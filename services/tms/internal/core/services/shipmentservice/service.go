@@ -4,26 +4,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/internal/core/services/equipmentavailabilityhelper"
-	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -196,7 +189,7 @@ func (s *service) Create(
 	}
 
 	req := duplicateBOLCheckRequest(entity)
-	if err = s.checkForDuplicateBOLs(ctx, control, req); err != nil {
+	if err = s.checkDuplicateBOLsWithControl(ctx, control, req); err != nil {
 		return nil, err
 	}
 
@@ -297,7 +290,7 @@ func (s *service) Update(
 	}
 
 	req := duplicateBOLCheckRequest(entity)
-	if err = s.checkForDuplicateBOLs(ctx, control, req); err != nil {
+	if err = s.checkDuplicateBOLsWithControl(ctx, control, req); err != nil {
 		return nil, err
 	}
 
@@ -333,216 +326,6 @@ func (s *service) Update(
 	}
 
 	return updatedEntity, nil
-}
-
-func (s *service) normalizeAdditionalChargeSystemGenerationForCreate(
-	entity *shipment.Shipment,
-) {
-	if entity == nil {
-		return
-	}
-
-	for _, charge := range entity.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-
-		charge.IsSystemGenerated = false
-	}
-}
-
-func (s *service) restoreAdditionalChargeSystemGeneration(
-	original *shipment.Shipment,
-	updated *shipment.Shipment,
-) {
-	if updated == nil {
-		return
-	}
-
-	originalCharges := make(map[pulid.ID]*shipment.AdditionalCharge, len(updated.AdditionalCharges))
-	if original != nil {
-		for _, charge := range original.AdditionalCharges {
-			if charge == nil || charge.ID.IsNil() {
-				continue
-			}
-			originalCharges[charge.ID] = charge
-		}
-	}
-
-	for _, charge := range updated.AdditionalCharges {
-		if charge == nil {
-			continue
-		}
-
-		if charge.ID.IsNil() {
-			charge.IsSystemGenerated = false
-			continue
-		}
-
-		if originalCharge := originalCharges[charge.ID]; originalCharge != nil {
-			charge.IsSystemGenerated = originalCharge.IsSystemGenerated
-			continue
-		}
-
-		charge.IsSystemGenerated = false
-	}
-}
-
-func (s *service) restoreAssignmentsForExistingMoves(
-	original *shipment.Shipment,
-	updated *shipment.Shipment,
-) {
-	if original == nil || updated == nil {
-		return
-	}
-
-	originalMoves := make(map[pulid.ID]*shipment.ShipmentMove, len(original.Moves))
-	for _, move := range original.Moves {
-		if move == nil || move.ID.IsNil() {
-			continue
-		}
-
-		originalMoves[move.ID] = move
-	}
-
-	for _, move := range updated.Moves {
-		if move == nil || move.ID.IsNil() || move.Assignment != nil {
-			continue
-		}
-
-		originalMove := originalMoves[move.ID]
-		if originalMove == nil || originalMove.Assignment == nil {
-			continue
-		}
-
-		move.Assignment = originalMove.Assignment
-	}
-}
-
-func (s *service) advanceContinuityForCompletedMoves(
-	ctx context.Context,
-	original *shipment.Shipment,
-	updated *shipment.Shipment,
-) error {
-	if s.continuityRepo == nil || updated == nil {
-		return nil
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: updated.OrganizationID,
-		BuID:  updated.BusinessUnitID,
-	}
-
-	originalMoveCap := 0
-	if original != nil {
-		originalMoveCap = len(original.Moves)
-	}
-	originalMoves := make(map[pulid.ID]*shipment.ShipmentMove, originalMoveCap)
-	if original != nil {
-		for _, move := range original.Moves {
-			if move == nil || move.ID.IsNil() {
-				continue
-			}
-			originalMoves[move.ID] = move
-		}
-	}
-
-	for _, move := range updated.Moves {
-		if move == nil || move.ID.IsNil() || move.Assignment == nil || !move.IsCompleted() {
-			continue
-		}
-
-		if previous := originalMoves[move.ID]; previous != nil && previous.IsCompleted() {
-			continue
-		}
-
-		if err := equipmentcontinuityhelper.AdvanceForCompletedMove(
-			ctx,
-			s.continuityRepo,
-			tenantInfo,
-			move,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (s *service) ensureEquipmentAvailableForShipmentUpdate(
-	ctx context.Context,
-	original *shipment.Shipment,
-	updated *shipment.Shipment,
-) error {
-	if s.assignmentRepo == nil || updated == nil {
-		return nil
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: updated.OrganizationID,
-		BuID:  updated.BusinessUnitID,
-	}
-
-	originalMoveCap := 0
-	if original != nil {
-		originalMoveCap = len(original.Moves)
-	}
-	originalMoves := make(map[pulid.ID]*shipment.ShipmentMove, originalMoveCap)
-	if original != nil {
-		for _, move := range original.Moves {
-			if move == nil || move.ID.IsNil() {
-				continue
-			}
-			originalMoves[move.ID] = move
-		}
-	}
-
-	seenTractors := make(map[pulid.ID]pulid.ID)
-	seenTrailers := make(map[pulid.ID]pulid.ID)
-
-	for _, move := range updated.Moves {
-		if move == nil || move.ID.IsNil() || !move.IsInTransit() {
-			continue
-		}
-
-		previous := originalMoves[move.ID]
-		if previous != nil && previous.IsInTransit() {
-			continue
-		}
-		if move.Assignment == nil {
-			continue
-		}
-
-		if move.Assignment.TractorID != nil {
-			if priorMoveID, ok := seenTractors[*move.Assignment.TractorID]; ok {
-				return errortypes.NewBusinessError("Tractor is currently in progress on another move").
-					WithParam("tractorId", move.Assignment.TractorID.String()).
-					WithParam("shipmentMoveId", priorMoveID.String())
-			}
-			seenTractors[*move.Assignment.TractorID] = move.ID
-		}
-
-		if move.Assignment.TrailerID != nil {
-			if priorMoveID, ok := seenTrailers[*move.Assignment.TrailerID]; ok {
-				return errortypes.NewBusinessError("Trailer is currently in progress on another move").
-					WithParam("trailerId", move.Assignment.TrailerID.String()).
-					WithParam("shipmentMoveId", priorMoveID.String())
-			}
-			seenTrailers[*move.Assignment.TrailerID] = move.ID
-		}
-
-		if err := equipmentavailabilityhelper.EnsureAssignmentEquipmentAvailable(
-			ctx,
-			s.assignmentRepo,
-			tenantInfo,
-			move.Assignment,
-			move.ID,
-		); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (s *service) TransferOwnership(
@@ -787,47 +570,7 @@ func (s *service) CheckForDuplicateBOLs(
 		return err
 	}
 
-	return s.checkForDuplicateBOLs(ctx, control, req)
-}
-
-func (s *service) checkForDuplicateBOLs(
-	ctx context.Context,
-	control *tenant.ShipmentControl,
-	req *repositories.DuplicateBOLCheckRequest,
-) error {
-	if !control.CheckForDuplicateBOLs {
-		return nil
-	}
-
-	duplicates, err := s.repo.CheckForDuplicateBOLs(ctx, req)
-	if err != nil {
-		return err
-	}
-
-	if len(duplicates) == 0 {
-		return nil
-	}
-
-	proNumbers := make([]string, 0, len(duplicates))
-	for _, duplicate := range duplicates {
-		proNumbers = append(proNumbers, duplicate.ProNumber)
-	}
-
-	me := errortypes.NewMultiError()
-	me.Add(
-		"bol",
-		errortypes.ErrInvalid,
-		fmt.Sprintf(
-			"BOL is already in use by shipment(s) with Pro Number(s): %s",
-			strings.Join(proNumbers, ", "),
-		),
-	)
-
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return s.checkDuplicateBOLsWithControl(ctx, control, req)
 }
 
 func (s *service) CheckHazmatSegregation(
@@ -843,69 +586,13 @@ func (s *service) CheckHazmatSegregation(
 		return err
 	}
 
-	if !control.CheckHazmatSegregation {
-		return nil
-	}
-
-	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
-		TenantInfo:   req.TenantInfo,
-		CommodityIDs: req.CommodityIDs,
-	})
-	if err != nil {
-		return err
-	}
-
-	hazmatCommodities := mapHazmatCommodities(commodities)
-	if len(hazmatCommodities) < 2 {
-		return nil
-	}
-
-	rules, err := s.hazmatRuleRepo.ListActiveByTenant(ctx, req.TenantInfo)
+	conflicts, err := s.evaluateHazmatSegregationRequest(ctx, control, req)
 	if err != nil {
 		return err
 	}
 
 	multiErr := errortypes.NewMultiError()
-
-	for i := 0; i < len(req.CommodityIDs); i++ {
-		leftCommodity, ok := hazmatCommodities[req.CommodityIDs[i]]
-		if !ok {
-			continue
-		}
-
-		for j := i + 1; j < len(req.CommodityIDs); j++ {
-			rightCommodity, ok := hazmatCommodities[req.CommodityIDs[j]]
-			if !ok {
-				continue
-			}
-
-			matchedRule := findMatchingHazmatRule(rules, leftCommodity, rightCommodity)
-			if matchedRule == nil {
-				continue
-			}
-
-			multiErr.WithIndex("commodities", i).Add(
-				"commodityId",
-				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-					matchedRule.Name,
-					matchedRule.SegregationType,
-					rightCommodity.Name,
-				),
-			)
-			multiErr.WithIndex("commodities", j).Add(
-				"commodityId",
-				errortypes.ErrInvalidOperation,
-				fmt.Sprintf(
-					"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-					matchedRule.Name,
-					matchedRule.SegregationType,
-					leftCommodity.Name,
-				),
-			)
-		}
-	}
+	addHazmatConflictsToMultiError(multiErr, conflicts)
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -1217,184 +904,4 @@ func (s *service) validateTransferTarget(
 	}
 
 	return nil
-}
-
-func (s *service) hydrateShipmentCommodityDetails(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) error {
-	if entity == nil || len(entity.Commodities) == 0 {
-		return nil
-	}
-
-	commodityIDs := uniqueShipmentCommodityIDs(entity.Commodities)
-	if len(commodityIDs) == 0 || s.commodityRepo == nil {
-		return nil
-	}
-
-	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		CommodityIDs: commodityIDs,
-	})
-	if err != nil {
-		return err
-	}
-
-	commodityMap := make(map[pulid.ID]*commodity.Commodity, len(commodities))
-	for _, item := range commodities {
-		if item == nil || item.ID.IsNil() {
-			continue
-		}
-		commodityMap[item.ID] = item
-	}
-
-	for _, shipmentCommodity := range entity.Commodities {
-		if shipmentCommodity == nil || shipmentCommodity.CommodityID.IsNil() {
-			continue
-		}
-		if loaded, ok := commodityMap[shipmentCommodity.CommodityID]; ok {
-			shipmentCommodity.Commodity = mergeCommodityDetails(shipmentCommodity.Commodity, loaded)
-		}
-	}
-
-	return nil
-}
-
-func mergeCommodityDetails(
-	existing *commodity.Commodity,
-	loaded *commodity.Commodity,
-) *commodity.Commodity {
-	if existing == nil {
-		return loaded
-	}
-
-	merged := *loaded
-
-	if existing.LinearFeetPerUnit != nil {
-		merged.LinearFeetPerUnit = existing.LinearFeetPerUnit
-	}
-
-	if existing.HazardousMaterial != nil {
-		merged.HazardousMaterial = existing.HazardousMaterial
-	}
-
-	if !existing.HazardousMaterialID.IsNil() {
-		merged.HazardousMaterialID = existing.HazardousMaterialID
-	}
-
-	return &merged
-}
-
-func delayThresholdMinutes(control *tenant.ShipmentControl) int16 {
-	if control == nil || !control.AutoDelayShipments {
-		return shipmentstate.DisabledDelayThresholdMinutes
-	}
-	if control.AutoDelayShipmentsThreshold == nil {
-		return shipmentstate.ResolveDelayThresholdMinutes(0)
-	}
-
-	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
-}
-
-func autoCancelThresholdDays(control *tenant.ShipmentControl) int8 {
-	if control.AutoCancelShipmentsThreshold == nil {
-		return shipmentstate.ResolveAutoCancelThresholdDays(0)
-	}
-
-	return shipmentstate.ResolveAutoCancelThresholdDays(*control.AutoCancelShipmentsThreshold)
-}
-
-func (s *service) getShipmentControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.ShipmentControl, error) {
-	return s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
-		TenantInfo: tenantInfo,
-	})
-}
-
-func (s *service) logShipmentAction(
-	entity shipmentTenantResource,
-	actor services.AuditActor,
-	operation permission.Operation,
-	previous any,
-	current any,
-	opts ...services.LogOption,
-) error {
-	params := &services.LogActionParams{
-		Resource:       permission.ResourceShipment,
-		ResourceID:     entity.GetID().String(),
-		Operation:      operation,
-		UserID:         actor.UserID,
-		PrincipalType:  actor.PrincipalType,
-		PrincipalID:    actor.PrincipalID,
-		APIKeyID:       actor.APIKeyID,
-		OrganizationID: entity.GetOrganizationID(),
-		BusinessUnitID: entity.GetBusinessUnitID(),
-	}
-	if current != nil {
-		params.CurrentState = jsonutils.MustToJSON(current)
-	}
-	if previous != nil {
-		params.PreviousState = jsonutils.MustToJSON(previous)
-	}
-
-	return s.auditService.LogAction(params, opts...)
-}
-
-func (s *service) publishShipmentInvalidation(
-	ctx context.Context,
-	entity shipmentTenantResource,
-	actor services.AuditActor,
-	action string,
-	payload any,
-) error {
-	return realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: entity.GetOrganizationID(),
-		BusinessUnitID: entity.GetBusinessUnitID(),
-		ActorUserID:    actor.UserID,
-		ActorType:      actor.PrincipalType,
-		ActorID:        actor.PrincipalID,
-		ActorAPIKeyID:  actor.APIKeyID,
-		Resource:       "shipments",
-		Action:         action,
-		RecordID:       entity.GetID(),
-		Entity:         payload,
-	})
-}
-
-func (s *service) publishBulkShipmentInvalidation(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	actor services.AuditActor,
-	action string,
-) error {
-	return realtimeinvalidation.Publish(ctx, s.realtime, &realtimeinvalidation.PublishParams{
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		ActorUserID:    actor.UserID,
-		ActorType:      actor.PrincipalType,
-		ActorID:        actor.PrincipalID,
-		ActorAPIKeyID:  actor.APIKeyID,
-		Resource:       "shipments",
-		Action:         action,
-	})
-}
-
-func duplicateBOLCheckRequest(entity *shipment.Shipment) *repositories.DuplicateBOLCheckRequest {
-	req := &repositories.DuplicateBOLCheckRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		BOL: entity.BOL,
-	}
-	if entity.ID.IsNotNil() {
-		req.ShipmentID = &entity.ID
-	}
-
-	return req
 }

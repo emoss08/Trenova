@@ -45,6 +45,7 @@ type Params struct {
 	Repo                 repositories.DocumentRepository
 	PacketRuleRepo       repositories.DocumentPacketRuleRepository
 	DocumentTypeRepo     repositories.DocumentTypeRepository
+	DraftRepo            repositories.DocumentShipmentDraftRepository
 	CacheRepo            repositories.DocumentCacheRepository
 	SessionRepo          repositories.DocumentUploadSessionRepository
 	Storage              storage.Client
@@ -63,6 +64,7 @@ type Service struct {
 	repo                 repositories.DocumentRepository
 	packetRuleRepo       repositories.DocumentPacketRuleRepository
 	documentTypeRepo     repositories.DocumentTypeRepository
+	draftRepo            repositories.DocumentShipmentDraftRepository
 	cacheRepo            repositories.DocumentCacheRepository
 	sessionRepo          repositories.DocumentUploadSessionRepository
 	storage              storage.Client
@@ -98,6 +100,7 @@ func New(p Params) *Service {
 		repo:                 p.Repo,
 		packetRuleRepo:       p.PacketRuleRepo,
 		documentTypeRepo:     p.DocumentTypeRepo,
+		draftRepo:            p.DraftRepo,
 		cacheRepo:            p.CacheRepo,
 		sessionRepo:          p.SessionRepo,
 		storage:              p.Storage,

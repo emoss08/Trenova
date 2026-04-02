@@ -28,6 +28,7 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 
 interface DocumentIntelligenceDialogProps {
@@ -70,6 +71,11 @@ function formatValue(value: unknown): string {
 function formatConfidence(confidence?: number | null) {
   if (confidence == null || Number.isNaN(confidence)) return "Not scored";
   return `${Math.round(confidence * 100)}%`;
+}
+
+function formatUnixTimestamp(value?: number | null) {
+  if (!value) return "Not recorded";
+  return new Date(value * 1000).toLocaleString();
 }
 
 function normalizeDraftFields(
@@ -231,7 +237,7 @@ function StopsSection({ stops }: { stops: DocumentIntelligenceStop[] }) {
             </div>
           </div>
           {stop.evidenceExcerpt ? (
-            <div className="mt-2 rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] text-muted-foreground whitespace-pre-wrap">
+            <div className="mt-2 rounded-md bg-muted/40 px-2 py-1 font-mono text-[11px] whitespace-pre-wrap text-muted-foreground">
               {stop.evidenceExcerpt}
             </div>
           ) : null}
@@ -309,7 +315,9 @@ function IntelligenceSummary({
           <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Classification Reason
           </div>
-          <div className="mt-1 text-sm">{intelligence.classificationReason}</div>
+          <div className="mt-1 text-sm">
+            {intelligence.classificationReason}
+          </div>
         </div>
       ) : null}
     </div>
@@ -328,7 +336,14 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (draft.status === "Failed") {
     return (
       <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-        Shipment draft extraction failed.
+        <div className="font-medium text-foreground">
+          Shipment draft extraction failed.
+        </div>
+        <div className="mt-1">
+          {[draft.failureCode, draft.failureMessage]
+            .filter(Boolean)
+            .join(" · ") || "No failure details were recorded."}
+        </div>
       </div>
     );
   }
@@ -378,6 +393,29 @@ function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
           </div>
         </div>
       </div>
+
+      {draft.attachedShipmentId ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-medium">
+                This document is already attached to a shipment.
+              </div>
+              <div className="mt-1 text-emerald-900/80">
+                Shipment {draft.attachedShipmentId} attached{" "}
+                {formatUnixTimestamp(draft.attachedAt)}.
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<Link to="/shipment-management/shipments" />}
+            >
+              Open Shipments
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {signals.length > 0 ? (
         <div className="rounded-lg border p-3">
@@ -575,32 +613,33 @@ export function DocumentIntelligenceDialog({
 }: DocumentIntelligenceDialogProps) {
   const queryClient = useQueryClient();
   const [reviewShipmentOpen, setReviewShipmentOpen] = useState(false);
+  const documentID = document?.id;
+  const shipmentDraftStatus = document?.shipmentDraftStatus;
 
   const { data: content, isLoading: isContentLoading } = useQuery({
-    queryKey: ["document-content", document?.id],
+    queryKey: ["document-content", documentID],
     queryFn: async () => {
-      if (!document) return null;
+      if (!documentID) return null;
       try {
-        return await apiService.documentService.getContent(document.id);
+        return await apiService.documentService.getContent(documentID);
       } catch {
         return null;
       }
     },
-    enabled: open && !!document,
+    enabled: open && !!documentID,
   });
 
   const { data: shipmentDraft, isLoading: isDraftLoading } = useQuery({
-    queryKey: ["document-shipment-draft", document?.id],
+    queryKey: ["document-shipment-draft", documentID, shipmentDraftStatus],
     queryFn: async () => {
-      if (!document) return null;
+      if (!documentID) return null;
       try {
-        return await apiService.documentService.getShipmentDraft(document.id);
+        return await apiService.documentService.getShipmentDraft(documentID);
       } catch {
         return null;
       }
     },
-    enabled:
-      open && !!document && document?.shipmentDraftStatus !== "Unavailable",
+    enabled: open && !!documentID && shipmentDraftStatus !== "Unavailable",
   });
 
   const { mutate: reextract, isPending: isReextracting } = useMutation({
@@ -631,7 +670,8 @@ export function DocumentIntelligenceDialog({
     !!document &&
     !!shipmentDraft &&
     shipmentDraft.status !== "Unavailable" &&
-    shipmentDraft.status !== "Failed";
+    shipmentDraft.status !== "Failed" &&
+    !shipmentDraft.attachedShipmentId;
 
   return (
     <>
@@ -645,134 +685,159 @@ export function DocumentIntelligenceDialog({
         }}
       >
         <DialogContent
-          className="sm:max-w-4xl p-0 gap-0 overflow-hidden"
+          className="gap-0 overflow-hidden p-0 sm:max-w-4xl"
           showCloseButton
         >
           {document ? (
             <>
-            <DialogHeader className="border-b px-6 pt-6 pb-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <DialogTitle>{document.originalName}</DialogTitle>
-                <Badge variant={statusBadgeVariant(document.contentStatus)}>
-                  {document.contentStatus}
-                </Badge>
-                {document.detectedKind && document.detectedKind !== "Other" ? (
-                  <Badge variant="info">{document.detectedKind}</Badge>
-                ) : null}
-                {document.shipmentDraftStatus === "Ready" ? (
-                  <Badge variant="teal">Shipment draft ready</Badge>
-                ) : null}
-              </div>
-              <DialogDescription>
-                Review extracted text, document classification, and any
-                structured shipment draft fields.
-              </DialogDescription>
-            </DialogHeader>
+              <DialogHeader className="border-b px-6 pt-6 pb-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <DialogTitle>{document.originalName}</DialogTitle>
+                  <Badge variant={statusBadgeVariant(document.contentStatus)}>
+                    {document.contentStatus}
+                  </Badge>
+                  {document.detectedKind &&
+                  document.detectedKind !== "Other" ? (
+                    <Badge variant="info">{document.detectedKind}</Badge>
+                  ) : null}
+                  {document.shipmentDraftStatus === "Ready" ? (
+                    <Badge variant="teal">Shipment draft ready</Badge>
+                  ) : null}
+                  {shipmentDraft?.attachedShipmentId ? (
+                    <Badge variant="active">Attached to shipment</Badge>
+                  ) : null}
+                </div>
+                <DialogDescription>
+                  Review extracted text, document classification, and any
+                  structured shipment draft fields.
+                </DialogDescription>
+              </DialogHeader>
 
-            <ScrollArea className="max-h-[calc(90vh-160px)]">
-              <div className="grid gap-6 p-4 ">
-                <section className="grid gap-3">
-                  <div>
-                    <h3 className="text-sm font-medium">
-                      Document Intelligence
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Extraction status, classification, and structured output.
-                    </p>
-                  </div>
-                  <div className="grid gap-3">
-                    <IntelligenceSummary
-                      intelligence={content?.structuredData?.intelligence}
-                      fallbackKind={
-                        content?.detectedDocumentKind || document.detectedKind
-                      }
-                      fallbackConfidence={content?.classificationConfidence}
-                    />
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <div className="rounded-lg border p-3">
-                        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                          Extraction Source
+              <ScrollArea className="max-h-[calc(90vh-160px)]">
+                <div className="grid gap-6 p-4">
+                  <section className="grid gap-3">
+                    <div>
+                      <h3 className="text-sm font-medium">
+                        Document Intelligence
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Extraction status, classification, and structured
+                        output.
+                      </p>
+                    </div>
+                    <div className="grid gap-3">
+                      <IntelligenceSummary
+                        intelligence={content?.structuredData?.intelligence}
+                        fallbackKind={
+                          content?.detectedDocumentKind || document.detectedKind
+                        }
+                        fallbackConfidence={content?.classificationConfidence}
+                      />
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <div className="rounded-lg border p-3">
+                          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                            Extraction Source
+                          </div>
+                          <div className="mt-1 text-sm">
+                            {content?.sourceKind || "Not available"}
+                          </div>
                         </div>
-                        <div className="mt-1 text-sm">
-                          {content?.sourceKind || "Not available"}
+                        <div className="rounded-lg border p-3">
+                          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                            Pages
+                          </div>
+                          <div className="mt-1 text-sm">
+                            {content?.pageCount ?? "Not available"}
+                          </div>
                         </div>
                       </div>
-                      <div className="rounded-lg border p-3">
-                        <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                          Pages
-                        </div>
-                        <div className="mt-1 text-sm">
-                          {content?.pageCount ?? "Not available"}
-                        </div>
+                    </div>
+                  </section>
+
+                  <section className="grid gap-3">
+                    <div>
+                      <h3 className="text-sm font-medium">Shipment Draft</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Review structured fields extracted from supported
+                        shipment documents.
+                      </p>
+                    </div>
+                    {isDraftLoading ? (
+                      <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+                        <LoaderCircleIcon className="size-4 animate-spin" />
+                        Loading shipment draft...
                       </div>
-                    </div>
-                  </div>
-                </section>
+                    ) : (
+                      <>
+                        <DraftSection draft={shipmentDraft ?? null} />
+                        {(!shipmentDraft ||
+                          shipmentDraft.status === "Unavailable") &&
+                        document.detectedKind &&
+                        document.detectedKind !== "RateConfirmation" ? (
+                          <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                            This document is available for classification,
+                            search, and extracted-text review, but it does not
+                            produce a shipment draft.
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </section>
 
-                <section className="grid gap-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Shipment Draft</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Review structured fields extracted from rate
-                      confirmations.
-                    </p>
-                  </div>
-                  {isDraftLoading ? (
-                    <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
-                      <LoaderCircleIcon className="size-4 animate-spin" />
-                      Loading shipment draft...
+                  <section className="grid gap-3">
+                    <div>
+                      <h3 className="text-sm font-medium">Extracted Text</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Full extracted text used for search and document
+                        classification.
+                      </p>
                     </div>
-                  ) : (
-                    <DraftSection draft={shipmentDraft ?? null} />
-                  )}
-                </section>
+                    {isContentLoading ? (
+                      <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
+                        <LoaderCircleIcon className="size-4 animate-spin" />
+                        Loading extracted content...
+                      </div>
+                    ) : (
+                      <ContentSection
+                        content={content ?? null}
+                        fallbackStatus={document.contentStatus}
+                        fallbackError={document.contentError}
+                      />
+                    )}
+                  </section>
+                </div>
+              </ScrollArea>
 
-                <section className="grid gap-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Extracted Text</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Full extracted text used for search and document
-                      classification.
-                    </p>
-                  </div>
-                  {isContentLoading ? (
-                    <div className="flex items-center gap-2 rounded-lg border p-3 text-sm text-muted-foreground">
-                      <LoaderCircleIcon className="size-4 animate-spin" />
-                      Loading extracted content...
-                    </div>
-                  ) : (
-                    <ContentSection
-                      content={content ?? null}
-                      fallbackStatus={document.contentStatus}
-                      fallbackError={document.contentError}
-                    />
-                  )}
-                </section>
-              </div>
-            </ScrollArea>
-
-            <DialogFooter className="m-0" showCloseButton>
-              {canReviewShipmentDraft ? (
+              <DialogFooter className="m-0" showCloseButton>
+                {canReviewShipmentDraft ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setReviewShipmentOpen(true)}
+                  >
+                    Create Shipment
+                  </Button>
+                ) : null}
+                {shipmentDraft?.attachedShipmentId ? (
+                  <Button
+                    variant="secondary"
+                    render={<Link to="/shipment-management/shipments" />}
+                  >
+                    Open Shipments
+                  </Button>
+                ) : null}
                 <Button
-                  variant="secondary"
-                  onClick={() => setReviewShipmentOpen(true)}
+                  variant="outline"
+                  onClick={() => reextract()}
+                  disabled={isReextracting}
                 >
-                  Create Shipment
+                  {isReextracting ? (
+                    <LoaderCircleIcon className="size-4 animate-spin" />
+                  ) : (
+                    <RefreshCcwIcon className="size-4" />
+                  )}
+                  Re-extract
                 </Button>
-              ) : null}
-              <Button
-                variant="outline"
-                onClick={() => reextract()}
-                disabled={isReextracting}
-              >
-                {isReextracting ? (
-                  <LoaderCircleIcon className="size-4 animate-spin" />
-                ) : (
-                  <RefreshCcwIcon className="size-4" />
-                )}
-                Re-extract
-              </Button>
-            </DialogFooter>
+              </DialogFooter>
             </>
           ) : null}
         </DialogContent>

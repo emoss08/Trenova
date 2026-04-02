@@ -14,6 +14,7 @@ import { DatabaseSessionService } from "./database-session";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DocumentService } from "./document";
+import { DocumentControlService } from "./document-control";
 import { DocumentOperationsService } from "./document-operations";
 import { DocumentPacketRuleService } from "./document-packet-rule";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
@@ -59,6 +60,7 @@ class APIService {
   public tractorService: TractorService;
   public customFieldService: CustomFieldService;
   public documentService: DocumentService;
+  public documentControlService: DocumentControlService;
   public accessorialChargeService: AccessorialChargeService;
   public workerService: WorkerService;
   public serviceTypeService: ServiceTypeService;
@@ -108,6 +110,7 @@ class APIService {
     this.tractorService = new TractorService();
     this.customFieldService = new CustomFieldService();
     this.documentService = new DocumentService();
+    this.documentControlService = new DocumentControlService();
     this.accessorialChargeService = new AccessorialChargeService();
     this.workerService = new WorkerService();
     this.serviceTypeService = new ServiceTypeService();

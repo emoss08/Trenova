@@ -129,7 +129,11 @@ function JsonNode({
       return <span className="text-muted-foreground italic">null</span>;
     }
     if (type === "boolean") {
-      return <span className="text-amber-500">{String(value)}</span>;
+      return (
+        <span className="text-amber-500">
+          {value === true ? "true" : "false"}
+        </span>
+      );
     }
     if (type === "number") {
       return <span className="text-blue-500">{value as number}</span>;
@@ -137,7 +141,7 @@ function JsonNode({
     if (type === "string") {
       return (
         <span className="text-green-600 dark:text-green-400">
-          "{value as string}"
+          &quot;{value as string}&quot;
         </span>
       );
     }
@@ -159,7 +163,7 @@ function JsonNode({
             type="button"
             onClick={handleCopyPath}
             aria-label={`Copy path ${path}`}
-            className="ml-1 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground hover:text-foreground transition-opacity"
+            className="ml-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
           >
             {copied ? "✓" : "⎘"}
           </button>
@@ -201,7 +205,7 @@ function JsonNode({
           onClick={handleToggle}
           onKeyDown={handleKeyDown}
           aria-label={isCollapsed ? "Expand" : "Collapse"}
-          className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
+          className="flex h-4 w-4 items-center justify-center text-muted-foreground hover:text-foreground"
         >
           {isCollapsed ? "▶" : "▼"}
         </button>
@@ -215,7 +219,7 @@ function JsonNode({
           {brackets[0]}
           {isCollapsed && (
             <>
-              <span className="italic text-xs mx-1">{getPreview(value)}</span>
+              <span className="mx-1 text-xs italic">{getPreview(value)}</span>
               {brackets[1]}
             </>
           )}
@@ -225,7 +229,7 @@ function JsonNode({
             type="button"
             onClick={handleCopyPath}
             aria-label={`Copy path ${path}`}
-            className="ml-1 opacity-0 group-hover:opacity-100 text-xs text-muted-foreground hover:text-foreground transition-opacity"
+            className="ml-1 text-xs text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground"
           >
             {copied ? "✓" : "⎘"}
           </button>
@@ -277,7 +281,7 @@ export function JsonViewer({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search..."
-            className="w-full px-2 py-1 text-sm border border-border rounded bg-background"
+            className="w-full rounded border border-border bg-background px-2 py-1 text-sm"
           />
         </div>
       )}

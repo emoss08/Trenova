@@ -17,11 +17,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { apiService } from "@/services/api";
 import type { Document, DocumentUploadSession } from "@/types/document";
-import type { DocumentOperationsDiagnostics, WorkflowReference } from "@/types/document-operations";
+import type {
+  DocumentOperationsDiagnostics,
+  WorkflowReference,
+} from "@/types/document-operations";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
@@ -58,7 +65,14 @@ function relativeTime(ts: number): string {
 
 function statusVariant(
   status: string,
-): "default" | "active" | "inactive" | "warning" | "info" | "secondary" | "orange" {
+):
+  | "default"
+  | "active"
+  | "inactive"
+  | "warning"
+  | "info"
+  | "secondary"
+  | "orange" {
   switch (status) {
     case "Active":
     case "Completed":
@@ -119,7 +133,13 @@ function statusDotColor(status: string): string {
   }
 }
 
-function CopyableId({ value, truncate = true }: { value: string; truncate?: boolean }) {
+function CopyableId({
+  value,
+  truncate = true,
+}: {
+  value: string;
+  truncate?: boolean;
+}) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
@@ -134,7 +154,9 @@ function CopyableId({ value, truncate = true }: { value: string; truncate?: bool
         }
       >
         <span className="truncate">
-          {truncate && value.length > 20 ? `${value.slice(0, 10)}...${value.slice(-6)}` : value}
+          {truncate && value.length > 20
+            ? `${value.slice(0, 10)}...${value.slice(-6)}`
+            : value}
         </span>
         {isCopied ? (
           <CheckIcon className="size-3 shrink-0 text-emerald-500" />
@@ -163,7 +185,7 @@ function SectionHeader({
       </span>
       <h3 className="text-sm font-medium">{title}</h3>
       {count != null && (
-        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground tabular-nums">
           {count}
         </span>
       )}
@@ -171,7 +193,13 @@ function SectionHeader({
   );
 }
 
-function MetadataCell({ label, children }: { label: string; children: React.ReactNode }) {
+function MetadataCell({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-lg border p-3">
       <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -208,7 +236,12 @@ function DocumentSearch({
         className="font-mono placeholder:font-sans"
         leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
         rightElement={
-          <Button type="submit" size="xxxs" disabled={!input.trim() || isLoading} isLoading={isLoading}>
+          <Button
+            type="submit"
+            size="xxxs"
+            disabled={!input.trim() || isLoading}
+            isLoading={isLoading}
+          >
             Inspect
           </Button>
         }
@@ -269,7 +302,9 @@ function ActionButton({
         </div>
         <div>
           <div className="text-sm font-medium">{label}</div>
-          <div className="mt-0.5 text-[11px] text-muted-foreground">{detail}</div>
+          <div className="mt-0.5 text-[11px] text-muted-foreground">
+            {detail}
+          </div>
         </div>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -279,7 +314,9 @@ function ActionButton({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>Confirm</AlertDialogAction>
+          <AlertDialogAction onClick={() => mutation.mutate(documentId)}>
+            Confirm
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -305,8 +342,12 @@ function StatusPipeline({ doc }: { doc: Document }) {
                 <div className="flex items-center gap-1.5 rounded-full border px-2 py-1" />
               }
             >
-              <span className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`} />
-              <span className="text-[10px] font-medium tracking-wide uppercase">{stage.label}</span>
+              <span
+                className={`size-1.5 rounded-full ${statusDotColor(stage.status)}`}
+              />
+              <span className="text-[10px] font-medium tracking-wide uppercase">
+                {stage.label}
+              </span>
             </TooltipTrigger>
             <TooltipContent>
               {stage.label}: {stage.status}
@@ -328,7 +369,9 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
           </span>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="truncate text-base font-semibold">{doc.originalName}</h2>
+              <h2 className="truncate text-base font-semibold">
+                {doc.originalName}
+              </h2>
               <Badge variant={statusVariant(doc.status)}>{doc.status}</Badge>
               {doc.detectedKind && doc.detectedKind !== "Other" && (
                 <Badge variant="info">{doc.detectedKind}</Badge>
@@ -363,20 +406,28 @@ function DocumentOverviewSection({ doc }: { doc: Document }) {
         </MetadataCell>
         <MetadataCell label="Created">
           <span>{formatTimestamp(doc.createdAt)}</span>
-          <span className="ml-1 text-muted-foreground">{relativeTime(doc.createdAt)}</span>
+          <span className="ml-1 text-muted-foreground">
+            {relativeTime(doc.createdAt)}
+          </span>
         </MetadataCell>
         <MetadataCell label="Updated">
           <span>{formatTimestamp(doc.updatedAt)}</span>
-          <span className="ml-1 text-muted-foreground">{relativeTime(doc.updatedAt)}</span>
+          <span className="ml-1 text-muted-foreground">
+            {relativeTime(doc.updatedAt)}
+          </span>
         </MetadataCell>
       </div>
 
       <div className="grid gap-2.5 md:grid-cols-4">
         <MetadataCell label="Preview Status">
-          <Badge variant={statusVariant(doc.previewStatus)}>{doc.previewStatus}</Badge>
+          <Badge variant={statusVariant(doc.previewStatus)}>
+            {doc.previewStatus}
+          </Badge>
         </MetadataCell>
         <MetadataCell label="Content Status">
-          <Badge variant={statusVariant(doc.contentStatus)}>{doc.contentStatus}</Badge>
+          <Badge variant={statusVariant(doc.contentStatus)}>
+            {doc.contentStatus}
+          </Badge>
         </MetadataCell>
         <MetadataCell label="Draft Status">
           <Badge variant={statusVariant(doc.shipmentDraftStatus)}>
@@ -412,7 +463,9 @@ function ActionsSection({
           description="Re-run content extraction for this document. This will re-process the document and update extracted text and structured data."
           icon={FileSearchIcon}
           documentId={documentId}
-          mutationFn={(id) => apiService.documentOperationsService.reextract(id)}
+          mutationFn={(id) =>
+            apiService.documentOperationsService.reextract(id)
+          }
           onSuccess={onSuccess}
         />
         <ActionButton
@@ -421,7 +474,9 @@ function ActionsSection({
           description="Regenerate the document preview thumbnail. A new Temporal workflow will be started to generate the thumbnail."
           icon={ImageIcon}
           documentId={documentId}
-          mutationFn={(id) => apiService.documentOperationsService.regeneratePreview(id)}
+          mutationFn={(id) =>
+            apiService.documentOperationsService.regeneratePreview(id)
+          }
           onSuccess={onSuccess}
         />
         <ActionButton
@@ -430,7 +485,9 @@ function ActionsSection({
           description="Re-sync this document's search index entry. This will update the search projection with the latest document data."
           icon={RefreshCwIcon}
           documentId={documentId}
-          mutationFn={(id) => apiService.documentOperationsService.resyncSearch(id)}
+          mutationFn={(id) =>
+            apiService.documentOperationsService.resyncSearch(id)
+          }
           onSuccess={onSuccess}
         />
       </div>
@@ -486,7 +543,11 @@ function VersionsSection({ versions }: { versions: Document[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={GitBranchIcon} title="Version History" count={versions.length} />
+      <SectionHeader
+        icon={GitBranchIcon}
+        title="Version History"
+        count={versions.length}
+      />
       <div className="grid gap-2">
         {versions.map((v) => (
           <div
@@ -499,9 +560,7 @@ function VersionsSection({ versions }: { versions: Document[] }) {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
                 <CopyableId value={v.id} />
-                {v.isCurrentVersion && (
-                  <Badge variant="active">Current</Badge>
-                )}
+                {v.isCurrentVersion && <Badge variant="active">Current</Badge>}
               </div>
               <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
                 <ClockIcon className="size-3" />
@@ -521,7 +580,11 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={UploadIcon} title="Upload Sessions" count={sessions.length} />
+      <SectionHeader
+        icon={UploadIcon}
+        title="Upload Sessions"
+        count={sessions.length}
+      />
       <div className="grid gap-2">
         {sessions.map((s) => {
           const hasFailure = !!(s.failureCode || s.failureMessage);
@@ -532,7 +595,9 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className={`size-2 shrink-0 rounded-full ${statusDotColor(s.status)}`} />
+                  <span
+                    className={`size-2 shrink-0 rounded-full ${statusDotColor(s.status)}`}
+                  />
                   <CopyableId value={s.id} />
                   <Badge variant={statusVariant(s.status)}>{s.status}</Badge>
                 </div>
@@ -545,11 +610,19 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
               <div className="mt-2.5 grid gap-2 md:grid-cols-3">
                 <div className="text-xs">
                   <span className="text-muted-foreground">Lineage </span>
-                  {s.lineageId ? <CopyableId value={s.lineageId} /> : <span className="text-muted-foreground">-</span>}
+                  {s.lineageId ? (
+                    <CopyableId value={s.lineageId} />
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </div>
                 <div className="text-xs">
                   <span className="text-muted-foreground">Document </span>
-                  {s.documentId ? <CopyableId value={s.documentId} /> : <span className="text-muted-foreground">-</span>}
+                  {s.documentId ? (
+                    <CopyableId value={s.documentId} />
+                  ) : (
+                    <span className="text-muted-foreground">-</span>
+                  )}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   Created {formatTimestamp(s.createdAt)}
@@ -558,7 +631,9 @@ function SessionsSection({ sessions }: { sessions: DocumentUploadSession[] }) {
 
               {hasFailure && (
                 <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/5 px-2.5 py-1.5 font-mono text-[11px] text-destructive">
-                  {s.failureCode && <span className="font-semibold">{s.failureCode}: </span>}
+                  {s.failureCode && (
+                    <span className="font-semibold">{s.failureCode}: </span>
+                  )}
                   {s.failureMessage}
                 </div>
               )}
@@ -575,7 +650,11 @@ function WorkflowsSection({ refs }: { refs: WorkflowReference[] }) {
 
   return (
     <section className="grid gap-3">
-      <SectionHeader icon={WorkflowIcon} title="Workflow References" count={refs.length} />
+      <SectionHeader
+        icon={WorkflowIcon}
+        title="Workflow References"
+        count={refs.length}
+      />
       <div className="grid gap-2 sm:grid-cols-2">
         {refs.map((ref) => (
           <div
@@ -627,7 +706,7 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
   const queryClient = useQueryClient();
 
   function handleActionSuccess() {
-    queryClient.invalidateQueries({
+    void queryClient.invalidateQueries({
       queryKey: ["document-operations-diagnostics", data.document.id],
     });
   }
@@ -640,13 +719,21 @@ function DiagnosticsView({ data }: { data: DocumentOperationsDiagnostics }) {
 
         <Separator />
 
-        <PresenceSection hasContent={!!data.content} hasDraft={!!data.shipmentDraft} />
+        <PresenceSection
+          hasContent={!!data.content}
+          hasDraft={!!data.shipmentDraft}
+        />
 
         <Separator />
 
-        <ActionsSection documentId={data.document.id} onSuccess={handleActionSuccess} />
+        <ActionsSection
+          documentId={data.document.id}
+          onSuccess={handleActionSuccess}
+        />
 
-        {(data.versions.length > 0 || data.sessions.length > 0 || data.workflowRefs.length > 0) && (
+        {(data.versions.length > 0 ||
+          data.sessions.length > 0 ||
+          data.workflowRefs.length > 0) && (
           <>
             <Separator />
             <div className="grid gap-6 lg:grid-cols-2">
@@ -703,7 +790,8 @@ export function DocumentOperationsPage() {
 
   const diagnosticsQuery = useQuery({
     queryKey: ["document-operations-diagnostics", documentId],
-    queryFn: () => apiService.documentOperationsService.getDiagnostics(documentId!),
+    queryFn: () =>
+      apiService.documentOperationsService.getDiagnostics(documentId!),
     enabled: !!documentId,
     retry: false,
   });
@@ -717,7 +805,10 @@ export function DocumentOperationsPage() {
       />
 
       <div className="mb-4">
-        <DocumentSearch onSearch={(id) => setDocumentId(id)} isLoading={diagnosticsQuery.isFetching} />
+        <DocumentSearch
+          onSearch={(id) => setDocumentId(id)}
+          isLoading={diagnosticsQuery.isFetching}
+        />
       </div>
 
       {!documentId && (
@@ -727,7 +818,8 @@ export function DocumentOperationsPage() {
           </div>
           <h3 className="mt-4 text-sm font-medium">No document selected</h3>
           <p className="mt-1 max-w-[260px] text-center text-xs text-muted-foreground">
-            Paste a document ID above to view its lifecycle state and available recovery actions
+            Paste a document ID above to view its lifecycle state and available
+            recovery actions
           </p>
         </div>
       )}
@@ -740,7 +832,9 @@ export function DocumentOperationsPage() {
             <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10">
               <XCircleIcon className="size-6 text-destructive" />
             </div>
-            <h3 className="mt-3 text-sm font-medium">Failed to load diagnostics</h3>
+            <h3 className="mt-3 text-sm font-medium">
+              Failed to load diagnostics
+            </h3>
             <p className="mt-1 max-w-[300px] text-center text-xs text-muted-foreground">
               {diagnosticsQuery.error instanceof Error
                 ? diagnosticsQuery.error.message
@@ -759,7 +853,9 @@ export function DocumentOperationsPage() {
         </Card>
       )}
 
-      {diagnosticsQuery.data && <DiagnosticsView data={diagnosticsQuery.data} />}
+      {diagnosticsQuery.data && (
+        <DiagnosticsView data={diagnosticsQuery.data} />
+      )}
     </AdminPageLayout>
   );
 }

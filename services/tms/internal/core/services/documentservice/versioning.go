@@ -366,6 +366,18 @@ func (s *Service) AttachLineageToResource(
 		return current, nil
 	}
 
+	var shipmentID pulid.ID
+	if resourceType == "shipment" {
+		shipmentID, err = pulid.MustParse(resourceID)
+		if err != nil {
+			return nil, errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"Invalid shipment ID",
+			)
+		}
+	}
+
 	previous := *current
 	if err = s.repo.MoveLineageToResource(ctx, &repositories.MoveDocumentLineageRequest{
 		DocumentID:   documentID,
@@ -382,6 +394,23 @@ func (s *Service) AttachLineageToResource(
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if resourceType == "shipment" && s.draftRepo != nil {
+		draft, draftErr := s.draftRepo.GetByDocumentID(ctx, updated.ID, tenantInfo)
+		switch {
+		case draftErr == nil:
+			now := time.Now().Unix()
+			draft.AttachedShipmentID = &shipmentID
+			draft.AttachedAt = &now
+			draft.AttachedByID = &userID
+			if _, draftErr = s.draftRepo.Upsert(ctx, draft); draftErr != nil {
+				return nil, draftErr
+			}
+		case errortypes.IsNotFoundError(draftErr):
+		default:
+			return nil, draftErr
+		}
 	}
 
 	contentText := ""

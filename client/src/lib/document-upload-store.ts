@@ -31,7 +31,7 @@ function openDB(): Promise<IDBDatabase> {
 
 async function withStore<T>(
   mode: IDBTransactionMode,
-  run: (store: IDBObjectStore) => IDBRequest<T> | void,
+  run: (store: IDBObjectStore) => IDBRequest<T> | undefined,
 ): Promise<T | undefined> {
   const db = await openDB();
 
@@ -41,8 +41,10 @@ async function withStore<T>(
     const request = run(store);
 
     tx.oncomplete = () => resolve(request?.result);
-    tx.onerror = () => reject(tx.error ?? new Error("IndexedDB transaction failed"));
-    tx.onabort = () => reject(tx.error ?? new Error("IndexedDB transaction aborted"));
+    tx.onerror = () =>
+      reject(tx.error ?? new Error("IndexedDB transaction failed"));
+    tx.onabort = () =>
+      reject(tx.error ?? new Error("IndexedDB transaction aborted"));
   }).finally(() => db.close());
 }
 
@@ -52,7 +54,9 @@ export async function persistDocumentUploadSession(
   await withStore("readwrite", (store) => store.put(record));
 }
 
-export async function removeDocumentUploadSession(sessionId: string): Promise<void> {
+export async function removeDocumentUploadSession(
+  sessionId: string,
+): Promise<void> {
   await withStore("readwrite", (store) => store.delete(sessionId));
 }
 
@@ -60,9 +64,10 @@ export async function listPersistedDocumentUploadSessions(
   resourceType: string,
   resourceId: string,
 ): Promise<PersistedUploadRecord[]> {
-  const records = (await withStore<PersistedUploadRecord[]>("readonly", (store) =>
-    store.getAll(),
-  )) ?? [];
+  const records =
+    (await withStore<PersistedUploadRecord[]>("readonly", (store) =>
+      store.getAll(),
+    )) ?? [];
 
   return records.filter(
     (record) =>

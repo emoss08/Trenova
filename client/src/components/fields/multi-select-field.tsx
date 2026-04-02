@@ -9,7 +9,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { API_BASE_URL } from "@/lib/constants";
@@ -60,11 +64,13 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
 }
 
 export interface MultiSelectAutocompleteProps<TOption>
-  extends
-    BaseMultiSelectAutocompleteFieldProps<TOption>,
+  extends BaseMultiSelectAutocompleteFieldProps<TOption>,
     Omit<ComponentPropsWithoutRef<"button">, "onChange"> {}
 
-export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldValues> {
+export interface MultiSelectAutocompleteFieldProps<
+  TOption,
+  TForm extends FieldValues,
+> {
   name: FieldPath<TForm>;
   control: Control<TForm>;
   rules?: RegisterOptions<TForm, Path<TForm>>;
@@ -130,7 +136,10 @@ async function fetchOptionsByIds(
 
   const promises = ids.map(async (id) => {
     try {
-      const fetchURL = new URL(`${API_BASE_URL}${link}${id}`, window.location.origin);
+      const fetchURL = new URL(
+        `${API_BASE_URL}${link}${id}`,
+        window.location.origin,
+      );
 
       if (extraSearchParams) {
         Object.entries(extraSearchParams).forEach(([key, value]) => {
@@ -198,14 +207,19 @@ export function MultiSelectAutocomplete<T>({
     | { type: "fetchError"; error: string }
     | { type: "fetchEnd" };
 
-  const asyncStateReducer = (state: AsyncState, action: AsyncAction): AsyncState => {
+  const asyncStateReducer = (
+    state: AsyncState,
+    action: AsyncAction,
+  ): AsyncState => {
     switch (action.type) {
       case "fetchStart":
         return { ...state, loading: true, error: null };
       case "fetchSuccess":
         return {
           ...state,
-          options: action.append ? [...state.options, ...action.results] : action.results,
+          options: action.append
+            ? [...state.options, ...action.results]
+            : action.results,
           hasMore: action.hasMore,
         };
       case "fetchError":
@@ -248,7 +262,9 @@ export function MultiSelectAutocomplete<T>({
       }
 
       const currentValuesKey = JSON.stringify(
-        values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
+        values.map((v) =>
+          typeof v === "string" ? v : getOptionValue(v as T).toString(),
+        ),
       );
 
       if (prevValuesRef.current === currentValuesKey) {
@@ -261,7 +277,9 @@ export function MultiSelectAutocomplete<T>({
       const resolveInitialOptions = nestedValues
         ? (async () => {
             const objects = values.filter((v): v is T => typeof v === "object");
-            const strings = values.filter((v): v is string => typeof v === "string");
+            const strings = values.filter(
+              (v): v is string => typeof v === "string",
+            );
             const additionalOptionsPromise =
               strings.length > 0
                 ? fetchOptionsByIds(link, strings, extraSearchParams)
@@ -272,7 +290,9 @@ export function MultiSelectAutocomplete<T>({
           })()
         : fetchOptionsByIds(
             link,
-            values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
+            values.map((v) =>
+              typeof v === "string" ? v : getOptionValue(v as T).toString(),
+            ),
             extraSearchParams,
           );
 
@@ -283,7 +303,10 @@ export function MultiSelectAutocomplete<T>({
         .catch((err) => {
           dispatchAsyncState({
             type: "fetchError",
-            error: err instanceof Error ? err.message : "Failed to fetch initial values",
+            error:
+              err instanceof Error
+                ? err.message
+                : "Failed to fetch initial values",
           });
         })
         .finally(() => {
@@ -311,7 +334,8 @@ export function MultiSelectAutocomplete<T>({
           console.error(link, err);
           dispatchAsyncState({
             type: "fetchError",
-            error: err instanceof Error ? err.message : "Failed to fetch options",
+            error:
+              err instanceof Error ? err.message : "Failed to fetch options",
           });
         })
         .finally(() => {
@@ -358,7 +382,9 @@ export function MultiSelectAutocomplete<T>({
 
   const handleSelect = useCallback(
     (currentValue: string) => {
-      const optionToToggle = options.find((opt) => getOptionValue(opt).toString() === currentValue);
+      const optionToToggle = options.find(
+        (opt) => getOptionValue(opt).toString() === currentValue,
+      );
 
       if (!optionToToggle) return;
 
@@ -367,21 +393,33 @@ export function MultiSelectAutocomplete<T>({
       );
 
       const newSelectedOptions = isAlreadySelected
-        ? selectedOptions.filter((opt) => getOptionValue(opt).toString() !== currentValue)
+        ? selectedOptions.filter(
+            (opt) => getOptionValue(opt).toString() !== currentValue,
+          )
         : [...selectedOptions, optionToToggle];
 
       setSelectedOptions(newSelectedOptions);
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
         onOptionsChange(newSelectedOptions);
       }
     },
-    [options, selectedOptions, onChange, onOptionsChange, getOptionValue, nestedValues],
+    [
+      options,
+      selectedOptions,
+      onChange,
+      onOptionsChange,
+      getOptionValue,
+      nestedValues,
+    ],
   );
 
   const removeOption = useCallback(
@@ -394,7 +432,10 @@ export function MultiSelectAutocomplete<T>({
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
@@ -416,9 +457,15 @@ export function MultiSelectAutocomplete<T>({
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.target as HTMLDivElement;
       const scrollBuffer = 50;
-      const distanceFromBottom = target.scrollHeight - (target.scrollTop + target.clientHeight);
+      const distanceFromBottom =
+        target.scrollHeight - (target.scrollTop + target.clientHeight);
 
-      if (!loading && hasMore && distanceFromBottom <= scrollBuffer && distanceFromBottom >= 0) {
+      if (
+        !loading &&
+        hasMore &&
+        distanceFromBottom <= scrollBuffer &&
+        distanceFromBottom >= 0
+      ) {
         setPage((prev) => prev + 1);
       }
     },
@@ -429,9 +476,11 @@ export function MultiSelectAutocomplete<T>({
     (e: React.WheelEvent<HTMLDivElement>) => {
       if (
         commandListRef.current &&
-        commandListRef.current.scrollHeight > commandListRef.current.clientHeight
+        commandListRef.current.scrollHeight >
+          commandListRef.current.clientHeight
       ) {
-        const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
+        const { scrollTop, scrollHeight, clientHeight } =
+          commandListRef.current;
         const isScrollingDown = e.deltaY > 0;
         const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
         const isAtTop = scrollTop <= 0;
@@ -466,7 +515,10 @@ export function MultiSelectAutocomplete<T>({
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
@@ -512,9 +564,13 @@ export function MultiSelectAutocomplete<T>({
                     {selectedOptions.slice(0, maxCount).map((option) => (
                       <span
                         key={getOptionValue(option).toString()}
-                        className={cn(multiSelectVariants({ variant: "default" }))}
+                        className={cn(
+                          multiSelectVariants({ variant: "default" }),
+                        )}
                       >
-                        {renderBadge ? renderBadge(option) : getDisplayValue(option)}
+                        {renderBadge
+                          ? renderBadge(option)
+                          : getDisplayValue(option)}
                         <span
                           className="size-4 cursor-pointer"
                           onClick={(event) => {
@@ -576,7 +632,12 @@ export function MultiSelectAutocomplete<T>({
                 </div>
               ) : (
                 <>
-                  <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>
+                  <p
+                    className={cn(
+                      "text-muted-foreground",
+                      isInvalid && "text-red-500",
+                    )}
+                  >
                     {placeholder}
                   </p>
                   <span
@@ -605,7 +666,7 @@ export function MultiSelectAutocomplete<T>({
         />
         <PopoverContent
           sideOffset={7}
-          className={cn("w-(--anchor-width) rounded-md p-0 dark", className)}
+          className={cn("dark w-(--anchor-width) rounded-md p-0", className)}
         >
           <Command shouldFilter={false} className="overflow-hidden">
             <CommandInput
@@ -621,7 +682,9 @@ export function MultiSelectAutocomplete<T>({
               onWheel={handleWheel}
               className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-[200px] overflow-y-auto"
             >
-              {error && <div className="p-4 text-center text-destructive">{error}</div>}
+              {error && (
+                <div className="p-4 text-center text-destructive">{error}</div>
+              )}
               {!loading && !error && options.length === 0 && (
                 <CommandEmpty>
                   {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
@@ -637,7 +700,8 @@ export function MultiSelectAutocomplete<T>({
                     <div
                       className={cn(
                         "flex size-4 items-center justify-center rounded-sm border border-primary",
-                        selectedOptions.length === options.length && options.length > 0
+                        selectedOptions.length === options.length &&
+                          options.length > 0
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
                       )}
@@ -650,7 +714,8 @@ export function MultiSelectAutocomplete<T>({
                 {options.map((option) => {
                   const optionValue = getOptionValue(option).toString();
                   const isSelected = selectedOptions.some(
-                    (selected) => getOptionValue(selected).toString() === optionValue,
+                    (selected) =>
+                      getOptionValue(selected).toString() === optionValue,
                   );
 
                   return (
@@ -662,7 +727,10 @@ export function MultiSelectAutocomplete<T>({
                     >
                       {renderOption(option)}
                       <CheckIcon
-                        className={cn("ml-auto size-2", isSelected ? "opacity-100" : "opacity-0")}
+                        className={cn(
+                          "ml-auto size-2",
+                          isSelected ? "opacity-100" : "opacity-0",
+                        )}
                       />
                     </CommandItem>
                   );
@@ -686,7 +754,10 @@ export function MultiSelectAutocomplete<T>({
   );
 }
 
-export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>({
+export function MultiSelectAutocompleteField<
+  TOption,
+  TForm extends FieldValues,
+>({
   label,
   name,
   control,

@@ -1028,6 +1028,17 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 		)
 		return
 	}
+	if _, err = pulid.MustParse(req.ShipmentID); err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"Invalid shipment ID",
+			),
+		)
+		return
+	}
 
 	updated, err := h.service.AttachLineageToResource(
 		c.Request.Context(),

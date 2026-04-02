@@ -1,4 +1,8 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { API_BASE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
@@ -13,13 +17,17 @@ import { AutocompleteTrigger } from "./autocomplete-input";
 const optionRequestQueueByLink = new Map<string, Promise<void>>();
 let optionRequestSequence = 0;
 
-function logOptionRequestDebug(event: string, details: Record<string, unknown>) {
+function logOptionRequestDebug(
+  event: string,
+  details: Record<string, unknown>,
+) {
   if (!import.meta.env.DEV) return;
   console.debug("[AutocompleteOption]", event, details);
 }
 
 async function fetchOptionQueued(url: string, link: string): Promise<Response> {
-  const previousRequest = optionRequestQueueByLink.get(link) ?? Promise.resolve();
+  const previousRequest =
+    optionRequestQueueByLink.get(link) ?? Promise.resolve();
   const requestId = ++optionRequestSequence;
   const queuedAt = Date.now();
 
@@ -68,8 +76,12 @@ async function fetchOptionQueued(url: string, link: string): Promise<Response> {
       link,
       url,
       durationMs: Date.now() - startedAt,
-      isAbortError: error instanceof DOMException && error.name === "AbortError",
-      error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+      isAbortError:
+        error instanceof DOMException && error.name === "AbortError",
+      error:
+        error instanceof Error
+          ? { name: error.name, message: error.message }
+          : String(error),
     });
     throw error;
   } finally {
@@ -196,7 +208,10 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     queryKey: ["autocomplete-option", link, valueLookupLink, value],
     queryFn: async () => {
       if (!value) return null;
-      const fetchURL = new URL(`${API_BASE_URL}${valueLookupLink}${value}`, window.location.origin);
+      const fetchURL = new URL(
+        `${API_BASE_URL}${valueLookupLink}${value}`,
+        window.location.origin,
+      );
 
       let response: Response;
       try {
@@ -218,9 +233,14 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
           fallbackLink: fallbackLookupLink,
           fallbackUrl: fallbackURL.href,
           error:
-            error instanceof Error ? { name: error.name, message: error.message } : String(error),
+            error instanceof Error
+              ? { name: error.name, message: error.message }
+              : String(error),
         });
-        response = await fetchOptionQueued(fallbackURL.href, fallbackLookupLink);
+        response = await fetchOptionQueued(
+          fallbackURL.href,
+          fallbackLookupLink,
+        );
       }
 
       if (!response.ok) {
@@ -239,7 +259,9 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
 
       return data;
     },
-    enabled: !!value && (!userSelectedOptionState || userSelectedOptionState.value !== value),
+    enabled:
+      !!value &&
+      (!userSelectedOptionState || userSelectedOptionState.value !== value),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
@@ -285,7 +307,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
         />
         <PopoverContent
           sideOffset={7}
-          className={cn("w-(--anchor-width) rounded-md p-0 dark", className)}
+          className={cn("dark w-(--anchor-width) rounded-md p-0", className)}
         >
           <AutocompleteCommandContent
             open={open}
@@ -297,7 +319,9 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             setOpen={setOpen}
             setSelectedOption={(option) =>
               setUserSelectedOptionState(
-                option ? { option, value: getOptionValue(option).toString() } : null,
+                option
+                  ? { option, value: getOptionValue(option).toString() }
+                  : null,
               )
             }
             selectedOption={selectedOption}

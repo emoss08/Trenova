@@ -1,4 +1,7 @@
-import type { DocumentPacketItem, DocumentPacketSummary } from "@/types/document";
+import type {
+  DocumentPacketItem,
+  DocumentPacketSummary,
+} from "@/types/document";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
@@ -9,13 +12,23 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "../ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "../ui/collapsible";
 
 interface PacketCompletenessPanelProps {
   summary: DocumentPacketSummary;
 }
 
-type BadgeVariant = "teal" | "inactive" | "pink" | "warning" | "purple" | "outline";
+type BadgeVariant =
+  | "teal"
+  | "inactive"
+  | "pink"
+  | "warning"
+  | "purple"
+  | "outline";
 
 function getStatusBadgeVariant(
   status: DocumentPacketItem["status"] | DocumentPacketSummary["status"],
@@ -85,16 +98,20 @@ function groupByStatus(items: DocumentPacketItem[]) {
 function PacketItem({ item }: { item: DocumentPacketItem }) {
   return (
     <div className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex min-w-0 items-center gap-2.5">
         {getStatusIcon(item.status)}
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium truncate">{item.documentTypeName}</span>
-            <span className="text-xs text-muted-foreground">{item.documentTypeCode}</span>
+            <span className="truncate text-sm font-medium">
+              {item.documentTypeName}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {item.documentTypeCode}
+            </span>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
         {item.required && (
           <Badge variant="outline" className="text-2xs">
             Required
@@ -124,14 +141,16 @@ function PacketItem({ item }: { item: DocumentPacketItem }) {
   );
 }
 
-export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProps) {
+export function PacketCompletenessPanel({
+  summary,
+}: PacketCompletenessPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const grouped = groupByStatus(summary.items);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="rounded-lg border bg-card">
-        <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 hover:bg-accent/50 transition-colors cursor-pointer">
+        <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between px-4 py-3 transition-colors hover:bg-accent/50">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-medium">Packet Status</span>
             <Badge variant={getStatusBadgeVariant(summary.status)}>
@@ -171,10 +190,10 @@ export function PacketCompletenessPanel({ summary }: PacketCompletenessPanelProp
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="border-t px-4 py-3 space-y-3">
+          <div className="space-y-3 border-t px-4 py-3">
             {[...grouped.entries()].map(([status, items]) => (
               <div key={status} className="space-y-1.5">
-                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
                   {getStatusIcon(status)}
                   <span>
                     {getStatusLabel(status)} ({items.length})

@@ -27,6 +27,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircleIcon, LoaderCircleIcon, SparklesIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { Link } from "react-router";
 import { toast } from "sonner";
 
 interface DocumentShipmentDraftReviewDialogProps {
@@ -67,6 +68,11 @@ function parseTimestamp(value?: string): number {
   return Math.floor(parsed / 1000);
 }
 
+function formatUnixTimestamp(value?: number | null) {
+  if (!value) return "Not recorded";
+  return new Date(value * 1000).toLocaleString();
+}
+
 function getFieldValue(
   draft: DocumentShipmentDraft | null,
   key: string,
@@ -79,7 +85,13 @@ function stopTypeFromRole(role?: string) {
 }
 
 function addressLine(stop: DocumentIntelligenceStop) {
-  return [stop.addressLine1, stop.addressLine2, stop.city, stop.state, stop.postalCode]
+  return [
+    stop.addressLine1,
+    stop.addressLine2,
+    stop.city,
+    stop.state,
+    stop.postalCode,
+  ]
     .filter((part) => !!part && part.trim() !== "")
     .join(", ");
 }
@@ -107,7 +119,9 @@ function createDefaultShipmentValues(
             stops: extractedStops.map((stop, index) => ({
               status: "New" as const,
               type: stopTypeFromRole(stop.role),
-              scheduleType: stop.appointmentRequired ? ("Appointment" as const) : ("Open" as const),
+              scheduleType: stop.appointmentRequired
+                ? ("Appointment" as const)
+                : ("Open" as const),
               locationId: "",
               sequence: index,
               scheduledWindowStart: parseTimestamp(stop.date),
@@ -222,9 +236,15 @@ export function DocumentShipmentDraftReviewDialog({
 
       if (document) {
         try {
-          await apiService.documentService.attachToShipment(document.id, shipment.id);
+          await apiService.documentService.attachToShipment(
+            document.id,
+            shipment.id,
+          );
         } catch (error) {
-          attachError = error instanceof Error ? error : new Error("Failed to attach document");
+          attachError =
+            error instanceof Error
+              ? error
+              : new Error("Failed to attach document");
         }
       }
 
@@ -248,9 +268,12 @@ export function DocumentShipmentDraftReviewDialog({
       });
 
       if (attachError) {
-        toast.warning("Shipment created, but the source document could not be attached", {
-          description: attachError.message,
-        });
+        toast.warning(
+          "Shipment created, but the source document could not be attached",
+          {
+            description: attachError.message,
+          },
+        );
       } else {
         toast.success("Shipment created from document draft");
       }
@@ -265,18 +288,25 @@ export function DocumentShipmentDraftReviewDialog({
   const stops = draft?.draftData?.stops ?? [];
   const missingFields = draft?.draftData?.missingFields ?? [];
   const signals = draft?.draftData?.signals ?? [];
+  const isAttached = !!draft?.attachedShipmentId;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-6xl p-0 gap-0 overflow-hidden" showCloseButton>
+      <DialogContent
+        className="gap-0 overflow-hidden p-0 sm:max-w-6xl"
+        showCloseButton
+      >
         <DialogHeader className="border-b px-6 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle>Create Shipment from Document</DialogTitle>
-            {draft?.status ? <Badge variant="secondary">{draft.status}</Badge> : null}
+            {draft?.status ? (
+              <Badge variant="secondary">{draft.status}</Badge>
+            ) : null}
           </div>
           <DialogDescription>
-            Review the extracted shipment draft, fill in the required shipment details,
-            then create a shipment and attach this document lineage to it.
+            Review the extracted shipment draft, fill in the required shipment
+            details, then create a shipment and attach this document lineage to
+            it.
           </DialogDescription>
         </DialogHeader>
 
@@ -324,6 +354,27 @@ export function DocumentShipmentDraftReviewDialog({
                 </div>
               </div>
 
+              {isAttached ? (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950">
+                  <div className="font-medium">
+                    This source document is already attached.
+                  </div>
+                  <div className="mt-1 text-emerald-900/80">
+                    Shipment {draft?.attachedShipmentId} attached{" "}
+                    {formatUnixTimestamp(draft?.attachedAt)}.
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={<Link to="/shipment-management/shipments" />}
+                    >
+                      Open Shipments
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
               {signals.length > 0 ? (
                 <div className="rounded-lg border p-3">
                   <div className="mb-2 flex items-center gap-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -362,7 +413,8 @@ export function DocumentShipmentDraftReviewDialog({
                 </div>
                 {stops.length === 0 ? (
                   <div className="mt-2 text-sm text-muted-foreground">
-                    No stops were extracted. You can still create the shipment manually.
+                    No stops were extracted. You can still create the shipment
+                    manually.
                   </div>
                 ) : (
                   <div className="mt-3 grid gap-3">
@@ -373,18 +425,23 @@ export function DocumentShipmentDraftReviewDialog({
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="text-sm font-medium">
-                            {stop.role === "delivery" ? "Delivery" : "Pickup"} #{stop.sequence}
+                            {stop.role === "delivery" ? "Delivery" : "Pickup"} #
+                            {stop.sequence}
                           </div>
                           {stop.pageNumber ? (
-                            <Badge variant="outline">Page {stop.pageNumber}</Badge>
+                            <Badge variant="outline">
+                              Page {stop.pageNumber}
+                            </Badge>
                           ) : null}
                         </div>
                         <div className="mt-1 text-xs text-muted-foreground">
                           {addressLine(stop) || "Address not extracted"}
                         </div>
-                        {(stop.date || stop.timeWindow) ? (
+                        {stop.date || stop.timeWindow ? (
                           <div className="mt-1 text-xs text-muted-foreground">
-                            {[stop.date, stop.timeWindow].filter(Boolean).join(" · ")}
+                            {[stop.date, stop.timeWindow]
+                              .filter(Boolean)
+                              .join(" · ")}
                           </div>
                         ) : null}
                       </div>
@@ -394,8 +451,9 @@ export function DocumentShipmentDraftReviewDialog({
               </div>
 
               <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                Location, customer, service type, shipment type, and formula template still
-                need to be confirmed before the shipment can be created.
+                Location, customer, service type, shipment type, and formula
+                template still need to be confirmed before the shipment can be
+                created.
               </div>
             </div>
           </ScrollArea>
@@ -406,11 +464,18 @@ export function DocumentShipmentDraftReviewDialog({
                 id="document-shipment-draft-form"
                 className="flex h-full min-h-0 flex-col"
                 onSubmit={form.handleSubmit((values) =>
-                  createShipment.mutate(shipmentCreateSchema.parse(values))
+                  createShipment.mutate(shipmentCreateSchema.parse(values)),
                 )}
               >
                 <ScrollArea className="max-h-[calc(90vh-170px)]">
                   <div className="p-6">
+                    {isAttached ? (
+                      <div className="mb-4 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                        Shipment creation from this draft is disabled because
+                        the source document has already been linked to shipment{" "}
+                        {draft?.attachedShipmentId}.
+                      </div>
+                    ) : null}
                     <ShipmentForm />
                   </div>
                 </ScrollArea>
@@ -423,12 +488,12 @@ export function DocumentShipmentDraftReviewDialog({
           <Button
             type="submit"
             form="document-shipment-draft-form"
-            disabled={createShipment.isPending}
+            disabled={createShipment.isPending || isAttached}
           >
             {createShipment.isPending ? (
               <LoaderCircleIcon className="size-4 animate-spin" />
             ) : null}
-            Create Shipment
+            {isAttached ? "Shipment Attached" : "Create Shipment"}
           </Button>
         </DialogFooter>
       </DialogContent>

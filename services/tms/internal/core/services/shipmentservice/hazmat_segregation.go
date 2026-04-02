@@ -2,7 +2,6 @@ package shipmentservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
@@ -88,55 +87,10 @@ func createHazmatSegregationRule(
 				return nil
 			}
 
-			for i := 0; i < len(entity.Commodities); i++ {
-				leftShipmentCommodity := entity.Commodities[i]
-				if leftShipmentCommodity == nil {
-					continue
-				}
-
-				leftCommodity, ok := hazmatCommodities[leftShipmentCommodity.CommodityID]
-				if !ok {
-					continue
-				}
-
-				for j := i + 1; j < len(entity.Commodities); j++ {
-					rightShipmentCommodity := entity.Commodities[j]
-					if rightShipmentCommodity == nil {
-						continue
-					}
-
-					rightCommodity, ok := hazmatCommodities[rightShipmentCommodity.CommodityID]
-					if !ok {
-						continue
-					}
-
-					matchedRule := findMatchingHazmatRule(rules, leftCommodity, rightCommodity)
-					if matchedRule == nil {
-						continue
-					}
-
-					multiErr.WithIndex("commodities", i).Add(
-						"commodityId",
-						errortypes.ErrInvalidOperation,
-						fmt.Sprintf(
-							"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-							matchedRule.Name,
-							matchedRule.SegregationType,
-							rightCommodity.Name,
-						),
-					)
-					multiErr.WithIndex("commodities", j).Add(
-						"commodityId",
-						errortypes.ErrInvalidOperation,
-						fmt.Sprintf(
-							"Violates hazmat segregation rule %q (%s) — conflicts with %q",
-							matchedRule.Name,
-							matchedRule.SegregationType,
-							leftCommodity.Name,
-						),
-					)
-				}
-			}
+			addHazmatConflictsToMultiError(
+				multiErr,
+				evaluateShipmentHazmatConflicts(entity.Commodities, hazmatCommodities, rules),
+			)
 
 			return nil
 		})

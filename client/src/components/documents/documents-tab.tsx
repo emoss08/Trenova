@@ -51,7 +51,11 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
-function sortDocuments(docs: Document[], field: SortField, direction: SortDirection): Document[] {
+function sortDocuments(
+  docs: Document[],
+  field: SortField,
+  direction: SortDirection,
+): Document[] {
   const sorted = [...docs].sort((a, b) => {
     let comparison = 0;
 
@@ -73,34 +77,46 @@ function sortDocuments(docs: Document[], field: SortField, direction: SortDirect
   return sorted;
 }
 
-export function DocumentsTab({ resourceId, resourceType, disabled = false }: DocumentsTabProps) {
+export function DocumentsTab({
+  resourceId,
+  resourceType,
+  disabled = false,
+}: DocumentsTabProps) {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(null);
+  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(
+    null,
+  );
   const [versionDocument, setVersionDocument] = useState<Document | null>(null);
-  const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
+  const [replacementLineageId, setReplacementLineageId] = useState<
+    string | undefined
+  >(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
     "upload",
     parseAsBoolean.withDefault(false),
   );
 
-  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("documents-view-mode", "grid");
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>(
+    "documents-view-mode",
+    "grid",
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<string | undefined>(
-    undefined,
-  );
+  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<
+    string | undefined
+  >(undefined);
 
   const isShipment = resourceType === "shipment";
 
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
-    queryFn: () => fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
+    queryFn: () =>
+      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });
@@ -131,7 +147,11 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery),
+      apiService.documentService.getByResource(
+        resourceType,
+        resourceId,
+        deferredSearchQuery,
+      ),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;
@@ -150,17 +170,19 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", resourceType, resourceId],
-    queryFn: () => apiService.documentService.getPacketSummary(resourceType, resourceId),
+    queryFn: () =>
+      apiService.documentService.getPacketSummary(resourceType, resourceId),
     enabled: !!resourceId,
   });
+  const versionDocumentID = versionDocument?.id;
 
   const { data: versionHistory = [], isLoading: isLoadingVersions } = useQuery({
-    queryKey: ["document-versions", versionDocument?.id],
+    queryKey: ["document-versions", versionDocumentID],
     queryFn: () =>
-      versionDocument
-        ? apiService.documentService.getVersions(versionDocument.id)
+      versionDocumentID
+        ? apiService.documentService.getVersions(versionDocumentID)
         : Promise.resolve([]),
-    enabled: !!versionDocument,
+    enabled: !!versionDocumentID,
   });
 
   const filteredDocuments = useMemo(() => {
@@ -173,24 +195,33 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     return result;
   }, [documents, fileTypeFilter, sortField, sortDirection]);
 
-  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
-    useDocumentUpload({
-      resourceId,
-      resourceType,
-      uploadMetadata,
-      onSuccess: () => {
-        setReplacementLineageId(undefined);
-        toast.success("Document uploaded successfully");
-      },
-      onError: (error) => {
-        toast.error(`Upload failed: ${error.message}`);
-      },
-    });
+  const {
+    uploads,
+    uploadFiles,
+    cancelUpload,
+    retryUpload,
+    removeUpload,
+    clearCompleted,
+  } = useDocumentUpload({
+    resourceId,
+    resourceType,
+    uploadMetadata,
+    onSuccess: () => {
+      setReplacementLineageId(undefined);
+      toast.success("Document uploaded successfully");
+    },
+    onError: (error) => {
+      toast.error(`Upload failed: ${error.message}`);
+    },
+  });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) =>
+      apiService.documentService.delete(documentId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
       toast.success("Document deleted");
       setDeletingId(null);
     },
@@ -201,9 +232,12 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   });
 
   const { mutateAsync: bulkDelete, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
+    mutationFn: (documentIds: string[]) =>
+      apiService.documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
       toast.success(`${result.deletedCount} document(s) deleted`);
       setSelectedIds(new Set());
     },
@@ -213,10 +247,15 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   });
 
   const restoreVersionMutation = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.restoreVersion(documentId),
+    mutationFn: (documentId: string) =>
+      apiService.documentService.restoreVersion(documentId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
-      void queryClient.invalidateQueries({ queryKey: ["document-versions", versionDocument?.id] });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["document-versions", versionDocumentID],
+      });
       void queryClient.invalidateQueries({
         queryKey: ["document-packet-summary", resourceType, resourceId],
       });
@@ -339,13 +378,19 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-muted-foreground">Save the record first to manage documents.</p>
+        <p className="text-sm text-muted-foreground">
+          Save the record first to manage documents.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+    <div
+      className="space-y-4"
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
+    >
       {packetSummary && packetSummary.totalRules > 0 && (
         <PacketCompletenessPanel summary={packetSummary} />
       )}
@@ -370,14 +415,22 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
           link="/document-types/select-options/"
           extraSearchParams={{ documentCategory: "Shipment" }}
           value={selectedDocumentTypeId ?? null}
-          onChange={(value: string | null) => setSelectedDocumentTypeId(value ?? undefined)}
+          onChange={(value: string | null) =>
+            setSelectedDocumentTypeId(value ?? undefined)
+          }
           getOptionValue={(option) => option.id || ""}
           getDisplayValue={(option) => (
-            <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+            <ColorOptionValue
+              color={option.color ?? undefined}
+              value={option.code}
+            />
           )}
           renderOption={(option) => (
             <div className="flex size-full flex-col items-start">
-              <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+              <ColorOptionValue
+                color={option.color ?? undefined}
+                value={option.code}
+              />
               {option?.name && (
                 <span className="w-full truncate text-2xs text-muted-foreground">
                   {option.name}
