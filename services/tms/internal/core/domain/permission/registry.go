@@ -774,6 +774,15 @@ func (r *Registry) registerComplianceResources() {
 		DefaultSensitivity: SensitivityInternal,
 	})
 
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDocumentParsingRule.String(),
+		DisplayName:        "Document Parsing Rule",
+		Description:        "Tenant-managed parsing rules, versions, fixtures, and simulations",
+		Category:           "Compliance",
+		Operations:         GetAllOperations(),
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 }
 
 func (r *Registry) registerReferenceDataResources() {

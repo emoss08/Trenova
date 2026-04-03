@@ -809,6 +809,16 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 		Category:    "Organization",
 	})
 
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-parsing-rules",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentParsingRule, Operation: OpRead},
+		},
+		DisplayName: "Document Parsing Rules",
+		Category:    "Organization",
+	})
+
 }
 
 func (rr *RouteRegistry) registerReportingRoutes() {

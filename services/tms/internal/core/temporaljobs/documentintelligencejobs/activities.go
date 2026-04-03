@@ -53,6 +53,7 @@ type ActivitiesParams struct {
 	SearchProjection    services.DocumentSearchProjectionService
 	Storage             storage.Client
 	WorkflowStarter     services.WorkflowStarter
+	ParsingRuleRuntime  services.DocumentParsingRuleRuntime
 }
 
 type Activities struct {
@@ -68,6 +69,7 @@ type Activities struct {
 	searchProjection    services.DocumentSearchProjectionService
 	storage             storage.Client
 	workflowStarter     services.WorkflowStarter
+	parsingRuleRuntime  services.DocumentParsingRuleRuntime
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -86,6 +88,11 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflowStarter = noopWorkflowStarter{}
 	}
 
+	parsingRuleRuntime := p.ParsingRuleRuntime
+	if parsingRuleRuntime == nil {
+		parsingRuleRuntime = noopDocumentParsingRuleRuntime{}
+	}
+
 	return &Activities{
 		logger:              p.Logger.Named("temporal.document-intelligence"),
 		cfg:                 p.Config.GetDocumentIntelligenceConfig(),
@@ -99,6 +106,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		searchProjection:    searchProjection,
 		storage:             p.Storage,
 		workflowStarter:     workflowStarter,
+		parsingRuleRuntime:  parsingRuleRuntime,
 	}
 }
 
@@ -188,6 +196,7 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
 	classification := classifyDocumentWithControl(doc.OriginalName, extracted.Text, extracted.Pages, control, features, fingerprint)
 	intelligence := analyzeDocument(classification, extracted)
+	intelligence = a.applyParsingRules(ctx, tenantInfo, doc.OriginalName, classification.ProviderFingerprint, extracted, intelligence)
 	classification, intelligence = a.enrichWithAI(ctx, payload, doc, control, extracted, features, fingerprint, classification, intelligence)
 	structured := buildStructuredData(intelligence)
 	content.Status = documentcontent.StatusIndexed
@@ -701,6 +710,7 @@ type documentIntelligenceAnalysis struct {
 	ClassifierSource     string
 	ProviderFingerprint  string
 	ClassificationReason string
+	ParsingRuleMetadata  *services.DocumentParsingRuleMetadata
 	Conflicts            []reviewConflict
 	Fields               map[string]reviewField
 	Stops                []intelligenceStop
@@ -766,6 +776,7 @@ func (a documentIntelligenceAnalysis) ToMap() map[string]any {
 		"classifierSource":     a.ClassifierSource,
 		"providerFingerprint":  a.ProviderFingerprint,
 		"classificationReason": a.ClassificationReason,
+		"parsingRuleMetadata":  a.ParsingRuleMetadata,
 		"conflicts":            conflicts,
 		"fields":               fields,
 		"stops":                stops,
@@ -1048,7 +1059,7 @@ func scoreInvoice(
 
 func buildStructuredData(intelligence documentIntelligenceAnalysis) map[string]any {
 	data := map[string]any{
-		"schemaVersion": 4,
+		"schemaVersion": 5,
 		"intelligence":  intelligence.ToMap(),
 	}
 	return data

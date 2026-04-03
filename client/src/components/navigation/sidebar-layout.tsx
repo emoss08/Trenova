@@ -4,9 +4,10 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { useEffect } from "react";
 import { RouteCommandPalette } from "../command-palette/route-command-palette";
-import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { Header } from "../header";
+import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
+import { ScrollArea } from "../ui/scroll-area";
 import { AppSidebar } from "./app-sidebar";
 
 interface SidebarLayoutProps {
@@ -28,7 +29,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <AppSidebar variant="sidebar" />
       <SidebarInset>
         <Header />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <ScrollArea>{children}</ScrollArea>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -58,5 +59,5 @@ export function AdminPageLayout({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("flex flex-col gap-y-4 px-6", className)}>{children}</div>;
+  return <div className={cn("flex flex-col", className)}>{children}</div>;
 }

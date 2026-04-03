@@ -3,6 +3,8 @@ package documentintelligencejobs
 import (
 	"testing"
 
+	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -170,12 +172,12 @@ Weight: 42,000 lbs`
 
 	analysis := analyzeDocument(
 		classificationResult{
-			Kind:             "BillOfLading",
-			Confidence:       0.9,
-			Signals:          []string{"bill of lading"},
-			Source:           "deterministic",
-			Reason:           "header matched BOL",
-			ReviewRequired:   false,
+			Kind:           "BillOfLading",
+			Confidence:     0.9,
+			Signals:        []string{"bill of lading"},
+			Source:         "deterministic",
+			Reason:         "header matched BOL",
+			ReviewRequired: false,
 		},
 		&extractionResult{
 			Text: text,
@@ -244,6 +246,38 @@ Received in good order`
 	assert.Equal(t, "POD99881", analysis.Fields["referenceNumber"].Value)
 	assert.Equal(t, "Received in good order", analysis.Fields["receiptNotes"].Value)
 	assert.Empty(t, analysis.MissingFields)
+}
+
+func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
+	t.Parallel()
+
+	intelligence := documentIntelligenceAnalysis{
+		Kind:          "RateConfirmation",
+		ReviewStatus:  "Ready",
+		MissingFields: []string{},
+		Signals:       []string{"rule:generic"},
+		Fields:        map[string]reviewField{},
+		Stops:         []intelligenceStop{},
+		Conflicts:     []reviewConflict{},
+		ParsingRuleMetadata: &services.DocumentParsingRuleMetadata{
+			RuleSetID:        pulid.MustNew("dprs_"),
+			RuleSetName:      "Generic",
+			RuleVersionID:    pulid.MustNew("dprv_"),
+			VersionNumber:    2,
+			ParserMode:       "merge_with_base",
+			ProviderMatched:  "GenericBroker",
+			MatchSpecificity: 220,
+		},
+	}
+
+	data := buildStructuredData(intelligence)
+	require.Equal(t, 5, data["schemaVersion"])
+
+	intelligenceMap, ok := data["intelligence"].(map[string]any)
+	require.True(t, ok)
+	metadata, ok := intelligenceMap["parsingRuleMetadata"].(*services.DocumentParsingRuleMetadata)
+	require.True(t, ok)
+	require.Equal(t, "Generic", metadata.RuleSetName)
 }
 
 func TestAnalyzeDocument_ProofOfDeliveryMissingSignatureStaysNeedsReview(t *testing.T) {

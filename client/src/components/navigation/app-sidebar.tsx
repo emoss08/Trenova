@@ -66,16 +66,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar
-      className={cn(
-        "*:data-[slot=sidebar-inner]:bg-background",
-        "*:data-[slot=sidebar-inner]:dark:bg-[radial-gradient(60%_18%_at_10%_0%,--theme(--color-foreground/.08),transparent)]",
-        "**:data-[slot=sidebar-menu-button]:[&>span]:text-foreground/75",
-      )}
-      collapsible="icon"
-      {...props}
-    >
-      <SidebarHeader className="h-14.5 items-center justify-center border-b border-border p-0 px-1">
+    <Sidebar className={cn("*:data-[slot=sidebar-inner]:bg-sidebar")} collapsible="icon" {...props}>
+      <SidebarHeader className="h-14 items-center justify-center border-b border-border p-0 px-1">
         <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>

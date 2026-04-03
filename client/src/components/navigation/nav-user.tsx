@@ -68,7 +68,7 @@ export function NavUser() {
               render={
                 <SidebarMenuButton
                   size="lg"
-                  className="bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground rounded-none h-14"
+                  className="bg-sidebar data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground rounded-none h-14"
                 />
               }
             >

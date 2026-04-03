@@ -30,8 +30,13 @@ export function Header() {
   const isLoading = navigation.state === "loading";
 
   return (
-    <header className="sticky top-0 z-50 flex h-[58px] w-full shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 dark:border-border">
-      <div className="flex flex-1 items-center gap-2 px-3">
+    <header
+      className={cn(
+        "sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6",
+        "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/50",
+      )}
+    >
+      <div className="flex items-center gap-3">
         <SidebarTrigger />
         <HistoryNavigation />
         <Breadcrumb>

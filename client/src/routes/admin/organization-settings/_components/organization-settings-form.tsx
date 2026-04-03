@@ -10,7 +10,7 @@ import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
-import { timezoneChoices } from "@/lib/choices";
+import { timezoneGroupedChoices } from "@/lib/choices";
 import { convertOrganizationLogoToWebP } from "@/lib/images/organization-logo";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
@@ -148,7 +148,7 @@ export default function OrganizationSettingsForm() {
   }
 
   return (
-    <Tabs value={tab} onValueChange={(value) => setTab(value)} className="gap-1">
+    <Tabs value={tab} onValueChange={(value) => setTab(value)} className="gap-1 px-4">
       <TabsList variant="underline">
         <TabsTab value="general">
           <Building2Icon size={16} />
@@ -367,11 +367,20 @@ function GeneralForm() {
           <FormControl cols="full">
             <SelectField
               control={control}
-              name="timezone"
               rules={{ required: true }}
-              label="Operating Timezone"
+              name="timezone"
+              label="Timezone"
               placeholder="Select timezone"
-              options={timezoneChoices}
+              groups={timezoneGroupedChoices}
+              // isReadOnly={isDisabled}
+              renderOption={(option) => (
+                <span className="flex w-full items-center justify-between gap-3">
+                  <span>{option.label}</span>
+                  {option.description && (
+                    <span className="text-xs text-muted-foreground">{option.description}</span>
+                  )}
+                </span>
+              )}
             />
           </FormControl>
           <FormControl>

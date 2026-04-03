@@ -17,6 +17,7 @@ import { DocumentService } from "./document";
 import { DocumentControlService } from "./document-control";
 import { DocumentOperationsService } from "./document-operations";
 import { DocumentPacketRuleService } from "./document-packet-rule";
+import { DocumentParsingRuleService } from "./document-parsing-rule";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
 import { FiscalPeriodService } from "./fiscal-period";
@@ -96,6 +97,7 @@ class APIService {
   public tableChangeAlertService: TableChangeAlertService;
   public documentOperationsService: DocumentOperationsService;
   public documentPacketRuleService: DocumentPacketRuleService;
+  public documentParsingRuleService: DocumentParsingRuleService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -146,6 +148,7 @@ class APIService {
     this.tableChangeAlertService = new TableChangeAlertService();
     this.documentOperationsService = new DocumentOperationsService();
     this.documentPacketRuleService = new DocumentPacketRuleService();
+    this.documentParsingRuleService = new DocumentParsingRuleService();
   }
 }
 

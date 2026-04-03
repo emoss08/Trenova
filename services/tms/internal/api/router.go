@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
@@ -141,6 +142,7 @@ type RouterParams struct {
 	DataEntryControlHandler      *dataentrycontrolhandler.Handler
 	DispatchControlHandler       *dispatchcontrolhandler.Handler
 	DocumentControlHandler       *documentcontrolhandler.Handler
+	DocumentParsingRuleHandler   *documentparsingrulehandler.Handler
 	WorkerPTOHandler             *workerptohandler.Handler
 	DistanceOverrideHandler      *distanceoverridehandler.Handler
 	AnalyticsHandler             *analyticshandler.Handler
@@ -211,6 +213,7 @@ type Router struct {
 	dataEntryControlHandler      *dataentrycontrolhandler.Handler
 	dispatchControlHandler       *dispatchcontrolhandler.Handler
 	documentControlHandler       *documentcontrolhandler.Handler
+	documentParsingRuleHandler   *documentparsingrulehandler.Handler
 	workerPTOHandler             *workerptohandler.Handler
 	distanceOverrideHandler      *distanceoverridehandler.Handler
 	analyticsHandler             *analyticshandler.Handler
@@ -283,6 +286,7 @@ func NewRouter(p RouterParams) *Router {
 		dataEntryControlHandler:      p.DataEntryControlHandler,
 		dispatchControlHandler:       p.DispatchControlHandler,
 		documentControlHandler:       p.DocumentControlHandler,
+		documentParsingRuleHandler:   p.DocumentParsingRuleHandler,
 		workerPTOHandler:             p.WorkerPTOHandler,
 		distanceOverrideHandler:      p.DistanceOverrideHandler,
 		analyticsHandler:             p.AnalyticsHandler,
@@ -401,6 +405,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)
+	r.documentParsingRuleHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
 	r.workerPTOHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)

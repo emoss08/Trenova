@@ -58,3 +58,20 @@ func (noopWorkflowStarter) StartWorkflow(
 func (noopWorkflowStarter) Enabled() bool {
 	return false
 }
+
+type noopDocumentParsingRuleRuntime struct{}
+
+func (noopDocumentParsingRuleRuntime) ApplyPublished(
+	context.Context,
+	*services.DocumentParsingRuntimeInput,
+	*services.DocumentParsingAnalysis,
+) (*services.DocumentParsingAnalysis, error) {
+	return nil, nil
+}
+
+func (noopDocumentParsingRuleRuntime) SimulateVersion(
+	context.Context,
+	*services.DocumentParsingSimulationRequest,
+) (*services.DocumentParsingSimulationResult, error) {
+	return nil, nil
+}

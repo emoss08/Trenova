@@ -47,7 +47,7 @@ function OrganizationButtonContent({
     <>
       <div className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md select-none after:absolute after:inset-0 after:rounded-md">
         {isSwitching ? (
-          <div className="flex size-full items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+          <div className="flex size-full items-center justify-center rounded-md bg-linear-to-br from-primary to-primary/80 text-primary-foreground">
             <Loader2 className="size-3 animate-spin" />
           </div>
         ) : hasLogo ? (
@@ -58,7 +58,7 @@ function OrganizationButtonContent({
             onError={() => setImageLoadFailed(true)}
           />
         ) : (
-          <div className="flex size-full items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary/80 text-xs font-bold text-primary-foreground">
+          <div className="flex size-full items-center justify-center rounded-md bg-linear-to-br from-primary to-primary/80 text-xs font-bold text-primary-foreground">
             {orgInitials}
           </div>
         )}
@@ -150,7 +150,7 @@ export function OrganizationSwitcher() {
           <div className="flex items-center gap-1">
             <SidebarMenuButton
               size="lg"
-              className="cursor-default hover:bg-transparent"
+              className="cursor-default hover:bg-transparent bg-transparent data-[state=open]:bg-transparent"
               disabled={switchMutation.isPending}
             >
               <OrganizationButtonContent

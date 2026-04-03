@@ -4,8 +4,9 @@ export const Operation = {
   Read: 1 << 0,
   Create: 1 << 1,
   Update: 1 << 2,
-  Export: 1 << 3,
-  Import: 1 << 4,
+  Delete: 1 << 3,
+  Export: 1 << 4,
+  Import: 1 << 5,
   Approve: 1 << 8,
   Reject: 1 << 9,
   Assign: 1 << 10,
@@ -15,6 +16,11 @@ export const Operation = {
   Submit: 1 << 14,
   Cancel: 1 << 15,
   Duplicate: 1 << 16,
+  Close: 1 << 17,
+  Lock: 1 << 18,
+  Unlock: 1 << 19,
+  Activate: 1 << 20,
+  Reopen: 1 << 21,
 } as const;
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];
@@ -116,6 +122,7 @@ export const Resource = {
   TableChangeAlert: "table_change_alert",
   FiscalYear: "fiscal_year",
   FiscalPeriod: "fiscal_period",
+  DocumentParsingRule: "document_parsing_rule",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

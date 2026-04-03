@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
@@ -119,6 +120,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,
+	documentparsingrulehandler.New,
 	workerptohandler.New,
 	distanceoverridehandler.New,
 	analyticshandler.New,

@@ -445,6 +445,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "document-parsing-rules",
+                loader: createPermissionLoader(
+                  Resource.DocumentParsingRule,
+                  Operation.Read,
+                ),
+                async lazy() {
+                  const { DocumentParsingRulesPage } = await import(
+                    "@/routes/admin/document-parsing-rules/page"
+                  );
+                  return { Component: DocumentParsingRulesPage };
+                },
+              },
+              {
                 path: "sequence-configs",
                 loader: createPermissionLoader(
                   Resource.SequenceConfig,

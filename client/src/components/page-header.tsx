@@ -7,17 +7,22 @@ export type PageHeaderProps = {
   description: string;
   includeMetadata?: boolean;
   className?: string;
+  // Simple flag to include inner padding for the title and description (Mainly used for admin pages)
+  includeInnerPadding?: boolean;
 };
 
 export function PageHeader({
   title,
   description,
   includeMetadata = true,
+  includeInnerPadding = false,
   className,
 }: PageHeaderProps) {
   return (
     <div className={cn("border-b border-border p-4", className)}>
-      <div className="flex flex-col items-start leading-none">
+      <div
+        className={cn("flex flex-col items-start leading-none", includeInnerPadding ? "px-4" : "")}
+      >
         <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
         <p className="text-muted-foreground">{description}</p>
       </div>

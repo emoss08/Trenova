@@ -53,12 +53,12 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
 
   return (
     <SidebarNavOuter>
-      <ScrollArea className="h-full rounded-lg border bg-background p-3 text-card-foreground">
+      <ScrollArea className="h-full border-r bg-background p-3 text-card-foreground">
         <SidebarNavInner className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks], index, array) => (
             <div key={group} className="space-y-2">
               {group !== "ungrouped" && (
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase select-none">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase select-none">
                   {group}
                 </h3>
               )}
@@ -75,7 +75,7 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
                           ? "bg-muted dark:bg-primary/10"
                           : "hover:bg-muted dark:hover:bg-primary/10",
                         link.disabled && "pointer-events-none opacity-50",
-                        "group mb-1 flex items-center justify-start text-sm",
+                        "group mb-1 flex items-center justify-start font-normal text-xs",
                       )}
                     >
                       {link.title}
@@ -95,7 +95,7 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
 
 function SidebarNavOuter({ children }: { children: React.ReactNode }) {
   return (
-    <aside className="transition-spacing sticky top-0 z-30 -ml-2 h-screen w-full shrink-0 duration-500 md:block md:gap-y-2">
+    <aside className="transition-spacing sticky top-0 z-30 h-[calc(100vh-3.6rem)] w-full shrink-0 duration-500 md:block md:gap-y-2">
       {children}
     </aside>
   );

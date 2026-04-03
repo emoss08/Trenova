@@ -618,6 +618,14 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/document-parsing-rules",
+    title: "Parsing Rules",
+    group: "Document Management",
+    adminOnly: true,
+    resource: Resource.DocumentParsingRule,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/sequence-configs",
     title: "Sequence Configuration",
     group: "Organization",
