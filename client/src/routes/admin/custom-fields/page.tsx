@@ -11,11 +11,12 @@ export function CustomFieldDefinitionsPage() {
       <PageHeader
         title="Custom Field Definitions"
         description="Define custom fields for trailers, workers, and other resources"
-        className="p-0 py-4"
       />
-      <DataTableLazyComponent>
-        <Table />
-      </DataTableLazyComponent>
+      <div className="p-4">
+        <DataTableLazyComponent>
+          <Table />
+        </DataTableLazyComponent>
+      </div>
     </AdminPageLayout>
   );
 }

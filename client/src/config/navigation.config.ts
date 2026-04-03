@@ -1,12 +1,16 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { ChartColumnIncreasingIcon } from "@/components/ui/chart-column-increasing";
-import { ContainerIcon } from "@/components/ui/container";
-import { HomeIcon } from "@/components/ui/home";
-import { ReceiptIcon } from "@/components/ui/receipt";
-import { SettingsIcon } from "@/components/ui/settings";
-import { TruckIcon } from "@/components/ui/truck";
 import { Operation, Resource } from "@/types/permission";
-import { CalculatorIcon, Package, UsersIcon } from "lucide-react";
+import {
+  BarChart3Icon,
+  CalculatorIcon,
+  ContainerIcon,
+  HomeIcon,
+  Package,
+  ReceiptTextIcon,
+  SettingsIcon,
+  TruckIcon,
+  UsersIcon,
+} from "lucide-react";
 import type { ModuleId, NavigationConfig, NavModule } from "./navigation.types";
 
 interface AppModuleGroup {
@@ -168,7 +172,7 @@ const equipmentModule: NavModule = {
 const billingModule: NavModule = {
   id: "billing",
   label: "Billing Management",
-  icon: ReceiptIcon,
+  icon: ReceiptTextIcon,
   description: "Invoicing and financial management",
   basePath: "/billing",
   navigation: [
@@ -262,7 +266,7 @@ const accountingModule: NavModule = {
 const reportsModule: NavModule = {
   id: "reports",
   label: "Reports",
-  icon: ChartColumnIncreasingIcon,
+  icon: BarChart3Icon,
   description: "Analytics and reporting",
   basePath: "/reports",
   navigation: [

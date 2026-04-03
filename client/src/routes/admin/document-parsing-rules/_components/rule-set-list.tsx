@@ -128,9 +128,7 @@ function RuleSetCard({
       onClick={onSelect}
       className={cn(
         "w-full rounded-md border p-3 text-left transition-colors",
-        isSelected
-          ? "border-primary bg-primary/5 ring-1 ring-primary"
-          : "border-transparent hover:bg-muted/50",
+        isSelected ? "border-brand/30 bg-brand/5" : "border-transparent hover:bg-muted/50",
       )}
     >
       <div className="flex items-start justify-between gap-2">

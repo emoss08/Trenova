@@ -10,8 +10,6 @@ export function OrganizationSettingsPage() {
       <PageHeader
         title="Organization Settings"
         description="Manage your organization profile, compliance, and security settings"
-        className="p-0 py-4"
-        includeInnerPadding
       />
       <Suspense
         fallback={<div className="px-1 py-8 text-sm text-muted-foreground">Loading...</div>}

@@ -66,9 +66,9 @@ func (r *repository) Upsert(
 		Set("draft_data = EXCLUDED.draft_data").
 		Set("failure_code = EXCLUDED.failure_code").
 		Set("failure_message = EXCLUDED.failure_message").
-		Set("attached_shipment_id = COALESCE(EXCLUDED.attached_shipment_id, document_shipment_drafts.attached_shipment_id)").
-		Set("attached_at = COALESCE(EXCLUDED.attached_at, document_shipment_drafts.attached_at)").
-		Set("attached_by_id = COALESCE(EXCLUDED.attached_by_id, document_shipment_drafts.attached_by_id)").
+		Set("attached_shipment_id = COALESCE(EXCLUDED.attached_shipment_id, dsd.attached_shipment_id)").
+		Set("attached_at = COALESCE(EXCLUDED.attached_at, dsd.attached_at)").
+		Set("attached_by_id = COALESCE(EXCLUDED.attached_by_id, dsd.attached_by_id)").
 		Set("updated_at = EXCLUDED.updated_at").
 		Returning("*").
 		Exec(ctx); err != nil {

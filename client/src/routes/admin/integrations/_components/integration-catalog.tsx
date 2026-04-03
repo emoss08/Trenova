@@ -2,13 +2,7 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -19,11 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -70,10 +60,7 @@ export function IntegrationCatalogCard() {
     ...queries.integration.catalog(),
   });
 
-  const items = useMemo(
-    () => catalogQuery.data?.items ?? [],
-    [catalogQuery.data?.items],
-  );
+  const items = useMemo(() => catalogQuery.data?.items ?? [], [catalogQuery.data?.items]);
 
   const categoryOptions = useMemo(() => {
     const uniqueCategories = new Map<string, string>();
@@ -82,10 +69,7 @@ export function IntegrationCatalogCard() {
         continue;
       }
       if (!uniqueCategories.has(item.category)) {
-        uniqueCategories.set(
-          item.category,
-          item.categoryLabel || item.category,
-        );
+        uniqueCategories.set(item.category, item.categoryLabel || item.category);
       }
     }
 
@@ -107,10 +91,7 @@ export function IntegrationCatalogCard() {
       if (searchParams.status === "disconnected" && item.enabled) {
         return false;
       }
-      if (
-        searchParams.category !== "all" &&
-        item.category !== searchParams.category
-      ) {
+      if (searchParams.category !== "all" && item.category !== searchParams.category) {
         return false;
       }
 
@@ -156,7 +137,7 @@ export function IntegrationCatalogCard() {
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-xl border border-border bg-background">
+      <section className="relative overflow-hidden bg-background">
         <div className="relative border-b border-border/80 bg-sidebar px-5 py-5 sm:px-6">
           <IntegrationMarketplaceHeader />
           <div className="mt-4 flex flex-row items-center gap-1.5">
@@ -254,9 +235,7 @@ export function IntegrationCatalogCard() {
                     <CardHeader className="space-y-2 pb-3">
                       <div className="relative flex items-start justify-between gap-3">
                         <div className="space-y-1 pr-14">
-                          <CardTitle className="text-base">
-                            {item.name}
-                          </CardTitle>
+                          <CardTitle className="text-base">{item.name}</CardTitle>
                           <CardDescription className="text-xs">
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                               {item.links.map((link) => (
@@ -314,27 +293,14 @@ export function IntegrationCatalogCard() {
           )}
         </div>
       </section>
-      <SamsaraIntegrationModal
-        open={isSamsaraModalOpen}
-        onOpenChange={setIsSamsaraModalOpen}
-      />
-      <GoogleIntegrationModal
-        open={isGoogleModalOpen}
-        onOpenChange={setIsGoogleModalOpen}
-      />
-      <OpenAIIntegrationModal
-        open={isOpenAIModalOpen}
-        onOpenChange={setIsOpenAIModalOpen}
-      />
+      <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
+      <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
+      <OpenAIIntegrationModal open={isOpenAIModalOpen} onOpenChange={setIsOpenAIModalOpen} />
     </>
   );
 }
 
-export function CatalogItemDescription({
-  description,
-}: {
-  description: string;
-}) {
+export function CatalogItemDescription({ description }: { description: string }) {
   return (
     <Tooltip>
       <TooltipTrigger

@@ -9,12 +9,10 @@ const DocumentParsingRulePageContent = lazy(
 
 export function DocumentParsingRulesPage() {
   return (
-    <AdminPageLayout className="flex h-[calc(100vh-3.6rem)] flex-col">
+    <AdminPageLayout className="flex h-[calc(100vh-3rem)] flex-col">
       <PageHeader
         title="Document Parsing Rules"
         description="Define provider-specific parsing rules, test with fixtures, and simulate extraction results"
-        className="p-0 py-4"
-        includeInnerPadding
       />
       <SuspenseLoader>
         <DocumentParsingRulePageContent />

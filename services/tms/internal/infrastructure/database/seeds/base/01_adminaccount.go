@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -175,6 +176,24 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("create document control: %w", err)
 			}
 			if err := sc.TrackCreated(ctx, "document_controls", documentControl.ID, s.Name()); err != nil {
+				return err
+			}
+
+			dataEntryControl := &dataentrycontrol.DataEntryControl{
+				ID:             pulid.MustNew("dec_"),
+				OrganizationID: org.ID,
+				BusinessUnitID: bu.ID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+				CodeCase:       dataentrycontrol.CaseFormatUpper,
+				NameCase:       dataentrycontrol.CaseFormatTitleCase,
+				EmailCase:      dataentrycontrol.CaseFormatLower,
+				CityCase:       dataentrycontrol.CaseFormatTitleCase,
+			}
+			if _, err := tx.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
+				return fmt.Errorf("create data entry control: %w", err)
+			}
+			if err := sc.TrackCreated(ctx, "data_entry_controls", dataEntryControl.ID, s.Name()); err != nil {
 				return err
 			}
 
