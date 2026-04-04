@@ -188,23 +188,20 @@ func (r *repository) SelectOptions(
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				cols.ID.Bare(),
-				cols.Status.Bare(),
-				cols.Code.Bare(),
-				cols.Description.Bare(),
-				cols.Color.Bare(),
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Status,
+				cols.Code,
+				cols.Description,
+				cols.Color,
 			},
-			OrgColumn: cols.OrganizationID.Qualified(),
-			BuColumn:  cols.BusinessUnitID.Qualified(),
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
-			EntityName: "ShipmentType",
-			SearchColumns: []string{
-				cols.Code.Qualified(),
-				cols.Description.Qualified(),
-			},
+			EntityName:       "ShipmentType",
+			SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
 		},
 	)
 }

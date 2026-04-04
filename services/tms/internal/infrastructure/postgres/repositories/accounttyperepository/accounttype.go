@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,14 +40,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListAccountTypesRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.AccountTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"at",
+		buncolgen.AccountTypeTable.Alias,
 		req.Filter,
 		(*accounttype.AccountType)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Apply(buncolgen.AccountTypeApplyTenant(req.Filter.TenantInfo)).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -86,13 +91,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(accounttype.AccountType)
+	cols := buncolgen.AccountTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("at.id = ?", req.ID).
-				Where("at.organization_id = ?", req.TenantInfo.OrgID).
-				Where("at.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.AccountTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -131,12 +136,13 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.AccountTypeColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -162,15 +168,15 @@ func (r *repository) BulkUpdateStatus(
 	)
 
 	entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
+	cols := buncolgen.AccountTypeColumns
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("at.organization_id = ?", req.TenantInfo.OrgID).
-				Where("at.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("at.id IN (?)", bun.In(req.AccountTypeIDs))
+			return buncolgen.AccountTypeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.AccountTypeIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(cols.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -195,13 +201,13 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
+	cols := buncolgen.AccountTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("at.organization_id = ?", req.TenantInfo.OrgID).
-				Where("at.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("at.id IN (?)", bun.In(req.AccountTypeIDs))
+			return buncolgen.AccountTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.AccountTypeIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -216,27 +222,26 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.AccountTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
+	cols := buncolgen.AccountTypeColumns
+
 	return dbhelper.SelectOptions[*accounttype.AccountType](
 		ctx,
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"code",
-				"name",
-				"category",
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Category,
 			},
-			OrgColumn: "at.organization_id",
-			BuColumn:  "at.business_unit_id",
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("at.status = ?", domaintypes.StatusActive)
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
-			EntityName: "AccountType",
-			SearchColumns: []string{
-				"at.code",
-				"at.name",
-			},
+			EntityName:       "AccountType",
+			SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
 		},
 	)
 }

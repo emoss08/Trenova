@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,14 +40,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListServiceTypesRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.ServiceTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"st",
+		buncolgen.ServiceTypeTable.Alias,
 		req.Filter,
 		(*servicetype.ServiceType)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Apply(buncolgen.ServiceTypeApplyTenant(req.Filter.TenantInfo)).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -104,12 +109,13 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.ServiceTypeColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -135,13 +141,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(servicetype.ServiceType)
+	cols := buncolgen.ServiceTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("st.id = ?", req.ID).
-				Where("st.organization_id = ?", req.TenantInfo.OrgID).
-				Where("st.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.ServiceTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -156,27 +162,26 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.ServiceTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*servicetype.ServiceType], error) {
+	cols := buncolgen.ServiceTypeColumns
+
 	return dbhelper.SelectOptions[*servicetype.ServiceType](
 		ctx,
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"code",
-				"description",
-				"color",
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Description,
+				cols.Color,
 			},
-			OrgColumn: "st.organization_id",
-			BuColumn:  "st.business_unit_id",
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("st.status = ?", domaintypes.StatusActive)
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
-			EntityName: "ServiceType",
-			SearchColumns: []string{
-				"st.code",
-				"st.description",
-			},
+			EntityName:       "ServiceType",
+			SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
 		},
 	)
 }
@@ -191,15 +196,15 @@ func (r *repository) BulkUpdateStatus(
 	)
 
 	entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
+	cols := buncolgen.ServiceTypeColumns
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("st.organization_id = ?", req.TenantInfo.OrgID).
-				Where("st.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("st.id IN (?)", bun.In(req.ServiceTypeIDs))
+			return buncolgen.ServiceTypeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.ServiceTypeIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(cols.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -224,13 +229,13 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*servicetype.ServiceType, 0, len(req.ServiceTypeIDs))
+	cols := buncolgen.ServiceTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("st.organization_id = ?", req.TenantInfo.OrgID).
-				Where("st.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("st.id IN (?)", bun.In(req.ServiceTypeIDs))
+			return buncolgen.ServiceTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.ServiceTypeIDs))
 		}).
 		Scan(ctx)
 	if err != nil {

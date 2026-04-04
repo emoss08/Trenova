@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,14 +40,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListCommodityRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.CommodityColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"com",
+		buncolgen.CommodityTable.Alias,
 		req.Filter,
 		(*commodity.Commodity)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Apply(buncolgen.CommodityApplyTenant(req.Filter.TenantInfo)).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -86,13 +91,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(commodity.Commodity)
+	cols := buncolgen.CommodityColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("com.id = ?", req.ID).
-				Where("com.organization_id = ?", req.TenantInfo.OrgID).
-				Where("com.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.CommodityScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -131,12 +136,13 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.CommodityColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -162,15 +168,15 @@ func (r *repository) BulkUpdateStatus(
 	)
 
 	entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
+	cols := buncolgen.CommodityColumns
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("com.organization_id = ?", req.TenantInfo.OrgID).
-				Where("com.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("com.id IN (?)", bun.In(req.CommodityIDs))
+			return buncolgen.CommodityScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.CommodityIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(cols.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -195,14 +201,14 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*commodity.Commodity, 0, len(req.CommodityIDs))
+	cols := buncolgen.CommodityColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Relation("HazardousMaterial").
+		Relation(buncolgen.CommodityRelations.HazardousMaterial).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("com.organization_id = ?", req.TenantInfo.OrgID).
-				Where("com.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("com.id IN (?)", bun.In(req.CommodityIDs))
+			return buncolgen.CommodityScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.In(req.CommodityIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -217,27 +223,26 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.CommoditySelectOptionsRequest,
 ) (*pagination.ListResult[*commodity.Commodity], error) {
+	cols := buncolgen.CommodityColumns
+
 	return dbhelper.SelectOptions[*commodity.Commodity](
 		ctx,
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"name",
-				"hazardous_material_id",
-				"freight_class",
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Name,
+				cols.HazardousMaterialID,
+				cols.FreightClass,
 			},
-			OrgColumn: "com.organization_id",
-			BuColumn:  "com.business_unit_id",
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("com.status = ?", domaintypes.StatusActive)
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
-			EntityName: "Commodity",
-			SearchColumns: []string{
-				"com.name",
-				"com.description",
-			},
+			EntityName:       "Commodity",
+			SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Description},
 		},
 	)
 }

@@ -3,6 +3,7 @@ package documentservice
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
@@ -206,11 +207,23 @@ func (s *Service) GetPacketSummary(
 	resourceType, resourceID string,
 	tenantInfo pagination.TenantInfo,
 ) (*documentpacketrule.PacketSummary, error) {
+	normalizedResourceType := strings.TrimSpace(resourceType)
+	switch strings.ToLower(normalizedResourceType) {
+	case strings.ToLower(string(documentpacketrule.ResourceTypeShipment)):
+		normalizedResourceType = string(documentpacketrule.ResourceTypeShipment)
+	case strings.ToLower(string(documentpacketrule.ResourceTypeTrailer)):
+		normalizedResourceType = string(documentpacketrule.ResourceTypeTrailer)
+	case strings.ToLower(string(documentpacketrule.ResourceTypeTractor)):
+		normalizedResourceType = string(documentpacketrule.ResourceTypeTractor)
+	case strings.ToLower(string(documentpacketrule.ResourceTypeWorker)):
+		normalizedResourceType = string(documentpacketrule.ResourceTypeWorker)
+	}
+
 	rules, err := s.packetRuleRepo.ListByResourceType(
 		ctx,
 		&repositories.ListDocumentPacketRulesByResourceRequest{
 			TenantInfo:   tenantInfo,
-			ResourceType: resourceType,
+			ResourceType: normalizedResourceType,
 		},
 	)
 	if err != nil {
@@ -241,7 +254,7 @@ func (s *Service) GetPacketSummary(
 	items := make([]documentpacketrule.PacketItemSummary, 0, len(rules))
 	summary := &documentpacketrule.PacketSummary{
 		ResourceID:   resourceID,
-		ResourceType: documentpacketrule.ResourceType(resourceType),
+		ResourceType: documentpacketrule.ResourceType(normalizedResourceType),
 		Status:       documentpacketrule.PacketStatusComplete,
 		TotalRules:   len(rules),
 	}

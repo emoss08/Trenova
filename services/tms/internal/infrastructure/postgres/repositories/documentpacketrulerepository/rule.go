@@ -108,7 +108,7 @@ func (r *repository) ListByResourceType(
 			return buncolgen.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
 				Where(cols.ResourceType.Eq(), req.ResourceType)
 		}).
-		OrderExpr(cols.DisplayOrder.OrderAsc(), cols.CreatedAt.OrderAsc()).
+		Order(cols.DisplayOrder.OrderAsc(), cols.CreatedAt.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

@@ -138,7 +138,6 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 		SearchProjection:     searchProjection,
 		Config:               cfg,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(),
-		TemporalClient:       nil,
 	})
 
 	return &serviceHarness{
@@ -212,6 +211,7 @@ func createTestSchema(t *testing.T, db *bun.DB, ctx context.Context) {
 			description TEXT,
 			resource_id VARCHAR(100) NOT NULL,
 			resource_type VARCHAR(100) NOT NULL,
+			processing_profile VARCHAR(64) NOT NULL DEFAULT 'none',
 			expiration_date BIGINT,
 			tags VARCHAR(100)[] DEFAULT '{}',
 			is_public BOOLEAN NOT NULL DEFAULT FALSE,

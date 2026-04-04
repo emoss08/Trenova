@@ -66,6 +66,8 @@ type DocumentPacketRule struct {
 	UpdatedAt             int64        `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
+type Rule = DocumentPacketRule
+
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		r,

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,14 +40,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListAccessorialChargeRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.AccessorialChargeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"acc",
+		buncolgen.AccessorialChargeTable.Alias,
 		req.Filter,
 		(*accessorialcharge.AccessorialCharge)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q.Apply(buncolgen.AccessorialChargeApplyTenant(req.Filter.TenantInfo)).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		Order(cols.CreatedAt.OrderDesc())
 }
 
 func (r *repository) List(
@@ -104,11 +109,12 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.AccessorialChargeColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -134,13 +140,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(accessorialcharge.AccessorialCharge)
+	cols := buncolgen.AccessorialChargeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("acc.id = ?", req.ID).
-				Where("acc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("acc.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.AccessorialChargeScopeTenant(sq, *req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -155,26 +161,28 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
+	cols := buncolgen.AccessorialChargeColumns
+
 	return dbhelper.SelectOptions[*accessorialcharge.AccessorialCharge](
 		ctx,
 		r.db.DB(),
 		req,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"code",
-				"description",
-				"status",
-				"method",
-				"rate_unit",
-				"amount",
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Description,
+				cols.Status,
+				cols.Method,
+				cols.RateUnit,
+				cols.Amount,
 			},
-			OrgColumn:     "acc.organization_id",
-			BuColumn:      "acc.business_unit_id",
-			SearchColumns: []string{"acc.code", "acc.description"},
-			EntityName:    "AccessorialCharge",
+			OrgColumnRef:     &cols.OrganizationID,
+			BuColumnRef:      &cols.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Description},
+			EntityName:       "AccessorialCharge",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("acc.status = ?", domaintypes.StatusActive)
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
 		},
 	)

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -39,14 +40,16 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListEquipmentManufacturersRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.EquipmentManufacturerColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"em",
+		buncolgen.EquipmentManufacturerTable.Alias,
 		req.Filter,
 		(*equipmentmanufacturer.EquipmentManufacturer)(nil),
 	)
 
-	q = q.Order("em.created_at DESC")
+	q = q.Apply(buncolgen.EquipmentManufacturerApplyTenant(req.Filter.TenantInfo)).
+		Order(cols.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -106,11 +109,12 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.EquipmentManufacturerColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -136,13 +140,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(equipmentmanufacturer.EquipmentManufacturer)
+	cols := buncolgen.EquipmentManufacturerColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("em.id = ?", req.ID).
-				Where("em.organization_id = ?", req.TenantInfo.OrgID).
-				Where("em.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -171,9 +175,8 @@ func (r *repository) GetByIDs(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("em.organization_id = ?", req.TenantInfo.OrgID).
-				Where("em.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("em.id IN (?)", bun.In(req.EquipmentManufacturerIDs))
+			return buncolgen.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.In(req.EquipmentManufacturerIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -188,19 +191,26 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+	cols := buncolgen.EquipmentManufacturerColumns
+
 	return dbhelper.SelectOptions[*equipmentmanufacturer.EquipmentManufacturer](
 		ctx,
 		r.db.DB(),
 		req,
 		&dbhelper.SelectOptionsConfig{
-			Columns:   []string{"id", "name", "description", "status"},
-			OrgColumn: "em.organization_id",
-			BuColumn:  "em.business_unit_id",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("em.status = ?", domaintypes.StatusActive)
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Name,
+				cols.Description,
+				cols.Status,
 			},
-			EntityName:    "EquipmentManufacturer",
-			SearchColumns: []string{"em.name", "em.description"},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
+			},
+			EntityName:       "EquipmentManufacturer",
+			SearchColumnRefs: []buncolgen.Column{cols.Name, cols.Description},
 		},
 	)
 }
@@ -223,11 +233,10 @@ func (r *repository) BulkUpdateStatus(
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("em.organization_id = ?", req.TenantInfo.OrgID).
-				Where("em.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("em.id IN (?)", bun.In(req.EquipmentManufacturerIDs))
+			return buncolgen.EquipmentManufacturerScopeTenantUpdate(uq, req.TenantInfo).
+				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.In(req.EquipmentManufacturerIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(buncolgen.EquipmentManufacturerColumns.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

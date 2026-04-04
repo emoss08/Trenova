@@ -257,19 +257,49 @@ func createTestSchema(t *testing.T, db *bun.DB, tc *testutil.TestContext) {
 		EXCEPTION
 			WHEN duplicate_object THEN null;
 		END $$`,
+		`DO $$ BEGIN
+			CREATE TYPE document_preview_status_enum AS ENUM (
+				'Pending', 'Ready', 'Failed', 'Unsupported'
+			);
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$`,
+		`DO $$ BEGIN
+			CREATE TYPE document_content_status_enum AS ENUM (
+				'Pending', 'Extracting', 'Extracted', 'Indexed', 'Failed'
+			);
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$`,
+		`DO $$ BEGIN
+			CREATE TYPE document_shipment_draft_status_enum AS ENUM (
+				'Unavailable', 'Pending', 'Ready', 'Failed'
+			);
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$`,
 		`CREATE TABLE IF NOT EXISTS documents (
 			id VARCHAR(100) NOT NULL,
 			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id),
 			business_unit_id VARCHAR(100) NOT NULL REFERENCES business_units(id),
+			lineage_id VARCHAR(100) NOT NULL,
+			version_number BIGINT NOT NULL DEFAULT 1,
+			is_current_version BOOLEAN NOT NULL DEFAULT TRUE,
 			file_name VARCHAR(255) NOT NULL,
 			original_name VARCHAR(255) NOT NULL,
 			file_size BIGINT NOT NULL,
 			file_type VARCHAR(100) NOT NULL,
 			storage_path VARCHAR(500) NOT NULL,
+			checksum_sha256 VARCHAR(64),
+			storage_version_id VARCHAR(255),
+			storage_retention_mode VARCHAR(50),
+			storage_retention_until BIGINT,
+			storage_legal_hold BOOLEAN NOT NULL DEFAULT FALSE,
 			status document_status_enum NOT NULL DEFAULT 'Active',
 			description TEXT,
 			resource_id VARCHAR(100) NOT NULL,
 			resource_type VARCHAR(100) NOT NULL,
+			processing_profile VARCHAR(64) NOT NULL DEFAULT 'none',
 			expiration_date BIGINT,
 			tags VARCHAR(100)[] DEFAULT '{}',
 			is_public BOOLEAN NOT NULL DEFAULT FALSE,
@@ -277,6 +307,12 @@ func createTestSchema(t *testing.T, db *bun.DB, tc *testutil.TestContext) {
 			approved_by_id VARCHAR(100) REFERENCES users(id),
 			approved_at BIGINT,
 			preview_storage_path VARCHAR(500),
+			preview_status document_preview_status_enum NOT NULL DEFAULT 'Unsupported',
+			content_status document_content_status_enum NOT NULL DEFAULT 'Pending',
+			content_error TEXT,
+			detected_kind VARCHAR(100),
+			has_extracted_text BOOLEAN NOT NULL DEFAULT FALSE,
+			shipment_draft_status document_shipment_draft_status_enum NOT NULL DEFAULT 'Unavailable',
 			document_type_id VARCHAR(100),
 			version BIGINT NOT NULL DEFAULT 0,
 			created_at BIGINT NOT NULL,

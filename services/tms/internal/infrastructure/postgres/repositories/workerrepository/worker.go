@@ -76,17 +76,17 @@ func (r *repository) SelectOptions(
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				buncolgen.WorkerColumns.ID.Bare(),
-				buncolgen.WorkerColumns.FirstName.Bare(),
-				buncolgen.WorkerColumns.LastName.Bare(),
-				buncolgen.WorkerColumns.Status.Bare(),
+			ColumnRefs: []buncolgen.Column{
+				buncolgen.WorkerColumns.ID,
+				buncolgen.WorkerColumns.FirstName,
+				buncolgen.WorkerColumns.LastName,
+				buncolgen.WorkerColumns.Status,
 			},
-			OrgColumn: buncolgen.WorkerColumns.OrganizationID.Qualified(),
-			BuColumn:  buncolgen.WorkerColumns.BusinessUnitID.Qualified(),
-			SearchColumns: []string{
-				buncolgen.WorkerColumns.FirstName.Qualified(),
-				buncolgen.WorkerColumns.LastName.Qualified(),
+			OrgColumnRef: &buncolgen.WorkerColumns.OrganizationID,
+			BuColumnRef:  &buncolgen.WorkerColumns.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{
+				buncolgen.WorkerColumns.FirstName,
+				buncolgen.WorkerColumns.LastName,
 			},
 			EntityName: "Worker",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {

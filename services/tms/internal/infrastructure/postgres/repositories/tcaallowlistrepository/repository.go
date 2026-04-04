@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -35,15 +36,15 @@ func (r *repository) List(
 	tenantInfo pagination.TenantInfo,
 ) ([]*tablechangealert.TCAAllowlistedTable, error) {
 	log := r.l.With(zap.String("operation", "List"))
+	cols := buncolgen.TCAAllowlistedTableColumns
 
 	entities := make([]*tablechangealert.TCAAllowlistedTable, 0)
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Where("tcaw.organization_id = ?", tenantInfo.OrgID).
-		Where("tcaw.business_unit_id = ?", tenantInfo.BuID).
-		Where("tcaw.enabled = ?", true).
-		Order("tcaw.display_name ASC").
+		Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+		Where(cols.Enabled.Eq(), true).
+		Order(cols.DisplayName.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to list tca allowlisted tables", zap.Error(err))
@@ -62,14 +63,14 @@ func (r *repository) IsTableAllowed(
 		zap.String("operation", "IsTableAllowed"),
 		zap.String("tableName", tableName),
 	)
+	cols := buncolgen.TCAAllowlistedTableColumns
 
 	exists, err := r.db.DB().
 		NewSelect().
 		Model((*tablechangealert.TCAAllowlistedTable)(nil)).
-		Where("tcaw.organization_id = ?", tenantInfo.OrgID).
-		Where("tcaw.business_unit_id = ?", tenantInfo.BuID).
-		Where("tcaw.table_name = ?", tableName).
-		Where("tcaw.enabled = ?", true).
+		Apply(buncolgen.TCAAllowlistedTableApplyTenant(tenantInfo)).
+		Where(cols.TableName.Eq(), tableName).
+		Where(cols.Enabled.Eq(), true).
 		Exists(ctx)
 	if err != nil {
 		log.Error("failed to check if table is allowed", zap.Error(err))

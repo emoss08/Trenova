@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tablechangealert"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -38,20 +39,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListTCASubscriptionsRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.TCASubscriptionColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"tcas",
+		buncolgen.TCASubscriptionTable.Alias,
 		req.Filter,
 		(*tablechangealert.TCASubscription)(nil),
 	)
 
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("tcas.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("tcas.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-			Where("tcas.user_id = ?", req.Filter.TenantInfo.UserID)
-	})
+	q = q.Apply(buncolgen.TCASubscriptionApplyTenant(req.Filter.TenantInfo)).
+		Where(cols.UserID.Eq(), req.Filter.TenantInfo.UserID)
 
-	q = q.Order("tcas.created_at DESC")
+	q = q.Order(cols.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -106,12 +105,13 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.TCASubscriptionColumns
 
 	_, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -133,14 +133,14 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(tablechangealert.TCASubscription)
+	cols := buncolgen.TCASubscriptionColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("tcas.id = ?", req.SubscriptionID).
-				Where("tcas.organization_id = ?", req.TenantInfo.OrgID).
-				Where("tcas.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("tcas.user_id = ?", req.TenantInfo.UserID)
+			return buncolgen.TCASubscriptionScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.SubscriptionID).
+				Where(cols.UserID.Eq(), req.TenantInfo.UserID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -165,10 +165,9 @@ func (r *repository) Delete(
 		NewDelete().
 		Model((*tablechangealert.TCASubscription)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where("tcas.id = ?", id).
-				Where("tcas.organization_id = ?", tenantInfo.OrgID).
-				Where("tcas.business_unit_id = ?", tenantInfo.BuID).
-				Where("tcas.user_id = ?", tenantInfo.UserID)
+			return buncolgen.TCASubscriptionScopeTenantDelete(dq, tenantInfo).
+				Where(buncolgen.TCASubscriptionColumns.ID.Eq(), id).
+				Where(buncolgen.TCASubscriptionColumns.UserID.Eq(), tenantInfo.UserID)
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -194,19 +193,23 @@ func (r *repository) FindMatchingSubscriptions(
 	}
 
 	entities := make([]*tablechangealert.TCASubscription, 0)
+	cols := buncolgen.TCASubscriptionColumns
 	q := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Where("tcas.organization_id = ?", req.OrganizationID).
-		Where("tcas.business_unit_id = ?", req.BusinessUnitID).
-		Where("tcas.table_name = ?", req.TableName).
-		Where("tcas.status = ?", tablechangealert.SubscriptionStatusActive).
-		Where("tcas.event_types @> ?::jsonb", `["`+req.Operation+`"]`)
+		Where(cols.OrganizationID.Eq(), req.OrganizationID).
+		Where(cols.BusinessUnitID.Eq(), req.BusinessUnitID).
+		Where(cols.TableName.Eq(), req.TableName).
+		Where(cols.Status.Eq(), tablechangealert.SubscriptionStatusActive).
+		Where(cols.EventTypes.Expr("{} @> ?::jsonb"), `["`+req.Operation+`"]`)
 
 	if req.RecordID != "" {
-		q = q.Where("(tcas.record_id IS NULL OR tcas.record_id = '' OR tcas.record_id = ?)", req.RecordID)
+		q = q.Where(
+			buncolgen.Expr("({0} IS NULL OR {0} = '' OR {0} = ?)", cols.RecordID),
+			req.RecordID,
+		)
 	} else {
-		q = q.Where("(tcas.record_id IS NULL OR tcas.record_id = '')")
+		q = q.Where(buncolgen.Expr("({} IS NULL OR {} = '')", cols.RecordID))
 	}
 
 	if err := q.Scan(ctx); err != nil {

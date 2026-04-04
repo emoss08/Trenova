@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
+	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/fatih/color"
 	"github.com/uptrace/bun"
@@ -26,6 +27,10 @@ type Engine struct {
 }
 
 func NewEngine(db *bun.DB, registry *Registry, cfg *config.Config) *Engine {
+	if db != nil {
+		db.RegisterModel(domainregistry.RegisterEntities()...)
+	}
+
 	return &Engine{
 		db:              db,
 		registry:        registry,
