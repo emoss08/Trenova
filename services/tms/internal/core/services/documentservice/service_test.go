@@ -11,8 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
 	storageutil "github.com/emoss08/trenova/shared/testutil/storage"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -34,14 +35,14 @@ import (
 )
 
 type serviceHarness struct {
-	ctx            context.Context
-	db             *bun.DB
-	tenantInfo     pagination.TenantInfo
-	service        *documentservice.Service
-	documentRepo   repositories.DocumentRepository
+	ctx              context.Context
+	db               *bun.DB
+	tenantInfo       pagination.TenantInfo
+	service          *documentservice.Service
+	documentRepo     repositories.DocumentRepository
 	documentTypeRepo repositories.DocumentTypeRepository
-	packetRuleRepo repositories.DocumentPacketRuleRepository
-	storage        storage.Client
+	packetRuleRepo   repositories.DocumentPacketRuleRepository
+	storage          storage.Client
 }
 
 func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
@@ -83,15 +84,25 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	require.NoError(t, err)
 
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, repositories.ErrCacheMiss)
+	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil, repositories.ErrCacheMiss)
 
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
+	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
 
 	contentService := mocks.NewMockDocumentContentService(t)
-	contentService.On("EnqueueExtraction", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	contentService.On("GetContent", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, assert.AnError)
+	contentService.On("EnqueueExtraction", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
+	contentService.On("GetContent", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil, assert.AnError)
 
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	searchProjection.On("Upsert", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
@@ -111,15 +122,17 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	})
 
 	service := documentservice.New(documentservice.Params{
-		Logger:               logger,
-		DB:                   conn,
-		Repo:                 docRepo,
-		PacketRuleRepo:       packetRuleRepo,
-		DocumentTypeRepo:     docTypeRepo,
-		CacheRepo:            cacheRepo,
-		SessionRepo:          sessionRepo,
-		Storage:              storageClient,
-		Validator:            documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg}),
+		Logger:           logger,
+		DB:               conn,
+		Repo:             docRepo,
+		PacketRuleRepo:   packetRuleRepo,
+		DocumentTypeRepo: docTypeRepo,
+		CacheRepo:        cacheRepo,
+		SessionRepo:      sessionRepo,
+		Storage:          storageClient,
+		Validator: documentservice.NewValidator(
+			documentservice.ValidatorParams{Config: cfg},
+		),
 		AuditService:         &mocks.NoopAuditService{},
 		DocumentIntelligence: contentService,
 		SearchProjection:     searchProjection,
@@ -129,18 +142,18 @@ func setupDocumentServiceHarness(t *testing.T) *serviceHarness {
 	})
 
 	return &serviceHarness{
-		ctx:  dbCtx.Ctx,
-		db:   db,
+		ctx: dbCtx.Ctx,
+		db:  db,
 		tenantInfo: pagination.TenantInfo{
 			OrgID:  fixtures.orgID,
 			BuID:   fixtures.buID,
 			UserID: fixtures.userID,
 		},
-		service:         service,
-		documentRepo:    docRepo,
+		service:          service,
+		documentRepo:     docRepo,
 		documentTypeRepo: docTypeRepo,
-		packetRuleRepo:  packetRuleRepo,
-		storage:         storageClient,
+		packetRuleRepo:   packetRuleRepo,
+		storage:          storageClient,
 	}
 }
 
@@ -351,7 +364,11 @@ func uploadDocument(
 ) *document.Document {
 	t.Helper()
 
-	fileHeader := storageutil.NewMockFileHeader(filename, []byte("test "+filename), "application/pdf")
+	fileHeader := storageutil.NewMockFileHeader(
+		filename,
+		[]byte("test "+filename),
+		"application/pdf",
+	)
 	result, err := h.service.Upload(h.ctx, &documentservice.UploadRequest{
 		TenantInfo:     h.tenantInfo,
 		File:           fileHeader,
@@ -367,7 +384,12 @@ func uploadDocument(
 	return result.Document
 }
 
-func updateDocumentExpiration(t *testing.T, h *serviceHarness, documentID pulid.ID, expiration *int64) {
+func updateDocumentExpiration(
+	t *testing.T,
+	h *serviceHarness,
+	documentID pulid.ID,
+	expiration *int64,
+) {
 	t.Helper()
 
 	_, err := h.db.NewUpdate().
@@ -423,7 +445,11 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	versions, err := h.service.ListVersions(h.ctx, secondVersion.ID, h.tenantInfo)
 	require.NoError(t, err)
 	require.Len(t, versions, 2)
-	assert.ElementsMatch(t, []pulid.ID{firstVersion.ID, secondVersion.ID}, []pulid.ID{versions[0].ID, versions[1].ID})
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{firstVersion.ID, secondVersion.ID},
+		[]pulid.ID{versions[0].ID, versions[1].ID},
+	)
 
 	refreshedFirstVersion := fetchDocument(t, h, firstVersion.ID)
 	refreshedSecondVersion := fetchDocument(t, h, secondVersion.ID)
@@ -441,7 +467,12 @@ func TestService_DocumentVersioningLifecycle_Integration(t *testing.T) {
 	require.Len(t, resourceDocs, 1)
 	assert.Equal(t, secondVersion.ID, resourceDocs[0].ID)
 
-	restored, err := h.service.RestoreVersion(h.ctx, firstVersion.ID, h.tenantInfo, h.tenantInfo.UserID)
+	restored, err := h.service.RestoreVersion(
+		h.ctx,
+		firstVersion.ID,
+		h.tenantInfo,
+		h.tenantInfo.UserID,
+	)
 	require.NoError(t, err)
 	assert.Equal(t, firstVersion.ID, restored.ID)
 	assert.True(t, restored.IsCurrentVersion)
@@ -494,12 +525,44 @@ func TestService_BulkDeleteDeletesLineages_Integration(t *testing.T) {
 	docType := createDocumentType(t, h, "POD", "Proof of Delivery", documenttype.CategoryShipment)
 
 	resourceOne := pulid.MustNew("sh_").String()
-	firstV1 := uploadDocument(t, h, "lineage-one-v1.pdf", resourceOne, "shipment", docType.ID.String(), "")
-	firstV2 := uploadDocument(t, h, "lineage-one-v2.pdf", resourceOne, "shipment", docType.ID.String(), firstV1.LineageID.String())
+	firstV1 := uploadDocument(
+		t,
+		h,
+		"lineage-one-v1.pdf",
+		resourceOne,
+		"shipment",
+		docType.ID.String(),
+		"",
+	)
+	firstV2 := uploadDocument(
+		t,
+		h,
+		"lineage-one-v2.pdf",
+		resourceOne,
+		"shipment",
+		docType.ID.String(),
+		firstV1.LineageID.String(),
+	)
 
 	resourceTwo := pulid.MustNew("sh_").String()
-	secondV1 := uploadDocument(t, h, "lineage-two-v1.pdf", resourceTwo, "shipment", docType.ID.String(), "")
-	secondV2 := uploadDocument(t, h, "lineage-two-v2.pdf", resourceTwo, "shipment", docType.ID.String(), secondV1.LineageID.String())
+	secondV1 := uploadDocument(
+		t,
+		h,
+		"lineage-two-v1.pdf",
+		resourceTwo,
+		"shipment",
+		docType.ID.String(),
+		"",
+	)
+	secondV2 := uploadDocument(
+		t,
+		h,
+		"lineage-two-v2.pdf",
+		resourceTwo,
+		"shipment",
+		docType.ID.String(),
+		secondV1.LineageID.String(),
+	)
 
 	result, err := h.service.BulkDelete(h.ctx, &documentservice.BulkDeleteRequest{
 		IDs:        []pulid.ID{firstV2.ID, secondV2.ID},
@@ -525,25 +588,123 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	h := setupDocumentServiceHarness(t)
 
 	missingDocType := createDocumentType(t, h, "INS", "Insurance", documenttype.CategoryRegulatory)
-	needsReviewDocType := createDocumentType(t, h, "REG", "Registration", documenttype.CategoryRegulatory)
+	needsReviewDocType := createDocumentType(
+		t,
+		h,
+		"REG",
+		"Registration",
+		documenttype.CategoryRegulatory,
+	)
 	expiredDocType := createDocumentType(t, h, "PERM", "Permit", documenttype.CategoryRegulatory)
-	expiringSoonDocType := createDocumentType(t, h, "ANNU", "Annual Inspection", documenttype.CategoryRegulatory)
-	currentOnlyDocType := createDocumentType(t, h, "BOL", "Bill of Lading", documenttype.CategoryShipment)
+	expiringSoonDocType := createDocumentType(
+		t,
+		h,
+		"ANNU",
+		"Annual Inspection",
+		documenttype.CategoryRegulatory,
+	)
+	currentOnlyDocType := createDocumentType(
+		t,
+		h,
+		"BOL",
+		"Bill of Lading",
+		documenttype.CategoryShipment,
+	)
 
-	createPacketRule(t, h, documentpacketrule.ResourceTypeTrailer, missingDocType.ID, true, false, 0)
-	createPacketRule(t, h, documentpacketrule.ResourceTypeTrailer, needsReviewDocType.ID, true, true, 30)
-	createPacketRule(t, h, documentpacketrule.ResourceTypeTrailer, expiredDocType.ID, true, true, 30)
-	createPacketRule(t, h, documentpacketrule.ResourceTypeTrailer, expiringSoonDocType.ID, true, true, 30)
-	createPacketRule(t, h, documentpacketrule.ResourceTypeTrailer, currentOnlyDocType.ID, true, false, 0)
+	createPacketRule(
+		t,
+		h,
+		documentpacketrule.ResourceTypeTrailer,
+		missingDocType.ID,
+		true,
+		false,
+		0,
+	)
+	createPacketRule(
+		t,
+		h,
+		documentpacketrule.ResourceTypeTrailer,
+		needsReviewDocType.ID,
+		true,
+		true,
+		30,
+	)
+	createPacketRule(
+		t,
+		h,
+		documentpacketrule.ResourceTypeTrailer,
+		expiredDocType.ID,
+		true,
+		true,
+		30,
+	)
+	createPacketRule(
+		t,
+		h,
+		documentpacketrule.ResourceTypeTrailer,
+		expiringSoonDocType.ID,
+		true,
+		true,
+		30,
+	)
+	createPacketRule(
+		t,
+		h,
+		documentpacketrule.ResourceTypeTrailer,
+		currentOnlyDocType.ID,
+		true,
+		false,
+		0,
+	)
 
 	resourceID := pulid.MustNew("tr_").String()
-	uploadDocument(t, h, "registration.pdf", resourceID, "trailer", needsReviewDocType.ID.String(), "")
-	expiredDoc := uploadDocument(t, h, "permit.pdf", resourceID, "trailer", expiredDocType.ID.String(), "")
-	expiringSoonDoc := uploadDocument(t, h, "inspection.pdf", resourceID, "trailer", expiringSoonDocType.ID.String(), "")
-	currentV1 := uploadDocument(t, h, "bol-v1.pdf", resourceID, "trailer", currentOnlyDocType.ID.String(), "")
-	currentV2 := uploadDocument(t, h, "bol-v2.pdf", resourceID, "trailer", currentOnlyDocType.ID.String(), currentV1.LineageID.String())
+	uploadDocument(
+		t,
+		h,
+		"registration.pdf",
+		resourceID,
+		"trailer",
+		needsReviewDocType.ID.String(),
+		"",
+	)
+	expiredDoc := uploadDocument(
+		t,
+		h,
+		"permit.pdf",
+		resourceID,
+		"trailer",
+		expiredDocType.ID.String(),
+		"",
+	)
+	expiringSoonDoc := uploadDocument(
+		t,
+		h,
+		"inspection.pdf",
+		resourceID,
+		"trailer",
+		expiringSoonDocType.ID.String(),
+		"",
+	)
+	currentV1 := uploadDocument(
+		t,
+		h,
+		"bol-v1.pdf",
+		resourceID,
+		"trailer",
+		currentOnlyDocType.ID.String(),
+		"",
+	)
+	currentV2 := uploadDocument(
+		t,
+		h,
+		"bol-v2.pdf",
+		resourceID,
+		"trailer",
+		currentOnlyDocType.ID.String(),
+		currentV1.LineageID.String(),
+	)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	expiredAt := now - int64(24*time.Hour.Seconds())
 	expiringSoonAt := now + int64(7*24*time.Hour.Seconds())
 
@@ -568,9 +729,17 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	}
 
 	assert.Equal(t, documentpacketrule.ItemStatusMissing, itemByType[missingDocType.ID].Status)
-	assert.Equal(t, documentpacketrule.ItemStatusNeedsReview, itemByType[needsReviewDocType.ID].Status)
+	assert.Equal(
+		t,
+		documentpacketrule.ItemStatusNeedsReview,
+		itemByType[needsReviewDocType.ID].Status,
+	)
 	assert.Equal(t, documentpacketrule.ItemStatusExpired, itemByType[expiredDocType.ID].Status)
-	assert.Equal(t, documentpacketrule.ItemStatusExpiringSoon, itemByType[expiringSoonDocType.ID].Status)
+	assert.Equal(
+		t,
+		documentpacketrule.ItemStatusExpiringSoon,
+		itemByType[expiringSoonDocType.ID].Status,
+	)
 	assert.Equal(t, documentpacketrule.ItemStatusComplete, itemByType[currentOnlyDocType.ID].Status)
 	assert.Equal(t, 1, itemByType[currentOnlyDocType.ID].DocumentCount)
 	assert.Equal(t, []pulid.ID{currentV2.ID}, itemByType[currentOnlyDocType.ID].CurrentDocumentIDs)

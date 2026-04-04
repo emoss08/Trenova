@@ -106,8 +106,8 @@ type AIExtractResult struct {
 	MissingFields     []string                   `json:"missingFields"`
 	Signals           []string                   `json:"signals"`
 	Fields            map[string]AIDocumentField `json:"fields"`
-	Stops             []AIDocumentStop           `json:"stops"`
-	Conflicts         []AIDocumentConflict       `json:"conflicts"`
+	Stops             []*AIDocumentStop          `json:"stops"`
+	Conflicts         []*AIDocumentConflict      `json:"conflicts"`
 }
 
 type AIBackgroundExtractionStatus string
@@ -143,6 +143,12 @@ type AIBackgroundExtractPollResult struct {
 type AIDocumentService interface {
 	RouteDocument(ctx context.Context, req *AIRouteRequest) (*AIRouteResult, error)
 	ExtractRateConfirmation(ctx context.Context, req *AIExtractRequest) (*AIExtractResult, error)
-	SubmitRateConfirmationBackgroundExtraction(ctx context.Context, req *AIExtractRequest) (*AIBackgroundExtractSubmission, error)
-	PollRateConfirmationBackgroundExtraction(ctx context.Context, req *AIBackgroundExtractPollRequest) (*AIBackgroundExtractPollResult, error)
+	SubmitRateConfirmationBackgroundExtraction(
+		ctx context.Context,
+		req *AIExtractRequest,
+	) (*AIBackgroundExtractSubmission, error)
+	PollRateConfirmationBackgroundExtraction(
+		ctx context.Context,
+		req *AIBackgroundExtractPollRequest,
+	) (*AIBackgroundExtractPollResult, error)
 }

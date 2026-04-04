@@ -372,7 +372,7 @@ func (p *Provider) getDetentionAlerts(
 
 	detentionThreshold := detentionThresholdSeconds(control)
 
-	nowUnix := time.Now().Unix()
+	nowUnix := timeutils.NowUnix()
 
 	count, err := p.db.DB().NewSelect().
 		TableExpr("stops stp").

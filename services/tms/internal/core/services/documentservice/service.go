@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -29,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
@@ -165,7 +165,11 @@ func (s *Service) Get(
 		return entity, nil
 	}
 	if !errors.Is(err, repositories.ErrCacheMiss) {
-		s.l.Warn("failed to load document from cache", zap.Error(err), zap.String("documentID", req.ID.String()))
+		s.l.Warn(
+			"failed to load document from cache",
+			zap.Error(err),
+			zap.String("documentID", req.ID.String()),
+		)
 	}
 
 	return s.repo.GetByID(ctx, req)
@@ -220,14 +224,21 @@ func (s *Service) Upload(
 	if strings.TrimSpace(req.LineageID) != "" {
 		parsedLineageID, parseErr := pulid.MustParse(req.LineageID)
 		if parseErr != nil {
-			return nil, errortypes.NewValidationError("lineageId", errortypes.ErrInvalid, "Invalid lineage ID")
+			return nil, errortypes.NewValidationError(
+				"lineageId",
+				errortypes.ErrInvalid,
+				"Invalid lineage ID",
+			)
 		}
 		lineageInfo, err = s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
 		if err != nil {
 			return nil, err
 		}
-		if lineageInfo.ResourceID != req.ResourceID || lineageInfo.ResourceType != req.ResourceType {
-			return nil, errortypes.NewConflictError("Document lineage does not belong to the selected resource")
+		if lineageInfo.ResourceID != req.ResourceID ||
+			lineageInfo.ResourceType != req.ResourceType {
+			return nil, errortypes.NewConflictError(
+				"Document lineage does not belong to the selected resource",
+			)
 		}
 		lineageID = lineageInfo.LineageID
 	}
@@ -349,7 +360,10 @@ func (s *Service) startThumbnailWorkflow(
 			ID:                                       workflowID,
 			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
-			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
+			StaticSummary: fmt.Sprintf(
+				"Generating thumbnail for document %s",
+				doc.ID,
+			),
 		},
 		"GenerateThumbnailWorkflow",
 		payload,
@@ -584,7 +598,10 @@ func (s *Service) BulkDelete(
 		Errors: make([]error, 0),
 	}
 
-	if slices.ContainsFunc(docs, func(doc *document.Document) bool { return doc.LineageID.IsNil() }) {
+	if slices.ContainsFunc(
+		docs,
+		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
+	) {
 		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			if txErr := s.detachUploadSessionsForDocuments(txCtx, documentIDs(docs), req.TenantInfo); txErr != nil {
 				log.Error("failed to clear upload session document references during bulk delete", zap.Error(txErr))
@@ -691,23 +708,23 @@ func (s *Service) BulkDelete(
 
 func (s *Service) detachUploadSessionsForDocuments(
 	ctx context.Context,
-	documentIDs []pulid.ID,
+	docIDs []pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	if len(documentIDs) == 0 {
+	if len(docIDs) == 0 {
 		return nil
 	}
 
 	db := s.db.DBForContext(ctx)
 	if db == nil {
-		if len(documentIDs) == 1 {
-			return s.sessionRepo.ClearDocumentReference(ctx, documentIDs[0], tenantInfo)
+		if len(docIDs) == 1 {
+			return s.sessionRepo.ClearDocumentReference(ctx, docIDs[0], tenantInfo)
 		}
-		return s.sessionRepo.ClearDocumentReferences(ctx, documentIDs, tenantInfo)
+		return s.sessionRepo.ClearDocumentReferences(ctx, docIDs, tenantInfo)
 	}
 
-	documentIDStrings := make([]string, 0, len(documentIDs))
-	for _, id := range documentIDs {
+	documentIDStrings := make([]string, 0, len(docIDs))
+	for _, id := range docIDs {
 		documentIDStrings = append(documentIDStrings, id.String())
 	}
 
@@ -776,7 +793,11 @@ func (s *Service) generateStoragePath(orgID, resourceType, filename string) stri
 	return fmt.Sprintf("%s/%s/%s%s", orgID, resourceType, uniqueID, strings.ToLower(ext))
 }
 
-func (s *Service) cleanupDocumentStorage(ctx context.Context, log *zap.Logger, doc *document.Document) {
+func (s *Service) cleanupDocumentStorage(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+) {
 	failedPaths := make([]string, 0, 2)
 
 	if err := s.deleteStoredObject(ctx, doc.StoragePath, doc.StorageVersionID); err != nil {
@@ -868,14 +889,18 @@ func (s *Service) enqueueStorageCleanup(
 	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:            fmt.Sprintf("document-storage-cleanup-%s-%d", documentID.String(), time.Now().Unix()),
+			ID: fmt.Sprintf(
+				"document-storage-cleanup-%s-%d",
+				documentID.String(),
+				timeutils.NowUnix(),
+			),
 			TaskQueue:     temporaltype.UploadTaskQueue,
 			StaticSummary: fmt.Sprintf("Cleaning up document storage for %s", documentID.String()),
 		},
 		"CleanupDocumentStorageWorkflow",
 		&documentuploadjobs.CleanupDocumentStoragePayload{
 			BasePayload: temporaltype.BasePayload{
-				Timestamp: time.Now().Unix(),
+				Timestamp: timeutils.NowUnix(),
 			},
 			DocumentID: documentID,
 			Paths:      paths,

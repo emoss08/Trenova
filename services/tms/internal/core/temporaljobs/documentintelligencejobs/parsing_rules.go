@@ -13,9 +13,9 @@ func (a *Activities) applyParsingRules(
 	tenantInfo pagination.TenantInfo,
 	fileName string,
 	providerFingerprint string,
-	extracted *extractionResult,
-	intelligence documentIntelligenceAnalysis,
-) documentIntelligenceAnalysis {
+	extracted *ExtractionResult,
+	intelligence *DocumentIntelligenceAnalysis,
+) *DocumentIntelligenceAnalysis {
 	if extracted == nil || intelligence.Kind != "RateConfirmation" || a.parsingRuleRuntime == nil {
 		return intelligence
 	}
@@ -38,7 +38,7 @@ func (a *Activities) applyParsingRules(
 	return fromParsingAnalysis(intelligence, result)
 }
 
-func toParsingPages(pages []pageExtractionResult) []services.DocumentParsingPage {
+func toParsingPages(pages []*PageExtractionResult) []services.DocumentParsingPage {
 	out := make([]services.DocumentParsingPage, 0, len(pages))
 	for _, page := range pages {
 		out = append(out, services.DocumentParsingPage{
@@ -49,7 +49,13 @@ func toParsingPages(pages []pageExtractionResult) []services.DocumentParsingPage
 	return out
 }
 
-func toParsingAnalysis(intelligence documentIntelligenceAnalysis) *services.DocumentParsingAnalysis {
+func toParsingAnalysis(
+	intelligence *DocumentIntelligenceAnalysis,
+) *services.DocumentParsingAnalysis {
+	if intelligence == nil {
+		return nil
+	}
+
 	fields := make(map[string]services.DocumentParsingField, len(intelligence.Fields))
 	for key, field := range intelligence.Fields {
 		fields[key] = services.DocumentParsingField{
@@ -111,16 +117,17 @@ func toParsingAnalysis(intelligence documentIntelligenceAnalysis) *services.Docu
 }
 
 func fromParsingAnalysis(
-	baseline documentIntelligenceAnalysis,
+	baseline *DocumentIntelligenceAnalysis,
 	analysis *services.DocumentParsingAnalysis,
-) documentIntelligenceAnalysis {
+) *DocumentIntelligenceAnalysis {
 	if analysis == nil {
 		return baseline
 	}
 
-	fields := make(map[string]reviewField, len(analysis.Fields))
-	for key, field := range analysis.Fields {
-		fields[key] = reviewField{
+	fields := make(map[string]*ReviewField, len(analysis.Fields))
+	for key := range analysis.Fields {
+		field := analysis.Fields[key]
+		fields[key] = &ReviewField{
 			Label:           field.Label,
 			Value:           field.Value,
 			Confidence:      field.Confidence,
@@ -133,9 +140,10 @@ func fromParsingAnalysis(
 		}
 	}
 
-	stops := make([]intelligenceStop, 0, len(analysis.Stops))
-	for _, stop := range analysis.Stops {
-		stops = append(stops, intelligenceStop{
+	stops := make([]*IntelligenceStop, 0, len(analysis.Stops))
+	for i := range analysis.Stops {
+		stop := analysis.Stops[i]
+		stops = append(stops, &IntelligenceStop{
 			Sequence:            stop.Sequence,
 			Role:                stop.Role,
 			Name:                stop.Name,
@@ -155,9 +163,9 @@ func fromParsingAnalysis(
 		})
 	}
 
-	conflicts := make([]reviewConflict, 0, len(analysis.Conflicts))
+	conflicts := make([]*ReviewConflict, 0, len(analysis.Conflicts))
 	for _, conflict := range analysis.Conflicts {
-		conflicts = append(conflicts, reviewConflict{
+		conflicts = append(conflicts, &ReviewConflict{
 			Key:             conflict.Key,
 			Label:           conflict.Label,
 			Values:          conflict.Values,

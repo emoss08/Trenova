@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -43,8 +43,10 @@ type Service struct {
 	auditService serviceports.AuditService
 }
 
-var _ serviceports.DocumentParsingRuleAdminService = (*Service)(nil)
-var _ serviceports.DocumentParsingRuleRuntime = (*Service)(nil)
+var (
+	_ serviceports.DocumentParsingRuleAdminService = (*Service)(nil)
+	_ serviceports.DocumentParsingRuleRuntime      = (*Service)(nil)
+)
 
 func New(p Params) *Service {
 	return &Service{
@@ -121,7 +123,14 @@ func (s *Service) UpdateRuleSet(
 		return nil, err
 	}
 
-	s.logAudit(ctx, updated, original, permission.OpUpdate, userID, "Document parsing rule set updated")
+	s.logAudit(
+		ctx,
+		updated,
+		original,
+		permission.OpUpdate,
+		userID,
+		"Document parsing rule set updated",
+	)
 	return updated, nil
 }
 
@@ -197,7 +206,14 @@ func (s *Service) CreateVersion(
 	}
 
 	created.RuleSet = set
-	s.logAudit(ctx, created, nil, permission.OpCreate, userID, "Document parsing rule version created")
+	s.logAudit(
+		ctx,
+		created,
+		nil,
+		permission.OpCreate,
+		userID,
+		"Document parsing rule version created",
+	)
 	return created, nil
 }
 
@@ -206,13 +222,16 @@ func (s *Service) UpdateVersion(
 	entity *documentparsingrule.RuleVersion,
 	userID pulid.ID,
 ) (*documentparsingrule.RuleVersion, error) {
-	original, _, err := s.repo.GetVersionWithRuleSet(ctx, repositories.GetDocumentParsingRuleVersionRequest{
-		ID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	original, _, err := s.repo.GetVersionWithRuleSet(
+		ctx,
+		repositories.GetDocumentParsingRuleVersionRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +254,14 @@ func (s *Service) UpdateVersion(
 		return nil, err
 	}
 
-	s.logAudit(ctx, updated, original, permission.OpUpdate, userID, "Document parsing rule version updated")
+	s.logAudit(
+		ctx,
+		updated,
+		original,
+		permission.OpUpdate,
+		userID,
+		"Document parsing rule version updated",
+	)
 	return updated, nil
 }
 
@@ -245,10 +271,13 @@ func (s *Service) PublishVersion(
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
 ) (*documentparsingrule.RuleVersion, error) {
-	version, set, err := s.repo.GetVersionWithRuleSet(ctx, repositories.GetDocumentParsingRuleVersionRequest{
-		ID:         id,
-		TenantInfo: tenantInfo,
-	})
+	version, set, err := s.repo.GetVersionWithRuleSet(
+		ctx,
+		repositories.GetDocumentParsingRuleVersionRequest{
+			ID:         id,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +293,9 @@ func (s *Service) PublishVersion(
 		return nil, err
 	}
 	if len(fixtures) == 0 {
-		return nil, errortypes.NewBusinessError("At least one fixture is required before publishing a parsing rule version")
+		return nil, errortypes.NewBusinessError(
+			"At least one fixture is required before publishing a parsing rule version",
+		)
 	}
 
 	summary, validationErr := s.validateFixturesAgainstVersion(version, set, fixtures)
@@ -276,7 +307,7 @@ func (s *Service) PublishVersion(
 		return nil, validationErr
 	}
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	previousState := jsonutils.MustToJSON(version)
 	version.Status = documentparsingrule.VersionStatusPublished
 	version.PublishedAt = &now
@@ -293,14 +324,30 @@ func (s *Service) PublishVersion(
 			return err
 		}
 
-		return s.repo.SetPublishedVersion(txCtx, set.ID, updated.ID, tenantInfo.OrgID, tenantInfo.BuID)
+		return s.repo.SetPublishedVersion(
+			txCtx,
+			set.ID,
+			updated.ID,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+		)
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "The parsing rule is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"The parsing rule is busy. Retry the request.",
+		)
 	}
 
 	updated.RuleSet = set
-	s.logAudit(ctx, updated, previousState, permission.OpActivate, userID, "Document parsing rule version published")
+	s.logAudit(
+		ctx,
+		updated,
+		previousState,
+		permission.OpActivate,
+		userID,
+		"Document parsing rule version published",
+	)
 	return updated, nil
 }
 
@@ -340,7 +387,14 @@ func (s *Service) SaveFixture(
 		if err != nil {
 			return nil, err
 		}
-		s.logAudit(ctx, created, nil, permission.OpCreate, userID, "Document parsing rule fixture created")
+		s.logAudit(
+			ctx,
+			created,
+			nil,
+			permission.OpCreate,
+			userID,
+			"Document parsing rule fixture created",
+		)
 		return created, nil
 	}
 
@@ -361,7 +415,14 @@ func (s *Service) SaveFixture(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(ctx, updated, original, permission.OpUpdate, userID, "Document parsing rule fixture updated")
+	s.logAudit(
+		ctx,
+		updated,
+		original,
+		permission.OpUpdate,
+		userID,
+		"Document parsing rule fixture updated",
+	)
 	return updated, nil
 }
 
@@ -381,7 +442,14 @@ func (s *Service) DeleteFixture(
 	}); err != nil {
 		return err
 	}
-	s.logAudit(ctx, nil, original, permission.OpDelete, userID, "Document parsing rule fixture deleted")
+	s.logAudit(
+		ctx,
+		nil,
+		original,
+		permission.OpDelete,
+		userID,
+		"Document parsing rule fixture deleted",
+	)
 	return nil
 }
 
@@ -407,7 +475,8 @@ func (s *Service) ApplyPublished(
 		ProviderMatched:  providerMatched,
 		MatchSpecificity: score,
 	}
-	if selected.Version.ParserMode == documentparsingrule.ParserModeOverrideBase || baseline == nil {
+	if selected.Version.ParserMode == documentparsingrule.ParserModeOverrideBase ||
+		baseline == nil {
 		return candidate, nil
 	}
 	return mergeAnalyses(baseline, candidate), nil
@@ -417,10 +486,13 @@ func (s *Service) SimulateVersion(
 	ctx context.Context,
 	req *serviceports.DocumentParsingSimulationRequest,
 ) (*serviceports.DocumentParsingSimulationResult, error) {
-	version, set, err := s.repo.GetVersionWithRuleSet(ctx, repositories.GetDocumentParsingRuleVersionRequest{
-		ID:         req.VersionID,
-		TenantInfo: req.TenantInfo,
-	})
+	version, set, err := s.repo.GetVersionWithRuleSet(
+		ctx,
+		repositories.GetDocumentParsingRuleVersionRequest{
+			ID:         req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -472,7 +544,11 @@ func (s *Service) selectPublishedVersion(
 	if input == nil || strings.TrimSpace(input.DocumentKind) == "" {
 		return nil, 0, "", nil
 	}
-	published, err := s.repo.ListPublishedVersionsByDocumentKind(ctx, input.TenantInfo, input.DocumentKind)
+	published, err := s.repo.ListPublishedVersionsByDocumentKind(
+		ctx,
+		input.TenantInfo,
+		input.DocumentKind,
+	)
 	if err != nil {
 		return nil, 0, "", err
 	}
@@ -546,7 +622,9 @@ func (s *Service) validateFixturesAgainstVersion(
 		"failures":     failures,
 	}
 	if len(failures) > 0 {
-		return summary, errortypes.NewBusinessError("Fixture validation failed for the parsing rule version")
+		return summary, errortypes.NewBusinessError(
+			"Fixture validation failed for the parsing rule version",
+		)
 	}
 	return summary, nil
 }
@@ -662,14 +740,19 @@ func validateFixtureAssertions(
 		}
 	}
 	if assertions.MinimumStopCount > 0 && len(analysis.Stops) < assertions.MinimumStopCount {
-		return fmt.Errorf("expected at least %d stops, got %d", assertions.MinimumStopCount, len(analysis.Stops))
+		return fmt.Errorf(
+			"expected at least %d stops, got %d",
+			assertions.MinimumStopCount,
+			len(analysis.Stops),
+		)
 	}
 	for _, role := range assertions.RequiredStopRoles {
 		if !analysisHasStopRole(analysis, role) {
 			return fmt.Errorf("expected stop role %q was not extracted", role)
 		}
 	}
-	if status := strings.TrimSpace(assertions.ReviewStatus); status != "" && status != analysis.ReviewStatus {
+	if status := strings.TrimSpace(assertions.ReviewStatus); status != "" &&
+		status != analysis.ReviewStatus {
 		return fmt.Errorf("expected review status %q, got %q", status, analysis.ReviewStatus)
 	}
 	return nil
@@ -771,7 +854,9 @@ func diffAnalyses(
 			diff.AddedStopRoles = append(diff.AddedStopRoles, stop.Role)
 			continue
 		}
-		if stop.Name != baseStop.Name || stop.AddressLine1 != baseStop.AddressLine1 || stop.Date != baseStop.Date || stop.TimeWindow != baseStop.TimeWindow {
+		if stop.Name != baseStop.Name || stop.AddressLine1 != baseStop.AddressLine1 ||
+			stop.Date != baseStop.Date ||
+			stop.TimeWindow != baseStop.TimeWindow {
 			diff.ChangedStopRoles = append(diff.ChangedStopRoles, stop.Role)
 		}
 	}
@@ -782,7 +867,10 @@ func diffAnalyses(
 	return diff
 }
 
-func findStopByRole(stops []serviceports.DocumentParsingStop, role string) (serviceports.DocumentParsingStop, bool) {
+func findStopByRole(
+	stops []serviceports.DocumentParsingStop,
+	role string,
+) (serviceports.DocumentParsingStop, bool) {
 	for _, stop := range stops {
 		if strings.EqualFold(stop.Role, role) {
 			return stop, true

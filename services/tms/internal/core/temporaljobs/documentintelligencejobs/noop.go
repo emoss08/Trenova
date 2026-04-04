@@ -16,28 +16,28 @@ func (noopAIDocumentService) RouteDocument(
 	context.Context,
 	*services.AIRouteRequest,
 ) (*services.AIRouteResult, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) ExtractRateConfirmation(
 	context.Context,
 	*services.AIExtractRequest,
 ) (*services.AIExtractResult, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) SubmitRateConfirmationBackgroundExtraction(
 	context.Context,
 	*services.AIExtractRequest,
 ) (*services.AIBackgroundExtractSubmission, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopAIDocumentService) PollRateConfirmationBackgroundExtraction(
 	context.Context,
 	*services.AIBackgroundExtractPollRequest,
 ) (*services.AIBackgroundExtractPollResult, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }
 
 type noopDocumentSearchProjectionService struct{}
@@ -80,12 +80,12 @@ func (noopDocumentParsingRuleRuntime) ApplyPublished(
 	*services.DocumentParsingRuntimeInput,
 	*services.DocumentParsingAnalysis,
 ) (*services.DocumentParsingAnalysis, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }
 
 func (noopDocumentParsingRuleRuntime) SimulateVersion(
 	context.Context,
 	*services.DocumentParsingSimulationRequest,
 ) (*services.DocumentParsingSimulationResult, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // intentional noop
 }

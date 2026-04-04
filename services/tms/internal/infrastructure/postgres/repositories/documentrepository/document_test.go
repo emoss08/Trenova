@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -335,7 +336,7 @@ func createTestDocument(
 	fixtures *testFixtures,
 	opts ...func(*document.Document),
 ) *document.Document {
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	doc := &document.Document{
 		ID:             pulid.MustNew("doc_"),
 		OrganizationID: fixtures.orgID,

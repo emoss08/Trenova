@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -15,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 
@@ -79,7 +79,7 @@ func (s *Service) GetWorkerSyncReadiness(
 		SyncedActiveWorkers:    counts.SyncedActiveWorkers,
 		UnsyncedActiveWorkers:  unsyncedActiveWorkers,
 		AllActiveWorkersSynced: unsyncedActiveWorkers == 0,
-		LastCalculatedAt:       time.Now().Unix(),
+		LastCalculatedAt:       timeutils.NowUnix(),
 	}, nil
 }
 
@@ -162,7 +162,7 @@ func (s *Service) DetectWorkerSyncDrift(
 		}
 	}
 
-	detectedAt := time.Now().Unix()
+	detectedAt := timeutils.NowUnix()
 	drifts := make([]repositories.WorkerSyncDriftRecord, 0)
 	for _, currentWorker := range workers {
 		drifts = append(

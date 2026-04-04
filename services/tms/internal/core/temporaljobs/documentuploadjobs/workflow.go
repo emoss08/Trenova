@@ -53,7 +53,11 @@ func FinalizeDocumentUploadWorkflow(
 	var a *Activities
 	var result *FinalizeUploadResult
 
-	if err := workflow.ExecuteActivity(ctx, a.FinalizeUploadActivity, payload).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(
+		ctx,
+		a.FinalizeUploadActivity,
+		payload,
+	).Get(ctx, &result); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +82,11 @@ func ReconcileDocumentUploadsWorkflow(
 		Limit:               100,
 	}
 
-	if err := workflow.ExecuteActivity(ctx, a.ReconcileUploadsActivity, payload).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(
+		ctx,
+		a.ReconcileUploadsActivity,
+		payload,
+	).Get(ctx, &result); err != nil {
 		return nil, err
 	}
 

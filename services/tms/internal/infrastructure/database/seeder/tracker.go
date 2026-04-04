@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -120,7 +121,7 @@ func (t *Tracker) RecordSuccess(
 		Version:     seed.Version(),
 		Environment: env,
 		Checksum:    t.calculateChecksum(seed),
-		AppliedAt:   time.Now().Unix(),
+		AppliedAt:   timeutils.NowUnix(),
 		AppliedBy:   "system",
 		Status:      SeedStatusActive,
 		Details:     make(map[string]any),
@@ -137,7 +138,6 @@ func (t *Tracker) RecordSuccess(
 		Set("duration_ms = EXCLUDED.duration_ms").
 		Set("error = NULL").
 		Exec(ctx)
-
 	if err != nil {
 		return fmt.Errorf("failed to record seed success: %w", err)
 	}
@@ -157,7 +157,7 @@ func (t *Tracker) RecordFailure(
 		Version:     seed.Version(),
 		Environment: env,
 		Checksum:    t.calculateChecksum(seed),
-		AppliedAt:   time.Now().Unix(),
+		AppliedAt:   timeutils.NowUnix(),
 		AppliedBy:   "system",
 		Status:      SeedStatusInactive,
 		Details:     make(map[string]any),
@@ -171,7 +171,6 @@ func (t *Tracker) RecordFailure(
 		Set("status = EXCLUDED.status").
 		Set("error = EXCLUDED.error").
 		Exec(ctx)
-
 	if err != nil {
 		return fmt.Errorf("failed to record seed failure: %w", err)
 	}
@@ -211,7 +210,6 @@ func (t *Tracker) MarkOrphaned(ctx context.Context, name string, env common.Envi
 		Where("name = ?", name).
 		Where("environment = ?", env).
 		Exec(ctx)
-
 	if err != nil {
 		return fmt.Errorf("failed to mark seed as orphaned: %w", err)
 	}

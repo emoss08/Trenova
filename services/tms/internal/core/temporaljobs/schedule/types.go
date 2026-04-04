@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 )
@@ -151,7 +152,7 @@ func (s *Schedule) ToScheduleOptions() client.ScheduleOptions {
 		Spec:   spec,
 		Paused: s.Paused,
 		Action: &client.ScheduleWorkflowAction{
-			ID:        fmt.Sprintf("%s-%d", workflowIDPrefix, time.Now().Unix()),
+			ID:        fmt.Sprintf("%s-%d", workflowIDPrefix, timeutils.NowUnix()),
 			Workflow:  s.Workflow,
 			TaskQueue: s.TaskQueue,
 			Args:      s.Args,

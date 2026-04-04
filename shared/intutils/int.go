@@ -11,6 +11,13 @@ type Numeric interface {
 		~float32 | ~float64
 }
 
+func SafeUint32ToUint8(value uint32) uint8 {
+	if value > math.MaxUint8 {
+		return math.MaxUint8
+	}
+	return uint8(value) //nolint:gosec // safe: checked above
+}
+
 func SafeIntToUint32(value int) uint32 {
 	if value > math.MaxUint32 || value < 0 {
 		return 0
@@ -62,4 +69,19 @@ func ClonePointer[T Numeric](value *T) *T {
 
 	cloned := *value
 	return &cloned
+}
+
+func IntValue(v any) int {
+	switch value := v.(type) {
+	case int:
+		return value
+	case int32:
+		return int(value)
+	case int64:
+		return int(value)
+	case float64:
+		return int(value)
+	default:
+		return 0
+	}
 }

@@ -4,41 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
-
-type Status string
-
-const (
-	StatusInitiated   Status = "Initiated"
-	StatusUploading   Status = "Uploading"
-	StatusUploaded    Status = "Uploaded"
-	StatusVerifying   Status = "Verifying"
-	StatusFinalizing  Status = "Finalizing"
-	StatusPaused      Status = "Paused"
-	StatusCompleting  Status = "Completing"
-	StatusCompleted   Status = "Completed"
-	StatusAvailable   Status = "Available"
-	StatusQuarantined Status = "Quarantined"
-	StatusFailed      Status = "Failed"
-	StatusCanceled    Status = "Canceled"
-	StatusExpired     Status = "Expired"
-)
-
-type Strategy string
-
-const (
-	StrategySingle    Strategy = "single"
-	StrategyMultipart Strategy = "multipart"
-)
-
-type UploadedPart struct {
-	PartNumber int    `json:"partNumber"`
-	ETag       string `json:"etag"`
-	Size       int64  `json:"size"`
-}
 
 type Session struct {
 	bun.BaseModel `bun:"table:document_upload_sessions,alias:dus" json:"-"`
@@ -61,7 +31,7 @@ type Session struct {
 	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'"`
 	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero"`
 	Tags                    []string                   `json:"tags"                    bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	UploadedParts           []UploadedPart             `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'::jsonb"`
+	UploadedParts           []storage.UploadedPart     `json:"uploadedParts"           bun:"uploaded_parts,type:JSONB,notnull,default:'[]'::jsonb"`
 	PartSize                int64                      `json:"partSize"                bun:"part_size,type:BIGINT,notnull,default:0"`
 	FailureCode             string                     `json:"failureCode"             bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureMessage          string                     `json:"failureMessage"          bun:"failure_message,type:TEXT,nullzero"`
@@ -103,7 +73,7 @@ func (s *Session) GetTableName() string {
 }
 
 func (s Status) IsTerminal() bool {
-	switch s {
+	switch s { //nolint:exhaustive // we only want to check for the terminal statuses
 	case StatusCompleted,
 		StatusAvailable,
 		StatusQuarantined,
@@ -116,9 +86,18 @@ func (s Status) IsTerminal() bool {
 	}
 }
 
+func (s Status) IsDocumentReady() bool {
+	switch s { //nolint:exhaustive // we only want to check for the document ready statuses
+	case StatusAvailable, StatusCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *Session) MarkSuperseded(now int64) {
 	s.Status = StatusCanceled
-	s.FailureCode = "SUPERSEDED_BY_NEWER_SESSION"
+	s.FailureCode = FailureCodeSuspendedByNewerSession.String()
 	s.FailureMessage = "Superseded by a newer upload session"
 	s.LastActivityAt = now
 }

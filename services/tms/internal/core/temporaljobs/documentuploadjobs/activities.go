@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -24,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	goredis "github.com/redis/go-redis/v9"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
@@ -59,6 +59,7 @@ type Activities struct {
 	documentIntelligence services.DocumentContentService
 }
 
+//nolint:gocritic // dependency injection param
 func NewActivities(p ActivitiesParams) *Activities {
 	documentIntelligence := p.DocumentIntelligence
 	if documentIntelligence == nil {
@@ -115,43 +116,8 @@ func (a *Activities) FinalizeUploadActivity(
 
 	defer a.releaseCompletionLease(ctx, session.ID.String())
 
-	if superseded, err := a.cancelSupersededSession(ctx, session); err != nil {
-		return nil, err
-	} else if superseded {
-		return &FinalizeUploadResult{
-			SessionID: session.ID,
-			Status:    string(session.Status),
-		}, nil
-	}
-
-	if session.DocumentID != nil && (session.Status == documentupload.StatusAvailable || session.Status == documentupload.StatusCompleted) {
-		previewPath := a.ensureThumbnailForSession(ctx, session)
-		return &FinalizeUploadResult{
-			SessionID:   session.ID,
-			DocumentID:  session.DocumentID,
-			Status:      string(session.Status),
-			PreviewPath: previewPath,
-		}, nil
-	}
-
-	if session.DocumentID != nil {
-		if doc := a.getDocumentForSession(ctx, session); doc != nil {
-			session.Status = documentupload.StatusAvailable
-			session.FailureCode = ""
-			session.FailureMessage = ""
-			session.LastActivityAt = time.Now().Unix()
-			if _, err = a.sessionRepo.Update(ctx, session); err != nil {
-				return nil, err
-			}
-
-			previewPath := a.ensureThumbnailForDocument(ctx, doc)
-			return &FinalizeUploadResult{
-				SessionID:   session.ID,
-				DocumentID:  &doc.ID,
-				Status:      string(session.Status),
-				PreviewPath: previewPath,
-			}, nil
-		}
+	if res, done, earlyErr := a.finalizeUploadEarlyOutcomes(ctx, session); earlyErr != nil || done {
+		return res, earlyErr
 	}
 
 	if err = a.updateStatus(ctx, session, documentupload.StatusVerifying); err != nil {
@@ -164,27 +130,8 @@ func (a *Activities) FinalizeUploadActivity(
 		return nil, err
 	}
 
-	if session.Strategy == documentupload.StrategyMultipart {
-		if len(parts) == 0 {
-			return nil, a.failSession(ctx, session, "NO_UPLOADED_PARTS", "No uploaded parts were found for this session")
-		}
-
-		if err = a.storage.CompleteMultipartUpload(ctx, &storage.CompleteMultipartUploadParams{
-			Key:      session.StoragePath,
-			UploadID: session.StorageProviderUploadID,
-			Parts:    parts,
-		}); err != nil && !isAlreadyCompletedUploadError(err) {
-			return nil, a.failSession(ctx, session, "MULTIPART_COMPLETE_FAILED", "Failed to finalize multipart upload")
-		}
-	}
-
-	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
-	if err != nil {
-		return nil, a.failSession(ctx, session, "FILE_INFO_FAILED", "Failed to verify uploaded file")
-	}
-
-	if fileInfo.Size != session.FileSize {
-		return nil, a.failSession(ctx, session, "FILE_SIZE_MISMATCH", "Uploaded file size does not match the original file")
+	if err = a.finalizeValidateStoredObject(ctx, session, parts); err != nil {
+		return nil, err
 	}
 
 	if err = a.updateStatus(ctx, session, documentupload.StatusFinalizing); err != nil {
@@ -194,16 +141,130 @@ func (a *Activities) FinalizeUploadActivity(
 
 	doc, err := a.ensureDocument(ctx, session, payload.UserID)
 	if err != nil {
-		return nil, a.failSession(ctx, session, "DOCUMENT_CREATE_FAILED", "Failed to create document record")
+		return nil, a.failSession(
+			ctx,
+			session,
+			documentupload.FailureDocumentCreateFailed.String(),
+			"Failed to create document record",
+		)
 	}
 
+	return a.finalizeUploadPersistDocument(ctx, session, parts, doc, payload)
+}
+
+func (a *Activities) finalizeUploadEarlyOutcomes(
+	ctx context.Context,
+	session *documentupload.Session,
+) (*FinalizeUploadResult, bool, error) {
+	superseded, supersededErr := a.cancelSupersededSession(ctx, session)
+	if supersededErr != nil {
+		return nil, false, supersededErr
+	}
+	if superseded {
+		return &FinalizeUploadResult{
+			SessionID: session.ID,
+			Status:    string(session.Status),
+		}, true, nil
+	}
+
+	if session.DocumentID != nil && session.Status.IsDocumentReady() {
+		previewPath := a.ensureThumbnailForSession(ctx, session)
+		return &FinalizeUploadResult{
+			SessionID:   session.ID,
+			DocumentID:  session.DocumentID,
+			Status:      string(session.Status),
+			PreviewPath: previewPath,
+		}, true, nil
+	}
+
+	if session.DocumentID != nil {
+		if doc := a.getDocumentForSession(ctx, session); doc != nil {
+			session.Status = documentupload.StatusAvailable
+			session.FailureCode = ""
+			session.FailureMessage = ""
+			session.LastActivityAt = timeutils.NowUnix()
+			if _, err := a.sessionRepo.Update(ctx, session); err != nil {
+				return nil, false, err
+			}
+
+			previewPath := a.ensureThumbnailForDocument(ctx, doc)
+			return &FinalizeUploadResult{
+				SessionID:   session.ID,
+				DocumentID:  &doc.ID,
+				Status:      string(session.Status),
+				PreviewPath: previewPath,
+			}, true, nil
+		}
+	}
+
+	return nil, false, nil
+}
+
+func (a *Activities) finalizeValidateStoredObject(
+	ctx context.Context,
+	session *documentupload.Session,
+	parts []storage.UploadedPart,
+) error {
+	if session.Strategy == documentupload.StrategyMultipart {
+		if len(parts) == 0 {
+			return a.failSession(
+				ctx,
+				session,
+				documentupload.FailureNoUploadParts.String(),
+				"No uploaded parts were found for this session",
+			)
+		}
+
+		if err := a.storage.CompleteMultipartUpload(ctx, &storage.CompleteMultipartUploadParams{
+			Key:      session.StoragePath,
+			UploadID: session.StorageProviderUploadID,
+			Parts:    parts,
+		}); err != nil && !storage.IsMissingMultipartUploadError(err) {
+			return a.failSession(
+				ctx,
+				session,
+				documentupload.FailureMultipartCompleteFailed.String(),
+				"Failed to finalize multipart upload",
+			)
+		}
+	}
+
+	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
+	if err != nil {
+		return a.failSession(
+			ctx,
+			session,
+			documentupload.FailureFileInfoFailed.String(),
+			"Failed to verify uploaded file",
+		)
+	}
+
+	if fileInfo.Size != session.FileSize {
+		return a.failSession(
+			ctx,
+			session,
+			documentupload.FailureFileSizeMismatch.String(),
+			"Uploaded file size does not match the original file",
+		)
+	}
+
+	return nil
+}
+
+func (a *Activities) finalizeUploadPersistDocument(
+	ctx context.Context,
+	session *documentupload.Session,
+	parts []storage.UploadedPart,
+	doc *document.Document,
+	payload *FinalizeUploadPayload,
+) (*FinalizeUploadResult, error) {
 	session.DocumentID = &doc.ID
 	session.UploadedParts = toDomainUploadedParts(parts)
 	session.Status = documentupload.StatusAvailable
 	session.FailureCode = ""
 	session.FailureMessage = ""
-	session.LastActivityAt = time.Now().Unix()
-	if _, err = a.sessionRepo.Update(ctx, session); err != nil {
+	session.LastActivityAt = timeutils.NowUnix()
+	if _, err := a.sessionRepo.Update(ctx, session); err != nil {
 		return nil, err
 	}
 
@@ -218,7 +279,7 @@ func (a *Activities) FinalizeUploadActivity(
 	return &FinalizeUploadResult{
 		SessionID:   session.ID,
 		DocumentID:  &doc.ID,
-		Status:      string(session.Status),
+		Status:      session.Status.String(),
 		PreviewPath: previewPath,
 	}, nil
 }
@@ -233,7 +294,12 @@ func (a *Activities) ReconcileUploadsActivity(
 	expiresBefore := now.Unix()
 	previewBefore := now.Add(-time.Duration(payload.PendingAfterSeconds) * time.Second).Unix()
 
-	sessions, err := a.sessionRepo.ListForReconciliation(ctx, staleBefore, expiresBefore, payload.Limit)
+	sessions, err := a.sessionRepo.ListForReconciliation(
+		ctx,
+		staleBefore,
+		expiresBefore,
+		payload.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +329,8 @@ func (a *Activities) ReconcileUploadsActivity(
 	}
 
 	for _, doc := range docs {
-		if a.ensureThumbnailForDocument(ctx, doc) != "" || doc.PreviewStatus == document.PreviewStatusPending {
+		if a.ensureThumbnailForDocument(ctx, doc) != "" ||
+			doc.PreviewStatus == document.PreviewStatusPending {
 			result.PreviewRetriesStarted++
 		}
 	}
@@ -280,7 +347,8 @@ func (a *Activities) CleanupDocumentStorageActivity(
 			continue
 		}
 		if err := a.deleteStoredObject(ctx, path); err != nil {
-			return temporaltype.NewRetryableError("Failed to cleanup document storage", err).ToTemporalError()
+			return temporaltype.NewRetryableError("Failed to cleanup document storage", err).
+				ToTemporalError()
 		}
 	}
 
@@ -313,7 +381,7 @@ func (a *Activities) updateStatus(
 	status documentupload.Status,
 ) error {
 	session.Status = status
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	_, err := a.sessionRepo.Update(ctx, session)
 	return err
 }
@@ -327,7 +395,7 @@ func (a *Activities) failSession(
 	session.Status = documentupload.StatusFailed
 	session.FailureCode = code
 	session.FailureMessage = message
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	_, err := a.sessionRepo.Update(ctx, session)
 	if err != nil {
 		return err
@@ -350,13 +418,16 @@ func (a *Activities) ensureDocument(
 		})
 	}
 
-	existing, err := a.documentRepo.GetByStoragePath(ctx, repositories.GetDocumentByStoragePathRequest{
-		StoragePath: session.StoragePath,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: session.OrganizationID,
-			BuID:  session.BusinessUnitID,
+	existing, err := a.documentRepo.GetByStoragePath(
+		ctx,
+		repositories.GetDocumentByStoragePathRequest{
+			StoragePath: session.StoragePath,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err == nil {
 		return existing, nil
 	}
@@ -369,6 +440,15 @@ func (a *Activities) ensureDocument(
 		return nil, err
 	}
 
+	return a.createDocumentWithRetryLoop(ctx, session, userID, fileInfo)
+}
+
+func (a *Activities) createDocumentWithRetryLoop(
+	ctx context.Context,
+	session *documentupload.Session,
+	userID pulid.ID,
+	fileInfo *storage.FileInfo,
+) (*document.Document, error) {
 	const maxCreateAttempts = 3
 	for attempt := 0; attempt < maxCreateAttempts; attempt++ {
 		lineageID, versionNumber, previousDoc, resolveErr := a.resolveLineageState(ctx, session)
@@ -376,78 +456,45 @@ func (a *Activities) ensureDocument(
 			return nil, resolveErr
 		}
 
-		doc := &document.Document{
-			LineageID:          lineageID,
-			VersionNumber:      versionNumber,
-			IsCurrentVersion:   previousDoc == nil,
-			OrganizationID:     session.OrganizationID,
-			BusinessUnitID:     session.BusinessUnitID,
-			FileName:           filepath.Base(session.StoragePath),
-			OriginalName:       session.OriginalName,
-			FileSize:           session.FileSize,
-			FileType:           session.ContentType,
-			StoragePath:        session.StoragePath,
-			StorageVersionID:   fileInfo.VersionID,
-			Status:             document.StatusActive,
-			Description:        session.Description,
-			ResourceID:         session.ResourceID,
-			ResourceType:       session.ResourceType,
-			ProcessingProfile:  session.ProcessingProfile,
-			Tags:               session.Tags,
-			UploadedByID:       userID,
-			PreviewStoragePath: "",
-			PreviewStatus:      previewStatusForFileType(session.ContentType),
-			DocumentTypeID:     session.DocumentTypeID,
-		}
+		doc := a.newDocumentForUpload(
+			session,
+			fileInfo,
+			lineageID,
+			versionNumber,
+			previousDoc,
+			userID,
+		)
 
 		createdDoc, createErr := a.documentRepo.Create(ctx, doc)
 		if createErr != nil {
-			if dberror.IsUniqueConstraintViolation(createErr) {
-				if existingDoc, existingErr := a.documentRepo.GetByStoragePath(ctx, repositories.GetDocumentByStoragePathRequest{
-					StoragePath: session.StoragePath,
-					TenantInfo: pagination.TenantInfo{
-						OrgID: session.OrganizationID,
-						BuID:  session.BusinessUnitID,
-					},
-				}); existingErr == nil {
-					return existingDoc, nil
-				}
-
-				if attempt < maxCreateAttempts-1 {
-					continue
-				}
+			recovered, retry, dupErr := a.recoverDocumentCreateAfterUniqueConflict(
+				ctx,
+				session,
+				createErr,
+				attempt,
+				maxCreateAttempts,
+			)
+			if dupErr != nil {
+				return nil, dupErr
 			}
-			return nil, createErr
+			if recovered != nil {
+				return recovered, nil
+			}
+			if retry {
+				continue
+			}
 		}
 
-		if previousDoc != nil {
-			if err = a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
-				LineageID:         lineageID,
-				CurrentDocumentID: createdDoc.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: session.OrganizationID,
-					BuID:  session.BusinessUnitID,
-				},
-			}); err != nil {
-				return nil, err
-			}
-			_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
-				OrgID: session.OrganizationID,
-				BuID:  session.BusinessUnitID,
-			})
+		if err := a.finalizeCreatedDocumentUpload(
+			ctx,
+			session,
+			userID,
+			createdDoc,
+			previousDoc,
+			lineageID,
+		); err != nil {
+			return nil, err
 		}
-		createdDoc.IsCurrentVersion = true
-
-		_ = a.auditService.LogAction(&services.LogActionParams{
-			Resource:       permission.ResourceDocument,
-			ResourceID:     createdDoc.GetID().String(),
-			Operation:      permission.OpCreate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(createdDoc),
-			OrganizationID: createdDoc.OrganizationID,
-			BusinessUnitID: createdDoc.BusinessUnitID,
-		}, auditservice.WithComment("Document uploaded"))
-		a.syncSearchProjection(ctx, createdDoc, "")
 
 		return createdDoc, nil
 	}
@@ -457,6 +504,109 @@ func (a *Activities) ensureDocument(
 		"document-upload-finalization",
 		nil,
 	)
+}
+
+func (a *Activities) newDocumentForUpload(
+	session *documentupload.Session,
+	fileInfo *storage.FileInfo,
+	lineageID pulid.ID,
+	versionNumber int64,
+	previousDoc *document.Document,
+	userID pulid.ID,
+) *document.Document {
+	return &document.Document{
+		LineageID:          lineageID,
+		VersionNumber:      versionNumber,
+		IsCurrentVersion:   previousDoc == nil,
+		OrganizationID:     session.OrganizationID,
+		BusinessUnitID:     session.BusinessUnitID,
+		FileName:           filepath.Base(session.StoragePath),
+		OriginalName:       session.OriginalName,
+		FileSize:           session.FileSize,
+		FileType:           session.ContentType,
+		StoragePath:        session.StoragePath,
+		StorageVersionID:   fileInfo.VersionID,
+		Status:             document.StatusActive,
+		Description:        session.Description,
+		ResourceID:         session.ResourceID,
+		ResourceType:       session.ResourceType,
+		ProcessingProfile:  session.ProcessingProfile,
+		Tags:               session.Tags,
+		UploadedByID:       userID,
+		PreviewStoragePath: "",
+		PreviewStatus:      previewStatusForFileType(session.ContentType),
+		DocumentTypeID:     session.DocumentTypeID,
+	}
+}
+
+func (a *Activities) finalizeCreatedDocumentUpload(
+	ctx context.Context,
+	session *documentupload.Session,
+	userID pulid.ID,
+	createdDoc *document.Document,
+	previousDoc *document.Document,
+	lineageID pulid.ID,
+) error {
+	if previousDoc != nil {
+		if err := a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
+			LineageID:         lineageID,
+			CurrentDocumentID: createdDoc.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
+		}); err != nil {
+			return err
+		}
+		_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		})
+	}
+	createdDoc.IsCurrentVersion = true
+
+	_ = a.auditService.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceDocument,
+		ResourceID:     createdDoc.GetID().String(),
+		Operation:      permission.OpCreate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(createdDoc),
+		OrganizationID: createdDoc.OrganizationID,
+		BusinessUnitID: createdDoc.BusinessUnitID,
+	}, auditservice.WithComment("Document uploaded"))
+	a.syncSearchProjection(ctx, createdDoc, "")
+	return nil
+}
+
+func (a *Activities) recoverDocumentCreateAfterUniqueConflict(
+	ctx context.Context,
+	session *documentupload.Session,
+	createErr error,
+	attempt, maxAttempts int,
+) (*document.Document, bool, error) {
+	if !dberror.IsUniqueConstraintViolation(createErr) {
+		return nil, false, createErr
+	}
+
+	existingDoc, getErr := a.documentRepo.GetByStoragePath(
+		ctx,
+		repositories.GetDocumentByStoragePathRequest{
+			StoragePath: session.StoragePath,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
+		},
+	)
+	if getErr == nil {
+		return existingDoc, false, nil
+	}
+
+	if attempt < maxAttempts-1 {
+		return nil, true, nil
+	}
+
+	return nil, false, createErr
 }
 
 func (a *Activities) resolveLineageState(
@@ -506,17 +656,21 @@ func (a *Activities) reconcileSession(
 	ctx context.Context,
 	session *documentupload.Session,
 	expiresBefore int64,
-) (expired bool, finalize bool, err error) {
-	if superseded, err := a.cancelSupersededSession(ctx, session); err != nil {
-		return false, false, err
+) (expired, finalize bool, err error) {
+	if superseded, supersededErr := a.cancelSupersededSession(ctx, session); supersededErr != nil {
+		return false, false, supersededErr
 	} else if superseded {
 		return false, false, nil
 	}
 
-	switch session.Status {
-	case documentupload.StatusUploaded, documentupload.StatusVerifying, documentupload.StatusFinalizing:
+	switch session.Status { //nolint:exhaustive // we only want to check for the finalizable statuses
+	case documentupload.StatusUploaded,
+		documentupload.StatusVerifying,
+		documentupload.StatusFinalizing:
 		return false, a.startFinalizeWorkflowForSession(ctx, session), nil
-	case documentupload.StatusInitiated, documentupload.StatusUploading, documentupload.StatusPaused:
+	case documentupload.StatusInitiated,
+		documentupload.StatusUploading,
+		documentupload.StatusPaused:
 		if session.ExpiresAt <= expiresBefore {
 			return true, false, a.expireSession(ctx, session)
 		}
@@ -532,7 +686,7 @@ func (a *Activities) reconcileSession(
 		session.Status = documentupload.StatusUploaded
 		session.FailureCode = ""
 		session.FailureMessage = ""
-		session.LastActivityAt = time.Now().Unix()
+		session.LastActivityAt = timeutils.NowUnix()
 		if _, err = a.sessionRepo.Update(ctx, session); err != nil {
 			return false, false, err
 		}
@@ -550,14 +704,15 @@ func (a *Activities) isSessionReadyToFinalize(
 	if session.Strategy == documentupload.StrategySingle {
 		info, err := a.storage.GetFileInfo(ctx, session.StoragePath)
 		if err != nil {
-			return false, nil
+			return false, nil //nolint:nilerr // we want to return false if we can't get the file info
 		}
+
 		return info.Size == session.FileSize, nil
 	}
 
 	parts, err := a.getUploadedParts(ctx, session)
 	if err != nil {
-		if isMissingMultipartUploadError(err) {
+		if storage.IsMissingMultipartUploadError(err) {
 			return false, nil
 		}
 		return false, err
@@ -581,7 +736,8 @@ func (a *Activities) isSessionReadyToFinalize(
 }
 
 func (a *Activities) expireSession(ctx context.Context, session *documentupload.Session) error {
-	if session.Strategy == documentupload.StrategyMultipart && session.StorageProviderUploadID != "" {
+	if session.Strategy == documentupload.StrategyMultipart &&
+		session.StorageProviderUploadID != "" {
 		_ = a.storage.AbortMultipartUpload(ctx, &storage.AbortMultipartUploadParams{
 			Key:      session.StoragePath,
 			UploadID: session.StorageProviderUploadID,
@@ -589,9 +745,9 @@ func (a *Activities) expireSession(ctx context.Context, session *documentupload.
 	}
 
 	session.Status = documentupload.StatusExpired
-	session.FailureCode = "SESSION_EXPIRED"
+	session.FailureCode = documentupload.FailureSessionExpired.String()
 	session.FailureMessage = "Upload session expired before completion"
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	_, err := a.sessionRepo.Update(ctx, session)
 	return err
 }
@@ -609,7 +765,7 @@ func (a *Activities) getUploadedParts(
 	}
 
 	if len(session.UploadedParts) > 0 {
-		return fromDomainUploadedParts(session.UploadedParts), nil
+		return storage.ToDomainParts(session.UploadedParts), nil
 	}
 
 	return a.storage.ListMultipartUploadParts(ctx, &storage.ListMultipartUploadPartsParams{
@@ -629,17 +785,23 @@ func (a *Activities) startFinalizeWorkflowForSession(
 	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:                                       fmt.Sprintf("document-upload-finalize-%s", session.ID.String()),
+			ID: fmt.Sprintf(
+				"document-upload-finalize-%s",
+				session.ID.String(),
+			),
 			TaskQueue:                                temporaltype.UploadTaskQueue,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
-			StaticSummary:                            fmt.Sprintf("Finalizing upload %s", session.ID.String()),
+			StaticSummary: fmt.Sprintf(
+				"Finalizing upload %s",
+				session.ID.String(),
+			),
 		},
 		"FinalizeDocumentUploadWorkflow",
 		&FinalizeUploadPayload{
 			BasePayload: temporaltype.BasePayload{
 				OrganizationID: session.OrganizationID,
 				BusinessUnitID: session.BusinessUnitID,
-				Timestamp:      time.Now().Unix(),
+				Timestamp:      timeutils.NowUnix(),
 			},
 			SessionID: session.ID,
 		},
@@ -690,7 +852,10 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
 			WorkflowIDReusePolicy:                    enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
-			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
+			StaticSummary: fmt.Sprintf(
+				"Generating thumbnail for document %s",
+				doc.ID,
+			),
 		},
 		"GenerateThumbnailWorkflow",
 		payload,
@@ -719,7 +884,8 @@ func (a *Activities) cancelSupersededSession(
 	ctx context.Context,
 	session *documentupload.Session,
 ) (bool, error) {
-	if session == nil || session.LineageID == nil || session.LineageID.IsNil() || session.Status.IsTerminal() {
+	if session == nil || session.LineageID == nil || session.LineageID.IsNil() ||
+		session.Status.IsTerminal() {
 		return false, nil
 	}
 
@@ -728,7 +894,7 @@ func (a *Activities) cancelSupersededSession(
 		return false, err
 	}
 
-	session.MarkSuperseded(time.Now().Unix())
+	session.MarkSuperseded(timeutils.NowUnix())
 	if _, err = a.sessionRepo.Update(ctx, session); err != nil {
 		return false, err
 	}
@@ -740,14 +906,17 @@ func (a *Activities) isSupersededByNewerVersion(
 	ctx context.Context,
 	session *documentupload.Session,
 ) (bool, error) {
-	activeSessions, err := a.sessionRepo.ListActive(ctx, &repositories.ListActiveDocumentUploadSessionsRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: session.OrganizationID,
-			BuID:  session.BusinessUnitID,
+	activeSessions, err := a.sessionRepo.ListActive(
+		ctx,
+		&repositories.ListActiveDocumentUploadSessionsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
+			ResourceID:   session.ResourceID,
+			ResourceType: session.ResourceType,
 		},
-		ResourceID:   session.ResourceID,
-		ResourceType: session.ResourceType,
-	})
+	)
 	if err != nil {
 		return false, err
 	}
@@ -834,38 +1003,12 @@ func completionLeaseKey(sessionID string) string {
 	return "document-upload:completion:" + sessionID
 }
 
-func isAlreadyCompletedUploadError(err error) bool {
-	msg := strings.ToLower(err.Error())
-	return strings.Contains(msg, "multipart upload does not exist")
-}
+func toDomainUploadedParts(parts []storage.UploadedPart) []storage.UploadedPart {
+	result := storage.ToDomainParts(parts)
 
-func fromDomainUploadedParts(parts []documentupload.UploadedPart) []storage.UploadedPart {
-	result := make([]storage.UploadedPart, 0, len(parts))
-	for _, part := range parts {
-		result = append(result, storage.UploadedPart{
-			PartNumber: part.PartNumber,
-			ETag:       part.ETag,
-			Size:       part.Size,
-		})
-	}
-	return result
-}
-
-func toDomainUploadedParts(parts []storage.UploadedPart) []documentupload.UploadedPart {
-	result := make([]documentupload.UploadedPart, 0, len(parts))
-	for _, part := range parts {
-		result = append(result, documentupload.UploadedPart{
-			PartNumber: part.PartNumber,
-			ETag:       part.ETag,
-			Size:       part.Size,
-		})
-	}
-	slices.SortFunc(result, func(a, b documentupload.UploadedPart) int {
+	slices.SortFunc(result, func(a, b storage.UploadedPart) int {
 		return a.PartNumber - b.PartNumber
 	})
-	return result
-}
 
-func isMissingMultipartUploadError(err error) bool {
-	return strings.Contains(strings.ToLower(err.Error()), "multipart upload does not exist")
+	return result
 }

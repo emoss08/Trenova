@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -111,7 +112,11 @@ func (s *service) Get(
 		return entity, nil
 	}
 	if !errors.Is(err, repositories.ErrCacheMiss) {
-		s.l.Warn("failed to load shipment from cache", zap.Error(err), zap.String("shipmentID", req.ID.String()))
+		s.l.Warn(
+			"failed to load shipment from cache",
+			zap.Error(err),
+			zap.String("shipmentID", req.ID.String()),
+		)
 	}
 
 	return s.repo.GetByID(ctx, req)
@@ -641,7 +646,7 @@ func (s *service) Cancel(
 	}
 
 	req.CanceledByID = auditActor.UserID
-	req.CanceledAt = time.Now().Unix()
+	req.CanceledAt = timeutils.NowUnix()
 
 	updatedEntity, err := s.repo.Cancel(ctx, req)
 	if err != nil {
@@ -758,7 +763,7 @@ func (s *service) Duplicate(
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			UserID:         req.TenantInfo.UserID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 			Metadata: map[string]any{
 				"trigger":    "api",
 				"shipmentId": req.ShipmentID.String(),
@@ -807,7 +812,7 @@ func (s *service) Duplicate(
 		RunID:       run.GetRunID(),
 		TaskQueue:   temporaltype.TaskQueueSystem.String(),
 		Status:      enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING.String(),
-		SubmittedAt: time.Now().Unix(),
+		SubmittedAt: timeutils.NowUnix(),
 	}, nil
 }
 

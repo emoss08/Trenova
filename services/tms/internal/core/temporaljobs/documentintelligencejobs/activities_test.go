@@ -104,19 +104,24 @@ func TestProcessDocumentIntelligenceActivity_SkipsWhenControlDisabled(t *testing
 
 	promRegistry := prometheus.NewRegistry()
 	activities := &Activities{
-		logger:              zap.NewNop(),
-		metrics:             &metrics.Registry{Document: metrics.NewDocument(promRegistry, zap.NewNop(), true)},
+		logger: zap.NewNop(),
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(promRegistry, zap.NewNop(), true),
+		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
-		DocumentID: docID,
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
+	result, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID: docID,
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+			},
 		},
-	})
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -156,7 +161,9 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 	contentWrites := make([]documentcontent.Content, 0, 2)
 	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
 	draftWrites := make([]documentshipmentdraft.Draft, 0, 1)
-	metricsRegistry := &metrics.Registry{Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false)}
+	metricsRegistry := &metrics.Registry{
+		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+	}
 
 	docRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
@@ -172,7 +179,8 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 			}
 			contentWrites = append(contentWrites, *entity)
 			return entity, nil
-		}).Twice()
+		}).
+		Twice()
 	contentRepo.EXPECT().
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
@@ -181,14 +189,19 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 		RunAndReturn(func(_ context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
-		}).Twice()
+		}).
+		Twice()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
 		Return(nil).Twice()
 	storageClient.EXPECT().
 		Download(mock.Anything, doc.StoragePath).
 		Return(&storage.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("Rate Confirmation\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026")),
+			Body: io.NopCloser(
+				strings.NewReader(
+					"Rate Confirmation\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
+				),
+			),
 		}, nil)
 	draftRepo.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
@@ -205,30 +218,38 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 		documentControlRepo: controlRepo,
 		contentRepo:         contentRepo,
 		draftRepo:           draftRepo,
+		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
 		storage:             storageClient,
+		workflowStarter:     noopWorkflowStarter{},
+		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
-		DocumentID: docID,
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			UserID:         userID,
+	result, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID: docID,
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				UserID:         userID,
+			},
 		},
-	})
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Len(t, draftWrites, 1)
 	require.Len(t, docUpdates, 2)
-	assert.Equal(t, "RateConfirmation", result.Kind)
+	assert.Equal(t, kindRateConfirmation, result.Kind)
 	assert.Equal(t, documentshipmentdraft.StatusUnavailable, draftWrites[0].Status)
 	assert.Equal(t, document.ShipmentDraftStatusUnavailable, docUpdates[1].ShipmentDraftStatus)
 	assert.Nil(t, docUpdates[1].DocumentTypeID)
 }
 
-func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTypeForShipment(t *testing.T) {
+func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTypeForShipment(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	docRepo := mocks.NewMockDocumentRepository(t)
@@ -261,7 +282,9 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
 	draftWrites := make([]documentshipmentdraft.Draft, 0, 1)
-	metricsRegistry := &metrics.Registry{Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false)}
+	metricsRegistry := &metrics.Registry{
+		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+	}
 
 	docRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
@@ -276,7 +299,8 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 				entity.ID = pulid.MustNew("dc_")
 			}
 			return entity, nil
-		}).Twice()
+		}).
+		Twice()
 	contentRepo.EXPECT().
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
@@ -285,14 +309,19 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		RunAndReturn(func(_ context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
-		}).Twice()
+		}).
+		Twice()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
 		Return(nil).Twice()
 	storageClient.EXPECT().
 		Download(mock.Anything, doc.StoragePath).
 		Return(&storage.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026")),
+			Body: io.NopCloser(
+				strings.NewReader(
+					"Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
+				),
+			),
 		}, nil)
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
@@ -319,18 +348,24 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		documentTypeRepo:    typeRepo,
 		contentRepo:         contentRepo,
 		draftRepo:           draftRepo,
+		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
 		storage:             storageClient,
+		workflowStarter:     noopWorkflowStarter{},
+		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
-		DocumentID: docID,
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			UserID:         userID,
+	result, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID: docID,
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				UserID:         userID,
+			},
 		},
-	})
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -375,7 +410,9 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
-	metricsRegistry := &metrics.Registry{Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false)}
+	metricsRegistry := &metrics.Registry{
+		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+	}
 
 	docRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).
@@ -390,7 +427,8 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 				entity.ID = pulid.MustNew("dc_")
 			}
 			return entity, nil
-		}).Twice()
+		}).
+		Twice()
 	contentRepo.EXPECT().
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
@@ -399,14 +437,19 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		RunAndReturn(func(_ context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error {
 			docUpdates = append(docUpdates, *req)
 			return nil
-		}).Twice()
+		}).
+		Twice()
 	searchProjection.EXPECT().
 		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
 		Return(nil).Twice()
 	storageClient.EXPECT().
 		Download(mock.Anything, doc.StoragePath).
 		Return(&storage.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("Bill of Lading\nShipper: ACME Foods\nConsignee: Blue Market\nCommodity: Produce\nBOL #: B12345")),
+			Body: io.NopCloser(
+				strings.NewReader(
+					"Bill of Lading\nShipper: ACME Foods\nConsignee: Blue Market\nCommodity: Produce\nBOL #: B12345",
+				),
+			),
 		}, nil)
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
@@ -427,18 +470,24 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		documentTypeRepo:    typeRepo,
 		contentRepo:         contentRepo,
 		draftRepo:           draftRepo,
+		aiDocumentService:   noopAIDocumentService{},
 		searchProjection:    searchProjection,
 		storage:             storageClient,
+		workflowStarter:     noopWorkflowStarter{},
+		parsingRuleRuntime:  noopDocumentParsingRuleRuntime{},
 	}
 
-	result, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
-		DocumentID: docID,
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			UserID:         userID,
+	result, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID: docID,
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				UserID:         userID,
+			},
 		},
-	})
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -492,7 +541,8 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 			}
 			contentWrites = append(contentWrites, *entity)
 			return entity, nil
-		}).Twice()
+		}).
+		Twice()
 	contentRepo.EXPECT().
 		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
 		Return(nil)
@@ -505,7 +555,11 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 	storageClient.EXPECT().
 		Download(mock.Anything, doc.StoragePath).
 		Return(&storage.DownloadResult{
-			Body: io.NopCloser(strings.NewReader("Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026")),
+			Body: io.NopCloser(
+				strings.NewReader(
+					"Rate Confirmation\nShipper: ACME Foods\nConsignee: Blue Market\nRate: $1,200\nPickup: ACME Foods\n123 Main St\nDallas, TX 75001\nPickup Date: 03/27/2026\nDelivery: Blue Market\n500 Peachtree Rd\nAtlanta, GA 30301\nDelivery Date: 03/28/2026",
+				),
+			),
 		}, nil)
 	typeRepo.EXPECT().
 		GetByCode(mock.Anything, mock.Anything).
@@ -524,9 +578,11 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		Return(nil, nil)
 
 	activities := &Activities{
-		logger:              zap.NewNop(),
-		cfg:                 &config.DocumentIntelligenceConfig{EnableAI: true},
-		metrics:             &metrics.Registry{Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false)},
+		logger: zap.NewNop(),
+		cfg:    &config.DocumentIntelligenceConfig{EnableAI: true},
+		metrics: &metrics.Registry{
+			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
+		},
 		documentRepo:        docRepo,
 		documentControlRepo: controlRepo,
 		documentTypeRepo:    typeRepo,
@@ -538,14 +594,17 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		workflowStarter:     workflowStarter,
 	}
 
-	_, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
-		DocumentID: docID,
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			UserID:         userID,
+	_, err := activities.ProcessDocumentIntelligenceActivity(
+		context.Background(),
+		&ProcessDocumentIntelligencePayload{
+			DocumentID: docID,
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				UserID:         userID,
+			},
 		},
-	})
+	)
 
 	require.NoError(t, err)
 	require.Len(t, contentWrites, 2)
@@ -556,9 +615,9 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 	t.Parallel()
 
-	intelligence := documentIntelligenceAnalysis{
+	intelligence := &DocumentIntelligenceAnalysis{
 		ReviewStatus: "NeedsReview",
-		Fields: map[string]reviewField{
+		Fields: map[string]*ReviewField{
 			"shipper": {
 				Value: "Anyco Clothes #425",
 			},
@@ -569,9 +628,9 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 				Value: "4500.00",
 			},
 		},
-		Stops: []intelligenceStop{
+		Stops: []*IntelligenceStop{
 			{
-				Role:         "pickup",
+				Role:         stopRolePickup,
 				Name:         "Anyco Clothes #425",
 				AddressLine1: "Main Drive",
 				City:         "Houston",
@@ -581,7 +640,7 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 				TimeWindow:   "04:00",
 			},
 			{
-				Role:         "delivery",
+				Role:         stopRoleDelivery,
 				Name:         "Anyco Clothes #255",
 				AddressLine1: "1234 E 1st Ave",
 				City:         "Dallas",
@@ -599,12 +658,12 @@ func TestHasUsableShipmentDraft_WithReviewableStops(t *testing.T) {
 func TestHasUsableShipmentDraft_FalseForIncompleteDraft(t *testing.T) {
 	t.Parallel()
 
-	intelligence := documentIntelligenceAnalysis{
+	intelligence := &DocumentIntelligenceAnalysis{
 		ReviewStatus: "NeedsReview",
-		Fields:       map[string]reviewField{},
-		Stops: []intelligenceStop{
+		Fields:       map[string]*ReviewField{},
+		Stops: []*IntelligenceStop{
 			{
-				Role: "pickup",
+				Role: stopRolePickup,
 				Name: "",
 			},
 		},

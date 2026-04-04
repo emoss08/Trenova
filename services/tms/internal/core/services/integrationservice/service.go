@@ -4,7 +4,6 @@ import (
 	"context"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -329,7 +329,7 @@ func (s *Service) TestConnection(
 	return &services.TestConnectionResponse{
 		Provider:  typ,
 		Success:   true,
-		CheckedAt: time.Now().Unix(),
+		CheckedAt: timeutils.NowUnix(),
 	}, nil
 }
 

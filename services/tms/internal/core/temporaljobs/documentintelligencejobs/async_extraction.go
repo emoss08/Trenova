@@ -18,7 +18,13 @@ import (
 	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/boolutils"
+	"github.com/emoss08/trenova/shared/floatutils"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/activity"
@@ -67,11 +73,18 @@ func (a *Activities) startAIExtractionWorkflow(
 	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:                                       fmt.Sprintf("document-ai-extraction-%s-%d", doc.ID.String(), extractedAt),
+			ID: fmt.Sprintf(
+				"document-ai-extraction-%s-%d",
+				doc.ID.String(),
+				extractedAt,
+			),
 			TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-			StaticSummary:                            fmt.Sprintf("Running AI extraction for document %s", doc.ID),
+			StaticSummary: fmt.Sprintf(
+				"Running AI extraction for document %s",
+				doc.ID,
+			),
 		},
 		"ProcessDocumentAIExtractionWorkflow",
 		&ProcessDocumentAIExtractionPayload{
@@ -94,7 +107,7 @@ func (a *Activities) startAIExtractionWorkflow(
 	return err
 }
 
-func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
+func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity( //nolint:funlen // async submission with idempotency checks
 	ctx context.Context,
 	payload *ProcessDocumentAIExtractionPayload,
 ) (*AsyncAIExtractionCompletion, error) {
@@ -185,21 +198,30 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
 			FailureCode:     "already_finalized",
 			FailureMessage:  "AI extraction was already superseded for this document extraction",
 		}, nil
+	case documentaiextraction.StatusPending,
+		documentaiextraction.StatusCompleted,
+		documentaiextraction.StatusFailed:
 	}
 
 	if strings.TrimSpace(row.ResponseID) == "" {
-		submission, submitErr := a.aiDocumentService.SubmitRateConfirmationBackgroundExtraction(ctx, &services.AIExtractRequest{
-			TenantInfo: tenantInfo,
-			DocumentID: doc.ID,
-			FileName:   doc.OriginalName,
-			Text:       truncateExtractedText(content.ContentText, a.cfg.GetAIMaxInputChars()),
-			Pages:      toAIDocumentPages(pages, a.cfg.GetAIMaxInputChars()),
-		})
+		submission, submitErr := a.aiDocumentService.SubmitRateConfirmationBackgroundExtraction(
+			ctx,
+			&services.AIExtractRequest{
+				TenantInfo: tenantInfo,
+				DocumentID: doc.ID,
+				FileName:   doc.OriginalName,
+				Text: stringutils.TruncateAndTrim(
+					content.ContentText,
+					a.cfg.GetAIMaxInputChars(),
+				),
+				Pages: toAIDocumentPages(pages, a.cfg.GetAIMaxInputChars()),
+			},
+		)
 		if submitErr != nil {
 			return nil, submitErr
 		}
 
-		now := time.Now().Unix()
+		now := timeutils.NowUnix()
 		row.ResponseID = submission.ResponseID
 		row.Model = submission.Model
 		row.SubmittedAt = &now
@@ -209,7 +231,11 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
 			return nil, err
 		}
 
-		content.StructuredData = markAIDiagnosticsPending(content.StructuredData, row.ResponseID, &now)
+		content.StructuredData = markAIDiagnosticsPending(
+			content.StructuredData,
+			row.ResponseID,
+			&now,
+		)
 		if _, err = a.contentRepo.Upsert(ctx, content); err != nil {
 			return nil, err
 		}
@@ -218,7 +244,7 @@ func (a *Activities) SubmitAndAwaitDocumentAIExtractionActivity(
 	return nil, activity.ErrResultPending
 }
 
-func (a *Activities) PollPendingDocumentAIExtractionsActivity(
+func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit,funlen // polling loop with per-row branching
 	ctx context.Context,
 	payload *PollPendingDocumentAIExtractionsPayload,
 ) (*PollPendingDocumentAIExtractionsResult, error) {
@@ -228,7 +254,11 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 	}
 
 	now := time.Now()
-	rows, err := a.aiExtractionRepo.ListPollable(ctx, now.Add(-documentAIExtractionPollInterval).Unix(), payload.Limit)
+	rows, err := a.aiExtractionRepo.ListPollable(
+		ctx,
+		now.Add(-documentAIExtractionPollInterval).Unix(),
+		payload.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +267,8 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 		polledAt := now.Unix()
 		row.LastPolledAt = &polledAt
 
-		if row.SubmittedAt != nil && now.Sub(time.Unix(*row.SubmittedAt, 0)) > documentAIExtractionMaxWait {
+		if row.SubmittedAt != nil &&
+			now.Sub(time.Unix(*row.SubmittedAt, 0)) > documentAIExtractionMaxWait {
 			completion := &AsyncAIExtractionCompletion{
 				ResponseID:      row.ResponseID,
 				Model:           row.Model,
@@ -262,26 +293,41 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 			continue
 		}
 
-		poll, pollErr := a.aiDocumentService.PollRateConfirmationBackgroundExtraction(ctx, &services.AIBackgroundExtractPollRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID:  row.OrganizationID,
-				BuID:   row.BusinessUnitID,
-				UserID: row.UserID,
+		poll, pollErr := a.aiDocumentService.PollRateConfirmationBackgroundExtraction(
+			ctx,
+			&services.AIBackgroundExtractPollRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID:  row.OrganizationID,
+					BuID:   row.BusinessUnitID,
+					UserID: row.UserID,
+				},
+				DocumentID: row.DocumentID,
+				ResponseID: row.ResponseID,
 			},
-			DocumentID: row.DocumentID,
-			ResponseID: row.ResponseID,
-		})
+		)
 		if pollErr != nil {
-			a.logger.Warn("failed to poll background AI extraction", zap.String("documentId", row.DocumentID.String()), zap.Error(pollErr))
+			a.logger.Warn(
+				"failed to poll background AI extraction",
+				zap.String("documentId", row.DocumentID.String()),
+				zap.Error(pollErr),
+			)
 			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-				a.logger.Warn("failed to touch pending AI extraction poll time", zap.String("documentId", row.DocumentID.String()), zap.Error(err))
+				a.logger.Warn(
+					"failed to touch pending AI extraction poll time",
+					zap.String("documentId", row.DocumentID.String()),
+					zap.Error(err),
+				)
 			}
 			continue
 		}
 
 		if poll.Status == services.AIBackgroundExtractionStatusPending {
 			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-				a.logger.Warn("failed to update pending AI extraction poll time", zap.String("documentId", row.DocumentID.String()), zap.Error(err))
+				a.logger.Warn(
+					"failed to update pending AI extraction poll time",
+					zap.String("documentId", row.DocumentID.String()),
+					zap.Error(err),
+				)
 			}
 			result.Pending++
 			continue
@@ -315,14 +361,20 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity(
 			row.FailureCode = ""
 			row.FailureMessage = ""
 			result.Completed++
-		default:
+		case services.AIBackgroundExtractionStatusFailed:
 			row.Status = documentaiextraction.StatusFailed
 			row.FailureCode = poll.FailureCode
 			row.FailureMessage = poll.FailureMessage
 			result.Failed++
+		case services.AIBackgroundExtractionStatusPending:
+			result.Pending++
 		}
 		if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-			a.logger.Warn("failed to update terminal AI extraction row", zap.String("documentId", row.DocumentID.String()), zap.Error(err))
+			a.logger.Warn(
+				"failed to update terminal AI extraction row",
+				zap.String("documentId", row.DocumentID.String()),
+				zap.Error(err),
+			)
 		}
 	}
 
@@ -359,21 +411,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	}
 
 	if content.LastExtractedAt == nil || *content.LastExtractedAt != payload.ExtractedAt {
-		if a.aiExtractionRepo != nil {
-			if row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(ctx, repositories.GetDocumentAIExtractionRequest{
-				DocumentID:  payload.DocumentID,
-				ExtractedAt: payload.ExtractedAt,
-				TenantInfo:  tenantInfo,
-			}); repoErr == nil {
-				row.Status = documentaiextraction.StatusSkipped
-				row.FailureCode = "stale_extraction"
-				row.FailureMessage = "document extraction has been superseded"
-				if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
-					a.logger.Warn("failed to mark stale AI extraction row skipped", zap.String("documentId", payload.DocumentID.String()), zap.Error(repoErr))
-				}
-			}
-		}
-
+		a.markExtractionSkipped(ctx, payload, tenantInfo)
 		return &ProcessDocumentAIExtractionResult{
 			DocumentID:      payload.DocumentID,
 			ExtractedAt:     payload.ExtractedAt,
@@ -388,30 +426,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		}, nil
 	}
 
-	fallback := analysisFromStructuredData(content.StructuredData)
-	diagnostics := aiExtractionDiagnostics{
-		FallbackAnalysis: fallback,
-		AcceptanceStatus: aiAcceptanceStatusRejected,
-		RejectionReason:  payload.Completion.FailureCode,
-		ResponseID:       payload.Completion.ResponseID,
-		SubmittedAt:      payload.Completion.SubmittedAt,
-		LastPolledAt:     payload.Completion.LastPolledAt,
-	}
-
-	updatedIntelligence := fallback
-	if payload.Completion.Status == services.AIBackgroundExtractionStatusCompleted && payload.Completion.ExtractResult != nil {
-		candidate := analysisFromAIExtract(payload.Completion.ExtractResult)
-		diagnostics.CandidateAnalysis = &candidate
-		merged, ok, rejectionReason := mergeAIAnalysis(fallback, payload.Completion.ExtractResult)
-		if ok {
-			diagnostics.AcceptanceStatus = aiAcceptanceStatusAccepted
-			diagnostics.RejectionReason = ""
-			updatedIntelligence = merged
-		} else {
-			diagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
-			diagnostics.RejectionReason = rejectionReason
-		}
-	}
+	updatedIntelligence, diagnostics := a.mergeCompletionIntoIntelligence(content, payload)
 
 	content.StructuredData = buildStructuredData(updatedIntelligence, diagnostics)
 	content.ClassificationConfidence = updatedIntelligence.OverallConfidence
@@ -423,7 +438,9 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	if err != nil {
 		return nil, err
 	}
-	if err = a.updateShipmentDraftFromIntelligence(ctx, doc, control, updatedIntelligence); err != nil {
+	if err = a.updateShipmentDraftFromIntelligence(
+		ctx, doc, control, updatedIntelligence,
+	); err != nil {
 		return nil, err
 	}
 
@@ -432,19 +449,7 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		indexedText = ""
 	}
 	a.syncSearchProjection(ctx, doc, indexedText)
-
-	if a.aiExtractionRepo != nil {
-		if row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(ctx, repositories.GetDocumentAIExtractionRequest{
-			DocumentID:  payload.DocumentID,
-			ExtractedAt: payload.ExtractedAt,
-			TenantInfo:  tenantInfo,
-		}); repoErr == nil {
-			row.Status = documentaiextraction.StatusApplied
-			if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
-				a.logger.Warn("failed to mark AI extraction row applied", zap.String("documentId", payload.DocumentID.String()), zap.Error(repoErr))
-			}
-		}
-	}
+	a.markExtractionApplied(ctx, payload, tenantInfo)
 
 	return &ProcessDocumentAIExtractionResult{
 		DocumentID:      payload.DocumentID,
@@ -453,9 +458,105 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 	}, nil
 }
 
+func (a *Activities) markExtractionSkipped(
+	ctx context.Context,
+	payload *ApplyDocumentAIExtractionPayload,
+	tenantInfo pagination.TenantInfo,
+) {
+	if a.aiExtractionRepo == nil {
+		return
+	}
+	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
+		ctx,
+		repositories.GetDocumentAIExtractionRequest{
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+			TenantInfo:  tenantInfo,
+		},
+	)
+	if repoErr != nil {
+		return
+	}
+	row.Status = documentaiextraction.StatusSkipped
+	row.FailureCode = "stale_extraction"
+	row.FailureMessage = "document extraction has been superseded"
+	if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
+		a.logger.Warn(
+			"failed to mark stale AI extraction row skipped",
+			zap.String("documentId", payload.DocumentID.String()),
+			zap.Error(repoErr),
+		)
+	}
+}
+
+func (a *Activities) markExtractionApplied(
+	ctx context.Context,
+	payload *ApplyDocumentAIExtractionPayload,
+	tenantInfo pagination.TenantInfo,
+) {
+	if a.aiExtractionRepo == nil {
+		return
+	}
+	row, repoErr := a.aiExtractionRepo.GetByDocumentExtractedAt(
+		ctx,
+		repositories.GetDocumentAIExtractionRequest{
+			DocumentID:  payload.DocumentID,
+			ExtractedAt: payload.ExtractedAt,
+			TenantInfo:  tenantInfo,
+		},
+	)
+	if repoErr != nil {
+		return
+	}
+	row.Status = documentaiextraction.StatusApplied
+	if _, repoErr = a.aiExtractionRepo.Update(ctx, row); repoErr != nil {
+		a.logger.Warn(
+			"failed to mark AI extraction row applied",
+			zap.String("documentId", payload.DocumentID.String()),
+			zap.Error(repoErr),
+		)
+	}
+}
+
+func (a *Activities) mergeCompletionIntoIntelligence(
+	content *documentcontent.Content,
+	payload *ApplyDocumentAIExtractionPayload,
+) (*DocumentIntelligenceAnalysis, *AIDiagnostics) {
+	fallback := analysisFromStructuredData(content.StructuredData)
+	diagnostics := &AIDiagnostics{
+		FallbackAnalysis: fallback,
+		AcceptanceStatus: aiAcceptanceStatusRejected,
+		RejectionReason:  payload.Completion.FailureCode,
+		ResponseID:       payload.Completion.ResponseID,
+		SubmittedAt:      payload.Completion.SubmittedAt,
+		LastPolledAt:     payload.Completion.LastPolledAt,
+	}
+
+	updatedIntelligence := fallback
+	if payload.Completion.Status == services.AIBackgroundExtractionStatusCompleted &&
+		payload.Completion.ExtractResult != nil {
+		candidate := analysisFromAIExtract(payload.Completion.ExtractResult)
+		diagnostics.CandidateAnalysis = candidate
+		merged, ok, rejectionReason := mergeAIAnalysis(
+			fallback,
+			payload.Completion.ExtractResult,
+		)
+		if ok {
+			diagnostics.AcceptanceStatus = aiAcceptanceStatusAccepted
+			diagnostics.RejectionReason = ""
+			updatedIntelligence = merged
+		} else {
+			diagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
+			diagnostics.RejectionReason = rejectionReason
+		}
+	}
+
+	return updatedIntelligence, diagnostics
+}
+
 func aiAcceptanceStatusFromStructuredData(structured map[string]any) string {
 	if diagnostics, ok := structured["aiDiagnostics"].(map[string]any); ok {
-		if status := stringValue(diagnostics["acceptanceStatus"]); status != "" {
+		if status := sliceutils.StringValue(diagnostics["acceptanceStatus"]); status != "" {
 			return status
 		}
 	}
@@ -475,10 +576,18 @@ func (a *Activities) completeAsyncAIActivity(
 	if err := a.temporalClient.CompleteActivity(ctx, row.TaskToken, completion, nil); err != nil {
 		var notFound *serviceerror.NotFound
 		if errors.As(err, &notFound) {
-			a.logger.Warn("pending AI extraction activity no longer exists", zap.String("documentId", row.DocumentID.String()), zap.Error(err))
+			a.logger.Warn(
+				"pending AI extraction activity no longer exists",
+				zap.String("documentId", row.DocumentID.String()),
+				zap.Error(err),
+			)
 			return true
 		}
-		a.logger.Warn("failed to complete pending AI extraction activity", zap.String("documentId", row.DocumentID.String()), zap.Error(err))
+		a.logger.Warn(
+			"failed to complete pending AI extraction activity",
+			zap.String("documentId", row.DocumentID.String()),
+			zap.Error(err),
+		)
 		return false
 	}
 
@@ -491,7 +600,7 @@ func hashAIExtractionRequest(fileName, text string, pages []*documentcontent.Pag
 	sum.Write([]byte{'\n'})
 	sum.Write([]byte(strings.TrimSpace(text)))
 	for _, page := range pages {
-		sum.Write([]byte(fmt.Sprintf("\n[%d]\n", page.PageNumber)))
+		fmt.Fprintf(sum, "\n[%d]\n", page.PageNumber)
 		sum.Write([]byte(strings.TrimSpace(page.ExtractedText)))
 	}
 
@@ -507,13 +616,17 @@ func toAIDocumentPages(pages []*documentcontent.Page, maxChars int) []services.A
 		}
 		out = append(out, services.AIDocumentPage{
 			PageNumber: page.PageNumber,
-			Text:       truncateExtractedText(page.ExtractedText, pageLimit),
+			Text:       stringutils.TruncateAndTrim(page.ExtractedText, pageLimit),
 		})
 	}
 	return out
 }
 
-func markAIDiagnosticsPending(structured map[string]any, responseID string, submittedAt *int64) map[string]any {
+func markAIDiagnosticsPending(
+	structured map[string]any,
+	responseID string,
+	submittedAt *int64,
+) map[string]any {
 	if structured == nil {
 		structured = map[string]any{}
 	}
@@ -533,43 +646,43 @@ func markAIDiagnosticsPending(structured map[string]any, responseID string, subm
 	return structured
 }
 
-func analysisFromStructuredData(structured map[string]any) documentIntelligenceAnalysis {
+func analysisFromStructuredData(structured map[string]any) *DocumentIntelligenceAnalysis {
 	if structured == nil {
-		return documentIntelligenceAnalysis{
-			Fields:    map[string]reviewField{},
-			Stops:     []intelligenceStop{},
-			Conflicts: []reviewConflict{},
+		return &DocumentIntelligenceAnalysis{
+			Fields:    map[string]*ReviewField{},
+			Stops:     []*IntelligenceStop{},
+			Conflicts: []*ReviewConflict{},
 		}
 	}
 	if aiDiagnostics, ok := structured["aiDiagnostics"].(map[string]any); ok {
-		if fallback, ok := aiDiagnostics["fallbackAnalysis"].(map[string]any); ok {
+		if fallback, hasFallback := aiDiagnostics["fallbackAnalysis"].(map[string]any); hasFallback {
 			return analysisFromMap(fallback)
 		}
 	}
 	if intelligence, ok := structured["intelligence"].(map[string]any); ok {
 		return analysisFromMap(intelligence)
 	}
-	return documentIntelligenceAnalysis{
-		Fields:    map[string]reviewField{},
-		Stops:     []intelligenceStop{},
-		Conflicts: []reviewConflict{},
+	return &DocumentIntelligenceAnalysis{
+		Fields:    map[string]*ReviewField{},
+		Stops:     []*IntelligenceStop{},
+		Conflicts: []*ReviewConflict{},
 	}
 }
 
-func analysisFromMap(data map[string]any) documentIntelligenceAnalysis {
-	analysis := documentIntelligenceAnalysis{
-		Kind:                 stringValue(data["kind"]),
-		OverallConfidence:    floatValue(data["overallConfidence"]),
-		ReviewStatus:         stringValue(data["reviewStatus"]),
-		MissingFields:        stringSliceValue(data["missingFields"]),
-		Signals:              stringSliceValue(data["signals"]),
-		ClassifierSource:     stringValue(data["classifierSource"]),
-		ProviderFingerprint:  stringValue(data["providerFingerprint"]),
-		ClassificationReason: stringValue(data["classificationReason"]),
-		RawExcerpt:           stringValue(data["rawExcerpt"]),
-		Fields:               map[string]reviewField{},
-		Stops:                []intelligenceStop{},
-		Conflicts:            []reviewConflict{},
+func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
+	analysis := &DocumentIntelligenceAnalysis{
+		Kind:                 sliceutils.StringValue(data["kind"]),
+		OverallConfidence:    floatutils.FloatValue(data["overallConfidence"]),
+		ReviewStatus:         sliceutils.StringValue(data["reviewStatus"]),
+		MissingFields:        sliceutils.StringSliceValue(data["missingFields"]),
+		Signals:              sliceutils.StringSliceValue(data["signals"]),
+		ClassifierSource:     sliceutils.StringValue(data["classifierSource"]),
+		ProviderFingerprint:  sliceutils.StringValue(data["providerFingerprint"]),
+		ClassificationReason: sliceutils.StringValue(data["classificationReason"]),
+		RawExcerpt:           sliceutils.StringValue(data["rawExcerpt"]),
+		Fields:               map[string]*ReviewField{},
+		Stops:                []*IntelligenceStop{},
+		Conflicts:            []*ReviewConflict{},
 	}
 
 	if metadata, ok := data["parsingRuleMetadata"].(map[string]any); ok {
@@ -577,62 +690,65 @@ func analysisFromMap(data map[string]any) documentIntelligenceAnalysis {
 	}
 	if fields, ok := data["fields"].(map[string]any); ok {
 		for key, raw := range fields {
-			fieldMap, ok := raw.(map[string]any)
-			if !ok {
+			fieldMap, isFieldMap := raw.(map[string]any)
+			if !isFieldMap {
 				continue
 			}
-			analysis.Fields[key] = reviewField{
-				Label:           stringValue(fieldMap["label"]),
-				Value:           stringValue(fieldMap["value"]),
-				Confidence:      floatValue(fieldMap["confidence"]),
-				Excerpt:         stringValue(fieldMap["excerpt"]),
-				EvidenceExcerpt: firstNonEmpty(stringValue(fieldMap["evidenceExcerpt"]), stringValue(fieldMap["excerpt"])),
-				PageNumber:      intValue(fieldMap["pageNumber"]),
-				ReviewRequired:  boolValue(fieldMap["reviewRequired"]),
-				Conflict:        boolValue(fieldMap["conflict"]),
-				Source:          stringValue(fieldMap["source"]),
+			analysis.Fields[key] = &ReviewField{
+				Label:      sliceutils.StringValue(fieldMap["label"]),
+				Value:      sliceutils.StringValue(fieldMap["value"]),
+				Confidence: floatutils.FloatValue(fieldMap["confidence"]),
+				Excerpt:    sliceutils.StringValue(fieldMap["excerpt"]),
+				EvidenceExcerpt: firstNonEmpty(
+					sliceutils.StringValue(fieldMap["evidenceExcerpt"]),
+					sliceutils.StringValue(fieldMap["excerpt"]),
+				),
+				PageNumber:     intutils.IntValue(fieldMap["pageNumber"]),
+				ReviewRequired: boolutils.BooleanValue(fieldMap["reviewRequired"]),
+				Conflict:       boolutils.BooleanValue(fieldMap["conflict"]),
+				Source:         sliceutils.StringValue(fieldMap["source"]),
 			}
 		}
 	}
 	if stops, ok := data["stops"].([]any); ok {
 		for _, raw := range stops {
-			stopMap, ok := raw.(map[string]any)
-			if !ok {
+			stopMap, isStopMap := raw.(map[string]any)
+			if !isStopMap {
 				continue
 			}
-			analysis.Stops = append(analysis.Stops, intelligenceStop{
-				Sequence:            intValue(stopMap["sequence"]),
-				Role:                stringValue(stopMap["role"]),
-				Name:                stringValue(stopMap["name"]),
-				AddressLine1:        stringValue(stopMap["addressLine1"]),
-				AddressLine2:        stringValue(stopMap["addressLine2"]),
-				City:                stringValue(stopMap["city"]),
-				State:               stringValue(stopMap["state"]),
-				PostalCode:          stringValue(stopMap["postalCode"]),
-				Date:                stringValue(stopMap["date"]),
-				TimeWindow:          stringValue(stopMap["timeWindow"]),
-				AppointmentRequired: boolValue(stopMap["appointmentRequired"]),
-				PageNumber:          intValue(stopMap["pageNumber"]),
-				EvidenceExcerpt:     stringValue(stopMap["evidenceExcerpt"]),
-				Confidence:          floatValue(stopMap["confidence"]),
-				ReviewRequired:      boolValue(stopMap["reviewRequired"]),
-				Source:              stringValue(stopMap["source"]),
+			analysis.Stops = append(analysis.Stops, &IntelligenceStop{
+				Sequence:            intutils.IntValue(stopMap["sequence"]),
+				Role:                sliceutils.StringValue(stopMap["role"]),
+				Name:                sliceutils.StringValue(stopMap["name"]),
+				AddressLine1:        sliceutils.StringValue(stopMap["addressLine1"]),
+				AddressLine2:        sliceutils.StringValue(stopMap["addressLine2"]),
+				City:                sliceutils.StringValue(stopMap["city"]),
+				State:               sliceutils.StringValue(stopMap["state"]),
+				PostalCode:          sliceutils.StringValue(stopMap["postalCode"]),
+				Date:                sliceutils.StringValue(stopMap["date"]),
+				TimeWindow:          sliceutils.StringValue(stopMap["timeWindow"]),
+				AppointmentRequired: boolutils.BooleanValue(stopMap["appointmentRequired"]),
+				PageNumber:          intutils.IntValue(stopMap["pageNumber"]),
+				EvidenceExcerpt:     sliceutils.StringValue(stopMap["evidenceExcerpt"]),
+				Confidence:          floatutils.FloatValue(stopMap["confidence"]),
+				ReviewRequired:      boolutils.BooleanValue(stopMap["reviewRequired"]),
+				Source:              sliceutils.StringValue(stopMap["source"]),
 			})
 		}
 	}
 	if conflicts, ok := data["conflicts"].([]any); ok {
 		for _, raw := range conflicts {
-			conflictMap, ok := raw.(map[string]any)
-			if !ok {
+			conflictMap, isConflictMap := raw.(map[string]any)
+			if !isConflictMap {
 				continue
 			}
-			analysis.Conflicts = append(analysis.Conflicts, reviewConflict{
-				Key:             stringValue(conflictMap["key"]),
-				Label:           stringValue(conflictMap["label"]),
-				Values:          stringSliceValue(conflictMap["values"]),
-				PageNumbers:     intSliceValue(conflictMap["pageNumbers"]),
-				EvidenceExcerpt: stringValue(conflictMap["evidenceExcerpt"]),
-				Source:          stringValue(conflictMap["source"]),
+			analysis.Conflicts = append(analysis.Conflicts, &ReviewConflict{
+				Key:             sliceutils.StringValue(conflictMap["key"]),
+				Label:           sliceutils.StringValue(conflictMap["label"]),
+				Values:          sliceutils.StringSliceValue(conflictMap["values"]),
+				PageNumbers:     intutils.IntSliceValue(conflictMap["pageNumbers"]),
+				EvidenceExcerpt: sliceutils.StringValue(conflictMap["evidenceExcerpt"]),
+				Source:          sliceutils.StringValue(conflictMap["source"]),
 			})
 		}
 	}
@@ -641,102 +757,30 @@ func analysisFromMap(data map[string]any) documentIntelligenceAnalysis {
 }
 
 func parseParsingRuleMetadata(data map[string]any) *services.DocumentParsingRuleMetadata {
-	ruleSetID, err := pulid.Parse(stringValue(data["ruleSetId"]))
+	ruleSetID, err := pulid.Parse(sliceutils.StringValue(data["ruleSetId"]))
 	if err != nil {
 		return nil
 	}
-	ruleVersionID, err := pulid.Parse(stringValue(data["ruleVersionId"]))
+	ruleVersionID, err := pulid.Parse(sliceutils.StringValue(data["ruleVersionId"]))
 	if err != nil {
 		return nil
 	}
 	return &services.DocumentParsingRuleMetadata{
 		RuleSetID:        ruleSetID,
-		RuleSetName:      stringValue(data["ruleSetName"]),
+		RuleSetName:      sliceutils.StringValue(data["ruleSetName"]),
 		RuleVersionID:    ruleVersionID,
-		VersionNumber:    intValue(data["versionNumber"]),
-		ParserMode:       stringValue(data["parserMode"]),
-		ProviderMatched:  stringValue(data["providerMatched"]),
-		MatchSpecificity: intValue(data["matchSpecificity"]),
+		VersionNumber:    intutils.IntValue(data["versionNumber"]),
+		ParserMode:       sliceutils.StringValue(data["parserMode"]),
+		ProviderMatched:  sliceutils.StringValue(data["providerMatmatched"]),
+		MatchSpecificity: intutils.IntValue(data["matchSpecificity"]),
 	}
-}
-
-func stringValue(v any) string {
-	s, _ := v.(string)
-	return strings.TrimSpace(s)
-}
-
-func floatValue(v any) float64 {
-	switch value := v.(type) {
-	case float64:
-		return value
-	case float32:
-		return float64(value)
-	case int:
-		return float64(value)
-	case int64:
-		return float64(value)
-	default:
-		return 0
-	}
-}
-
-func intValue(v any) int {
-	switch value := v.(type) {
-	case int:
-		return value
-	case int32:
-		return int(value)
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	default:
-		return 0
-	}
-}
-
-func boolValue(v any) bool {
-	value, _ := v.(bool)
-	return value
-}
-
-func stringSliceValue(v any) []string {
-	items, ok := v.([]any)
-	if !ok {
-		if direct, ok := v.([]string); ok {
-			return append([]string{}, direct...)
-		}
-		return []string{}
-	}
-	out := make([]string, 0, len(items))
-	for _, item := range items {
-		if s := stringValue(item); s != "" {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
-func intSliceValue(v any) []int {
-	items, ok := v.([]any)
-	if !ok {
-		if direct, ok := v.([]int); ok {
-			return append([]int{}, direct...)
-		}
-		return []int{}
-	}
-	out := make([]int, 0, len(items))
-	for _, item := range items {
-		out = append(out, intValue(item))
-	}
-	return out
 }
 
 func (a *Activities) updateShipmentDraftFromIntelligence(
 	ctx context.Context,
 	doc *document.Document,
 	control *tenant.DocumentControl,
-	intelligence documentIntelligenceAnalysis,
+	intelligence *DocumentIntelligenceAnalysis,
 ) error {
 	draftStatus := document.ShipmentDraftStatusUnavailable
 	if canGenerateShipmentDraft(control, doc.ResourceType, doc.DetectedKind) &&
@@ -770,8 +814,11 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 
 	doc.ShipmentDraftStatus = draftStatus
 	return a.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
-		ID:                  doc.ID,
-		TenantInfo:          pagination.TenantInfo{OrgID: doc.OrganizationID, BuID: doc.BusinessUnitID},
+		ID: doc.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: doc.OrganizationID,
+			BuID:  doc.BusinessUnitID,
+		},
 		ContentStatus:       doc.ContentStatus,
 		ContentError:        doc.ContentError,
 		DetectedKind:        doc.DetectedKind,

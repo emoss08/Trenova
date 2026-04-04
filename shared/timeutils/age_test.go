@@ -14,7 +14,7 @@ func TestYearsAgoUnix(t *testing.T) {
 	t.Run("returns timestamp in the past", func(t *testing.T) {
 		t.Parallel()
 		result := timeutils.YearsAgoUnix(1)
-		now := time.Now().Unix()
+		now := timeutils.NowUnix()
 
 		assert.Less(t, result, now)
 	})
@@ -34,7 +34,7 @@ func TestMonthsAgoUnix(t *testing.T) {
 	t.Run("returns timestamp in the past", func(t *testing.T) {
 		t.Parallel()
 		result := timeutils.MonthsAgoUnix(6)
-		now := time.Now().Unix()
+		now := timeutils.NowUnix()
 
 		assert.Less(t, result, now)
 	})
@@ -54,7 +54,7 @@ func TestDaysAgoUnix(t *testing.T) {
 	t.Run("returns timestamp in the past", func(t *testing.T) {
 		t.Parallel()
 		result := timeutils.DaysAgoUnix(30)
-		now := time.Now().Unix()
+		now := timeutils.NowUnix()
 
 		assert.Less(t, result, now)
 	})

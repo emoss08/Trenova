@@ -2,11 +2,11 @@ package auditjobs
 
 import (
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
@@ -36,7 +36,7 @@ func (s *AuditWorkflowTestSuite) TestProcessAuditBatchWorkflow_Success() {
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 		},
 		Entries: []*audit.Entry{
 			{ID: pulid.MustNew("ael_")},
@@ -49,7 +49,7 @@ func (s *AuditWorkflowTestSuite) TestProcessAuditBatchWorkflow_Success() {
 		ProcessedCount: 2,
 		FailedCount:    0,
 		BatchID:        batchID,
-		ProcessedAt:    time.Now().Unix(),
+		ProcessedAt:    timeutils.NowUnix(),
 	}
 
 	var a *Activities
@@ -72,7 +72,7 @@ func (s *AuditWorkflowTestSuite) TestProcessAuditBatchWorkflow_EmptyBatch() {
 
 	payload := &ProcessAuditBatchPayload{
 		BasePayload: temporaltype.BasePayload{
-			Timestamp: time.Now().Unix(),
+			Timestamp: timeutils.NowUnix(),
 		},
 		Entries: []*audit.Entry{},
 		BatchID: batchID,
@@ -82,7 +82,7 @@ func (s *AuditWorkflowTestSuite) TestProcessAuditBatchWorkflow_EmptyBatch() {
 		ProcessedCount: 0,
 		FailedCount:    0,
 		BatchID:        batchID,
-		ProcessedAt:    time.Now().Unix(),
+		ProcessedAt:    timeutils.NowUnix(),
 		Metadata: map[string]any{
 			"message": "No entries to process",
 		},

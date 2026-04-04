@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -265,7 +266,7 @@ func TestIntegrationHandler_GetWorkerSyncDrift_Success(t *testing.T) {
 				WorkerName: "Casey Nguyen",
 				DriftType:  repositories.WorkerSyncDriftTypeMissingMapping,
 				Message:    "active worker is missing a Samsara driver mapping",
-				DetectedAt: time.Now().Unix(),
+				DetectedAt: timeutils.NowUnix(),
 			},
 		},
 		nil,

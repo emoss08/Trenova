@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
@@ -443,8 +444,8 @@ func (h *Handler) preview(c *gin.Context) {
 }
 
 type uploadRequest struct {
-	ResourceID        string   `form:"resourceId"     binding:"required"`
-	ResourceType      string   `form:"resourceType"   binding:"required"`
+	ResourceID        string   `form:"resourceId"        binding:"required"`
+	ResourceType      string   `form:"resourceType"      binding:"required"`
 	ProcessingProfile string   `form:"processingProfile"`
 	Description       string   `form:"description"`
 	Tags              []string `form:"tags"`
@@ -453,12 +454,12 @@ type uploadRequest struct {
 }
 
 type createUploadSessionRequest struct {
-	ResourceID        string   `json:"resourceId"     binding:"required"`
-	ResourceType      string   `json:"resourceType"   binding:"required"`
+	ResourceID        string   `json:"resourceId"        binding:"required"`
+	ResourceType      string   `json:"resourceType"      binding:"required"`
 	ProcessingProfile string   `json:"processingProfile"`
-	FileName          string   `json:"fileName"       binding:"required"`
-	FileSize          int64    `json:"fileSize"       binding:"required,min=1"`
-	ContentType       string   `json:"contentType"    binding:"required"`
+	FileName          string   `json:"fileName"          binding:"required"`
+	FileSize          int64    `json:"fileSize"          binding:"required,min=1"`
+	ContentType       string   `json:"contentType"       binding:"required"`
 	Description       string   `json:"description"`
 	Tags              []string `json:"tags"`
 	DocumentTypeID    string   `json:"documentTypeId"`
@@ -539,7 +540,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.CreateSession(
 		c.Request.Context(),
-		&documentuploadservice.CreateSessionRequest{
+		&services.CreateSessionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -629,7 +630,7 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 
 	targets, err := h.uploadService.GetPartUploadTargets(
 		c.Request.Context(),
-		&documentuploadservice.PartRequest{
+		&services.PartRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -657,7 +658,7 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.Complete(
 		c.Request.Context(),
-		&documentuploadservice.CompletionRequest{
+		&services.CompletionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -682,7 +683,7 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 		return
 	}
 
-	if err = h.uploadService.Cancel(c.Request.Context(), &documentuploadservice.CancelRequest{
+	if err = h.uploadService.Cancel(c.Request.Context(), &services.CancelRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
@@ -1125,13 +1126,23 @@ func (h *Handler) importAssistantChat(c *gin.Context) {
 
 	documentID, err := pulid.Parse(c.Param("documentID"))
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
 		return
 	}
 
 	var body serviceports.ShipmentImportChatRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
+		)
 		return
 	}
 
@@ -1156,13 +1167,23 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 
 	documentID, err := pulid.Parse(c.Param("documentID"))
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
 		return
 	}
 
 	var body serviceports.ShipmentImportChatRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
+		)
 		return
 	}
 
@@ -1191,7 +1212,7 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 		flusher.Flush()
 	}
 
-	if err := h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
+	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
 		errData, _ := json.Marshal(map[string]string{"message": err.Error()})
 		_, _ = c.Writer.WriteString("event: error\n")
 		_, _ = c.Writer.WriteString("data: " + string(errData) + "\n\n")
@@ -1204,15 +1225,26 @@ func (h *Handler) getImportAssistantHistory(c *gin.Context) {
 
 	documentID, err := pulid.Parse(c.Param("documentID"))
 	if err != nil {
-		h.eh.HandleError(c, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID"))
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
 		return
 	}
 
-	resp, err := h.importAssistant.GetHistory(c.Request.Context(), documentID.String(), pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	})
+	resp, err := h.importAssistant.GetHistory(
+		c.Request.Context(),
+		documentID.String(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

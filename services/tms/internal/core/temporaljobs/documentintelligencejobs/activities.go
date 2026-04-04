@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
+	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
@@ -29,7 +30,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gen2brain/go-fitz"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/activity"
@@ -37,6 +41,18 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	reviewStatusReady    = "Ready"
+	stopRoleShipper      = "shipper"
+	stopRoleConsignee    = "consignee"
+	stopRolePickup       = "pickup"
+	stopRoleDelivery     = "delivery"
+	kindRateConfirmation = "RateConfirmation"
+	kindBillOfLading     = "BillOfLading"
+	kindProofOfDelivery  = "ProofOfDelivery"
+	kindInvoice          = "Invoice"
 )
 
 type ActivitiesParams struct {
@@ -77,6 +93,7 @@ type Activities struct {
 	temporalClient      client.Client
 }
 
+//nolint:gocritic // dependency injection param
 func NewActivities(p ActivitiesParams) *Activities {
 	aiDocumentService := p.AIDocumentService
 	if aiDocumentService == nil {
@@ -154,7 +171,69 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		}, nil
 	}
 
-	now := time.Now().Unix()
+	content, now, err := a.prepareExtractionContentAndStart(ctx, doc, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	outcome, err := a.runExtractionPipeline(
+		ctx,
+		payload,
+		doc,
+		tenantInfo,
+		control,
+		content,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = a.persistIndexedContentAndAssociate(
+		ctx,
+		&PersistIndexedContentPayload{
+			Document:       doc,
+			TenantInfo:     tenantInfo,
+			Control:        control,
+			Content:        content,
+			Extracted:      outcome.Extracted,
+			Classification: outcome.Classification,
+			Intelligence:   outcome.Intelligence,
+			AIDiagnostics:  outcome.AIDiagnostics,
+			Timestamp:      now,
+		}); err != nil {
+		return nil, err
+	}
+
+	if err = a.finalizeProcessDocumentIntelligence(
+		ctx,
+		doc,
+		payload,
+		content,
+		outcome.Extracted,
+		outcome.Classification,
+		outcome.Intelligence,
+		outcome.AIDiagnostics,
+		control,
+		tenantInfo,
+		outcome.EnqueueAsyncAI,
+		now,
+	); err != nil {
+		return nil, err
+	}
+
+	return &ProcessDocumentIntelligenceResult{
+		DocumentID: doc.ID,
+		Status:     string(doc.ContentStatus),
+		Kind:       outcome.Classification.Kind,
+	}, nil
+}
+
+func (a *Activities) prepareExtractionContentAndStart(
+	ctx context.Context,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+) (*documentcontent.Content, int64, error) {
+	now := timeutils.NowUnix()
 	content := &documentcontent.Content{
 		DocumentID:      doc.ID,
 		OrganizationID:  doc.OrganizationID,
@@ -162,113 +241,54 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		Status:          documentcontent.StatusExtracting,
 		LastExtractedAt: &now,
 	}
-	if _, err = a.contentRepo.Upsert(ctx, content); err != nil {
-		return nil, err
+	if _, err := a.contentRepo.Upsert(ctx, content); err != nil {
+		return nil, 0, err
 	}
 
 	doc.ContentStatus = document.ContentStatusExtracting
 	doc.ContentError = ""
-	if err = a.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
-		ID:                  doc.ID,
-		TenantInfo:          tenantInfo,
-		ContentStatus:       doc.ContentStatus,
-		ContentError:        doc.ContentError,
-		DetectedKind:        doc.DetectedKind,
-		HasExtractedText:    doc.HasExtractedText,
-		ShipmentDraftStatus: doc.ShipmentDraftStatus,
-		DocumentTypeID:      doc.DocumentTypeID,
-	}); err != nil {
-		return nil, err
+	if err := a.documentRepo.UpdateIntelligence(ctx,
+		&repositories.UpdateDocumentIntelligenceRequest{
+			ID:                  doc.ID,
+			TenantInfo:          tenantInfo,
+			ContentStatus:       doc.ContentStatus,
+			ContentError:        doc.ContentError,
+			DetectedKind:        doc.DetectedKind,
+			HasExtractedText:    doc.HasExtractedText,
+			ShipmentDraftStatus: doc.ShipmentDraftStatus,
+			DocumentTypeID:      doc.DocumentTypeID,
+		}); err != nil {
+		return nil, 0, err
 	}
 	a.metrics.Document.RecordExtraction("started", "", "none")
 	a.syncSearchProjection(ctx, doc, "")
+	return content, now, nil
+}
 
-	download, err := a.storage.Download(ctx, doc.StoragePath)
+func (a *Activities) finalizeProcessDocumentIntelligence(
+	ctx context.Context,
+	doc *document.Document,
+	payload *ProcessDocumentIntelligencePayload,
+	content *documentcontent.Content,
+	extracted *ExtractionResult,
+	classification *ClassificationResult,
+	intelligence *DocumentIntelligenceAnalysis,
+	aiDiagnostics *AIDiagnostics,
+	control *tenant.DocumentControl,
+	tenantInfo pagination.TenantInfo,
+	enqueueAsyncAI bool,
+	now int64,
+) error {
+	draftStatus, err := a.upsertShipmentDraftForProcess(
+		ctx,
+		doc,
+		control,
+		classification,
+		intelligence,
+		enqueueAsyncAI,
+	)
 	if err != nil {
-		return nil, a.markFailed(ctx, doc, content, "DOWNLOAD_FAILED", "Failed to download document")
-	}
-	defer download.Body.Close()
-
-	buf := new(bytes.Buffer)
-	if _, err = buf.ReadFrom(download.Body); err != nil {
-		return nil, a.markFailed(ctx, doc, content, "READ_FAILED", "Failed to read document bytes")
-	}
-
-	extracted, err := a.extractContent(ctx, doc, buf.Bytes(), control)
-	if err != nil {
-		return nil, a.markFailed(ctx, doc, content, "EXTRACTION_FAILED", err.Error())
-	}
-
-	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
-	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
-	classification := classifyDocumentWithControl(doc.OriginalName, extracted.Text, extracted.Pages, control, features, fingerprint)
-	intelligence := analyzeDocument(classification, extracted)
-	intelligence = a.applyParsingRules(ctx, tenantInfo, doc.OriginalName, classification.ProviderFingerprint, extracted, intelligence)
-	classification, intelligence, aiDiagnostics, enqueueAsyncAI := a.enrichWithAI(ctx, payload, doc, control, extracted, features, fingerprint, classification, intelligence)
-	structured := buildStructuredData(intelligence, aiDiagnostics)
-	content.Status = documentcontent.StatusIndexed
-	content.ContentText = extracted.Text
-	content.PageCount = extracted.PageCount
-	content.SourceKind = extracted.SourceKind
-	content.DetectedLanguage = "en"
-	content.DetectedDocumentKind = classification.Kind
-	content.ClassificationConfidence = classification.Confidence
-	content.StructuredData = structured
-	content.FailureCode = ""
-	content.FailureMessage = ""
-	content.LastExtractedAt = &now
-	if _, err = a.contentRepo.Upsert(ctx, content); err != nil {
-		return nil, err
-	}
-	if err = a.contentRepo.ReplacePages(ctx, content, buildContentPages(content, extracted.Pages)); err != nil {
-		return nil, err
-	}
-	a.metrics.Document.RecordExtraction("succeeded", extracted.SourceKind, "none")
-
-	doc.ContentStatus = document.ContentStatusIndexed
-	doc.ContentError = ""
-	doc.HasExtractedText = strings.TrimSpace(extracted.Text) != ""
-	doc.DetectedKind = classification.Kind
-	if err = a.associateDocumentType(ctx, doc, tenantInfo, classification.Kind, control); err != nil {
-		return nil, err
-	}
-
-	draftStatus := document.ShipmentDraftStatusUnavailable
-	draftIsUsable := canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
-		hasUsableShipmentDraft(intelligence)
-	if draftIsUsable {
-		draft := &documentshipmentdraft.Draft{
-			DocumentID:     doc.ID,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			Status:         documentshipmentdraft.StatusReady,
-			DocumentKind:   classification.Kind,
-			Confidence:     intelligence.OverallConfidence,
-			DraftData:      intelligence.ToMap(),
-		}
-		if _, err = a.draftRepo.Upsert(ctx, draft); err != nil {
-			return nil, err
-		}
-		draftStatus = document.ShipmentDraftStatusReady
-		a.metrics.Document.RecordShipmentDraft("ready", doc.ResourceType, classification.Kind)
-	} else {
-		draftState := documentshipmentdraft.StatusUnavailable
-		if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) && enqueueAsyncAI {
-			draftStatus = document.ShipmentDraftStatusPending
-			draftState = documentshipmentdraft.StatusPending
-		}
-		if _, err = a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
-			DocumentID:     doc.ID,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			Status:         draftState,
-			DocumentKind:   classification.Kind,
-			Confidence:     intelligence.OverallConfidence,
-			DraftData:      intelligence.ToMap(),
-		}); err != nil {
-			return nil, err
-		}
-		a.metrics.Document.RecordShipmentDraft("unavailable", doc.ResourceType, classification.Kind)
+		return err
 	}
 
 	doc.ShipmentDraftStatus = draftStatus
@@ -282,7 +302,7 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		ShipmentDraftStatus: doc.ShipmentDraftStatus,
 		DocumentTypeID:      doc.DocumentTypeID,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 	indexedText := extracted.Text
 	if !control.EnableFullTextIndexing {
@@ -290,23 +310,221 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 	}
 	a.syncSearchProjection(ctx, doc, indexedText)
 
-	if enqueueAsyncAI {
-		if err = a.startAIExtractionWorkflow(ctx, doc, payload.UserID, now); err != nil {
-			a.logger.Warn("failed to start async AI extraction workflow", zap.String("documentId", doc.ID.String()), zap.Error(err))
-			aiDiagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
-			aiDiagnostics.RejectionReason = "ai_async_enqueue_failed"
-			content.StructuredData = buildStructuredData(intelligence, aiDiagnostics)
-			if _, upsertErr := a.contentRepo.Upsert(ctx, content); upsertErr != nil {
-				return nil, upsertErr
-			}
-		}
+	return a.maybeApplyAsyncAIEnqueueFailure(
+		ctx,
+		doc,
+		payload,
+		content,
+		intelligence,
+		aiDiagnostics,
+		enqueueAsyncAI,
+		now,
+	)
+}
+
+func (a *Activities) persistIndexedContentAndAssociate(
+	ctx context.Context,
+	payload *PersistIndexedContentPayload,
+) error {
+	structured := buildStructuredData(payload.Intelligence, payload.AIDiagnostics)
+	payload.Content.Status = documentcontent.StatusIndexed
+	payload.Content.ContentText = payload.Extracted.Text
+	payload.Content.PageCount = payload.Extracted.PageCount
+	payload.Content.SourceKind = payload.Extracted.SourceKind
+	payload.Content.DetectedLanguage = "en"
+	payload.Content.DetectedDocumentKind = payload.Classification.Kind
+	payload.Content.ClassificationConfidence = payload.Classification.Confidence
+	payload.Content.StructuredData = structured
+	payload.Content.FailureCode = ""
+	payload.Content.FailureMessage = ""
+	payload.Content.LastExtractedAt = &payload.Timestamp
+
+	if _, err := a.contentRepo.Upsert(ctx, payload.Content); err != nil {
+		return err
+	}
+	if err := a.contentRepo.ReplacePages(
+		ctx,
+		payload.Content,
+		buildContentPages(payload.Content, payload.Extracted.Pages),
+	); err != nil {
+		return err
+	}
+	a.metrics.Document.RecordExtraction("succeeded", payload.Extracted.SourceKind, "none")
+
+	payload.Document.ContentStatus = document.ContentStatusIndexed
+	payload.Document.ContentError = ""
+	payload.Document.HasExtractedText = strings.TrimSpace(payload.Extracted.Text) != ""
+	payload.Document.DetectedKind = payload.Classification.Kind
+	if err := a.associateDocumentType(
+		ctx,
+		payload.Document,
+		payload.TenantInfo,
+		payload.Classification.Kind,
+		payload.Control,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *Activities) runExtractionPipeline(
+	ctx context.Context,
+	payload *ProcessDocumentIntelligencePayload,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	control *tenant.DocumentControl,
+	content *documentcontent.Content,
+) (*ExtractionPipelineOutcome, error) {
+	download, err := a.storage.Download(ctx, doc.StoragePath)
+	if err != nil {
+		return nil, a.markFailed(
+			ctx,
+			doc,
+			content,
+			documentupload.FailureDownloadFailed.String(),
+			"Failed to download document",
+		)
+	}
+	defer download.Body.Close()
+
+	buf := new(bytes.Buffer)
+	if _, err = buf.ReadFrom(download.Body); err != nil {
+		return nil, a.markFailed(
+			ctx,
+			doc,
+			content,
+			documentupload.FailureReadFailed.String(),
+			"Failed to read document bytes",
+		)
 	}
 
-	return &ProcessDocumentIntelligenceResult{
-		DocumentID: doc.ID,
-		Status:     string(doc.ContentStatus),
-		Kind:       classification.Kind,
+	extracted, err := a.extractContent(ctx, doc, buf.Bytes(), control)
+	if err != nil {
+		return nil, a.markFailed(
+			ctx,
+			doc,
+			content,
+			documentupload.FailureExtractionFailed.String(),
+			err.Error(),
+		)
+	}
+
+	features := extractDocumentFeatures(doc.OriginalName, extracted.Pages, extracted.Text)
+	fingerprint := detectProviderFingerprint(doc.OriginalName, extracted.Text, features)
+	classification := classifyDocumentWithControl(
+		doc.OriginalName,
+		extracted.Text,
+		control,
+		features,
+		fingerprint,
+	)
+	intelligence := analyzeDocument(classification, extracted)
+	intelligence = a.applyParsingRules(
+		ctx,
+		tenantInfo,
+		doc.OriginalName,
+		classification.ProviderFingerprint,
+		extracted,
+		intelligence,
+	)
+	result := a.enrichWithAI(
+		ctx,
+		&EnrichmentPayload{
+			Payload:        payload,
+			Document:       doc,
+			Control:        control,
+			Extracted:      extracted,
+			Features:       features,
+			Fingerprint:    fingerprint,
+			Classification: classification,
+			Intelligence:   intelligence,
+		},
+	)
+
+	return &ExtractionPipelineOutcome{
+		Extracted:      extracted,
+		Classification: classification,
+		Intelligence:   intelligence,
+		AIDiagnostics:  result.AIDiagnostics,
+		EnqueueAsyncAI: result.EnqueueAsyncAI,
 	}, nil
+}
+
+func (a *Activities) upsertShipmentDraftForProcess(
+	ctx context.Context,
+	doc *document.Document,
+	control *tenant.DocumentControl,
+	classification *ClassificationResult,
+	intelligence *DocumentIntelligenceAnalysis,
+	enqueueAsyncAI bool,
+) (document.ShipmentDraftStatus, error) {
+	draftIsUsable := canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
+		hasUsableShipmentDraft(intelligence)
+	if draftIsUsable {
+		draft := &documentshipmentdraft.Draft{
+			DocumentID:     doc.ID,
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+			Status:         documentshipmentdraft.StatusReady,
+			DocumentKind:   classification.Kind,
+			Confidence:     intelligence.OverallConfidence,
+			DraftData:      intelligence.ToMap(),
+		}
+		if _, err := a.draftRepo.Upsert(ctx, draft); err != nil {
+			return "", err
+		}
+		a.metrics.Document.RecordShipmentDraft("ready", doc.ResourceType, classification.Kind)
+		return document.ShipmentDraftStatusReady, nil
+	}
+
+	draftState := documentshipmentdraft.StatusUnavailable
+	draftStatus := document.ShipmentDraftStatusUnavailable
+	if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) && enqueueAsyncAI {
+		draftStatus = document.ShipmentDraftStatusPending
+		draftState = documentshipmentdraft.StatusPending
+	}
+	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
+		DocumentID:     doc.ID,
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		Status:         draftState,
+		DocumentKind:   classification.Kind,
+		Confidence:     intelligence.OverallConfidence,
+		DraftData:      intelligence.ToMap(),
+	}); err != nil {
+		return "", err
+	}
+	a.metrics.Document.RecordShipmentDraft("unavailable", doc.ResourceType, classification.Kind)
+	return draftStatus, nil
+}
+
+func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
+	ctx context.Context,
+	doc *document.Document,
+	payload *ProcessDocumentIntelligencePayload,
+	content *documentcontent.Content,
+	intelligence *DocumentIntelligenceAnalysis,
+	aiDiagnostics *AIDiagnostics,
+	enqueueAsyncAI bool,
+	now int64,
+) error {
+	if !enqueueAsyncAI {
+		return nil
+	}
+	if err := a.startAIExtractionWorkflow(ctx, doc, payload.UserID, now); err != nil {
+		a.logger.Warn(
+			"failed to start async AI extraction workflow",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+		aiDiagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
+		aiDiagnostics.RejectionReason = "ai_async_enqueue_failed"
+		content.StructuredData = buildStructuredData(intelligence, aiDiagnostics)
+		if _, upsertErr := a.contentRepo.Upsert(ctx, content); upsertErr != nil {
+			return upsertErr
+		}
+	}
+	return nil
 }
 
 func (a *Activities) ReconcileDocumentIntelligenceActivity(
@@ -328,7 +546,10 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 		_, startErr := a.workflowStarter.StartWorkflow(
 			ctx,
 			client.StartWorkflowOptions{
-				ID:                                       fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
+				ID: fmt.Sprintf(
+					"document-intelligence-%s",
+					doc.ID.String(),
+				),
 				TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
 				WorkflowExecutionErrorWhenAlreadyStarted: true,
 				WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
@@ -352,37 +573,19 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 	return result, nil
 }
 
-type extractionResult struct {
-	Text       string
-	PageCount  int
-	SourceKind documentcontent.SourceKind
-	Pages      []pageExtractionResult
-}
-
-type pageExtractionResult struct {
-	PageNumber           int
-	SourceKind           documentcontent.SourceKind
-	Text                 string
-	OCRConfidence        float64
-	PreprocessingApplied bool
-	Width                int
-	Height               int
-	Metadata             map[string]any
-}
-
 func (a *Activities) extractContent(
 	ctx context.Context,
 	doc *document.Document,
 	data []byte,
 	control *tenant.DocumentControl,
-) (*extractionResult, error) {
+) (*ExtractionResult, error) {
 	contentType := strings.ToLower(doc.FileType)
 	ext := strings.ToLower(filepath.Ext(doc.OriginalName))
 
 	switch {
 	case isPlainTextType(contentType, ext):
-		text := truncateExtractedText(string(data), a.cfg.GetMaxExtractedChars())
-		return finalizeExtraction([]pageExtractionResult{{
+		text := stringutils.TruncateAndTrim(string(data), a.cfg.GetMaxExtractedChars())
+		return finalizeExtraction([]*PageExtractionResult{{
 			PageNumber: 1,
 			SourceKind: documentcontent.SourceKindNative,
 			Text:       text,
@@ -391,7 +594,7 @@ func (a *Activities) extractContent(
 		return a.extractViaFitz(ctx, data, control.EnableOCR)
 	case strings.HasPrefix(contentType, "image/"):
 		if !control.EnableOCR {
-			return finalizeExtraction([]pageExtractionResult{{
+			return finalizeExtraction([]*PageExtractionResult{{
 				PageNumber: 1,
 				SourceKind: documentcontent.SourceKindOCR,
 			}}, a.cfg.GetMaxExtractedChars()), nil
@@ -400,13 +603,17 @@ func (a *Activities) extractContent(
 		if err != nil {
 			return nil, err
 		}
-		return finalizeExtraction([]pageExtractionResult{page}, a.cfg.GetMaxExtractedChars()), nil
+		return finalizeExtraction([]*PageExtractionResult{page}, a.cfg.GetMaxExtractedChars()), nil
 	default:
 		return nil, fmt.Errorf("unsupported document type for extraction: %s", doc.FileType)
 	}
 }
 
-func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR bool) (*extractionResult, error) {
+func (a *Activities) extractViaFitz(
+	ctx context.Context,
+	data []byte,
+	enableOCR bool,
+) (*ExtractionResult, error) {
 	doc, err := fitz.NewFromMemory(data)
 	if err != nil {
 		return nil, err
@@ -414,13 +621,13 @@ func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR 
 	defer doc.Close()
 
 	pageCount := doc.NumPage()
-	pages := make([]pageExtractionResult, 0, pageCount)
+	pages := make([]*PageExtractionResult, 0, pageCount)
 
 	for page := range pageCount {
 		recordHeartbeatIfActivity(ctx, page)
 		pageText, textErr := doc.Text(page)
 		if textErr == nil && strings.TrimSpace(pageText) != "" {
-			pages = append(pages, pageExtractionResult{
+			pages = append(pages, &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindNative,
 				Text:       pageText,
@@ -429,7 +636,7 @@ func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR 
 		}
 
 		if !enableOCR || page >= a.cfg.GetMaxOCRPages() {
-			pages = append(pages, pageExtractionResult{
+			pages = append(pages, &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindNative,
 				Metadata: map[string]any{
@@ -441,7 +648,7 @@ func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR 
 
 		imageBytes, imageErr := doc.ImagePNG(page, 150)
 		if imageErr != nil {
-			pages = append(pages, pageExtractionResult{
+			pages = append(pages, &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindOCR,
 				Metadata: map[string]any{
@@ -453,7 +660,7 @@ func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR 
 
 		ocrPage, ocrErr := a.runOCRPage(ctx, imageBytes, ".png", page+1)
 		if ocrErr != nil {
-			pages = append(pages, pageExtractionResult{
+			pages = append(pages, &PageExtractionResult{
 				PageNumber: page + 1,
 				SourceKind: documentcontent.SourceKindOCR,
 				Metadata: map[string]any{
@@ -476,8 +683,8 @@ func (a *Activities) runOCRPage(
 	imageData []byte,
 	ext string,
 	pageNumber int,
-) (pageExtractionResult, error) {
-	page := pageExtractionResult{
+) (*PageExtractionResult, error) {
+	page := PageExtractionResult{
 		PageNumber: pageNumber,
 		SourceKind: documentcontent.SourceKindOCR,
 		Metadata:   map[string]any{},
@@ -504,10 +711,10 @@ func (a *Activities) runOCRPage(
 
 	text, confidence, err := a.runOCR(ctx, ocrInput, ext)
 	if err != nil {
-		return page, err
+		return &page, err
 	}
 
-	page.Text = truncateExtractedText(text, a.cfg.GetMaxExtractedChars())
+	page.Text = stringutils.TruncateAndTrim(text, a.cfg.GetMaxExtractedChars())
 	page.OCRConfidence = confidence
 	if page.Metadata == nil {
 		page.Metadata = map[string]any{}
@@ -515,10 +722,14 @@ func (a *Activities) runOCRPage(
 	page.Metadata["ocrLanguage"] = a.cfg.GetOCRLanguage()
 	page.Metadata["ocrConfidence"] = confidence
 
-	return page, nil
+	return &page, nil
 }
 
-func (a *Activities) runOCR(ctx context.Context, imageData []byte, ext string) (string, float64, error) {
+func (a *Activities) runOCR(
+	ctx context.Context,
+	imageData []byte,
+	ext string,
+) (text string, confidence float64, err error) {
 	tmpFile, err := os.CreateTemp("", "trenova-ocr-*"+ext)
 	if err != nil {
 		return "", 0, err
@@ -536,18 +747,35 @@ func (a *Activities) runOCR(ctx context.Context, imageData []byte, ext string) (
 	ocrCtx, cancel := context.WithTimeout(ctx, a.cfg.GetOCRTimeout())
 	defer cancel()
 
-	cmd := exec.CommandContext(ocrCtx, a.cfg.GetOCRCommand(), tmpFile.Name(), "stdout", "-l", a.cfg.GetOCRLanguage(), "tsv")
+	// #nosec G204 -- OCR binary path and language come from trusted config; temp path is from os.CreateTemp, not user shell input
+	cmd := exec.CommandContext(
+		ocrCtx,
+		a.cfg.GetOCRCommand(),
+		tmpFile.Name(),
+		"stdout",
+		"-l",
+		a.cfg.GetOCRLanguage(),
+		"tsv",
+	)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		if ocrCtx.Err() != nil {
-			return "", 0, fmt.Errorf("ocr command timed out after %s: %w", a.cfg.GetOCRTimeout(), ocrCtx.Err())
+			return "", 0, fmt.Errorf(
+				"ocr command timed out after %s: %w",
+				a.cfg.GetOCRTimeout(),
+				ocrCtx.Err(),
+			)
 		}
-		return "", 0, fmt.Errorf("ocr command failed: %w: %s", err, strings.TrimSpace(string(output)))
+		return "", 0, fmt.Errorf(
+			"ocr command failed: %w: %s",
+			err,
+			strings.TrimSpace(string(output)),
+		)
 	}
 
-	text, confidence, parseErr := parseTesseractTSV(string(output))
-	if parseErr != nil {
-		return "", 0, parseErr
+	text, confidence, err = parseTesseractTSV(string(output))
+	if err != nil {
+		return "", 0, err
 	}
 
 	return text, confidence, nil
@@ -559,7 +787,7 @@ func (a *Activities) markFailed(
 	content *documentcontent.Content,
 	code, message string,
 ) error {
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	content.Status = documentcontent.StatusFailed
 	content.FailureCode = code
 	content.FailureMessage = message
@@ -588,19 +816,21 @@ func (a *Activities) markFailed(
 	doc.HasExtractedText = false
 	doc.DetectedKind = ""
 	doc.ShipmentDraftStatus = document.ShipmentDraftStatusFailed
-	if err := a.documentRepo.UpdateIntelligence(ctx, &repositories.UpdateDocumentIntelligenceRequest{
-		ID: doc.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: doc.OrganizationID,
-			BuID:  doc.BusinessUnitID,
-		},
-		ContentStatus:       doc.ContentStatus,
-		ContentError:        doc.ContentError,
-		DetectedKind:        doc.DetectedKind,
-		HasExtractedText:    doc.HasExtractedText,
-		ShipmentDraftStatus: doc.ShipmentDraftStatus,
-		DocumentTypeID:      doc.DocumentTypeID,
-	}); err != nil {
+	if err := a.documentRepo.UpdateIntelligence(
+		ctx,
+		&repositories.UpdateDocumentIntelligenceRequest{
+			ID: doc.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: doc.OrganizationID,
+				BuID:  doc.BusinessUnitID,
+			},
+			ContentStatus:       doc.ContentStatus,
+			ContentError:        doc.ContentError,
+			DetectedKind:        doc.DetectedKind,
+			HasExtractedText:    doc.HasExtractedText,
+			ShipmentDraftStatus: doc.ShipmentDraftStatus,
+			DocumentTypeID:      doc.DocumentTypeID,
+		}); err != nil {
 		return err
 	}
 	a.syncSearchProjection(ctx, doc, "")
@@ -643,214 +873,14 @@ func isFitzType(contentType, ext string) bool {
 	}
 }
 
-func truncateExtractedText(text string, max int) string {
-	text = strings.TrimSpace(text)
-	if max <= 0 || len(text) <= max {
-		return text
-	}
-	return text[:max]
-}
-
-type classificationResult struct {
-	Kind                string
-	Confidence          float64
-	Signals             []string
-	ReviewRequired      bool
-	Source              string
-	ProviderFingerprint string
-	Reason              string
-}
-
-type documentFeatureSet struct {
-	TitleCandidates  []string
-	SectionLabels    []string
-	PartyLabels      []string
-	ReferenceLabels  []string
-	MoneySignals     []string
-	StopSignals      []string
-	TermsSignals     []string
-	SignatureSignals []string
-}
-
-type providerFingerprint struct {
-	Provider   string
-	KindHint   string
-	Confidence float64
-	Signals    []string
-}
-
-type reviewField struct {
-	Label           string
-	Value           string
-	Confidence      float64
-	Excerpt         string
-	EvidenceExcerpt string
-	PageNumber      int
-	ReviewRequired  bool
-	Conflict        bool
-	Source          string
-}
-
-type reviewConflict struct {
-	Key             string
-	Label           string
-	Values          []string
-	PageNumbers     []int
-	EvidenceExcerpt string
-	Source          string
-}
-
-type intelligenceStop struct {
-	Sequence            int
-	Role                string
-	Name                string
-	AddressLine1        string
-	AddressLine2        string
-	City                string
-	State               string
-	PostalCode          string
-	Date                string
-	TimeWindow          string
-	AppointmentRequired bool
-	PageNumber          int
-	EvidenceExcerpt     string
-	Confidence          float64
-	ReviewRequired      bool
-	Source              string
-}
-
-type documentIntelligenceAnalysis struct {
-	Kind                 string
-	OverallConfidence    float64
-	ReviewStatus         string
-	MissingFields        []string
-	Signals              []string
-	ClassifierSource     string
-	ProviderFingerprint  string
-	ClassificationReason string
-	ParsingRuleMetadata  *services.DocumentParsingRuleMetadata
-	Conflicts            []reviewConflict
-	Fields               map[string]reviewField
-	Stops                []intelligenceStop
-	RawExcerpt           string
-}
-
-type aiAcceptanceStatus string
-
-const (
-	aiAcceptanceStatusNotAttempted aiAcceptanceStatus = "not_attempted"
-	aiAcceptanceStatusPending      aiAcceptanceStatus = "pending"
-	aiAcceptanceStatusAccepted     aiAcceptanceStatus = "accepted"
-	aiAcceptanceStatusRejected     aiAcceptanceStatus = "rejected"
-)
-
-type aiExtractionDiagnostics struct {
-	FallbackAnalysis  documentIntelligenceAnalysis
-	CandidateAnalysis *documentIntelligenceAnalysis
-	AcceptanceStatus  aiAcceptanceStatus
-	RejectionReason   string
-	ResponseID        string
-	SubmittedAt       *int64
-	LastPolledAt      *int64
-}
-
-func (d aiExtractionDiagnostics) ToMap() map[string]any {
-	data := map[string]any{
-		"acceptanceStatus": d.AcceptanceStatus,
-		"rejectionReason":  d.RejectionReason,
-		"fallbackAnalysis": d.FallbackAnalysis.ToMap(),
-	}
-	if d.CandidateAnalysis != nil {
-		data["candidateAnalysis"] = d.CandidateAnalysis.ToMap()
-	}
-	if d.ResponseID != "" {
-		data["responseId"] = d.ResponseID
-	}
-	if d.SubmittedAt != nil {
-		data["submittedAt"] = *d.SubmittedAt
-	}
-	if d.LastPolledAt != nil {
-		data["lastPolledAt"] = *d.LastPolledAt
-	}
-	return data
-}
-
-func (a documentIntelligenceAnalysis) ToMap() map[string]any {
-	fields := make(map[string]any, len(a.Fields))
-	for key, field := range a.Fields {
-		fields[key] = map[string]any{
-			"label":           field.Label,
-			"value":           field.Value,
-			"confidence":      field.Confidence,
-			"excerpt":         field.Excerpt,
-			"evidenceExcerpt": field.EvidenceExcerpt,
-			"pageNumber":      field.PageNumber,
-			"reviewRequired":  field.ReviewRequired,
-			"conflict":        field.Conflict,
-			"source":          field.Source,
-		}
-	}
-
-	conflicts := make([]map[string]any, 0, len(a.Conflicts))
-	for _, conflict := range a.Conflicts {
-		conflicts = append(conflicts, map[string]any{
-			"key":             conflict.Key,
-			"label":           conflict.Label,
-			"values":          conflict.Values,
-			"pageNumbers":     conflict.PageNumbers,
-			"evidenceExcerpt": conflict.EvidenceExcerpt,
-			"source":          conflict.Source,
-		})
-	}
-
-	stops := make([]map[string]any, 0, len(a.Stops))
-	for _, stop := range a.Stops {
-		stops = append(stops, map[string]any{
-			"sequence":            stop.Sequence,
-			"role":                stop.Role,
-			"name":                stop.Name,
-			"addressLine1":        stop.AddressLine1,
-			"addressLine2":        stop.AddressLine2,
-			"city":                stop.City,
-			"state":               stop.State,
-			"postalCode":          stop.PostalCode,
-			"date":                stop.Date,
-			"timeWindow":          stop.TimeWindow,
-			"appointmentRequired": stop.AppointmentRequired,
-			"pageNumber":          stop.PageNumber,
-			"evidenceExcerpt":     stop.EvidenceExcerpt,
-			"confidence":          stop.Confidence,
-			"reviewRequired":      stop.ReviewRequired,
-			"source":              stop.Source,
-		})
-	}
-
-	return map[string]any{
-		"kind":                 a.Kind,
-		"overallConfidence":    a.OverallConfidence,
-		"reviewStatus":         a.ReviewStatus,
-		"missingFields":        a.MissingFields,
-		"signals":              a.Signals,
-		"classifierSource":     a.ClassifierSource,
-		"providerFingerprint":  a.ProviderFingerprint,
-		"classificationReason": a.ClassificationReason,
-		"parsingRuleMetadata":  a.ParsingRuleMetadata,
-		"conflicts":            conflicts,
-		"fields":               fields,
-		"stops":                stops,
-		"rawExcerpt":           a.RawExcerpt,
-	}
-}
-
 func classifyDocumentWithControl(
 	name, text string,
-	pages []pageExtractionResult,
 	control *tenant.DocumentControl,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
+	features *DocumentFeatureSet,
+	fingerprint *ProviderFingerprint,
+) *ClassificationResult {
 	if control == nil || !control.EnableAutoClassification {
-		return classificationResult{
+		return &ClassificationResult{
 			Kind:           "Other",
 			Confidence:     0,
 			Signals:        []string{"auto classification disabled"},
@@ -859,34 +889,23 @@ func classifyDocumentWithControl(
 			Reason:         "automatic classification disabled by document controls",
 		}
 	}
-	return classifyDocumentWithFeatures(name, text, pages, features, fingerprint)
-}
-
-func classifyDocument(name, text string) classificationResult {
-	return classifyDocumentWithFeatures(
-		name,
-		text,
-		nil,
-		extractDocumentFeatures(name, nil, text),
-		detectProviderFingerprint(name, text, extractDocumentFeatures(name, nil, text)),
-	)
+	return classifyDocumentWithFeatures(name, text, features, fingerprint)
 }
 
 func classifyDocumentWithFeatures(
 	name, text string,
-	_ []pageExtractionResult,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
+	features *DocumentFeatureSet,
+	fingerprint *ProviderFingerprint,
+) *ClassificationResult {
 	corpus := strings.ToLower(name + "\n" + text)
 
-	candidates := []classificationResult{
+	candidates := []*ClassificationResult{
 		scoreRateConfirmation(corpus, features, fingerprint),
 		scoreBillOfLading(corpus, features, fingerprint),
 		scoreProofOfDelivery(corpus, features, fingerprint),
 	}
 
-	best := classificationResult{
+	best := &ClassificationResult{
 		Kind:           "Other",
 		Confidence:     0.3,
 		Signals:        []string{"no strong classification signals"},
@@ -902,7 +921,7 @@ func classifyDocumentWithFeatures(
 	}
 
 	if best.Kind == "Other" || best.Confidence < 0.55 {
-		return classificationResult{
+		return &ClassificationResult{
 			Kind:                "Other",
 			Confidence:          clampConfidence(best.Confidence),
 			Signals:             best.Signals,
@@ -927,9 +946,9 @@ func classifyDocumentWithFeatures(
 
 func scoreRateConfirmation(
 	corpus string,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
+	features *DocumentFeatureSet,
+	fingerprint *ProviderFingerprint,
+) *ClassificationResult {
 	score := 0.0
 	signals := make([]string, 0, 10)
 
@@ -964,7 +983,14 @@ func scoreRateConfirmation(
 		score += 0.075
 		signals = append(signals, "reference number")
 	}
-	if containsAny(corpus, "line haul", "flat rate", "fuel surcharge", "quick pay", "cash advance") {
+	if containsAny(
+		corpus,
+		"line haul",
+		"flat rate",
+		"fuel surcharge",
+		"quick pay",
+		"cash advance",
+	) {
 		score += 0.15
 		signals = append(signals, "carrier rate terms")
 	}
@@ -972,7 +998,11 @@ func scoreRateConfirmation(
 		score += 0.1
 		signals = append(signals, "load number")
 	}
-	if containsAny(corpus, "load confirmation is subject to the terms", "this load confirmation is") {
+	if containsAny(
+		corpus,
+		"load confirmation is subject to the terms",
+		"this load confirmation is",
+	) {
 		score += 0.1
 		signals = append(signals, "load confirmation terms")
 	}
@@ -984,13 +1014,13 @@ func scoreRateConfirmation(
 		score += 0.05
 		signals = append(signals, "stop signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, "RateConfirmation") {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindRateConfirmation) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
-	return classificationResult{
-		Kind:                "RateConfirmation",
+	return &ClassificationResult{
+		Kind:                kindRateConfirmation,
 		Confidence:          score,
 		Signals:             dedupeStrings(signals),
 		Source:              "deterministic",
@@ -1001,9 +1031,9 @@ func scoreRateConfirmation(
 
 func scoreBillOfLading(
 	corpus string,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
+	features *DocumentFeatureSet,
+	fingerprint *ProviderFingerprint,
+) *ClassificationResult {
 	score := 0.0
 	signals := make([]string, 0, 4)
 
@@ -1026,13 +1056,13 @@ func scoreBillOfLading(
 		score += 0.08
 		signals = append(signals, "signature signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, "BillOfLading") {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindBillOfLading) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
-	return classificationResult{
-		Kind:                "BillOfLading",
+	return &ClassificationResult{
+		Kind:                kindBillOfLading,
 		Confidence:          score,
 		Signals:             dedupeStrings(signals),
 		Source:              "deterministic",
@@ -1043,9 +1073,9 @@ func scoreBillOfLading(
 
 func scoreProofOfDelivery(
 	corpus string,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
+	features *DocumentFeatureSet,
+	fingerprint *ProviderFingerprint,
+) *ClassificationResult {
 	score := 0.0
 	signals := make([]string, 0, 4)
 
@@ -1061,13 +1091,13 @@ func scoreProofOfDelivery(
 		score += 0.08
 		signals = append(signals, "signature signals")
 	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, "ProofOfDelivery") {
+	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, kindProofOfDelivery) {
 		score += fingerprint.Confidence * 0.2
 		signals = append(signals, fingerprint.Signals...)
 	}
 
-	return classificationResult{
-		Kind:                "ProofOfDelivery",
+	return &ClassificationResult{
+		Kind:                kindProofOfDelivery,
 		Confidence:          score,
 		Signals:             dedupeStrings(signals),
 		Source:              "deterministic",
@@ -1076,48 +1106,9 @@ func scoreProofOfDelivery(
 	}
 }
 
-func scoreInvoice(
-	corpus string,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-) classificationResult {
-	score := 0.0
-	signals := make([]string, 0, 4)
-
-	if containsAny(corpus, "\ninvoice", "invoice #", "invoice number") {
-		score += 0.6
-		signals = append(signals, "invoice phrase")
-	}
-	if containsAny(corpus, "amount due", "total due", "balance due") {
-		score += 0.2
-		signals = append(signals, "amount due")
-	}
-	if containsAny(corpus, "invoice date", "due date") {
-		score += 0.1
-		signals = append(signals, "invoice dates")
-	}
-	if len(features.MoneySignals) > 0 {
-		score += 0.05
-		signals = append(signals, "money signals")
-	}
-	if fingerprint != nil && strings.EqualFold(fingerprint.KindHint, "Invoice") {
-		score += fingerprint.Confidence * 0.2
-		signals = append(signals, fingerprint.Signals...)
-	}
-
-	return classificationResult{
-		Kind:                "Invoice",
-		Confidence:          score,
-		Signals:             dedupeStrings(signals),
-		Source:              "deterministic",
-		ProviderFingerprint: providerName(fingerprint),
-		Reason:              "invoice and billing evidence detected",
-	}
-}
-
 func buildStructuredData(
-	intelligence documentIntelligenceAnalysis,
-	aiDiagnostics aiExtractionDiagnostics,
+	intelligence *DocumentIntelligenceAnalysis,
+	aiDiagnostics *AIDiagnostics,
 ) map[string]any {
 	data := map[string]any{
 		"schemaVersion": 6,
@@ -1129,12 +1120,12 @@ func buildStructuredData(
 
 func extractDocumentFeatures(
 	name string,
-	pages []pageExtractionResult,
+	pages []*PageExtractionResult,
 	text string,
-) documentFeatureSet {
+) *DocumentFeatureSet {
 	corpus := strings.ToLower(name + "\n" + text)
 	lines := splitNormalizedLines(text)
-	features := documentFeatureSet{
+	features := &DocumentFeatureSet{
 		TitleCandidates:  make([]string, 0, 4),
 		SectionLabels:    make([]string, 0, 12),
 		PartyLabels:      make([]string, 0, 8),
@@ -1151,7 +1142,7 @@ func extractDocumentFeatures(
 			if i < 3 && looksLikeTitle(line) {
 				features.TitleCandidates = append(features.TitleCandidates, line)
 			}
-			recordLineFeatures(&features, line)
+			recordLineFeatures(features, line)
 		}
 	}
 
@@ -1191,7 +1182,7 @@ func extractDocumentFeatures(
 	return features
 }
 
-func recordLineFeatures(features *documentFeatureSet, line string) {
+func recordLineFeatures(features *DocumentFeatureSet, line string) {
 	normalized := strings.ToLower(strings.TrimSpace(line))
 	if normalized == "" {
 		return
@@ -1219,31 +1210,31 @@ func recordLineFeatures(features *documentFeatureSet, line string) {
 
 func detectProviderFingerprint(
 	name, text string,
-	features documentFeatureSet,
-) *providerFingerprint {
+	features *DocumentFeatureSet,
+) *ProviderFingerprint {
 	corpus := strings.ToLower(name + "\n" + text)
-	registry := []providerFingerprint{
+	registry := []ProviderFingerprint{
 		{
 			Provider:   "CHRobinson",
-			KindHint:   "RateConfirmation",
+			KindHint:   kindRateConfirmation,
 			Confidence: 0.95,
 			Signals:    []string{"ch robinson fingerprint", "carrier load confirmation format"},
 		},
 		{
 			Provider:   "TQL",
-			KindHint:   "RateConfirmation",
+			KindHint:   kindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"tql fingerprint"},
 		},
 		{
 			Provider:   "Echo",
-			KindHint:   "RateConfirmation",
+			KindHint:   kindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"echo fingerprint"},
 		},
 		{
 			Provider:   "UberFreight",
-			KindHint:   "RateConfirmation",
+			KindHint:   kindRateConfirmation,
 			Confidence: 0.9,
 			Signals:    []string{"uber freight fingerprint"},
 		},
@@ -1252,7 +1243,14 @@ func detectProviderFingerprint(
 	for _, candidate := range registry {
 		switch candidate.Provider {
 		case "CHRobinson":
-			if containsAny(corpus, "c.h. robinson", "ch robinson", "navispherecarrier", "carrier load confirmation", "contract addendum and carrier load confirmation") {
+			if containsAny(
+				corpus,
+				"c.h. robinson",
+				"ch robinson",
+				"navispherecarrier",
+				"carrier load confirmation",
+				"contract addendum and carrier load confirmation",
+			) {
 				return &candidate
 			}
 		case "TQL":
@@ -1271,9 +1269,9 @@ func detectProviderFingerprint(
 	}
 
 	if len(features.TermsSignals) > 0 && containsAny(corpus, "load confirmation", "carrier load") {
-		return &providerFingerprint{
+		return &ProviderFingerprint{
 			Provider:   "GenericBrokerLoadConfirmation",
-			KindHint:   "RateConfirmation",
+			KindHint:   kindRateConfirmation,
 			Confidence: 0.7,
 			Signals:    []string{"generic broker load confirmation fingerprint"},
 		}
@@ -1282,7 +1280,7 @@ func detectProviderFingerprint(
 	return nil
 }
 
-func providerName(fingerprint *providerFingerprint) string {
+func providerName(fingerprint *ProviderFingerprint) string {
 	if fingerprint == nil {
 		return ""
 	}
@@ -1320,47 +1318,32 @@ func looksLikeSectionLabel(line string) bool {
 	)
 }
 
+//nolint:funlen // multi-step AI enrichment pipeline
 func (a *Activities) enrichWithAI(
 	ctx context.Context,
-	payload *ProcessDocumentIntelligencePayload,
-	doc *document.Document,
-	control *tenant.DocumentControl,
-	extracted *extractionResult,
-	features documentFeatureSet,
-	fingerprint *providerFingerprint,
-	classification classificationResult,
-	intelligence documentIntelligenceAnalysis,
-) (classificationResult, documentIntelligenceAnalysis, aiExtractionDiagnostics, bool) {
-	diagnostics := aiExtractionDiagnostics{
-		FallbackAnalysis: intelligence,
+	payload *EnrichmentPayload,
+) *EnrichmentResult {
+	diagnostics := &AIDiagnostics{
+		FallbackAnalysis: payload.Intelligence,
 		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
-	}
-	if extracted == nil {
-		diagnostics.RejectionReason = "no_extracted_content"
-		return classification, intelligence, diagnostics, false
-	}
-	if !a.cfg.AIEnabled() || !control.EnableAIAssistedClassification {
-		if !a.cfg.AIEnabled() {
-			diagnostics.RejectionReason = "ai_disabled"
-		} else {
-			diagnostics.RejectionReason = "ai_assisted_classification_disabled"
-		}
-		return classification, intelligence, diagnostics, false
 	}
 
 	tenantInfo := pagination.TenantInfo{
-		OrgID:  doc.OrganizationID,
-		BuID:   doc.BusinessUnitID,
-		UserID: payload.UserID,
+		OrgID:  payload.Document.OrganizationID,
+		BuID:   payload.Document.BusinessUnitID,
+		UserID: payload.Payload.UserID,
 	}
-	pages := make([]services.AIDocumentPage, 0, len(extracted.Pages))
-	for _, page := range extracted.Pages {
+	pages := make([]services.AIDocumentPage, 0, len(payload.Extracted.Pages))
+	for _, page := range payload.Extracted.Pages {
 		if strings.TrimSpace(page.Text) == "" {
 			continue
 		}
 		pages = append(pages, services.AIDocumentPage{
 			PageNumber: page.PageNumber,
-			Text:       truncateExtractedText(page.Text, a.cfg.GetAIMaxInputChars()/max(len(extracted.Pages), 1)),
+			Text: stringutils.TruncateAndTrim(
+				page.Text,
+				a.cfg.GetAIMaxInputChars()/max(len(payload.Extracted.Pages), 1),
+			),
 		})
 	}
 
@@ -1369,62 +1352,99 @@ func (a *Activities) enrichWithAI(
 		var routeErr error
 		route, routeErr = a.aiDocumentService.RouteDocument(ctx, &services.AIRouteRequest{
 			TenantInfo: tenantInfo,
-			DocumentID: doc.ID,
-			FileName:   doc.OriginalName,
-			Text:       truncateExtractedText(extracted.Text, a.cfg.GetAIMaxInputChars()),
-			Pages:      pages,
+			DocumentID: payload.Document.ID,
+			FileName:   payload.Document.OriginalName,
+			Text: stringutils.TruncateAndTrim(
+				payload.Extracted.Text,
+				a.cfg.GetAIMaxInputChars(),
+			),
+			Pages: pages,
 			Features: &services.AIDocumentFeatureSet{
-				TitleCandidates:  features.TitleCandidates,
-				SectionLabels:    features.SectionLabels,
-				PartyLabels:      features.PartyLabels,
-				ReferenceLabels:  features.ReferenceLabels,
-				MoneySignals:     features.MoneySignals,
-				StopSignals:      features.StopSignals,
-				TermsSignals:     features.TermsSignals,
-				SignatureSignals: features.SignatureSignals,
+				TitleCandidates:  payload.Features.TitleCandidates,
+				SectionLabels:    payload.Features.SectionLabels,
+				PartyLabels:      payload.Features.PartyLabels,
+				ReferenceLabels:  payload.Features.ReferenceLabels,
+				MoneySignals:     payload.Features.MoneySignals,
+				StopSignals:      payload.Features.StopSignals,
+				TermsSignals:     payload.Features.TermsSignals,
+				SignatureSignals: payload.Features.SignatureSignals,
 			},
-			Fingerprint: toAIFingerprintHint(fingerprint),
+			Fingerprint: toAIFingerprintHint(payload.Fingerprint),
 		})
 		return routeErr
 	})
 	if err != nil {
-		a.logger.Warn("ai route failed", zap.String("documentId", doc.ID.String()), zap.Error(err))
+		a.logger.Warn(
+			"ai route failed",
+			zap.String("documentId", payload.Document.ID.String()),
+			zap.Error(err),
+		)
 		if errors.Is(err, context.DeadlineExceeded) {
 			diagnostics.RejectionReason = "ai_route_timeout"
 		} else {
 			diagnostics.RejectionReason = "ai_route_failed"
 		}
-		return classification, intelligence, diagnostics, false
+		return &EnrichmentResult{
+			Classification:       payload.Classification,
+			DocumentIntelligence: payload.Intelligence,
+			AIDiagnostics:        diagnostics,
+			EnqueueAsyncAI:       false,
+		}
 	}
 	if route == nil || strings.TrimSpace(route.DocumentKind) == "" {
 		diagnostics.RejectionReason = "ai_route_empty"
-		return classification, intelligence, diagnostics, false
+		return &EnrichmentResult{
+			Classification:       payload.Classification,
+			DocumentIntelligence: payload.Intelligence,
+			AIDiagnostics:        diagnostics,
+			EnqueueAsyncAI:       false,
+		}
 	}
-	routedClassification := classification
+
+	routedClassification := payload.Classification
 	routedClassification.Kind = normalizeRoutedKind(route.DocumentKind)
 	routedClassification.Confidence = route.Confidence
-	routedClassification.Signals = dedupeStrings(append(classification.Signals, route.Signals...))
-	routedClassification.ReviewRequired = normalizeAIReviewStatus(route.ReviewStatus) != "Ready"
+	routedClassification.Signals = dedupeStrings(
+		append(payload.Classification.Signals, route.Signals...),
+	)
+	routedClassification.ReviewRequired = normalizeAIReviewStatus(
+		route.ReviewStatus,
+	) != reviewStatusReady
 	routedClassification.Source = normalizeClassifierSource(route.ClassifierSource)
-	routedClassification.ProviderFingerprint = firstNonEmpty(route.ProviderFingerprint, providerName(fingerprint))
-	routedClassification.Reason = firstNonEmpty(route.Reason, classification.Reason)
-	routedAnalysis := analyzeDocument(routedClassification, extracted)
+	routedClassification.ProviderFingerprint = firstNonEmpty(
+		route.ProviderFingerprint,
+		providerName(payload.Fingerprint),
+	)
+	routedClassification.Reason = firstNonEmpty(route.Reason, payload.Classification.Reason)
+	routedAnalysis := analyzeDocument(routedClassification, payload.Extracted)
 
-	if !strings.EqualFold(routedClassification.Kind, "RateConfirmation") || !control.EnableAIAssistedExtraction || !route.ShouldExtract {
+	if !strings.EqualFold(routedClassification.Kind, kindRateConfirmation) ||
+		!payload.Control.EnableAIAssistedExtraction ||
+		!route.ShouldExtract {
 		switch {
-		case !strings.EqualFold(routedClassification.Kind, "RateConfirmation"):
+		case !strings.EqualFold(routedClassification.Kind, kindRateConfirmation):
 			diagnostics.RejectionReason = "ai_routed_non_rate_confirmation"
-		case !control.EnableAIAssistedExtraction:
+		case !payload.Control.EnableAIAssistedExtraction:
 			diagnostics.RejectionReason = "ai_assisted_extraction_disabled"
 		case !route.ShouldExtract:
 			diagnostics.RejectionReason = "ai_route_declined_extraction"
 		}
-		return routedClassification, routedAnalysis, diagnostics, false
+		return &EnrichmentResult{
+			Classification:       routedClassification,
+			DocumentIntelligence: routedAnalysis,
+			AIDiagnostics:        diagnostics,
+			EnqueueAsyncAI:       false,
+		}
 	}
 
 	diagnostics.AcceptanceStatus = aiAcceptanceStatusPending
 	diagnostics.RejectionReason = ""
-	return routedClassification, routedAnalysis, diagnostics, true
+	return &EnrichmentResult{
+		Classification:       routedClassification,
+		DocumentIntelligence: routedAnalysis,
+		AIDiagnostics:        diagnostics,
+		EnqueueAsyncAI:       true,
+	}
 }
 
 func (a *Activities) runWithHeartbeat(ctx context.Context, stage string, fn func() error) error {
@@ -1461,16 +1481,16 @@ func recordHeartbeatIfActivity(ctx context.Context, details ...any) {
 }
 
 func mergeAIAnalysis(
-	fallback documentIntelligenceAnalysis,
+	fallback *DocumentIntelligenceAnalysis,
 	aiExtract *services.AIExtractResult,
-) (documentIntelligenceAnalysis, bool, string) {
+) (merged *DocumentIntelligenceAnalysis, accepted bool, rejectionReason string) {
 	normalized := normalizeAIExtractResult(aiExtract)
-	rejectionReason := validateAIExtract(normalized)
+	rejectionReason = validateAIExtract(normalized)
 	if rejectionReason != "" {
 		return fallback, false, rejectionReason
 	}
 
-	merged := analysisFromAIExtract(normalized)
+	merged = analysisFromAIExtract(normalized)
 	merged.ClassifierSource = fallback.ClassifierSource
 	merged.ProviderFingerprint = fallback.ProviderFingerprint
 	merged.ClassificationReason = fallback.ClassificationReason
@@ -1479,32 +1499,32 @@ func mergeAIAnalysis(
 	return merged, true, ""
 }
 
-func analysisFromAIExtract(aiExtract *services.AIExtractResult) documentIntelligenceAnalysis {
+func analysisFromAIExtract(aiExtract *services.AIExtractResult) *DocumentIntelligenceAnalysis {
 	aiExtract = normalizeAIExtractResult(aiExtract)
 	if aiExtract == nil {
-		return documentIntelligenceAnalysis{
-			Kind:          "RateConfirmation",
+		return &DocumentIntelligenceAnalysis{
+			Kind:          kindRateConfirmation,
 			MissingFields: []string{},
 			Signals:       []string{},
-			Fields:        map[string]reviewField{},
-			Stops:         []intelligenceStop{},
-			Conflicts:     []reviewConflict{},
+			Fields:        map[string]*ReviewField{},
+			Stops:         []*IntelligenceStop{},
+			Conflicts:     []*ReviewConflict{},
 		}
 	}
 
-	analysis := documentIntelligenceAnalysis{
-		Kind:              "RateConfirmation",
+	analysis := &DocumentIntelligenceAnalysis{
+		Kind:              kindRateConfirmation,
 		OverallConfidence: clampConfidence(aiExtract.OverallConfidence),
 		ReviewStatus:      normalizeAIReviewStatus(aiExtract.ReviewStatus),
 		ClassifierSource:  "ai",
 		MissingFields:     dedupeStrings(aiExtract.MissingFields),
 		Signals:           dedupeStrings(aiExtract.Signals),
-		Fields:            make(map[string]reviewField, len(aiExtract.Fields)),
-		Stops:             make([]intelligenceStop, 0, len(aiExtract.Stops)),
-		Conflicts:         make([]reviewConflict, 0, len(aiExtract.Conflicts)),
+		Fields:            make(map[string]*ReviewField, len(aiExtract.Fields)),
+		Stops:             make([]*IntelligenceStop, 0, len(aiExtract.Stops)),
+		Conflicts:         make([]*ReviewConflict, 0, len(aiExtract.Conflicts)),
 	}
 	for key, field := range aiExtract.Fields {
-		analysis.Fields[key] = reviewField{
+		analysis.Fields[key] = &ReviewField{
 			Label:           field.Label,
 			Value:           field.Value,
 			Confidence:      clampConfidence(field.Confidence),
@@ -1518,7 +1538,7 @@ func analysisFromAIExtract(aiExtract *services.AIExtractResult) documentIntellig
 	}
 
 	for _, stop := range aiExtract.Stops {
-		analysis.Stops = append(analysis.Stops, intelligenceStop{
+		analysis.Stops = append(analysis.Stops, &IntelligenceStop{
 			Sequence:            stop.Sequence,
 			Role:                stop.Role,
 			Name:                stop.Name,
@@ -1539,7 +1559,7 @@ func analysisFromAIExtract(aiExtract *services.AIExtractResult) documentIntellig
 	}
 
 	for _, conflict := range aiExtract.Conflicts {
-		analysis.Conflicts = append(analysis.Conflicts, reviewConflict{
+		analysis.Conflicts = append(analysis.Conflicts, &ReviewConflict{
 			Key:             conflict.Key,
 			Label:           conflict.Label,
 			Values:          conflict.Values,
@@ -1564,8 +1584,8 @@ func normalizeAIExtractResult(result *services.AIExtractResult) *services.AIExtr
 		MissingFields:     append([]string{}, result.MissingFields...),
 		Signals:           append([]string{}, result.Signals...),
 		Fields:            make(map[string]services.AIDocumentField, len(result.Fields)+3),
-		Stops:             make([]services.AIDocumentStop, 0, len(result.Stops)),
-		Conflicts:         append([]services.AIDocumentConflict{}, result.Conflicts...),
+		Stops:             make([]*services.AIDocumentStop, 0, len(result.Stops)),
+		Conflicts:         append([]*services.AIDocumentConflict{}, result.Conflicts...),
 	}
 
 	for key, field := range result.Fields {
@@ -1580,7 +1600,8 @@ func normalizeAIExtractResult(result *services.AIExtractResult) *services.AIExtr
 		field.Label = strings.TrimSpace(field.Label)
 		field.Value = strings.TrimSpace(field.Value)
 		field.Source = normalizeAISource(field.Source)
-		if existing, ok := normalized.Fields[canonicalKey]; !ok || field.PageNumber > 0 && existing.PageNumber <= 0 {
+		if existing, ok := normalized.Fields[canonicalKey]; !ok ||
+			field.PageNumber > 0 && existing.PageNumber <= 0 {
 			normalized.Fields[canonicalKey] = field
 		}
 	}
@@ -1599,9 +1620,21 @@ func normalizeAIExtractResult(result *services.AIExtractResult) *services.AIExtr
 		normalized.Stops = append(normalized.Stops, stop)
 	}
 
-	ensureCanonicalAIField(normalized, "rate", []string{"rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue"})
-	ensureCanonicalAIFieldFromStop(normalized, "shipper", "Shipper", "pickup")
-	ensureCanonicalAIFieldFromStop(normalized, "consignee", "Consignee", "delivery")
+	ensureCanonicalAIField(
+		normalized,
+		"rate",
+		[]string{
+			"rate",
+			"totalrate",
+			"linehaul",
+			"linehaulrate",
+			"freightcharge",
+			"total",
+			"amountdue",
+		},
+	)
+	ensureCanonicalAIFieldFromStop(normalized, stopRoleShipper, "Shipper", stopRolePickup)
+	ensureCanonicalAIFieldFromStop(normalized, stopRoleConsignee, "Consignee", stopRoleDelivery)
 
 	return normalized
 }
@@ -1613,9 +1646,9 @@ func normalizeAIFieldKey(value string) string {
 	case "rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue":
 		return "rate"
 	case "shipper", "shippername", "shipfrom", "originname":
-		return "shipper"
+		return stopRoleShipper
 	case "consignee", "receiver", "receivername", "deliveryto", "shipto", "destinationname":
-		return "consignee"
+		return stopRoleConsignee
 	default:
 		return normalized
 	}
@@ -1624,9 +1657,9 @@ func normalizeAIFieldKey(value string) string {
 func normalizeAIStopRole(role string) string {
 	switch strings.TrimSpace(strings.ToLower(role)) {
 	case "pickup", "origin", "shipper":
-		return "pickup"
+		return stopRolePickup
 	case "delivery", "destination", "receiver", "consignee", "drop":
-		return "delivery"
+		return stopRoleDelivery
 	default:
 		return strings.TrimSpace(strings.ToLower(role))
 	}
@@ -1660,7 +1693,8 @@ func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label
 	if result == nil {
 		return
 	}
-	if field, ok := result.Fields[key]; ok && strings.TrimSpace(field.Value) != "" && field.PageNumber > 0 {
+	if field, ok := result.Fields[key]; ok && strings.TrimSpace(field.Value) != "" &&
+		field.PageNumber > 0 {
 		return
 	}
 
@@ -1683,10 +1717,10 @@ func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label
 }
 
 func validateAIExtract(result *services.AIExtractResult) string {
-	if result == nil || !strings.EqualFold(result.DocumentKind, "RateConfirmation") {
+	if result == nil || !strings.EqualFold(result.DocumentKind, kindRateConfirmation) {
 		return "ai_candidate_invalid_document_kind"
 	}
-	requiredFields := []string{"shipper", "consignee", "rate"}
+	requiredFields := []string{stopRoleShipper, stopRoleConsignee, "rate"}
 	for _, key := range requiredFields {
 		field, ok := result.Fields[key]
 		if !ok || strings.TrimSpace(field.Value) == "" || field.PageNumber <= 0 {
@@ -1701,9 +1735,9 @@ func validateAIExtract(result *services.AIExtractResult) string {
 			return "ai_candidate_invalid_stop_metadata"
 		}
 		switch strings.ToLower(strings.TrimSpace(stop.Role)) {
-		case "pickup":
+		case stopRolePickup:
 			hasPickup = true
-		case "delivery":
+		case stopRoleDelivery:
 			hasDelivery = true
 		}
 	}
@@ -1714,14 +1748,6 @@ func validateAIExtract(result *services.AIExtractResult) string {
 		return "ai_candidate_missing_delivery_stop"
 	}
 	return ""
-}
-
-func isPotentialRateConfirmation(name, text, kind string) bool {
-	if strings.EqualFold(kind, "RateConfirmation") {
-		return true
-	}
-	corpus := strings.ToLower(name + "\n" + text)
-	return containsAny(corpus, "rate confirmation", "load confirmation", "rate con", "ratecon", "load tender")
 }
 
 func normalizeAISource(source string) string {
@@ -1743,7 +1769,7 @@ func normalizeClassifierSource(source string) string {
 func normalizeAIReviewStatus(status string) string {
 	switch strings.TrimSpace(strings.ToLower(status)) {
 	case "ready":
-		return "Ready"
+		return reviewStatusReady
 	case "unavailable":
 		return "Unavailable"
 	default:
@@ -1754,17 +1780,17 @@ func normalizeAIReviewStatus(status string) string {
 func normalizeRoutedKind(kind string) string {
 	switch strings.TrimSpace(strings.ToLower(kind)) {
 	case "rateconfirmation", "rate_confirmation":
-		return "RateConfirmation"
+		return kindRateConfirmation
 	case "billoflading", "bill_of_lading":
-		return "BillOfLading"
+		return kindBillOfLading
 	case "proofofdelivery", "proof_of_delivery":
-		return "ProofOfDelivery"
+		return kindProofOfDelivery
 	default:
 		return "Other"
 	}
 }
 
-func toAIFingerprintHint(fingerprint *providerFingerprint) *services.AIDocumentFingerprintHint {
+func toAIFingerprintHint(fingerprint *ProviderFingerprint) *services.AIDocumentFingerprintHint {
 	if fingerprint == nil {
 		return nil
 	}
@@ -1805,42 +1831,34 @@ func dedupeStrings(items []string) []string {
 	return out
 }
 
-type inferredDocumentType struct {
-	Code           string
-	Name           string
-	Category       documenttype.DocumentCategory
-	Classification documenttype.DocumentClassification
-	Color          string
-}
-
-func inferDocumentType(kind string) (*inferredDocumentType, bool) {
+func inferDocumentType(kind string) (*InferredDocumentType, bool) {
 	switch kind {
-	case "RateConfirmation":
-		return &inferredDocumentType{
+	case kindRateConfirmation:
+		return &InferredDocumentType{
 			Code:           "RATECONF",
 			Name:           "Rate Confirmation",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#0f766e",
 		}, true
-	case "BillOfLading":
-		return &inferredDocumentType{
+	case kindBillOfLading:
+		return &InferredDocumentType{
 			Code:           "BOL",
 			Name:           "Bill of Lading",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#f59e0b",
 		}, true
-	case "ProofOfDelivery":
-		return &inferredDocumentType{
+	case kindProofOfDelivery:
+		return &InferredDocumentType{
 			Code:           "POD",
 			Name:           "Proof of Delivery",
 			Category:       documenttype.CategoryShipment,
 			Classification: documenttype.ClassificationPublic,
 			Color:          "#8b5cf6",
 		}, true
-	case "Invoice":
-		return &inferredDocumentType{
+	case kindInvoice:
+		return &InferredDocumentType{
 			Code:           "INVOICE",
 			Name:           "Invoice",
 			Category:       documenttype.CategoryInvoice,
@@ -1854,7 +1872,7 @@ func inferDocumentType(kind string) (*inferredDocumentType, bool) {
 
 func canApplyKindToResource(resourceType, kind string) bool {
 	switch kind {
-	case "RateConfirmation", "BillOfLading", "ProofOfDelivery", "Invoice":
+	case kindRateConfirmation, kindBillOfLading, kindProofOfDelivery, kindInvoice:
 		return strings.EqualFold(resourceType, "shipment")
 	default:
 		return true
@@ -1868,37 +1886,37 @@ func canGenerateShipmentDraft(
 	return control != nil &&
 		control.EnableShipmentDraftExtraction &&
 		control.AllowsShipmentDraftResource(resourceType) &&
-		kind == "RateConfirmation"
+		kind == kindRateConfirmation
 }
 
-func hasUsableShipmentDraft(intelligence documentIntelligenceAnalysis) bool {
-	if strings.EqualFold(strings.TrimSpace(intelligence.ReviewStatus), "Ready") {
+func hasUsableShipmentDraft(intelligence *DocumentIntelligenceAnalysis) bool {
+	if strings.EqualFold(strings.TrimSpace(intelligence.ReviewStatus), reviewStatusReady) {
 		return true
 	}
 
-	if hasMeaningfulStopForRole(intelligence.Stops, "pickup") &&
-		hasMeaningfulStopForRole(intelligence.Stops, "delivery") {
+	if hasMeaningfulStopForRole(intelligence.Stops, stopRolePickup) &&
+		hasMeaningfulStopForRole(intelligence.Stops, stopRoleDelivery) {
 		return true
 	}
 
-	return hasMeaningfulField(intelligence.Fields, "shipper") &&
-		hasMeaningfulField(intelligence.Fields, "consignee") &&
+	return hasMeaningfulField(intelligence.Fields, stopRoleShipper) &&
+		hasMeaningfulField(intelligence.Fields, stopRoleConsignee) &&
 		hasMeaningfulField(intelligence.Fields, "rate")
 }
 
-func hasMeaningfulStopForRole(stops []intelligenceStop, role string) bool {
-	for _, stop := range stops {
-		if !strings.EqualFold(strings.TrimSpace(stop.Role), role) {
+func hasMeaningfulStopForRole(stops []*IntelligenceStop, role string) bool {
+	for _, i := range stops {
+		if !strings.EqualFold(strings.TrimSpace(i.Role), role) {
 			continue
 		}
-		if hasReviewableStopData(stop) {
+		if hasReviewableStopData(i) {
 			return true
 		}
 	}
 	return false
 }
 
-func hasReviewableStopData(stop intelligenceStop) bool {
+func hasReviewableStopData(stop *IntelligenceStop) bool {
 	return strings.TrimSpace(stop.Name) != "" ||
 		strings.TrimSpace(stop.AddressLine1) != "" ||
 		strings.TrimSpace(stop.AddressLine2) != "" ||
@@ -1909,7 +1927,7 @@ func hasReviewableStopData(stop intelligenceStop) bool {
 		strings.TrimSpace(stop.TimeWindow) != ""
 }
 
-func hasMeaningfulField(fields map[string]reviewField, key string) bool {
+func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
 	field, ok := fields[key]
 	if !ok {
 		return false
@@ -1917,6 +1935,7 @@ func hasMeaningfulField(fields map[string]reviewField, key string) bool {
 	return strings.TrimSpace(field.Value) != ""
 }
 
+//nolint:funlen // sequential fallback lookups for document type
 func (a *Activities) associateDocumentType(
 	ctx context.Context,
 	doc *document.Document,
@@ -2028,44 +2047,16 @@ func (a *Activities) getDocumentControl(
 	return a.documentControlRepo.GetOrCreate(ctx, orgID, buID)
 }
 
-var (
-	rateRegex         = regexp.MustCompile(`(?im)^(?:rate|freight charge|line haul|amount due|total)\s*[:#-]\s*([$]?[0-9,]+(?:\.[0-9]{2})?)$`)
-	referenceRegex    = regexp.MustCompile(`(?im)^(?:load|reference|order|confirmation|pro|bol|invoice)(?:\s+(?:number|#))?\s*[:#-]\s*([A-Za-z0-9-]+)$`)
-	bolReferenceRegex = regexp.MustCompile(`(?im)^(?:bill of lading|bol|b\/l|pro|reference|order|load)(?:\s+(?:number|#|no\.?))\s*[:#-]?\s*([A-Za-z0-9-]+)$`)
-	podReferenceRegex = regexp.MustCompile(`(?im)^(?:pod|pro|reference|order|load)(?:\s+(?:number|#|no\.?))\s*[:#-]?\s*([A-Za-z0-9-]+)$`)
-	pickupRegex       = regexp.MustCompile(`(?im)^(pickup|ship)(?:\s+(?:date|window|location|address))?\s*[:\-]\s*(.+)$`)
-	deliveryRegex     = regexp.MustCompile(`(?im)^(delivery|drop)(?:\s+(?:date|window|location|address))?\s*[:\-]\s*(.+)$`)
-	shipperRegex      = regexp.MustCompile(`(?im)^shipper(?:\s+name)?\s*[:\-]\s*(.+)$`)
-	consigneeRegex    = regexp.MustCompile(`(?im)^(consignee|receiver)(?:\s+name)?\s*[:\-]\s*(.+)$`)
-	commodityRegex    = regexp.MustCompile(`(?im)^(commodity|product|description)\s*[:\-]\s*(.+)$`)
-	equipmentRegex    = regexp.MustCompile(`(?i)\b(van|reefer|flatbed|step deck|power only|hotshot|conestoga|dry van)\b`)
-	weightRegex       = regexp.MustCompile(`(?i)([0-9,]+)\s*(lbs|pounds)`)
-	pieceCountRegex   = regexp.MustCompile(`(?im)^(?:pieces?|piece count|total pieces|packages?|package count|units?|cartons?)\s*[:#-]?\s*([0-9,]+)\b`)
-	instructionsRegex = regexp.MustCompile(`(?im)^(instructions|notes|special instructions)\s*[:\-]\s*(.+)$`)
-	invoiceDateRegex  = regexp.MustCompile(`(?im)^invoice date\s*[:\-]\s*(.+)$`)
-	dueDateRegex      = regexp.MustCompile(`(?im)^due date\s*[:\-]\s*(.+)$`)
-	totalDueRegex     = regexp.MustCompile(`(?im)^(?:amount due|total due|balance due)\s*[:#-]\s*([$]?[0-9,]+(?:\.[0-9]{2})?)$`)
-	signatureRegex    = regexp.MustCompile(`(?im)^(?:receiver|consignee) signature\s*[:\-]\s*(.+)$`)
-	dateLabelRegex    = regexp.MustCompile(`(?i)\b(?:date|pick\s*up|pickup|delivery)\b`)
-	timeWindowRegex   = regexp.MustCompile(`(?i)\b([0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?\s*[-–]\s*[0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?)\b`)
-	appointmentRegex  = regexp.MustCompile(`(?i)\b([0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?\s*appt\.?)\b`)
-	dateValueRegex    = regexp.MustCompile(`(?i)(?:^|[^0-9:])((?:\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:,\s*\d{4})?))\b`)
-	addressLineRegex  = regexp.MustCompile(`(?i)\b\d{1,6}\s+[a-z0-9][a-z0-9.\-# ]+\b`)
-	cityStateZipRegex = regexp.MustCompile(`(?i)\b([a-z .'-]+),?\s*([a-z]{2})\s+(\d{5}(?:-\d{4})?)\b`)
-	stopSectionRegex  = regexp.MustCompile(`(?i)^\s*(shipper|pickup|origin|receiver|consignee|delivery|drop|destination)\s*(?:#\s*\d+)?\s*:?\s*$`)
-	phoneLineRegex    = regexp.MustCompile(`^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$`)
-)
-
 func analyzeDocument(
-	classification classificationResult,
-	extracted *extractionResult,
-) documentIntelligenceAnalysis {
+	classification *ClassificationResult,
+	extracted *ExtractionResult,
+) *DocumentIntelligenceAnalysis {
 	if extracted == nil {
-		extracted = &extractionResult{}
+		extracted = &ExtractionResult{}
 	}
-	text := ""
-	text = extracted.Text
-	analysis := documentIntelligenceAnalysis{
+
+	text := extracted.Text
+	analysis := &DocumentIntelligenceAnalysis{
 		Kind:                 classification.Kind,
 		ReviewStatus:         "NeedsReview",
 		MissingFields:        []string{},
@@ -2073,55 +2064,37 @@ func analyzeDocument(
 		ClassifierSource:     classification.Source,
 		ProviderFingerprint:  classification.ProviderFingerprint,
 		ClassificationReason: classification.Reason,
-		Conflicts:            []reviewConflict{},
-		Fields:               make(map[string]reviewField),
-		Stops:                []intelligenceStop{},
-		RawExcerpt:           truncateExtractedText(strings.ReplaceAll(text, "\r", ""), 2000),
+		Conflicts:            []*ReviewConflict{},
+		Fields:               make(map[string]*ReviewField),
+		Stops:                []*IntelligenceStop{},
+		RawExcerpt:           stringutils.TruncateAndTrim(strings.ReplaceAll(text, "\r", ""), 2000),
 	}
 
 	required := requiredFieldsForKind(classification.Kind)
 
 	switch classification.Kind {
-	case "RateConfirmation":
-		analysis.Stops = extractRateConfirmationStops(extracted.Pages)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "shipper", "Shipper", shipperRegex, extracted.Pages, 0.9)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "consignee", "Consignee", consigneeRegex, extracted.Pages, 0.9)
-		addStopTimingField(analysis.Fields, &analysis.Signals, "pickupWindow", "Pickup Window", firstStopByRole(analysis.Stops, "pickup"), 0.88)
-		addStopTimingField(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery Window", firstStopByRole(analysis.Stops, "delivery"), 0.88)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Reference Number", referenceRegex, extracted.Pages, 0.8)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "commodity", "Commodity", commodityRegex, extracted.Pages, 0.78)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "instructions", "Instructions", instructionsRegex, extracted.Pages, 0.72)
-		addCurrencyFieldFromPages(analysis.Fields, &analysis.Signals, "rate", "Rate", rateRegex, extracted.Pages, 0.92, "rate amount")
-		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "equipmentType", "Equipment Type", equipmentRegex, extracted.Pages, 0.82, "equipment type", false)
-		addWeightFieldFromPages(analysis.Fields, &analysis.Signals, extracted.Pages, "weight")
-		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
-		analysis.Conflicts = append(analysis.Conflicts, collectStopConflicts(analysis.Stops)...)
-	case "BillOfLading":
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "shipper", "Shipper", extracted.Pages, []string{"ship from", "shipper", "shipper name", "shipper information"}, 0.93, "shipper", false, extractEntityNameFromSection)
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "consignee", "Consignee", extracted.Pages, []string{"ship to", "consignee", "receiver", "delivery to"}, 0.93, "consignee", false, extractEntityNameFromSection)
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "commodity", "Commodity", extracted.Pages, []string{"commodity", "description", "product", "articles"}, 0.86, "commodity", false, extractCommodityFromSection)
-		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "BOL / Reference Number", bolReferenceRegex, extracted.Pages, 0.85, "reference number", false)
-		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "pieceCount", "Pieces / Packages", pieceCountRegex, extracted.Pages, 0.76, "piece count", true)
-		addWeightFieldFromPages(analysis.Fields, &analysis.Signals, extracted.Pages, "weight")
-		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
-	case "ProofOfDelivery":
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "consignee", "Consignee", extracted.Pages, []string{"consignee", "receiver name", "delivery to", "delivered to", "received by"}, 0.91, "consignee", false, extractEntityNameFromSection)
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery", extracted.Pages, []string{"delivery date", "delivered on", "received on", "date delivered"}, 0.89, "delivery", false, extractDeliveryFieldFromSection)
-		if _, ok := analysis.Fields["deliveryWindow"]; !ok {
-			addFieldFromPages(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery", deliveryRegex, extracted.Pages, 0.86)
-		}
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "signature", "Signature", extracted.Pages, []string{"receiver signature", "consignee signature", "signature", "received by", "signed by"}, 0.82, "signature", false, extractSignatureFromSection)
-		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Reference Number", podReferenceRegex, extracted.Pages, 0.82, "reference number", false)
-		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "receiptNotes", "Receipt Notes", extracted.Pages, []string{"remarks", "exceptions", "received in good order", "delivery status"}, 0.72, "receipt notes", true, extractFreeformSectionValue)
-		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
-	case "Invoice":
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Invoice Number", referenceRegex, extracted.Pages, 0.84)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "invoiceDate", "Invoice Date", invoiceDateRegex, extracted.Pages, 0.88)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "dueDate", "Due Date", dueDateRegex, extracted.Pages, 0.88)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "shipper", "Bill To / Shipper", shipperRegex, extracted.Pages, 0.72)
-		addCurrencyFieldFromPages(analysis.Fields, &analysis.Signals, "totalDue", "Total Due", totalDueRegex, extracted.Pages, 0.93, "total due")
+	case kindRateConfirmation:
+		analyzeRateConfirmation(analysis, extracted)
+	case kindBillOfLading:
+		analyzeBillOfLading(analysis, extracted)
+	case kindProofOfDelivery:
+		analyzeProofOfDelivery(analysis, extracted)
+	case kindInvoice:
+		analyzeInvoice(analysis, extracted)
 	}
 
+	finalizeAnalysis(analysis, classification, required)
+	return analysis
+}
+
+func finalizeAnalysis(
+	analysis *DocumentIntelligenceAnalysis,
+	classification *ClassificationResult,
+	required []struct {
+		key   string
+		label string
+	},
+) {
 	totalConfidence := classification.Confidence
 	fieldCount := 1.0
 	for _, field := range analysis.Fields {
@@ -2135,55 +2108,236 @@ func analyzeDocument(
 			analysis.MissingFields = append(analysis.MissingFields, field.label)
 		}
 	}
-	if classification.Kind == "RateConfirmation" {
-		if !hasStopRole(analysis.Stops, "pickup") {
+	if classification.Kind == kindRateConfirmation {
+		if !hasStopRole(analysis.Stops, stopRolePickup) {
 			analysis.MissingFields = appendIfMissing(analysis.MissingFields, "Pickup Stop")
 		}
-		if !hasStopRole(analysis.Stops, "delivery") {
+		if !hasStopRole(analysis.Stops, stopRoleDelivery) {
 			analysis.MissingFields = appendIfMissing(analysis.MissingFields, "Delivery Stop")
 		}
 	}
 
 	if len(analysis.Fields) == 0 {
 		analysis.ReviewStatus = "Unavailable"
-		return analysis
+		return
 	}
 
-	if classification.Kind == "RateConfirmation" {
-		if analysis.OverallConfidence >= 0.82 &&
-			len(analysis.MissingFields) == 0 &&
-			len(analysis.Conflicts) == 0 &&
-			hasStopRole(analysis.Stops, "pickup") &&
-			hasStopRole(analysis.Stops, "delivery") &&
+	analysis.ReviewStatus = resolveReviewStatus(analysis, classification.Kind)
+}
+
+func resolveReviewStatus(
+	analysis *DocumentIntelligenceAnalysis,
+	kind string,
+) string {
+	noConflicts := len(analysis.Conflicts) == 0
+	noMissing := len(analysis.MissingFields) == 0
+	highConfidence := analysis.OverallConfidence >= 0.82
+	baseReady := highConfidence && noMissing && noConflicts
+
+	switch kind {
+	case kindRateConfirmation:
+		if baseReady &&
+			hasStopRole(analysis.Stops, stopRolePickup) &&
+			hasStopRole(analysis.Stops, stopRoleDelivery) &&
 			!hasReviewRequiredStop(analysis.Stops) {
-			analysis.ReviewStatus = "Ready"
+			return reviewStatusReady
 		}
-		return analysis
-	}
-
-	if classification.Kind == "BillOfLading" {
-		if analysis.OverallConfidence >= 0.82 && len(analysis.MissingFields) == 0 && len(analysis.Conflicts) == 0 {
-			analysis.ReviewStatus = "Ready"
+	case kindBillOfLading:
+		if baseReady {
+			return reviewStatusReady
 		}
-		return analysis
-	}
-
-	if classification.Kind == "ProofOfDelivery" {
-		if analysis.OverallConfidence >= 0.82 &&
-			len(analysis.MissingFields) == 0 &&
-			len(analysis.Conflicts) == 0 &&
+	case kindProofOfDelivery:
+		if baseReady &&
 			!analysis.Fields["deliveryWindow"].ReviewRequired &&
 			!analysis.Fields["signature"].ReviewRequired {
-			analysis.ReviewStatus = "Ready"
+			return reviewStatusReady
 		}
-		return analysis
+	default:
+		if highConfidence && len(analysis.MissingFields) <= 1 && noConflicts {
+			return reviewStatusReady
+		}
 	}
 
-	if analysis.OverallConfidence >= 0.82 && len(analysis.MissingFields) <= 1 && len(analysis.Conflicts) == 0 {
-		analysis.ReviewStatus = "Ready"
-	}
+	return "NeedsReview"
+}
 
-	return analysis
+func analyzeRateConfirmation(analysis *DocumentIntelligenceAnalysis, extracted *ExtractionResult) {
+	analysis.Stops = extractRateConfirmationStops(extracted.Pages)
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "shipper", Label: "Shipper", Regex: shipperRegex,
+		Pages: extracted.Pages, Confidence: 0.9,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "consignee", Label: "Consignee", Regex: consigneeRegex,
+		Pages: extracted.Pages, Confidence: 0.9,
+	})
+	addStopTimingField(&AddStopTimingFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "pickupWindow", Label: "Pickup Window",
+		Stop: firstStopByRole(analysis.Stops, stopRolePickup), Confidence: 0.88,
+	})
+	addStopTimingField(&AddStopTimingFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "deliveryWindow", Label: "Delivery Window",
+		Stop: firstStopByRole(analysis.Stops, stopRoleDelivery), Confidence: 0.88,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "referenceNumber", Label: "Reference Number", Regex: referenceRegex,
+		Pages: extracted.Pages, Confidence: 0.8,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "commodity", Label: "Commodity", Regex: commodityRegex,
+		Pages: extracted.Pages, Confidence: 0.78,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "instructions", Label: "Instructions", Regex: instructionsRegex,
+		Pages: extracted.Pages, Confidence: 0.72,
+	})
+	addCurrencyFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "rate", Label: "Rate", Regex: rateRegex,
+		Pages: extracted.Pages, Confidence: 0.92, Signal: "rate amount",
+	})
+	addRegexValueFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "equipmentType", Label: "Equipment Type", Regex: equipmentRegex,
+		Pages: extracted.Pages, Confidence: 0.82,
+		Signal: "equipment type", ReviewRequired: false,
+	})
+	addWeightFieldFromPages(&AddWeightFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Text: "weight", Signal: "weight",
+	}, extracted.Pages)
+	analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
+	analysis.Conflicts = append(analysis.Conflicts, collectStopConflicts(analysis.Stops)...)
+}
+
+func analyzeBillOfLading(analysis *DocumentIntelligenceAnalysis, extracted *ExtractionResult) {
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "shipper", Label: "Shipper", Pages: extracted.Pages,
+		Labels:     []string{"ship from", "shipper", "shipper name", "shipper information"},
+		Confidence: 0.93, Signal: "shipper",
+		ReviewRequired: false, Extractor: extractEntityNameFromSection,
+	})
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "consignee", Label: "Consignee", Pages: extracted.Pages,
+		Labels:     []string{"ship to", "consignee", "receiver", "delivery to"},
+		Confidence: 0.93, Signal: "consignee",
+		ReviewRequired: false, Extractor: extractEntityNameFromSection,
+	})
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "commodity", Label: "Commodity", Pages: extracted.Pages,
+		Labels:     []string{"commodity", "description", "product", "articles"},
+		Confidence: 0.86, Signal: "commodity",
+		ReviewRequired: false, Extractor: extractCommodityFromSection,
+	})
+	addRegexValueFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "referenceNumber", Label: "BOL / Reference Number",
+		Regex: bolReferenceRegex, Pages: extracted.Pages,
+		Confidence: 0.85, Signal: "reference number", ReviewRequired: false,
+	})
+	addRegexValueFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "pieceCount", Label: "Pieces / Packages",
+		Regex: pieceCountRegex, Pages: extracted.Pages,
+		Confidence: 0.76, Signal: "piece count", ReviewRequired: true,
+	})
+	addWeightFieldFromPages(&AddWeightFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Text: "weight", Signal: "weight",
+	}, extracted.Pages)
+	analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
+}
+
+func analyzeProofOfDelivery(analysis *DocumentIntelligenceAnalysis, extracted *ExtractionResult) {
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "consignee", Label: "Consignee", Pages: extracted.Pages,
+		Labels: []string{
+			"consignee", "receiver name", "delivery to", "delivered to", "received by",
+		},
+		Confidence: 0.91, Signal: "consignee",
+		ReviewRequired: false, Extractor: extractEntityNameFromSection,
+	})
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "deliveryWindow", Label: "Delivery", Pages: extracted.Pages,
+		Labels: []string{
+			"delivery date", "delivered on", "received on", "date delivered",
+		},
+		Confidence: 0.89, Signal: "delivery",
+		ReviewRequired: false, Extractor: extractDeliveryFieldFromSection,
+	})
+	if _, ok := analysis.Fields["deliveryWindow"]; !ok {
+		addFieldFromPages(&RegexValueFieldParams{
+			Fields: analysis.Fields, Signals: &analysis.Signals,
+			Key: "deliveryWindow", Label: "Delivery", Regex: deliveryRegex,
+			Pages: extracted.Pages, Confidence: 0.86,
+		})
+	}
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "signature", Label: "Signature", Pages: extracted.Pages,
+		Labels: []string{
+			"receiver signature", "consignee signature", "signature",
+			"received by", "signed by",
+		},
+		Confidence: 0.82, Signal: "signature",
+		ReviewRequired: false, Extractor: extractSignatureFromSection,
+	})
+	addRegexValueFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "referenceNumber", Label: "Reference Number",
+		Regex: podReferenceRegex, Pages: extracted.Pages,
+		Confidence: 0.82, Signal: "reference number", ReviewRequired: false,
+	})
+	addFieldFromSectionLabels(&AddFieldFromSectionLabelsParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "receiptNotes", Label: "Receipt Notes", Pages: extracted.Pages,
+		Labels: []string{
+			"remarks", "exceptions", "received in good order", "delivery status",
+		},
+		Confidence: 0.72, Signal: "receipt notes",
+		ReviewRequired: true, Extractor: extractFreeformSectionValue,
+	})
+	analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
+}
+
+func analyzeInvoice(analysis *DocumentIntelligenceAnalysis, extracted *ExtractionResult) {
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "referenceNumber", Label: "Invoice Number", Regex: referenceRegex,
+		Pages: extracted.Pages, Confidence: 0.84,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "invoiceDate", Label: "Invoice Date", Regex: invoiceDateRegex,
+		Pages: extracted.Pages, Confidence: 0.88,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "dueDate", Label: "Due Date", Regex: dueDateRegex,
+		Pages: extracted.Pages, Confidence: 0.88,
+	})
+	addFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "shipper", Label: "Bill To / Shipper", Regex: shipperRegex,
+		Pages: extracted.Pages, Confidence: 0.72,
+	})
+	addCurrencyFieldFromPages(&RegexValueFieldParams{
+		Fields: analysis.Fields, Signals: &analysis.Signals,
+		Key: "totalDue", Label: "Total Due", Regex: totalDueRegex,
+		Pages: extracted.Pages, Confidence: 0.93, Signal: "total due",
+	})
 }
 
 func requiredFieldsForKind(kind string) []struct {
@@ -2191,7 +2345,7 @@ func requiredFieldsForKind(kind string) []struct {
 	label string
 } {
 	switch kind {
-	case "RateConfirmation":
+	case kindRateConfirmation:
 		return []struct {
 			key   string
 			label string
@@ -2202,7 +2356,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "deliveryWindow", label: "Delivery Window"},
 			{key: "rate", label: "Rate"},
 		}
-	case "BillOfLading":
+	case kindBillOfLading:
 		return []struct {
 			key   string
 			label string
@@ -2212,7 +2366,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "commodity", label: "Commodity"},
 			{key: "referenceNumber", label: "Reference Number"},
 		}
-	case "ProofOfDelivery":
+	case kindProofOfDelivery:
 		return []struct {
 			key   string
 			label string
@@ -2221,7 +2375,7 @@ func requiredFieldsForKind(kind string) []struct {
 			{key: "deliveryWindow", label: "Delivery"},
 			{key: "signature", label: "Signature"},
 		}
-	case "Invoice":
+	case kindInvoice:
 		return []struct {
 			key   string
 			label string
@@ -2236,15 +2390,8 @@ func requiredFieldsForKind(kind string) []struct {
 	}
 }
 
-func addFieldFromRegex(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	text string,
-	confidence float64,
-) {
-	match := re.FindStringSubmatch(text)
+func addFieldFromPages(params *RegexValueFieldParams) {
+	pageNumber, match := firstPageMatch(params.Regex, params.Pages)
 	if len(match) < 2 {
 		return
 	}
@@ -2254,63 +2401,24 @@ func addFieldFromRegex(
 		return
 	}
 
-	fields[key] = reviewField{
-		Label:          label,
-		Value:          value,
-		Confidence:     confidence,
-		Excerpt:        strings.TrimSpace(match[0]),
-		ReviewRequired: confidence < 0.8,
-		Source:         "deterministic",
-	}
-	if signals != nil {
-		*signals = append(*signals, strings.ToLower(label))
-	}
-}
-
-func addFieldFromPages(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	pages []pageExtractionResult,
-	confidence float64,
-) {
-	pageNumber, match := firstPageMatch(re, pages)
-	if len(match) < 2 {
-		return
-	}
-
-	value := strings.TrimSpace(match[len(match)-1])
-	if value == "" {
-		return
-	}
-
-	fields[key] = reviewField{
-		Label:           label,
+	params.Fields[params.Key] = &ReviewField{
+		Label:           params.Label,
 		Value:           value,
-		Confidence:      pageAdjustedConfidence(confidence, pageNumber, pages),
+		Confidence:      pageAdjustedConfidence(params.Confidence, pageNumber, params.Pages),
 		Excerpt:         strings.TrimSpace(match[0]),
 		EvidenceExcerpt: strings.TrimSpace(match[0]),
 		PageNumber:      pageNumber,
-		ReviewRequired:  confidence < 0.8,
-		Conflict:        hasConflictingMatches(re, value, pages),
+		ReviewRequired:  params.Confidence < 0.8,
+		Conflict:        hasConflictingMatches(params.Regex, value, params.Pages),
 		Source:          "deterministic",
 	}
-	if signals != nil {
-		*signals = append(*signals, strings.ToLower(label))
+	if params.Signals != nil && params.Signal != "" {
+		*params.Signals = append(*params.Signals, params.Signal)
 	}
 }
 
-func addCurrencyField(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	text string,
-	confidence float64,
-	signal string,
-) {
-	match := re.FindStringSubmatch(text)
+func addCurrencyFieldFromPages(params *RegexValueFieldParams) {
+	pageNumber, match := firstPageMatch(params.Regex, params.Pages)
 	if len(match) < 2 {
 		return
 	}
@@ -2320,65 +2428,24 @@ func addCurrencyField(
 		return
 	}
 
-	fields[key] = reviewField{
-		Label:          label,
-		Value:          value,
-		Confidence:     confidence,
-		Excerpt:        strings.TrimSpace(match[0]),
-		ReviewRequired: confidence < 0.8,
-		Source:         "deterministic",
-	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
-	}
-}
-
-func addCurrencyFieldFromPages(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	pages []pageExtractionResult,
-	confidence float64,
-	signal string,
-) {
-	pageNumber, match := firstPageMatch(re, pages)
-	if len(match) < 2 {
-		return
-	}
-
-	value := strings.TrimSpace(match[1])
-	if value == "" {
-		return
-	}
-
-	fields[key] = reviewField{
-		Label:           label,
+	params.Fields[params.Key] = &ReviewField{
+		Label:           params.Label,
 		Value:           value,
-		Confidence:      pageAdjustedConfidence(confidence, pageNumber, pages),
+		Confidence:      pageAdjustedConfidence(params.Confidence, pageNumber, params.Pages),
 		Excerpt:         strings.TrimSpace(match[0]),
 		EvidenceExcerpt: strings.TrimSpace(match[0]),
 		PageNumber:      pageNumber,
-		ReviewRequired:  confidence < 0.8,
-		Conflict:        hasConflictingMatches(re, value, pages),
+		ReviewRequired:  params.Confidence < 0.8,
+		Conflict:        hasConflictingMatches(params.Regex, value, params.Pages),
 		Source:          "deterministic",
 	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
+	if params.Signals != nil && params.Signal != "" {
+		*params.Signals = append(*params.Signals, params.Signal)
 	}
 }
 
-func addRegexValueField(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	text string,
-	confidence float64,
-	signal string,
-	reviewRequired bool,
-) {
-	match := re.FindStringSubmatch(text)
+func addRegexValueFieldFromPages(params *RegexValueFieldParams) {
+	pageNumber, match := firstPageMatch(params.Regex, params.Pages)
 	if len(match) < 2 {
 		return
 	}
@@ -2388,93 +2455,31 @@ func addRegexValueField(
 		return
 	}
 
-	fields[key] = reviewField{
-		Label:          label,
-		Value:          value,
-		Confidence:     confidence,
-		Excerpt:        strings.TrimSpace(match[0]),
-		ReviewRequired: reviewRequired,
-		Source:         "deterministic",
-	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
-	}
-}
-
-func addRegexValueFieldFromPages(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	re *regexp.Regexp,
-	pages []pageExtractionResult,
-	confidence float64,
-	signal string,
-	reviewRequired bool,
-) {
-	pageNumber, match := firstPageMatch(re, pages)
-	if len(match) < 2 {
-		return
-	}
-
-	value := strings.TrimSpace(match[1])
-	if value == "" {
-		return
-	}
-
-	fields[key] = reviewField{
-		Label:           label,
+	params.Fields[params.Key] = &ReviewField{
+		Label:           params.Label,
 		Value:           value,
-		Confidence:      pageAdjustedConfidence(confidence, pageNumber, pages),
+		Confidence:      pageAdjustedConfidence(params.Confidence, pageNumber, params.Pages),
 		Excerpt:         strings.TrimSpace(match[0]),
 		EvidenceExcerpt: strings.TrimSpace(match[0]),
 		PageNumber:      pageNumber,
-		ReviewRequired:  reviewRequired,
-		Conflict:        hasConflictingMatches(re, value, pages),
+		ReviewRequired:  params.ReviewRequired,
+		Conflict:        hasConflictingMatches(params.Regex, value, params.Pages),
 		Source:          "deterministic",
 	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
+	if params.Signals != nil && params.Signal != "" {
+		*params.Signals = append(*params.Signals, params.Signal)
 	}
 }
 
-func addWeightField(
-	fields map[string]reviewField,
-	signals *[]string,
-	text string,
-	signal string,
-) {
-	match := weightRegex.FindStringSubmatch(text)
-	if len(match) < 2 {
-		return
-	}
-
-	fields["weight"] = reviewField{
-		Label:          "Weight",
-		Value:          strings.TrimSpace(match[1]) + " lbs",
-		Confidence:     0.8,
-		Excerpt:        strings.TrimSpace(match[0]),
-		ReviewRequired: false,
-		Source:         "deterministic",
-	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
-	}
-}
-
-func addWeightFieldFromPages(
-	fields map[string]reviewField,
-	signals *[]string,
-	pages []pageExtractionResult,
-	signal string,
-) {
+func addWeightFieldFromPages(params *AddWeightFieldParams, pages []*PageExtractionResult) {
 	pageNumber, match := firstPageMatch(weightRegex, pages)
 	if len(match) < 2 {
 		return
 	}
 
-	fields["weight"] = reviewField{
+	params.Fields["weight"] = &ReviewField{
 		Label:           "Weight",
-		Value:           strings.TrimSpace(match[1]) + " lbs",
+		Value:           fmt.Sprintf("%s lbs", strings.TrimSpace(match[1])),
 		Confidence:      pageAdjustedConfidence(0.8, pageNumber, pages),
 		Excerpt:         strings.TrimSpace(match[0]),
 		EvidenceExcerpt: strings.TrimSpace(match[0]),
@@ -2482,60 +2487,41 @@ func addWeightFieldFromPages(
 		ReviewRequired:  false,
 		Source:          "deterministic",
 	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
+
+	if params.Signals != nil && params.Signal != "" {
+		*params.Signals = append(*params.Signals, params.Signal)
 	}
 }
 
-func addStopTimingField(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	stop *intelligenceStop,
-	confidence float64,
-) {
-	if stop == nil {
+func addStopTimingField(params *AddStopTimingFieldParams) {
+	if params.Stop == nil {
 		return
 	}
 
-	value := strings.TrimSpace(strings.Join(filterNonEmpty(stop.Date, stop.TimeWindow), " "))
+	value := strings.TrimSpace(
+		strings.Join(filterNonEmpty(params.Stop.Date, params.Stop.TimeWindow), " "),
+	)
 	if value == "" {
 		return
 	}
 
-	fields[key] = reviewField{
-		Label:           label,
+	params.Fields[params.Key] = &ReviewField{
+		Label:           params.Label,
 		Value:           value,
-		Confidence:      clampConfidence((confidence + stop.Confidence) / 2),
-		Excerpt:         stop.EvidenceExcerpt,
-		EvidenceExcerpt: stop.EvidenceExcerpt,
-		PageNumber:      stop.PageNumber,
-		ReviewRequired:  stop.ReviewRequired,
-		Source:          stop.Source,
+		Confidence:      clampConfidence((params.Confidence + params.Stop.Confidence) / 2),
+		Excerpt:         params.Stop.EvidenceExcerpt,
+		EvidenceExcerpt: params.Stop.EvidenceExcerpt,
+		PageNumber:      params.Stop.PageNumber,
+		ReviewRequired:  params.Stop.ReviewRequired,
+		Source:          params.Stop.Source,
 	}
-	if signals != nil {
-		*signals = append(*signals, strings.ToLower(label))
+	if params.Signals != nil {
+		*params.Signals = append(*params.Signals, strings.ToLower(params.Label))
 	}
 }
 
-type pageSectionMatch struct {
-	PageNumber int
-	Value      string
-	Excerpt    string
-}
-
-func addFieldFromSectionLabels(
-	fields map[string]reviewField,
-	signals *[]string,
-	key, label string,
-	pages []pageExtractionResult,
-	labels []string,
-	confidence float64,
-	signal string,
-	reviewRequired bool,
-	extractor func(string, []string) string,
-) {
-	matches := findSectionMatches(pages, labels, extractor)
+func addFieldFromSectionLabels(params *AddFieldFromSectionLabelsParams) {
+	matches := findSectionMatches(params)
 	if len(matches) == 0 {
 		return
 	}
@@ -2550,46 +2536,50 @@ func addFieldFromSectionLabels(
 		}
 	}
 
-	fields[key] = reviewField{
-		Label:           label,
-		Value:           selected.Value,
-		Confidence:      pageAdjustedConfidence(confidence, selected.PageNumber, pages),
+	params.Fields[params.Key] = &ReviewField{
+		Label: params.Label,
+		Value: selected.Value,
+		Confidence: pageAdjustedConfidence(
+			params.Confidence,
+			selected.PageNumber,
+			params.Pages,
+		),
 		Excerpt:         selected.Excerpt,
 		EvidenceExcerpt: selected.Excerpt,
 		PageNumber:      selected.PageNumber,
-		ReviewRequired:  reviewRequired || conflict || normalizeSectionValue(selected.Value) == "",
-		Conflict:        conflict,
-		Source:          "deterministic",
+		ReviewRequired: params.ReviewRequired || conflict ||
+			normalizeSectionValue(selected.Value) == "",
+		Conflict: conflict,
+		Source:   "deterministic",
 	}
-	if signals != nil && signal != "" {
-		*signals = append(*signals, signal)
+	if params.Signals != nil && params.Signal != "" {
+		*params.Signals = append(*params.Signals, params.Signal)
 	}
 }
 
 func findSectionMatches(
-	pages []pageExtractionResult,
-	labels []string,
-	extractor func(string, []string) string,
-) []pageSectionMatch {
-	matches := make([]pageSectionMatch, 0)
-	for _, page := range pages {
+	params *AddFieldFromSectionLabelsParams,
+) []PageSectionMatch {
+	matches := make([]PageSectionMatch, 0)
+	for _, page := range params.Pages {
 		lines := splitNormalizedLines(page.Text)
 		for idx, line := range lines {
-			if !matchesSectionLabel(line, labels) {
+			if !matchesSectionLabel(line, params.Labels) {
 				continue
 			}
 			block := collectSectionBlock(lines, idx)
-			value := strings.TrimSpace(extractor(line, block))
+			value := strings.TrimSpace(params.Extractor(line, block))
 			if value == "" {
 				continue
 			}
-			matches = append(matches, pageSectionMatch{
+			matches = append(matches, PageSectionMatch{
 				PageNumber: page.PageNumber,
 				Value:      value,
 				Excerpt:    strings.Join(block, "\n"),
 			})
 		}
 	}
+
 	return dedupeSectionMatches(matches)
 }
 
@@ -2642,13 +2632,7 @@ func isLikelyBoundaryLine(line string) bool {
 		return false
 	}
 	normalized := normalizeSectionLabel(line)
-	boundaries := []string{
-		"ship from", "ship to", "shipper", "consignee", "receiver", "delivery to", "delivered to",
-		"pickup", "delivery", "received by", "signed by", "receiver signature", "consignee signature",
-		"bill of lading", "bol", "reference", "load", "pro", "commodity", "description", "weight",
-		"pieces", "packages", "remarks", "exceptions", "carrier", "invoice", "bill to",
-	}
-	for _, boundary := range boundaries {
+	for _, boundary := range Boundaries {
 		if normalized == boundary || strings.HasPrefix(normalized, boundary+" ") {
 			return true
 		}
@@ -2657,7 +2641,8 @@ func isLikelyBoundaryLine(line string) bool {
 }
 
 func extractEntityNameFromSection(header string, block []string) string {
-	if value := extractSectionHeaderValue(header); value != "" && !looksLikeAddress(value) && !cityStateZipRegex.MatchString(value) {
+	if value := extractSectionHeaderValue(header); value != "" && !looksLikeAddress(value) &&
+		!cityStateZipRegex.MatchString(value) {
 		return value
 	}
 	for _, line := range block[1:] {
@@ -2717,11 +2702,13 @@ func extractDeliveryFieldFromSection(header string, block []string) string {
 }
 
 func extractSignatureFromSection(header string, block []string) string {
-	if value := extractSectionHeaderValue(header); value != "" && !dateValueRegex.MatchString(value) {
+	if value := extractSectionHeaderValue(header); value != "" &&
+		!dateValueRegex.MatchString(value) {
 		return value
 	}
 	for _, line := range block[1:] {
-		if line == "" || dateValueRegex.MatchString(line) || strings.Contains(strings.ToLower(line), "date") {
+		if line == "" || dateValueRegex.MatchString(line) ||
+			strings.Contains(strings.ToLower(line), "date") {
 			continue
 		}
 		return line
@@ -2749,11 +2736,11 @@ func extractSectionHeaderValue(header string) string {
 	return strings.TrimSpace(parts[1])
 }
 
-func dedupeSectionMatches(matches []pageSectionMatch) []pageSectionMatch {
-	deduped := make([]pageSectionMatch, 0, len(matches))
+func dedupeSectionMatches(matches []PageSectionMatch) []PageSectionMatch {
+	deduped := make([]PageSectionMatch, 0, len(matches))
 	seen := make(map[string]struct{}, len(matches))
 	for _, match := range matches {
-		key := normalizeSectionValue(match.Value) + "|" + strconv.Itoa(match.PageNumber)
+		key := fmt.Sprintf("%s|%d", normalizeSectionValue(match.Value), match.PageNumber)
 		if _, ok := seen[key]; ok {
 			continue
 		}
@@ -2763,8 +2750,8 @@ func dedupeSectionMatches(matches []pageSectionMatch) []pageSectionMatch {
 	return deduped
 }
 
-func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceStop {
-	stops := make([]intelligenceStop, 0, 2)
+func extractRateConfirmationStops(pages []*PageExtractionResult) []*IntelligenceStop {
+	stops := make([]*IntelligenceStop, 0, 2)
 
 	for _, page := range pages {
 		lines := splitNormalizedLines(page.Text)
@@ -2774,7 +2761,7 @@ func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceSt
 				continue
 			}
 
-			stop := intelligenceStop{
+			stop := &IntelligenceStop{
 				Sequence:        len(stops) + 1,
 				Role:            role,
 				PageNumber:      page.PageNumber,
@@ -2788,7 +2775,7 @@ func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceSt
 			if len(block) > 0 {
 				stop.EvidenceExcerpt = strings.Join(block, "\n")
 			}
-			populateRateConfirmationStop(&stop, block)
+			populateRateConfirmationStop(stop, block)
 			if !hasMeaningfulStopData(stop) {
 				continue
 			}
@@ -2809,13 +2796,13 @@ func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceSt
 	return stops
 }
 
-func collectFieldConflicts(fields map[string]reviewField) []reviewConflict {
-	conflicts := make([]reviewConflict, 0)
+func collectFieldConflicts(fields map[string]*ReviewField) []*ReviewConflict {
+	conflicts := make([]*ReviewConflict, 0)
 	for key, field := range fields {
 		if !field.Conflict {
 			continue
 		}
-		conflicts = append(conflicts, reviewConflict{
+		conflicts = append(conflicts, &ReviewConflict{
 			Key:             key,
 			Label:           field.Label,
 			Values:          []string{field.Value},
@@ -2827,12 +2814,12 @@ func collectFieldConflicts(fields map[string]reviewField) []reviewConflict {
 	return conflicts
 }
 
-func collectStopConflicts(stops []intelligenceStop) []reviewConflict {
-	conflicts := make([]reviewConflict, 0)
+func collectStopConflicts(stops []*IntelligenceStop) []*ReviewConflict {
+	conflicts := make([]*ReviewConflict, 0)
 
-	for _, role := range []string{"pickup", "delivery"} {
-		addresses := make(map[string][]intelligenceStop)
-		dates := make(map[string][]intelligenceStop)
+	for _, role := range []string{stopRolePickup, stopRoleDelivery} {
+		addresses := make(map[string][]*IntelligenceStop)
+		dates := make(map[string][]*IntelligenceStop)
 		for _, stop := range stops {
 			if stop.Role != role {
 				continue
@@ -2846,9 +2833,9 @@ func collectStopConflicts(stops []intelligenceStop) []reviewConflict {
 		}
 
 		if len(addresses) > 1 {
-			conflicts = append(conflicts, reviewConflict{
-				Key:             role + "Address",
-				Label:           roleLabel(role) + " Address",
+			conflicts = append(conflicts, &ReviewConflict{
+				Key:             fmt.Sprintf("%sAddress", role),
+				Label:           fmt.Sprintf("%s Address", roleLabel(role)),
 				Values:          mapKeys(addresses),
 				PageNumbers:     stopPages(stops, role),
 				EvidenceExcerpt: firstStopExcerpt(stops, role),
@@ -2856,9 +2843,9 @@ func collectStopConflicts(stops []intelligenceStop) []reviewConflict {
 			})
 		}
 		if len(dates) > 1 {
-			conflicts = append(conflicts, reviewConflict{
-				Key:             role + "Date",
-				Label:           roleLabel(role) + " Date",
+			conflicts = append(conflicts, &ReviewConflict{
+				Key:             fmt.Sprintf("%sDate", role),
+				Label:           fmt.Sprintf("%s Date", roleLabel(role)),
 				Values:          mapKeys(dates),
 				PageNumbers:     stopPages(stops, role),
 				EvidenceExcerpt: firstStopExcerpt(stops, role),
@@ -2870,7 +2857,7 @@ func collectStopConflicts(stops []intelligenceStop) []reviewConflict {
 	return conflicts
 }
 
-func hasStopRole(stops []intelligenceStop, role string) bool {
+func hasStopRole(stops []*IntelligenceStop, role string) bool {
 	for _, stop := range stops {
 		if stop.Role == role {
 			return true
@@ -2879,7 +2866,7 @@ func hasStopRole(stops []intelligenceStop, role string) bool {
 	return false
 }
 
-func hasReviewRequiredStop(stops []intelligenceStop) bool {
+func hasReviewRequiredStop(stops []*IntelligenceStop) bool {
 	for _, stop := range stops {
 		if stop.ReviewRequired {
 			return true
@@ -2919,22 +2906,29 @@ func detectStopRole(line string) (string, bool) {
 	switch {
 	case stopSectionRegex.MatchString(lower):
 		switch {
-		case strings.HasPrefix(lower, "shipper"), strings.HasPrefix(lower, "pickup"), strings.HasPrefix(lower, "origin"):
-			return "pickup", true
-		case strings.HasPrefix(lower, "receiver"), strings.HasPrefix(lower, "consignee"), strings.HasPrefix(lower, "delivery"), strings.HasPrefix(lower, "drop"), strings.HasPrefix(lower, "destination"):
-			return "delivery", true
+		case strings.HasPrefix(lower, "shipper"),
+			strings.HasPrefix(lower, "pickup"),
+			strings.HasPrefix(lower, "origin"):
+			return stopRolePickup, true
+		case strings.HasPrefix(lower, "receiver"),
+			strings.HasPrefix(lower, "consignee"),
+			strings.HasPrefix(lower, "delivery"),
+			strings.HasPrefix(lower, "drop"),
+			strings.HasPrefix(lower, "destination"):
+			return stopRoleDelivery, true
 		}
 		return "", false
 	case strings.HasPrefix(lower, "pickup"):
 		if strings.HasPrefix(lower, "pickup date") || strings.HasPrefix(lower, "pickup window") {
 			return "", false
 		}
-		return "pickup", true
+		return stopRolePickup, true
 	case strings.HasPrefix(lower, "delivery"), strings.HasPrefix(lower, "drop"):
-		if strings.HasPrefix(lower, "delivery date") || strings.HasPrefix(lower, "delivery window") {
+		if strings.HasPrefix(lower, "delivery date") ||
+			strings.HasPrefix(lower, "delivery window") {
 			return "", false
 		}
-		return "delivery", true
+		return stopRoleDelivery, true
 	default:
 		return "", false
 	}
@@ -2975,13 +2969,14 @@ func collectRateConfirmationStopBlock(lines []string, idx int) []string {
 	return block
 }
 
-func populateRateConfirmationStop(stop *intelligenceStop, block []string) {
+func populateRateConfirmationStop(stop *IntelligenceStop, block []string) {
 	if stop == nil || len(block) == 0 {
 		return
 	}
 
 	header := block[0]
-	if labelValue := extractLabelValue(header); labelValue != "" && !isStopMetadataLine(strings.ToLower(labelValue)) {
+	if labelValue := extractLabelValue(header); labelValue != "" &&
+		!isStopMetadataLine(strings.ToLower(labelValue)) {
 		switch {
 		case looksLikeAddress(labelValue):
 			stop.AddressLine1 = labelValue
@@ -3029,13 +3024,18 @@ func populateRateConfirmationStop(stop *intelligenceStop, block []string) {
 	stop.AddressLine2 = strings.TrimSpace(stop.AddressLine2)
 	stop.Date = strings.TrimSpace(stop.Date)
 	stop.TimeWindow = strings.TrimSpace(stop.TimeWindow)
-	stop.AppointmentRequired = strings.Contains(strings.ToLower(strings.Join(block, "\n")), "appointment") ||
+	stop.AppointmentRequired = strings.Contains(
+		strings.ToLower(strings.Join(block, "\n")),
+		"appointment",
+	) ||
 		strings.Contains(strings.ToLower(stop.TimeWindow), "appt")
 }
 
 func hasStopSignal(block []string) bool {
 	for _, line := range block {
-		if looksLikeAddress(line) || cityStateZipRegex.MatchString(line) || dateValueRegex.MatchString(line) || timeWindowRegex.MatchString(line) {
+		if looksLikeAddress(line) || cityStateZipRegex.MatchString(line) ||
+			dateValueRegex.MatchString(line) ||
+			timeWindowRegex.MatchString(line) {
 			return true
 		}
 	}
@@ -3058,20 +3058,24 @@ func findLastStopTimeValue(block []string) string {
 	return findLastRegexValue(appointmentRegex, block)
 }
 
-func findLastCityStateZip(block []string) (int, string, string, string) {
-	for idx := len(block) - 1; idx >= 0; idx-- {
-		if !cityStateZipRegex.MatchString(block[idx]) {
+func findLastCityStateZip(
+	block []string,
+) (foundIdx int, foundCity, foundState, foundZip string) {
+	for i := len(block) - 1; i >= 0; i-- {
+		if !cityStateZipRegex.MatchString(block[i]) {
 			continue
 		}
-		city, state, postalCode := extractCityStateZip(block[idx])
+		city, state, postalCode := extractCityStateZip(block[i])
 		if city != "" && state != "" {
-			return idx, city, state, postalCode
+			return i, city, state, postalCode
 		}
 	}
 	return -1, "", "", ""
 }
 
-func extractAddressBeforeCity(block []string, cityIdx int) (string, string) {
+func extractAddressBeforeCity(
+	block []string, cityIdx int,
+) (addr1, addr2 string) { //nolint:unparam // addr2 reserved for future suite/apt lines
 	if cityIdx <= 0 || cityIdx > len(block) {
 		return "", ""
 	}
@@ -3108,13 +3112,16 @@ func extractStopNameBeforeIndex(block []string, limit int) string {
 	return ""
 }
 
-func previousMeaningfulStopLine(block []string, start int) (int, string) {
-	for idx := start; idx >= 0; idx-- {
-		line := strings.TrimSpace(block[idx])
-		if line == "" || isStopMetadataLine(strings.ToLower(line)) || phoneLineRegex.MatchString(line) {
+func previousMeaningfulStopLine(
+	block []string, start int,
+) (foundIdx int, foundLine string) {
+	for i := start; i >= 0; i-- {
+		l := strings.TrimSpace(block[i])
+		if l == "" || isStopMetadataLine(strings.ToLower(l)) ||
+			phoneLineRegex.MatchString(l) {
 			continue
 		}
-		return idx, line
+		return i, l
 	}
 	return -1, ""
 }
@@ -3129,7 +3136,8 @@ func findLastAddressLine(block []string) string {
 			return line
 		}
 		if isStreetFragment(line) {
-			if prevIdx, prevLine := previousMeaningfulStopLine(block, idx-1); prevIdx >= 0 && isNumericAddressPrefix(prevLine) {
+			if prevIdx, prevLine := previousMeaningfulStopLine(block, idx-1); prevIdx >= 0 &&
+				isNumericAddressPrefix(prevLine) {
 				return strings.TrimSpace(prevLine + " " + line)
 			}
 		}
@@ -3145,7 +3153,7 @@ func sanitizeStopName(name string) string {
 	return trimmed
 }
 
-func hasMeaningfulStopData(stop intelligenceStop) bool {
+func hasMeaningfulStopData(stop *IntelligenceStop) bool {
 	return strings.TrimSpace(stop.Name) != "" ||
 		strings.TrimSpace(stop.AddressLine1) != "" ||
 		(strings.TrimSpace(stop.City) != "" && strings.TrimSpace(stop.State) != "") ||
@@ -3159,7 +3167,12 @@ func isUsableStopName(line string) bool {
 		return false
 	}
 	lower := strings.ToLower(trimmed)
-	if isStopMetadataLine(lower) || phoneLineRegex.MatchString(trimmed) || looksLikeAddress(trimmed) || cityStateZipRegex.MatchString(trimmed) || dateValueRegex.MatchString(trimmed) || isStreetFragment(trimmed) || isNumericAddressPrefix(trimmed) {
+	if isStopMetadataLine(lower) || phoneLineRegex.MatchString(trimmed) ||
+		looksLikeAddress(trimmed) ||
+		cityStateZipRegex.MatchString(trimmed) ||
+		dateValueRegex.MatchString(trimmed) ||
+		isStreetFragment(trimmed) ||
+		isNumericAddressPrefix(trimmed) {
 		return false
 	}
 	return true
@@ -3214,7 +3227,8 @@ func isStreetFragment(line string) bool {
 	if trimmed == "" || looksLikeAddress(trimmed) || cityStateZipRegex.MatchString(trimmed) {
 		return false
 	}
-	if isNumericAddressPrefix(trimmed) || phoneLineRegex.MatchString(trimmed) || dateValueRegex.MatchString(trimmed) {
+	if isNumericAddressPrefix(trimmed) || phoneLineRegex.MatchString(trimmed) ||
+		dateValueRegex.MatchString(trimmed) {
 		return false
 	}
 	lower := strings.ToLower(trimmed)
@@ -3222,7 +3236,31 @@ func isStreetFragment(line string) bool {
 		return false
 	}
 
-	streetKeywords := []string{"street", "st", "road", "rd", "drive", "dr", "avenue", "ave", "boulevard", "blvd", "lane", "ln", "court", "ct", "circle", "cir", "way", "parkway", "pkwy", "highway", "hwy", "suite", "ste"}
+	streetKeywords := []string{
+		"street",
+		"st",
+		"road",
+		"rd",
+		"drive",
+		"dr",
+		"avenue",
+		"ave",
+		"boulevard",
+		"blvd",
+		"lane",
+		"ln",
+		"court",
+		"ct",
+		"circle",
+		"cir",
+		"way",
+		"parkway",
+		"pkwy",
+		"highway",
+		"hwy",
+		"suite",
+		"ste",
+	}
 	for _, keyword := range streetKeywords {
 		if strings.Contains(lower, keyword) {
 			return true
@@ -3271,12 +3309,18 @@ func looksLikeAddress(value string) bool {
 	return addressLineRegex.MatchString(strings.TrimSpace(value))
 }
 
-func extractCityStateZip(line string) (string, string, string) {
+func extractCityStateZip(line string) (city, state, postalCode string) {
 	match := cityStateZipRegex.FindStringSubmatch(strings.TrimSpace(line))
 	if len(match) != 4 {
 		return "", "", ""
 	}
-	return strings.TrimSpace(match[1]), strings.ToUpper(strings.TrimSpace(match[2])), strings.TrimSpace(match[3])
+	return strings.TrimSpace(
+			match[1],
+		), strings.ToUpper(
+			strings.TrimSpace(match[2]),
+		), strings.TrimSpace(
+			match[3],
+		)
 }
 
 func firstRegexValue(re *regexp.Regexp, text string) string {
@@ -3290,7 +3334,7 @@ func firstRegexValue(re *regexp.Regexp, text string) string {
 	return strings.TrimSpace(match[1])
 }
 
-func baseStopConfidence(page pageExtractionResult) float64 {
+func baseStopConfidence(page *PageExtractionResult) float64 {
 	if page.SourceKind == documentcontent.SourceKindOCR {
 		return clampConfidence((0.72 + page.OCRConfidence) / 2)
 	}
@@ -3304,7 +3348,7 @@ func nonZeroPageNumbers(pageNumber int) []int {
 	return []int{pageNumber}
 }
 
-func stopPages(stops []intelligenceStop, role string) []int {
+func stopPages(stops []*IntelligenceStop, role string) []int {
 	pages := make([]int, 0)
 	seen := make(map[int]struct{})
 	for _, stop := range stops {
@@ -3320,7 +3364,7 @@ func stopPages(stops []intelligenceStop, role string) []int {
 	return pages
 }
 
-func firstStopExcerpt(stops []intelligenceStop, role string) string {
+func firstStopExcerpt(stops []*IntelligenceStop, role string) string {
 	for _, stop := range stops {
 		if stop.Role == role && stop.EvidenceExcerpt != "" {
 			return stop.EvidenceExcerpt
@@ -3342,19 +3386,19 @@ func roleLabel(role string) string {
 		return "Unknown"
 	}
 	switch role {
-	case "pickup":
+	case stopRolePickup:
 		return "Pickup"
-	case "delivery":
+	case stopRoleDelivery:
 		return "Delivery"
 	default:
 		return strings.ToUpper(role[:1]) + role[1:]
 	}
 }
 
-func firstStopByRole(stops []intelligenceStop, role string) *intelligenceStop {
+func firstStopByRole(stops []*IntelligenceStop, role string) *IntelligenceStop {
 	for idx := range stops {
 		if stops[idx].Role == role {
-			return &stops[idx]
+			return stops[idx]
 		}
 	}
 	return nil
@@ -3370,7 +3414,10 @@ func filterNonEmpty(items ...string) []string {
 	return filtered
 }
 
-func buildContentPages(content *documentcontent.Content, pages []pageExtractionResult) []*documentcontent.Page {
+func buildContentPages(
+	content *documentcontent.Content,
+	pages []*PageExtractionResult,
+) []*documentcontent.Page {
 	items := make([]*documentcontent.Page, 0, len(pages))
 	for _, page := range pages {
 		items = append(items, &documentcontent.Page{
@@ -3392,7 +3439,7 @@ func buildContentPages(content *documentcontent.Content, pages []pageExtractionR
 	return items
 }
 
-func finalizeExtraction(pages []pageExtractionResult, maxExtractedChars int) *extractionResult {
+func finalizeExtraction(pages []*PageExtractionResult, maxExtractedChars int) *ExtractionResult {
 	textParts := make([]string, 0, len(pages))
 	pageCount := len(pages)
 	nativeCount := 0
@@ -3413,8 +3460,11 @@ func finalizeExtraction(pages []pageExtractionResult, maxExtractedChars int) *ex
 			nativeCount++
 			weightedConfidence += 0.99
 			weightedPages++
-		default:
+		case documentcontent.SourceKindMixed:
 			nativeCount++
+			ocrCount++
+			weightedConfidence += (page.OCRConfidence + 0.99) / 2
+			weightedPages++
 		}
 	}
 
@@ -3431,12 +3481,14 @@ func finalizeExtraction(pages []pageExtractionResult, maxExtractedChars int) *ex
 			if pages[idx].Metadata == nil {
 				pages[idx].Metadata = map[string]any{}
 			}
-			pages[idx].Metadata["documentAverageConfidence"] = clampConfidence(weightedConfidence / weightedPages)
+			pages[idx].Metadata["documentAverageConfidence"] = clampConfidence(
+				weightedConfidence / weightedPages,
+			)
 		}
 	}
 
-	return &extractionResult{
-		Text:       truncateExtractedText(strings.Join(textParts, "\n\n"), maxExtractedChars),
+	return &ExtractionResult{
+		Text:       stringutils.TruncateAndTrim(strings.Join(textParts, "\n\n"), maxExtractedChars),
 		PageCount:  pageCount,
 		SourceKind: sourceKind,
 		Pages:      pages,
@@ -3450,17 +3502,19 @@ func defaultMetadata(metadata map[string]any) map[string]any {
 	return metadata
 }
 
-func firstPageMatch(re *regexp.Regexp, pages []pageExtractionResult) (int, []string) {
+func firstPageMatch(
+	re *regexp.Regexp, pages []*PageExtractionResult,
+) (pageNum int, groups []string) {
 	for _, page := range pages {
-		match := re.FindStringSubmatch(strings.ReplaceAll(page.Text, "\r", ""))
-		if len(match) > 0 {
-			return page.PageNumber, match
+		m := re.FindStringSubmatch(strings.ReplaceAll(page.Text, "\r", ""))
+		if len(m) > 0 {
+			return page.PageNumber, m
 		}
 	}
 	return 0, nil
 }
 
-func hasConflictingMatches(re *regexp.Regexp, selected string, pages []pageExtractionResult) bool {
+func hasConflictingMatches(re *regexp.Regexp, selected string, pages []*PageExtractionResult) bool {
 	normalizedSelected := strings.TrimSpace(strings.ToLower(selected))
 	for _, page := range pages {
 		matches := re.FindAllStringSubmatch(strings.ReplaceAll(page.Text, "\r", ""), -1)
@@ -3477,7 +3531,7 @@ func hasConflictingMatches(re *regexp.Regexp, selected string, pages []pageExtra
 	return false
 }
 
-func pageAdjustedConfidence(base float64, pageNumber int, pages []pageExtractionResult) float64 {
+func pageAdjustedConfidence(base float64, pageNumber int, pages []*PageExtractionResult) float64 {
 	if pageNumber <= 0 {
 		return clampConfidence(base)
 	}
@@ -3493,7 +3547,7 @@ func pageAdjustedConfidence(base float64, pageNumber int, pages []pageExtraction
 	return clampConfidence(base)
 }
 
-func readImageDimensions(imageData []byte) (int, int, error) {
+func readImageDimensions(imageData []byte) (width, height int, err error) {
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(imageData))
 	if err != nil {
 		return 0, 0, err
@@ -3501,7 +3555,9 @@ func readImageDimensions(imageData []byte) (int, int, error) {
 	return cfg.Width, cfg.Height, nil
 }
 
-func (a *Activities) preprocessOCRImage(imageData []byte) ([]byte, int, int, error) {
+func (a *Activities) preprocessOCRImage(
+	imageData []byte,
+) (data []byte, width, height int, err error) {
 	img, err := imaging.Decode(bytes.NewReader(imageData))
 	if err != nil {
 		return nil, 0, 0, err
@@ -3516,8 +3572,7 @@ func (a *Activities) preprocessOCRImage(imageData []byte) ([]byte, int, int, err
 		}
 	}
 
-	switch strings.ToLower(a.cfg.GetOCRPreprocessingMode()) {
-	case "standard":
+	if strings.ToLower(a.cfg.GetOCRPreprocessingMode()) == "standard" {
 		processed = imaging.Grayscale(processed)
 		processed = imaging.AdjustContrast(processed, 25)
 		processed = imaging.Sharpen(processed, 1.5)
@@ -3525,8 +3580,8 @@ func (a *Activities) preprocessOCRImage(imageData []byte) ([]byte, int, int, err
 	}
 
 	buf := new(bytes.Buffer)
-	if err := imaging.Encode(buf, processed, imaging.PNG); err != nil {
-		return nil, 0, 0, err
+	if encErr := imaging.Encode(buf, processed, imaging.PNG); encErr != nil {
+		return nil, 0, 0, encErr
 	}
 
 	bounds := processed.Bounds()
@@ -3540,19 +3595,28 @@ func thresholdImage(img image.Image, threshold uint8) image.Image {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			r, g, b, a := img.At(x, y).RGBA()
-			luma := uint8(((299 * r) + (587 * g) + (114 * b) + 500) / 1000 >> 8)
+			lumaVal := ((299 * r) + (587 * g) + (114 * b) + 500) / 1000 >> 8
+			luma := intutils.SafeUint32ToUint8(lumaVal)
+			alpha := intutils.SafeUint32ToUint8(a >> 8)
 			if luma >= threshold {
-				dst.SetNRGBA(x, y, color.NRGBA{R: 255, G: 255, B: 255, A: uint8(a >> 8)})
+				dst.SetNRGBA(x, y, color.NRGBA{
+					R: 255, G: 255, B: 255, A: alpha,
+				})
 				continue
 			}
-			dst.SetNRGBA(x, y, color.NRGBA{R: 0, G: 0, B: 0, A: uint8(a >> 8)})
+			dst.SetNRGBA(x, y, color.NRGBA{
+				R: 0, G: 0, B: 0, A: alpha,
+			})
 		}
 	}
 
 	return dst
 }
 
-func parseTesseractTSV(output string) (string, float64, error) {
+//nolint:gocognit,funlen // TSV parsing with line-grouping state machine
+func parseTesseractTSV(
+	output string,
+) (parsed string, avgConfidence float64, parseErr error) { //nolint:unparam // error return reserved for future format validation
 	lines := strings.Split(strings.ReplaceAll(output, "\r\n", "\n"), "\n")
 	if len(lines) <= 1 {
 		return "", 0, nil
@@ -3636,13 +3700,12 @@ func parseTesseractTSV(output string) (string, float64, error) {
 
 	flush()
 
-	joined := strings.TrimSpace(strings.Join(lineTexts, "\n"))
-	confidence := 0.0
+	parsed = strings.TrimSpace(strings.Join(lineTexts, "\n"))
 	if confidenceCount > 0 {
-		confidence = clampConfidence(totalConfidence / confidenceCount)
+		avgConfidence = clampConfidence(totalConfidence / confidenceCount)
 	}
 
-	return joined, confidence, nil
+	return parsed, avgConfidence, nil
 }
 
 func containsAny(corpus string, needles ...string) bool {

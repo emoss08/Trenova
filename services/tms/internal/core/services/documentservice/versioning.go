@@ -3,7 +3,6 @@ package documentservice
 import (
 	"context"
 	"slices"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
@@ -17,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -282,7 +282,7 @@ func (s *Service) GetPacketSummary(
 			item.Status = documentpacketrule.ItemStatusNeedsReview
 			summary.NeedsReview++
 		default:
-			now := time.Now().Unix()
+			now := timeutils.NowUnix()
 			expired := slices.ContainsFunc(matchedDocs, func(doc *document.Document) bool {
 				return doc.ExpirationDate != nil && *doc.ExpirationDate <= now
 			})
@@ -400,7 +400,7 @@ func (s *Service) AttachLineageToResource(
 		draft, draftErr := s.draftRepo.GetByDocumentID(ctx, updated.ID, tenantInfo)
 		switch {
 		case draftErr == nil:
-			now := time.Now().Unix()
+			now := timeutils.NowUnix()
 			draft.AttachedShipmentID = &shipmentID
 			draft.AttachedAt = &now
 			draft.AttachedByID = &userID
@@ -414,7 +414,8 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	contentText := ""
-	if content, contentErr := s.documentIntelligence.GetContent(ctx, updated.ID, tenantInfo); contentErr == nil && content != nil {
+	if content, contentErr := s.documentIntelligence.GetContent(ctx, updated.ID, tenantInfo); contentErr == nil &&
+		content != nil {
 		contentText = content.ContentText
 	}
 	s.syncSearchProjection(ctx, s.l, updated, contentText)

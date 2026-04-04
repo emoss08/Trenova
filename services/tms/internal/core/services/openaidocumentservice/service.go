@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -147,14 +148,14 @@ type extractFieldResponse struct {
 }
 
 type extractResponse struct {
-	DocumentKind      string                            `json:"documentKind"`
-	OverallConfidence float64                           `json:"overallConfidence"`
-	ReviewStatus      string                            `json:"reviewStatus"`
-	MissingFields     []string                          `json:"missingFields"`
-	Signals           []string                          `json:"signals"`
-	Fields            []extractFieldResponse            `json:"fields"`
-	Stops             []serviceports.AIDocumentStop     `json:"stops"`
-	Conflicts         []serviceports.AIDocumentConflict `json:"conflicts"`
+	DocumentKind      string                              `json:"documentKind"`
+	OverallConfidence float64                             `json:"overallConfidence"`
+	ReviewStatus      string                              `json:"reviewStatus"`
+	MissingFields     []string                            `json:"missingFields"`
+	Signals           []string                            `json:"signals"`
+	Fields            []extractFieldResponse              `json:"fields"`
+	Stops             []*serviceports.AIDocumentStop      `json:"stops"`
+	Conflicts         []*serviceports.AIDocumentConflict  `json:"conflicts"`
 }
 
 func (s *Service) RouteDocument(
@@ -290,14 +291,22 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 		return nil, err
 	}
 
-	envelope, err := s.doResponsesRequest(ctx, runtimeCfg.Config["apiKey"], http.MethodPost, responsesURL, body)
+	envelope, err := s.doResponsesRequest(
+		ctx,
+		runtimeCfg.Config["apiKey"],
+		http.MethodPost,
+		responsesURL,
+		body,
+	)
 	if err != nil {
 		s.recordAIUsage("extract_background_submit", false, "error")
 		return nil, err
 	}
 	if strings.TrimSpace(envelope.ID) == "" {
 		s.recordAIUsage("extract_background_submit", false, "empty_response_id")
-		return nil, errortypes.NewBusinessError("AI background extraction response did not include an ID")
+		return nil, errortypes.NewBusinessError(
+			"AI background extraction response did not include an ID",
+		)
 	}
 
 	s.recordAIUsage("extract_background_submit", true, "success")
@@ -552,7 +561,11 @@ func (s *Service) doResponsesRequest(
 		return nil, err
 	}
 	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("openai responses api returned %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+		return nil, fmt.Errorf(
+			"openai responses api returned %d: %s",
+			resp.StatusCode,
+			strings.TrimSpace(string(respBody)),
+		)
 	}
 
 	envelope := new(responsesEnvelope)
@@ -575,34 +588,67 @@ func (s *Service) recordAIUsage(operation string, success bool, outcome string) 
 
 func buildRoutePrompt(req *serviceports.AIRouteRequest) string {
 	var b strings.Builder
-	b.WriteString("Classify this transportation document into one of: RateConfirmation, BillOfLading, ProofOfDelivery, Other.\n")
-	b.WriteString("Use the extracted text, feature summary, and any provider fingerprint hint. Return strict JSON only.\n")
-	b.WriteString("Set shouldExtract=true only when the documentKind is RateConfirmation and the evidence is strong enough for structured extraction.\n")
+	b.WriteString(
+		"Classify this transportation document into one of: RateConfirmation, BillOfLading, ProofOfDelivery, Other.\n",
+	)
+	b.WriteString(
+		"Use the extracted text, feature summary, and any provider fingerprint hint. Return strict JSON only.\n",
+	)
+	b.WriteString(
+		"Set shouldExtract=true only when the documentKind is RateConfirmation and the evidence is strong enough for structured extraction.\n",
+	)
 	b.WriteString("Filename: " + strings.TrimSpace(req.FileName) + "\n")
 	if req.Fingerprint != nil {
-		b.WriteString(fmt.Sprintf("Provider fingerprint hint: provider=%s kindHint=%s confidence=%.2f signals=%s\n",
-			req.Fingerprint.Provider,
-			req.Fingerprint.KindHint,
-			req.Fingerprint.Confidence,
-			strings.Join(req.Fingerprint.Signals, ", "),
-		))
+		b.WriteString(
+			fmt.Sprintf(
+				"Provider fingerprint hint: provider=%s kindHint=%s confidence=%.2f signals=%s\n",
+				req.Fingerprint.Provider,
+				req.Fingerprint.KindHint,
+				req.Fingerprint.Confidence,
+				strings.Join(req.Fingerprint.Signals, ", "),
+			),
+		)
 	}
 	if req.Features != nil {
 		b.WriteString("Normalized features:\n")
-		b.WriteString(fmt.Sprintf("Titles: %s\n", strings.Join(req.Features.TitleCandidates, " | ")))
-		b.WriteString(fmt.Sprintf("Section labels: %s\n", strings.Join(req.Features.SectionLabels, " | ")))
-		b.WriteString(fmt.Sprintf("Party labels: %s\n", strings.Join(req.Features.PartyLabels, " | ")))
-		b.WriteString(fmt.Sprintf("Reference labels: %s\n", strings.Join(req.Features.ReferenceLabels, " | ")))
-		b.WriteString(fmt.Sprintf("Money signals: %s\n", strings.Join(req.Features.MoneySignals, " | ")))
-		b.WriteString(fmt.Sprintf("Stop signals: %s\n", strings.Join(req.Features.StopSignals, " | ")))
-		b.WriteString(fmt.Sprintf("Terms signals: %s\n", strings.Join(req.Features.TermsSignals, " | ")))
-		b.WriteString(fmt.Sprintf("Signature signals: %s\n", strings.Join(req.Features.SignatureSignals, " | ")))
+		b.WriteString(
+			fmt.Sprintf("Titles: %s\n", strings.Join(req.Features.TitleCandidates, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf("Section labels: %s\n", strings.Join(req.Features.SectionLabels, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf("Party labels: %s\n", strings.Join(req.Features.PartyLabels, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf(
+				"Reference labels: %s\n",
+				strings.Join(req.Features.ReferenceLabels, " | "),
+			),
+		)
+		b.WriteString(
+			fmt.Sprintf("Money signals: %s\n", strings.Join(req.Features.MoneySignals, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf("Stop signals: %s\n", strings.Join(req.Features.StopSignals, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf("Terms signals: %s\n", strings.Join(req.Features.TermsSignals, " | ")),
+		)
+		b.WriteString(
+			fmt.Sprintf(
+				"Signature signals: %s\n",
+				strings.Join(req.Features.SignatureSignals, " | "),
+			),
+		)
 	}
 	b.WriteString("Document text excerpt:\n")
-	b.WriteString(truncateForAI(req.Text, 4000))
+	b.WriteString(stringutils.Truncate(req.Text, 4000))
 	b.WriteString("\nPage summaries:\n")
 	for _, page := range req.Pages {
-		b.WriteString(fmt.Sprintf("Page %d: %s\n", page.PageNumber, truncateForAI(page.Text, 800)))
+		b.WriteString(
+			fmt.Sprintf("Page %d: %s\n", page.PageNumber, stringutils.Truncate(page.Text, 800)),
+		)
 	}
 	return b.String()
 }
@@ -610,13 +656,27 @@ func buildRoutePrompt(req *serviceports.AIRouteRequest) string {
 func buildExtractPrompt(req *serviceports.AIExtractRequest) string {
 	var b strings.Builder
 	b.WriteString("Extract structured rate confirmation data for a TMS.\n")
-	b.WriteString("Return only compact canonical fields and stop data needed for shipment creation/review.\n")
-	b.WriteString("Do not emit extra broker-specific or descriptive fields beyond the canonical key set.\n")
-	b.WriteString("Use page-local evidence. Keep evidence excerpts short and specific. Mark conflicts and low-confidence fields instead of guessing.\n")
-	b.WriteString("Canonical field keys: loadNumber, referenceNumber, shipper, consignee, rate, equipmentType, commodity, pickupDate, deliveryDate, pickupWindow, deliveryWindow, pickupNumber, deliveryNumber, appointmentNumber, bol, poNumber, scac, proNumber, paymentTerms, billTo, carrierName, carrierContact, containerNumber, trailerNumber, tractorNumber, fuelSurcharge, serviceType.\n")
+	b.WriteString(
+		"Return only compact canonical fields and stop data needed for shipment creation/review.\n",
+	)
+	b.WriteString(
+		"Do not emit extra broker-specific or descriptive fields beyond the canonical key set.\n",
+	)
+	b.WriteString(
+		"Use page-local evidence. Keep evidence excerpts short and specific. Mark conflicts and low-confidence fields instead of guessing.\n",
+	)
+	b.WriteString(
+		"Canonical field keys: loadNumber, referenceNumber, shipper, consignee, rate, equipmentType, commodity, pickupDate, deliveryDate, pickupWindow, deliveryWindow, pickupNumber, deliveryNumber, appointmentNumber, bol, poNumber, scac, proNumber, paymentTerms, billTo, carrierName, carrierContact, containerNumber, trailerNumber, tractorNumber, fuelSurcharge, serviceType.\n",
+	)
 	b.WriteString("Filename: " + strings.TrimSpace(req.FileName) + "\n")
 	for _, page := range req.Pages {
-		b.WriteString(fmt.Sprintf("\n[Page %d]\n%s\n", page.PageNumber, truncateForAI(page.Text, 2500)))
+		b.WriteString(
+			fmt.Sprintf(
+				"\n[Page %d]\n%s\n",
+				page.PageNumber,
+				stringutils.Truncate(page.Text, 2500),
+			),
+		)
 	}
 	return b.String()
 }
@@ -638,7 +698,16 @@ func buildRouteSchema() map[string]any {
 			"providerFingerprint": map[string]any{"type": "string"},
 			"reason":              map[string]any{"type": "string"},
 		},
-		"required": []string{"shouldExtract", "documentKind", "confidence", "signals", "reviewStatus", "classifierSource", "providerFingerprint", "reason"},
+		"required": []string{
+			"shouldExtract",
+			"documentKind",
+			"confidence",
+			"signals",
+			"reviewStatus",
+			"classifierSource",
+			"providerFingerprint",
+			"reason",
+		},
 	}
 }
 
@@ -671,7 +740,18 @@ func buildExtractSchema() map[string]any {
 				"items":    map[string]any{"type": "string", "maxLength": 128},
 			},
 		},
-		"required": []string{"key", "label", "value", "confidence", "evidenceExcerpt", "pageNumber", "reviewRequired", "conflict", "source", "alternativeValues"},
+		"required": []string{
+			"key",
+			"label",
+			"value",
+			"confidence",
+			"evidenceExcerpt",
+			"pageNumber",
+			"reviewRequired",
+			"conflict",
+			"source",
+			"alternativeValues",
+		},
 	}
 	stopSchema := map[string]any{
 		"type":                 "object",
@@ -694,16 +774,41 @@ func buildExtractSchema() map[string]any {
 			"reviewRequired":      map[string]any{"type": "boolean"},
 			"source":              map[string]any{"type": "string", "maxLength": 32},
 		},
-		"required": []string{"sequence", "role", "name", "addressLine1", "addressLine2", "city", "state", "postalCode", "date", "timeWindow", "appointmentRequired", "pageNumber", "evidenceExcerpt", "confidence", "reviewRequired", "source"},
+		"required": []string{
+			"sequence",
+			"role",
+			"name",
+			"addressLine1",
+			"addressLine2",
+			"city",
+			"state",
+			"postalCode",
+			"date",
+			"timeWindow",
+			"appointmentRequired",
+			"pageNumber",
+			"evidenceExcerpt",
+			"confidence",
+			"reviewRequired",
+			"source",
+		},
 	}
 	conflictSchema := map[string]any{
 		"type":                 "object",
 		"additionalProperties": false,
 		"properties": map[string]any{
-			"key":             map[string]any{"type": "string", "maxLength": 64},
-			"label":           map[string]any{"type": "string", "maxLength": 64},
-			"values":          map[string]any{"type": "array", "maxItems": 4, "items": map[string]any{"type": "string", "maxLength": 128}},
-			"pageNumbers":     map[string]any{"type": "array", "maxItems": 6, "items": map[string]any{"type": "integer"}},
+			"key":   map[string]any{"type": "string", "maxLength": 64},
+			"label": map[string]any{"type": "string", "maxLength": 64},
+			"values": map[string]any{
+				"type":     "array",
+				"maxItems": 4,
+				"items":    map[string]any{"type": "string", "maxLength": 128},
+			},
+			"pageNumbers": map[string]any{
+				"type":     "array",
+				"maxItems": 6,
+				"items":    map[string]any{"type": "integer"},
+			},
 			"evidenceExcerpt": map[string]any{"type": "string", "maxLength": 200},
 			"source":          map[string]any{"type": "string", "maxLength": 32},
 		},
@@ -717,34 +822,52 @@ func buildExtractSchema() map[string]any {
 			"documentKind":      map[string]any{"type": "string"},
 			"overallConfidence": map[string]any{"type": "number"},
 			"reviewStatus":      map[string]any{"type": "string"},
-			"missingFields":     map[string]any{"type": "array", "maxItems": 12, "items": map[string]any{"type": "string", "maxLength": 64}},
-			"signals":           map[string]any{"type": "array", "maxItems": 8, "items": map[string]any{"type": "string", "maxLength": 120}},
-			"fields":            map[string]any{"type": "array", "maxItems": 18, "items": fieldSchema},
-			"stops":             map[string]any{"type": "array", "maxItems": 8, "items": stopSchema},
-			"conflicts":         map[string]any{"type": "array", "maxItems": 6, "items": conflictSchema},
+			"missingFields": map[string]any{
+				"type":     "array",
+				"maxItems": 12,
+				"items":    map[string]any{"type": "string", "maxLength": 64},
+			},
+			"signals": map[string]any{
+				"type":     "array",
+				"maxItems": 8,
+				"items":    map[string]any{"type": "string", "maxLength": 120},
+			},
+			"fields": map[string]any{
+				"type":     "array",
+				"maxItems": 18,
+				"items":    fieldSchema,
+			},
+			"stops": map[string]any{
+				"type":     "array",
+				"maxItems": 8,
+				"items":    stopSchema,
+			},
+			"conflicts": map[string]any{
+				"type":     "array",
+				"maxItems": 6,
+				"items":    conflictSchema,
+			},
 		},
-		"required": []string{"documentKind", "overallConfidence", "reviewStatus", "missingFields", "signals", "fields", "stops", "conflicts"},
+		"required": []string{
+			"documentKind",
+			"overallConfidence",
+			"reviewStatus",
+			"missingFields",
+			"signals",
+			"fields",
+			"stops",
+			"conflicts",
+		},
 	}
-}
-
-func truncateForAI(text string, max int) string {
-	text = strings.TrimSpace(text)
-	if max <= 0 || len(text) <= max {
-		return text
-	}
-	return text[:max]
 }
 
 func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResult {
 	result := &serviceports.AIExtractResult{
-		DocumentKind:      "",
-		OverallConfidence: 0,
-		ReviewStatus:      "",
-		MissingFields:     []string{},
-		Signals:           []string{},
-		Fields:            map[string]serviceports.AIDocumentField{},
-		Stops:             []serviceports.AIDocumentStop{},
-		Conflicts:         []serviceports.AIDocumentConflict{},
+		MissingFields: []string{},
+		Signals:       []string{},
+		Fields:        map[string]serviceports.AIDocumentField{},
+		Stops:         []*serviceports.AIDocumentStop{},
+		Conflicts:     []*serviceports.AIDocumentConflict{},
 	}
 	if parsed == nil {
 		return result
@@ -839,12 +962,21 @@ func firstNonEmpty(values ...string) string {
 
 func redactPrompt(systemPrompt, userPrompt string) string {
 	sum := sha256.Sum256([]byte(userPrompt))
-	return fmt.Sprintf("system=%q user_sha256=%s user_preview=%q", systemPrompt, hex.EncodeToString(sum[:]), truncateForAI(userPrompt, 512))
+	return fmt.Sprintf(
+		"system=%q user_sha256=%s user_preview=%q",
+		systemPrompt,
+		hex.EncodeToString(sum[:]),
+		stringutils.Truncate(userPrompt, 512),
+	)
 }
 
 func redactResponse(text string) string {
 	sum := sha256.Sum256([]byte(text))
-	return fmt.Sprintf("sha256=%s preview=%q", hex.EncodeToString(sum[:]), truncateForAI(text, 1024))
+	return fmt.Sprintf(
+		"sha256=%s preview=%q",
+		hex.EncodeToString(sum[:]),
+		stringutils.Truncate(text, 1024),
+	)
 }
 
 func normalizeReviewStatus(status string) string {

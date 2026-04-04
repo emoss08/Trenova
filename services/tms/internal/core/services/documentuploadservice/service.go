@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
@@ -24,10 +23,10 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/google/uuid"
 	goredis "github.com/redis/go-redis/v9"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
@@ -117,14 +116,14 @@ func (s *Service) CreateSession(
 		OriginalName:      req.FileName,
 		ContentType:       req.ContentType,
 		FileSize:          req.FileSize,
-		StoragePath: s.generateStoragePath(
+		StoragePath: fileutils.GenerateStoragePath(
 			req.TenantInfo.OrgID.String(),
 			req.ResourceType,
 			req.FileName,
 		),
 		Description:    req.Description,
 		Tags:           tags,
-		UploadedParts:  make([]documentupload.UploadedPart, 0),
+		UploadedParts:  make([]storage.UploadedPart, 0),
 		ExpiresAt:      timeutils.NowAddDuration(sessionTTL),
 		LastActivityAt: timeutils.NowUnix(),
 	}
@@ -213,7 +212,7 @@ func (s *Service) GetSessionState(
 		return nil, err
 	}
 
-	session.UploadedParts = toDomainParts(parts)
+	session.UploadedParts = storage.ToDomainParts(parts)
 	normalizeSession(session)
 	if parts == nil {
 		parts = make([]storage.UploadedPart, 0)
@@ -246,43 +245,59 @@ func (s *Service) GetPartUploadTargets(
 		partNumbers = []int{1}
 	}
 
-	targets := make([]services.PartUploadTarget, 0, len(partNumbers))
 	if session.Strategy == documentupload.StrategySingle {
-		url, urlErr := s.storage.GetPresignedUploadURL(ctx, &storage.PresignedUploadURLParams{
-			Key:         session.StoragePath,
-			Expiry:      s.config.GetPresignedURLExpiry(),
-			ContentType: session.ContentType,
-		})
-		if urlErr != nil {
-			return nil, errortypes.NewDatabaseError("Failed to generate upload URL").
-				WithInternal(urlErr)
-		}
+		return s.partUploadTargetsSingle(ctx, session)
+	}
+	return s.partUploadTargetsMultipart(ctx, session, partNumbers)
+}
 
-		targets = append(targets, services.PartUploadTarget{PartNumber: 1, URL: url})
-	} else {
-		for _, partNumber := range partNumbers {
-			url, urlErr := s.storage.GetMultipartUploadPartURL(ctx, &storage.MultipartUploadPartURLParams{
+func (s *Service) partUploadTargetsSingle(
+	ctx context.Context,
+	session *documentupload.Session,
+) ([]services.PartUploadTarget, error) {
+	url, err := s.storage.GetPresignedUploadURL(ctx, &storage.PresignedUploadURLParams{
+		Key:         session.StoragePath,
+		Expiry:      s.config.GetPresignedURLExpiry(),
+		ContentType: session.ContentType,
+	})
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to generate upload URL").WithInternal(err)
+	}
+
+	return []services.PartUploadTarget{{PartNumber: 1, URL: url}}, nil
+}
+
+func (s *Service) partUploadTargetsMultipart(
+	ctx context.Context,
+	session *documentupload.Session,
+	partNumbers []int,
+) ([]services.PartUploadTarget, error) {
+	targets := make([]services.PartUploadTarget, 0, len(partNumbers))
+	for _, partNumber := range partNumbers {
+		url, urlErr := s.storage.GetMultipartUploadPartURL(
+			ctx,
+			&storage.MultipartUploadPartURLParams{
 				Key:        session.StoragePath,
 				UploadID:   session.StorageProviderUploadID,
 				PartNumber: partNumber,
 				Expiry:     s.config.GetPresignedURLExpiry(),
-			})
-			if urlErr != nil {
-				if isMissingMultipartUploadError(urlErr) {
-					_, _ = s.markSessionFailed(
-						ctx,
-						session,
-						"MULTIPART_UPLOAD_MISSING",
-						"Upload session is no longer active",
-					)
-					return nil, errortypes.NewConflictError("Upload session is no longer active")
-				}
-				return nil, errortypes.NewDatabaseError("Failed to generate upload URL").WithInternal(urlErr)
+			},
+		)
+		if urlErr != nil {
+			if storage.IsMissingMultipartUploadError(urlErr) {
+				_, _ = s.markSessionFailed(
+					ctx,
+					session,
+					documentupload.FailureMultipartUploadMissing.String(),
+					"Upload session is no longer active",
+				)
+				return nil, errortypes.NewConflictError("Upload session is no longer active")
 			}
-			targets = append(targets, services.PartUploadTarget{PartNumber: partNumber, URL: url})
+			return nil, errortypes.NewDatabaseError("Failed to generate upload URL").
+				WithInternal(urlErr)
 		}
+		targets = append(targets, services.PartUploadTarget{PartNumber: partNumber, URL: url})
 	}
-
 	return targets, nil
 }
 
@@ -298,8 +313,7 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	if session.DocumentID != nil &&
-		(session.Status == documentupload.StatusAvailable || session.Status == documentupload.StatusCompleted) {
+	if session.DocumentID != nil && session.Status.IsDocumentReady() {
 		s.ensureThumbnailForSession(ctx, session)
 		normalizeSession(session)
 		return session, nil
@@ -308,7 +322,9 @@ func (s *Service) Complete(
 	if superseded, supersededErr := s.cancelSupersededSession(ctx, session); supersededErr != nil {
 		return nil, supersededErr
 	} else if superseded {
-		return nil, errortypes.NewConflictError("Upload session was superseded by a newer version upload")
+		return nil, errortypes.NewConflictError(
+			"Upload session was superseded by a newer version upload",
+		)
 	}
 
 	uploadedParts, err := s.getUploadedParts(ctx, session)
@@ -321,7 +337,7 @@ func (s *Service) Complete(
 			return nil, errortypes.NewConflictError("No uploaded parts were found for this session")
 		}
 
-		if sumUploadedPartSizes(uploadedParts) != session.FileSize {
+		if storage.SumUploadedPartSizes(uploadedParts) != session.FileSize {
 			return nil, errortypes.NewConflictError(
 				"Uploaded file size does not match the original file",
 			)
@@ -329,10 +345,10 @@ func (s *Service) Complete(
 	}
 
 	session.Status = documentupload.StatusUploaded
-	session.UploadedParts = toDomainParts(uploadedParts)
+	session.UploadedParts = storage.ToDomainParts(uploadedParts)
 	session.FailureCode = ""
 	session.FailureMessage = ""
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	if _, err = s.sessionRepo.Update(ctx, session); err != nil {
 		return nil, err
 	}
@@ -347,37 +363,16 @@ func (s *Service) Complete(
 		})
 	}
 
-	if acquired, leaseErr := s.acquireCompletionLease(ctx, session.ID.String()); leaseErr != nil {
+	acquired, leaseErr := s.acquireCompletionLease(ctx, session.ID.String())
+	if leaseErr != nil {
 		s.l.Warn(
 			"failed to acquire upload completion lease",
 			zap.Error(leaseErr),
 			zap.String("sessionId", session.ID.String()),
 		)
-		if err = s.startFinalizeWorkflow(ctx, req, session); err != nil {
-			if _, updateErr := s.markSessionFailed(
-				ctx,
-				session,
-				"UPLOAD_FINALIZATION_FAILED",
-				"Upload finalization failed",
-			); updateErr != nil {
-				s.l.Warn(
-					"failed to mark upload session as failed",
-					zap.Error(updateErr),
-					zap.String("sessionId", session.ID.String()),
-				)
-			}
-			return nil, err
-		}
-	} else if acquired {
-		if err = s.startFinalizeWorkflow(ctx, req, session); err != nil {
-			if _, updateErr := s.markSessionFailed(
-				ctx,
-				session,
-				"UPLOAD_FINALIZATION_FAILED",
-				"Upload finalization failed",
-			); updateErr != nil {
-				s.l.Warn("failed to mark upload session as failed", zap.Error(updateErr), zap.String("sessionId", session.ID.String()))
-			}
+	}
+	if leaseErr != nil || acquired {
+		if err = s.startFinalizeWorkflowOrMarkFailed(ctx, req, session); err != nil {
 			return nil, err
 		}
 	}
@@ -413,7 +408,7 @@ func (s *Service) Cancel(ctx context.Context, req *services.CancelRequest) error
 	}
 
 	session.Status = documentupload.StatusCanceled
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	_, err = s.sessionRepo.Update(ctx, session)
 	return err
 }
@@ -422,70 +417,52 @@ func (s *Service) getUploadedParts(
 	ctx context.Context,
 	session *documentupload.Session,
 ) ([]storage.UploadedPart, error) {
-	if session.Status == documentupload.StatusCompleted ||
-		session.Status == documentupload.StatusAvailable ||
-		session.Status == documentupload.StatusQuarantined ||
-		session.Status == documentupload.StatusFailed ||
-		session.Status == documentupload.StatusCanceled ||
-		session.Status == documentupload.StatusExpired {
-		if len(session.UploadedParts) > 0 {
-			return fromDomainParts(session.UploadedParts), nil
-		}
+	if session.Status.IsTerminal() && len(session.UploadedParts) > 0 {
+		return storage.ToDomainParts(session.UploadedParts), nil
 	}
 
 	if session.Strategy == documentupload.StrategySingle {
-		exists, err := s.storage.Exists(ctx, session.StoragePath)
-		if err != nil {
-			return nil, err
-		}
-		if !exists {
-			return nil, nil
-		}
-
-		fileInfo, err := s.storage.GetFileInfo(ctx, session.StoragePath)
-		if err != nil {
-			return nil, err
-		}
-
-		return []storage.UploadedPart{{
-			PartNumber: 1,
-			Size:       fileInfo.Size,
-		}}, nil
+		return s.uploadedPartsFromSingleObject(ctx, session.StoragePath)
 	}
 
 	parts, err := s.storage.ListMultipartUploadParts(ctx, &storage.ListMultipartUploadPartsParams{
 		Key:      session.StoragePath,
 		UploadID: session.StorageProviderUploadID,
 	})
+	if err == nil {
+		return parts, nil
+	}
+	if !storage.IsMissingMultipartUploadError(err) {
+		return nil, err
+	}
+	if len(session.UploadedParts) > 0 {
+		return storage.ToDomainParts(session.UploadedParts), nil
+	}
+
+	return s.uploadedPartsFromSingleObject(ctx, session.StoragePath)
+}
+
+func (s *Service) uploadedPartsFromSingleObject(
+	ctx context.Context,
+	storagePath string,
+) ([]storage.UploadedPart, error) {
+	exists, err := s.storage.Exists(ctx, storagePath)
 	if err != nil {
-		if isMissingMultipartUploadError(err) {
-			if len(session.UploadedParts) > 0 {
-				return fromDomainParts(session.UploadedParts), nil
-			}
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
 
-			exists, existsErr := s.storage.Exists(ctx, session.StoragePath)
-			if existsErr != nil {
-				return nil, existsErr
-			}
-			if !exists {
-				return nil, nil
-			}
-
-			fileInfo, fileInfoErr := s.storage.GetFileInfo(ctx, session.StoragePath)
-			if fileInfoErr != nil {
-				return nil, fileInfoErr
-			}
-
-			return []storage.UploadedPart{{
-				PartNumber: 1,
-				Size:       fileInfo.Size,
-			}}, nil
-		}
-
+	fileInfo, err := s.storage.GetFileInfo(ctx, storagePath)
+	if err != nil {
 		return nil, err
 	}
 
-	return parts, nil
+	return []storage.UploadedPart{{
+		PartNumber: 1,
+		Size:       fileInfo.Size,
+	}}, nil
 }
 
 func (s *Service) markSessionFailed(
@@ -497,32 +474,8 @@ func (s *Service) markSessionFailed(
 	session.Status = documentupload.StatusFailed
 	session.FailureCode = code
 	session.FailureMessage = message
-	session.LastActivityAt = time.Now().Unix()
+	session.LastActivityAt = timeutils.NowUnix()
 	return s.sessionRepo.Update(ctx, session)
-}
-
-func fromDomainParts(parts []documentupload.UploadedPart) []storage.UploadedPart {
-	result := make([]storage.UploadedPart, 0, len(parts))
-	for _, part := range parts {
-		result = append(result, storage.UploadedPart{
-			PartNumber: part.PartNumber,
-			ETag:       part.ETag,
-			Size:       part.Size,
-		})
-	}
-	return result
-}
-
-func sumUploadedPartSizes(parts []storage.UploadedPart) int64 {
-	var total int64
-	for _, part := range parts {
-		total += part.Size
-	}
-	return total
-}
-
-func isMissingMultipartUploadError(err error) bool {
-	return strings.Contains(strings.ToLower(err.Error()), "multipart upload does not exist")
 }
 
 func normalizeSession(session *documentupload.Session) {
@@ -535,7 +488,7 @@ func normalizeSession(session *documentupload.Session) {
 	}
 
 	if session.UploadedParts == nil {
-		session.UploadedParts = make([]documentupload.UploadedPart, 0)
+		session.UploadedParts = make([]storage.UploadedPart, 0)
 	}
 }
 
@@ -544,7 +497,41 @@ func (s *Service) acquireCompletionLease(ctx context.Context, sessionID string) 
 		return true, nil
 	}
 
-	return s.redis.SetNX(ctx, completionLeaseKey(sessionID), "1", 5*time.Minute).Result()
+	_, err := s.redis.SetArgs(ctx, completionLeaseKey(sessionID), "1", goredis.SetArgs{
+		Mode: "NX",
+		TTL:  5 * time.Minute,
+	}).Result()
+	if err != nil {
+		if errors.Is(err, goredis.Nil) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (s *Service) startFinalizeWorkflowOrMarkFailed(
+	ctx context.Context,
+	req *services.CompletionRequest,
+	session *documentupload.Session,
+) error {
+	err := s.startFinalizeWorkflow(ctx, req, session)
+	if err == nil {
+		return nil
+	}
+	if _, updateErr := s.markSessionFailed(
+		ctx,
+		session,
+		documentupload.FailureCodeUploadFinalizationFailed.String(),
+		"Upload finalization failed",
+	); updateErr != nil {
+		s.l.Warn(
+			"failed to mark upload session as failed",
+			zap.Error(updateErr),
+			zap.String("sessionId", session.ID.String()),
+		)
+	}
+	return err
 }
 
 func (s *Service) startFinalizeWorkflow(
@@ -649,8 +636,8 @@ func (s *Service) runSynchronousFinalization(
 
 	session.DocumentID = &createdDoc.ID
 	session.Status = documentupload.StatusAvailable
-	session.UploadedParts = toDomainParts(uploadedParts)
-	session.LastActivityAt = time.Now().Unix()
+	session.UploadedParts = storage.ToDomainParts(uploadedParts)
+	session.LastActivityAt = timeutils.NowUnix()
 	if _, err = s.sessionRepo.Update(ctx, session); err != nil {
 		return nil, err
 	}
@@ -692,7 +679,7 @@ func (s *Service) cancelSupersededSession(
 		return false, err
 	}
 
-	session.MarkSuperseded(time.Now().Unix())
+	session.MarkSuperseded(timeutils.NowUnix())
 	if _, err = s.sessionRepo.Update(ctx, session); err != nil {
 		return false, err
 	}
@@ -735,21 +722,6 @@ func (s *Service) isSupersededByNewerVersion(
 	}
 
 	return session.IsSupersededByNewerArtifacts(activeSessions, versions), nil
-}
-
-func toDomainParts(parts []storage.UploadedPart) []documentupload.UploadedPart {
-	result := make([]documentupload.UploadedPart, 0, len(parts))
-	for _, part := range parts {
-		result = append(result, documentupload.UploadedPart{
-			PartNumber: part.PartNumber,
-			ETag:       part.ETag,
-			Size:       part.Size,
-		})
-	}
-	slices.SortFunc(result, func(a, b documentupload.UploadedPart) int {
-		return a.PartNumber - b.PartNumber
-	})
-	return result
 }
 
 func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Document) {
@@ -810,15 +782,18 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 		)
 		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
 		if !errors.As(err, &alreadyStarted) {
-			if updateErr := s.documentRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
-				ID: doc.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: doc.OrganizationID,
-					BuID:  doc.BusinessUnitID,
+			if updateErr := s.documentRepo.UpdatePreview(
+				ctx,
+				&repositories.UpdateDocumentPreviewRequest{
+					ID: doc.ID,
+					TenantInfo: pagination.TenantInfo{
+						OrgID: doc.OrganizationID,
+						BuID:  doc.BusinessUnitID,
+					},
+					PreviewStatus:      document.PreviewStatusFailed,
+					PreviewStoragePath: "",
 				},
-				PreviewStatus:      document.PreviewStatusFailed,
-				PreviewStoragePath: "",
-			}); updateErr != nil {
+			); updateErr != nil {
 				s.l.Warn(
 					"failed to mark document preview as failed",
 					zap.Error(updateErr),
@@ -827,12 +802,6 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 			}
 		}
 	}
-}
-
-func (s *Service) generateStoragePath(orgID, resourceType, filename string) string {
-	ext := filepath.Ext(filename)
-	uniqueID := uuid.New().String()
-	return fmt.Sprintf("%s/%s/%s%s", orgID, resourceType, uniqueID, strings.ToLower(ext))
 }
 
 func previewStatusForFileType(contentType string) document.PreviewStatus {

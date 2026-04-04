@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
@@ -13,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/timeutils"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
@@ -68,7 +68,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			UserID:         tenantInfo.UserID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 			Metadata: map[string]any{
 				"trigger": "api",
 			},
@@ -115,7 +115,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 		RunID:       run.GetRunID(),
 		TaskQueue:   temporaltype.IntegrationTaskQueue,
 		Status:      enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING.String(),
-		SubmittedAt: time.Now().Unix(),
+		SubmittedAt: timeutils.NowUnix(),
 	}, nil
 }
 
