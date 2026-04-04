@@ -4,9 +4,9 @@ package documentupload
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Session].
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentUploadSession].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.SessionFieldMap] instead of parsing struct tags via reflection.
-func (e *Session) GetStaticFieldMap() map[string]string {
-	return buncolgen.SessionFieldMap
+// the generated [buncolgen.DocumentUploadSessionFieldMap] instead of parsing struct tags via reflection.
+func (e *DocumentUploadSession) GetStaticFieldMap() map[string]string {
+	return buncolgen.DocumentUploadSessionFieldMap
 }

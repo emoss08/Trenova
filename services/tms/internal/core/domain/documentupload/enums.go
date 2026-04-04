@@ -39,6 +39,29 @@ const (
 	StatusExpired     = Status("Expired")
 )
 
+func (s Status) IsTerminal() bool {
+	switch s { //nolint:exhaustive // we only want to check for the terminal statuses
+	case StatusCompleted,
+		StatusAvailable,
+		StatusQuarantined,
+		StatusFailed,
+		StatusCanceled,
+		StatusExpired:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s Status) IsDocumentReady() bool {
+	switch s { //nolint:exhaustive // we only want to check for the document ready statuses
+	case StatusAvailable, StatusCompleted:
+		return true
+	default:
+		return false
+	}
+}
+
 func (s Status) String() string {
 	return string(s)
 }

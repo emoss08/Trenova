@@ -69,6 +69,7 @@ var DocumentColumns = struct {
 	Description           Column // "description" → qualified: "doc.description"
 	ResourceID            Column // "resource_id" → qualified: "doc.resource_id"
 	ResourceType          Column // "resource_type" → qualified: "doc.resource_type"
+	ProcessingProfile     Column // "processing_profile" → qualified: "doc.processing_profile"
 	ExpirationDate        Column // "expiration_date" → qualified: "doc.expiration_date"
 	Tags                  Column // "tags" → qualified: "doc.tags"
 	IsPublic              Column // "is_public" → qualified: "doc.is_public"
@@ -109,6 +110,7 @@ var DocumentColumns = struct {
 	Description:           NewColumn("description", "doc"),
 	ResourceID:            NewColumn("resource_id", "doc"),
 	ResourceType:          NewColumn("resource_type", "doc"),
+	ProcessingProfile:     NewColumn("processing_profile", "doc"),
 	ExpirationDate:        NewColumn("expiration_date", "doc"),
 	Tags:                  NewColumn("tags", "doc"),
 	IsPublic:              NewColumn("is_public", "doc"),
@@ -155,6 +157,7 @@ var DocumentFieldMap = map[string]string{
 	"description":           "description",
 	"resourceId":            "resource_id",
 	"resourceType":          "resource_type",
+	"processingProfile":     "processing_profile",
 	"expirationDate":        "expiration_date",
 	"tags":                  "tags",
 	"isPublic":              "is_public",
@@ -197,6 +200,7 @@ var DocumentInsertableColumns = []string{
 	"description",
 	"resource_id",
 	"resource_type",
+	"processing_profile",
 	"expiration_date",
 	"tags",
 	"is_public",
@@ -299,6 +303,7 @@ var DocumentFilter = struct {
 	Description           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	ResourceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
 	ResourceType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceType" → DB: "resource_type"
+	ProcessingProfile     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "processingProfile" → DB: "processing_profile"
 	ExpirationDate        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expirationDate" → DB: "expiration_date"
 	Tags                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
 	IsPublic              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isPublic" → DB: "is_public"
@@ -376,6 +381,9 @@ var DocumentFilter = struct {
 	},
 	ResourceType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("resourceType", op, value)
+	},
+	ProcessingProfile: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("processingProfile", op, value)
 	},
 	ExpirationDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expirationDate", op, value)

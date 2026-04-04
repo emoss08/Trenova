@@ -24,31 +24,31 @@ var (
 )
 
 // ---------------------------------------------------------------------------
-// Session — table "document_upload_sessions", alias "dus"
+// DocumentUploadSession — table "document_upload_sessions", alias "dus"
 // ---------------------------------------------------------------------------
 
-// SessionTable holds the table name, alias, and primary key columns
+// DocumentUploadSessionTable holds the table name, alias, and primary key columns
 // for the "document_upload_sessions" table. The alias "dus" is used in all generated
 // SQL fragments (e.g. "dus.id = ?").
-var SessionTable = TableInfo{
+var DocumentUploadSessionTable = TableInfo{
 	Name:       "document_upload_sessions",
 	Alias:      "dus",
 	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
 }
 
-// SessionColumns provides type-safe column references for the "document_upload_sessions" table.
+// DocumentUploadSessionColumns provides type-safe column references for the "document_upload_sessions" table.
 // Each field is a [Column] whose methods return pre-computed SQL fragments.
 //
 // Use String() when Bun manages the alias (model-aware queries):
 //
-//	q.Column(SessionColumns.ID.String())
+//	q.Column(DocumentUploadSessionColumns.ID.String())
 //	// SELECT dus.id FROM document_upload_sessions AS dus
 //
 // Use expression helpers for raw WHERE/ORDER BY clauses:
 //
-//	q.Where(SessionColumns.ID.Eq(), id)           // WHERE dus.id = ?
-//	q.Order(SessionColumns.CreatedAt.OrderDesc())  // ORDER BY dus.created_at DESC
-var SessionColumns = struct {
+//	q.Where(DocumentUploadSessionColumns.ID.Eq(), id)           // WHERE dus.id = ?
+//	q.Order(DocumentUploadSessionColumns.CreatedAt.OrderDesc())  // ORDER BY dus.created_at DESC
+var DocumentUploadSessionColumns = struct {
 	ID                      Column // "id" → qualified: "dus.id"
 	OrganizationID          Column // "organization_id" → qualified: "dus.organization_id"
 	BusinessUnitID          Column // "business_unit_id" → qualified: "dus.business_unit_id"
@@ -56,6 +56,7 @@ var SessionColumns = struct {
 	LineageID               Column // "lineage_id" → qualified: "dus.lineage_id"
 	ResourceID              Column // "resource_id" → qualified: "dus.resource_id"
 	ResourceType            Column // "resource_type" → qualified: "dus.resource_type"
+	ProcessingProfile       Column // "processing_profile" → qualified: "dus.processing_profile"
 	DocumentTypeID          Column // "document_type_id" → qualified: "dus.document_type_id"
 	OriginalName            Column // "original_name" → qualified: "dus.original_name"
 	ContentType             Column // "content_type" → qualified: "dus.content_type"
@@ -83,6 +84,7 @@ var SessionColumns = struct {
 	LineageID:               NewColumn("lineage_id", "dus"),
 	ResourceID:              NewColumn("resource_id", "dus"),
 	ResourceType:            NewColumn("resource_type", "dus"),
+	ProcessingProfile:       NewColumn("processing_profile", "dus"),
 	DocumentTypeID:          NewColumn("document_type_id", "dus"),
 	OriginalName:            NewColumn("original_name", "dus"),
 	ContentType:             NewColumn("content_type", "dus"),
@@ -104,11 +106,11 @@ var SessionColumns = struct {
 	UpdatedAt:               NewColumn("updated_at", "dus"),
 }
 
-// SessionFieldMap maps JSON API field names to database column names.
+// DocumentUploadSessionFieldMap maps JSON API field names to database column names.
 // The QueryBuilder uses this to translate filter/sort requests from the frontend
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by Session.GetStaticFieldMap().
-var SessionFieldMap = map[string]string{
+// This is returned by DocumentUploadSession.GetStaticFieldMap().
+var DocumentUploadSessionFieldMap = map[string]string{
 	"id":                      "id",
 	"organizationId":          "organization_id",
 	"businessUnitId":          "business_unit_id",
@@ -116,6 +118,7 @@ var SessionFieldMap = map[string]string{
 	"lineageId":               "lineage_id",
 	"resourceId":              "resource_id",
 	"resourceType":            "resource_type",
+	"processingProfile":       "processing_profile",
 	"documentTypeId":          "document_type_id",
 	"originalName":            "original_name",
 	"contentType":             "content_type",
@@ -137,9 +140,9 @@ var SessionFieldMap = map[string]string{
 	"updatedAt":               "updated_at",
 }
 
-// SessionInsertableColumns lists column names suitable for INSERT statements on the "document_upload_sessions" table.
+// DocumentUploadSessionInsertableColumns lists column names suitable for INSERT statements on the "document_upload_sessions" table.
 // Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var SessionInsertableColumns = []string{
+var DocumentUploadSessionInsertableColumns = []string{
 	"id",
 	"organization_id",
 	"business_unit_id",
@@ -147,6 +150,7 @@ var SessionInsertableColumns = []string{
 	"lineage_id",
 	"resource_id",
 	"resource_type",
+	"processing_profile",
 	"document_type_id",
 	"original_name",
 	"content_type",
@@ -168,56 +172,56 @@ var SessionInsertableColumns = []string{
 	"updated_at",
 }
 
-// SessionScopeTenant restricts a query to a single tenant by adding:
+// DocumentUploadSessionScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE dus.organization_id = ? AND dus.business_unit_id = ?
 //
 // Returns the same *bun.SelectQuery so it can be chained fluently:
 //
-//	buncolgen.SessionScopeTenant(sq, ti).
-//		Where(buncolgen.SessionColumns.ID.Eq(), id)
-func SessionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return ScopeTenant(q, SessionColumns.OrganizationID, SessionColumns.BusinessUnitID, ti)
+//	buncolgen.DocumentUploadSessionScopeTenant(sq, ti).
+//		Where(buncolgen.DocumentUploadSessionColumns.ID.Eq(), id)
+func DocumentUploadSessionScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DocumentUploadSessionColumns.OrganizationID, DocumentUploadSessionColumns.BusinessUnitID, ti)
 }
 
-// SessionScopeTenantUpdate restricts an update query to a single tenant.
+// DocumentUploadSessionScopeTenantUpdate restricts an update query to a single tenant.
 // Use this inside UpdateQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return buncolgen.SessionScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(buncolgen.SessionColumns.ID.In(), bun.List(ids))
+//		return buncolgen.DocumentUploadSessionScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DocumentUploadSessionColumns.ID.In(), bun.List(ids))
 //	})
-func SessionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return ScopeTenantUpdate(q, SessionColumns.OrganizationID, SessionColumns.BusinessUnitID, ti)
+func DocumentUploadSessionScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DocumentUploadSessionColumns.OrganizationID, DocumentUploadSessionColumns.BusinessUnitID, ti)
 }
 
-// SessionScopeTenantDelete restricts a delete query to a single tenant.
+// DocumentUploadSessionScopeTenantDelete restricts a delete query to a single tenant.
 // Use this inside DeleteQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return buncolgen.SessionScopeTenantDelete(dq, req.TenantInfo).
-//			Where(buncolgen.SessionColumns.ID.Eq(), id)
+//		return buncolgen.DocumentUploadSessionScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DocumentUploadSessionColumns.ID.Eq(), id)
 //	})
-func SessionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return ScopeTenantDelete(q, SessionColumns.OrganizationID, SessionColumns.BusinessUnitID, ti)
+func DocumentUploadSessionScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DocumentUploadSessionColumns.OrganizationID, DocumentUploadSessionColumns.BusinessUnitID, ti)
 }
 
-// SessionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// DocumentUploadSessionApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
 // Use this instead of wrapping ScopeTenant in an anonymous function:
 //
-//	q.Apply(buncolgen.SessionApplyTenant(tenantInfo))
-func SessionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return ApplyTenant(SessionColumns.OrganizationID, SessionColumns.BusinessUnitID, ti)
+//	q.Apply(buncolgen.DocumentUploadSessionApplyTenant(tenantInfo))
+func DocumentUploadSessionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DocumentUploadSessionColumns.OrganizationID, DocumentUploadSessionColumns.BusinessUnitID, ti)
 }
 
-// SessionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// DocumentUploadSessionFilter builds [domaintypes.FieldFilter] values using the correct JSON
 // field names for the "document_upload_sessions" table. Pass these to the QueryBuilder's ApplyFilters.
 //
 // The JSON field name is baked in — you only provide the operator and value:
 //
-//	SessionFilter.ID(dbtype.OpEq, value)
+//	DocumentUploadSessionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var SessionFilter = struct {
+var DocumentUploadSessionFilter = struct {
 	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
 	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
@@ -225,6 +229,7 @@ var SessionFilter = struct {
 	LineageID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageId" → DB: "lineage_id"
 	ResourceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
 	ResourceType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceType" → DB: "resource_type"
+	ProcessingProfile       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "processingProfile" → DB: "processing_profile"
 	DocumentTypeID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
 	OriginalName            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originalName" → DB: "original_name"
 	ContentType             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentType" → DB: "content_type"
@@ -265,6 +270,9 @@ var SessionFilter = struct {
 	},
 	ResourceType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("resourceType", op, value)
+	},
+	ProcessingProfile: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("processingProfile", op, value)
 	},
 	DocumentTypeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("documentTypeId", op, value)

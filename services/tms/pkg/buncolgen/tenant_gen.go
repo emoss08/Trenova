@@ -1291,6 +1291,7 @@ var OrganizationColumns = struct {
 	StateID        Column // "state_id" → qualified: "org.state_id"
 	BusinessUnitID Column // "business_unit_id" → qualified: "org.business_unit_id"
 	Name           Column // "name" → qualified: "org.name"
+	LoginSlug      Column // "login_slug" → qualified: "org.login_slug"
 	ScacCode       Column // "scac_code" → qualified: "org.scac_code"
 	DOTNumber      Column // "dot_number" → qualified: "org.dot_number"
 	LogoURL        Column // "logo_url" → qualified: "org.logo_url"
@@ -1310,6 +1311,7 @@ var OrganizationColumns = struct {
 	StateID:        NewColumn("state_id", "org"),
 	BusinessUnitID: NewColumn("business_unit_id", "org"),
 	Name:           NewColumn("name", "org"),
+	LoginSlug:      NewColumn("login_slug", "org"),
 	ScacCode:       NewColumn("scac_code", "org"),
 	DOTNumber:      NewColumn("dot_number", "org"),
 	LogoURL:        NewColumn("logo_url", "org"),
@@ -1335,6 +1337,7 @@ var OrganizationFieldMap = map[string]string{
 	"stateId":        "state_id",
 	"businessUnitId": "business_unit_id",
 	"name":           "name",
+	"loginSlug":      "login_slug",
 	"scacCode":       "scac_code",
 	"dotNumber":      "dot_number",
 	"logoUrl":        "logo_url",
@@ -1357,6 +1360,7 @@ var OrganizationInsertableColumns = []string{
 	"state_id",
 	"business_unit_id",
 	"name",
+	"login_slug",
 	"scac_code",
 	"dot_number",
 	"logo_url",
@@ -1398,6 +1402,7 @@ var OrganizationFilter = struct {
 	StateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
 	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	LoginSlug      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loginSlug" → DB: "login_slug"
 	ScacCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scacCode" → DB: "scac_code"
 	DOTNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dotNumber" → DB: "dot_number"
 	LogoURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "logoUrl" → DB: "logo_url"
@@ -1423,6 +1428,9 @@ var OrganizationFilter = struct {
 	},
 	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("name", op, value)
+	},
+	LoginSlug: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("loginSlug", op, value)
 	},
 	ScacCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("scacCode", op, value)
@@ -1637,6 +1645,255 @@ var OrganizationMembershipFilter = struct {
 	},
 	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expiresAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// SSOConfig — table "sso_configs", alias "ssoc"
+// ---------------------------------------------------------------------------
+
+// SSOConfigTable holds the table name, alias, and primary key columns
+// for the "sso_configs" table. The alias "ssoc" is used in all generated
+// SQL fragments (e.g. "ssoc.id = ?").
+var SSOConfigTable = TableInfo{
+	Name:       "sso_configs",
+	Alias:      "ssoc",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// SSOConfigColumns provides type-safe column references for the "sso_configs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SSOConfigColumns.ID.String())
+//	// SELECT ssoc.id FROM sso_configs AS ssoc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SSOConfigColumns.ID.Eq(), id)           // WHERE ssoc.id = ?
+//	q.Order(SSOConfigColumns.CreatedAt.OrderDesc())  // ORDER BY ssoc.created_at DESC
+var SSOConfigColumns = struct {
+	ID               Column // "id" → qualified: "ssoc.id"
+	OrganizationID   Column // "organization_id" → qualified: "ssoc.organization_id"
+	BusinessUnitID   Column // "business_unit_id" → qualified: "ssoc.business_unit_id"
+	Name             Column // "name" → qualified: "ssoc.name"
+	Provider         Column // "provider" → qualified: "ssoc.provider"
+	Protocol         Column // "protocol" → qualified: "ssoc.protocol"
+	Enabled          Column // "enabled" → qualified: "ssoc.enabled"
+	EnforceSSO       Column // "enforce_sso" → qualified: "ssoc.enforce_sso"
+	AutoProvision    Column // "auto_provision" → qualified: "ssoc.auto_provision"
+	DefaultRole      Column // "default_role" → qualified: "ssoc.default_role"
+	AllowedDomains   Column // "allowed_domains" → qualified: "ssoc.allowed_domains"
+	AttributeMap     Column // "attribute_map" → qualified: "ssoc.attribute_map"
+	OIDCIssuerURL    Column // "oidc_issuer_url" → qualified: "ssoc.oidc_issuer_url"
+	OIDCClientID     Column // "oidc_client_id" → qualified: "ssoc.oidc_client_id"
+	OIDCClientSecret Column // "oidc_client_secret" → qualified: "ssoc.oidc_client_secret"
+	OIDCRedirectURL  Column // "oidc_redirect_url" → qualified: "ssoc.oidc_redirect_url"
+	OIDCScopes       Column // "oidc_scopes" → qualified: "ssoc.oidc_scopes"
+	Version          Column // "version" → qualified: "ssoc.version"
+	CreatedAt        Column // "created_at" → qualified: "ssoc.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "ssoc.updated_at"
+}{
+	ID:               NewColumn("id", "ssoc"),
+	OrganizationID:   NewColumn("organization_id", "ssoc"),
+	BusinessUnitID:   NewColumn("business_unit_id", "ssoc"),
+	Name:             NewColumn("name", "ssoc"),
+	Provider:         NewColumn("provider", "ssoc"),
+	Protocol:         NewColumn("protocol", "ssoc"),
+	Enabled:          NewColumn("enabled", "ssoc"),
+	EnforceSSO:       NewColumn("enforce_sso", "ssoc"),
+	AutoProvision:    NewColumn("auto_provision", "ssoc"),
+	DefaultRole:      NewColumn("default_role", "ssoc"),
+	AllowedDomains:   NewColumn("allowed_domains", "ssoc"),
+	AttributeMap:     NewColumn("attribute_map", "ssoc"),
+	OIDCIssuerURL:    NewColumn("oidc_issuer_url", "ssoc"),
+	OIDCClientID:     NewColumn("oidc_client_id", "ssoc"),
+	OIDCClientSecret: NewColumn("oidc_client_secret", "ssoc"),
+	OIDCRedirectURL:  NewColumn("oidc_redirect_url", "ssoc"),
+	OIDCScopes:       NewColumn("oidc_scopes", "ssoc"),
+	Version:          NewColumn("version", "ssoc"),
+	CreatedAt:        NewColumn("created_at", "ssoc"),
+	UpdatedAt:        NewColumn("updated_at", "ssoc"),
+}
+
+// SSOConfigFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by SSOConfig.GetStaticFieldMap().
+var SSOConfigFieldMap = map[string]string{
+	"id":              "id",
+	"organizationId":  "organization_id",
+	"businessUnitId":  "business_unit_id",
+	"name":            "name",
+	"provider":        "provider",
+	"protocol":        "protocol",
+	"enabled":         "enabled",
+	"enforceSso":      "enforce_sso",
+	"autoProvision":   "auto_provision",
+	"defaultRole":     "default_role",
+	"allowedDomains":  "allowed_domains",
+	"attributeMap":    "attribute_map",
+	"oidcIssuerUrl":   "oidc_issuer_url",
+	"oidcClientId":    "oidc_client_id",
+	"oidcRedirectUrl": "oidc_redirect_url",
+	"oidcScopes":      "oidc_scopes",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// SSOConfigInsertableColumns lists column names suitable for INSERT statements on the "sso_configs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SSOConfigInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"name",
+	"provider",
+	"protocol",
+	"enabled",
+	"enforce_sso",
+	"auto_provision",
+	"default_role",
+	"allowed_domains",
+	"attribute_map",
+	"oidc_issuer_url",
+	"oidc_client_id",
+	"oidc_client_secret",
+	"oidc_redirect_url",
+	"oidc_scopes",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// SSOConfigScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ssoc.organization_id = ? AND ssoc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.SSOConfigScopeTenant(sq, ti).
+//		Where(buncolgen.SSOConfigColumns.ID.Eq(), id)
+func SSOConfigScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, SSOConfigColumns.OrganizationID, SSOConfigColumns.BusinessUnitID, ti)
+}
+
+// SSOConfigScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.SSOConfigScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.SSOConfigColumns.ID.In(), bun.List(ids))
+//	})
+func SSOConfigScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, SSOConfigColumns.OrganizationID, SSOConfigColumns.BusinessUnitID, ti)
+}
+
+// SSOConfigScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.SSOConfigScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.SSOConfigColumns.ID.Eq(), id)
+//	})
+func SSOConfigScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, SSOConfigColumns.OrganizationID, SSOConfigColumns.BusinessUnitID, ti)
+}
+
+// SSOConfigApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.SSOConfigApplyTenant(tenantInfo))
+func SSOConfigApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(SSOConfigColumns.OrganizationID, SSOConfigColumns.BusinessUnitID, ti)
+}
+
+// SSOConfigFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "sso_configs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SSOConfigFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SSOConfigFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Provider        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	Protocol        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "protocol" → DB: "protocol"
+	Enabled         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	EnforceSSO      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceSso" → DB: "enforce_sso"
+	AutoProvision   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoProvision" → DB: "auto_provision"
+	DefaultRole     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultRole" → DB: "default_role"
+	AllowedDomains  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowedDomains" → DB: "allowed_domains"
+	AttributeMap    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attributeMap" → DB: "attribute_map"
+	OIDCIssuerURL   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "oidcIssuerUrl" → DB: "oidc_issuer_url"
+	OIDCClientID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "oidcClientId" → DB: "oidc_client_id"
+	OIDCRedirectURL func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "oidcRedirectUrl" → DB: "oidc_redirect_url"
+	OIDCScopes      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "oidcScopes" → DB: "oidc_scopes"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
+	Protocol: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("protocol", op, value)
+	},
+	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enabled", op, value)
+	},
+	EnforceSSO: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enforceSso", op, value)
+	},
+	AutoProvision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoProvision", op, value)
+	},
+	DefaultRole: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultRole", op, value)
+	},
+	AllowedDomains: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowedDomains", op, value)
+	},
+	AttributeMap: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attributeMap", op, value)
+	},
+	OIDCIssuerURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("oidcIssuerUrl", op, value)
+	},
+	OIDCClientID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("oidcClientId", op, value)
+	},
+	OIDCRedirectURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("oidcRedirectUrl", op, value)
+	},
+	OIDCScopes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("oidcScopes", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
 	},
 }
 

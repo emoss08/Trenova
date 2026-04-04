@@ -24,83 +24,92 @@ var (
 )
 
 // ---------------------------------------------------------------------------
-// Draft — table "document_shipment_drafts", alias "dsd"
+// DocumentShipmentDraft — table "document_shipment_drafts", alias "dsd"
 // ---------------------------------------------------------------------------
 
-// DraftTable holds the table name, alias, and primary key columns
+// DocumentShipmentDraftTable holds the table name, alias, and primary key columns
 // for the "document_shipment_drafts" table. The alias "dsd" is used in all generated
 // SQL fragments (e.g. "dsd.id = ?").
-var DraftTable = TableInfo{
+var DocumentShipmentDraftTable = TableInfo{
 	Name:       "document_shipment_drafts",
 	Alias:      "dsd",
 	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
 }
 
-// DraftColumns provides type-safe column references for the "document_shipment_drafts" table.
+// DocumentShipmentDraftColumns provides type-safe column references for the "document_shipment_drafts" table.
 // Each field is a [Column] whose methods return pre-computed SQL fragments.
 //
 // Use String() when Bun manages the alias (model-aware queries):
 //
-//	q.Column(DraftColumns.ID.String())
+//	q.Column(DocumentShipmentDraftColumns.ID.String())
 //	// SELECT dsd.id FROM document_shipment_drafts AS dsd
 //
 // Use expression helpers for raw WHERE/ORDER BY clauses:
 //
-//	q.Where(DraftColumns.ID.Eq(), id)           // WHERE dsd.id = ?
-//	q.Order(DraftColumns.CreatedAt.OrderDesc())  // ORDER BY dsd.created_at DESC
-var DraftColumns = struct {
-	ID             Column // "id" → qualified: "dsd.id"
-	DocumentID     Column // "document_id" → qualified: "dsd.document_id"
-	OrganizationID Column // "organization_id" → qualified: "dsd.organization_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "dsd.business_unit_id"
-	Status         Column // "status" → qualified: "dsd.status"
-	DocumentKind   Column // "document_kind" → qualified: "dsd.document_kind"
-	Confidence     Column // "confidence" → qualified: "dsd.confidence"
-	DraftData      Column // "draft_data" → qualified: "dsd.draft_data"
-	FailureCode    Column // "failure_code" → qualified: "dsd.failure_code"
-	FailureMessage Column // "failure_message" → qualified: "dsd.failure_message"
-	Version        Column // "version" → qualified: "dsd.version"
-	CreatedAt      Column // "created_at" → qualified: "dsd.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "dsd.updated_at"
+//	q.Where(DocumentShipmentDraftColumns.ID.Eq(), id)           // WHERE dsd.id = ?
+//	q.Order(DocumentShipmentDraftColumns.CreatedAt.OrderDesc())  // ORDER BY dsd.created_at DESC
+var DocumentShipmentDraftColumns = struct {
+	ID                 Column // "id" → qualified: "dsd.id"
+	DocumentID         Column // "document_id" → qualified: "dsd.document_id"
+	OrganizationID     Column // "organization_id" → qualified: "dsd.organization_id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "dsd.business_unit_id"
+	Status             Column // "status" → qualified: "dsd.status"
+	DocumentKind       Column // "document_kind" → qualified: "dsd.document_kind"
+	Confidence         Column // "confidence" → qualified: "dsd.confidence"
+	DraftData          Column // "draft_data" → qualified: "dsd.draft_data"
+	FailureCode        Column // "failure_code" → qualified: "dsd.failure_code"
+	FailureMessage     Column // "failure_message" → qualified: "dsd.failure_message"
+	AttachedShipmentID Column // "attached_shipment_id" → qualified: "dsd.attached_shipment_id"
+	AttachedAt         Column // "attached_at" → qualified: "dsd.attached_at"
+	AttachedByID       Column // "attached_by_id" → qualified: "dsd.attached_by_id"
+	Version            Column // "version" → qualified: "dsd.version"
+	CreatedAt          Column // "created_at" → qualified: "dsd.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "dsd.updated_at"
 }{
-	ID:             NewColumn("id", "dsd"),
-	DocumentID:     NewColumn("document_id", "dsd"),
-	OrganizationID: NewColumn("organization_id", "dsd"),
-	BusinessUnitID: NewColumn("business_unit_id", "dsd"),
-	Status:         NewColumn("status", "dsd"),
-	DocumentKind:   NewColumn("document_kind", "dsd"),
-	Confidence:     NewColumn("confidence", "dsd"),
-	DraftData:      NewColumn("draft_data", "dsd"),
-	FailureCode:    NewColumn("failure_code", "dsd"),
-	FailureMessage: NewColumn("failure_message", "dsd"),
-	Version:        NewColumn("version", "dsd"),
-	CreatedAt:      NewColumn("created_at", "dsd"),
-	UpdatedAt:      NewColumn("updated_at", "dsd"),
+	ID:                 NewColumn("id", "dsd"),
+	DocumentID:         NewColumn("document_id", "dsd"),
+	OrganizationID:     NewColumn("organization_id", "dsd"),
+	BusinessUnitID:     NewColumn("business_unit_id", "dsd"),
+	Status:             NewColumn("status", "dsd"),
+	DocumentKind:       NewColumn("document_kind", "dsd"),
+	Confidence:         NewColumn("confidence", "dsd"),
+	DraftData:          NewColumn("draft_data", "dsd"),
+	FailureCode:        NewColumn("failure_code", "dsd"),
+	FailureMessage:     NewColumn("failure_message", "dsd"),
+	AttachedShipmentID: NewColumn("attached_shipment_id", "dsd"),
+	AttachedAt:         NewColumn("attached_at", "dsd"),
+	AttachedByID:       NewColumn("attached_by_id", "dsd"),
+	Version:            NewColumn("version", "dsd"),
+	CreatedAt:          NewColumn("created_at", "dsd"),
+	UpdatedAt:          NewColumn("updated_at", "dsd"),
 }
 
-// DraftFieldMap maps JSON API field names to database column names.
+// DocumentShipmentDraftFieldMap maps JSON API field names to database column names.
 // The QueryBuilder uses this to translate filter/sort requests from the frontend
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by Draft.GetStaticFieldMap().
-var DraftFieldMap = map[string]string{
-	"id":             "id",
-	"documentId":     "document_id",
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"status":         "status",
-	"documentKind":   "document_kind",
-	"confidence":     "confidence",
-	"draftData":      "draft_data",
-	"failureCode":    "failure_code",
-	"failureMessage": "failure_message",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+// This is returned by DocumentShipmentDraft.GetStaticFieldMap().
+var DocumentShipmentDraftFieldMap = map[string]string{
+	"id":                 "id",
+	"documentId":         "document_id",
+	"organizationId":     "organization_id",
+	"businessUnitId":     "business_unit_id",
+	"status":             "status",
+	"documentKind":       "document_kind",
+	"confidence":         "confidence",
+	"draftData":          "draft_data",
+	"failureCode":        "failure_code",
+	"failureMessage":     "failure_message",
+	"attachedShipmentId": "attached_shipment_id",
+	"attachedAt":         "attached_at",
+	"attachedById":       "attached_by_id",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
 }
 
-// DraftInsertableColumns lists column names suitable for INSERT statements on the "document_shipment_drafts" table.
+// DocumentShipmentDraftInsertableColumns lists column names suitable for INSERT statements on the "document_shipment_drafts" table.
 // Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var DraftInsertableColumns = []string{
+var DocumentShipmentDraftInsertableColumns = []string{
 	"id",
 	"document_id",
 	"organization_id",
@@ -111,74 +120,80 @@ var DraftInsertableColumns = []string{
 	"draft_data",
 	"failure_code",
 	"failure_message",
+	"attached_shipment_id",
+	"attached_at",
+	"attached_by_id",
 	"version",
 	"created_at",
 	"updated_at",
 }
 
-// DraftScopeTenant restricts a query to a single tenant by adding:
+// DocumentShipmentDraftScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE dsd.organization_id = ? AND dsd.business_unit_id = ?
 //
 // Returns the same *bun.SelectQuery so it can be chained fluently:
 //
-//	buncolgen.DraftScopeTenant(sq, ti).
-//		Where(buncolgen.DraftColumns.ID.Eq(), id)
-func DraftScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return ScopeTenant(q, DraftColumns.OrganizationID, DraftColumns.BusinessUnitID, ti)
+//	buncolgen.DocumentShipmentDraftScopeTenant(sq, ti).
+//		Where(buncolgen.DocumentShipmentDraftColumns.ID.Eq(), id)
+func DocumentShipmentDraftScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DocumentShipmentDraftColumns.OrganizationID, DocumentShipmentDraftColumns.BusinessUnitID, ti)
 }
 
-// DraftScopeTenantUpdate restricts an update query to a single tenant.
+// DocumentShipmentDraftScopeTenantUpdate restricts an update query to a single tenant.
 // Use this inside UpdateQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return buncolgen.DraftScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(buncolgen.DraftColumns.ID.In(), bun.List(ids))
+//		return buncolgen.DocumentShipmentDraftScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DocumentShipmentDraftColumns.ID.In(), bun.List(ids))
 //	})
-func DraftScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return ScopeTenantUpdate(q, DraftColumns.OrganizationID, DraftColumns.BusinessUnitID, ti)
+func DocumentShipmentDraftScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DocumentShipmentDraftColumns.OrganizationID, DocumentShipmentDraftColumns.BusinessUnitID, ti)
 }
 
-// DraftScopeTenantDelete restricts a delete query to a single tenant.
+// DocumentShipmentDraftScopeTenantDelete restricts a delete query to a single tenant.
 // Use this inside DeleteQuery.WhereGroup callbacks:
 //
 //	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return buncolgen.DraftScopeTenantDelete(dq, req.TenantInfo).
-//			Where(buncolgen.DraftColumns.ID.Eq(), id)
+//		return buncolgen.DocumentShipmentDraftScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DocumentShipmentDraftColumns.ID.Eq(), id)
 //	})
-func DraftScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return ScopeTenantDelete(q, DraftColumns.OrganizationID, DraftColumns.BusinessUnitID, ti)
+func DocumentShipmentDraftScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DocumentShipmentDraftColumns.OrganizationID, DocumentShipmentDraftColumns.BusinessUnitID, ti)
 }
 
-// DraftApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// DocumentShipmentDraftApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
 // Use this instead of wrapping ScopeTenant in an anonymous function:
 //
-//	q.Apply(buncolgen.DraftApplyTenant(tenantInfo))
-func DraftApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return ApplyTenant(DraftColumns.OrganizationID, DraftColumns.BusinessUnitID, ti)
+//	q.Apply(buncolgen.DocumentShipmentDraftApplyTenant(tenantInfo))
+func DocumentShipmentDraftApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DocumentShipmentDraftColumns.OrganizationID, DocumentShipmentDraftColumns.BusinessUnitID, ti)
 }
 
-// DraftFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// DocumentShipmentDraftFilter builds [domaintypes.FieldFilter] values using the correct JSON
 // field names for the "document_shipment_drafts" table. Pass these to the QueryBuilder's ApplyFilters.
 //
 // The JSON field name is baked in — you only provide the operator and value:
 //
-//	DraftFilter.ID(dbtype.OpEq, value)
+//	DocumentShipmentDraftFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var DraftFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	DocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	DocumentKind   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentKind" → DB: "document_kind"
-	Confidence     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
-	DraftData      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftData" → DB: "draft_data"
-	FailureCode    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
-	FailureMessage func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+var DocumentShipmentDraftFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	DocumentID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	DocumentKind       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentKind" → DB: "document_kind"
+	Confidence         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
+	DraftData          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "draftData" → DB: "draft_data"
+	FailureCode        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureCode" → DB: "failure_code"
+	FailureMessage     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureMessage" → DB: "failure_message"
+	AttachedShipmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachedShipmentId" → DB: "attached_shipment_id"
+	AttachedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachedAt" → DB: "attached_at"
+	AttachedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachedById" → DB: "attached_by_id"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -209,6 +224,15 @@ var DraftFilter = struct {
 	},
 	FailureMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("failureMessage", op, value)
+	},
+	AttachedShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attachedShipmentId", op, value)
+	},
+	AttachedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attachedAt", op, value)
+	},
+	AttachedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attachedById", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

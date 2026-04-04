@@ -39,6 +39,7 @@ type Column struct {
 	qualified string
 	eq        string
 	ne        string
+	notEq     string
 	gt        string
 	gte       string
 	lt        string
@@ -92,6 +93,7 @@ func NewColumn(name, alias string) Column {
 		qualified: q,
 		eq:        q + " = ?",
 		ne:        q + " != ?",
+		notEq:     q + " <> ?",
 		gt:        q + " > ?",
 		gte:       q + " >= ?",
 		lt:        q + " < ?",
@@ -141,6 +143,9 @@ func (c Column) Eq() string { return c.eq }
 
 // Ne returns a "alias.column != ?" fragment for WHERE clauses.
 func (c Column) Ne() string { return c.ne }
+
+// NotEq returns a "alias.column <> ?" fragment for WHERE clauses.
+func (c Column) NotEq() string { return c.notEq }
 
 // Gt returns a "alias.column > ?" fragment for WHERE clauses.
 func (c Column) Gt() string { return c.gt }

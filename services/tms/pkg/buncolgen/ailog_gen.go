@@ -63,6 +63,7 @@ var LogColumns = struct {
 	CompletionTokens Column // "completion_tokens" → qualified: "ail.completion_tokens"
 	TotalTokens      Column // "total_tokens" → qualified: "ail.total_tokens"
 	ReasoningTokens  Column // "reasoning_tokens" → qualified: "ail.reasoning_tokens"
+	SearchVector     Column // "search_vector" → qualified: "ail.search_vector"
 	Timestamp        Column // "timestamp" → qualified: "ail.timestamp"
 }{
 	ID:               NewColumn("id", "ail"),
@@ -79,6 +80,7 @@ var LogColumns = struct {
 	CompletionTokens: NewColumn("completion_tokens", "ail"),
 	TotalTokens:      NewColumn("total_tokens", "ail"),
 	ReasoningTokens:  NewColumn("reasoning_tokens", "ail"),
+	SearchVector:     NewColumn("search_vector", "ail"),
 	Timestamp:        NewColumn("timestamp", "ail"),
 }
 

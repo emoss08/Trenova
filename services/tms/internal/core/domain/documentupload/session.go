@@ -10,7 +10,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Session struct {
+var _ bun.BeforeAppendModelHook = (*DocumentUploadSession)(nil)
+
+type DocumentUploadSession struct {
 	bun.BaseModel `bun:"table:document_upload_sessions,alias:dus" json:"-"`
 
 	ID                      pulid.ID                   `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
@@ -42,7 +44,7 @@ type Session struct {
 	UpdatedAt               int64                      `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
-func (s *Session) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (s *DocumentUploadSession) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 
 	switch query.(type) {
@@ -68,42 +70,19 @@ func (s *Session) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (s *Session) GetTableName() string {
+func (s *DocumentUploadSession) GetTableName() string {
 	return "document_upload_sessions"
 }
 
-func (s Status) IsTerminal() bool {
-	switch s { //nolint:exhaustive // we only want to check for the terminal statuses
-	case StatusCompleted,
-		StatusAvailable,
-		StatusQuarantined,
-		StatusFailed,
-		StatusCanceled,
-		StatusExpired:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s Status) IsDocumentReady() bool {
-	switch s { //nolint:exhaustive // we only want to check for the document ready statuses
-	case StatusAvailable, StatusCompleted:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s *Session) MarkSuperseded(now int64) {
+func (s *DocumentUploadSession) MarkSuperseded(now int64) {
 	s.Status = StatusCanceled
 	s.FailureCode = FailureCodeSuspendedByNewerSession.String()
 	s.FailureMessage = "Superseded by a newer upload session"
 	s.LastActivityAt = now
 }
 
-func (s *Session) IsSupersededByNewerArtifacts(
-	activeSessions []*Session,
+func (s *DocumentUploadSession) IsSupersededByNewerArtifacts(
+	activeSessions []*DocumentUploadSession,
 	versions []*document.Document,
 ) bool {
 	if s == nil || s.LineageID == nil || s.LineageID.IsNil() {
@@ -132,7 +111,7 @@ func (s *Session) IsSupersededByNewerArtifacts(
 	return false
 }
 
-func (s *Session) IsNewerThan(other *Session) bool {
+func (s *DocumentUploadSession) IsNewerThan(other *DocumentUploadSession) bool {
 	if s == nil || other == nil {
 		return false
 	}

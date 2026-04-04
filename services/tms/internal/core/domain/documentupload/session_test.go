@@ -12,19 +12,19 @@ func TestSessionIsSupersededByNewerArtifacts(t *testing.T) {
 	currentID := pulid.MustNew("dus_")
 	newerID := pulid.MustNew("dus_")
 
-	current := &Session{
+	current := &DocumentUploadSession{
 		ID:        currentID,
 		LineageID: &lineageID,
 		CreatedAt: 100,
 	}
 
-	newerSession := &Session{
+	newerSession := &DocumentUploadSession{
 		ID:        newerID,
 		LineageID: &lineageID,
 		CreatedAt: 101,
 	}
 
-	if !current.IsSupersededByNewerArtifacts([]*Session{newerSession}, nil) {
+	if !current.IsSupersededByNewerArtifacts([]*DocumentUploadSession{newerSession}, nil) {
 		t.Fatal("expected newer active session to supersede current session")
 	}
 
@@ -45,7 +45,7 @@ func TestSessionIsSupersededByNewerArtifacts(t *testing.T) {
 }
 
 func TestSessionMarkSuperseded(t *testing.T) {
-	session := &Session{}
+	session := &DocumentUploadSession{}
 
 	session.MarkSuperseded(123)
 

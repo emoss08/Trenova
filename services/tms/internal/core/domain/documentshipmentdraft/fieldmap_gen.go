@@ -4,9 +4,9 @@ package documentshipmentdraft
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
-// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Draft].
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentShipmentDraft].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
-// the generated [buncolgen.DraftFieldMap] instead of parsing struct tags via reflection.
-func (e *Draft) GetStaticFieldMap() map[string]string {
-	return buncolgen.DraftFieldMap
+// the generated [buncolgen.DocumentShipmentDraftFieldMap] instead of parsing struct tags via reflection.
+func (e *DocumentShipmentDraft) GetStaticFieldMap() map[string]string {
+	return buncolgen.DocumentShipmentDraftFieldMap
 }
