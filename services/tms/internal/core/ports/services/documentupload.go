@@ -45,6 +45,6 @@ type PartUploadTarget struct {
 }
 
 type SessionState struct {
-	Session *documentupload.Session `json:"session"`
-	Parts   []storage.UploadedPart  `json:"parts"`
+	Session *documentupload.DocumentUploadSession `json:"session"`
+	Parts   []storage.UploadedPart                `json:"parts"`
 }

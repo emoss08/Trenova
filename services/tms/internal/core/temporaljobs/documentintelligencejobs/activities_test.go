@@ -160,7 +160,7 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
 	contentWrites := make([]documentcontent.Content, 0, 2)
 	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
-	draftWrites := make([]documentshipmentdraft.Draft, 0, 1)
+	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 	metricsRegistry := &metrics.Registry{
 		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 	}
@@ -204,8 +204,8 @@ func TestProcessDocumentIntelligenceActivity_SuppressesShipmentDraftOutsideShipm
 			),
 		}, nil)
 	draftRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
-		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error) {
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 			draftWrites = append(draftWrites, *entity)
 			return entity, nil
 		})
@@ -281,7 +281,7 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 
 	control := tenant.NewDefaultDocumentControl(orgID, buID)
 	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
-	draftWrites := make([]documentshipmentdraft.Draft, 0, 1)
+	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
 	metricsRegistry := &metrics.Registry{
 		Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
 	}
@@ -333,8 +333,8 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		Create(mock.Anything, mock.AnythingOfType("*documenttype.DocumentType")).
 		Return(&documenttype.DocumentType{ID: typeID}, nil)
 	draftRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
-		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error) {
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 			draftWrites = append(draftWrites, *entity)
 			return entity, nil
 		})
@@ -458,8 +458,8 @@ func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByNam
 		GetByName(mock.Anything, mock.Anything).
 		Return(&documenttype.DocumentType{ID: typeID, Name: "Bill of Lading"}, nil)
 	draftRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
-		Return(&documentshipmentdraft.Draft{}, nil)
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		Return(&documentshipmentdraft.DocumentShipmentDraft{}, nil)
 
 	activities := &Activities{
 		logger:              zap.NewNop(),
@@ -568,8 +568,8 @@ func TestProcessDocumentIntelligenceActivity_EnqueuesAsyncAIExtraction(t *testin
 		GetByName(mock.Anything, mock.Anything).
 		Return(&documenttype.DocumentType{ID: typeID, Name: "Rate Confirmation"}, nil)
 	draftRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
-		Return(&documentshipmentdraft.Draft{}, nil)
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
+		Return(&documentshipmentdraft.DocumentShipmentDraft{}, nil)
 	workflowStarter.EXPECT().Enabled().Return(true)
 	workflowStarter.EXPECT().
 		StartWorkflow(mock.Anything, mock.MatchedBy(func(options client.StartWorkflowOptions) bool {

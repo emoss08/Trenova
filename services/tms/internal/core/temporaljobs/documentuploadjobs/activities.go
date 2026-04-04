@@ -154,7 +154,7 @@ func (a *Activities) FinalizeUploadActivity(
 
 func (a *Activities) finalizeUploadEarlyOutcomes(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (*FinalizeUploadResult, bool, error) {
 	superseded, supersededErr := a.cancelSupersededSession(ctx, session)
 	if supersededErr != nil {
@@ -202,7 +202,7 @@ func (a *Activities) finalizeUploadEarlyOutcomes(
 
 func (a *Activities) finalizeValidateStoredObject(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	parts []storage.UploadedPart,
 ) error {
 	if session.Strategy == documentupload.StrategyMultipart {
@@ -253,7 +253,7 @@ func (a *Activities) finalizeValidateStoredObject(
 
 func (a *Activities) finalizeUploadPersistDocument(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	parts []storage.UploadedPart,
 	doc *document.Document,
 	payload *FinalizeUploadPayload,
@@ -377,7 +377,7 @@ func (a *Activities) deleteStoredObject(ctx context.Context, key string) error {
 
 func (a *Activities) updateStatus(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	status documentupload.Status,
 ) error {
 	session.Status = status
@@ -388,7 +388,7 @@ func (a *Activities) updateStatus(
 
 func (a *Activities) failSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	code string,
 	message string,
 ) error {
@@ -405,7 +405,7 @@ func (a *Activities) failSession(
 
 func (a *Activities) ensureDocument(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	userID pulid.ID,
 ) (*document.Document, error) {
 	if session.DocumentID != nil {
@@ -445,7 +445,7 @@ func (a *Activities) ensureDocument(
 
 func (a *Activities) createDocumentWithRetryLoop(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	userID pulid.ID,
 	fileInfo *storage.FileInfo,
 ) (*document.Document, error) {
@@ -507,7 +507,7 @@ func (a *Activities) createDocumentWithRetryLoop(
 }
 
 func (a *Activities) newDocumentForUpload(
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	fileInfo *storage.FileInfo,
 	lineageID pulid.ID,
 	versionNumber int64,
@@ -541,7 +541,7 @@ func (a *Activities) newDocumentForUpload(
 
 func (a *Activities) finalizeCreatedDocumentUpload(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	userID pulid.ID,
 	createdDoc *document.Document,
 	previousDoc *document.Document,
@@ -580,7 +580,7 @@ func (a *Activities) finalizeCreatedDocumentUpload(
 
 func (a *Activities) recoverDocumentCreateAfterUniqueConflict(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	createErr error,
 	attempt, maxAttempts int,
 ) (*document.Document, bool, error) {
@@ -611,7 +611,7 @@ func (a *Activities) recoverDocumentCreateAfterUniqueConflict(
 
 func (a *Activities) resolveLineageState(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (pulid.ID, int64, *document.Document, error) {
 	var (
 		lineageID     pulid.ID
@@ -654,7 +654,7 @@ func (a *Activities) syncSearchProjection(
 
 func (a *Activities) reconcileSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	expiresBefore int64,
 ) (expired, finalize bool, err error) {
 	if superseded, supersededErr := a.cancelSupersededSession(ctx, session); supersededErr != nil {
@@ -699,7 +699,7 @@ func (a *Activities) reconcileSession(
 
 func (a *Activities) isSessionReadyToFinalize(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	if session.Strategy == documentupload.StrategySingle {
 		info, err := a.storage.GetFileInfo(ctx, session.StoragePath)
@@ -735,7 +735,10 @@ func (a *Activities) isSessionReadyToFinalize(
 	return true, nil
 }
 
-func (a *Activities) expireSession(ctx context.Context, session *documentupload.Session) error {
+func (a *Activities) expireSession(
+	ctx context.Context,
+	session *documentupload.DocumentUploadSession,
+) error {
 	if session.Strategy == documentupload.StrategyMultipart &&
 		session.StorageProviderUploadID != "" {
 		_ = a.storage.AbortMultipartUpload(ctx, &storage.AbortMultipartUploadParams{
@@ -754,7 +757,7 @@ func (a *Activities) expireSession(ctx context.Context, session *documentupload.
 
 func (a *Activities) getUploadedParts(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) ([]storage.UploadedPart, error) {
 	if session.Strategy == documentupload.StrategySingle {
 		fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
@@ -776,7 +779,7 @@ func (a *Activities) getUploadedParts(
 
 func (a *Activities) startFinalizeWorkflowForSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) bool {
 	if !a.workflowStarter.Enabled() {
 		return false
@@ -882,7 +885,7 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 
 func (a *Activities) cancelSupersededSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	if session == nil || session.LineageID == nil || session.LineageID.IsNil() ||
 		session.Status.IsTerminal() {
@@ -904,7 +907,7 @@ func (a *Activities) cancelSupersededSession(
 
 func (a *Activities) isSupersededByNewerVersion(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	activeSessions, err := a.sessionRepo.ListActive(
 		ctx,
@@ -937,7 +940,7 @@ func (a *Activities) isSupersededByNewerVersion(
 
 func (a *Activities) getDocumentForSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) *document.Document {
 	if session.DocumentID == nil {
 		return nil
@@ -959,7 +962,7 @@ func (a *Activities) getDocumentForSession(
 
 func (a *Activities) ensureThumbnailForSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) string {
 	doc := a.getDocumentForSession(ctx, session)
 	if doc == nil {

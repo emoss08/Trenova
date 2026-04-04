@@ -52,28 +52,34 @@ func TestGetDiagnostics(t *testing.T) {
 	}, nil)
 
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.EXPECT().ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
-		TenantInfo: tenantInfo,
-		DocumentID: documentID,
-		LineageID:  lineageID,
-	}).Return([]*documentupload.Session{
-		{
-			ID:             sessionID,
-			DocumentID:     &documentID,
-			LineageID:      &lineageID,
-			FailureCode:    "FAILED",
-			FailureMessage: "upload failed",
-		},
-	}, nil)
+	sessionRepo.EXPECT().
+		ListRelated(mock.Anything, &repositories.ListRelatedDocumentUploadSessionsRequest{
+			TenantInfo: tenantInfo,
+			DocumentID: documentID,
+			LineageID:  lineageID,
+		}).
+		Return([]*documentupload.DocumentUploadSession{
+			{
+				ID:             sessionID,
+				DocumentID:     &documentID,
+				LineageID:      &lineageID,
+				FailureCode:    "FAILED",
+				FailureMessage: "upload failed",
+			},
+		}, nil)
 
 	contentService := mocks.NewMockDocumentContentService(t)
-	contentService.EXPECT().GetContent(mock.Anything, documentID, tenantInfo).Return(&documentcontent.Content{
-		DocumentID:  documentID,
-		ContentText: "extracted text",
-	}, nil)
-	contentService.EXPECT().GetShipmentDraft(mock.Anything, documentID, tenantInfo).Return(&documentshipmentdraft.Draft{
-		DocumentID: documentID,
-	}, nil)
+	contentService.EXPECT().
+		GetContent(mock.Anything, documentID, tenantInfo).
+		Return(&documentcontent.Content{
+			DocumentID:  documentID,
+			ContentText: "extracted text",
+		}, nil)
+	contentService.EXPECT().
+		GetShipmentDraft(mock.Anything, documentID, tenantInfo).
+		Return(&documentshipmentdraft.DocumentShipmentDraft{
+			DocumentID: documentID,
+		}, nil)
 
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	workflowStarter := mocks.NewMockWorkflowStarter(t)
@@ -96,7 +102,11 @@ func TestGetDiagnostics(t *testing.T) {
 	assert.NotNil(t, result.Content)
 	assert.NotNil(t, result.ShipmentDraft)
 	assert.Contains(t, result.LastErrors, "content: ocr failed once")
-	assert.Contains(t, result.LastErrors, "upload session "+sessionID.String()+": FAILED: upload failed")
+	assert.Contains(
+		t,
+		result.LastErrors,
+		"upload session "+sessionID.String()+": FAILED: upload failed",
+	)
 	assert.NotEmpty(t, result.WorkflowRefs)
 }
 
@@ -107,7 +117,11 @@ func TestResyncSearchIgnoresMissingContent(t *testing.T) {
 	tenantInfo := pagination.TenantInfo{OrgID: testutil.TestOrgID, BuID: testutil.TestBuID}
 
 	docRepo := mocks.NewMockDocumentRepository(t)
-	doc := &document.Document{ID: documentID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID}
+	doc := &document.Document{
+		ID:             documentID,
+		OrganizationID: testutil.TestOrgID,
+		BusinessUnitID: testutil.TestBuID,
+	}
 	docRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
 		ID:         documentID,
 		TenantInfo: tenantInfo,

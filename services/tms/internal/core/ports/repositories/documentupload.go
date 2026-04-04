@@ -26,18 +26,24 @@ type ListRelatedDocumentUploadSessionsRequest struct {
 }
 
 type DocumentUploadSessionRepository interface {
-	Create(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error)
-	Update(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error)
+	Create(
+		ctx context.Context,
+		entity *documentupload.DocumentUploadSession,
+	) (*documentupload.DocumentUploadSession, error)
+	Update(
+		ctx context.Context,
+		entity *documentupload.DocumentUploadSession,
+	) (*documentupload.DocumentUploadSession, error)
 	GetByID(
 		ctx context.Context,
 		req GetDocumentUploadSessionByIDRequest,
-	) (*documentupload.Session, error)
+	) (*documentupload.DocumentUploadSession, error)
 	ListForReconciliation(
 		ctx context.Context,
 		staleBefore int64,
 		expiresBefore int64,
 		limit int,
-	) ([]*documentupload.Session, error)
+	) ([]*documentupload.DocumentUploadSession, error)
 	ClearDocumentReference(
 		ctx context.Context,
 		documentID pulid.ID,
@@ -51,9 +57,9 @@ type DocumentUploadSessionRepository interface {
 	ListActive(
 		ctx context.Context,
 		req *ListActiveDocumentUploadSessionsRequest,
-	) ([]*documentupload.Session, error)
+	) ([]*documentupload.DocumentUploadSession, error)
 	ListRelated(
 		ctx context.Context,
 		req *ListRelatedDocumentUploadSessionsRequest,
-	) ([]*documentupload.Session, error)
+	) ([]*documentupload.DocumentUploadSession, error)
 }

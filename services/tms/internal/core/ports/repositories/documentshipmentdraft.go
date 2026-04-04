@@ -9,6 +9,13 @@ import (
 )
 
 type DocumentShipmentDraftRepository interface {
-	GetByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.Draft, error)
-	Upsert(ctx context.Context, entity *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error)
+	GetByDocumentID(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentshipmentdraft.DocumentShipmentDraft, error)
+	Upsert(
+		ctx context.Context,
+		entity *documentshipmentdraft.DocumentShipmentDraft,
+	) (*documentshipmentdraft.DocumentShipmentDraft, error)
 }

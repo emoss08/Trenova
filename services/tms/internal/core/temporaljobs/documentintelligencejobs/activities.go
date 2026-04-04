@@ -461,7 +461,7 @@ func (a *Activities) upsertShipmentDraftForProcess(
 	draftIsUsable := canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
 		hasUsableShipmentDraft(intelligence)
 	if draftIsUsable {
-		draft := &documentshipmentdraft.Draft{
+		draft := &documentshipmentdraft.DocumentShipmentDraft{
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
@@ -483,7 +483,7 @@ func (a *Activities) upsertShipmentDraftForProcess(
 		draftStatus = document.ShipmentDraftStatusPending
 		draftState = documentshipmentdraft.StatusPending
 	}
-	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
+	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,
@@ -795,7 +795,7 @@ func (a *Activities) markFailed(
 	if _, err := a.contentRepo.Upsert(ctx, content); err != nil {
 		return err
 	}
-	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
+	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
 		DocumentID:     doc.ID,
 		OrganizationID: doc.OrganizationID,
 		BusinessUnitID: doc.BusinessUnitID,

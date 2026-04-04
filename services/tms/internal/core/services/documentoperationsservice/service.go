@@ -51,13 +51,13 @@ type WorkflowReference struct {
 }
 
 type Diagnostics struct {
-	Document      *document.Document           `json:"document"`
-	Versions      []*document.Document         `json:"versions"`
-	Sessions      []*documentupload.Session    `json:"sessions"`
-	Content       *documentcontent.Content     `json:"content,omitempty"`
-	ShipmentDraft *documentshipmentdraft.Draft `json:"shipmentDraft,omitempty"`
-	LastErrors    []string                     `json:"lastErrors"`
-	WorkflowRefs  []WorkflowReference          `json:"workflowRefs"`
+	Document      *document.Document                           `json:"document"`
+	Versions      []*document.Document                         `json:"versions"`
+	Sessions      []*documentupload.DocumentUploadSession      `json:"sessions"`
+	Content       *documentcontent.Content                     `json:"content,omitempty"`
+	ShipmentDraft *documentshipmentdraft.DocumentShipmentDraft `json:"shipmentDraft,omitempty"`
+	LastErrors    []string                                     `json:"lastErrors"`
+	WorkflowRefs  []WorkflowReference                          `json:"workflowRefs"`
 }
 
 func New(p Params) *Service {
@@ -97,11 +97,14 @@ func (s *Service) GetDiagnostics(
 		return nil, err
 	}
 
-	sessions, err := s.sessionRepo.ListRelated(ctx, &repositories.ListRelatedDocumentUploadSessionsRequest{
-		TenantInfo: tenantInfo,
-		DocumentID: doc.ID,
-		LineageID:  doc.LineageID,
-	})
+	sessions, err := s.sessionRepo.ListRelated(
+		ctx,
+		&repositories.ListRelatedDocumentUploadSessionsRequest{
+			TenantInfo: tenantInfo,
+			DocumentID: doc.ID,
+			LineageID:  doc.LineageID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +191,9 @@ func (s *Service) RegeneratePreview(
 	}
 
 	if !document.SupportsPreview(doc.FileType) {
-		return errortypes.NewConflictError("Preview generation is not supported for this document type")
+		return errortypes.NewConflictError(
+			"Preview generation is not supported for this document type",
+		)
 	}
 
 	payload := &thumbnailjobs.GenerateThumbnailPayload{
@@ -207,7 +212,10 @@ func (s *Service) RegeneratePreview(
 			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
 			WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
-			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
+			StaticSummary: fmt.Sprintf(
+				"Generating thumbnail for document %s",
+				doc.ID,
+			),
 		},
 		"GenerateThumbnailWorkflow",
 		payload,
@@ -227,7 +235,10 @@ func (s *Service) RegeneratePreview(
 	})
 }
 
-func collectErrors(doc *document.Document, sessions []*documentupload.Session) []string {
+func collectErrors(
+	doc *document.Document,
+	sessions []*documentupload.DocumentUploadSession,
+) []string {
 	errorsList := make([]string, 0, 1+len(sessions))
 	if doc.ContentError != "" {
 		errorsList = append(errorsList, fmt.Sprintf("content: %s", doc.ContentError))
@@ -254,7 +265,7 @@ func collectErrors(doc *document.Document, sessions []*documentupload.Session) [
 func workflowReferences(
 	doc *document.Document,
 	versions []*document.Document,
-	sessions []*documentupload.Session,
+	sessions []*documentupload.DocumentUploadSession,
 ) []WorkflowReference {
 	refs := make([]WorkflowReference, 0, len(versions)*2+len(sessions))
 	seen := make(map[string]struct{}, len(versions)*2+len(sessions))

@@ -88,7 +88,7 @@ func New(p Params) *Service {
 func (s *Service) CreateSession(
 	ctx context.Context,
 	req *services.CreateSessionRequest,
-) (*documentupload.Session, error) {
+) (*documentupload.DocumentUploadSession, error) {
 	processingProfile, err := document.NormalizeProcessingProfile(req.ProcessingProfile)
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -107,7 +107,7 @@ func (s *Service) CreateSession(
 	}
 
 	tags := make([]string, 0, len(req.Tags))
-	session := &documentupload.Session{
+	session := &documentupload.DocumentUploadSession{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		ResourceID:        req.ResourceID,
@@ -185,7 +185,7 @@ func (s *Service) CreateSession(
 func (s *Service) ListActive(
 	ctx context.Context,
 	req *repositories.ListActiveDocumentUploadSessionsRequest,
-) ([]*documentupload.Session, error) {
+) ([]*documentupload.DocumentUploadSession, error) {
 	sessions, err := s.sessionRepo.ListActive(ctx, req)
 	if err != nil {
 		return nil, err
@@ -253,7 +253,7 @@ func (s *Service) GetPartUploadTargets(
 
 func (s *Service) partUploadTargetsSingle(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) ([]services.PartUploadTarget, error) {
 	url, err := s.storage.GetPresignedUploadURL(ctx, &storage.PresignedUploadURLParams{
 		Key:         session.StoragePath,
@@ -269,7 +269,7 @@ func (s *Service) partUploadTargetsSingle(
 
 func (s *Service) partUploadTargetsMultipart(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	partNumbers []int,
 ) ([]services.PartUploadTarget, error) {
 	targets := make([]services.PartUploadTarget, 0, len(partNumbers))
@@ -304,7 +304,7 @@ func (s *Service) partUploadTargetsMultipart(
 func (s *Service) Complete(
 	ctx context.Context,
 	req *services.CompletionRequest,
-) (*documentupload.Session, error) {
+) (*documentupload.DocumentUploadSession, error) {
 	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
 		ID:         req.SessionID,
 		TenantInfo: req.TenantInfo,
@@ -415,7 +415,7 @@ func (s *Service) Cancel(ctx context.Context, req *services.CancelRequest) error
 
 func (s *Service) getUploadedParts(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) ([]storage.UploadedPart, error) {
 	if session.Status.IsTerminal() && len(session.UploadedParts) > 0 {
 		return storage.ToDomainParts(session.UploadedParts), nil
@@ -467,10 +467,10 @@ func (s *Service) uploadedPartsFromSingleObject(
 
 func (s *Service) markSessionFailed(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 	code string,
 	message string,
-) (*documentupload.Session, error) {
+) (*documentupload.DocumentUploadSession, error) {
 	session.Status = documentupload.StatusFailed
 	session.FailureCode = code
 	session.FailureMessage = message
@@ -478,7 +478,7 @@ func (s *Service) markSessionFailed(
 	return s.sessionRepo.Update(ctx, session)
 }
 
-func normalizeSession(session *documentupload.Session) {
+func normalizeSession(session *documentupload.DocumentUploadSession) {
 	if session == nil {
 		return
 	}
@@ -513,7 +513,7 @@ func (s *Service) acquireCompletionLease(ctx context.Context, sessionID string) 
 func (s *Service) startFinalizeWorkflowOrMarkFailed(
 	ctx context.Context,
 	req *services.CompletionRequest,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) error {
 	err := s.startFinalizeWorkflow(ctx, req, session)
 	if err == nil {
@@ -537,7 +537,7 @@ func (s *Service) startFinalizeWorkflowOrMarkFailed(
 func (s *Service) startFinalizeWorkflow(
 	ctx context.Context,
 	req *services.CompletionRequest,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) error {
 	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
@@ -579,7 +579,7 @@ func (s *Service) startFinalizeWorkflow(
 func (s *Service) runSynchronousFinalization(
 	ctx context.Context,
 	req *services.CompletionRequest,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (*document.Document, error) {
 	uploadedParts, err := s.getUploadedParts(ctx, session)
 	if err != nil {
@@ -667,7 +667,7 @@ func completionLeaseKey(sessionID string) string {
 
 func (s *Service) cancelSupersededSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	if session == nil || session.LineageID == nil || session.LineageID.IsNil() ||
 		session.Status.IsTerminal() {
@@ -689,7 +689,7 @@ func (s *Service) cancelSupersededSession(
 
 func (s *Service) isSupersededByNewerVersion(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	if session == nil || session.LineageID == nil || session.LineageID.IsNil() {
 		return false, nil
@@ -814,7 +814,7 @@ func previewStatusForFileType(contentType string) document.PreviewStatus {
 
 func (s *Service) ensureThumbnailForSession(
 	ctx context.Context,
-	session *documentupload.Session,
+	session *documentupload.DocumentUploadSession,
 ) {
 	if session.DocumentID == nil || s.thumbnailGenerator == nil {
 		return

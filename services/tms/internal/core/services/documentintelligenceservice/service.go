@@ -104,7 +104,7 @@ func (s *Service) GetShipmentDraft(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*documentshipmentdraft.Draft, error) {
+) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return s.draftRepo.GetByDocumentID(ctx, documentID, tenantInfo)
 }
 

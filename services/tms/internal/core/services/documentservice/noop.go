@@ -25,7 +25,7 @@ func (noopDocumentContentService) GetShipmentDraft(
 	context.Context,
 	pulid.ID,
 	pagination.TenantInfo,
-) (*documentshipmentdraft.Draft, error) {
+) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	return nil, nil
 }
 

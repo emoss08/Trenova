@@ -70,17 +70,28 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	}
 
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
-	cacheRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Maybe().Return(nil, repositories.ErrCacheMiss)
+	cacheRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil, repositories.ErrCacheMiss)
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.EXPECT().ClearDocumentReference(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.EXPECT().ClearDocumentReferences(mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	sessionRepo.EXPECT().
+		ClearDocumentReference(mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
+	sessionRepo.EXPECT().
+		ClearDocumentReferences(mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
 	contentService := mocks.NewMockDocumentContentService(t)
-	contentService.EXPECT().GetContent(mock.Anything, documentID, tenantInfo).Return(nil, assert.AnError)
+	contentService.EXPECT().
+		GetContent(mock.Anything, documentID, tenantInfo).
+		Return(nil, assert.AnError)
 	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
 	searchProjection.EXPECT().Upsert(mock.Anything, updated, "").Return(nil)
 	draftRepo := mocks.NewMockDocumentShipmentDraftRepository(t)
 
-	draft := &documentshipmentdraft.Draft{
+	draft := &documentshipmentdraft.DocumentShipmentDraft{
 		ID:             pulid.MustNew("dsd_"),
 		DocumentID:     documentID,
 		OrganizationID: orgID,
@@ -88,14 +99,16 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 		Status:         documentshipmentdraft.StatusReady,
 	}
 	draftRepo.EXPECT().GetByDocumentID(mock.Anything, documentID, tenantInfo).Return(draft, nil)
-	draftRepo.EXPECT().Upsert(mock.Anything, mock.MatchedBy(func(entity *documentshipmentdraft.Draft) bool {
-		return entity.AttachedShipmentID != nil &&
-			*entity.AttachedShipmentID == shipmentID &&
-			entity.AttachedByID != nil &&
-			*entity.AttachedByID == userID &&
-			entity.AttachedAt != nil &&
-			*entity.AttachedAt > 0
-	})).Return(draft, nil)
+	draftRepo.EXPECT().
+		Upsert(mock.Anything, mock.MatchedBy(func(entity *documentshipmentdraft.DocumentShipmentDraft) bool {
+			return entity.AttachedShipmentID != nil &&
+				*entity.AttachedShipmentID == shipmentID &&
+				entity.AttachedByID != nil &&
+				*entity.AttachedByID == userID &&
+				entity.AttachedAt != nil &&
+				*entity.AttachedAt > 0
+		})).
+		Return(draft, nil)
 
 	cfg := &config.Config{
 		Storage: config.StorageConfig{

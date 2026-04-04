@@ -785,7 +785,7 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 	draftStatus := document.ShipmentDraftStatusUnavailable
 	if canGenerateShipmentDraft(control, doc.ResourceType, doc.DetectedKind) &&
 		hasUsableShipmentDraft(intelligence) {
-		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
+		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
@@ -799,7 +799,7 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 		draftStatus = document.ShipmentDraftStatusReady
 	} else {
 		draftState := documentshipmentdraft.StatusUnavailable
-		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
+		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
 			BusinessUnitID: doc.BusinessUnitID,
