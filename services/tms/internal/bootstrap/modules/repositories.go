@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceoverriderepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentaiextractionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentpacketrulerepository"
@@ -57,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentholdrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentimportchatrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
@@ -106,6 +108,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	customfieldvaluerepository.New,
 	databasesessionrepository.New,
 	documentrepository.New,
+	documentaiextractionrepository.New,
 	documentcontentrepository.New,
 	documentsearchprojectionrepository.New,
 	documentshipmentdraftrepository.New,
@@ -119,6 +122,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	shipmentcommodityrepository.New,
 	shipmentcommentrepository.New,
 	shipmentholdrepository.New,
+	shipmentimportchatrepository.New,
 	shipmentmoverepository.New,
 	seqgen.NewSequenceStore,
 	seqgen.NewFormatProvider,

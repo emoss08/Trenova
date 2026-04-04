@@ -3,6 +3,7 @@ package documentintelligencejobs
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -48,12 +49,14 @@ type ActivitiesParams struct {
 	DocumentControlRepo repositories.DocumentControlRepository
 	DocumentTypeRepo    repositories.DocumentTypeRepository
 	ContentRepo         repositories.DocumentContentRepository
+	AIExtractionRepo    repositories.DocumentAIExtractionRepository
 	DraftRepo           repositories.DocumentShipmentDraftRepository
 	AIDocumentService   services.AIDocumentService
 	SearchProjection    services.DocumentSearchProjectionService
 	Storage             storage.Client
 	WorkflowStarter     services.WorkflowStarter
 	ParsingRuleRuntime  services.DocumentParsingRuleRuntime
+	TemporalClient      client.Client `optional:"true"`
 }
 
 type Activities struct {
@@ -64,12 +67,14 @@ type Activities struct {
 	documentControlRepo repositories.DocumentControlRepository
 	documentTypeRepo    repositories.DocumentTypeRepository
 	contentRepo         repositories.DocumentContentRepository
+	aiExtractionRepo    repositories.DocumentAIExtractionRepository
 	draftRepo           repositories.DocumentShipmentDraftRepository
 	aiDocumentService   services.AIDocumentService
 	searchProjection    services.DocumentSearchProjectionService
 	storage             storage.Client
 	workflowStarter     services.WorkflowStarter
 	parsingRuleRuntime  services.DocumentParsingRuleRuntime
+	temporalClient      client.Client
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -101,12 +106,14 @@ func NewActivities(p ActivitiesParams) *Activities {
 		documentControlRepo: p.DocumentControlRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
 		contentRepo:         p.ContentRepo,
+		aiExtractionRepo:    p.AIExtractionRepo,
 		draftRepo:           p.DraftRepo,
 		aiDocumentService:   aiDocumentService,
 		searchProjection:    searchProjection,
 		storage:             p.Storage,
 		workflowStarter:     workflowStarter,
 		parsingRuleRuntime:  parsingRuleRuntime,
+		temporalClient:      p.TemporalClient,
 	}
 }
 
@@ -197,8 +204,8 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 	classification := classifyDocumentWithControl(doc.OriginalName, extracted.Text, extracted.Pages, control, features, fingerprint)
 	intelligence := analyzeDocument(classification, extracted)
 	intelligence = a.applyParsingRules(ctx, tenantInfo, doc.OriginalName, classification.ProviderFingerprint, extracted, intelligence)
-	classification, intelligence = a.enrichWithAI(ctx, payload, doc, control, extracted, features, fingerprint, classification, intelligence)
-	structured := buildStructuredData(intelligence)
+	classification, intelligence, aiDiagnostics, enqueueAsyncAI := a.enrichWithAI(ctx, payload, doc, control, extracted, features, fingerprint, classification, intelligence)
+	structured := buildStructuredData(intelligence, aiDiagnostics)
 	content.Status = documentcontent.StatusIndexed
 	content.ContentText = extracted.Text
 	content.PageCount = extracted.PageCount
@@ -227,8 +234,9 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 	}
 
 	draftStatus := document.ShipmentDraftStatusUnavailable
-	if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
-		intelligence.ReviewStatus == "Ready" {
+	draftIsUsable := canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) &&
+		hasUsableShipmentDraft(intelligence)
+	if draftIsUsable {
 		draft := &documentshipmentdraft.Draft{
 			DocumentID:     doc.ID,
 			OrganizationID: doc.OrganizationID,
@@ -245,10 +253,8 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		a.metrics.Document.RecordShipmentDraft("ready", doc.ResourceType, classification.Kind)
 	} else {
 		draftState := documentshipmentdraft.StatusUnavailable
-		if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) {
+		if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) && enqueueAsyncAI {
 			draftStatus = document.ShipmentDraftStatusPending
-		}
-		if canGenerateShipmentDraft(control, doc.ResourceType, classification.Kind) {
 			draftState = documentshipmentdraft.StatusPending
 		}
 		if _, err = a.draftRepo.Upsert(ctx, &documentshipmentdraft.Draft{
@@ -283,6 +289,18 @@ func (a *Activities) ProcessDocumentIntelligenceActivity(
 		indexedText = ""
 	}
 	a.syncSearchProjection(ctx, doc, indexedText)
+
+	if enqueueAsyncAI {
+		if err = a.startAIExtractionWorkflow(ctx, doc, payload.UserID, now); err != nil {
+			a.logger.Warn("failed to start async AI extraction workflow", zap.String("documentId", doc.ID.String()), zap.Error(err))
+			aiDiagnostics.AcceptanceStatus = aiAcceptanceStatusRejected
+			aiDiagnostics.RejectionReason = "ai_async_enqueue_failed"
+			content.StructuredData = buildStructuredData(intelligence, aiDiagnostics)
+			if _, upsertErr := a.contentRepo.Upsert(ctx, content); upsertErr != nil {
+				return nil, upsertErr
+			}
+		}
+	}
 
 	return &ProcessDocumentIntelligenceResult{
 		DocumentID: doc.ID,
@@ -399,7 +417,7 @@ func (a *Activities) extractViaFitz(ctx context.Context, data []byte, enableOCR 
 	pages := make([]pageExtractionResult, 0, pageCount)
 
 	for page := range pageCount {
-		activity.RecordHeartbeat(ctx, page)
+		recordHeartbeatIfActivity(ctx, page)
 		pageText, textErr := doc.Text(page)
 		if textErr == nil && strings.TrimSpace(pageText) != "" {
 			pages = append(pages, pageExtractionResult{
@@ -715,6 +733,46 @@ type documentIntelligenceAnalysis struct {
 	Fields               map[string]reviewField
 	Stops                []intelligenceStop
 	RawExcerpt           string
+}
+
+type aiAcceptanceStatus string
+
+const (
+	aiAcceptanceStatusNotAttempted aiAcceptanceStatus = "not_attempted"
+	aiAcceptanceStatusPending      aiAcceptanceStatus = "pending"
+	aiAcceptanceStatusAccepted     aiAcceptanceStatus = "accepted"
+	aiAcceptanceStatusRejected     aiAcceptanceStatus = "rejected"
+)
+
+type aiExtractionDiagnostics struct {
+	FallbackAnalysis  documentIntelligenceAnalysis
+	CandidateAnalysis *documentIntelligenceAnalysis
+	AcceptanceStatus  aiAcceptanceStatus
+	RejectionReason   string
+	ResponseID        string
+	SubmittedAt       *int64
+	LastPolledAt      *int64
+}
+
+func (d aiExtractionDiagnostics) ToMap() map[string]any {
+	data := map[string]any{
+		"acceptanceStatus": d.AcceptanceStatus,
+		"rejectionReason":  d.RejectionReason,
+		"fallbackAnalysis": d.FallbackAnalysis.ToMap(),
+	}
+	if d.CandidateAnalysis != nil {
+		data["candidateAnalysis"] = d.CandidateAnalysis.ToMap()
+	}
+	if d.ResponseID != "" {
+		data["responseId"] = d.ResponseID
+	}
+	if d.SubmittedAt != nil {
+		data["submittedAt"] = *d.SubmittedAt
+	}
+	if d.LastPolledAt != nil {
+		data["lastPolledAt"] = *d.LastPolledAt
+	}
+	return data
 }
 
 func (a documentIntelligenceAnalysis) ToMap() map[string]any {
@@ -1057,10 +1115,14 @@ func scoreInvoice(
 	}
 }
 
-func buildStructuredData(intelligence documentIntelligenceAnalysis) map[string]any {
+func buildStructuredData(
+	intelligence documentIntelligenceAnalysis,
+	aiDiagnostics aiExtractionDiagnostics,
+) map[string]any {
 	data := map[string]any{
-		"schemaVersion": 5,
+		"schemaVersion": 6,
 		"intelligence":  intelligence.ToMap(),
+		"aiDiagnostics": aiDiagnostics.ToMap(),
 	}
 	return data
 }
@@ -1268,12 +1330,22 @@ func (a *Activities) enrichWithAI(
 	fingerprint *providerFingerprint,
 	classification classificationResult,
 	intelligence documentIntelligenceAnalysis,
-) (classificationResult, documentIntelligenceAnalysis) {
+) (classificationResult, documentIntelligenceAnalysis, aiExtractionDiagnostics, bool) {
+	diagnostics := aiExtractionDiagnostics{
+		FallbackAnalysis: intelligence,
+		AcceptanceStatus: aiAcceptanceStatusNotAttempted,
+	}
 	if extracted == nil {
-		return classification, intelligence
+		diagnostics.RejectionReason = "no_extracted_content"
+		return classification, intelligence, diagnostics, false
 	}
 	if !a.cfg.AIEnabled() || !control.EnableAIAssistedClassification {
-		return classification, intelligence
+		if !a.cfg.AIEnabled() {
+			diagnostics.RejectionReason = "ai_disabled"
+		} else {
+			diagnostics.RejectionReason = "ai_assisted_classification_disabled"
+		}
+		return classification, intelligence, diagnostics, false
 	}
 
 	tenantInfo := pagination.TenantInfo{
@@ -1292,30 +1364,41 @@ func (a *Activities) enrichWithAI(
 		})
 	}
 
-	route, err := a.aiDocumentService.RouteDocument(ctx, &services.AIRouteRequest{
-		TenantInfo: tenantInfo,
-		DocumentID: doc.ID,
-		FileName:   doc.OriginalName,
-		Text:       truncateExtractedText(extracted.Text, a.cfg.GetAIMaxInputChars()),
-		Pages:      pages,
-		Features: &services.AIDocumentFeatureSet{
-			TitleCandidates:  features.TitleCandidates,
-			SectionLabels:    features.SectionLabels,
-			PartyLabels:      features.PartyLabels,
-			ReferenceLabels:  features.ReferenceLabels,
-			MoneySignals:     features.MoneySignals,
-			StopSignals:      features.StopSignals,
-			TermsSignals:     features.TermsSignals,
-			SignatureSignals: features.SignatureSignals,
-		},
-		Fingerprint: toAIFingerprintHint(fingerprint),
+	var route *services.AIRouteResult
+	err := a.runWithHeartbeat(ctx, "ai-route", func() error {
+		var routeErr error
+		route, routeErr = a.aiDocumentService.RouteDocument(ctx, &services.AIRouteRequest{
+			TenantInfo: tenantInfo,
+			DocumentID: doc.ID,
+			FileName:   doc.OriginalName,
+			Text:       truncateExtractedText(extracted.Text, a.cfg.GetAIMaxInputChars()),
+			Pages:      pages,
+			Features: &services.AIDocumentFeatureSet{
+				TitleCandidates:  features.TitleCandidates,
+				SectionLabels:    features.SectionLabels,
+				PartyLabels:      features.PartyLabels,
+				ReferenceLabels:  features.ReferenceLabels,
+				MoneySignals:     features.MoneySignals,
+				StopSignals:      features.StopSignals,
+				TermsSignals:     features.TermsSignals,
+				SignatureSignals: features.SignatureSignals,
+			},
+			Fingerprint: toAIFingerprintHint(fingerprint),
+		})
+		return routeErr
 	})
 	if err != nil {
 		a.logger.Warn("ai route failed", zap.String("documentId", doc.ID.String()), zap.Error(err))
-		return classification, intelligence
+		if errors.Is(err, context.DeadlineExceeded) {
+			diagnostics.RejectionReason = "ai_route_timeout"
+		} else {
+			diagnostics.RejectionReason = "ai_route_failed"
+		}
+		return classification, intelligence, diagnostics, false
 	}
 	if route == nil || strings.TrimSpace(route.DocumentKind) == "" {
-		return classification, intelligence
+		diagnostics.RejectionReason = "ai_route_empty"
+		return classification, intelligence, diagnostics, false
 	}
 	routedClassification := classification
 	routedClassification.Kind = normalizeRoutedKind(route.DocumentKind)
@@ -1328,60 +1411,100 @@ func (a *Activities) enrichWithAI(
 	routedAnalysis := analyzeDocument(routedClassification, extracted)
 
 	if !strings.EqualFold(routedClassification.Kind, "RateConfirmation") || !control.EnableAIAssistedExtraction || !route.ShouldExtract {
-		return routedClassification, routedAnalysis
+		switch {
+		case !strings.EqualFold(routedClassification.Kind, "RateConfirmation"):
+			diagnostics.RejectionReason = "ai_routed_non_rate_confirmation"
+		case !control.EnableAIAssistedExtraction:
+			diagnostics.RejectionReason = "ai_assisted_extraction_disabled"
+		case !route.ShouldExtract:
+			diagnostics.RejectionReason = "ai_route_declined_extraction"
+		}
+		return routedClassification, routedAnalysis, diagnostics, false
 	}
 
-	aiExtract, err := a.aiDocumentService.ExtractRateConfirmation(ctx, &services.AIExtractRequest{
-		TenantInfo: tenantInfo,
-		DocumentID: doc.ID,
-		FileName:   doc.OriginalName,
-		Text:       truncateExtractedText(extracted.Text, a.cfg.GetAIMaxInputChars()),
-		Pages:      pages,
-	})
-	if err != nil {
-		a.logger.Warn("ai extraction failed", zap.String("documentId", doc.ID.String()), zap.Error(err))
-		return classification, intelligence
-	}
-	if aiExtract == nil {
-		return routedClassification, routedAnalysis
+	diagnostics.AcceptanceStatus = aiAcceptanceStatusPending
+	diagnostics.RejectionReason = ""
+	return routedClassification, routedAnalysis, diagnostics, true
+}
+
+func (a *Activities) runWithHeartbeat(ctx context.Context, stage string, fn func() error) error {
+	recordHeartbeatIfActivity(ctx, stage)
+
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-done:
+				return
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				recordHeartbeatIfActivity(ctx, stage)
+			}
+		}
+	}()
+
+	return fn()
+}
+
+func recordHeartbeatIfActivity(ctx context.Context, details ...any) {
+	if !activity.IsActivity(ctx) {
+		return
 	}
 
-	merged, ok := mergeAIAnalysis(routedAnalysis, aiExtract)
-	if !ok {
-		return routedClassification, routedAnalysis
-	}
-
-	routedClassification.Kind = merged.Kind
-	routedClassification.Confidence = merged.OverallConfidence
-	routedClassification.Signals = dedupeStrings(append(routedClassification.Signals, route.Signals...))
-	routedClassification.ReviewRequired = merged.ReviewStatus != "Ready"
-	routedClassification.Source = "ai"
-	routedClassification.ProviderFingerprint = firstNonEmpty(route.ProviderFingerprint, providerName(fingerprint))
-	routedClassification.Reason = firstNonEmpty(route.Reason, routedClassification.Reason)
-
-	return routedClassification, merged
+	activity.RecordHeartbeat(ctx, details...)
 }
 
 func mergeAIAnalysis(
 	fallback documentIntelligenceAnalysis,
 	aiExtract *services.AIExtractResult,
-) (documentIntelligenceAnalysis, bool) {
-	if aiExtract == nil || !strings.EqualFold(aiExtract.DocumentKind, "RateConfirmation") {
-		return fallback, false
-	}
-	if !validateAIExtract(aiExtract) {
-		return fallback, false
+) (documentIntelligenceAnalysis, bool, string) {
+	normalized := normalizeAIExtractResult(aiExtract)
+	rejectionReason := validateAIExtract(normalized)
+	if rejectionReason != "" {
+		return fallback, false, rejectionReason
 	}
 
-	merged := fallback
-	merged.Kind = "RateConfirmation"
-	merged.OverallConfidence = clampConfidence(aiExtract.OverallConfidence)
-	merged.ReviewStatus = normalizeAIReviewStatus(aiExtract.ReviewStatus)
-	merged.MissingFields = dedupeStrings(aiExtract.MissingFields)
-	merged.Signals = dedupeStrings(aiExtract.Signals)
-	merged.Fields = make(map[string]reviewField, len(aiExtract.Fields))
+	merged := analysisFromAIExtract(normalized)
+	merged.ClassifierSource = fallback.ClassifierSource
+	merged.ProviderFingerprint = fallback.ProviderFingerprint
+	merged.ClassificationReason = fallback.ClassificationReason
+	merged.ParsingRuleMetadata = fallback.ParsingRuleMetadata
+	merged.RawExcerpt = fallback.RawExcerpt
+	return merged, true, ""
+}
+
+func analysisFromAIExtract(aiExtract *services.AIExtractResult) documentIntelligenceAnalysis {
+	aiExtract = normalizeAIExtractResult(aiExtract)
+	if aiExtract == nil {
+		return documentIntelligenceAnalysis{
+			Kind:          "RateConfirmation",
+			MissingFields: []string{},
+			Signals:       []string{},
+			Fields:        map[string]reviewField{},
+			Stops:         []intelligenceStop{},
+			Conflicts:     []reviewConflict{},
+		}
+	}
+
+	analysis := documentIntelligenceAnalysis{
+		Kind:              "RateConfirmation",
+		OverallConfidence: clampConfidence(aiExtract.OverallConfidence),
+		ReviewStatus:      normalizeAIReviewStatus(aiExtract.ReviewStatus),
+		ClassifierSource:  "ai",
+		MissingFields:     dedupeStrings(aiExtract.MissingFields),
+		Signals:           dedupeStrings(aiExtract.Signals),
+		Fields:            make(map[string]reviewField, len(aiExtract.Fields)),
+		Stops:             make([]intelligenceStop, 0, len(aiExtract.Stops)),
+		Conflicts:         make([]reviewConflict, 0, len(aiExtract.Conflicts)),
+	}
 	for key, field := range aiExtract.Fields {
-		merged.Fields[key] = reviewField{
+		analysis.Fields[key] = reviewField{
 			Label:           field.Label,
 			Value:           field.Value,
 			Confidence:      clampConfidence(field.Confidence),
@@ -1394,9 +1517,8 @@ func mergeAIAnalysis(
 		}
 	}
 
-	merged.Stops = make([]intelligenceStop, 0, len(aiExtract.Stops))
 	for _, stop := range aiExtract.Stops {
-		merged.Stops = append(merged.Stops, intelligenceStop{
+		analysis.Stops = append(analysis.Stops, intelligenceStop{
 			Sequence:            stop.Sequence,
 			Role:                stop.Role,
 			Name:                stop.Name,
@@ -1416,9 +1538,8 @@ func mergeAIAnalysis(
 		})
 	}
 
-	merged.Conflicts = make([]reviewConflict, 0, len(aiExtract.Conflicts))
 	for _, conflict := range aiExtract.Conflicts {
-		merged.Conflicts = append(merged.Conflicts, reviewConflict{
+		analysis.Conflicts = append(analysis.Conflicts, reviewConflict{
 			Key:             conflict.Key,
 			Label:           conflict.Label,
 			Values:          conflict.Values,
@@ -1428,18 +1549,148 @@ func mergeAIAnalysis(
 		})
 	}
 
-	return merged, true
+	return analysis
 }
 
-func validateAIExtract(result *services.AIExtractResult) bool {
+func normalizeAIExtractResult(result *services.AIExtractResult) *services.AIExtractResult {
+	if result == nil {
+		return nil
+	}
+
+	normalized := &services.AIExtractResult{
+		DocumentKind:      normalizeRoutedKind(result.DocumentKind),
+		OverallConfidence: result.OverallConfidence,
+		ReviewStatus:      normalizeAIReviewStatus(result.ReviewStatus),
+		MissingFields:     append([]string{}, result.MissingFields...),
+		Signals:           append([]string{}, result.Signals...),
+		Fields:            make(map[string]services.AIDocumentField, len(result.Fields)+3),
+		Stops:             make([]services.AIDocumentStop, 0, len(result.Stops)),
+		Conflicts:         append([]services.AIDocumentConflict{}, result.Conflicts...),
+	}
+
+	for key, field := range result.Fields {
+		canonicalKey := normalizeAIFieldKey(key)
+		if canonicalKey == "" {
+			canonicalKey = normalizeAIFieldKey(field.Label)
+		}
+		if canonicalKey == "" {
+			continue
+		}
+
+		field.Label = strings.TrimSpace(field.Label)
+		field.Value = strings.TrimSpace(field.Value)
+		field.Source = normalizeAISource(field.Source)
+		if existing, ok := normalized.Fields[canonicalKey]; !ok || field.PageNumber > 0 && existing.PageNumber <= 0 {
+			normalized.Fields[canonicalKey] = field
+		}
+	}
+
+	for _, stop := range result.Stops {
+		stop.Role = normalizeAIStopRole(stop.Role)
+		stop.Name = strings.TrimSpace(stop.Name)
+		stop.AddressLine1 = strings.TrimSpace(stop.AddressLine1)
+		stop.AddressLine2 = strings.TrimSpace(stop.AddressLine2)
+		stop.City = strings.TrimSpace(stop.City)
+		stop.State = strings.TrimSpace(stop.State)
+		stop.PostalCode = strings.TrimSpace(stop.PostalCode)
+		stop.Date = strings.TrimSpace(stop.Date)
+		stop.TimeWindow = strings.TrimSpace(stop.TimeWindow)
+		stop.Source = normalizeAISource(stop.Source)
+		normalized.Stops = append(normalized.Stops, stop)
+	}
+
+	ensureCanonicalAIField(normalized, "rate", []string{"rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue"})
+	ensureCanonicalAIFieldFromStop(normalized, "shipper", "Shipper", "pickup")
+	ensureCanonicalAIFieldFromStop(normalized, "consignee", "Consignee", "delivery")
+
+	return normalized
+}
+
+func normalizeAIFieldKey(value string) string {
+	replacer := strings.NewReplacer(" ", "", "_", "", "-", "", "/", "")
+	normalized := replacer.Replace(strings.TrimSpace(strings.ToLower(value)))
+	switch normalized {
+	case "rate", "totalrate", "linehaul", "linehaulrate", "freightcharge", "total", "amountdue":
+		return "rate"
+	case "shipper", "shippername", "shipfrom", "originname":
+		return "shipper"
+	case "consignee", "receiver", "receivername", "deliveryto", "shipto", "destinationname":
+		return "consignee"
+	default:
+		return normalized
+	}
+}
+
+func normalizeAIStopRole(role string) string {
+	switch strings.TrimSpace(strings.ToLower(role)) {
+	case "pickup", "origin", "shipper":
+		return "pickup"
+	case "delivery", "destination", "receiver", "consignee", "drop":
+		return "delivery"
+	default:
+		return strings.TrimSpace(strings.ToLower(role))
+	}
+}
+
+func ensureCanonicalAIField(result *services.AIExtractResult, key string, aliases []string) {
+	if result == nil {
+		return
+	}
+	if field, ok := result.Fields[key]; ok && strings.TrimSpace(field.Value) != "" {
+		if field.PageNumber > 0 {
+			return
+		}
+	}
+
+	for _, alias := range aliases {
+		field, ok := result.Fields[alias]
+		if !ok || strings.TrimSpace(field.Value) == "" {
+			continue
+		}
+		field.Source = normalizeAISource(field.Source)
+		if strings.TrimSpace(field.Label) == "" {
+			field.Label = key
+		}
+		result.Fields[key] = field
+		return
+	}
+}
+
+func ensureCanonicalAIFieldFromStop(result *services.AIExtractResult, key, label, role string) {
+	if result == nil {
+		return
+	}
+	if field, ok := result.Fields[key]; ok && strings.TrimSpace(field.Value) != "" && field.PageNumber > 0 {
+		return
+	}
+
+	for _, stop := range result.Stops {
+		if stop.Role != role || strings.TrimSpace(stop.Name) == "" || stop.PageNumber <= 0 {
+			continue
+		}
+		result.Fields[key] = services.AIDocumentField{
+			Label:           label,
+			Value:           stop.Name,
+			Confidence:      clampConfidence(stop.Confidence),
+			EvidenceExcerpt: stop.EvidenceExcerpt,
+			PageNumber:      stop.PageNumber,
+			ReviewRequired:  stop.ReviewRequired,
+			Conflict:        false,
+			Source:          normalizeAISource(stop.Source),
+		}
+		return
+	}
+}
+
+func validateAIExtract(result *services.AIExtractResult) string {
 	if result == nil || !strings.EqualFold(result.DocumentKind, "RateConfirmation") {
-		return false
+		return "ai_candidate_invalid_document_kind"
 	}
 	requiredFields := []string{"shipper", "consignee", "rate"}
 	for _, key := range requiredFields {
 		field, ok := result.Fields[key]
 		if !ok || strings.TrimSpace(field.Value) == "" || field.PageNumber <= 0 {
-			return false
+			return "ai_candidate_missing_required_field_" + key
 		}
 	}
 
@@ -1447,7 +1698,7 @@ func validateAIExtract(result *services.AIExtractResult) bool {
 	hasDelivery := false
 	for _, stop := range result.Stops {
 		if stop.PageNumber <= 0 || strings.TrimSpace(stop.EvidenceExcerpt) == "" {
-			return false
+			return "ai_candidate_invalid_stop_metadata"
 		}
 		switch strings.ToLower(strings.TrimSpace(stop.Role)) {
 		case "pickup":
@@ -1456,7 +1707,13 @@ func validateAIExtract(result *services.AIExtractResult) bool {
 			hasDelivery = true
 		}
 	}
-	return hasPickup && hasDelivery
+	if !hasPickup {
+		return "ai_candidate_missing_pickup_stop"
+	}
+	if !hasDelivery {
+		return "ai_candidate_missing_delivery_stop"
+	}
+	return ""
 }
 
 func isPotentialRateConfirmation(name, text, kind string) bool {
@@ -1614,6 +1871,52 @@ func canGenerateShipmentDraft(
 		kind == "RateConfirmation"
 }
 
+func hasUsableShipmentDraft(intelligence documentIntelligenceAnalysis) bool {
+	if strings.EqualFold(strings.TrimSpace(intelligence.ReviewStatus), "Ready") {
+		return true
+	}
+
+	if hasMeaningfulStopForRole(intelligence.Stops, "pickup") &&
+		hasMeaningfulStopForRole(intelligence.Stops, "delivery") {
+		return true
+	}
+
+	return hasMeaningfulField(intelligence.Fields, "shipper") &&
+		hasMeaningfulField(intelligence.Fields, "consignee") &&
+		hasMeaningfulField(intelligence.Fields, "rate")
+}
+
+func hasMeaningfulStopForRole(stops []intelligenceStop, role string) bool {
+	for _, stop := range stops {
+		if !strings.EqualFold(strings.TrimSpace(stop.Role), role) {
+			continue
+		}
+		if hasReviewableStopData(stop) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasReviewableStopData(stop intelligenceStop) bool {
+	return strings.TrimSpace(stop.Name) != "" ||
+		strings.TrimSpace(stop.AddressLine1) != "" ||
+		strings.TrimSpace(stop.AddressLine2) != "" ||
+		strings.TrimSpace(stop.City) != "" ||
+		strings.TrimSpace(stop.State) != "" ||
+		strings.TrimSpace(stop.PostalCode) != "" ||
+		strings.TrimSpace(stop.Date) != "" ||
+		strings.TrimSpace(stop.TimeWindow) != ""
+}
+
+func hasMeaningfulField(fields map[string]reviewField, key string) bool {
+	field, ok := fields[key]
+	if !ok {
+		return false
+	}
+	return strings.TrimSpace(field.Value) != ""
+}
+
 func (a *Activities) associateDocumentType(
 	ctx context.Context,
 	doc *document.Document,
@@ -1743,11 +2046,14 @@ var (
 	dueDateRegex      = regexp.MustCompile(`(?im)^due date\s*[:\-]\s*(.+)$`)
 	totalDueRegex     = regexp.MustCompile(`(?im)^(?:amount due|total due|balance due)\s*[:#-]\s*([$]?[0-9,]+(?:\.[0-9]{2})?)$`)
 	signatureRegex    = regexp.MustCompile(`(?im)^(?:receiver|consignee) signature\s*[:\-]\s*(.+)$`)
-	dateLabelRegex    = regexp.MustCompile(`(?i)\b(?:date|pickup|delivery)\b`)
+	dateLabelRegex    = regexp.MustCompile(`(?i)\b(?:date|pick\s*up|pickup|delivery)\b`)
 	timeWindowRegex   = regexp.MustCompile(`(?i)\b([0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?\s*[-–]\s*[0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?)\b`)
-	dateValueRegex    = regexp.MustCompile(`(?i)\b(?:\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:,\s*\d{4})?)\b`)
+	appointmentRegex  = regexp.MustCompile(`(?i)\b([0-9]{1,2}[:][0-9]{2}\s*(?:am|pm)?\s*appt\.?)\b`)
+	dateValueRegex    = regexp.MustCompile(`(?i)(?:^|[^0-9:])((?:\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:,\s*\d{4})?))\b`)
 	addressLineRegex  = regexp.MustCompile(`(?i)\b\d{1,6}\s+[a-z0-9][a-z0-9.\-# ]+\b`)
-	cityStateZipRegex = regexp.MustCompile(`(?i)\b([a-z .'-]+),\s*([a-z]{2})\s+(\d{5}(?:-\d{4})?)\b`)
+	cityStateZipRegex = regexp.MustCompile(`(?i)\b([a-z .'-]+),?\s*([a-z]{2})\s+(\d{5}(?:-\d{4})?)\b`)
+	stopSectionRegex  = regexp.MustCompile(`(?i)^\s*(shipper|pickup|origin|receiver|consignee|delivery|drop|destination)\s*(?:#\s*\d+)?\s*:?\s*$`)
+	phoneLineRegex    = regexp.MustCompile(`^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$`)
 )
 
 func analyzeDocument(
@@ -2478,53 +2784,14 @@ func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceSt
 				Source:          "deterministic",
 			}
 
-			if labelValue := extractLabelValue(line); labelValue != "" {
-				switch {
-				case looksLikeAddress(labelValue):
-					stop.AddressLine1 = labelValue
-				case dateLabelRegex.MatchString(line) && stop.Date == "":
-					stop.Date = firstRegexValue(dateValueRegex, labelValue)
-					stop.TimeWindow = firstRegexValue(timeWindowRegex, labelValue)
-				default:
-					stop.Name = labelValue
-				}
+			block := collectRateConfirmationStopBlock(lines, idx)
+			if len(block) > 0 {
+				stop.EvidenceExcerpt = strings.Join(block, "\n")
 			}
-
-			for _, candidate := range lines[idx+1:] {
-				if candidate == "" {
-					break
-				}
-				if _, nextStop := detectStopRole(candidate); nextStop {
-					break
-				}
-
-				switch {
-				case stop.Name == "" && !looksLikeAddress(candidate) && !cityStateZipRegex.MatchString(candidate) && !dateLabelRegex.MatchString(candidate):
-					stop.Name = strings.TrimSpace(candidate)
-				case stop.AddressLine1 == "" && looksLikeAddress(candidate):
-					stop.AddressLine1 = strings.TrimSpace(candidate)
-				case stop.City == "" && cityStateZipRegex.MatchString(candidate):
-					city, state, postalCode := extractCityStateZip(candidate)
-					stop.City = city
-					stop.State = state
-					stop.PostalCode = postalCode
-				case stop.Date == "" && dateLabelRegex.MatchString(candidate):
-					stop.Date = firstRegexValue(dateValueRegex, candidate)
-					stop.TimeWindow = firstRegexValue(timeWindowRegex, candidate)
-				case stop.TimeWindow == "":
-					stop.TimeWindow = firstRegexValue(timeWindowRegex, candidate)
-				case stop.AddressLine2 == "" && looksLikeAddress(candidate) && strings.TrimSpace(candidate) != stop.AddressLine1:
-					stop.AddressLine2 = strings.TrimSpace(candidate)
-				}
+			populateRateConfirmationStop(&stop, block)
+			if !hasMeaningfulStopData(stop) {
+				continue
 			}
-
-			if stop.Date == "" {
-				stop.Date = firstRegexValue(dateValueRegex, stop.EvidenceExcerpt)
-			}
-			if stop.TimeWindow == "" {
-				stop.TimeWindow = firstRegexValue(timeWindowRegex, stop.EvidenceExcerpt)
-			}
-			stop.AppointmentRequired = strings.Contains(strings.ToLower(stop.EvidenceExcerpt), "appointment")
 
 			if stop.AddressLine1 == "" || stop.Date == "" {
 				stop.ReviewRequired = true
@@ -2646,7 +2913,18 @@ func splitNormalizedLines(text string) []string {
 
 func detectStopRole(line string) (string, bool) {
 	lower := strings.ToLower(strings.TrimSpace(line))
+	if isStopMetadataLine(lower) {
+		return "", false
+	}
 	switch {
+	case stopSectionRegex.MatchString(lower):
+		switch {
+		case strings.HasPrefix(lower, "shipper"), strings.HasPrefix(lower, "pickup"), strings.HasPrefix(lower, "origin"):
+			return "pickup", true
+		case strings.HasPrefix(lower, "receiver"), strings.HasPrefix(lower, "consignee"), strings.HasPrefix(lower, "delivery"), strings.HasPrefix(lower, "drop"), strings.HasPrefix(lower, "destination"):
+			return "delivery", true
+		}
+		return "", false
 	case strings.HasPrefix(lower, "pickup"):
 		if strings.HasPrefix(lower, "pickup date") || strings.HasPrefix(lower, "pickup window") {
 			return "", false
@@ -2660,6 +2938,310 @@ func detectStopRole(line string) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+func collectRateConfirmationStopBlock(lines []string, idx int) []string {
+	end := idx + 36
+	if end > len(lines) {
+		end = len(lines)
+	}
+
+	block := make([]string, 0, end-idx)
+	blankRun := 0
+	for pos := idx; pos < end; pos++ {
+		line := strings.TrimSpace(lines[pos])
+
+		if pos > idx {
+			if _, nextStop := detectStopRole(line); nextStop {
+				break
+			}
+			if strings.HasPrefix(line, "--- PAGE ") {
+				break
+			}
+		}
+
+		if line == "" {
+			blankRun++
+			if blankRun > 5 && hasStopSignal(block) {
+				break
+			}
+			continue
+		}
+
+		blankRun = 0
+		block = append(block, line)
+	}
+
+	return block
+}
+
+func populateRateConfirmationStop(stop *intelligenceStop, block []string) {
+	if stop == nil || len(block) == 0 {
+		return
+	}
+
+	header := block[0]
+	if labelValue := extractLabelValue(header); labelValue != "" && !isStopMetadataLine(strings.ToLower(labelValue)) {
+		switch {
+		case looksLikeAddress(labelValue):
+			stop.AddressLine1 = labelValue
+		case dateLabelRegex.MatchString(header):
+			if stop.Date == "" {
+				stop.Date = firstRegexValue(dateValueRegex, labelValue)
+			}
+			if stop.TimeWindow == "" {
+				stop.TimeWindow = firstRegexValue(timeWindowRegex, labelValue)
+			}
+		default:
+			stop.Name = labelValue
+		}
+	}
+
+	if stop.Date == "" {
+		stop.Date = findLastRegexValue(dateValueRegex, block)
+	}
+	if stop.TimeWindow == "" {
+		stop.TimeWindow = findLastStopTimeValue(block)
+	}
+
+	cityIdx, city, state, postalCode := findLastCityStateZip(block)
+	if cityIdx >= 0 {
+		stop.City = city
+		stop.State = state
+		stop.PostalCode = postalCode
+		if stop.AddressLine1 == "" {
+			stop.AddressLine1, stop.AddressLine2 = extractAddressBeforeCity(block, cityIdx)
+		}
+		if stop.Name == "" {
+			stop.Name = extractStopNameBeforeIndex(block, cityIdx)
+		}
+	}
+
+	if stop.AddressLine1 == "" {
+		stop.AddressLine1 = findLastAddressLine(block)
+	}
+	if stop.Name == "" {
+		stop.Name = extractStopNameBeforeIndex(block, len(block))
+	}
+
+	stop.Name = sanitizeStopName(stop.Name)
+	stop.AddressLine1 = strings.TrimSpace(stop.AddressLine1)
+	stop.AddressLine2 = strings.TrimSpace(stop.AddressLine2)
+	stop.Date = strings.TrimSpace(stop.Date)
+	stop.TimeWindow = strings.TrimSpace(stop.TimeWindow)
+	stop.AppointmentRequired = strings.Contains(strings.ToLower(strings.Join(block, "\n")), "appointment") ||
+		strings.Contains(strings.ToLower(stop.TimeWindow), "appt")
+}
+
+func hasStopSignal(block []string) bool {
+	for _, line := range block {
+		if looksLikeAddress(line) || cityStateZipRegex.MatchString(line) || dateValueRegex.MatchString(line) || timeWindowRegex.MatchString(line) {
+			return true
+		}
+	}
+	return false
+}
+
+func findLastRegexValue(re *regexp.Regexp, block []string) string {
+	for idx := len(block) - 1; idx >= 0; idx-- {
+		if value := firstRegexValue(re, block[idx]); value != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func findLastStopTimeValue(block []string) string {
+	if value := findLastRegexValue(timeWindowRegex, block); value != "" {
+		return value
+	}
+	return findLastRegexValue(appointmentRegex, block)
+}
+
+func findLastCityStateZip(block []string) (int, string, string, string) {
+	for idx := len(block) - 1; idx >= 0; idx-- {
+		if !cityStateZipRegex.MatchString(block[idx]) {
+			continue
+		}
+		city, state, postalCode := extractCityStateZip(block[idx])
+		if city != "" && state != "" {
+			return idx, city, state, postalCode
+		}
+	}
+	return -1, "", "", ""
+}
+
+func extractAddressBeforeCity(block []string, cityIdx int) (string, string) {
+	if cityIdx <= 0 || cityIdx > len(block) {
+		return "", ""
+	}
+
+	prevIdx, prevLine := previousMeaningfulStopLine(block, cityIdx-1)
+	if prevIdx < 0 {
+		return "", ""
+	}
+
+	if looksLikeAddress(prevLine) {
+		return prevLine, ""
+	}
+	if isStreetFragment(prevLine) {
+		numberIdx, numberLine := previousMeaningfulStopLine(block, prevIdx-1)
+		if numberIdx >= 0 && isNumericAddressPrefix(numberLine) {
+			return strings.TrimSpace(numberLine + " " + prevLine), ""
+		}
+	}
+
+	return "", ""
+}
+
+func extractStopNameBeforeIndex(block []string, limit int) string {
+	if limit > len(block) {
+		limit = len(block)
+	}
+	for idx := limit - 1; idx >= 0; idx-- {
+		line := strings.TrimSpace(block[idx])
+		if !isUsableStopName(line) {
+			continue
+		}
+		return line
+	}
+	return ""
+}
+
+func previousMeaningfulStopLine(block []string, start int) (int, string) {
+	for idx := start; idx >= 0; idx-- {
+		line := strings.TrimSpace(block[idx])
+		if line == "" || isStopMetadataLine(strings.ToLower(line)) || phoneLineRegex.MatchString(line) {
+			continue
+		}
+		return idx, line
+	}
+	return -1, ""
+}
+
+func findLastAddressLine(block []string) string {
+	for idx := len(block) - 1; idx >= 0; idx-- {
+		line := strings.TrimSpace(block[idx])
+		if line == "" || isStopMetadataLine(strings.ToLower(line)) {
+			continue
+		}
+		if looksLikeAddress(line) {
+			return line
+		}
+		if isStreetFragment(line) {
+			if prevIdx, prevLine := previousMeaningfulStopLine(block, idx-1); prevIdx >= 0 && isNumericAddressPrefix(prevLine) {
+				return strings.TrimSpace(prevLine + " " + line)
+			}
+		}
+	}
+	return ""
+}
+
+func sanitizeStopName(name string) string {
+	trimmed := strings.TrimSpace(name)
+	if !isUsableStopName(trimmed) {
+		return ""
+	}
+	return trimmed
+}
+
+func hasMeaningfulStopData(stop intelligenceStop) bool {
+	return strings.TrimSpace(stop.Name) != "" ||
+		strings.TrimSpace(stop.AddressLine1) != "" ||
+		(strings.TrimSpace(stop.City) != "" && strings.TrimSpace(stop.State) != "") ||
+		strings.TrimSpace(stop.Date) != "" ||
+		strings.TrimSpace(stop.TimeWindow) != ""
+}
+
+func isUsableStopName(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" {
+		return false
+	}
+	lower := strings.ToLower(trimmed)
+	if isStopMetadataLine(lower) || phoneLineRegex.MatchString(trimmed) || looksLikeAddress(trimmed) || cityStateZipRegex.MatchString(trimmed) || dateValueRegex.MatchString(trimmed) || isStreetFragment(trimmed) || isNumericAddressPrefix(trimmed) {
+		return false
+	}
+	return true
+}
+
+func isStopMetadataLine(lower string) bool {
+	normalized := normalizeSectionLabel(lower)
+	if normalized == "" {
+		return false
+	}
+
+	switch {
+	case normalized == "shipper instructions",
+		normalized == "receiver instructions",
+		normalized == "address",
+		normalized == "phone",
+		normalized == "ref #",
+		normalized == "ref",
+		normalized == "commodity",
+		normalized == "est wgt",
+		normalized == "units",
+		normalized == "count",
+		normalized == "pallets",
+		normalized == "temp",
+		normalized == "driver name",
+		normalized == "trailer #",
+		normalized == "tractor #",
+		normalized == "pickup#",
+		normalized == "delivery#",
+		normalized == "appointment#",
+		normalized == "pick up date",
+		normalized == "pick up time",
+		normalized == "pickup date",
+		normalized == "pickup time",
+		normalized == "delivery date",
+		normalized == "delivery time":
+		return true
+	case strings.HasPrefix(normalized, "please "),
+		strings.HasPrefix(normalized, "scheduled "),
+		strings.HasPrefix(normalized, "page "),
+		strings.HasPrefix(normalized, "this load was booked"),
+		strings.HasPrefix(normalized, "thank you"),
+		normalized == "loose(s)":
+		return true
+	default:
+		return false
+	}
+}
+
+func isStreetFragment(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" || looksLikeAddress(trimmed) || cityStateZipRegex.MatchString(trimmed) {
+		return false
+	}
+	if isNumericAddressPrefix(trimmed) || phoneLineRegex.MatchString(trimmed) || dateValueRegex.MatchString(trimmed) {
+		return false
+	}
+	lower := strings.ToLower(trimmed)
+	if isStopMetadataLine(lower) {
+		return false
+	}
+
+	streetKeywords := []string{"street", "st", "road", "rd", "drive", "dr", "avenue", "ave", "boulevard", "blvd", "lane", "ln", "court", "ct", "circle", "cir", "way", "parkway", "pkwy", "highway", "hwy", "suite", "ste"}
+	for _, keyword := range streetKeywords {
+		if strings.Contains(lower, keyword) {
+			return true
+		}
+	}
+	return false
+}
+
+func isNumericAddressPrefix(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if trimmed == "" {
+		return false
+	}
+	for _, r := range trimmed {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func collectStopExcerpt(lines []string, idx int) string {

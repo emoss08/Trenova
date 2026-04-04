@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -38,6 +39,7 @@ func TestReextractResetsStateAndRequeuesWorkflow(t *testing.T) {
 		ID:                  documentID,
 		OrganizationID:      orgID,
 		BusinessUnitID:      buID,
+		ProcessingProfile:   document.ProcessingProfileRateConfirmationImport,
 		ContentStatus:       document.ContentStatusFailed,
 		ContentError:        "old error",
 		DetectedKind:        "RateConfirmation",
@@ -153,9 +155,81 @@ func TestEnqueueExtractionSkipsWhenDocumentIntelligenceDisabled(t *testing.T) {
 	})
 
 	err = service.EnqueueExtraction(t.Context(), &document.Document{
-		ID:             documentID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
+		ID:                documentID,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
 	}, userID)
 	require.NoError(t, err)
+}
+
+func TestEnqueueExtractionSkipsWhenProcessingProfileIsNone(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+	}
+	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	require.NoError(t, err)
+
+	service := documentintelligenceservice.New(documentintelligenceservice.Params{
+		Logger:              zap.NewNop(),
+		Config:              cfg,
+		Metrics:             metricRegistry,
+		DocumentControlRepo: mocks.NewMockDocumentControlRepository(t),
+		DocumentRepo:        mocks.NewMockDocumentRepository(t),
+		ContentRepo:         mocks.NewMockDocumentContentRepository(t),
+		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
+		WorkflowStarter:     mocks.NewMockWorkflowStarter(t),
+	})
+
+	err = service.EnqueueExtraction(t.Context(), &document.Document{
+		ID:                pulid.MustNew("doc_"),
+		OrganizationID:    pulid.MustNew("org_"),
+		BusinessUnitID:    pulid.MustNew("bu_"),
+		ProcessingProfile: document.ProcessingProfileNone,
+	}, pulid.MustNew("usr_"))
+	require.NoError(t, err)
+}
+
+func TestReextractRejectsDocumentsWithoutTargetedProcessing(t *testing.T) {
+	t.Parallel()
+
+	cfg := &config.Config{
+		DocumentIntelligence: config.DocumentIntelligenceConfig{Enabled: true},
+	}
+	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
+	require.NoError(t, err)
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	documentID := pulid.MustNew("doc_")
+	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
+
+	documentRepo := mocks.NewMockDocumentRepository(t)
+	documentRepo.EXPECT().GetByID(mock.Anything, repositories.GetDocumentByIDRequest{
+		ID:         documentID,
+		TenantInfo: tenantInfo,
+	}).Return(&document.Document{
+		ID:                documentID,
+		OrganizationID:    orgID,
+		BusinessUnitID:    buID,
+		ProcessingProfile: document.ProcessingProfileNone,
+	}, nil)
+
+	service := documentintelligenceservice.New(documentintelligenceservice.Params{
+		Logger:              zap.NewNop(),
+		Config:              cfg,
+		Metrics:             metricRegistry,
+		DocumentControlRepo: mocks.NewMockDocumentControlRepository(t),
+		DocumentRepo:        documentRepo,
+		ContentRepo:         mocks.NewMockDocumentContentRepository(t),
+		DraftRepo:           mocks.NewMockDocumentShipmentDraftRepository(t),
+		WorkflowStarter:     mocks.NewMockWorkflowStarter(t),
+	})
+
+	err = service.Reextract(t.Context(), documentID, tenantInfo)
+	require.Error(t, err)
+	require.True(t, errortypes.IsConflictError(err))
 }

@@ -14,6 +14,7 @@ import { apiService } from "@/services/api";
 import type {
   Document,
   DocumentContent,
+  DocumentIntelligenceAIDiagnostics,
   DocumentIntelligenceConflict,
   DocumentIntelligence,
   DocumentIntelligenceField,
@@ -127,6 +128,41 @@ function formatStopSummary(stop: DocumentIntelligenceStop) {
   return addressParts.length > 0
     ? addressParts.join(", ")
     : "Address not extracted";
+}
+
+function formatAIAcceptanceStatus(status?: string) {
+  switch (status) {
+    case "accepted":
+      return "Accepted";
+    case "rejected":
+      return "Rejected";
+    case "not_attempted":
+      return "Not Attempted";
+    default:
+      return "Unknown";
+  }
+}
+
+function aiAcceptanceVariant(status?: string) {
+  switch (status) {
+    case "accepted":
+      return "active";
+    case "rejected":
+      return "outline";
+    case "not_attempted":
+      return "secondary";
+    default:
+      return "secondary";
+  }
+}
+
+function formatDiagnosticReason(reason?: string) {
+  if (!reason) return "None";
+  return reason
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function ConflictSection({
@@ -324,6 +360,148 @@ function IntelligenceSummary({
   );
 }
 
+function AnalysisSnapshotCard({
+  title,
+  analysis,
+}: {
+  title: string;
+  analysis: DocumentIntelligence | null | undefined;
+}) {
+  if (!analysis) {
+    return (
+      <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+        No analysis captured.
+      </div>
+    );
+  }
+
+  const fieldCount = Object.keys(analysis.fields ?? {}).length;
+
+  return (
+    <div className="rounded-lg border p-3">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {title}
+          </div>
+          <div className="mt-1 text-sm font-medium">
+            {analysis.kind || "Other"}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant={confidenceVariant(analysis.overallConfidence)}>
+            {formatConfidence(analysis.overallConfidence)}
+          </Badge>
+          {analysis.reviewStatus ? (
+            <Badge variant={analysis.reviewStatus === "Ready" ? "active" : "outline"}>
+              {analysis.reviewStatus}
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+      <div className="grid gap-2 md:grid-cols-3">
+        <div className="rounded-md bg-muted/20 p-2">
+          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Fields
+          </div>
+          <div className="mt-1 text-sm">{fieldCount}</div>
+        </div>
+        <div className="rounded-md bg-muted/20 p-2">
+          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Stops
+          </div>
+          <div className="mt-1 text-sm">{analysis.stops?.length ?? 0}</div>
+        </div>
+        <div className="rounded-md bg-muted/20 p-2">
+          <div className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Source
+          </div>
+          <div className="mt-1 text-sm">{analysis.classifierSource || "Unknown"}</div>
+        </div>
+      </div>
+      {analysis.missingFields?.length ? (
+        <div className="mt-3">
+          <div className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Missing Fields
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {analysis.missingFields.map((field) => (
+              <Badge key={field} variant="secondary">
+                {field}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {analysis.stops?.length ? (
+        <div className="mt-3">
+          <div className="mb-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+            Stops
+          </div>
+          <StopsSection stops={analysis.stops.slice(0, 3)} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function AIDiagnosticsSection({
+  diagnostics,
+}: {
+  diagnostics: DocumentIntelligenceAIDiagnostics | null | undefined;
+}) {
+  if (!diagnostics) {
+    return null;
+  }
+
+  return (
+    <div className="grid gap-3">
+      <div>
+        <h3 className="text-sm font-medium">AI Extraction Diagnostics</h3>
+        <p className="text-xs text-muted-foreground">
+          Compare the non-AI fallback result with the AI candidate and see why
+          the AI output was accepted, rejected, or skipped.
+        </p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="rounded-lg border p-3">
+          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            AI Outcome
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Badge variant={aiAcceptanceVariant(diagnostics.acceptanceStatus)}>
+              {formatAIAcceptanceStatus(diagnostics.acceptanceStatus)}
+            </Badge>
+            {diagnostics.rejectionReason ? (
+              <Badge variant="secondary">
+                {formatDiagnosticReason(diagnostics.rejectionReason)}
+              </Badge>
+            ) : null}
+          </div>
+        </div>
+        <div className="rounded-lg border p-3">
+          <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Rejection Reason
+          </div>
+          <div className="mt-1 text-sm">
+            {formatDiagnosticReason(diagnostics.rejectionReason)}
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <AnalysisSnapshotCard
+          title="Fallback Analysis"
+          analysis={diagnostics.fallbackAnalysis}
+        />
+        <AnalysisSnapshotCard
+          title="AI Candidate"
+          analysis={diagnostics.candidateAnalysis}
+        />
+      </div>
+    </div>
+  );
+}
+
 function DraftSection({ draft }: { draft: DocumentShipmentDraft | null }) {
   if (!draft || draft.status === "Unavailable") {
     return (
@@ -507,6 +685,7 @@ function ContentSection({
   fallbackError?: string | null;
 }) {
   const intelligence = content?.structuredData?.intelligence;
+  const aiDiagnostics = content?.structuredData?.aiDiagnostics;
 
   if (content?.contentText?.trim()) {
     return (
@@ -537,6 +716,8 @@ function ContentSection({
         ) : null}
 
         <ConflictSection conflicts={intelligence?.conflicts ?? []} />
+
+        <AIDiagnosticsSection diagnostics={aiDiagnostics} />
 
         <div className="grid gap-2">
           <div className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -672,6 +853,8 @@ export function DocumentIntelligenceDialog({
     shipmentDraft.status !== "Unavailable" &&
     shipmentDraft.status !== "Failed" &&
     !shipmentDraft.attachedShipmentId;
+  const supportsTargetedReextract =
+    document?.processingProfile === "rate_confirmation_import";
 
   return (
     <>
@@ -726,6 +909,12 @@ export function DocumentIntelligenceDialog({
                       </p>
                     </div>
                     <div className="grid gap-3">
+                      {!supportsTargetedReextract ? (
+                        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                          Extraction was not requested for this document. OCR and AI extraction now
+                          run only through the targeted rate confirmation import flow.
+                        </div>
+                      ) : null}
                       <IntelligenceSummary
                         intelligence={content?.structuredData?.intelligence}
                         fallbackKind={
@@ -825,18 +1014,20 @@ export function DocumentIntelligenceDialog({
                     Open Shipments
                   </Button>
                 ) : null}
-                <Button
-                  variant="outline"
-                  onClick={() => reextract()}
-                  disabled={isReextracting}
-                >
-                  {isReextracting ? (
-                    <LoaderCircleIcon className="size-4 animate-spin" />
-                  ) : (
-                    <RefreshCcwIcon className="size-4" />
-                  )}
-                  Re-extract
-                </Button>
+                {supportsTargetedReextract ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => reextract()}
+                    disabled={isReextracting}
+                  >
+                    {isReextracting ? (
+                      <LoaderCircleIcon className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCcwIcon className="size-4" />
+                    )}
+                    Re-extract
+                  </Button>
+                ) : null}
               </DialogFooter>
             </>
           ) : null}

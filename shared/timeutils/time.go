@@ -46,6 +46,10 @@ func NormalizeTimezone(timezone string) string {
 	return timezone
 }
 
+func NowAddDuration(duration time.Duration) int64 {
+	return time.Now().Add(duration).Unix()
+}
+
 func DayStartUnix(ts int64, timezone string) (int64, error) {
 	if ts <= 0 {
 		return 0, fmt.Errorf("timestamp must be greater than zero")

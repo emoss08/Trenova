@@ -10,7 +10,6 @@ import {
 	DropdownMenuContent,
 	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -25,54 +24,48 @@ const user = {
 export function NavUser() {
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger render={<Avatar className="size-8" />}><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></DropdownMenuTrigger>
+			<DropdownMenuTrigger
+				render={
+					<Avatar className="size-8">
+						<AvatarImage src={user.avatar} />
+						<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+					</Avatar>
+				}
+			/>
 			<DropdownMenuContent align="end" className="w-60">
-				<DropdownMenuItem className="flex items-center justify-start gap-2">
-					<DropdownMenuLabel className="flex items-center gap-3">
+				<DropdownMenuItem
+					className="flex items-center justify-start gap-2"
+					title={user.name}
+					description={user.email}
+					startContent={
 						<Avatar className="size-10">
 							<AvatarImage src={user.avatar} />
 							<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
 						</Avatar>
-						<div>
-							<span className="font-medium text-foreground">{user.name}</span>{" "}
-							<br />
-							<div className="max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-muted-foreground text-xs">
-								{user.email}
-							</div>
-						</div>
-					</DropdownMenuLabel>
-				</DropdownMenuItem>
+					}
+					titleClassProps="font-medium text-foreground"
+					descriptionClassProps="max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap text-muted-foreground text-xs"
+				/>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem>
-						<UserIcon
-						/>
-						Account
-					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<SettingsIcon
-						/>
-						Settings
-					</DropdownMenuItem>
+					<DropdownMenuItem title="Account" startContent={<UserIcon />} />
+					<DropdownMenuItem title="Settings" startContent={<SettingsIcon />} />
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem>
-						<CreditCardIcon
-						/>
-						Plan & Billing
-					</DropdownMenuItem>
+					<DropdownMenuItem
+						title="Plan & Billing"
+						startContent={<CreditCardIcon />}
+					/>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem
 						className="w-full cursor-pointer"
-						variant="destructive"
-					>
-						<LogOutIcon
-						/>
-						Log out
-					</DropdownMenuItem>
+						color="danger"
+						title="Log out"
+						startContent={<LogOutIcon />}
+					/>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>

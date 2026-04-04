@@ -66,6 +66,8 @@ type responsesRequest struct {
 	Input           []responsesMessage  `json:"input"`
 	Text            responsesTextConfig `json:"text"`
 	MaxOutputTokens int                 `json:"max_output_tokens,omitempty"`
+	Background      bool                `json:"background,omitempty"`
+	Store           bool                `json:"store,omitempty"`
 }
 
 type responsesMessage struct {
@@ -90,6 +92,9 @@ type responsesFormat struct {
 }
 
 type responsesEnvelope struct {
+	ID         string `json:"id"`
+	Status     string `json:"status"`
+	Model      string `json:"model"`
 	OutputText string `json:"output_text"`
 	Output     []struct {
 		Type    string `json:"type"`
@@ -107,6 +112,14 @@ type responsesEnvelope struct {
 		} `json:"output_tokens_details"`
 	} `json:"usage"`
 	ServiceTier string `json:"service_tier"`
+	Error       *struct {
+		Code    string `json:"code"`
+		Message string `json:"message"`
+		Type    string `json:"type"`
+	} `json:"error"`
+	IncompleteDetails *struct {
+		Reason string `json:"reason"`
+	} `json:"incomplete_details"`
 }
 
 type routeResponse struct {
@@ -118,6 +131,30 @@ type routeResponse struct {
 	ClassifierSource    string   `json:"classifierSource"`
 	ProviderFingerprint string   `json:"providerFingerprint"`
 	Reason              string   `json:"reason"`
+}
+
+type extractFieldResponse struct {
+	Key               string   `json:"key"`
+	Label             string   `json:"label"`
+	Value             string   `json:"value"`
+	Confidence        float64  `json:"confidence"`
+	EvidenceExcerpt   string   `json:"evidenceExcerpt"`
+	PageNumber        int      `json:"pageNumber"`
+	ReviewRequired    bool     `json:"reviewRequired"`
+	Conflict          bool     `json:"conflict"`
+	Source            string   `json:"source"`
+	AlternativeValues []string `json:"alternativeValues"`
+}
+
+type extractResponse struct {
+	DocumentKind      string                            `json:"documentKind"`
+	OverallConfidence float64                           `json:"overallConfidence"`
+	ReviewStatus      string                            `json:"reviewStatus"`
+	MissingFields     []string                          `json:"missingFields"`
+	Signals           []string                          `json:"signals"`
+	Fields            []extractFieldResponse            `json:"fields"`
+	Stops             []serviceports.AIDocumentStop     `json:"stops"`
+	Conflicts         []serviceports.AIDocumentConflict `json:"conflicts"`
 }
 
 func (s *Service) RouteDocument(
@@ -172,7 +209,7 @@ func (s *Service) ExtractRateConfirmation(
 
 	systemPrompt := "You extract structured rate confirmation data for a transportation management system. Return strict JSON only."
 	userPrompt := buildExtractPrompt(req)
-	result := new(serviceports.AIExtractResult)
+	parsed := new(extractResponse)
 	envelope, err := s.executeStructuredResponse(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -184,17 +221,183 @@ func (s *Service) ExtractRateConfirmation(
 		systemPrompt,
 		userPrompt,
 		buildExtractSchema(),
-		result,
+		parsed,
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	result := convertExtractResponse(parsed)
 	result.DocumentKind = strings.TrimSpace(result.DocumentKind)
 	result.ReviewStatus = normalizeReviewStatus(result.ReviewStatus)
 	result.OverallConfidence = clampAIConfidence(result.OverallConfidence)
 	s.recordAIUsage("extract", envelope != nil, "success")
 	return result, nil
+}
+
+func (s *Service) SubmitRateConfirmationBackgroundExtraction(
+	ctx context.Context,
+	req *serviceports.AIExtractRequest,
+) (*serviceports.AIBackgroundExtractSubmission, error) {
+	if !s.cfg.AIEnabled() {
+		return nil, errortypes.NewBusinessError("AI document intelligence is disabled")
+	}
+
+	systemPrompt := "You extract structured rate confirmation data for a transportation management system. Return strict JSON only."
+	userPrompt := buildExtractPrompt(req)
+	requestBody := responsesRequest{
+		Model: string(ailog.Model(s.cfg.GetAIExtractionModel())),
+		Input: []responsesMessage{
+			{
+				Role: "system",
+				Content: []responsesMessagePart{{
+					Type: "input_text",
+					Text: systemPrompt,
+				}},
+			},
+			{
+				Role: "user",
+				Content: []responsesMessagePart{{
+					Type: "input_text",
+					Text: userPrompt,
+				}},
+			},
+		},
+		Text: responsesTextConfig{
+			Format: responsesFormat{
+				Type:   "json_schema",
+				Name:   string(ailog.OperationDocumentIntelligenceExtract),
+				Schema: buildExtractSchema(),
+				Strict: true,
+			},
+		},
+		MaxOutputTokens: s.cfg.GetAIExtractionMaxTokens(),
+		Background:      true,
+		Store:           true,
+	}
+
+	body, err := json.Marshal(requestBody)
+	if err != nil {
+		return nil, err
+	}
+
+	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, pagination.TenantInfo{
+		OrgID: req.TenantInfo.OrgID,
+		BuID:  req.TenantInfo.BuID,
+	}, integration.TypeOpenAI)
+	if err != nil {
+		s.recordAIUsage("extract_background_submit", false, "missing_config")
+		return nil, err
+	}
+
+	envelope, err := s.doResponsesRequest(ctx, runtimeCfg.Config["apiKey"], http.MethodPost, responsesURL, body)
+	if err != nil {
+		s.recordAIUsage("extract_background_submit", false, "error")
+		return nil, err
+	}
+	if strings.TrimSpace(envelope.ID) == "" {
+		s.recordAIUsage("extract_background_submit", false, "empty_response_id")
+		return nil, errortypes.NewBusinessError("AI background extraction response did not include an ID")
+	}
+
+	s.recordAIUsage("extract_background_submit", true, "success")
+	return &serviceports.AIBackgroundExtractSubmission{
+		ResponseID: envelope.ID,
+		Model:      firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+		Status:     strings.TrimSpace(envelope.Status),
+	}, nil
+}
+
+func (s *Service) PollRateConfirmationBackgroundExtraction(
+	ctx context.Context,
+	req *serviceports.AIBackgroundExtractPollRequest,
+) (*serviceports.AIBackgroundExtractPollResult, error) {
+	if !s.cfg.AIEnabled() {
+		return nil, errortypes.NewBusinessError("AI document intelligence is disabled")
+	}
+
+	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, pagination.TenantInfo{
+		OrgID: req.TenantInfo.OrgID,
+		BuID:  req.TenantInfo.BuID,
+	}, integration.TypeOpenAI)
+	if err != nil {
+		s.recordAIUsage("extract_background_poll", false, "missing_config")
+		return nil, err
+	}
+
+	envelope, err := s.doResponsesRequest(
+		ctx,
+		runtimeCfg.Config["apiKey"],
+		http.MethodGet,
+		fmt.Sprintf("%s/%s", responsesURL, strings.TrimSpace(req.ResponseID)),
+		nil,
+	)
+	if err != nil {
+		s.recordAIUsage("extract_background_poll", false, "error")
+		return nil, err
+	}
+
+	rawStatus := strings.TrimSpace(envelope.Status)
+	switch rawStatus {
+	case "", "queued", "in_progress":
+		s.recordAIUsage("extract_background_poll", true, "pending")
+		return &serviceports.AIBackgroundExtractPollResult{
+			ResponseID: req.ResponseID,
+			Model:      firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+			Status:     serviceports.AIBackgroundExtractionStatusPending,
+			RawStatus:  rawStatus,
+		}, nil
+	case "completed":
+		parsed := new(extractResponse)
+		text := extractResponseText(envelope)
+		if text == "" {
+			s.recordAIUsage("extract_background_poll", false, "empty_output")
+			return &serviceports.AIBackgroundExtractPollResult{
+				ResponseID:     req.ResponseID,
+				Model:          firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+				Status:         serviceports.AIBackgroundExtractionStatusFailed,
+				RawStatus:      rawStatus,
+				FailureCode:    "empty_output",
+				FailureMessage: "AI background extraction completed without structured output",
+			}, nil
+		}
+		if err = json.Unmarshal([]byte(text), parsed); err != nil {
+			s.recordAIUsage("extract_background_poll", false, "invalid_output")
+			return &serviceports.AIBackgroundExtractPollResult{
+				ResponseID:     req.ResponseID,
+				Model:          firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+				Status:         serviceports.AIBackgroundExtractionStatusFailed,
+				RawStatus:      rawStatus,
+				FailureCode:    "invalid_output",
+				FailureMessage: err.Error(),
+			}, nil
+		}
+		s.recordAIUsage("extract_background_poll", true, "completed")
+		return &serviceports.AIBackgroundExtractPollResult{
+			ResponseID:    req.ResponseID,
+			Model:         firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+			Status:        serviceports.AIBackgroundExtractionStatusCompleted,
+			RawStatus:     rawStatus,
+			ExtractResult: convertExtractResponse(parsed),
+		}, nil
+	default:
+		incompleteReason := responseIncompleteReason(envelope)
+		failureCode := firstNonEmpty(incompleteReason, errorCode(envelope), rawStatus)
+		failureMessage := firstNonEmpty(
+			errorMessage(envelope),
+			incompleteFailureMessage(rawStatus, incompleteReason),
+			fmt.Sprintf("AI background extraction ended with status %s", rawStatus),
+		)
+		s.recordAIUsage("extract_background_poll", true, "terminal_failure")
+		return &serviceports.AIBackgroundExtractPollResult{
+			ResponseID:     req.ResponseID,
+			Model:          firstNonEmpty(envelope.Model, s.cfg.GetAIExtractionModel()),
+			Status:         serviceports.AIBackgroundExtractionStatusFailed,
+			RawStatus:      rawStatus,
+			FailureCode:    failureCode,
+			FailureMessage: failureMessage,
+		}, nil
+	}
 }
 
 func (s *Service) executeStructuredResponse(
@@ -241,7 +444,7 @@ func (s *Service) executeStructuredResponse(
 				Strict: true,
 			},
 		},
-		MaxOutputTokens: 2500,
+		MaxOutputTokens: s.cfg.GetAIExtractionMaxTokens(),
 	}
 
 	body, err := json.Marshal(requestBody)
@@ -289,29 +492,8 @@ func (s *Service) executeOnce(
 	systemPrompt, userPrompt string,
 	out any,
 ) (*responsesEnvelope, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, responsesURL, bytes.NewReader(body))
+	envelope, err := s.doResponsesRequest(ctx, apiKey, http.MethodPost, responsesURL, body)
 	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := s.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("openai responses api returned %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
-	}
-
-	envelope := new(responsesEnvelope)
-	if err = json.Unmarshal(respBody, envelope); err != nil {
 		return nil, err
 	}
 
@@ -338,6 +520,45 @@ func (s *Service) executeOnce(
 		TotalTokens:      envelope.Usage.TotalTokens,
 		ReasoningTokens:  envelope.Usage.OutputTokensDetails.ReasoningTokens,
 	})
+
+	return envelope, nil
+}
+
+func (s *Service) doResponsesRequest(
+	ctx context.Context,
+	apiKey, method, url string,
+	body []byte,
+) (*responsesEnvelope, error) {
+	var bodyReader io.Reader
+	if len(body) > 0 {
+		bodyReader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("openai responses api returned %d: %s", resp.StatusCode, strings.TrimSpace(string(respBody)))
+	}
+
+	envelope := new(responsesEnvelope)
+	if err = json.Unmarshal(respBody, envelope); err != nil {
+		return nil, err
+	}
 
 	return envelope, nil
 }
@@ -388,10 +609,14 @@ func buildRoutePrompt(req *serviceports.AIRouteRequest) string {
 
 func buildExtractPrompt(req *serviceports.AIExtractRequest) string {
 	var b strings.Builder
-	b.WriteString("Extract structured rate confirmation data. Use page-local evidence. Mark conflicts and low-confidence fields instead of guessing.\n")
+	b.WriteString("Extract structured rate confirmation data for a TMS.\n")
+	b.WriteString("Return only compact canonical fields and stop data needed for shipment creation/review.\n")
+	b.WriteString("Do not emit extra broker-specific or descriptive fields beyond the canonical key set.\n")
+	b.WriteString("Use page-local evidence. Keep evidence excerpts short and specific. Mark conflicts and low-confidence fields instead of guessing.\n")
+	b.WriteString("Canonical field keys: loadNumber, referenceNumber, shipper, consignee, rate, equipmentType, commodity, pickupDate, deliveryDate, pickupWindow, deliveryWindow, pickupNumber, deliveryNumber, appointmentNumber, bol, poNumber, scac, proNumber, paymentTerms, billTo, carrierName, carrierContact, containerNumber, trailerNumber, tractorNumber, fuelSurcharge, serviceType.\n")
 	b.WriteString("Filename: " + strings.TrimSpace(req.FileName) + "\n")
 	for _, page := range req.Pages {
-		b.WriteString(fmt.Sprintf("\n[Page %d]\n%s\n", page.PageNumber, truncateForAI(page.Text, 3500)))
+		b.WriteString(fmt.Sprintf("\n[Page %d]\n%s\n", page.PageNumber, truncateForAI(page.Text, 2500)))
 	}
 	return b.String()
 }
@@ -422,20 +647,31 @@ func buildExtractSchema() map[string]any {
 		"type":                 "object",
 		"additionalProperties": false,
 		"properties": map[string]any{
-			"label":           map[string]any{"type": "string"},
-			"value":           map[string]any{"type": "string"},
+			"key": map[string]any{
+				"type": "string",
+				"enum": []string{
+					"loadNumber", "referenceNumber", "shipper", "consignee", "rate", "equipmentType", "commodity",
+					"pickupDate", "deliveryDate", "pickupWindow", "deliveryWindow", "pickupNumber", "deliveryNumber",
+					"appointmentNumber", "bol", "poNumber", "scac", "proNumber", "paymentTerms", "billTo",
+					"carrierName", "carrierContact", "containerNumber", "trailerNumber", "tractorNumber",
+					"fuelSurcharge", "serviceType",
+				},
+			},
+			"label":           map[string]any{"type": "string", "maxLength": 64},
+			"value":           map[string]any{"type": "string", "maxLength": 256},
 			"confidence":      map[string]any{"type": "number"},
-			"evidenceExcerpt": map[string]any{"type": "string"},
+			"evidenceExcerpt": map[string]any{"type": "string", "maxLength": 200},
 			"pageNumber":      map[string]any{"type": "integer"},
 			"reviewRequired":  map[string]any{"type": "boolean"},
 			"conflict":        map[string]any{"type": "boolean"},
-			"source":          map[string]any{"type": "string"},
+			"source":          map[string]any{"type": "string", "maxLength": 32},
 			"alternativeValues": map[string]any{
-				"type":  "array",
-				"items": map[string]any{"type": "string"},
+				"type":     "array",
+				"maxItems": 4,
+				"items":    map[string]any{"type": "string", "maxLength": 128},
 			},
 		},
-		"required": []string{"label", "value", "confidence", "evidenceExcerpt", "pageNumber", "reviewRequired", "conflict", "source", "alternativeValues"},
+		"required": []string{"key", "label", "value", "confidence", "evidenceExcerpt", "pageNumber", "reviewRequired", "conflict", "source", "alternativeValues"},
 	}
 	stopSchema := map[string]any{
 		"type":                 "object",
@@ -443,20 +679,20 @@ func buildExtractSchema() map[string]any {
 		"properties": map[string]any{
 			"sequence":            map[string]any{"type": "integer"},
 			"role":                map[string]any{"type": "string"},
-			"name":                map[string]any{"type": "string"},
-			"addressLine1":        map[string]any{"type": "string"},
-			"addressLine2":        map[string]any{"type": "string"},
-			"city":                map[string]any{"type": "string"},
-			"state":               map[string]any{"type": "string"},
-			"postalCode":          map[string]any{"type": "string"},
-			"date":                map[string]any{"type": "string"},
-			"timeWindow":          map[string]any{"type": "string"},
+			"name":                map[string]any{"type": "string", "maxLength": 128},
+			"addressLine1":        map[string]any{"type": "string", "maxLength": 160},
+			"addressLine2":        map[string]any{"type": "string", "maxLength": 160},
+			"city":                map[string]any{"type": "string", "maxLength": 80},
+			"state":               map[string]any{"type": "string", "maxLength": 16},
+			"postalCode":          map[string]any{"type": "string", "maxLength": 20},
+			"date":                map[string]any{"type": "string", "maxLength": 40},
+			"timeWindow":          map[string]any{"type": "string", "maxLength": 64},
 			"appointmentRequired": map[string]any{"type": "boolean"},
 			"pageNumber":          map[string]any{"type": "integer"},
-			"evidenceExcerpt":     map[string]any{"type": "string"},
+			"evidenceExcerpt":     map[string]any{"type": "string", "maxLength": 200},
 			"confidence":          map[string]any{"type": "number"},
 			"reviewRequired":      map[string]any{"type": "boolean"},
-			"source":              map[string]any{"type": "string"},
+			"source":              map[string]any{"type": "string", "maxLength": 32},
 		},
 		"required": []string{"sequence", "role", "name", "addressLine1", "addressLine2", "city", "state", "postalCode", "date", "timeWindow", "appointmentRequired", "pageNumber", "evidenceExcerpt", "confidence", "reviewRequired", "source"},
 	}
@@ -464,12 +700,12 @@ func buildExtractSchema() map[string]any {
 		"type":                 "object",
 		"additionalProperties": false,
 		"properties": map[string]any{
-			"key":             map[string]any{"type": "string"},
-			"label":           map[string]any{"type": "string"},
-			"values":          map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			"pageNumbers":     map[string]any{"type": "array", "items": map[string]any{"type": "integer"}},
-			"evidenceExcerpt": map[string]any{"type": "string"},
-			"source":          map[string]any{"type": "string"},
+			"key":             map[string]any{"type": "string", "maxLength": 64},
+			"label":           map[string]any{"type": "string", "maxLength": 64},
+			"values":          map[string]any{"type": "array", "maxItems": 4, "items": map[string]any{"type": "string", "maxLength": 128}},
+			"pageNumbers":     map[string]any{"type": "array", "maxItems": 6, "items": map[string]any{"type": "integer"}},
+			"evidenceExcerpt": map[string]any{"type": "string", "maxLength": 200},
+			"source":          map[string]any{"type": "string", "maxLength": 32},
 		},
 		"required": []string{"key", "label", "values", "pageNumbers", "evidenceExcerpt", "source"},
 	}
@@ -481,14 +717,11 @@ func buildExtractSchema() map[string]any {
 			"documentKind":      map[string]any{"type": "string"},
 			"overallConfidence": map[string]any{"type": "number"},
 			"reviewStatus":      map[string]any{"type": "string"},
-			"missingFields":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			"signals":           map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
-			"fields": map[string]any{
-				"type":                 "object",
-				"additionalProperties": fieldSchema,
-			},
-			"stops":     map[string]any{"type": "array", "items": stopSchema},
-			"conflicts": map[string]any{"type": "array", "items": conflictSchema},
+			"missingFields":     map[string]any{"type": "array", "maxItems": 12, "items": map[string]any{"type": "string", "maxLength": 64}},
+			"signals":           map[string]any{"type": "array", "maxItems": 8, "items": map[string]any{"type": "string", "maxLength": 120}},
+			"fields":            map[string]any{"type": "array", "maxItems": 18, "items": fieldSchema},
+			"stops":             map[string]any{"type": "array", "maxItems": 8, "items": stopSchema},
+			"conflicts":         map[string]any{"type": "array", "maxItems": 6, "items": conflictSchema},
 		},
 		"required": []string{"documentKind", "overallConfidence", "reviewStatus", "missingFields", "signals", "fields", "stops", "conflicts"},
 	}
@@ -500,6 +733,49 @@ func truncateForAI(text string, max int) string {
 		return text
 	}
 	return text[:max]
+}
+
+func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResult {
+	result := &serviceports.AIExtractResult{
+		DocumentKind:      "",
+		OverallConfidence: 0,
+		ReviewStatus:      "",
+		MissingFields:     []string{},
+		Signals:           []string{},
+		Fields:            map[string]serviceports.AIDocumentField{},
+		Stops:             []serviceports.AIDocumentStop{},
+		Conflicts:         []serviceports.AIDocumentConflict{},
+	}
+	if parsed == nil {
+		return result
+	}
+
+	result.DocumentKind = parsed.DocumentKind
+	result.OverallConfidence = parsed.OverallConfidence
+	result.ReviewStatus = parsed.ReviewStatus
+	result.MissingFields = parsed.MissingFields
+	result.Signals = parsed.Signals
+	result.Stops = parsed.Stops
+	result.Conflicts = parsed.Conflicts
+	for _, field := range parsed.Fields {
+		key := strings.TrimSpace(field.Key)
+		if key == "" {
+			continue
+		}
+		result.Fields[key] = serviceports.AIDocumentField{
+			Label:             field.Label,
+			Value:             field.Value,
+			Confidence:        field.Confidence,
+			EvidenceExcerpt:   field.EvidenceExcerpt,
+			PageNumber:        field.PageNumber,
+			ReviewRequired:    field.ReviewRequired,
+			Conflict:          field.Conflict,
+			Source:            field.Source,
+			AlternativeValues: field.AlternativeValues,
+		}
+	}
+
+	return result
 }
 
 func extractResponseText(envelope *responsesEnvelope) string {
@@ -514,6 +790,48 @@ func extractResponseText(envelope *responsesEnvelope) string {
 			if strings.TrimSpace(content.Text) != "" {
 				return content.Text
 			}
+		}
+	}
+	return ""
+}
+
+func errorCode(envelope *responsesEnvelope) string {
+	if envelope == nil || envelope.Error == nil {
+		return ""
+	}
+	return strings.TrimSpace(envelope.Error.Code)
+}
+
+func errorMessage(envelope *responsesEnvelope) string {
+	if envelope == nil || envelope.Error == nil {
+		return ""
+	}
+	return strings.TrimSpace(envelope.Error.Message)
+}
+
+func responseIncompleteReason(envelope *responsesEnvelope) string {
+	if envelope == nil || envelope.IncompleteDetails == nil {
+		return ""
+	}
+	return strings.TrimSpace(envelope.IncompleteDetails.Reason)
+}
+
+func incompleteFailureMessage(status, reason string) string {
+	if strings.TrimSpace(reason) == "" {
+		return ""
+	}
+
+	if strings.EqualFold(status, "incomplete") {
+		return fmt.Sprintf("AI background extraction ended incomplete: %s", reason)
+	}
+
+	return fmt.Sprintf("AI background extraction ended with status %s: %s", status, reason)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			return trimmed
 		}
 	}
 	return ""

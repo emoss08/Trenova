@@ -24,6 +24,53 @@ import (
 	"go.uber.org/zap"
 )
 
+type importAssistantStub struct {
+	completeHistoryFn func(context.Context, string, pagination.TenantInfo) error
+}
+
+func (s *importAssistantStub) Chat(
+	context.Context,
+	*servicesport.ShipmentImportChatRequest,
+) (*servicesport.ShipmentImportChatResponse, error) {
+	panic("unexpected Chat call")
+}
+
+func (s *importAssistantStub) ChatStream(
+	context.Context,
+	*servicesport.ShipmentImportChatRequest,
+	func(servicesport.StreamEvent),
+) error {
+	panic("unexpected ChatStream call")
+}
+
+func (s *importAssistantStub) GetHistory(
+	context.Context,
+	string,
+	pagination.TenantInfo,
+) (*servicesport.ShipmentImportChatHistoryResponse, error) {
+	panic("unexpected GetHistory call")
+}
+
+func (s *importAssistantStub) ArchiveHistory(
+	context.Context,
+	string,
+	pagination.TenantInfo,
+) error {
+	panic("unexpected ArchiveHistory call")
+}
+
+func (s *importAssistantStub) CompleteHistory(
+	ctx context.Context,
+	documentID string,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if s.completeHistoryFn != nil {
+		return s.completeHistoryFn(ctx, documentID, tenantInfo)
+	}
+
+	return nil
+}
+
 func setupShipmentHandler(
 	t *testing.T,
 	service *mocks.MockShipmentService,
@@ -32,7 +79,7 @@ func setupShipmentHandler(
 
 	commentService := mocks.NewMockShipmentCommentService(t)
 	holdService := mocks.NewMockShipmentHoldService(t)
-	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService)
+	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService, nil)
 }
 
 func setupShipmentHandlerWithComments(
@@ -42,7 +89,7 @@ func setupShipmentHandlerWithComments(
 ) *shipmenthandler.Handler {
 	t.Helper()
 	holdService := mocks.NewMockShipmentHoldService(t)
-	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService)
+	return setupShipmentHandlerWithSubresources(t, service, commentService, holdService, nil)
 }
 
 func setupShipmentHandlerWithSubresources(
@@ -50,6 +97,7 @@ func setupShipmentHandlerWithSubresources(
 	service *mocks.MockShipmentService,
 	commentService *mocks.MockShipmentCommentService,
 	holdService *mocks.MockShipmentHoldService,
+	importAssistant ...servicesport.ShipmentImportAssistantService,
 ) *shipmenthandler.Handler {
 	t.Helper()
 
@@ -70,12 +118,19 @@ func setupShipmentHandlerWithSubresources(
 		ErrorHandler:     errorHandler,
 	})
 
+	var assistant servicesport.ShipmentImportAssistantService
+	if len(importAssistant) > 0 {
+		assistant = importAssistant[0]
+	}
+
 	return shipmenthandler.New(shipmenthandler.Params{
 		Service:              service,
 		CommentService:       commentService,
 		HoldService:          holdService,
+		ImportAssistant:      assistant,
 		ErrorHandler:         errorHandler,
 		PermissionMiddleware: pm,
+		Logger:               logger,
 	})
 }
 
@@ -167,6 +222,122 @@ func TestShipmentHandler_CalculateTotals_MissingFormulaTemplateID(t *testing.T) 
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, "https://api.trenova.app/problems/validation-error", resp["type"])
+}
+
+func TestShipmentHandler_Create_CompletesImportHistoryWhenSourceDocumentPresent(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	sourceDocumentID := pulid.MustNew("doc_")
+	shipmentID := pulid.MustNew("shp_")
+	completed := false
+
+	service.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
+			return entity.OrganizationID == testutil.TestOrgID &&
+				entity.BusinessUnitID == testutil.TestBuID &&
+				entity.SourceDocumentID == sourceDocumentID.String()
+		}), mock.Anything).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
+
+	handler := setupShipmentHandlerWithSubresources(
+		t,
+		service,
+		mocks.NewMockShipmentCommentService(t),
+		mocks.NewMockShipmentHoldService(t),
+		&importAssistantStub{
+			completeHistoryFn: func(_ context.Context, documentID string, tenantInfo pagination.TenantInfo) error {
+				assert.Equal(t, sourceDocumentID.String(), documentID)
+				assert.Equal(t, testutil.TestOrgID, tenantInfo.OrgID)
+				assert.Equal(t, testutil.TestBuID, tenantInfo.BuID)
+				assert.Equal(t, testutil.TestUserID, tenantInfo.UserID)
+				completed = true
+				return nil
+			},
+		},
+	)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/shipments/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"formulaTemplateId": "fmt_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"serviceTypeId":     "svc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"customerId":        "cus_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"sourceDocumentId":  sourceDocumentID.String(),
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
+	assert.True(t, completed)
+}
+
+func TestShipmentHandler_Create_InvalidSourceDocumentID(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	handler := setupShipmentHandler(t, service)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/shipments/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"formulaTemplateId": "fmt_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"serviceTypeId":     "svc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"customerId":        "cus_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"sourceDocumentId":  "not-a-document-id",
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+}
+
+func TestShipmentHandler_Create_StillSucceedsWhenHistoryCompletionFails(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	sourceDocumentID := pulid.MustNew("doc_")
+	shipmentID := pulid.MustNew("shp_")
+
+	service.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*shipment.Shipment"), mock.Anything).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
+
+	handler := setupShipmentHandlerWithSubresources(
+		t,
+		service,
+		mocks.NewMockShipmentCommentService(t),
+		mocks.NewMockShipmentHoldService(t),
+		&importAssistantStub{
+			completeHistoryFn: func(context.Context, string, pagination.TenantInfo) error {
+				return errortypes.NewBusinessError("completion failed")
+			},
+		},
+	)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/shipments/").
+		WithDefaultAuthContext().
+		WithJSONBody(map[string]any{
+			"formulaTemplateId": "fmt_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"serviceTypeId":     "svc_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"customerId":        "cus_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+			"sourceDocumentId":  sourceDocumentID.String(),
+		})
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusCreated, ginCtx.ResponseCode())
 }
 
 func TestShipmentHandler_List_Success(t *testing.T) {

@@ -110,7 +110,39 @@ type AIExtractResult struct {
 	Conflicts         []AIDocumentConflict       `json:"conflicts"`
 }
 
+type AIBackgroundExtractionStatus string
+
+const (
+	AIBackgroundExtractionStatusPending   AIBackgroundExtractionStatus = "pending"
+	AIBackgroundExtractionStatusCompleted AIBackgroundExtractionStatus = "completed"
+	AIBackgroundExtractionStatusFailed    AIBackgroundExtractionStatus = "failed"
+)
+
+type AIBackgroundExtractSubmission struct {
+	ResponseID string `json:"responseId"`
+	Model      string `json:"model"`
+	Status     string `json:"status"`
+}
+
+type AIBackgroundExtractPollRequest struct {
+	TenantInfo pagination.TenantInfo
+	DocumentID pulid.ID
+	ResponseID string
+}
+
+type AIBackgroundExtractPollResult struct {
+	ResponseID     string                       `json:"responseId"`
+	Model          string                       `json:"model"`
+	Status         AIBackgroundExtractionStatus `json:"status"`
+	RawStatus      string                       `json:"rawStatus"`
+	ExtractResult  *AIExtractResult             `json:"extractResult,omitempty"`
+	FailureCode    string                       `json:"failureCode,omitempty"`
+	FailureMessage string                       `json:"failureMessage,omitempty"`
+}
+
 type AIDocumentService interface {
 	RouteDocument(ctx context.Context, req *AIRouteRequest) (*AIRouteResult, error)
 	ExtractRateConfirmation(ctx context.Context, req *AIExtractRequest) (*AIExtractResult, error)
+	SubmitRateConfirmationBackgroundExtraction(ctx context.Context, req *AIExtractRequest) (*AIBackgroundExtractSubmission, error)
+	PollRateConfirmationBackgroundExtraction(ctx context.Context, req *AIBackgroundExtractPollRequest) (*AIBackgroundExtractPollResult, error)
 }

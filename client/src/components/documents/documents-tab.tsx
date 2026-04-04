@@ -51,6 +51,10 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
+function hasTargetedProcessing(doc: Document): boolean {
+  return doc.processingProfile === "rate_confirmation_import";
+}
+
 function sortDocuments(
   docs: Document[],
   field: SortField,
@@ -160,8 +164,10 @@ export function DocumentsTab({
       const hasPendingWork = docs.some(
         (doc) =>
           doc.previewStatus === "Pending" ||
-          doc.contentStatus === "Pending" ||
-          doc.contentStatus === "Extracting",
+          (hasTargetedProcessing(doc) &&
+            (doc.contentStatus === "Pending" ||
+              doc.contentStatus === "Extracting" ||
+              doc.shipmentDraftStatus === "Pending")),
       );
 
       return hasPendingWork ? 3000 : false;

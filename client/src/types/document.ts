@@ -41,6 +41,15 @@ export type DocumentShipmentDraftStatus = z.infer<
   typeof documentShipmentDraftStatusSchema
 >;
 
+export const documentProcessingProfileSchema = z.enum([
+  "none",
+  "rate_confirmation_import",
+]);
+
+export type DocumentProcessingProfile = z.infer<
+  typeof documentProcessingProfileSchema
+>;
+
 export const documentSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -62,6 +71,7 @@ export const documentSchema = z.object({
   description: z.string().nullable().optional(),
   resourceId: z.string(),
   resourceType: z.string(),
+  processingProfile: documentProcessingProfileSchema.nullish().transform((value) => value ?? "none"),
   expirationDate: z.number().nullable().optional(),
   tags: z.array(z.string()).nullable().optional(),
   isPublic: z.boolean(),
@@ -161,10 +171,22 @@ export const documentIntelligenceSchema = z
   })
   .passthrough();
 
+export const documentIntelligenceAIDiagnosticsSchema = z
+  .object({
+    fallbackAnalysis: documentIntelligenceSchema.optional(),
+    candidateAnalysis: documentIntelligenceSchema.nullable().optional(),
+    acceptanceStatus: z
+      .enum(["not_attempted", "accepted", "rejected"])
+      .optional(),
+    rejectionReason: z.string().optional(),
+  })
+  .passthrough();
+
 export const documentStructuredDataSchema = z
   .object({
     schemaVersion: z.number().optional(),
     intelligence: documentIntelligenceSchema.optional(),
+    aiDiagnostics: documentIntelligenceAIDiagnosticsSchema.optional(),
   })
   .passthrough();
 
@@ -262,6 +284,7 @@ export const documentUploadSessionSchema = z.object({
   lineageId: z.string().nullable().optional(),
   resourceId: z.string(),
   resourceType: z.string(),
+  processingProfile: documentProcessingProfileSchema.nullish().transform((value) => value ?? "none"),
   documentTypeId: z.string().nullable().optional(),
   originalName: z.string(),
   contentType: z.string(),
@@ -327,6 +350,9 @@ export type DocumentIntelligenceStop = z.infer<
   typeof documentIntelligenceStopSchema
 >;
 export type DocumentIntelligence = z.infer<typeof documentIntelligenceSchema>;
+export type DocumentIntelligenceAIDiagnostics = z.infer<
+  typeof documentIntelligenceAIDiagnosticsSchema
+>;
 export type DocumentStructuredData = z.infer<
   typeof documentStructuredDataSchema
 >;
@@ -382,6 +408,7 @@ export interface UploadDocumentParams {
   file: File;
   resourceId: string;
   resourceType: string;
+  processingProfile?: DocumentProcessingProfile;
   description?: string;
   tags?: string[];
   documentTypeId?: string;
@@ -398,6 +425,7 @@ export interface BulkUploadDocumentParams {
 export interface CreateDocumentUploadSessionParams {
   resourceId: string;
   resourceType: string;
+  processingProfile?: DocumentProcessingProfile;
   fileName: string;
   fileSize: number;
   contentType: string;
@@ -405,4 +433,78 @@ export interface CreateDocumentUploadSessionParams {
   tags?: string[];
   documentTypeId?: string;
   lineageId?: string;
+}
+
+export const importAssistantActionSchema = z.object({
+  type: z.string(),
+  fieldKey: z.string(),
+  value: z.string(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const importAssistantSuggestionSchema = z.object({
+  label: z.string(),
+  prompt: z.string(),
+  type: z.enum(["prompt", "input", "action", "date"]).default("prompt"),
+  placeholder: z.string().optional(),
+  action: z.string().optional(),
+  submitLabel: z.string().optional(),
+});
+
+export const importAssistantToolCallRecordSchema = z.object({
+  name: z.string(),
+  callId: z.string().optional(),
+  status: z.string(),
+  input: z.string(),
+  output: z.string(),
+});
+
+export const importAssistantChatMessageSchema = z.object({
+  id: z.string(),
+  role: z.enum(["user", "assistant"]),
+  text: z.string(),
+  toolCalls: z.array(importAssistantToolCallRecordSchema).nullish().transform((v) => v ?? []),
+  suggestions: z.array(importAssistantSuggestionSchema).nullish().transform((v) => v ?? []),
+  createdAt: z.number(),
+});
+
+export const importAssistantChatResponseSchema = z.object({
+  message: z.string(),
+  conversationId: z.string(),
+  actions: z.array(importAssistantActionSchema).nullish().transform((v) => v ?? []),
+  suggestions: z.array(importAssistantSuggestionSchema).nullish().transform((v) => v ?? []),
+  toolCalls: z.array(importAssistantToolCallRecordSchema).nullish().transform((v) => v ?? []),
+});
+
+export const conversationStatusSchema = z.enum(["Active", "Completed", "Superseded"]);
+export type ConversationStatus = z.infer<typeof conversationStatusSchema>;
+
+export const conversationStatusReasonSchema = z.enum(["", "reextract", "shipment_created", "manual_restart"]);
+export type ConversationStatusReason = z.infer<typeof conversationStatusReasonSchema>;
+
+export const importAssistantChatHistoryResponseSchema = z.object({
+  documentId: z.string(),
+  conversationId: z.string().optional(),
+  status: conversationStatusSchema.default("Active"),
+  statusReason: conversationStatusReasonSchema.default(""),
+  turnCount: z.number().default(0),
+  lastMessageAt: z.number().nullable().optional(),
+  updatedAt: z.number().default(0),
+  messages: z.array(importAssistantChatMessageSchema).nullish().transform((v) => v ?? []),
+});
+
+export type ImportAssistantAction = z.infer<typeof importAssistantActionSchema>;
+export type ImportAssistantSuggestion = z.infer<typeof importAssistantSuggestionSchema>;
+export type ImportAssistantToolCallRecord = z.infer<typeof importAssistantToolCallRecordSchema>;
+export type ImportAssistantChatMessage = z.infer<typeof importAssistantChatMessageSchema>;
+export type ImportAssistantChatResponse = z.infer<typeof importAssistantChatResponseSchema>;
+export type ImportAssistantChatHistoryResponse = z.infer<typeof importAssistantChatHistoryResponseSchema>;
+
+export interface ImportAssistantChatParams {
+  message: string;
+  conversationId?: string;
+  reconciliationState: Record<string, unknown>;
+  requiredFields: Record<string, string>;
+  stops?: Array<Record<string, unknown>>;
+  shipmentData?: Record<string, unknown>;
 }

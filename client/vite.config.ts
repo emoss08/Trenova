@@ -1,7 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import { compression } from "vite-plugin-compression2";
 
@@ -14,11 +13,11 @@ export default defineConfig({
       algorithms: ["gzip", "brotliCompress"],
       threshold: 10240,
     }),
-    visualizer({
-      open: !process.env.CI,
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    // visualizer({
+    //   open: !process.env.CI,
+    //   gzipSize: true,
+    //   brotliSize: true,
+    // }),
   ],
   resolve: {
     alias: {

@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
@@ -148,6 +149,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	apikeyservice.New,
 	notificationservice.New,
 	openaidocumentservice.New,
+	shipmentimportassistantservice.New,
 	tablechangealertservice.New,
 	tablechangealertservice.NewConsumer,
 	fx.Annotate(

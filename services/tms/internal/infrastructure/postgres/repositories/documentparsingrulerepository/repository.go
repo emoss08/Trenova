@@ -315,7 +315,6 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 	rows := make([]*joinedRow, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
-		Model(&rows).
 		TableExpr("document_parsing_rule_sets AS dprs").
 		Join("JOIN document_parsing_rule_versions AS dprv ON dprv.id = dprs.published_version_id AND dprv.rule_set_id = dprs.id AND dprv.organization_id = dprs.organization_id AND dprv.business_unit_id = dprs.business_unit_id").
 		ColumnExpr("dprs.id AS rule_set_id, dprs.organization_id AS rule_set_organization_id, dprs.business_unit_id AS rule_set_business_unit_id, dprs.name AS rule_set_name, dprs.description AS rule_set_description, dprs.document_kind AS rule_set_document_kind, dprs.priority AS rule_set_priority, dprs.published_version_id AS rule_set_published_version_id, dprs.version AS rule_set_version, dprs.created_at AS rule_set_created_at, dprs.updated_at AS rule_set_updated_at").
@@ -326,7 +325,7 @@ func (r *repository) ListPublishedVersionsByDocumentKind(
 		Where("dprs.published_version_id IS NOT NULL").
 		Where("dprv.status = ?", documentparsingrule.VersionStatusPublished).
 		OrderExpr("dprs.priority DESC, dprv.published_at DESC NULLS LAST").
-		Scan(ctx)
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, err
 	}

@@ -217,6 +217,7 @@ type DocumentIntelligenceConfig struct {
 	EnableAI                bool          `mapstructure:"enableAI"`
 	AITimeout               time.Duration `mapstructure:"aiTimeout"`
 	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars" validate:"omitempty,min=1000,max=500000"`
+	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens" validate:"omitempty,min=256,max=32768"`
 	AIClassificationModel   string        `mapstructure:"aiClassificationModel"`
 	AIExtractionModel       string        `mapstructure:"aiExtractionModel"`
 	AIMaxRetries            int           `mapstructure:"aiMaxRetries" validate:"omitempty,min=0,max=10"`
@@ -266,6 +267,13 @@ func (c *DocumentIntelligenceConfig) GetAIMaxInputChars() int {
 		return 24000
 	}
 	return c.AIMaxInputChars
+}
+
+func (c *DocumentIntelligenceConfig) GetAIExtractionMaxTokens() int {
+	if c.AIExtractionMaxTokens <= 0 {
+		return 5000
+	}
+	return c.AIExtractionMaxTokens
 }
 
 func (c *DocumentIntelligenceConfig) GetAIClassificationModel() string {

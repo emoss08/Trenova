@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,8 +43,8 @@ type Params struct {
 
 type Service struct {
 	logger              *zap.Logger
-	documentIndex       string
 	metrics             *metrics.Registry
+	searchConfig        *config.SearchConfig
 	documentControlRepo repositories.DocumentControlRepository
 	documentRepo        repositories.DocumentRepository
 	contentRepo         repositories.DocumentContentRepository
@@ -68,7 +69,7 @@ func New(p Params) serviceports.DocumentContentService {
 
 	return &Service{
 		logger:              p.Logger.Named("service.document-intelligence"),
-		documentIndex:       p.Config.GetSearchConfig().Meilisearch.Indexes.Documents,
+		searchConfig:        p.Config.GetSearchConfig(),
 		metrics:             p.Metrics,
 		documentControlRepo: p.DocumentControlRepo,
 		documentRepo:        p.DocumentRepo,
@@ -112,7 +113,8 @@ func (s *Service) SearchDocuments(
 	tenantInfo pagination.TenantInfo,
 	resourceType, resourceID, query string,
 ) ([]*document.Document, error) {
-	if docs, err := s.searchDocumentsViaSearchIndex(ctx, tenantInfo, resourceType, resourceID, query); err == nil && len(strings.TrimSpace(query)) > 0 {
+	if docs, err := s.searchDocumentsViaSearchIndex(ctx, tenantInfo, resourceType, resourceID, query); err == nil &&
+		len(strings.TrimSpace(query)) > 0 {
 		return docs, nil
 	} else if err != nil {
 		s.metrics.Document.RecordSearchQuery("postgres", "fallback")
@@ -138,6 +140,11 @@ func (s *Service) Reextract(
 	})
 	if err != nil {
 		return err
+	}
+	if !doc.ProcessingProfile.SupportsIntelligence() {
+		return errortypes.NewConflictError(
+			"Re-extraction is only available for rate confirmation import documents",
+		)
 	}
 
 	doc.ContentStatus = document.ContentStatusPending
@@ -185,9 +192,14 @@ func (s *Service) EnqueueExtraction(
 	doc *document.Document,
 	userID pulid.ID,
 ) error {
+	if !doc.ProcessingProfile.SupportsIntelligence() {
+		s.metrics.Document.RecordExtraction("skipped", "", "processing_profile_disabled")
+		return nil
+	}
 	if !s.workflowStarter.Enabled() {
 		return nil
 	}
+
 	control, err := s.documentControlRepo.GetOrCreate(ctx, doc.OrganizationID, doc.BusinessUnitID)
 	if err != nil {
 		return err
@@ -200,11 +212,17 @@ func (s *Service) EnqueueExtraction(
 	_, err = s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:                                       fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
+			ID: fmt.Sprintf(
+				"document-intelligence-%s",
+				doc.ID.String(),
+			),
 			TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-			StaticSummary:                            fmt.Sprintf("Extracting content for document %s", doc.ID),
+			StaticSummary: fmt.Sprintf(
+				"Extracting content for document %s",
+				doc.ID,
+			),
 		},
 		"ProcessDocumentIntelligenceWorkflow",
 		&documentintelligencejobs.ProcessDocumentIntelligencePayload{
@@ -217,10 +235,10 @@ func (s *Service) EnqueueExtraction(
 		},
 	)
 	if err != nil {
-		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
-		if errors.As(err, &alreadyStarted) {
+		if _, ok := errors.AsType[*serviceerror.WorkflowExecutionAlreadyStarted](err); ok {
 			return nil
 		}
+
 		s.logger.Warn("failed to start document intelligence workflow",
 			zap.String("documentId", doc.ID.String()),
 			zap.Error(err),
@@ -238,8 +256,10 @@ func (s *Service) searchDocumentsViaSearchIndex(
 	tenantInfo pagination.TenantInfo,
 	resourceType, resourceID, query string,
 ) ([]*document.Document, error) {
+	documentIndex := s.searchConfig.Meilisearch.Indexes.Documents
+
 	query = strings.TrimSpace(query)
-	if query == "" || s.searchRepo == nil || !s.searchRepo.Enabled() || s.documentIndex == "" {
+	if query == "" || s.searchRepo == nil || !s.searchRepo.Enabled() || documentIndex == "" {
 		s.metrics.Document.RecordSearchQuery("postgres", "direct")
 		return nil, nil
 	}
@@ -251,8 +271,9 @@ func (s *Service) searchDocumentsViaSearchIndex(
 		resourceType,
 		resourceID,
 	)
+
 	hits, err := s.searchRepo.Search(ctx, repositories.SearchRequest{
-		Index:  s.documentIndex,
+		Index:  documentIndex,
 		Query:  query,
 		Limit:  250,
 		Filter: filter,
@@ -301,6 +322,7 @@ func (s *Service) searchDocumentsViaSearchIndex(
 			ordered = append(ordered, doc)
 		}
 	}
+
 	if len(ordered) == 0 {
 		return []*document.Document{}, nil
 	}

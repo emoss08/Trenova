@@ -24,6 +24,7 @@ const (
 	OperationClassifyLocation            Operation = "ClassifyLocation"
 	OperationDocumentIntelligenceRoute   Operation = "DocumentIntelligenceRoute"
 	OperationDocumentIntelligenceExtract Operation = "DocumentIntelligenceExtract"
+	OperationShipmentImportChat          Operation = "ShipmentImportChat"
 )
 
 type Log struct {
@@ -43,6 +44,7 @@ type Log struct {
 	CompletionTokens int       `json:"completionTokens" bun:"completion_tokens,notnull"`
 	TotalTokens      int       `json:"totalTokens"    bun:"total_tokens,notnull"`
 	ReasoningTokens  int       `json:"reasoningTokens" bun:"reasoning_tokens,notnull"`
+	SearchVector     string    `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 	Timestamp        int64     `json:"timestamp"      bun:"timestamp,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 

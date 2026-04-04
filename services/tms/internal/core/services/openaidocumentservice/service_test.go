@@ -76,7 +76,7 @@ func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
 	aiLogRepo := mocks.NewMockAILogRepository(t)
 	aiLogRepo.EXPECT().Create(mock.Anything, mock.MatchedBy(func(entry *ailog.Log) bool {
 		return entry != nil && entry.Model != "" && entry.Operation != ""
-	})).Return(&ailog.Log{}, nil)
+	})).Return(&ailog.Log{}, nil).Maybe()
 
 	service := New(Params{
 		Logger:      zap.NewNop(),
@@ -162,10 +162,20 @@ func TestExtractRateConfirmationBuildsExtractionSchemaRequest(t *testing.T) {
 		assert.Equal(t, "object", payload.Text.Format.Schema["type"])
 		assert.Contains(t, payload.Input[1].Content[0].Text, "[Page 1]")
 		assert.Contains(t, payload.Input[1].Content[0].Text, "Rate Confirmation")
+		assert.Contains(t, payload.Input[1].Content[0].Text, "Canonical field keys:")
+		properties := payload.Text.Format.Schema["properties"].(map[string]any)
+		fields := properties["fields"].(map[string]any)
+		assert.Equal(t, "array", fields["type"])
+		assert.EqualValues(t, 18, fields["maxItems"])
+		fieldItems := fields["items"].(map[string]any)
+		fieldKey := fieldItems["properties"].(map[string]any)["key"].(map[string]any)
+		assert.Contains(t, fieldKey["enum"], "rate")
+		stopItems := properties["stops"].(map[string]any)
+		assert.EqualValues(t, 8, stopItems["maxItems"])
 
 		w.Header().Set("Content-Type", "application/json")
 		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
-			"output_text": `{"documentKind":"RateConfirmation","overallConfidence":0.88,"reviewStatus":"NeedsReview","missingFields":["customer"],"signals":["pickup","delivery"],"fields":{"bol":{"label":"BOL","value":"BOL-123","confidence":0.91,"evidenceExcerpt":"BOL-123","pageNumber":1,"reviewRequired":false,"conflict":false,"source":"page","alternativeValues":[]}},"stops":[],"conflicts":[]}`,
+			"output_text": `{"documentKind":"RateConfirmation","overallConfidence":0.88,"reviewStatus":"NeedsReview","missingFields":["customer"],"signals":["pickup","delivery"],"fields":[{"key":"bol","label":"BOL","value":"BOL-123","confidence":0.91,"evidenceExcerpt":"BOL-123","pageNumber":1,"reviewRequired":false,"conflict":false,"source":"page","alternativeValues":[]}],"stops":[],"conflicts":[]}`,
 			"usage": map[string]any{
 				"input_tokens":  50,
 				"output_tokens": 22,
@@ -195,4 +205,107 @@ func TestExtractRateConfirmationBuildsExtractionSchemaRequest(t *testing.T) {
 	assert.Equal(t, "RateConfirmation", result.DocumentKind)
 	assert.Equal(t, 1, len(result.Fields))
 	assert.Equal(t, "NeedsReview", result.ReviewStatus)
+}
+
+func TestSubmitRateConfirmationBackgroundExtraction(t *testing.T) {
+	t.Parallel()
+
+	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodPost, r.Method)
+
+		var payload responsesRequest
+		require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+		assert.True(t, payload.Background)
+		assert.True(t, payload.Store)
+		assert.Equal(t, "gpt-5-mini-2025-08-07", payload.Model)
+		assert.Equal(t, 5000, payload.MaxOutputTokens)
+
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+			"id":     "resp_123",
+			"status": "queued",
+			"model":  "gpt-5-mini-2025-08-07",
+		}))
+	})
+
+	result, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), &serviceports.AIExtractRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+		DocumentID: pulid.MustNew("doc_"),
+		FileName:   "rate-confirmation.pdf",
+		Text:       "Rate Confirmation text",
+		Pages: []serviceports.AIDocumentPage{
+			{PageNumber: 1, Text: "Rate Confirmation page 1"},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "resp_123", result.ResponseID)
+	assert.Equal(t, "queued", result.Status)
+}
+
+func TestPollRateConfirmationBackgroundExtractionCompleted(t *testing.T) {
+	t.Parallel()
+
+	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/v1/responses/resp_123", r.URL.Path)
+
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+			"id":          "resp_123",
+			"status":      "completed",
+			"model":       "gpt-5-mini-2025-08-07",
+			"output_text": `{"documentKind":"RateConfirmation","overallConfidence":0.88,"reviewStatus":"NeedsReview","missingFields":["customer"],"signals":["pickup","delivery"],"fields":[{"key":"bol","label":"BOL","value":"BOL-123","confidence":0.91,"evidenceExcerpt":"BOL-123","pageNumber":1,"reviewRequired":false,"conflict":false,"source":"page","alternativeValues":[]}],"stops":[],"conflicts":[]}`,
+		}))
+	})
+
+	result, err := service.PollRateConfirmationBackgroundExtraction(t.Context(), &serviceports.AIBackgroundExtractPollRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+		DocumentID: pulid.MustNew("doc_"),
+		ResponseID: "resp_123",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, serviceports.AIBackgroundExtractionStatusCompleted, result.Status)
+	require.NotNil(t, result.ExtractResult)
+	assert.Equal(t, "BOL-123", result.ExtractResult.Fields["bol"].Value)
+}
+
+func TestPollRateConfirmationBackgroundExtractionIncompleteIncludesReason(t *testing.T) {
+	t.Parallel()
+
+	service := newTestService(t, func(w http.ResponseWriter, r *http.Request) {
+		require.Equal(t, http.MethodGet, r.Method)
+		require.Equal(t, "/v1/responses/resp_123", r.URL.Path)
+
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{
+			"id":     "resp_123",
+			"status": "incomplete",
+			"model":  "gpt-5-mini-2025-08-07",
+			"incomplete_details": map[string]any{
+				"reason": "max_output_tokens",
+			},
+		}))
+	})
+
+	result, err := service.PollRateConfirmationBackgroundExtraction(t.Context(), &serviceports.AIBackgroundExtractPollRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+		DocumentID: pulid.MustNew("doc_"),
+		ResponseID: "resp_123",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, serviceports.AIBackgroundExtractionStatusFailed, result.Status)
+	assert.Equal(t, "max_output_tokens", result.FailureCode)
+	assert.Equal(t, "AI background extraction ended incomplete: max_output_tokens", result.FailureMessage)
 }

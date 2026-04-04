@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -43,6 +44,8 @@ func RegisterEntities() []any {
 		&shipment.ShipmentCommentMention{},
 		&shipment.ShipmentHold{},
 		&shipment.Shipment{},
+		&shipmentimportchat.Conversation{},
+		&shipmentimportchat.Turn{},
 		&customer.CustomerBillingProfileDocumentType{},
 	}
 }

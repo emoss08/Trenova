@@ -243,6 +243,18 @@
   }
 }
 
+@property --border-beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes border-beam-spin {
+  to {
+    --border-beam-angle: 360deg;
+  }
+}
+
 .mention-pill {
   display: inline-flex;
   align-items: center;

@@ -52,6 +52,7 @@ type Shipment struct {
 	ActualShipDate       *int64              `json:"actualShipDate"       bun:"actual_ship_date,type:BIGINT,nullzero"`
 	CanceledAt           *int64              `json:"canceledAt"           bun:"canceled_at,type:BIGINT,nullzero"`
 	RatingUnit           int64               `json:"ratingUnit"           bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	SourceDocumentID     string              `json:"sourceDocumentId,omitempty" bun:"-"`
 	SearchVector         string              `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                 string              `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
 	Version              int64               `json:"version"              bun:"version,type:BIGINT"`

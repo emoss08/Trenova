@@ -115,14 +115,15 @@ func New(p Params) *Service {
 }
 
 type UploadRequest struct {
-	TenantInfo     pagination.TenantInfo
-	File           *multipart.FileHeader
-	ResourceID     string
-	ResourceType   string
-	Description    string
-	Tags           []string
-	DocumentTypeID string
-	LineageID      string
+	TenantInfo        pagination.TenantInfo
+	File              *multipart.FileHeader
+	ResourceID        string
+	ResourceType      string
+	ProcessingProfile string
+	Description       string
+	Tags              []string
+	DocumentTypeID    string
+	LineageID         string
 }
 
 type UploadResult struct {
@@ -186,6 +187,15 @@ func (s *Service) Upload(
 		zap.String("resourceId", req.ResourceID),
 		zap.String("resourceType", req.ResourceType),
 	)
+
+	processingProfile, err := document.NormalizeProcessingProfile(req.ProcessingProfile)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"processingProfile",
+			errortypes.ErrInvalid,
+			"Invalid processing profile",
+		)
+	}
 
 	if multiErr := s.validator.ValidateFile(req.File); multiErr != nil {
 		return nil, multiErr
@@ -259,6 +269,7 @@ func (s *Service) Upload(
 		Description:        req.Description,
 		ResourceID:         req.ResourceID,
 		ResourceType:       req.ResourceType,
+		ProcessingProfile:  processingProfile,
 		Tags:               req.Tags,
 		UploadedByID:       req.TenantInfo.UserID,
 		PreviewStatus:      previewStatusForFileType(contentType),
@@ -304,7 +315,9 @@ func (s *Service) Upload(
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
 	}
-	_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
+	if createdDoc.ProcessingProfile.SupportsIntelligence() {
+		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
+	}
 
 	return &UploadResult{Document: createdDoc}, nil
 }

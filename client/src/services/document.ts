@@ -1,10 +1,16 @@
 import { api } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/constants";
 import { safeParse } from "@/lib/parse";
 import {
   type CreateDocumentUploadSessionParams,
   type BulkUploadDocumentParams,
   type BulkUploadDocumentResponse,
   type Document,
+  type ImportAssistantChatParams,
+  type ImportAssistantChatResponse,
+  type ImportAssistantChatHistoryResponse,
+  importAssistantChatResponseSchema,
+  importAssistantChatHistoryResponseSchema,
   type DocumentContent,
   type DocumentPacketSummary,
   type DocumentShipmentDraft,
@@ -31,6 +37,9 @@ export class DocumentService {
     formData.append("file", params.file);
     formData.append("resourceId", params.resourceId);
     formData.append("resourceType", params.resourceType);
+    if (params.processingProfile) {
+      formData.append("processingProfile", params.processingProfile);
+    }
 
     if (params.description) {
       formData.append("description", params.description);
@@ -232,5 +241,109 @@ export class DocumentService {
       errorCount: number;
     }>("/documents/bulk-delete/", { ids: documentIds });
     return response;
+  }
+
+  public async chatWithImportAssistantStream(
+    documentId: string,
+    params: ImportAssistantChatParams,
+    handlers: {
+      onTextDelta?: (delta: string) => void;
+      onNewMessage?: () => void;
+      onToolCallStart?: (name: string, callId: string) => void;
+      onToolCallDone?: (name: string, callId: string, status: string, result: string, actions: ImportAssistantChatResponse["actions"]) => void;
+      onSuggestions?: (suggestions: ImportAssistantChatResponse["suggestions"]) => void;
+      onDone?: (conversationId: string, actions: ImportAssistantChatResponse["actions"]) => void;
+      onError?: (message: string) => void;
+    },
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/documents/${documentId}/import-assistant/chat-stream/`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok || !response.body) {
+      handlers.onError?.("Failed to connect to AI assistant");
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      let currentEvent = "";
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7);
+        } else if (line.startsWith("data: ") && currentEvent) {
+          try {
+            const raw = line.slice(6);
+            const data = raw === "null" || raw === "" ? null : JSON.parse(raw);
+            switch (currentEvent) {
+              case "text_delta":
+                handlers.onTextDelta?.(data.delta);
+                break;
+              case "new_message":
+                handlers.onNewMessage?.();
+                break;
+              case "tool_call_start":
+                handlers.onToolCallStart?.(data.name, data.callId);
+                break;
+              case "tool_call_done":
+                handlers.onToolCallDone?.(data.name, data.callId, data.status, data.result, data.actions ?? []);
+                break;
+              case "suggestions":
+                handlers.onSuggestions?.(data.suggestions ?? []);
+                break;
+              case "done":
+                handlers.onDone?.(data.conversationId, data.actions ?? []);
+                break;
+              case "error":
+                handlers.onError?.(data.message);
+                break;
+            }
+          } catch {
+            // Skip malformed events
+          }
+          currentEvent = "";
+        }
+      }
+    }
+  }
+
+  public async chatWithImportAssistant(
+    documentId: string,
+    params: ImportAssistantChatParams,
+  ): Promise<ImportAssistantChatResponse> {
+    const response = await api.post<ImportAssistantChatResponse>(
+      `/documents/${documentId}/import-assistant/chat/`,
+      params,
+    );
+    return safeParse(importAssistantChatResponseSchema, response, "Import Assistant Chat");
+  }
+
+  public async getImportAssistantHistory(
+    documentId: string,
+  ): Promise<ImportAssistantChatHistoryResponse> {
+    const response = await api.get<ImportAssistantChatHistoryResponse>(
+      `/documents/${documentId}/import-assistant/history/`,
+    );
+    return safeParse(
+      importAssistantChatHistoryResponseSchema,
+      response,
+      "Import Assistant Chat History",
+    );
   }
 }

@@ -7,6 +7,7 @@ import {
 import { apiService } from "@/services/api";
 import type {
   Document,
+  DocumentProcessingProfile,
   DocumentUploadSession,
   DocumentUploadSessionState,
 } from "@/types/document";
@@ -22,6 +23,7 @@ const MAX_PART_RETRIES = 5;
 interface UseDocumentUploadOptions {
   resourceId: string;
   resourceType: string;
+  processingProfile?: DocumentProcessingProfile;
   uploadMetadata?: Record<string, string>;
   invalidateQueryKey?: readonly unknown[];
   onSuccess?: (document: Document) => void;
@@ -134,6 +136,7 @@ function mapSessionStatusToUploadStatus(
 export function useDocumentUpload({
   resourceId,
   resourceType,
+  processingProfile,
   uploadMetadata = {},
   invalidateQueryKey,
   onSuccess,
@@ -310,6 +313,7 @@ export function useDocumentUpload({
       const session = await apiService.documentService.createUploadSession({
         resourceId,
         resourceType,
+        processingProfile,
         fileName: uploadState.file.name,
         fileSize: uploadState.file.size,
         contentType: uploadState.file.type || "application/octet-stream",
@@ -320,7 +324,7 @@ export function useDocumentUpload({
       await syncSessionToStore(uploadState.id, uploadState.file);
       return session;
     },
-    [resourceId, resourceType, syncSessionToStore],
+    [processingProfile, resourceId, resourceType, syncSessionToStore],
   );
 
   const discardSession = useCallback(async (uploadId: string) => {

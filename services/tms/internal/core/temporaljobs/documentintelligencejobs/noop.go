@@ -26,6 +26,20 @@ func (noopAIDocumentService) ExtractRateConfirmation(
 	return nil, nil
 }
 
+func (noopAIDocumentService) SubmitRateConfirmationBackgroundExtraction(
+	context.Context,
+	*services.AIExtractRequest,
+) (*services.AIBackgroundExtractSubmission, error) {
+	return nil, nil
+}
+
+func (noopAIDocumentService) PollRateConfirmationBackgroundExtraction(
+	context.Context,
+	*services.AIBackgroundExtractPollRequest,
+) (*services.AIBackgroundExtractPollResult, error) {
+	return nil, nil
+}
+
 type noopDocumentSearchProjectionService struct{}
 
 func (noopDocumentSearchProjectionService) Upsert(

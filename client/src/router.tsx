@@ -69,6 +69,19 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/shipment-management/shipments/import",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Shipment, Operation.Create),
+            ),
+            async lazy() {
+              const { ShipmentImportPage } = await import(
+                "@/routes/shipment/import-page"
+              );
+              return { Component: ShipmentImportPage };
+            },
+          },
+          {
             path: "/shipment-management/configuration-files/shipment-types",
             loader: combineLoaders(
               protectedLoader,

@@ -211,7 +211,9 @@ func (a *Activities) FinalizeUploadActivity(
 	if a.thumbnailGenerator != nil && a.thumbnailGenerator.SupportsThumbnail(doc.FileType) {
 		previewPath = a.startThumbnailWorkflow(ctx, doc)
 	}
-	_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
+	if doc.ProcessingProfile.SupportsIntelligence() {
+		_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
+	}
 
 	return &FinalizeUploadResult{
 		SessionID:   session.ID,
@@ -390,6 +392,7 @@ func (a *Activities) ensureDocument(
 			Description:        session.Description,
 			ResourceID:         session.ResourceID,
 			ResourceType:       session.ResourceType,
+			ProcessingProfile:  session.ProcessingProfile,
 			Tags:               session.Tags,
 			UploadedByID:       userID,
 			PreviewStoragePath: "",

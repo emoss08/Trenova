@@ -83,7 +83,7 @@ func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 }
 
 func isAllowedDocumentControlResource(resourceType string) bool {
-	switch strings.ToLower(strings.TrimSpace(resourceType)) {
+	switch normalizeDocumentControlResource(resourceType) {
 	case "shipment", "trailer", "tractor", "worker":
 		return true
 	default:
@@ -92,12 +92,22 @@ func isAllowedDocumentControlResource(resourceType string) bool {
 }
 
 func (dc *DocumentControl) AllowsShipmentDraftResource(resourceType string) bool {
-	normalized := strings.ToLower(strings.TrimSpace(resourceType))
+	normalized := normalizeDocumentControlResource(resourceType)
 	values := make([]string, 0, len(dc.ShipmentDraftAllowedResources))
 	for _, value := range dc.ShipmentDraftAllowedResources {
-		values = append(values, strings.ToLower(strings.TrimSpace(value)))
+		values = append(values, normalizeDocumentControlResource(value))
 	}
 	return slices.Contains(values, normalized)
+}
+
+func normalizeDocumentControlResource(resourceType string) string {
+	normalized := strings.ToLower(strings.TrimSpace(resourceType))
+	switch normalized {
+	case "shipment_import":
+		return "shipment"
+	default:
+		return normalized
+	}
 }
 
 func (dc *DocumentControl) GetID() pulid.ID {

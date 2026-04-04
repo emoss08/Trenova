@@ -24,5 +24,18 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			TaskQueue:     temporaltype.DocumentIntelligenceTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 		},
+		{
+			ID:            "document-ai-extraction-poller",
+			Description:   "Poll pending OpenAI background extraction jobs",
+			Spec:          schedule.Every(30 * time.Second),
+			Workflow:      PollPendingDocumentAIExtractionsWorkflow,
+			TaskQueue:     temporaltype.DocumentIntelligenceTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Args: []any{
+				&PollPendingDocumentAIExtractionsPayload{
+					Limit: 25,
+				},
+			},
+		},
 	}
 }

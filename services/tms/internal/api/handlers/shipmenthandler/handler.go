@@ -13,10 +13,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type Params struct {
@@ -25,25 +27,31 @@ type Params struct {
 	Service              services.ShipmentService
 	CommentService       services.ShipmentCommentService
 	HoldService          services.ShipmentHoldService
+	ImportAssistant      services.ShipmentImportAssistantService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
+	Logger               *zap.Logger
 }
 
 type Handler struct {
-	service        services.ShipmentService
-	commentService services.ShipmentCommentService
-	holdService    services.ShipmentHoldService
-	eh             *helpers.ErrorHandler
-	pm             *middleware.PermissionMiddleware
+	service         services.ShipmentService
+	commentService  services.ShipmentCommentService
+	holdService     services.ShipmentHoldService
+	importAssistant services.ShipmentImportAssistantService
+	eh              *helpers.ErrorHandler
+	pm              *middleware.PermissionMiddleware
+	logger          *zap.Logger
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:        p.Service,
-		commentService: p.CommentService,
-		holdService:    p.HoldService,
-		eh:             p.ErrorHandler,
-		pm:             p.PermissionMiddleware,
+		service:         p.Service,
+		commentService:  p.CommentService,
+		holdService:     p.HoldService,
+		importAssistant: p.ImportAssistant,
+		eh:              p.ErrorHandler,
+		pm:              p.PermissionMiddleware,
+		logger:          p.Logger.Named("api.shipment-handler"),
 	}
 }
 
@@ -317,12 +325,37 @@ func (h *Handler) create(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	if entity.SourceDocumentID != "" {
+		if _, err := pulid.Parse(entity.SourceDocumentID); err != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError("sourceDocumentId", errortypes.ErrInvalid, "Invalid source document ID"))
+			return
+		}
+	}
 
 	actor := actorutil.FromAuthContext(authCtx)
 	created, err := h.service.Create(c.Request.Context(), entity, actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
+	}
+
+	if entity.SourceDocumentID != "" && h.importAssistant != nil {
+		if completeErr := h.importAssistant.CompleteHistory(
+			c.Request.Context(),
+			entity.SourceDocumentID,
+			pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		); completeErr != nil {
+			h.logger.Warn(
+				"failed to complete shipment import assistant history after shipment creation",
+				zap.String("sourceDocumentId", entity.SourceDocumentID),
+				zap.Stringer("shipmentId", created.ID),
+				zap.Error(completeErr),
+			)
+		}
 	}
 
 	c.JSON(http.StatusCreated, created)

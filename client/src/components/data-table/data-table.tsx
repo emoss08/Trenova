@@ -56,6 +56,7 @@ export function DataTable<TData extends Record<string, any>>({
   dockActions = [],
   TablePanel,
   onAddRecord: onAddRecordProp,
+  addRecordActions = [],
   extraSearchParams,
   contextMenuActions,
   onRowClick,
@@ -94,6 +95,23 @@ export function DataTable<TData extends Record<string, any>>({
   const openPanelCreate = useCallback(() => {
     void setSearchParams({ panelType: "create", panelEntityId: null });
   }, [setSearchParams]);
+
+  const resolvedAddRecordActions = useMemo(() => {
+    const actions = [...addRecordActions];
+    const defaultOnClick =
+      onAddRecordProp ?? (hasPanel ? openPanelCreate : undefined);
+
+    if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
+      actions.unshift({
+        id: "default-create",
+        label: `Add ${name}`,
+        description: `Create a new ${name.toLowerCase()} from scratch.`,
+        onClick: defaultOnClick,
+      });
+    }
+
+    return canCreate ? actions : [];
+  }, [addRecordActions, canCreate, hasPanel, name, onAddRecordProp, openPanelCreate]);
 
   const openPanelEdit = useCallback(
     (row: Row<TData>) => {
@@ -395,13 +413,7 @@ export function DataTable<TData extends Record<string, any>>({
               onFiltersChange={handleFiltersChange}
               sort={sort}
               onSortChange={handleSortArrayChange}
-              onAddRecord={
-                onAddRecordProp && canCreate
-                  ? onAddRecordProp
-                  : hasPanel && canCreate
-                    ? openPanelCreate
-                    : undefined
-              }
+              addRecordActions={resolvedAddRecordActions}
               resource={name}
               currentConfig={currentConfig}
               onApplyConfig={handleApplyConfig}

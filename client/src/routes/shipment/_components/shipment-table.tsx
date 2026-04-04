@@ -1,12 +1,18 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { apiService } from "@/services/api";
-import type { RowAction } from "@/types/data-table";
+import type { AddRecordAction, RowAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
-import { ArrowRightLeftIcon, BanIcon, CopyIcon, UndoIcon } from "lucide-react";
+import {
+  ArrowRightLeftIcon,
+  BanIcon,
+  CopyIcon,
+  UndoIcon,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ShipmentCancelDialog } from "./shipment-cancel-dialog";
 import { getColumns } from "./shipment-columns";
@@ -21,6 +27,7 @@ export default function ShipmentTable() {
     null,
   );
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { mutate: uncancelMutation } = useMutation({
     mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
@@ -91,6 +98,18 @@ export default function ShipmentTable() {
     [handleDuplicate, handleCancel, handleUncancel, handleTransferOwnership],
   );
 
+  const addRecordActions = useMemo<AddRecordAction[]>(
+    () => [
+      {
+        id: "import-rate-confirmation",
+        label: "Import from Rate Confirmation",
+        description: "Upload a rate confirmation and build a shipment draft from it.",
+        onClick: () => navigate("/shipment-management/shipments/import"),
+      },
+    ],
+    [navigate],
+  );
+
   const handleDuplicateOpenChange = useCallback((open: boolean) => {
     if (!open) setDuplicateShipmentId(null);
   }, []);
@@ -113,6 +132,7 @@ export default function ShipmentTable() {
         resource={Resource.Shipment}
         columns={columns}
         TablePanel={ShipmentPanel}
+        addRecordActions={addRecordActions}
         contextMenuActions={contextMenuActions}
         extraSearchParams={{
           expandShipmentDetails: true,
