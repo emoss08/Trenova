@@ -7,11 +7,7 @@ import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Notification } from "@/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckCheckIcon,
-  CheckIcon,
-  InboxIcon,
-} from "lucide-react";
+import { CheckCheckIcon, CheckIcon, InboxIcon } from "lucide-react";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
@@ -34,7 +30,7 @@ function NotificationRow({
     <div
       className={cn(
         "group flex items-start gap-3 rounded-lg border border-transparent px-4 py-3 transition-colors duration-150",
-        isUnread ? "border-primary/10 bg-primary/[0.03]" : "hover:bg-accent/30",
+        isUnread ? "border-primary/10 bg-primary/3" : "hover:bg-accent/30",
       )}
     >
       <div className="mt-0.5 shrink-0">{config.icon}</div>
@@ -49,9 +45,7 @@ function NotificationRow({
           >
             {notification.title}
           </p>
-          {isUnread && (
-            <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", config.dot)} />
-          )}
+          {isUnread && <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", config.dot)} />}
         </div>
 
         {notification.message && notification.message !== notification.title && (

@@ -29,4 +29,8 @@ type AssignmentService interface {
 		ctx context.Context,
 		req *repositories.UnassignShipmentMoveRequest,
 	) error
+	CheckWorkerCompliance(
+		ctx context.Context,
+		req *repositories.CheckWorkerComplianceRequest,
+	) error
 }

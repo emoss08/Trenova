@@ -63,7 +63,7 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
             Sensitive
           </Badge>
         )}
-        <p className="text-xs break-words text-foreground">{formatted.value}</p>
+        <p className="text-xs wrap-break-word text-foreground">{formatted.value}</p>
         {formatted.transformed && (
           <p className="font-mono text-[11px] text-muted-foreground">
             Raw: {formatAuditValue(value)}
@@ -119,7 +119,6 @@ function ChangeRow({
           </p>
         </div>
       </div>
-
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 rounded-md border border-red-500/20 bg-red-500/8 p-2.5">
           <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
@@ -185,7 +184,9 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
             <EntryDetailRow label="Category" value={row.category || "-"} />
             <EntryDetailRow
               label="Timestamp"
-              value={formatToUserTimezone(row.timestamp, { showTimeZone: true })}
+              value={formatToUserTimezone(row.timestamp, {
+                showTimeZone: true,
+              })}
             />
             <EntryDetailRow label="Correlation ID" value={row.correlationId || "-"} />
             <EntryDetailRow label="User Agent" value={row.userAgent || "-"} />
@@ -213,21 +214,17 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
             </div>
           </ScrollArea>
         </Section>
-
         <Section title="Metadata" description="Additional contextual information">
-          <ShikiJsonBlock value={row.metadata} />
+          <ShikiJsonBlock value={row.metadata} searchable />
         </Section>
-
         <Section title="Previous State" description="State before the operation">
-          <ShikiJsonBlock value={row.previousState} />
+          <ShikiJsonBlock value={row.previousState} searchable copyPath />
         </Section>
-
         <Section title="Current State" description="State after the operation">
-          <ShikiJsonBlock value={row.currentState} />
+          <ShikiJsonBlock value={row.currentState} searchable copyPath />
         </Section>
-
         <Section title="Full Event Data" description="Complete raw event payload">
-          <ShikiJsonBlock value={row} />
+          <ShikiJsonBlock value={row} searchable copyPath />
         </Section>
       </div>
     </DataTablePanelContainer>

@@ -1,12 +1,16 @@
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { ChartColumnIncreasingIcon } from "@/components/ui/chart-column-increasing";
-import { ContainerIcon } from "@/components/ui/container";
-import { HomeIcon } from "@/components/ui/home";
-import { ReceiptIcon } from "@/components/ui/receipt";
-import { SettingsIcon } from "@/components/ui/settings";
-import { TruckIcon } from "@/components/ui/truck";
 import { Operation, Resource } from "@/types/permission";
-import { CalculatorIcon, Package, UsersIcon } from "lucide-react";
+import {
+  BarChart3Icon,
+  CalculatorIcon,
+  ContainerIcon,
+  HomeIcon,
+  Package,
+  ReceiptTextIcon,
+  SettingsIcon,
+  TruckIcon,
+  UsersIcon,
+} from "lucide-react";
 import type { ModuleId, NavigationConfig, NavModule } from "./navigation.types";
 
 interface AppModuleGroup {
@@ -168,7 +172,7 @@ const equipmentModule: NavModule = {
 const billingModule: NavModule = {
   id: "billing",
   label: "Billing Management",
-  icon: ReceiptIcon,
+  icon: ReceiptTextIcon,
   description: "Invoicing and financial management",
   basePath: "/billing",
   navigation: [
@@ -214,6 +218,12 @@ const billingModule: NavModule = {
           path: "/billing/configuration-files/document-types",
           resource: Resource.DocumentType,
         },
+        {
+          id: "document-packet-rules",
+          label: "Packet Rules",
+          path: "/billing/configuration-files/document-packet-rules",
+          resource: Resource.DocumentType,
+        },
       ],
     },
   ],
@@ -256,7 +266,7 @@ const accountingModule: NavModule = {
 const reportsModule: NavModule = {
   id: "reports",
   label: "Reports",
-  icon: ChartColumnIncreasingIcon,
+  icon: BarChart3Icon,
   description: "Analytics and reporting",
   basePath: "/reports",
   navigation: [
@@ -604,6 +614,22 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/document-intelligence",
+    title: "Document Intelligence",
+    group: "Document Management",
+    adminOnly: true,
+    resource: Resource.DocumentControl,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/document-parsing-rules",
+    title: "Parsing Rules",
+    group: "Document Management",
+    adminOnly: true,
+    resource: Resource.DocumentParsingRule,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/sequence-configs",
     title: "Sequence Configuration",
     group: "Organization",
@@ -774,6 +800,13 @@ export const adminLinks: SidebarLink[] = [
     adminOnly: true,
     resource: Resource.TableChangeAlert,
     requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/document-operations",
+    title: "Document Operations",
+    group: "Document Management",
+    adminOnly: true,
+    platformAdminOnly: true,
   },
   {
     href: "/organization/document-templates/",

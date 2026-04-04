@@ -8,12 +8,7 @@ import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Notification } from "@/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BellIcon,
-  CheckCheckIcon,
-  CircleAlertIcon,
-  InboxIcon,
-} from "lucide-react";
+import { BellIcon, CheckCheckIcon, CircleAlertIcon, InboxIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -140,7 +135,7 @@ export function NotificationPopover() {
             <span className="relative">
               <BellIcon className={cn("size-4 transition-colors", open && "text-foreground")} />
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold leading-none text-destructive-foreground ring-2 ring-background">
+                <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] leading-none font-semibold text-destructive-foreground ring-2 ring-background">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}

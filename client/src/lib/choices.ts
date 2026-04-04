@@ -8,7 +8,6 @@ import type {
   ThresholdAction,
 } from "@/types/accounting-control";
 import type { PaymentTerm, TransferSchedule } from "@/types/billing-control";
-import type { CaseFormat } from "@/types/data-entry-control";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -19,21 +18,22 @@ import type {
   InvoiceMethod,
   InvoiceNumberFormat,
 } from "@/types/customer";
+import type { CaseFormat } from "@/types/data-entry-control";
 import type {
   AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
 } from "@/types/dispatch-control";
+import type { ResourceType } from "@/types/document-packet-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
 import type { EquipmentClass } from "@/types/equipment-type";
-import type { GenericSelectOption, SelectOption } from "@/types/fields";
+import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@/types/fields";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
 import type { FiscalYearStatus } from "@/types/fiscal-year";
 import type { FormulaTemplateStatus, FormulaTemplateType } from "@/types/formula-template";
 import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
 import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
 import type { EquipmentStatus, Status } from "@/types/helpers";
-import type { TimeFormatType } from "@/types/user";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { DataScope, FieldSensitivity, Operation } from "@/types/role";
@@ -45,6 +45,7 @@ import type {
   StopType,
 } from "@/types/shipment";
 import type { CommentPriority, CommentType, CommentVisibility } from "@/types/shipment-comment";
+import type { TimeFormatType } from "@/types/user";
 import type {
   CDLClass,
   ComplianceStatus,
@@ -191,6 +192,43 @@ export const timezoneChoices = [
   { value: "Australia/Sydney", label: "Sydney (AEST)" },
   { value: "UTC", label: "UTC" },
 ] satisfies ReadonlyArray<SelectOption>;
+
+export const timezoneGroupedChoices: SelectOptionGroup[] = [
+  {
+    label: "Americas",
+    options: [
+      { value: "America/New_York", label: "Eastern Time (US)", description: "UTC-5" },
+      { value: "America/Chicago", label: "Central Time (US)", description: "UTC-6" },
+      { value: "America/Denver", label: "Mountain Time (US)", description: "UTC-7" },
+      { value: "America/Los_Angeles", label: "Pacific Time (US)", description: "UTC-8" },
+      { value: "America/Phoenix", label: "Arizona Time (US)", description: "UTC-7" },
+      { value: "America/Anchorage", label: "Alaska Time", description: "UTC-9" },
+      { value: "Pacific/Honolulu", label: "Hawaii Time", description: "UTC-10" },
+      { value: "America/Toronto", label: "Eastern Time (Canada)", description: "UTC-5" },
+      { value: "America/Vancouver", label: "Pacific Time (Canada)", description: "UTC-8" },
+    ],
+  },
+  {
+    label: "Europe",
+    options: [
+      { value: "Europe/London", label: "London (GMT)", description: "UTC+0" },
+      { value: "Europe/Paris", label: "Paris (CET)", description: "UTC+1" },
+      { value: "Europe/Berlin", label: "Berlin (CET)", description: "UTC+1" },
+    ],
+  },
+  {
+    label: "Asia & Pacific",
+    options: [
+      { value: "Asia/Tokyo", label: "Tokyo (JST)", description: "UTC+9" },
+      { value: "Asia/Shanghai", label: "Shanghai (CST)", description: "UTC+8" },
+      { value: "Australia/Sydney", label: "Sydney (AEST)", description: "UTC+10" },
+    ],
+  },
+  {
+    label: "Other",
+    options: [{ value: "UTC", label: "UTC", description: "UTC+0" }],
+  },
+];
 
 export const equipmentStatusChoices = [
   { value: "Available", label: "Available", color: "#15803d" },
@@ -629,3 +667,9 @@ export const caseFormatChoices = [
   { value: "Lower", label: "lower" },
   { value: "TitleCase", label: "Title Case" },
 ] satisfies ReadonlyArray<GenericSelectOption<CaseFormat>>;
+export const resourceTypeChoices = [
+  { value: "Shipment", label: "Shipment" },
+  { value: "Trailer", label: "Trailer" },
+  { value: "Tractor", label: "Tractor" },
+  { value: "Worker", label: "Worker" },
+] satisfies ReadonlyArray<GenericSelectOption<ResourceType>>;

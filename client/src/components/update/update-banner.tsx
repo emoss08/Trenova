@@ -1,9 +1,10 @@
+import { cn } from "@/lib/utils";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useUpdateStore } from "@/stores/update-store";
-import { ArrowUpCircleIcon, ExternalLinkIcon, XIcon } from "lucide-react";
+import { ExternalLinkIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
-export function UpdateBanner() {
+export function LatestChange() {
   const manifest = usePermissionStore((state) => state.manifest);
   const status = useUpdateStore((state) => state.status);
   const dismissedVersion = useUpdateStore((state) => state.dismissedVersion);
@@ -30,35 +31,38 @@ export function UpdateBanner() {
   };
 
   return (
-    <div className="group relative flex flex-col items-center gap-2 rounded-md border border-info/30 bg-info/4 px-4 py-2">
-      <button
+    <div
+      className={cn(
+        "group/latest-change size-full min-h-27 justify-center border-t",
+        "relative flex size-full flex-col gap-1 overflow-hidden px-4 pt-3 pb-1 *:text-nowrap",
+        "transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0",
+      )}
+    >
+      <span className="font-light font-mono text-[10px] text-muted-foreground">UPDATE</span>
+      <p className="font-medium text-xs">v{status.latestVersion} available</p>
+      <span className="text-[10px] text-muted-foreground">Running v{status.currentVersion}</span>
+      {status.latestRelease.htmlUrl && (
+        <Button
+          render={
+            <a href={status.latestRelease.htmlUrl} target="_blank" rel="noopener noreferrer">
+              View Release
+            </a>
+          }
+          className="w-max px-0 font-light text-xs"
+          size="sm"
+          variant="link"
+        >
+          <ExternalLinkIcon className="size-3" />
+        </Button>
+      )}
+      <Button
+        className="absolute top-2 right-2 z-10 size-6 rounded-full opacity-0 transition-opacity group-hover/latest-change:opacity-100"
         onClick={handleDismiss}
-        className="absolute -top-2 -right-2 cursor-pointer rounded-full bg-foreground p-0.5 text-background opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
+        size="icon-sm"
+        variant="ghost"
       >
-        <XIcon className="size-4" />
-      </button>
-      <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
-        <ArrowUpCircleIcon className="size-5" />
-        <span className="text-sm font-semibold">
-          Update available: v{status.latestVersion}
-        </span>
-      </div>
-      <span className="text-center text-xs text-purple-600 dark:text-purple-50">
-        You are currently running v{status.currentVersion}
-      </span>
-      <div className="flex items-center gap-2">
-        {status.latestRelease.htmlUrl && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-purple-600 hover:bg-purple-500/20 hover:text-purple-700 dark:text-purple-400 dark:hover:bg-purple-500/20 dark:hover:text-purple-300"
-            onClick={() => window.open(status.latestRelease?.htmlUrl, "_blank")}
-          >
-            View Release
-            <ExternalLinkIcon className="size-3" />
-          </Button>
-        )}
-      </div>
+        <XIcon className="size-3.5 text-muted-foreground" />
+      </Button>
     </div>
   );
 }

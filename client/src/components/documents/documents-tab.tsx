@@ -1,17 +1,19 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { ColorOptionValue } from "@/components/fields/select-components";
+import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { apiService } from "@/services/api";
-import type { Document } from "@/types/document";
+import type { Document, DocumentPacketSummary } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
+import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
+import { DocumentVersionDialog } from "./document-version-dialog";
 import {
   DocumentToolbar,
   type FileTypeFilter,
@@ -21,6 +23,7 @@ import {
 } from "./document-toolbar";
 import { formatFileSize, type RejectedFile } from "./document-upload-zone";
 import { getFileCategory } from "./document-utils";
+import { PacketCompletenessPanel } from "./packet-completeness-panel";
 import { UploadPanel } from "./upload-panel";
 
 interface DocumentsTabProps {
@@ -48,9 +51,8 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
-function supportsThumbnail(fileType: string): boolean {
-  const type = fileType.toLowerCase();
-  return type.startsWith("image/") || type === "application/pdf";
+function hasTargetedProcessing(doc: Document): boolean {
+  return doc.processingProfile === "rate_confirmation_import";
 }
 
 function sortDocuments(
@@ -87,6 +89,13 @@ export function DocumentsTab({
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(
+    null,
+  );
+  const [versionDocument, setVersionDocument] = useState<Document | null>(null);
+  const [replacementLineageId, setReplacementLineageId] = useState<
+    string | undefined
+  >(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
     "upload",
@@ -98,6 +107,7 @@ export function DocumentsTab({
     "grid",
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -110,12 +120,7 @@ export function DocumentsTab({
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
     queryFn: () =>
-      fetchOptions<DocumentType>(
-        "/document-types/select-options/",
-        "",
-        1,
-        100,
-      ),
+      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });
@@ -131,47 +136,70 @@ export function DocumentsTab({
   }, [documentTypesData]);
 
   const uploadMetadata = useMemo((): Record<string, string> => {
+    const metadata: Record<string, string> = {};
     if (isShipment && selectedDocumentTypeId) {
-      return { documentTypeId: selectedDocumentTypeId };
+      metadata.documentTypeId = selectedDocumentTypeId;
     }
-    return {};
-  }, [isShipment, selectedDocumentTypeId]);
+    if (replacementLineageId) {
+      metadata.lineageId = replacementLineageId;
+    }
+    return metadata;
+  }, [isShipment, replacementLineageId, selectedDocumentTypeId]);
 
-  const queryKey = ["documents", resourceType, resourceId];
+  const queryKey = ["documents", resourceType, resourceId, deferredSearchQuery];
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId),
+      apiService.documentService.getByResource(
+        resourceType,
+        resourceId,
+        deferredSearchQuery,
+      ),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;
       if (!docs) return false;
 
-      const hasGeneratingThumbnails = docs.some(
-        (doc) => supportsThumbnail(doc.fileType) && !doc.previewStoragePath,
+      const hasPendingWork = docs.some(
+        (doc) =>
+          doc.previewStatus === "Pending" ||
+          (hasTargetedProcessing(doc) &&
+            (doc.contentStatus === "Pending" ||
+              doc.contentStatus === "Extracting" ||
+              doc.shipmentDraftStatus === "Pending")),
       );
 
-      return hasGeneratingThumbnails ? 3000 : false;
+      return hasPendingWork ? 3000 : false;
     },
+  });
+
+  const { data: packetSummary } = useQuery<DocumentPacketSummary>({
+    queryKey: ["document-packet-summary", resourceType, resourceId],
+    queryFn: () =>
+      apiService.documentService.getPacketSummary(resourceType, resourceId),
+    enabled: !!resourceId,
+  });
+  const versionDocumentID = versionDocument?.id;
+
+  const { data: versionHistory = [], isLoading: isLoadingVersions } = useQuery({
+    queryKey: ["document-versions", versionDocumentID],
+    queryFn: () =>
+      versionDocumentID
+        ? apiService.documentService.getVersions(versionDocumentID)
+        : Promise.resolve([]),
+    enabled: !!versionDocumentID,
   });
 
   const filteredDocuments = useMemo(() => {
     let result = documents;
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((doc) =>
-        doc.originalName.toLowerCase().includes(query),
-      );
-    }
 
     result = result.filter((doc) => matchesFileTypeFilter(doc, fileTypeFilter));
 
     result = sortDocuments(result, sortField, sortDirection);
 
     return result;
-  }, [documents, searchQuery, fileTypeFilter, sortField, sortDirection]);
+  }, [documents, fileTypeFilter, sortField, sortDirection]);
 
   const {
     uploads,
@@ -180,11 +208,12 @@ export function DocumentsTab({
     retryUpload,
     removeUpload,
     clearCompleted,
-  } = useUploadWithProgress({
+  } = useDocumentUpload({
     resourceId,
     resourceType,
     uploadMetadata,
     onSuccess: () => {
+      setReplacementLineageId(undefined);
       toast.success("Document uploaded successfully");
     },
     onError: (error) => {
@@ -196,7 +225,9 @@ export function DocumentsTab({
     mutationFn: (documentId: string) =>
       apiService.documentService.delete(documentId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
       toast.success("Document deleted");
       setDeletingId(null);
     },
@@ -210,12 +241,34 @@ export function DocumentsTab({
     mutationFn: (documentIds: string[]) =>
       apiService.documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
       toast.success(`${result.deletedCount} document(s) deleted`);
       setSelectedIds(new Set());
     },
     onError: (error) => {
       toast.error(`Bulk delete failed: ${error.message}`);
+    },
+  });
+
+  const restoreVersionMutation = useMutation({
+    mutationFn: (documentId: string) =>
+      apiService.documentService.restoreVersion(documentId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ["documents", resourceType, resourceId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["document-versions", versionDocumentID],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["document-packet-summary", resourceType, resourceId],
+      });
+      toast.success("Document version restored");
+    },
+    onError: (error) => {
+      toast.error(`Restore failed: ${error.message}`);
     },
   });
 
@@ -286,6 +339,26 @@ export function DocumentsTab({
 
   const { mutate: deleteDocument } = deleteMutation;
 
+  const handleInspect = useCallback((document: Document) => {
+    setInspectedDocument(document);
+  }, []);
+
+  const handleOpenVersions = useCallback((document: Document) => {
+    setVersionDocument(document);
+  }, []);
+
+  const handleUploadNewVersion = useCallback(
+    (document: Document) => {
+      setReplacementLineageId(document.lineageId);
+      if (document.documentTypeId) {
+        setSelectedDocumentTypeId(document.documentTypeId);
+      }
+      setVersionDocument(null);
+      void setIsUploadOpen(true);
+    },
+    [setIsUploadOpen],
+  );
+
   const handleDelete = useCallback(
     (document: Document) => {
       setDeletingId(document.id);
@@ -324,6 +397,10 @@ export function DocumentsTab({
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
+      {packetSummary && packetSummary.totalRules > 0 && (
+        <PacketCompletenessPanel summary={packetSummary} />
+      )}
+
       <DocumentToolbar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -379,6 +456,8 @@ export function DocumentsTab({
         onPreview={handlePreview}
         onDownload={handleDownload}
         onDelete={handleDelete}
+        onInspect={handleInspect}
+        onVersions={handleOpenVersions}
         deletingId={deletingId}
         isLoading={isLoading}
         selectedIds={selectedIds}
@@ -397,7 +476,10 @@ export function DocumentsTab({
 
       <UploadPanel
         isOpen={isUploadOpen}
-        onClose={() => void setIsUploadOpen(false)}
+        onClose={() => {
+          setReplacementLineageId(undefined);
+          void setIsUploadOpen(false);
+        }}
         uploads={uploads}
         onFilesSelected={handleFilesSelected}
         onFilesRejected={handleFilesRejected}
@@ -406,6 +488,39 @@ export function DocumentsTab({
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
         disabled={disabled}
+        title={replacementLineageId ? "Upload New Version" : undefined}
+        description={
+          replacementLineageId
+            ? "This file will be added as a new version in the same document lineage."
+            : undefined
+        }
+        multiple={!replacementLineageId}
+      />
+
+      <DocumentIntelligenceDialog
+        open={!!inspectedDocument}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setInspectedDocument(null);
+          }
+        }}
+        document={inspectedDocument}
+        resourceType={resourceType}
+        resourceId={resourceId}
+      />
+      <DocumentVersionDialog
+        open={!!versionDocument}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setVersionDocument(null);
+          }
+        }}
+        document={versionDocument}
+        versions={versionHistory}
+        isLoading={isLoadingVersions}
+        isRestoring={restoreVersionMutation.isPending}
+        onRestore={(document) => restoreVersionMutation.mutate(document.id)}
+        onUploadNewVersion={handleUploadNewVersion}
       />
     </div>
   );

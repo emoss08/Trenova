@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { UploadState } from "@/hooks/use-upload-with-progress";
 import { cn } from "@/lib/utils";
+import type { UploadState } from "@/types/upload";
 import {
   AlertCircleIcon,
   CheckCircleIcon,
@@ -38,6 +38,7 @@ interface UploadPanelProps {
   multiple?: boolean;
   supportedFormatsLabel?: string;
   maxFileSizeLabel?: string;
+  description?: string;
 }
 
 const MAX_RETRIES = 3;
@@ -165,6 +166,24 @@ function UploadItem({
               Compressing...
             </span>
           )}
+          {status === "uploaded" && (
+            <span className="text-xs text-muted-foreground">Uploaded, waiting...</span>
+          )}
+          {status === "verifying" && (
+            <span className="text-xs text-muted-foreground">Verifying...</span>
+          )}
+          {status === "paused" && (
+            <span className="text-xs text-muted-foreground">Paused</span>
+          )}
+          {status === "retrying" && (
+            <span className="text-xs text-muted-foreground">Retrying...</span>
+          )}
+          {status === "completing" && (
+            <span className="text-xs text-muted-foreground">Finalizing...</span>
+          )}
+          {status === "quarantined" && (
+            <span className="text-xs text-red-400">Quarantined</span>
+          )}
           {status === "pending" && (
             <span className="text-xs text-muted-foreground">
               {retryCount && retryCount > 0
@@ -192,12 +211,27 @@ function UploadItem({
         {status === "processing" && (
           <Loader2Icon className="size-4 animate-spin text-blue-400" />
         )}
+        {status === "uploaded" && (
+          <Loader2Icon className="size-4 animate-spin text-blue-400" />
+        )}
+        {status === "verifying" && (
+          <Loader2Icon className="size-4 animate-spin text-blue-400" />
+        )}
+        {status === "paused" && (
+          <AlertCircleIcon className="size-4 text-amber-400" />
+        )}
+        {status === "retrying" && (
+          <Loader2Icon className="size-4 animate-spin text-blue-400" />
+        )}
+        {status === "completing" && (
+          <Loader2Icon className="size-4 animate-spin text-blue-400" />
+        )}
         {status === "success" && (
           <CheckCircleIcon className="size-4 text-green-400" />
         )}
-        {status === "error" && (
+        {(status === "error" || status === "paused" || status === "quarantined") && (
           <>
-            {getErrorIcon(errorType)}
+            {status === "error" ? getErrorIcon(errorType) : null}
             {onRetry && canRetry && (
               <Button
                 variant="ghost"
@@ -224,7 +258,11 @@ function UploadItem({
         )}
         {(status === "pending" ||
           status === "processing" ||
-          status === "uploading") &&
+          status === "uploading" ||
+          status === "uploaded" ||
+          status === "verifying" ||
+          status === "retrying" ||
+          status === "completing") &&
           onCancel && (
             <Button
               variant="ghost"
@@ -379,6 +417,7 @@ export function UploadPanel({
   multiple = true,
   supportedFormatsLabel = "PDF, images, and documents",
   maxFileSizeLabel = "50 MB",
+  description,
 }: UploadPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -546,6 +585,12 @@ export function UploadPanel({
               </Button>
             </div>
           </div>
+
+          {description && (
+            <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
+              {description}
+            </p>
+          )}
 
           <AnimatePresence initial={false}>
             {!isEffectivelyCollapsed && (

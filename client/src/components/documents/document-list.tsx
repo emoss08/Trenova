@@ -11,6 +11,8 @@ interface DocumentListProps {
   onPreview?: (document: Document) => void;
   onDownload?: (document: Document) => void;
   onDelete?: (document: Document) => void;
+  onInspect?: (document: Document) => void;
+  onVersions?: (document: Document) => void;
   deletingId?: string | null;
   isLoading?: boolean;
   className?: string;
@@ -79,6 +81,8 @@ export function DocumentList({
   onPreview,
   onDownload,
   onDelete,
+  onInspect,
+  onVersions,
   deletingId,
   isLoading = false,
   className,
@@ -104,6 +108,8 @@ export function DocumentList({
             onPreview={onPreview}
             onDownload={onDownload}
             onDelete={onDelete}
+            onInspect={onInspect}
+            onVersions={onVersions}
             isDeleting={deletingId === document.id}
             isSelected={selectedIds?.has(document.id)}
             onSelect={onSelectDocument}
@@ -127,6 +133,8 @@ export function DocumentList({
           onPreview={onPreview}
           onDownload={onDownload}
           onDelete={onDelete}
+          onInspect={onInspect}
+          onVersions={onVersions}
           isDeleting={deletingId === document.id}
           isSelected={selectedIds?.has(document.id)}
           onSelect={onSelectDocument}

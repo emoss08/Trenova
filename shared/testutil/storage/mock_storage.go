@@ -21,6 +21,30 @@ type MockStorageClient struct {
 	DownloadFunc        func(ctx context.Context, key string) (*storage.DownloadResult, error)
 	DeleteFunc          func(ctx context.Context, key string) error
 	GetPresignedURLFunc func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	GetPresignedUploadURLFunc func(
+		ctx context.Context,
+		params *storage.PresignedUploadURLParams,
+	) (string, error)
+	InitiateMultipartUploadFunc func(
+		ctx context.Context,
+		params *storage.MultipartUploadParams,
+	) (string, error)
+	GetMultipartUploadPartURLFunc func(
+		ctx context.Context,
+		params *storage.MultipartUploadPartURLParams,
+	) (string, error)
+	CompleteMultipartUploadFunc func(
+		ctx context.Context,
+		params *storage.CompleteMultipartUploadParams,
+	) error
+	AbortMultipartUploadFunc func(
+		ctx context.Context,
+		params *storage.AbortMultipartUploadParams,
+	) error
+	ListMultipartUploadPartsFunc func(
+		ctx context.Context,
+		params *storage.ListMultipartUploadPartsParams,
+	) ([]storage.UploadedPart, error)
 	ExistsFunc          func(ctx context.Context, key string) (bool, error)
 	GetFileInfoFunc     func(ctx context.Context, key string) (*storage.FileInfo, error)
 }
@@ -148,6 +172,81 @@ func (m *MockStorageClient) GetPresignedURL(
 		params.Key,
 		time.Now().Add(params.Expiry).Unix(),
 	), nil
+}
+
+func (m *MockStorageClient) GetPresignedUploadURL(
+	ctx context.Context,
+	params *storage.PresignedUploadURLParams,
+) (string, error) {
+	if m.GetPresignedUploadURLFunc != nil {
+		return m.GetPresignedUploadURLFunc(ctx, params)
+	}
+
+	return fmt.Sprintf(
+		"https://mock-storage.example.com/%s?upload=1&expires=%d",
+		params.Key,
+		time.Now().Add(params.Expiry).Unix(),
+	), nil
+}
+
+func (m *MockStorageClient) InitiateMultipartUpload(
+	ctx context.Context,
+	params *storage.MultipartUploadParams,
+) (string, error) {
+	if m.InitiateMultipartUploadFunc != nil {
+		return m.InitiateMultipartUploadFunc(ctx, params)
+	}
+
+	return "mock-upload-id", nil
+}
+
+func (m *MockStorageClient) GetMultipartUploadPartURL(
+	ctx context.Context,
+	params *storage.MultipartUploadPartURLParams,
+) (string, error) {
+	if m.GetMultipartUploadPartURLFunc != nil {
+		return m.GetMultipartUploadPartURLFunc(ctx, params)
+	}
+
+	return fmt.Sprintf(
+		"https://mock-storage.example.com/%s?partNumber=%d&uploadId=%s",
+		params.Key,
+		params.PartNumber,
+		params.UploadID,
+	), nil
+}
+
+func (m *MockStorageClient) CompleteMultipartUpload(
+	ctx context.Context,
+	params *storage.CompleteMultipartUploadParams,
+) error {
+	if m.CompleteMultipartUploadFunc != nil {
+		return m.CompleteMultipartUploadFunc(ctx, params)
+	}
+
+	return nil
+}
+
+func (m *MockStorageClient) AbortMultipartUpload(
+	ctx context.Context,
+	params *storage.AbortMultipartUploadParams,
+) error {
+	if m.AbortMultipartUploadFunc != nil {
+		return m.AbortMultipartUploadFunc(ctx, params)
+	}
+
+	return nil
+}
+
+func (m *MockStorageClient) ListMultipartUploadParts(
+	ctx context.Context,
+	params *storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
+	if m.ListMultipartUploadPartsFunc != nil {
+		return m.ListMultipartUploadPartsFunc(ctx, params)
+	}
+
+	return nil, nil
 }
 
 func (m *MockStorageClient) Exists(ctx context.Context, key string) (bool, error) {

@@ -12,12 +12,13 @@ export function AuditLogsPage() {
       <PageHeader
         title="Audit Entries"
         description="Monitor and review system activity across your organization"
-        className="p-0 py-4"
       />
-      <AuditAlert />
-      <DataTableLazyComponent>
-        <AuditLogTable />
-      </DataTableLazyComponent>
+      <div className="p-4">
+        <AuditAlert />
+        <DataTableLazyComponent>
+          <AuditLogTable />
+        </DataTableLazyComponent>
+      </div>
     </AdminPageLayout>
   );
 }

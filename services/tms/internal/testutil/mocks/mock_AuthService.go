@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
@@ -116,6 +117,210 @@ func (_c *MockAuthService_AuthenticateAPIKey_Call) Return(authenticatedPrincipal
 }
 
 func (_c *MockAuthService_AuthenticateAPIKey_Call) RunAndReturn(run func(ctx context.Context, token string, ipAddress string, userAgent string) (*services.AuthenticatedPrincipal, error)) *MockAuthService_AuthenticateAPIKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSSOLoginState provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error) {
+	ret := _mock.Called(ctx, state)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSSOLoginState")
+	}
+
+	var r0 *repositories.SSOLoginState
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*repositories.SSOLoginState, error)); ok {
+		return returnFunc(ctx, state)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *repositories.SSOLoginState); ok {
+		r0 = returnFunc(ctx, state)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.SSOLoginState)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, state)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_GetSSOLoginState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSSOLoginState'
+type MockAuthService_GetSSOLoginState_Call struct {
+	*mock.Call
+}
+
+// GetSSOLoginState is a helper method to define mock.On call
+//   - ctx context.Context
+//   - state string
+func (_e *MockAuthService_Expecter) GetSSOLoginState(ctx interface{}, state interface{}) *MockAuthService_GetSSOLoginState_Call {
+	return &MockAuthService_GetSSOLoginState_Call{Call: _e.mock.On("GetSSOLoginState", ctx, state)}
+}
+
+func (_c *MockAuthService_GetSSOLoginState_Call) Run(run func(ctx context.Context, state string)) *MockAuthService_GetSSOLoginState_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_GetSSOLoginState_Call) Return(sSOLoginState *repositories.SSOLoginState, err error) *MockAuthService_GetSSOLoginState_Call {
+	_c.Call.Return(sSOLoginState, err)
+	return _c
+}
+
+func (_c *MockAuthService_GetSSOLoginState_Call) RunAndReturn(run func(ctx context.Context, state string) (*repositories.SSOLoginState, error)) *MockAuthService_GetSSOLoginState_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetTenantLoginMetadata provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) GetTenantLoginMetadata(ctx context.Context, organizationSlug string) (*services.TenantLoginMetadataResponse, error) {
+	ret := _mock.Called(ctx, organizationSlug)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTenantLoginMetadata")
+	}
+
+	var r0 *services.TenantLoginMetadataResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*services.TenantLoginMetadataResponse, error)); ok {
+		return returnFunc(ctx, organizationSlug)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *services.TenantLoginMetadataResponse); ok {
+		r0 = returnFunc(ctx, organizationSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.TenantLoginMetadataResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, organizationSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_GetTenantLoginMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTenantLoginMetadata'
+type MockAuthService_GetTenantLoginMetadata_Call struct {
+	*mock.Call
+}
+
+// GetTenantLoginMetadata is a helper method to define mock.On call
+//   - ctx context.Context
+//   - organizationSlug string
+func (_e *MockAuthService_Expecter) GetTenantLoginMetadata(ctx interface{}, organizationSlug interface{}) *MockAuthService_GetTenantLoginMetadata_Call {
+	return &MockAuthService_GetTenantLoginMetadata_Call{Call: _e.mock.On("GetTenantLoginMetadata", ctx, organizationSlug)}
+}
+
+func (_c *MockAuthService_GetTenantLoginMetadata_Call) Run(run func(ctx context.Context, organizationSlug string)) *MockAuthService_GetTenantLoginMetadata_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_GetTenantLoginMetadata_Call) Return(tenantLoginMetadataResponse *services.TenantLoginMetadataResponse, err error) *MockAuthService_GetTenantLoginMetadata_Call {
+	_c.Call.Return(tenantLoginMetadataResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_GetTenantLoginMetadata_Call) RunAndReturn(run func(ctx context.Context, organizationSlug string) (*services.TenantLoginMetadataResponse, error)) *MockAuthService_GetTenantLoginMetadata_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HandleSSOCallback provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) HandleSSOCallback(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HandleSSOCallback")
+	}
+
+	var r0 *services.SSOCallbackResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SSOCallbackRequest) (*services.SSOCallbackResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SSOCallbackRequest) *services.SSOCallbackResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.SSOCallbackResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.SSOCallbackRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_HandleSSOCallback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleSSOCallback'
+type MockAuthService_HandleSSOCallback_Call struct {
+	*mock.Call
+}
+
+// HandleSSOCallback is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req services.SSOCallbackRequest
+func (_e *MockAuthService_Expecter) HandleSSOCallback(ctx interface{}, req interface{}) *MockAuthService_HandleSSOCallback_Call {
+	return &MockAuthService_HandleSSOCallback_Call{Call: _e.mock.On("HandleSSOCallback", ctx, req)}
+}
+
+func (_c *MockAuthService_HandleSSOCallback_Call) Run(run func(ctx context.Context, req services.SSOCallbackRequest)) *MockAuthService_HandleSSOCallback_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.SSOCallbackRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.SSOCallbackRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_HandleSSOCallback_Call) Return(sSOCallbackResponse *services.SSOCallbackResponse, err error) *MockAuthService_HandleSSOCallback_Call {
+	_c.Call.Return(sSOCallbackResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_HandleSSOCallback_Call) RunAndReturn(run func(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error)) *MockAuthService_HandleSSOCallback_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -241,6 +446,72 @@ func (_c *MockAuthService_Logout_Call) Return(err error) *MockAuthService_Logout
 }
 
 func (_c *MockAuthService_Logout_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID) error) *MockAuthService_Logout_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StartSSOLogin provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) StartSSOLogin(ctx context.Context, req services.StartSSOLoginRequest) (string, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartSSOLogin")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartSSOLoginRequest) (string, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartSSOLoginRequest) string); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.StartSSOLoginRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_StartSSOLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartSSOLogin'
+type MockAuthService_StartSSOLogin_Call struct {
+	*mock.Call
+}
+
+// StartSSOLogin is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req services.StartSSOLoginRequest
+func (_e *MockAuthService_Expecter) StartSSOLogin(ctx interface{}, req interface{}) *MockAuthService_StartSSOLogin_Call {
+	return &MockAuthService_StartSSOLogin_Call{Call: _e.mock.On("StartSSOLogin", ctx, req)}
+}
+
+func (_c *MockAuthService_StartSSOLogin_Call) Run(run func(ctx context.Context, req services.StartSSOLoginRequest)) *MockAuthService_StartSSOLogin_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.StartSSOLoginRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.StartSSOLoginRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_StartSSOLogin_Call) Return(s string, err error) *MockAuthService_StartSSOLogin_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockAuthService_StartSSOLogin_Call) RunAndReturn(run func(ctx context.Context, req services.StartSSOLoginRequest) (string, error)) *MockAuthService_StartSSOLogin_Call {
 	_c.Call.Return(run)
 	return _c
 }

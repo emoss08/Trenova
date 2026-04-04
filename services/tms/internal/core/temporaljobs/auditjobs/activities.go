@@ -167,7 +167,7 @@ func (a *Activities) ProcessAuditBatchActivity(
 			ProcessedCount: 0,
 			FailedCount:    0,
 			BatchID:        payload.BatchID,
-			ProcessedAt:    time.Now().Unix(),
+			ProcessedAt:    timeutils.NowUnix(),
 			Metadata: map[string]any{
 				"message": "No entries to process",
 			},
@@ -200,7 +200,7 @@ func (a *Activities) ProcessAuditBatchActivity(
 			ProcessedCount: 0,
 			FailedCount:    len(payload.Entries),
 			BatchID:        payload.BatchID,
-			ProcessedAt:    time.Now().Unix(),
+			ProcessedAt:    timeutils.NowUnix(),
 			Errors:         []string{err.Error()},
 			Metadata: map[string]any{
 				"duration": duration.String(),
@@ -224,7 +224,7 @@ func (a *Activities) ProcessAuditBatchActivity(
 		ProcessedCount: len(payload.Entries),
 		FailedCount:    0,
 		BatchID:        payload.BatchID,
-		ProcessedAt:    time.Now().Unix(),
+		ProcessedAt:    timeutils.NowUnix(),
 		Metadata: map[string]any{
 			"duration":          duration.String(),
 			"avgProcessingTime": duration.Milliseconds() / int64(len(payload.Entries)),
@@ -527,7 +527,7 @@ func (a *Activities) GetBufferStatusActivity(ctx context.Context) (*AuditBufferS
 	status := &AuditBufferStatus{
 		BufferedEntries: int(size),
 		DLQEntries:      int(dlqSize),
-		LastFlush:       time.Now().Unix(),
+		LastFlush:       timeutils.NowUnix(),
 	}
 
 	logger.Info("Retrieved audit buffer status",

@@ -1,0 +1,161 @@
+ruleSet:
+  name: "CH Robinson Rate Confirmation Example"
+  description: "Example tenant-owned parsing rule for CH Robinson rate confirmations with multi-stop layout text."
+  documentKind: "RateConfirmation"
+  priority: 250
+version:
+  label: "Published example seeded from rate_confirmation_ch_robinson.pdf"
+  parserMode: "merge_with_base"
+  matchConfig:
+    providerFingerprints:
+      - "CHRobinson"
+    fileNameContains:
+      - "rate_confirmation"
+      - "ch_robinson"
+    requiresAll:
+      - "c.h. robinson contract addendum and carrier load confirmation"
+      - "service for load #"
+    requiresAny:
+      - "shipper#1:"
+      - "receiver #1:"
+    sectionAnchors:
+      - "shipper#1:"
+      - "receiver #4:"
+  ruleDocument:
+    fields:
+      - key: "referenceNumber"
+        label: "Reference Number"
+        aliases: []
+        patterns:
+          - '(?im)(?:load confirmation - #|service for load #)([0-9]+)'
+        normalizer: "reference"
+        required: true
+        confidence: 0.94
+      - key: "rate"
+        label: "Rate"
+        aliases: []
+        patterns:
+          - '(?is)Total:\s*[_\s\n]*(\$[0-9,]+\.\d{2})'
+        normalizer: "currency"
+        required: true
+        confidence: 0.95
+      - key: "equipment"
+        label: "Equipment"
+        aliases: []
+        patterns:
+          - '(?im)^([A-Za-z][A-Za-z0-9 /-]{1,40}(?:Van|Reefer|Flatbed|Step Deck|Power Only|Conestoga|Box Truck|Trailer)[A-Za-z0-9 /=-]{0,40})$'
+        normalizer: ""
+        required: true
+        confidence: 0.90
+    stops:
+      - role: "pickup"
+        required: true
+        startAnchors:
+          - "SHIPPER#1:"
+        endAnchors:
+          - "--- PAGE 2 ---"
+        allowMultiple: false
+        sequenceStart: 1
+        appointmentPatterns:
+          - '(?i)appt\.'
+        extractors:
+          - fieldKey: "city"
+            aliases: []
+            patterns:
+              - '(?is)SHIPPER#1:.*?\n([A-Za-z .''-]+),\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?'
+            normalizer: ""
+            confidence: 0.86
+            required: false
+          - fieldKey: "state"
+            aliases: []
+            patterns:
+              - '(?is)SHIPPER#1:.*?\n[A-Za-z .''-]+,\s*([A-Z]{2})\s*\d{5}(?:-\d{4})?'
+            normalizer: "state"
+            confidence: 0.86
+            required: false
+          - fieldKey: "postalCode"
+            aliases: []
+            patterns:
+              - '(?is)SHIPPER#1:.*?\n[A-Za-z .''-]+,\s*[A-Z]{2}\s*(\d{5}(?:-\d{4})?)'
+            normalizer: ""
+            confidence: 0.86
+            required: false
+          - fieldKey: "date"
+            aliases: []
+            patterns:
+              - '(?is)SHIPPER#1:.*?Pick Up Date:.*?(\d{1,2}/\d{1,2}/\d{2,4})'
+            normalizer: ""
+            confidence: 0.88
+            required: false
+          - fieldKey: "timeWindow"
+            aliases: []
+            patterns:
+              - '(?is)SHIPPER#1:.*?Pick Up Time:.*?(04:00\s*Appt\.)'
+            normalizer: ""
+            confidence: 0.86
+            required: false
+      - role: "delivery"
+        required: true
+        startAnchors:
+          - "RECEIVER #4:"
+        endAnchors:
+          - "--- PAGE 3 ---"
+        allowMultiple: false
+        sequenceStart: 2
+        appointmentPatterns: []
+        extractors:
+          - fieldKey: "city"
+            aliases: []
+            patterns:
+              - '(?is)RECEIVER #4:.*?\n([A-Za-z .''-]+),\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?'
+            normalizer: ""
+            confidence: 0.88
+            required: false
+          - fieldKey: "state"
+            aliases: []
+            patterns:
+              - '(?is)RECEIVER #4:.*?\n[A-Za-z .''-]+,\s*([A-Z]{2})\s*\d{5}(?:-\d{4})?'
+            normalizer: "state"
+            confidence: 0.88
+            required: false
+          - fieldKey: "postalCode"
+            aliases: []
+            patterns:
+              - '(?is)RECEIVER #4:.*?\n[A-Za-z .''-]+,\s*[A-Z]{2}\s*(\d{5}(?:-\d{4})?)'
+            normalizer: ""
+            confidence: 0.88
+            required: false
+          - fieldKey: "date"
+            aliases: []
+            patterns:
+              - '(?is)RECEIVER #4:.*?Delivery Date:.*?(\d{1,2}/\d{1,2}/\d{2,4})'
+            normalizer: ""
+            confidence: 0.88
+            required: false
+          - fieldKey: "timeWindow"
+            aliases: []
+            patterns:
+              - '(?is)RECEIVER #4:.*?Delivery Time:.*?(\d{2}:\d{2}-\d{2}:\d{2})'
+            normalizer: ""
+            confidence: 0.86
+            required: false
+fixture:
+  name: "CH Robinson multi-stop fixture"
+  description: "Extracted native text snapshot from rate_confirmation_ch_robinson.pdf used to validate the seeded example rule."
+  fileName: "rate_confirmation_ch_robinson.pdf"
+  providerFingerprint: "CHRobinson"
+  assertions:
+    fieldAssertions:
+      referenceNumber:
+        - operator: "matches_regex"
+          pattern: '^[0-9]+$'
+      rate:
+        - operator: "matches_regex"
+          pattern: '^\$[0-9]+(?:\.[0-9]{2})$'
+      equipment:
+        - operator: "not_empty"
+    requiredStopRoles:
+      - "pickup"
+      - "delivery"
+    minimumStopCount: 2
+    reviewStatus: "Ready"

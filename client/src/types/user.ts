@@ -100,6 +100,7 @@ export const loginRequestSchema = z.object({
   password: z
     .string({ error: "Password is required" })
     .min(1, "Password is required"),
+  organizationSlug: z.string().optional(),
 });
 
 export type LoginRequest = z.infer<typeof loginRequestSchema>;

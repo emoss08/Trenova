@@ -798,6 +798,27 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 		DisplayName: "Shipment Controls",
 		Category:    "Organization",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-controls",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentControl, Operation: OpRead},
+		},
+		DisplayName: "Document Controls",
+		Category:    "Organization",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-parsing-rules",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentParsingRule, Operation: OpRead},
+		},
+		DisplayName: "Document Parsing Rules",
+		Category:    "Organization",
+	})
+
 }
 
 func (rr *RouteRegistry) registerReportingRoutes() {

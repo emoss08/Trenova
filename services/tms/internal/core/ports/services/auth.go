@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -13,14 +14,40 @@ import (
 )
 
 type LoginRequest struct {
-	EmailAddress string `json:"emailAddress" binding:"required,email"`
-	Password     string `json:"password"     binding:"required"`
+	EmailAddress     string `json:"emailAddress" binding:"required,email"`
+	Password         string `json:"password"     binding:"required"`
+	OrganizationSlug string `json:"organizationSlug,omitempty"`
 }
 
 type LoginResponse struct {
 	User      *tenant.User `json:"user"`
 	ExpiresAt int64        `json:"expiresAt"`
 	SessionID string       `json:"sessionId"`
+}
+
+type TenantLoginMetadataResponse struct {
+	OrganizationID   string   `json:"organizationId"`
+	OrganizationName string   `json:"organizationName"`
+	OrganizationSlug string   `json:"organizationSlug"`
+	EnabledProviders []string `json:"enabledProviders"`
+	PasswordEnabled  bool     `json:"passwordEnabled"`
+	EnforceSSO       bool     `json:"enforceSso"`
+}
+
+type StartSSOLoginRequest struct {
+	Provider         tenant.SSOProvider
+	OrganizationSlug string
+	ReturnTo         string
+}
+
+type SSOCallbackRequest struct {
+	State string
+	Code  string
+}
+
+type SSOCallbackResponse struct {
+	LoginResponse *LoginResponse
+	RedirectTo    string
 }
 
 type PrincipalType string
@@ -93,6 +120,16 @@ func (lr *LoginRequest) Validate() error {
 
 type AuthService interface {
 	Login(ctx context.Context, req LoginRequest) (*LoginResponse, error)
+	GetTenantLoginMetadata(
+		ctx context.Context,
+		organizationSlug string,
+	) (*TenantLoginMetadataResponse, error)
+	StartSSOLogin(ctx context.Context, req StartSSOLoginRequest) (string, error)
+	HandleSSOCallback(
+		ctx context.Context,
+		req SSOCallbackRequest,
+	) (*SSOCallbackResponse, error)
+	GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error)
 	ValidateSession(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
 	AuthenticateAPIKey(
 		ctx context.Context,

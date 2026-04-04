@@ -9,12 +9,12 @@ export function QuickSearchTrigger() {
     <button
       type="button"
       onClick={() => setOpen(true)}
-      className="flex w-full items-center gap-2 rounded-md border border-sidebar-border bg-background px-2 py-1.5 text-left text-sidebar-foreground group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent"
+      className="flex w-full items-center gap-2 rounded-md border border-input bg-muted px-2 py-1.5 text-left text-sidebar-foreground group-data-[collapsible=icon]:hidden hover:bg-sidebar-accent"
       aria-label="Open quick search"
     >
       <Search className="size-4 text-muted-foreground" />
       <span className="flex-1 text-sm text-muted-foreground">Quick search...</span>
-      <Kbd className="h-5 px-1.5 text-2xs">Ctrl K</Kbd>
+      <Kbd className="h-5 px-1.5 text-2xs bg-accent border-input border">Ctrl K</Kbd>
     </button>
   );
 }

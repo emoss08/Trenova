@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -30,29 +31,35 @@ type Params struct {
 
 	Logger       *zap.Logger
 	Repo         repositories.OrganizationRepository
+	SSORepo      repositories.SSOConfigRepository
 	AuditService services.AuditService
 	Storage      storage.Client
 	Config       *config.Config
 	Validator    *Validator
+	Encryption   *encryptionservice.Service
 }
 
 type service struct {
 	l            *zap.Logger
 	repo         repositories.OrganizationRepository
+	ssoRepo      repositories.SSOConfigRepository
 	auditService services.AuditService
 	storage      storage.Client
 	storageCfg   *config.StorageConfig
 	v            *Validator
+	enc          *encryptionservice.Service
 }
 
 func New(p Params) services.OrganizationService {
 	return &service{
 		l:            p.Logger.Named("service.organization"),
 		repo:         p.Repo,
+		ssoRepo:      p.SSORepo,
 		storage:      p.Storage,
 		auditService: p.AuditService,
 		storageCfg:   p.Config.GetStorageConfig(),
 		v:            p.Validator,
+		enc:          p.Encryption,
 	}
 }
 
@@ -107,6 +114,12 @@ func mapOrganizationUniqueConstraint(err error) error {
 			"dotNumber",
 			errortypes.ErrDuplicate,
 			"Organization with this DOT number already exists in this business unit",
+		)
+	case "idx_organizations_login_slug":
+		multiErr.Add(
+			"loginSlug",
+			errortypes.ErrDuplicate,
+			"Organization with this login slug already exists",
 		)
 	default:
 		return err
@@ -320,4 +333,269 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 
 func isExternalLogoURL(value string) bool {
 	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
+}
+
+func (s *service) GetMicrosoftSSOConfig(
+	ctx context.Context,
+	organizationID pulid.ID,
+) (*services.MicrosoftSSOConfig, error) {
+	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderAzureAD)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return &services.MicrosoftSSOConfig{
+				OrganizationID: organizationID.String(),
+			}, nil
+		}
+
+		return nil, err
+	}
+
+	return mapMicrosoftSSOConfig(entity), nil
+}
+
+func (s *service) UpsertMicrosoftSSOConfig(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	cfg *services.MicrosoftSSOConfig,
+) (*services.MicrosoftSSOConfig, error) {
+	if cfg == nil {
+		return nil, errortypes.NewValidationError(
+			"config",
+			errortypes.ErrRequired,
+			"Microsoft SSO configuration is required",
+		)
+	}
+
+	tenantID := strings.TrimSpace(cfg.TenantID)
+	clientID := strings.TrimSpace(cfg.ClientID)
+	redirectURL := strings.TrimSpace(cfg.RedirectURL)
+
+	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, tenant.SSOProviderAzureAD)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	clientSecret := strings.TrimSpace(cfg.ClientSecret)
+	if clientSecret == "" && !errortypes.IsNotFoundError(err) {
+		clientSecret = existing.OIDCClientSecret
+	}
+
+	if cfg.Enabled {
+		multiErr := errortypes.NewMultiError()
+		if tenantID == "" {
+			multiErr.Add("tenantId", errortypes.ErrRequired, "Tenant ID is required")
+		}
+		if clientID == "" {
+			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
+		}
+		if clientSecret == "" {
+			multiErr.Add("clientSecret", errortypes.ErrRequired, "Client secret is required")
+		}
+		if redirectURL == "" {
+			multiErr.Add("redirectUrl", errortypes.ErrRequired, "Redirect URL is required")
+		}
+		if multiErr.HasErrors() {
+			return nil, multiErr
+		}
+	}
+
+	if clientSecret != "" {
+		clientSecret, err = s.enc.EncryptString(clientSecret)
+		if err != nil {
+			return nil, errortypes.NewBusinessError("Failed to encrypt Microsoft client secret").
+				WithInternal(err)
+		}
+	}
+
+	entity := &tenant.SSOConfig{
+		OrganizationID:   tenantInfo.OrgID,
+		BusinessUnitID:   tenantInfo.BuID,
+		Name:             "Microsoft Entra ID",
+		Provider:         tenant.SSOProviderAzureAD,
+		Protocol:         tenant.SSOProtocolOIDC,
+		Enabled:          cfg.Enabled,
+		EnforceSSO:       cfg.EnforceSSO,
+		AutoProvision:    false,
+		AllowedDomains:   cfg.AllowedDomains,
+		AttributeMap:     map[string]string{"email": "email"},
+		OIDCIssuerURL:    microsoftIssuerURL(tenantID),
+		OIDCClientID:     clientID,
+		OIDCClientSecret: clientSecret,
+		OIDCRedirectURL:  redirectURL,
+		OIDCScopes:       []string{"openid", "profile", "email"},
+	}
+
+	saved, err := s.ssoRepo.Save(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapMicrosoftSSOConfig(saved), nil
+}
+
+func mapMicrosoftSSOConfig(entity *tenant.SSOConfig) *services.MicrosoftSSOConfig {
+	if entity == nil {
+		return nil
+	}
+
+	allowedDomains := entity.AllowedDomains
+	if allowedDomains == nil {
+		allowedDomains = []string{}
+	}
+
+	return &services.MicrosoftSSOConfig{
+		OrganizationID:   entity.OrganizationID.String(),
+		Enabled:          entity.Enabled,
+		EnforceSSO:       entity.EnforceSSO,
+		TenantID:         microsoftTenantIDFromIssuer(entity.OIDCIssuerURL),
+		ClientID:         entity.OIDCClientID,
+		RedirectURL:      entity.OIDCRedirectURL,
+		AllowedDomains:   allowedDomains,
+		SecretConfigured: strings.TrimSpace(entity.OIDCClientSecret) != "",
+	}
+}
+
+func microsoftIssuerURL(tenantID string) string {
+	return fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0", tenantID)
+}
+
+func (s *service) GetOktaSSOConfig(
+	ctx context.Context,
+	organizationID pulid.ID,
+) (*services.OktaSSOConfig, error) {
+	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderOkta)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return &services.OktaSSOConfig{
+				OrganizationID: organizationID.String(),
+				Scopes:         []string{"openid", "profile", "email"},
+			}, nil
+		}
+
+		return nil, err
+	}
+
+	return mapOktaSSOConfig(entity), nil
+}
+
+func (s *service) UpsertOktaSSOConfig(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	cfg *services.OktaSSOConfig,
+) (*services.OktaSSOConfig, error) {
+	if cfg == nil {
+		return nil, errortypes.NewValidationError(
+			"config",
+			errortypes.ErrRequired,
+			"Okta SSO configuration is required",
+		)
+	}
+
+	issuerURL := strings.TrimSpace(cfg.IssuerURL)
+	clientID := strings.TrimSpace(cfg.ClientID)
+	redirectURL := strings.TrimSpace(cfg.RedirectURL)
+
+	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, tenant.SSOProviderOkta)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	clientSecret := strings.TrimSpace(cfg.ClientSecret)
+	if clientSecret == "" && !errortypes.IsNotFoundError(err) {
+		clientSecret = existing.OIDCClientSecret
+	}
+
+	if cfg.Enabled {
+		multiErr := errortypes.NewMultiError()
+		if issuerURL == "" {
+			multiErr.Add("issuerUrl", errortypes.ErrRequired, "Issuer URL is required")
+		}
+		if clientID == "" {
+			multiErr.Add("clientId", errortypes.ErrRequired, "Client ID is required")
+		}
+		if clientSecret == "" {
+			multiErr.Add("clientSecret", errortypes.ErrRequired, "Client secret is required")
+		}
+		if redirectURL == "" {
+			multiErr.Add("redirectUrl", errortypes.ErrRequired, "Redirect URL is required")
+		}
+		if multiErr.HasErrors() {
+			return nil, multiErr
+		}
+	}
+
+	if clientSecret != "" {
+		clientSecret, err = s.enc.EncryptString(clientSecret)
+		if err != nil {
+			return nil, errortypes.NewBusinessError("Failed to encrypt Okta client secret").
+				WithInternal(err)
+		}
+	}
+
+	scopes := cfg.Scopes
+	if len(scopes) == 0 {
+		scopes = []string{"openid", "profile", "email"}
+	}
+
+	entity := &tenant.SSOConfig{
+		OrganizationID:   tenantInfo.OrgID,
+		BusinessUnitID:   tenantInfo.BuID,
+		Name:             "Okta",
+		Provider:         tenant.SSOProviderOkta,
+		Protocol:         tenant.SSOProtocolOIDC,
+		Enabled:          cfg.Enabled,
+		EnforceSSO:       cfg.EnforceSSO,
+		AutoProvision:    false,
+		AllowedDomains:   cfg.AllowedDomains,
+		AttributeMap:     map[string]string{"email": "email"},
+		OIDCIssuerURL:    issuerURL,
+		OIDCClientID:     clientID,
+		OIDCClientSecret: clientSecret,
+		OIDCRedirectURL:  redirectURL,
+		OIDCScopes:       scopes,
+	}
+
+	saved, err := s.ssoRepo.Save(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return mapOktaSSOConfig(saved), nil
+}
+
+func mapOktaSSOConfig(entity *tenant.SSOConfig) *services.OktaSSOConfig {
+	if entity == nil {
+		return nil
+	}
+
+	allowedDomains := entity.AllowedDomains
+	if allowedDomains == nil {
+		allowedDomains = []string{}
+	}
+
+	scopes := entity.OIDCScopes
+	if scopes == nil {
+		scopes = []string{"openid", "profile", "email"}
+	}
+
+	return &services.OktaSSOConfig{
+		OrganizationID:   entity.OrganizationID.String(),
+		Enabled:          entity.Enabled,
+		EnforceSSO:       entity.EnforceSSO,
+		IssuerURL:        entity.OIDCIssuerURL,
+		ClientID:         entity.OIDCClientID,
+		RedirectURL:      entity.OIDCRedirectURL,
+		Scopes:           scopes,
+		AllowedDomains:   allowedDomains,
+		SecretConfigured: strings.TrimSpace(entity.OIDCClientSecret) != "",
+	}
+}
+
+func microsoftTenantIDFromIssuer(issuerURL string) string {
+	parts := strings.Split(strings.Trim(strings.TrimSpace(issuerURL), "/"), "/")
+	if len(parts) < 2 {
+		return ""
+	}
+
+	return parts[len(parts)-2]
 }

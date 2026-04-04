@@ -3,9 +3,9 @@ package seedhelpers
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -37,7 +37,7 @@ func (t *PersistentEntityTracker) Track(
 		SeedName:  seedName,
 		TableName: table,
 		EntityID:  id,
-		CreatedAt: time.Now().Unix(),
+		CreatedAt: timeutils.NowUnix(),
 	}
 
 	_, err := t.db.NewInsert().

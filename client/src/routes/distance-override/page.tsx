@@ -12,20 +12,11 @@ export function DistanceOverridesPage() {
         title="Distance Overrides"
         description="Override calculated distances between location pairs for routing and billing adjustments"
       />
-      <DataTableLazyComponent>
-        <Table />
-      </DataTableLazyComponent>
+      <div className="p-4">
+        <DataTableLazyComponent>
+          <Table />
+        </DataTableLazyComponent>
+      </div>
     </AdminPageLayout>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

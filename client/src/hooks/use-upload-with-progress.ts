@@ -1,28 +1,14 @@
 import { api } from "@/lib/api";
 import type { Document } from "@/types/document";
+import type {
+  UploadErrorType,
+  UploadState,
+} from "@/types/upload";
 import { documentSchema } from "@/types/document";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useCallback, useRef, useState } from "react";
-
-export type UploadStatus =
-  | "pending"
-  | "processing"
-  | "uploading"
-  | "success"
-  | "error";
-export type UploadErrorType = "network" | "validation" | "server" | "unknown";
-
-export interface UploadState {
-  id: string;
-  file: File;
-  progress: number;
-  status: UploadStatus;
-  error?: string;
-  errorType?: UploadErrorType;
-  retryCount?: number;
-  metadata?: Record<string, string>;
-}
+export type { UploadErrorType, UploadState, UploadStatus } from "@/types/upload";
 
 const MAX_AUTO_RETRIES = 3;
 

@@ -216,6 +216,19 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("search.meilisearch.indexes.customers", "customers")
 	l.viper.SetDefault("search.meilisearch.indexes.workers", "workers")
 	l.viper.SetDefault("search.meilisearch.indexes.documents", "documents")
+
+	// Document intelligence defaults
+	l.viper.SetDefault("documentIntelligence.enableOCRPreprocessing", true)
+	l.viper.SetDefault("documentIntelligence.ocrPreprocessingMode", "standard")
+	l.viper.SetDefault("documentIntelligence.ocrMaxImageDimension", 2400)
+	l.viper.SetDefault("documentIntelligence.enabled", true)
+	l.viper.SetDefault("documentIntelligence.ocrCommand", "tesseract")
+	l.viper.SetDefault("documentIntelligence.ocrLanguage", "eng")
+	l.viper.SetDefault("documentIntelligence.ocrTimeout", "45s")
+	l.viper.SetDefault("documentIntelligence.maxOCRPages", 25)
+	l.viper.SetDefault("documentIntelligence.maxExtractedChars", 200000)
+	l.viper.SetDefault("documentIntelligence.reconcileBatchSize", 100)
+	l.viper.SetDefault("documentIntelligence.maxConcurrentActivities", 2)
 }
 
 // loadConfigFiles loads base and environment-specific config files

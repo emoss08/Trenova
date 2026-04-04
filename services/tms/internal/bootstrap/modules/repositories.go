@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
@@ -18,8 +19,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceoverriderepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentaiextractionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentpacketrulerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentparsingrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentsearchprojectionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentshipmentdraftrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentcontinuityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
@@ -37,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
@@ -48,10 +58,14 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentholdrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentimportchatrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
@@ -65,6 +79,7 @@ import (
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	m2msync.NewSyncer,
 	organizationrepository.New,
+	ssoconfigrepository.New,
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplateversionrepository.New,
@@ -83,6 +98,9 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	dataentrycontrolrepository.New,
 	datarententionrepository.New,
 	dispatchcontrolrepository.New,
+	documentcontrolrepository.New,
+	documentparsingrulerepository.New,
+	documentpacketrulerepository.New,
 	rolerepository.New,
 	roleassignmentrepository.New,
 	usstaterepository.New,
@@ -90,6 +108,11 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	customfieldvaluerepository.New,
 	databasesessionrepository.New,
 	documentrepository.New,
+	documentaiextractionrepository.New,
+	documentcontentrepository.New,
+	documentsearchprojectionrepository.New,
+	documentshipmentdraftrepository.New,
+	documentuploadrepository.New,
 	accessorialchargerepository.New,
 	assignmentrepository.New,
 	servicetyperepository.New,
@@ -99,6 +122,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	shipmentcommodityrepository.New,
 	shipmentcommentrepository.New,
 	shipmentholdrepository.New,
+	shipmentimportchatrepository.New,
 	shipmentmoverepository.New,
 	seqgen.NewSequenceStore,
 	seqgen.NewFormatProvider,
@@ -123,4 +147,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	integrationrepository.New,
 	billingcontrolrepository.New,
 	distanceoverriderepository.New,
+	tcasubscriptionrepository.New,
+	tcaallowlistrepository.New,
+	notificationrepository.New,
+	ailogrepository.New,
 ))

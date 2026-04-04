@@ -26,12 +26,37 @@ import (
 var errNotFound = errors.New("organization not found")
 
 type mockStorageClient struct {
-	uploadFn       func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	downloadFn     func(ctx context.Context, key string) (*storage.DownloadResult, error)
-	deleteFn       func(ctx context.Context, key string) error
-	getPresignedFn func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
-	existsFn       func(ctx context.Context, key string) (bool, error)
-	getFileInfoFn  func(ctx context.Context, key string) (*storage.FileInfo, error)
+	uploadFn             func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
+	downloadFn           func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	deleteFn             func(ctx context.Context, key string) error
+	deleteObjectFn       func(ctx context.Context, params *storage.DeleteObjectParams) error
+	getPresignedFn       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	getPresignedUploadFn func(
+		ctx context.Context,
+		params *storage.PresignedUploadURLParams,
+	) (string, error)
+	initiateMultipartFn func(
+		ctx context.Context,
+		params *storage.MultipartUploadParams,
+	) (string, error)
+	getMultipartPartFn func(
+		ctx context.Context,
+		params *storage.MultipartUploadPartURLParams,
+	) (string, error)
+	completeMultipartFn func(
+		ctx context.Context,
+		params *storage.CompleteMultipartUploadParams,
+	) error
+	abortMultipartFn func(
+		ctx context.Context,
+		params *storage.AbortMultipartUploadParams,
+	) error
+	listMultipartPartsFn func(
+		ctx context.Context,
+		params *storage.ListMultipartUploadPartsParams,
+	) ([]storage.UploadedPart, error)
+	existsFn      func(ctx context.Context, key string) (bool, error)
+	getFileInfoFn func(ctx context.Context, key string) (*storage.FileInfo, error)
 }
 
 func (m *mockStorageClient) Upload(
@@ -68,6 +93,17 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+func (m *mockStorageClient) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
+	if m.deleteObjectFn != nil {
+		return m.deleteObjectFn(ctx, params)
+	}
+
+	return m.Delete(ctx, params.Key)
+}
+
 func (m *mockStorageClient) GetPresignedURL(
 	ctx context.Context,
 	params *storage.PresignedURLParams,
@@ -85,6 +121,72 @@ func (m *mockStorageClient) Exists(ctx context.Context, key string) (bool, error
 	}
 
 	return true, nil
+}
+
+func (m *mockStorageClient) GetPresignedUploadURL(
+	ctx context.Context,
+	params *storage.PresignedUploadURLParams,
+) (string, error) {
+	if m.getPresignedUploadFn != nil {
+		return m.getPresignedUploadFn(ctx, params)
+	}
+
+	return "https://example.test/upload", nil
+}
+
+func (m *mockStorageClient) InitiateMultipartUpload(
+	ctx context.Context,
+	params *storage.MultipartUploadParams,
+) (string, error) {
+	if m.initiateMultipartFn != nil {
+		return m.initiateMultipartFn(ctx, params)
+	}
+
+	return "upload-id", nil
+}
+
+func (m *mockStorageClient) GetMultipartUploadPartURL(
+	ctx context.Context,
+	params *storage.MultipartUploadPartURLParams,
+) (string, error) {
+	if m.getMultipartPartFn != nil {
+		return m.getMultipartPartFn(ctx, params)
+	}
+
+	return "https://example.test/part", nil
+}
+
+func (m *mockStorageClient) CompleteMultipartUpload(
+	ctx context.Context,
+	params *storage.CompleteMultipartUploadParams,
+) error {
+	if m.completeMultipartFn != nil {
+		return m.completeMultipartFn(ctx, params)
+	}
+
+	return nil
+}
+
+func (m *mockStorageClient) AbortMultipartUpload(
+	ctx context.Context,
+	params *storage.AbortMultipartUploadParams,
+) error {
+	if m.abortMultipartFn != nil {
+		return m.abortMultipartFn(ctx, params)
+	}
+
+	return nil
+}
+
+func (m *mockStorageClient) ListMultipartUploadParts(
+	ctx context.Context,
+	params *storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
+	if m.listMultipartPartsFn != nil {
+		return m.listMultipartPartsFn(ctx, params)
+	}
+
+	return nil, nil
 }
 
 func (m *mockStorageClient) GetFileInfo(

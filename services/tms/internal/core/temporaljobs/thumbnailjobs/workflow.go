@@ -47,6 +47,7 @@ func GenerateThumbnailWorkflow(
 
 	err := workflow.ExecuteActivity(ctx, a.GenerateThumbnailActivity, payload).Get(ctx, &result)
 	if err != nil {
+		_ = workflow.ExecuteActivity(ctx, a.MarkThumbnailFailedActivity, payload).Get(ctx, nil)
 		workflow.GetLogger(ctx).Error(
 			"Failed to generate thumbnail",
 			"documentId", payload.DocumentID.String(),

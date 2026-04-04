@@ -13,7 +13,9 @@ export function HazmatSegregationRulesPage() {
         description="Manage and configure hazmat segregation rules for your organization"
       />
       <DataTableLazyComponent>
-        <Table />
+        <div className="px-4">
+          <Table />
+        </div>
       </DataTableLazyComponent>
     </AdminPageLayout>
   );

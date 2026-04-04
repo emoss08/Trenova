@@ -68,6 +68,14 @@ export type RowAction<TData> = {
   disabled?: (row: Row<TData>) => boolean;
 };
 
+export type AddRecordAction = {
+  id: string;
+  label: string;
+  description?: string;
+  icon?: LucideIcon;
+  onClick: () => void;
+};
+
 export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
@@ -86,6 +94,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableRowSelection?: boolean;
   dockActions?: DockAction<TData>[];
   onAddRecord?: () => void;
+  addRecordActions?: AddRecordAction[];
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
   preferDetailRowForEdit?: boolean;

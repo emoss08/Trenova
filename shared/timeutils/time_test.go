@@ -13,9 +13,9 @@ func TestNowUnix(t *testing.T) {
 
 	t.Run("returns current unix timestamp", func(t *testing.T) {
 		t.Parallel()
-		before := time.Now().Unix()
+		before := timeutils.NowUnix()
 		result := timeutils.NowUnix()
-		after := time.Now().Unix()
+		after := timeutils.NowUnix()
 
 		assert.GreaterOrEqual(t, result, before)
 		assert.LessOrEqual(t, result, after)
@@ -165,10 +165,10 @@ func TestDayBoundariesUnix(t *testing.T) {
 	t.Run("returns error for invalid timezone", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := timeutils.DayStartUnix(time.Now().Unix(), "Mars/Olympus")
+		_, err := timeutils.DayStartUnix(timeutils.NowUnix(), "Mars/Olympus")
 		assert.Error(t, err)
 
-		_, err = timeutils.DayEndUnix(time.Now().Unix(), "Mars/Olympus")
+		_, err = timeutils.DayEndUnix(timeutils.NowUnix(), "Mars/Olympus")
 		assert.Error(t, err)
 	})
 }

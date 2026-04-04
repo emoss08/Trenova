@@ -11,11 +11,12 @@ export function SequenceConfigPage() {
       <PageHeader
         title="Sequence Configuration"
         description="Configure sequence generation formats for shipments and billing workflows"
-        className="p-0 py-4"
       />
-      <SuspenseLoader>
-        <SequenceConfigForm />
-      </SuspenseLoader>
+      <div className="p-4">
+        <SuspenseLoader>
+          <SequenceConfigForm />
+        </SuspenseLoader>
+      </div>
     </AdminPageLayout>
   );
 }

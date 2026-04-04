@@ -116,6 +116,80 @@ func (_c *MockDocumentContentRepository_GetByDocumentID_Call) RunAndReturn(run f
 	return _c
 }
 
+// ListPagesByDocumentID provides a mock function for the type MockDocumentContentRepository
+func (_mock *MockDocumentContentRepository) ListPagesByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) ([]*documentcontent.Page, error) {
+	ret := _mock.Called(ctx, documentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPagesByDocumentID")
+	}
+
+	var r0 []*documentcontent.Page
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) ([]*documentcontent.Page, error)); ok {
+		return returnFunc(ctx, documentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) []*documentcontent.Page); ok {
+		r0 = returnFunc(ctx, documentID, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*documentcontent.Page)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, documentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentContentRepository_ListPagesByDocumentID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPagesByDocumentID'
+type MockDocumentContentRepository_ListPagesByDocumentID_Call struct {
+	*mock.Call
+}
+
+// ListPagesByDocumentID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - documentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockDocumentContentRepository_Expecter) ListPagesByDocumentID(ctx interface{}, documentID interface{}, tenantInfo interface{}) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
+	return &MockDocumentContentRepository_ListPagesByDocumentID_Call{Call: _e.mock.On("ListPagesByDocumentID", ctx, documentID, tenantInfo)}
+}
+
+func (_c *MockDocumentContentRepository_ListPagesByDocumentID_Call) Run(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ListPagesByDocumentID_Call) Return(pages []*documentcontent.Page, err error) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
+	_c.Call.Return(pages, err)
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ListPagesByDocumentID_Call) RunAndReturn(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) ([]*documentcontent.Page, error)) *MockDocumentContentRepository_ListPagesByDocumentID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListPendingExtraction provides a mock function for the type MockDocumentContentRepository
 func (_mock *MockDocumentContentRepository) ListPendingExtraction(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error) {
 	ret := _mock.Called(ctx, olderThan, limit)
@@ -186,6 +260,69 @@ func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) Return(docum
 }
 
 func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) RunAndReturn(run func(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)) *MockDocumentContentRepository_ListPendingExtraction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReplacePages provides a mock function for the type MockDocumentContentRepository
+func (_mock *MockDocumentContentRepository) ReplacePages(ctx context.Context, content *documentcontent.Content, pages []*documentcontent.Page) error {
+	ret := _mock.Called(ctx, content, pages)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReplacePages")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentcontent.Content, []*documentcontent.Page) error); ok {
+		r0 = returnFunc(ctx, content, pages)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDocumentContentRepository_ReplacePages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReplacePages'
+type MockDocumentContentRepository_ReplacePages_Call struct {
+	*mock.Call
+}
+
+// ReplacePages is a helper method to define mock.On call
+//   - ctx context.Context
+//   - content *documentcontent.Content
+//   - pages []*documentcontent.Page
+func (_e *MockDocumentContentRepository_Expecter) ReplacePages(ctx interface{}, content interface{}, pages interface{}) *MockDocumentContentRepository_ReplacePages_Call {
+	return &MockDocumentContentRepository_ReplacePages_Call{Call: _e.mock.On("ReplacePages", ctx, content, pages)}
+}
+
+func (_c *MockDocumentContentRepository_ReplacePages_Call) Run(run func(ctx context.Context, content *documentcontent.Content, pages []*documentcontent.Page)) *MockDocumentContentRepository_ReplacePages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *documentcontent.Content
+		if args[1] != nil {
+			arg1 = args[1].(*documentcontent.Content)
+		}
+		var arg2 []*documentcontent.Page
+		if args[2] != nil {
+			arg2 = args[2].([]*documentcontent.Page)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ReplacePages_Call) Return(err error) *MockDocumentContentRepository_ReplacePages_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ReplacePages_Call) RunAndReturn(run func(ctx context.Context, content *documentcontent.Content, pages []*documentcontent.Page) error) *MockDocumentContentRepository_ReplacePages_Call {
 	_c.Call.Return(run)
 	return _c
 }

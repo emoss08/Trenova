@@ -1,12 +1,11 @@
 package testutil
 
 import (
-	"time"
-
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type RoleBuilder struct {
@@ -19,8 +18,8 @@ func NewRoleBuilder() *RoleBuilder {
 			Name:           "Test Role",
 			MaxSensitivity: permission.SensitivityInternal,
 			Permissions:    []*permission.ResourcePermission{},
-			CreatedAt:      time.Now().Unix(),
-			UpdatedAt:      time.Now().Unix(),
+			CreatedAt:      timeutils.NowUnix(),
+			UpdatedAt:      timeutils.NowUnix(),
 		},
 	}
 }
@@ -71,8 +70,8 @@ func (b *RoleBuilder) WithPermission(resource string, ops ...permission.Operatio
 		Resource:   resource,
 		Operations: ops,
 		DataScope:  permission.DataScopeOrganization,
-		CreatedAt:  time.Now().Unix(),
-		UpdatedAt:  time.Now().Unix(),
+		CreatedAt:  timeutils.NowUnix(),
+		UpdatedAt:  timeutils.NowUnix(),
 	}
 	b.role.Permissions = append(b.role.Permissions, rp)
 	return b
@@ -98,8 +97,8 @@ func NewResourcePermissionBuilder() *ResourcePermissionBuilder {
 			Resource:   "shipment",
 			Operations: []permission.Operation{permission.OpRead},
 			DataScope:  permission.DataScopeOrganization,
-			CreatedAt:  time.Now().Unix(),
-			UpdatedAt:  time.Now().Unix(),
+			CreatedAt:  timeutils.NowUnix(),
+			UpdatedAt:  timeutils.NowUnix(),
 		},
 	}
 }
@@ -145,7 +144,7 @@ func NewUserRoleAssignmentBuilder() *UserRoleAssignmentBuilder {
 	return &UserRoleAssignmentBuilder{
 		assignment: &permission.UserRoleAssignment{
 			ID:         pulid.MustNew("ura_"),
-			AssignedAt: time.Now().Unix(),
+			AssignedAt: timeutils.NowUnix(),
 		},
 	}
 }

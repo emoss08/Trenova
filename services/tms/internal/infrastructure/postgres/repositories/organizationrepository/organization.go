@@ -83,6 +83,40 @@ func (r *repository) GetByID(
 	return org, nil
 }
 
+func (r *repository) GetByLoginSlug(
+	ctx context.Context,
+	loginSlug string,
+) (*tenant.Organization, error) {
+	org := new(tenant.Organization)
+	if err := r.db.DB().
+		NewSelect().
+		Model(org).
+		Where("org.login_slug = ?", loginSlug).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Organization")
+	}
+
+	return org, nil
+}
+
+func (r *repository) ListLoginSlugsByPrefix(
+	ctx context.Context,
+	prefix string,
+) ([]string, error) {
+	var slugs []string
+	if err := r.db.DB().
+		NewSelect().
+		Model((*tenant.Organization)(nil)).
+		Column("login_slug").
+		Where("login_slug = ?", prefix).
+		WhereOr("login_slug LIKE ?", prefix+"-%").
+		Scan(ctx, &slugs); err != nil {
+		return nil, err
+	}
+
+	return slugs, nil
+}
+
 func (r *repository) Update(
 	ctx context.Context,
 	org *tenant.Organization,

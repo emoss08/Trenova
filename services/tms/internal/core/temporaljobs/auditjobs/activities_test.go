@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -276,7 +277,7 @@ func TestProcessAuditBatchActivity_Success(t *testing.T) {
 		BasePayload: temporaltype.BasePayload{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 		},
 		Entries: entries,
 		BatchID: batchID,

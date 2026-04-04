@@ -12,9 +12,11 @@ export function HoldReasonsPage() {
         title="Hold Reasons"
         description="Manage and configure hold reasons for your organization"
       />
-      <DataTableLazyComponent>
-        <Table />
-      </DataTableLazyComponent>
+      <div className="p-4">
+        <DataTableLazyComponent>
+          <Table />
+        </DataTableLazyComponent>
+      </div>
     </AdminPageLayout>
   );
 }

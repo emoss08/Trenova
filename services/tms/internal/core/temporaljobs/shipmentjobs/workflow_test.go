@@ -2,10 +2,10 @@ package shipmentjobs
 
 import (
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"go.temporal.io/sdk/testsuite"
@@ -34,7 +34,7 @@ func (s *ShipmentWorkflowTestSuite) TestBulkDuplicateShipmentsWorkflow() {
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
 			UserID:         pulid.MustNew("usr_"),
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 		},
 		ShipmentID:    sourceID,
 		Count:         1,
@@ -45,7 +45,7 @@ func (s *ShipmentWorkflowTestSuite) TestBulkDuplicateShipmentsWorkflow() {
 	expected := &BulkDuplicateShipmentsResult{
 		ShipmentIDs:      []pulid.ID{copyID},
 		DuplicatedCount:  1,
-		CompletedAt:      time.Now().Unix(),
+		CompletedAt:      timeutils.NowUnix(),
 		SourceShipmentID: sourceID,
 	}
 
@@ -68,7 +68,7 @@ func (s *ShipmentWorkflowTestSuite) TestAutoDelayShipmentsWorkflow() {
 	expected := &AutoDelayShipmentsResult{
 		ShipmentIDs:  []pulid.ID{pulid.MustNew("shp_")},
 		DelayedCount: 1,
-		CompletedAt:  time.Now().Unix(),
+		CompletedAt:  timeutils.NowUnix(),
 	}
 
 	var a *Activities
@@ -89,7 +89,7 @@ func (s *ShipmentWorkflowTestSuite) TestAutoCancelShipmentsWorkflow() {
 	expected := &AutoCancelShipmentsResult{
 		ShipmentIDs:   []pulid.ID{pulid.MustNew("shp_")},
 		CanceledCount: 1,
-		CompletedAt:   time.Now().Unix(),
+		CompletedAt:   timeutils.NowUnix(),
 	}
 
 	var a *Activities

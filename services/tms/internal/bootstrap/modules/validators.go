@@ -13,6 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
+	"github.com/emoss08/trenova/internal/core/services/documentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
+	"github.com/emoss08/trenova/internal/core/services/documentparsingruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
@@ -129,6 +132,9 @@ var ValidatorModule = fx.Module("validators",
 		dataentrycontrolservice.NewValidator,
 		dispatchcontrolservice.NewValidator,
 		distanceoverrideservice.NewValidator,
+		documentcontrolservice.NewValidator,
+		documentparsingruleservice.NewValidator,
+		documentpacketruleservice.NewValidator,
 	),
 	fx.Options(
 		ValidationFrameworkModule,

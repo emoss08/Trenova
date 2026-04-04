@@ -244,6 +244,74 @@ func (_c *MockDocumentTypeRepository_GetByID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// GetByName provides a mock function for the type MockDocumentTypeRepository
+func (_mock *MockDocumentTypeRepository) GetByName(ctx context.Context, req repositories.GetDocumentTypeByNameRequest) (*documenttype.DocumentType, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByName")
+	}
+
+	var r0 *documenttype.DocumentType
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentTypeByNameRequest) (*documenttype.DocumentType, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentTypeByNameRequest) *documenttype.DocumentType); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*documenttype.DocumentType)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetDocumentTypeByNameRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentTypeRepository_GetByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByName'
+type MockDocumentTypeRepository_GetByName_Call struct {
+	*mock.Call
+}
+
+// GetByName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetDocumentTypeByNameRequest
+func (_e *MockDocumentTypeRepository_Expecter) GetByName(ctx interface{}, req interface{}) *MockDocumentTypeRepository_GetByName_Call {
+	return &MockDocumentTypeRepository_GetByName_Call{Call: _e.mock.On("GetByName", ctx, req)}
+}
+
+func (_c *MockDocumentTypeRepository_GetByName_Call) Run(run func(ctx context.Context, req repositories.GetDocumentTypeByNameRequest)) *MockDocumentTypeRepository_GetByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetDocumentTypeByNameRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetDocumentTypeByNameRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentTypeRepository_GetByName_Call) Return(documentType *documenttype.DocumentType, err error) *MockDocumentTypeRepository_GetByName_Call {
+	_c.Call.Return(documentType, err)
+	return _c
+}
+
+func (_c *MockDocumentTypeRepository_GetByName_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetDocumentTypeByNameRequest) (*documenttype.DocumentType, error)) *MockDocumentTypeRepository_GetByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockDocumentTypeRepository
 func (_mock *MockDocumentTypeRepository) List(ctx context.Context, req *repositories.ListDocumentTypesRequest) (*pagination.ListResult[*documenttype.DocumentType], error) {
 	ret := _mock.Called(ctx, req)

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "accessorial_charges"(
     "description" text NOT NULL,
     "rate_unit" rate_unit_enum NULL,
     "method" accessorial_method_enum NOT NULL,
-    "amount" NUMERIC(10,2) NOT NULL DEFAULT 0,
+    "amount" numeric(19, 4) NOT NULL DEFAULT 0,
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -40,10 +40,7 @@ COMMENT ON TABLE accessorial_charges IS 'Stores information about accessorial ch
 
 -- bun:split
 ALTER TABLE "accessorial_charges"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
-        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
-        setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B')
-    ) STORED;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') || setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B')) STORED;
 
 -- bun:split
 CREATE INDEX IF NOT EXISTS idx_accessorial_charges_search ON accessorial_charges USING GIN(search_vector);
@@ -66,3 +63,4 @@ ALTER TABLE "shipment_controls"
 --bun:split
 ALTER TABLE "shipment_controls"
     ADD CONSTRAINT "fk_shipment_controls_detention_charge" FOREIGN KEY ("detention_charge_id", "organization_id", "business_unit_id") REFERENCES "accessorial_charges"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE;
+

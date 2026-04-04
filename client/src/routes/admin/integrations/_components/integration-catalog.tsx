@@ -21,6 +21,7 @@ import { useMemo, useState } from "react";
 import { searchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
+import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -53,6 +54,7 @@ export function IntegrationCatalogCard() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const [isSamsaraModalOpen, setIsSamsaraModalOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -115,18 +117,27 @@ export function IntegrationCatalogCard() {
   }, [filteredItems, searchParams.sortBy]);
 
   const openModal = (type: string) => {
-    if (type === "Samsara") {
-      setIsSamsaraModalOpen(true);
-    } else if (type === "GoogleMaps") {
-      setIsGoogleModalOpen(true);
+    switch (type) {
+      case "Samsara":
+        setIsSamsaraModalOpen(true);
+        break;
+      case "GoogleMaps":
+        setIsGoogleModalOpen(true);
+        break;
+      case "OpenAI":
+        setIsOpenAIModalOpen(true);
+        break;
+      default:
+        break;
     }
   };
 
-  const hasModal = (type: string) => type === "Samsara" || type === "GoogleMaps";
+  const hasModal = (type: string) =>
+    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI";
 
   return (
     <>
-      <section className="relative overflow-hidden rounded-xl border border-border bg-background">
+      <section className="relative overflow-hidden bg-background">
         <div className="relative border-b border-border/80 bg-sidebar px-5 py-5 sm:px-6">
           <IntegrationMarketplaceHeader />
           <div className="mt-4 flex flex-row items-center gap-1.5">
@@ -284,6 +295,7 @@ export function IntegrationCatalogCard() {
       </section>
       <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
       <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
+      <OpenAIIntegrationModal open={isOpenAIModalOpen} onOpenChange={setIsOpenAIModalOpen} />
     </>
   );
 }

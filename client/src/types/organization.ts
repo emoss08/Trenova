@@ -37,6 +37,7 @@ export const organizationSettingsSchema = z.object({
   updatedAt: z.number(),
   bucketName: z.string().nullish(),
   businessUnitId: z.string().nullish(),
+  loginSlug: z.string().nullish(),
 
   name: z.string().min(1, { error: "Name is required" }),
   scacCode: z.string().min(1, { error: "SCAC code is required" }),
@@ -67,3 +68,52 @@ export const organizationLogoUrlResponseSchema = z.object({
 export type OrganizationLogoUrlResponse = z.infer<
   typeof organizationLogoUrlResponseSchema
 >;
+
+export const microsoftSSOConfigSchema = z.object({
+  organizationId: z.string().optional().default(""),
+  enabled: z.boolean().default(false),
+  enforceSso: z.boolean().default(false),
+  tenantId: z.string().optional().default(""),
+  clientId: z.string().optional().default(""),
+  clientSecret: z.string().optional().default(""),
+  redirectUrl: z.string().optional().default(""),
+  allowedDomains: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  secretConfigured: z.boolean().default(false),
+});
+
+export type MicrosoftSSOConfig = z.infer<typeof microsoftSSOConfigSchema>;
+
+export const oktaSSOConfigSchema = z.object({
+  organizationId: z.string().optional().default(""),
+  enabled: z.boolean().default(false),
+  enforceSso: z.boolean().default(false),
+  issuerUrl: z.string().optional().default(""),
+  clientId: z.string().optional().default(""),
+  clientSecret: z.string().optional().default(""),
+  redirectUrl: z.string().optional().default(""),
+  scopes: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? ["openid", "profile", "email"]),
+  allowedDomains: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  secretConfigured: z.boolean().default(false),
+});
+
+export type OktaSSOConfig = z.infer<typeof oktaSSOConfigSchema>;
+
+export const tenantLoginMetadataSchema = z.object({
+  organizationId: z.string(),
+  organizationName: z.string(),
+  organizationSlug: z.string(),
+  enabledProviders: z.array(z.string()).default([]),
+  passwordEnabled: z.boolean(),
+  enforceSso: z.boolean(),
+});
+
+export type TenantLoginMetadata = z.infer<typeof tenantLoginMetadataSchema>;

@@ -51,6 +51,7 @@ export type BaseEndpoint =
   | "/hold-reasons/"
   | "/hazmat-segregation-rules/"
   | "/distance-overrides/"
+  | "/document-packet-rules/"
   | "/audit-entries/"
   | "/tca/subscriptions/";
 

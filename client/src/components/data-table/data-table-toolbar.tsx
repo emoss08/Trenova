@@ -1,8 +1,14 @@
 "use no memo";
-import type { FilterItem, SortField } from "@/types/data-table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { AddRecordAction, FilterItem, SortField } from "@/types/data-table";
 import type { TableConfig } from "@/types/table-configuration";
 import type { ColumnDef, Table } from "@tanstack/react-table";
-import { PlusIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import { lazy, Suspense, useState } from "react";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
@@ -45,7 +51,7 @@ type DataTableToolbarProps<TData> = {
   onFiltersChange: (filters: FilterItem[]) => void;
   sort: SortField[];
   onSortChange: (sort: SortField[]) => void;
-  onAddRecord?: () => void;
+  addRecordActions?: AddRecordAction[];
   resource?: string;
   currentConfig: TableConfig;
   onApplyConfig?: (config: TableConfig) => void;
@@ -60,12 +66,14 @@ export function DataTableToolbar<TData>({
   onFiltersChange,
   sort,
   onSortChange,
-  onAddRecord,
+  addRecordActions = [],
   resource,
   currentConfig,
   onApplyConfig,
 }: DataTableToolbarProps<TData>) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const hasAddRecordActions = addRecordActions.length > 0;
+  const hasSingleAddRecordAction = addRecordActions.length === 1;
 
   return (
     <>
@@ -103,12 +111,36 @@ export function DataTableToolbar<TData>({
               />
             )}
           </Suspense>
-          {onAddRecord && (
-            <Button variant="default" size="sm" onClick={onAddRecord}>
+          {hasSingleAddRecordAction ? (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={addRecordActions[0]?.onClick}
+            >
               <PlusIcon className="size-3.5" />
               Add Record
             </Button>
-          )}
+          ) : null}
+          {hasAddRecordActions && !hasSingleAddRecordAction ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="default" size="sm" />}>
+                <PlusIcon className="size-3.5" />
+                Add Record
+                <ChevronDownIcon className="size-3.5" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-72">
+                {addRecordActions.map((action) => (
+                  <DropdownMenuItem
+                    key={action.id}
+                    title={action.label}
+                    description={action.description}
+                    onClick={action.onClick}
+                    startContent={action.icon ? <action.icon className="size-4" /> : undefined}
+                  />
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
       </div>
 

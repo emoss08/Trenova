@@ -1,4 +1,4 @@
-import { LazyLoadErrorFallback } from "@/components/error-boundary";
+import { ErrorBoundaryUi } from "@/components/elements/error-boundary-ui";
 import { LoadingSkeletonState } from "@/components/loading-skeleton";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { Suspense } from "react";
@@ -10,7 +10,7 @@ export function ApprovedChartBoundary({ children }: { children: React.ReactNode 
       {({ reset }) => (
         <ErrorBoundary
           fallbackRender={({ error, resetErrorBoundary }) => (
-            <LazyLoadErrorFallback error={error as Error} resetErrorBoundary={resetErrorBoundary} />
+            <ErrorBoundaryUi error={error as Error} resetError={resetErrorBoundary} />
           )}
           onReset={reset}
         >

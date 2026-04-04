@@ -3,9 +3,7 @@ import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { lazy } from "react";
 
-const DispatchControlForm = lazy(
-  () => import("./_components/dispatch-control-form"),
-);
+const DispatchControlForm = lazy(() => import("./_components/dispatch-control-form"));
 
 export function DispatchControlPage() {
   return (
@@ -15,7 +13,9 @@ export function DispatchControlPage() {
         description="Configure and manage your dispatch control settings"
       />
       <SuspenseLoader>
-        <DispatchControlForm />
+        <div className="p-4">
+          <DispatchControlForm />
+        </div>
       </SuspenseLoader>
     </AdminPageLayout>
   );

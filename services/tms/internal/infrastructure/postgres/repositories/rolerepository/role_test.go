@@ -5,13 +5,13 @@ package rolerepository
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -358,7 +358,7 @@ func TestRoleRepository_Create_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
@@ -412,7 +412,7 @@ func TestRoleRepository_GetByID_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
@@ -456,7 +456,7 @@ func TestRoleRepository_List_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	roles := []*permission.Role{
 		{
 			ID:             pulid.MustNew("rol_"),
@@ -515,7 +515,7 @@ func TestRoleRepository_Update_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
@@ -531,7 +531,7 @@ func TestRoleRepository_Update_Integration(t *testing.T) {
 
 	role.Name = "Updated Name"
 	role.Description = "Updated description"
-	role.UpdatedAt = time.Now().Unix()
+	role.UpdatedAt = timeutils.NowUnix()
 
 	err = repo.Update(tc.Ctx, role)
 	require.NoError(t, err)
@@ -555,7 +555,7 @@ func TestRoleRepository_RoleAssignments_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
@@ -614,7 +614,7 @@ func TestRoleRepository_GetRolesWithInheritance_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 
 	parentRole := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
@@ -682,7 +682,7 @@ func TestRoleRepository_ResourcePermissions_Integration(t *testing.T) {
 
 	repo := setupTestRepository(t, db)
 
-	now := time.Now().Unix()
+	now := timeutils.NowUnix()
 	role := &permission.Role{
 		ID:             pulid.MustNew("rol_"),
 		OrganizationID: orgID,
@@ -719,7 +719,7 @@ func TestRoleRepository_ResourcePermissions_Integration(t *testing.T) {
 
 	t.Run("update resource permission", func(t *testing.T) {
 		rp.Operations = append(rp.Operations, permission.OpExport)
-		rp.UpdatedAt = time.Now().Unix()
+		rp.UpdatedAt = timeutils.NowUnix()
 		err := repo.UpdateResourcePermission(tc.Ctx, rp)
 		require.NoError(t, err)
 

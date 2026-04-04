@@ -104,3 +104,35 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 	assertErrorField(t, multiErr, "bol")
 	assert.Contains(t, multiErr.Error(), "PRO-101")
 }
+
+func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockShipmentRepository(t)
+	repo.EXPECT().
+		CheckForDuplicateBOLs(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
+
+	svc := &service{
+		l:           zap.NewNop(),
+		repo:        repo,
+		controlRepo: mocks.NewMockShipmentControlRepository(t),
+		validator:   NewTestValidator(t),
+		coordinator: newStateCoordinator(),
+	}
+
+	err := svc.checkDuplicateBOLsWithControl(
+		t.Context(),
+		&tenant.ShipmentControl{CheckForDuplicateBOLs: true},
+		&repositories.DuplicateBOLCheckRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			BOL: "BOL-123",
+		},
+	)
+
+	require.NoError(t, err)
+}

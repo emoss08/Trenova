@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/dataentrycontrol"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -65,6 +66,8 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
+			now := timeutils.NowUnix()
+
 			org, err := sc.GetDefaultOrganization(ctx)
 			if err != nil {
 				org, err = sc.CreateOrganization(ctx, tx, &seedhelpers.OrganizationOptions{
@@ -117,8 +120,8 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				ID:             pulid.MustNew("ac_"),
 				OrganizationID: org.ID,
 				BusinessUnitID: bu.ID,
-				CreatedAt:      timeutils.NowUnix(),
-				UpdatedAt:      timeutils.NowUnix(),
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 
 			if _, err := tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
@@ -129,8 +132,8 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				ID:             pulid.MustNew("bc_"),
 				OrganizationID: org.ID,
 				BusinessUnitID: bu.ID,
-				CreatedAt:      timeutils.NowUnix(),
-				UpdatedAt:      timeutils.NowUnix(),
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 			if _, err := tx.NewInsert().Model(billingControl).Exec(ctx); err != nil {
 				return fmt.Errorf("create billing control: %w", err)
@@ -143,8 +146,8 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				ID:             pulid.MustNew("dc_"),
 				OrganizationID: org.ID,
 				BusinessUnitID: bu.ID,
-				CreatedAt:      timeutils.NowUnix(),
-				UpdatedAt:      timeutils.NowUnix(),
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 			if _, err := tx.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
 				return fmt.Errorf("create dispatch control: %w", err)
@@ -158,13 +161,39 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				ID:             pulid.MustNew("sc_"),
 				OrganizationID: org.ID,
 				BusinessUnitID: bu.ID,
-				CreatedAt:      timeutils.NowUnix(),
-				UpdatedAt:      timeutils.NowUnix(),
+				CreatedAt:      now,
+				UpdatedAt:      now,
 			}
 			if _, err := tx.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
 				return fmt.Errorf("create shipment control: %w", err)
 			}
 			if err := sc.TrackCreated(ctx, "shipment_controls", shipmentControl.ID, s.Name()); err != nil {
+				return err
+			}
+
+			documentControl := tenant.NewDefaultDocumentControl(org.ID, bu.ID)
+			if _, err := tx.NewInsert().Model(documentControl).Exec(ctx); err != nil {
+				return fmt.Errorf("create document control: %w", err)
+			}
+			if err := sc.TrackCreated(ctx, "document_controls", documentControl.ID, s.Name()); err != nil {
+				return err
+			}
+
+			dataEntryControl := &dataentrycontrol.DataEntryControl{
+				ID:             pulid.MustNew("dec_"),
+				OrganizationID: org.ID,
+				BusinessUnitID: bu.ID,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+				CodeCase:       dataentrycontrol.CaseFormatUpper,
+				NameCase:       dataentrycontrol.CaseFormatTitleCase,
+				EmailCase:      dataentrycontrol.CaseFormatLower,
+				CityCase:       dataentrycontrol.CaseFormatTitleCase,
+			}
+			if _, err := tx.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
+				return fmt.Errorf("create data entry control: %w", err)
+			}
+			if err := sc.TrackCreated(ctx, "data_entry_controls", dataEntryControl.ID, s.Name()); err != nil {
 				return err
 			}
 
@@ -214,7 +243,6 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			now := timeutils.NowUnix()
 			year := int16(time.Unix(now, 0).Year())
 			month := int16(time.Unix(now, 0).Month())
 

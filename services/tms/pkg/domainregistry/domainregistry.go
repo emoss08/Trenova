@@ -2,14 +2,17 @@ package domainregistry
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -20,6 +23,11 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&tenant.BusinessUnit{},
 		&formulatemplate.FormulaTemplate{},
+		&tenant.DocumentControl{},
+		&ailog.Log{},
+		&dispatchcontrol.DispatchControl{},
+		&tenant.BillingControl{},
+		&tenant.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
 		&equipmentcontinuity.EquipmentContinuity{},
@@ -36,6 +44,8 @@ func RegisterEntities() []any {
 		&shipment.ShipmentCommentMention{},
 		&shipment.ShipmentHold{},
 		&shipment.Shipment{},
+		&shipmentimportchat.Conversation{},
+		&shipmentimportchat.Turn{},
 		&customer.CustomerBillingProfileDocumentType{},
 	}
 }

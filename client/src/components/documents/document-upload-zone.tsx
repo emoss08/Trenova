@@ -93,6 +93,7 @@ export const DocumentUploadZone = forwardRef<
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       setIsDragging(false);
       if (disabled) return;
       handleFiles(e.dataTransfer.files);
@@ -103,6 +104,7 @@ export const DocumentUploadZone = forwardRef<
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+      e.stopPropagation();
       if (!disabled) {
         setIsDragging(true);
       }
@@ -112,6 +114,7 @@ export const DocumentUploadZone = forwardRef<
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setIsDragging(false);
   }, []);
 

@@ -11,6 +11,7 @@ func (s SeedID) String() string {
 
 const (
 	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
+	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
 	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
 	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
 	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
@@ -19,7 +20,10 @@ const (
 	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
+	SeedShipment SeedID = "Shipment" // from 07_shipment.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
+	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
+	SeedTestData SeedID = "TestData" // from 06_test_data.go
 	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
 	SeedUSStates SeedID = "USStates" // from 00_us_states.go
 	SeedWorker SeedID = "Worker" // from 03_worker.go
@@ -27,6 +31,7 @@ const (
 
 var AllSeedIDs = []SeedID{
 	SeedAdminAccount,
+	SeedDocumentParsingRuleExample,
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedFormulaTemplate,
@@ -35,7 +40,10 @@ var AllSeedIDs = []SeedID{
 	SeedLocationCategory,
 	SeedNormalAccount,
 	SeedOrganizationRoles,
+	SeedShipment,
 	SeedSystemAccount,
+	SeedTCAAllowlistedTables,
+	SeedTestData,
 	SeedTestOrganizations,
 	SeedUSStates,
 	SeedWorker,
@@ -48,14 +56,18 @@ var BaseSeedIDs = []SeedID{
 	SeedGLAccount,
 	SeedOrganizationRoles,
 	SeedSystemAccount,
+	SeedTCAAllowlistedTables,
 	SeedUSStates,
 }
 
 var DevelopmentSeedIDs = []SeedID{
+	SeedDocumentParsingRuleExample,
 	SeedFormulaTemplate,
 	SeedLocation,
 	SeedLocationCategory,
 	SeedNormalAccount,
+	SeedShipment,
+	SeedTestData,
 	SeedTestOrganizations,
 	SeedWorker,
 }

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import type { DocumentPreviewStatus } from "@/types/document";
 import {
   FileIcon,
   FileSpreadsheetIcon,
@@ -12,6 +13,7 @@ import { useState } from "react";
 interface DocumentThumbnailProps {
   fileType: string;
   fileName: string;
+  previewStatus: DocumentPreviewStatus;
   previewUrl?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -37,6 +39,7 @@ function supportsThumbnail(fileType: string): boolean {
 export function DocumentThumbnail({
   fileType,
   fileName,
+  previewStatus,
   previewUrl,
   className,
   size = "md",
@@ -44,8 +47,10 @@ export function DocumentThumbnail({
   const iconType = fileType.toLowerCase();
   const [imageError, setImageError] = useState(false);
   const canHaveThumbnail = supportsThumbnail(fileType);
-  const showThumbnail = canHaveThumbnail && previewUrl && !imageError;
-  const isGenerating = canHaveThumbnail && !previewUrl;
+  const showThumbnail =
+    canHaveThumbnail && previewStatus === "Ready" && previewUrl && !imageError;
+  const isGenerating =
+    canHaveThumbnail && previewStatus === "Pending";
 
   if (showThumbnail) {
     return (
@@ -90,6 +95,7 @@ export function DocumentThumbnail({
         sizeClasses[size],
         className,
       )}
+      title={previewStatus === "Failed" ? "Preview unavailable" : undefined}
     >
       {iconType.startsWith("image/") && (
         <ImageIcon className={cn("text-muted-foreground", iconSizes[size])} />

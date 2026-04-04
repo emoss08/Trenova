@@ -1,15 +1,21 @@
 package documenthandler
 
 import (
+	"encoding/json" //nolint:depguard // SSE event encoding
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -19,22 +25,31 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *documentservice.Service
-	ErrorHandler         *helpers.ErrorHandler
-	PermissionMiddleware *middleware.PermissionMiddleware
+	Service                *documentservice.Service
+	UploadService          *documentuploadservice.Service
+	DocumentContentService serviceports.DocumentContentService
+	ImportAssistant        serviceports.ShipmentImportAssistantService
+	ErrorHandler           *helpers.ErrorHandler
+	PermissionMiddleware   *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *documentservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service         *documentservice.Service
+	uploadService   *documentuploadservice.Service
+	contentService  serviceports.DocumentContentService
+	importAssistant serviceports.ShipmentImportAssistantService
+	eh              *helpers.ErrorHandler
+	pm              *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:         p.Service,
+		uploadService:   p.UploadService,
+		contentService:  p.DocumentContentService,
+		importAssistant: p.ImportAssistant,
+		eh:              p.ErrorHandler,
+		pm:              p.PermissionMiddleware,
 	}
 }
 
@@ -42,16 +57,53 @@ func NewTestHandler(
 	service *documentservice.Service,
 	eh *helpers.ErrorHandler,
 	pm *middleware.PermissionMiddleware,
+	importAssistant ...serviceports.ShipmentImportAssistantService,
 ) *Handler {
+	var assistant serviceports.ShipmentImportAssistantService
+	if len(importAssistant) > 0 {
+		assistant = importAssistant[0]
+	}
+
 	return &Handler{
-		service: service,
-		eh:      eh,
-		pm:      pm,
+		service:         service,
+		importAssistant: assistant,
+		eh:              eh,
+		pm:              pm,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/documents")
+	api.POST(
+		"/uploads/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.createUploadSession,
+	)
+	api.GET(
+		"/uploads/active/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.listActiveUploadSessions,
+	)
+	api.GET(
+		"/uploads/:uploadSessionID/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getUploadSession,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/parts/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.getUploadPartURLs,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/complete/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.completeUploadSession,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/cancel/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.cancelUploadSession,
+	)
 	api.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -61,6 +113,51 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:documentID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.get,
+	)
+	api.GET(
+		"/:documentID/content/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getContent,
+	)
+	api.GET(
+		"/:documentID/versions/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.listVersions,
+	)
+	api.POST(
+		"/:documentID/restore/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.restoreVersion,
+	)
+	api.GET(
+		"/:documentID/shipment-draft/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getShipmentDraft,
+	)
+	api.POST(
+		"/:documentID/shipment-draft/reextract/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.reextractDocumentContent,
+	)
+	api.POST(
+		"/:documentID/attach-to-shipment/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.attachToShipment,
+	)
+	api.POST(
+		"/:documentID/import-assistant/chat/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.importAssistantChat,
+	)
+	api.POST(
+		"/:documentID/import-assistant/chat-stream/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.importAssistantChatStream,
+	)
+	api.GET(
+		"/:documentID/import-assistant/history/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getImportAssistantHistory,
 	)
 	api.GET(
 		"/:documentID/download/",
@@ -101,6 +198,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/resource/:resourceType/:resourceID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.getByResource,
+	)
+	api.GET(
+		"/resource/:resourceType/:resourceID/packet-summary/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getPacketSummary,
 	)
 }
 
@@ -182,6 +284,46 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) listVersions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	versions, err := h.service.ListVersions(c.Request.Context(), id, pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, versions)
+}
+
+func (h *Handler) restoreVersion(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	doc, err := h.service.RestoreVersion(c.Request.Context(), id, pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, doc)
 }
 
 // @Summary Get a document download URL
@@ -302,11 +444,30 @@ func (h *Handler) preview(c *gin.Context) {
 }
 
 type uploadRequest struct {
-	ResourceID     string   `form:"resourceId"     binding:"required"`
-	ResourceType   string   `form:"resourceType"   binding:"required"`
-	Description    string   `form:"description"`
-	Tags           []string `form:"tags"`
-	DocumentTypeID string   `form:"documentTypeId"`
+	ResourceID        string   `form:"resourceId"        binding:"required"`
+	ResourceType      string   `form:"resourceType"      binding:"required"`
+	ProcessingProfile string   `form:"processingProfile"`
+	Description       string   `form:"description"`
+	Tags              []string `form:"tags"`
+	DocumentTypeID    string   `form:"documentTypeId"`
+	LineageID         string   `form:"lineageId"`
+}
+
+type createUploadSessionRequest struct {
+	ResourceID        string   `json:"resourceId"        binding:"required"`
+	ResourceType      string   `json:"resourceType"      binding:"required"`
+	ProcessingProfile string   `json:"processingProfile"`
+	FileName          string   `json:"fileName"          binding:"required"`
+	FileSize          int64    `json:"fileSize"          binding:"required,min=1"`
+	ContentType       string   `json:"contentType"       binding:"required"`
+	Description       string   `json:"description"`
+	Tags              []string `json:"tags"`
+	DocumentTypeID    string   `json:"documentTypeId"`
+	LineageID         string   `json:"lineageId"`
+}
+
+type uploadPartURLsRequest struct {
+	PartNumbers []int `json:"partNumbers"`
 }
 
 // @Summary Upload a document
@@ -350,12 +511,14 @@ func (h *Handler) upload(c *gin.Context) {
 				BuID:   authCtx.BusinessUnitID,
 				UserID: authCtx.UserID,
 			},
-			File:           file,
-			ResourceID:     req.ResourceID,
-			ResourceType:   req.ResourceType,
-			Description:    req.Description,
-			Tags:           req.Tags,
-			DocumentTypeID: req.DocumentTypeID,
+			File:              file,
+			ResourceID:        req.ResourceID,
+			ResourceType:      req.ResourceType,
+			ProcessingProfile: req.ProcessingProfile,
+			Description:       req.Description,
+			Tags:              req.Tags,
+			DocumentTypeID:    req.DocumentTypeID,
+			LineageID:         req.LineageID,
 		},
 	)
 	if err != nil {
@@ -366,9 +529,179 @@ func (h *Handler) upload(c *gin.Context) {
 	c.JSON(http.StatusCreated, result.Document)
 }
 
+func (h *Handler) createUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req createUploadSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	session, err := h.uploadService.CreateSession(
+		c.Request.Context(),
+		&services.CreateSessionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			ResourceID:        req.ResourceID,
+			ResourceType:      req.ResourceType,
+			ProcessingProfile: req.ProcessingProfile,
+			FileName:          req.FileName,
+			FileSize:          req.FileSize,
+			ContentType:       req.ContentType,
+			Description:       req.Description,
+			Tags:              req.Tags,
+			DocumentTypeID:    req.DocumentTypeID,
+			LineageID:         req.LineageID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, session)
+}
+
+func (h *Handler) listActiveUploadSessions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	sessions, err := h.uploadService.ListActive(
+		c.Request.Context(),
+		&repositories.ListActiveDocumentUploadSessionsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ResourceID:   helpers.QueryString(c, "resourceId", ""),
+			ResourceType: helpers.QueryString(c, "resourceType", ""),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, sessions)
+}
+
+func (h *Handler) getUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	state, err := h.uploadService.GetSessionState(
+		c.Request.Context(),
+		repositories.GetDocumentUploadSessionByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, state)
+}
+
+func (h *Handler) getUploadPartURLs(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req uploadPartURLsRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	targets, err := h.uploadService.GetPartUploadTargets(
+		c.Request.Context(),
+		&services.PartRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			SessionID:   id,
+			PartNumbers: req.PartNumbers,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"parts": targets})
+}
+
+func (h *Handler) completeUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	session, err := h.uploadService.Complete(
+		c.Request.Context(),
+		&services.CompletionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			SessionID: id,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, session)
+}
+
+func (h *Handler) cancelUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.uploadService.Cancel(c.Request.Context(), &services.CancelRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		SessionID: id,
+	}); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": documentupload.StatusCanceled})
+}
+
 type bulkUploadRequest struct {
 	ResourceID   string `form:"resourceId"   binding:"required"`
 	ResourceType string `form:"resourceType" binding:"required"`
+	LineageID    string `form:"lineageId"`
 }
 
 // @Summary Bulk upload documents
@@ -418,6 +751,7 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 			Files:        files,
 			ResourceID:   req.ResourceID,
 			ResourceType: req.ResourceType,
+			LineageID:    req.LineageID,
 		},
 	)
 	if err != nil {
@@ -547,6 +881,27 @@ func (h *Handler) getByResource(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	resourceType := c.Param("resourceType")
 	resourceID := c.Param("resourceID")
+	searchQuery := helpers.QueryString(c, "query", "")
+
+	if searchQuery != "" && h.contentService != nil {
+		documents, err := h.contentService.SearchDocuments(
+			c.Request.Context(),
+			pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			resourceType,
+			resourceID,
+			searchQuery,
+		)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, documents)
+		return
+	}
 
 	documents, err := h.service.GetByResource(
 		c.Request.Context(),
@@ -565,4 +920,335 @@ func (h *Handler) getByResource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, documents)
+}
+
+func (h *Handler) getPacketSummary(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	summary, err := h.service.GetPacketSummary(
+		c.Request.Context(),
+		c.Param("resourceType"),
+		c.Param("resourceID"),
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
+}
+
+func (h *Handler) getContent(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	content, err := h.contentService.GetContent(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, content)
+}
+
+func (h *Handler) getShipmentDraft(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	draft, err := h.contentService.GetShipmentDraft(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, draft)
+}
+
+func (h *Handler) reextractDocumentContent(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	err = h.contentService.Reextract(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if h.importAssistant != nil {
+		if archiveErr := h.importAssistant.ArchiveHistory(
+			c.Request.Context(),
+			documentID.String(),
+			pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		); archiveErr != nil {
+			h.eh.HandleError(c, archiveErr)
+			return
+		}
+	}
+
+	c.Status(http.StatusAccepted)
+}
+
+type attachToShipmentRequest struct {
+	ShipmentID string `json:"shipmentId"`
+}
+
+func (h *Handler) attachToShipment(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(attachToShipmentRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if req.ShipmentID == "" {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"Shipment ID is required",
+			),
+		)
+		return
+	}
+	if _, err = pulid.MustParse(req.ShipmentID); err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"Invalid shipment ID",
+			),
+		)
+		return
+	}
+
+	updated, err := h.service.AttachLineageToResource(
+		c.Request.Context(),
+		documentID,
+		"shipment",
+		req.ShipmentID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		authCtx.UserID,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if h.importAssistant != nil {
+		if completeErr := h.importAssistant.CompleteHistory(
+			c.Request.Context(),
+			documentID.String(),
+			pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		); completeErr != nil {
+			h.eh.HandleError(c, completeErr)
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+func (h *Handler) importAssistantChat(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	documentID, err := pulid.Parse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
+		return
+	}
+
+	var body serviceports.ShipmentImportChatRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
+		)
+		return
+	}
+
+	body.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	body.DocumentID = documentID.String()
+
+	resp, err := h.importAssistant.Chat(c.Request.Context(), &body)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) importAssistantChatStream(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	documentID, err := pulid.Parse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
+		return
+	}
+
+	var body serviceports.ShipmentImportChatRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
+		)
+		return
+	}
+
+	body.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	body.DocumentID = documentID.String()
+
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming not supported"))
+		return
+	}
+
+	emit := func(event serviceports.StreamEvent) {
+		data, _ := json.Marshal(event.Data)
+		_, _ = c.Writer.WriteString("event: " + event.Event + "\n")
+		_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
+		flusher.Flush()
+	}
+
+	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
+		errData, _ := json.Marshal(map[string]string{"message": err.Error()})
+		_, _ = c.Writer.WriteString("event: error\n")
+		_, _ = c.Writer.WriteString("data: " + string(errData) + "\n\n")
+		flusher.Flush()
+	}
+}
+
+func (h *Handler) getImportAssistantHistory(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	documentID, err := pulid.Parse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"documentId",
+				errortypes.ErrInvalid,
+				"Invalid document ID",
+			),
+		)
+		return
+	}
+
+	resp, err := h.importAssistant.GetHistory(
+		c.Request.Context(),
+		documentID.String(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

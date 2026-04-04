@@ -183,6 +183,7 @@ export const shipmentCommodityCreateSchema = shipmentCommodityBaseSchema;
 export type ShipmentCommodityCreateInput = z.infer<typeof shipmentCommodityCreateSchema>;
 
 const shipmentBaseSchema = z.object({
+  sourceDocumentId: z.string().optional(),
   serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
   shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
   customerId: z.string().min(1, { error: "Customer is required" }),

@@ -62,6 +62,34 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          20,
 		PrimaryActionLabel: "View Integration",
 	},
+	{
+		Type:          integration.TypeOpenAI,
+		Name:          "OpenAI",
+		Description:   "AI-powered document classification and structured extraction for document intelligence workflows.",
+		Category:      integration.CategoryArtificialIntelligence,
+		CategoryLabel: "AI & Automation",
+		LogoURL:       "/integrations/logos/openai_logo.svg",
+		LogoLightURL:  "/integrations/logos/openai_logo.svg",
+		LogoDarkURL:   "/integrations/logos/openai_logo_white.svg",
+		DocsURL:       "https://platform.openai.com/docs",
+		WebsiteURL:    "https://openai.com/",
+		Color:         "#0f172a",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://platform.openai.com/docs",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://openai.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          30,
+		PrimaryActionLabel: "View Integration",
+	},
 }
 
 type CatalogLinkKind string

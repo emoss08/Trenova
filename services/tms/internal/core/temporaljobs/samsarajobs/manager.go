@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/timeutils"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
@@ -20,19 +22,29 @@ import (
 type ManagerParams struct {
 	fx.In
 
-	TemporalClient client.Client
-	SyncService    *samsarasyncservice.Service
+	TemporalClient  client.Client
+	WorkflowStarter serviceports.WorkflowStarter
+	SyncService     *samsarasyncservice.Service
 }
 
 type Manager struct {
-	temporalClient client.Client
-	syncService    *samsarasyncservice.Service
+	temporalClient  client.Client
+	workflowStarter serviceports.WorkflowStarter
+	syncService     *samsarasyncservice.Service
 }
 
 func NewManager(p ManagerParams) *Manager {
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{
+			TemporalClient: p.TemporalClient,
+		})
+	}
+
 	return &Manager{
-		temporalClient: p.TemporalClient,
-		syncService:    p.SyncService,
+		temporalClient:  p.TemporalClient,
+		workflowStarter: workflowStarter,
+		syncService:     p.SyncService,
 	}
 }
 
@@ -56,7 +68,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 			OrganizationID: tenantInfo.OrgID,
 			BusinessUnitID: tenantInfo.BuID,
 			UserID:         tenantInfo.UserID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 			Metadata: map[string]any{
 				"trigger": "api",
 			},
@@ -64,16 +76,15 @@ func (m *Manager) StartWorkersSyncWorkflow(
 		RequestedBy: tenantInfo.UserID,
 	}
 
-	if m.temporalClient == nil {
+	if !m.workflowStarter.Enabled() {
 		return nil, errortypes.NewBusinessError("Samsara worker sync is not configured")
 	}
 
-	run, err := m.temporalClient.ExecuteWorkflow(
+	run, err := m.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
 			ID:                                       workflowID,
 			TaskQueue:                                temporaltype.IntegrationTaskQueue,
-			RetryPolicy:                              temporaltype.DefaultRetryPolicy,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			StaticSummary: fmt.Sprintf(
 				"Sync workers to Samsara for business unit %s",
@@ -104,7 +115,7 @@ func (m *Manager) StartWorkersSyncWorkflow(
 		RunID:       run.GetRunID(),
 		TaskQueue:   temporaltype.IntegrationTaskQueue,
 		Status:      enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING.String(),
-		SubmittedAt: time.Now().Unix(),
+		SubmittedAt: timeutils.NowUnix(),
 	}, nil
 }
 

@@ -14,6 +14,10 @@ import { DatabaseSessionService } from "./database-session";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DocumentService } from "./document";
+import { DocumentControlService } from "./document-control";
+import { DocumentOperationsService } from "./document-operations";
+import { DocumentPacketRuleService } from "./document-packet-rule";
+import { DocumentParsingRuleService } from "./document-parsing-rule";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
 import { FiscalPeriodService } from "./fiscal-period";
@@ -57,6 +61,7 @@ class APIService {
   public tractorService: TractorService;
   public customFieldService: CustomFieldService;
   public documentService: DocumentService;
+  public documentControlService: DocumentControlService;
   public accessorialChargeService: AccessorialChargeService;
   public workerService: WorkerService;
   public serviceTypeService: ServiceTypeService;
@@ -90,6 +95,9 @@ class APIService {
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
+  public documentOperationsService: DocumentOperationsService;
+  public documentPacketRuleService: DocumentPacketRuleService;
+  public documentParsingRuleService: DocumentParsingRuleService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -104,6 +112,7 @@ class APIService {
     this.tractorService = new TractorService();
     this.customFieldService = new CustomFieldService();
     this.documentService = new DocumentService();
+    this.documentControlService = new DocumentControlService();
     this.accessorialChargeService = new AccessorialChargeService();
     this.workerService = new WorkerService();
     this.serviceTypeService = new ServiceTypeService();
@@ -137,6 +146,9 @@ class APIService {
     this.assignmentService = new AssignmentService();
     this.notificationService = new NotificationService();
     this.tableChangeAlertService = new TableChangeAlertService();
+    this.documentOperationsService = new DocumentOperationsService();
+    this.documentPacketRuleService = new DocumentPacketRuleService();
+    this.documentParsingRuleService = new DocumentParsingRuleService();
   }
 }
 

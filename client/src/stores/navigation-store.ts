@@ -1,13 +1,19 @@
+import type { ModuleId } from "@/config/navigation.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 interface NavigationState {
   sidebarOpen: boolean;
   mobileNavOpen: boolean;
+  activeModuleId: ModuleId | null;
+  modulePanelCollapsed: boolean;
 
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
   setMobileNavOpen: (open: boolean) => void;
+  setActiveModuleId: (id: ModuleId | null) => void;
+  toggleModulePanel: () => void;
+  setModulePanelCollapsed: (collapsed: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationState>()(
@@ -15,6 +21,8 @@ export const useNavigationStore = create<NavigationState>()(
     (set) => ({
       sidebarOpen: true,
       mobileNavOpen: false,
+      activeModuleId: null,
+      modulePanelCollapsed: false,
 
       toggleSidebar: () => {
         set((state) => ({
@@ -29,11 +37,26 @@ export const useNavigationStore = create<NavigationState>()(
       setMobileNavOpen: (open: boolean) => {
         set({ mobileNavOpen: open });
       },
+
+      setActiveModuleId: (id: ModuleId | null) => {
+        set({ activeModuleId: id });
+      },
+
+      toggleModulePanel: () => {
+        set((state) => ({
+          modulePanelCollapsed: !state.modulePanelCollapsed,
+        }));
+      },
+
+      setModulePanelCollapsed: (collapsed: boolean) => {
+        set({ modulePanelCollapsed: collapsed });
+      },
     }),
     {
       name: "navigation-storage",
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
+        modulePanelCollapsed: state.modulePanelCollapsed,
       }),
     },
   ),

@@ -90,7 +90,9 @@ function SessionSide({
       <span className="text-sm font-medium">{appName || "Unknown app"}</span>
       <span className="text-xs text-muted-foreground">{user || "Unknown user"}</span>
       <span className="text-xs text-muted-foreground">{state}</span>
-      <div className={`mt-1 flex flex-col gap-0.5 ${align === "end" ? "items-end" : "items-start"}`}>
+      <div
+        className={`mt-1 flex flex-col gap-0.5 ${align === "end" ? "items-end" : "items-start"}`}
+      >
         <AgeBadge label="Tx age" seconds={txAge} />
         <AgeBadge label="Query age" seconds={queryAge} />
       </div>
@@ -308,29 +310,28 @@ export function DatabaseSessionsPage() {
       <PageHeader
         title="Database Sessions"
         description="Inspect lock contention and manually terminate blocking database sessions"
-        className="p-0 py-4"
       />
-
-      <StatusBar
-        count={rows.length}
-        isFetching={query.isFetching}
-        onRefresh={() => query.refetch()}
-      />
-
-      {query.isLoading ? (
-        <div className="flex flex-col gap-3">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      ) : rows.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {rows.map((row) => (
-            <SessionCard key={`${row.blockedPid}-${row.blockingPid}`} row={row} />
-          ))}
-        </div>
-      )}
+      <div className="p-4">
+        <StatusBar
+          count={rows.length}
+          isFetching={query.isFetching}
+          onRefresh={() => query.refetch()}
+        />
+        {query.isLoading ? (
+          <div className="flex flex-col gap-3">
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : rows.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {rows.map((row) => (
+              <SessionCard key={`${row.blockedPid}-${row.blockingPid}`} row={row} />
+            ))}
+          </div>
+        )}
+      </div>
     </AdminPageLayout>
   );
 }

@@ -1040,6 +1040,228 @@ var DataRetentionFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// DocumentControl — table "document_controls", alias "dc"
+// ---------------------------------------------------------------------------
+
+// DocumentControlTable holds the table name, alias, and primary key columns
+// for the "document_controls" table. The alias "dc" is used in all generated
+// SQL fragments (e.g. "dc.id = ?").
+var DocumentControlTable = TableInfo{
+	Name:       "document_controls",
+	Alias:      "dc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// DocumentControlColumns provides type-safe column references for the "document_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(DocumentControlColumns.ID.String())
+//	// SELECT dc.id FROM document_controls AS dc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(DocumentControlColumns.ID.Eq(), id)           // WHERE dc.id = ?
+//	q.Order(DocumentControlColumns.CreatedAt.OrderDesc())  // ORDER BY dc.created_at DESC
+var DocumentControlColumns = struct {
+	ID                              Column // "id" → qualified: "dc.id"
+	BusinessUnitID                  Column // "business_unit_id" → qualified: "dc.business_unit_id"
+	OrganizationID                  Column // "organization_id" → qualified: "dc.organization_id"
+	EnableDocumentIntelligence      Column // "enable_document_intelligence" → qualified: "dc.enable_document_intelligence"
+	EnableOCR                       Column // "enable_ocr" → qualified: "dc.enable_ocr"
+	EnableAutoClassification        Column // "enable_auto_classification" → qualified: "dc.enable_auto_classification"
+	EnableAutoDocumentTypeAssociate Column // "enable_auto_document_type_associate" → qualified: "dc.enable_auto_document_type_associate"
+	EnableAutoCreateDocumentTypes   Column // "enable_auto_create_document_types" → qualified: "dc.enable_auto_create_document_types"
+	EnableShipmentDraftExtraction   Column // "enable_shipment_draft_extraction" → qualified: "dc.enable_shipment_draft_extraction"
+	EnableAIAssistedClassification  Column // "enable_ai_assisted_classification" → qualified: "dc.enable_ai_assisted_classification"
+	EnableAIAssistedExtraction      Column // "enable_ai_assisted_extraction" → qualified: "dc.enable_ai_assisted_extraction"
+	ShipmentDraftAllowedResources   Column // "shipment_draft_allowed_resources" → qualified: "dc.shipment_draft_allowed_resources"
+	EnableFullTextIndexing          Column // "enable_full_text_indexing" → qualified: "dc.enable_full_text_indexing"
+	Version                         Column // "version" → qualified: "dc.version"
+	CreatedAt                       Column // "created_at" → qualified: "dc.created_at"
+	UpdatedAt                       Column // "updated_at" → qualified: "dc.updated_at"
+}{
+	ID:                              NewColumn("id", "dc"),
+	BusinessUnitID:                  NewColumn("business_unit_id", "dc"),
+	OrganizationID:                  NewColumn("organization_id", "dc"),
+	EnableDocumentIntelligence:      NewColumn("enable_document_intelligence", "dc"),
+	EnableOCR:                       NewColumn("enable_ocr", "dc"),
+	EnableAutoClassification:        NewColumn("enable_auto_classification", "dc"),
+	EnableAutoDocumentTypeAssociate: NewColumn("enable_auto_document_type_associate", "dc"),
+	EnableAutoCreateDocumentTypes:   NewColumn("enable_auto_create_document_types", "dc"),
+	EnableShipmentDraftExtraction:   NewColumn("enable_shipment_draft_extraction", "dc"),
+	EnableAIAssistedClassification:  NewColumn("enable_ai_assisted_classification", "dc"),
+	EnableAIAssistedExtraction:      NewColumn("enable_ai_assisted_extraction", "dc"),
+	ShipmentDraftAllowedResources:   NewColumn("shipment_draft_allowed_resources", "dc"),
+	EnableFullTextIndexing:          NewColumn("enable_full_text_indexing", "dc"),
+	Version:                         NewColumn("version", "dc"),
+	CreatedAt:                       NewColumn("created_at", "dc"),
+	UpdatedAt:                       NewColumn("updated_at", "dc"),
+}
+
+// DocumentControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by DocumentControl.GetStaticFieldMap().
+var DocumentControlFieldMap = map[string]string{
+	"id":                              "id",
+	"businessUnitId":                  "business_unit_id",
+	"organizationId":                  "organization_id",
+	"enableDocumentIntelligence":      "enable_document_intelligence",
+	"enableOcr":                       "enable_ocr",
+	"enableAutoClassification":        "enable_auto_classification",
+	"enableAutoDocumentTypeAssociate": "enable_auto_document_type_associate",
+	"enableAutoCreateDocumentTypes":   "enable_auto_create_document_types",
+	"enableShipmentDraftExtraction":   "enable_shipment_draft_extraction",
+	"enableAiAssistedClassification":  "enable_ai_assisted_classification",
+	"enableAiAssistedExtraction":      "enable_ai_assisted_extraction",
+	"shipmentDraftAllowedResources":   "shipment_draft_allowed_resources",
+	"enableFullTextIndexing":          "enable_full_text_indexing",
+	"version":                         "version",
+	"createdAt":                       "created_at",
+	"updatedAt":                       "updated_at",
+}
+
+// DocumentControlInsertableColumns lists column names suitable for INSERT statements on the "document_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var DocumentControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"enable_document_intelligence",
+	"enable_ocr",
+	"enable_auto_classification",
+	"enable_auto_document_type_associate",
+	"enable_auto_create_document_types",
+	"enable_shipment_draft_extraction",
+	"enable_ai_assisted_classification",
+	"enable_ai_assisted_extraction",
+	"shipment_draft_allowed_resources",
+	"enable_full_text_indexing",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// DocumentControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE dc.organization_id = ? AND dc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.DocumentControlScopeTenant(sq, ti).
+//		Where(buncolgen.DocumentControlColumns.ID.Eq(), id)
+func DocumentControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DocumentControlColumns.OrganizationID, DocumentControlColumns.BusinessUnitID, ti)
+}
+
+// DocumentControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.DocumentControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DocumentControlColumns.ID.In(), bun.List(ids))
+//	})
+func DocumentControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DocumentControlColumns.OrganizationID, DocumentControlColumns.BusinessUnitID, ti)
+}
+
+// DocumentControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.DocumentControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DocumentControlColumns.ID.Eq(), id)
+//	})
+func DocumentControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DocumentControlColumns.OrganizationID, DocumentControlColumns.BusinessUnitID, ti)
+}
+
+// DocumentControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.DocumentControlApplyTenant(tenantInfo))
+func DocumentControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DocumentControlColumns.OrganizationID, DocumentControlColumns.BusinessUnitID, ti)
+}
+
+// DocumentControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "document_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	DocumentControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var DocumentControlFilter = struct {
+	ID                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	EnableDocumentIntelligence      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableDocumentIntelligence" → DB: "enable_document_intelligence"
+	EnableOCR                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableOcr" → DB: "enable_ocr"
+	EnableAutoClassification        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAutoClassification" → DB: "enable_auto_classification"
+	EnableAutoDocumentTypeAssociate func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAutoDocumentTypeAssociate" → DB: "enable_auto_document_type_associate"
+	EnableAutoCreateDocumentTypes   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAutoCreateDocumentTypes" → DB: "enable_auto_create_document_types"
+	EnableShipmentDraftExtraction   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableShipmentDraftExtraction" → DB: "enable_shipment_draft_extraction"
+	EnableAIAssistedClassification  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAiAssistedClassification" → DB: "enable_ai_assisted_classification"
+	EnableAIAssistedExtraction      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAiAssistedExtraction" → DB: "enable_ai_assisted_extraction"
+	ShipmentDraftAllowedResources   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentDraftAllowedResources" → DB: "shipment_draft_allowed_resources"
+	EnableFullTextIndexing          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableFullTextIndexing" → DB: "enable_full_text_indexing"
+	Version                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	EnableDocumentIntelligence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableDocumentIntelligence", op, value)
+	},
+	EnableOCR: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableOcr", op, value)
+	},
+	EnableAutoClassification: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAutoClassification", op, value)
+	},
+	EnableAutoDocumentTypeAssociate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAutoDocumentTypeAssociate", op, value)
+	},
+	EnableAutoCreateDocumentTypes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAutoCreateDocumentTypes", op, value)
+	},
+	EnableShipmentDraftExtraction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableShipmentDraftExtraction", op, value)
+	},
+	EnableAIAssistedClassification: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAiAssistedClassification", op, value)
+	},
+	EnableAIAssistedExtraction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableAiAssistedExtraction", op, value)
+	},
+	ShipmentDraftAllowedResources: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentDraftAllowedResources", op, value)
+	},
+	EnableFullTextIndexing: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableFullTextIndexing", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Organization — table "organizations", alias "org"
 // ---------------------------------------------------------------------------
 

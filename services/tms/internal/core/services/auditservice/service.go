@@ -216,7 +216,7 @@ func (s *service) buildBulkAuditEntries(
 			APIKeyID:       bulkEntry.Params.APIKeyID,
 			OrganizationID: bulkEntry.Params.OrganizationID,
 			BusinessUnitID: bulkEntry.Params.BusinessUnitID,
-			Timestamp:      time.Now().Unix(),
+			Timestamp:      timeutils.NowUnix(),
 			Category:       audit.CategorySystem,
 			Metadata:       make(map[string]any),
 			Critical:       bulkEntry.Params.Critical,

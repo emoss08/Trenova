@@ -38,6 +38,28 @@ func (m *mockOrganizationRepo) GetByID(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) GetByLoginSlug(
+	ctx context.Context,
+	loginSlug string,
+) (*tenant.Organization, error) {
+	args := m.Called(ctx, loginSlug)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*tenant.Organization), args.Error(1)
+}
+
+func (m *mockOrganizationRepo) ListLoginSlugsByPrefix(
+	ctx context.Context,
+	prefix string,
+) ([]string, error) {
+	args := m.Called(ctx, prefix)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (m *mockOrganizationRepo) Update(
 	ctx context.Context,
 	entity *tenant.Organization,
@@ -87,6 +109,13 @@ func (n *noopStorageClient) Delete(_ context.Context, _ string) error {
 	return nil
 }
 
+func (n *noopStorageClient) DeleteObject(
+	_ context.Context,
+	_ *storage.DeleteObjectParams,
+) error {
+	return nil
+}
+
 func (n *noopStorageClient) GetPresignedURL(
 	_ context.Context,
 	_ *storage.PresignedURLParams,
@@ -96,6 +125,48 @@ func (n *noopStorageClient) GetPresignedURL(
 
 func (n *noopStorageClient) Exists(_ context.Context, _ string) (bool, error) {
 	return true, nil
+}
+
+func (n *noopStorageClient) GetPresignedUploadURL(
+	_ context.Context,
+	_ *storage.PresignedUploadURLParams,
+) (string, error) {
+	return "https://example.test/upload", nil
+}
+
+func (n *noopStorageClient) InitiateMultipartUpload(
+	_ context.Context,
+	_ *storage.MultipartUploadParams,
+) (string, error) {
+	return "upload-id", nil
+}
+
+func (n *noopStorageClient) GetMultipartUploadPartURL(
+	_ context.Context,
+	_ *storage.MultipartUploadPartURLParams,
+) (string, error) {
+	return "https://example.test/part", nil
+}
+
+func (n *noopStorageClient) CompleteMultipartUpload(
+	_ context.Context,
+	_ *storage.CompleteMultipartUploadParams,
+) error {
+	return nil
+}
+
+func (n *noopStorageClient) AbortMultipartUpload(
+	_ context.Context,
+	_ *storage.AbortMultipartUploadParams,
+) error {
+	return nil
+}
+
+func (n *noopStorageClient) ListMultipartUploadParts(
+	_ context.Context,
+	_ *storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
+	return nil, nil
 }
 
 func (n *noopStorageClient) GetFileInfo(_ context.Context, key string) (*storage.FileInfo, error) {

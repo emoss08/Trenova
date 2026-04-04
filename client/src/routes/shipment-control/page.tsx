@@ -3,9 +3,7 @@ import { AdminPageLayout } from "@/components/navigation/sidebar-layout";
 import { PageHeader } from "@/components/page-header";
 import { lazy } from "react";
 
-const ShipmentControlForm = lazy(
-  () => import("./_components/shipment-control-form"),
-);
+const ShipmentControlForm = lazy(() => import("./_components/shipment-control-form"));
 
 export function ShipmentControlPage() {
   return (
@@ -14,9 +12,11 @@ export function ShipmentControlPage() {
         title="Shipment Control"
         description="Configure and manage your shipment control settings"
       />
-      <SuspenseLoader>
-        <ShipmentControlForm />
-      </SuspenseLoader>
+      <div className="p-4">
+        <SuspenseLoader>
+          <ShipmentControlForm />
+        </SuspenseLoader>
+      </div>
     </AdminPageLayout>
   );
 }

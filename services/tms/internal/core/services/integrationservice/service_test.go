@@ -59,7 +59,7 @@ func TestListCatalogIncludesBackendCardMetadata(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 2)
+	require.Len(t, resp.Items, 3)
 
 	samsara := resp.Items[0]
 	require.Equal(t, integration.TypeSamsara, samsara.Type)
@@ -98,7 +98,7 @@ func TestListCatalogSamsaraConfiguredFalseWithoutToken(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 2)
+	require.Len(t, resp.Items, 3)
 	require.False(t, resp.Items[0].Configured)
 	require.Equal(t, "needs_setup", string(resp.Items[0].Status.Configuration))
 }
@@ -114,7 +114,8 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 2)
+	require.Len(t, resp.Items, 3)
 	require.Equal(t, integration.TypeSamsara, resp.Items[0].Type)
 	require.Equal(t, integration.TypeGoogleMaps, resp.Items[1].Type)
+	require.Equal(t, integration.TypeOpenAI, resp.Items[2].Type)
 }

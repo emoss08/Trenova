@@ -13,14 +13,15 @@ export function APIKeysPage() {
       <PageHeader
         title="API Keys"
         description="Provision bearer credentials for third-party systems with direct, tenant-scoped permissions."
-        className="p-0 py-4"
       />
-      <Suspense fallback={<MetricSkeleton cardClassName="h-[125px]" />}>
-        <ApiKeyAnalytics />
-      </Suspense>
-      <DataTableLazyComponent>
-        <Table />
-      </DataTableLazyComponent>
+      <div className="p-4">
+        <Suspense fallback={<MetricSkeleton cardClassName="h-[125px]" />}>
+          <ApiKeyAnalytics />
+        </Suspense>
+        <DataTableLazyComponent>
+          <Table />
+        </DataTableLazyComponent>
+      </div>
     </AdminPageLayout>
   );
 }

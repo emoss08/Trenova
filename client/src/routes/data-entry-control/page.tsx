@@ -12,9 +12,11 @@ export function DataEntryControlPage() {
         title="Data Entry Control"
         description="Configure case formatting rules for data entry across the system"
       />
-      <SuspenseLoader>
-        <DataEntryControlForm />
-      </SuspenseLoader>
+      <div className="p-4">
+        <SuspenseLoader>
+          <DataEntryControlForm />
+        </SuspenseLoader>
+      </div>
     </AdminPageLayout>
   );
 }

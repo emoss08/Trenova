@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/sidebar";
 import { appModuleGroups } from "@/config/navigation.config";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
+import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { UpdateBanner } from "../update/update-banner";
+import { LatestChange } from "../update/update-banner";
 import { FavoritesSection } from "./favorites-section";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
@@ -23,9 +24,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const filteredModules = useFilteredNavigation();
   const [searchParams] = useSearchParams();
   const groupedModules = useMemo(() => {
-    const modulesById = new Map(
-      filteredModules.map((module) => [module.id, module]),
-    );
+    const modulesById = new Map(filteredModules.map((module) => [module.id, module]));
     const groupedModuleIds = new Set<string>();
     const groups = appModuleGroups
       .map((group) => {
@@ -37,9 +36,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             }
             return module;
           })
-          .filter((module): module is (typeof filteredModules)[number] =>
-            Boolean(module),
-          );
+          .filter((module): module is (typeof filteredModules)[number] => Boolean(module));
 
         return {
           id: group.id,
@@ -49,9 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       })
       .filter((group) => group.modules.length > 0);
 
-    const ungroupedModules = filteredModules.filter(
-      (module) => !groupedModuleIds.has(module.id),
-    );
+    const ungroupedModules = filteredModules.filter((module) => !groupedModuleIds.has(module.id));
 
     if (ungroupedModules.length > 0) {
       groups.push({
@@ -71,8 +66,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="h-14.5 items-center justify-center border-b border-border p-0 px-1">
+    <Sidebar className={cn("*:data-[slot=sidebar-inner]:bg-sidebar")} collapsible="icon" {...props}>
+      <SidebarHeader className="h-14 items-center justify-center border-b border-border p-0 px-1">
         <OrganizationSwitcher />
       </SidebarHeader>
       <SidebarContent>
@@ -91,8 +86,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter>
-        <UpdateBanner />
+      <SidebarFooter className="p-0 gap-0">
+        <LatestChange />
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

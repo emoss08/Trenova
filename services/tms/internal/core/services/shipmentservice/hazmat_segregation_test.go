@@ -11,10 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestValidatorValidateCreate_SkipsHazmatSegregationWhenDisabled(t *testing.T) {
@@ -55,7 +57,28 @@ func TestValidatorValidateCreate_RejectsProhibitedHazmatPair(t *testing.T) {
 	entity.Commodities = hazardousShipmentCommodities()
 
 	controlRepo := mockHazmatControlRepo(t, entity)
-	commodityRepo := mockHazmatCommodityRepo(t, entity)
+	commodityRepo := mocks.NewMockCommodityRepository(t)
+	commodityRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCommoditiesByIDsRequest) bool {
+			return req.TenantInfo.OrgID == entity.OrganizationID &&
+				req.TenantInfo.BuID == entity.BusinessUnitID &&
+				len(req.CommodityIDs) == 2
+		})).
+		Return([]*commodity.Commodity{
+			hazardousCommodity(
+				entity.Commodities[0].CommodityID,
+				"Explosive",
+				hazardousmaterial.HazardousClass1,
+				pulid.MustNew("hm_"),
+			),
+			hazardousCommodity(
+				entity.Commodities[1].CommodityID,
+				"Paint",
+				hazardousmaterial.HazardousClass3,
+				pulid.MustNew("hm_"),
+			),
+		}, nil).
+		Once()
 	ruleRepo := mocks.NewMockHazmatSegregationRuleRepository(t)
 	ruleRepo.EXPECT().
 		ListActiveByTenant(mock.Anything, pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}).
@@ -98,7 +121,28 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 	entity.Commodities = hazardousShipmentCommodities()
 
 	controlRepo := mockHazmatControlRepo(t, entity)
-	commodityRepo := mockHazmatCommodityRepo(t, entity)
+	commodityRepo := mocks.NewMockCommodityRepository(t)
+	commodityRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCommoditiesByIDsRequest) bool {
+			return req.TenantInfo.OrgID == entity.OrganizationID &&
+				req.TenantInfo.BuID == entity.BusinessUnitID &&
+				len(req.CommodityIDs) == 2
+		})).
+		Return([]*commodity.Commodity{
+			hazardousCommodity(
+				entity.Commodities[0].CommodityID,
+				"Explosive",
+				hazardousmaterial.HazardousClass1,
+				pulid.MustNew("hm_"),
+			),
+			hazardousCommodity(
+				entity.Commodities[1].CommodityID,
+				"Paint",
+				hazardousmaterial.HazardousClass3,
+				pulid.MustNew("hm_"),
+			),
+		}, nil).
+		Once()
 	ruleRepo := mocks.NewMockHazmatSegregationRuleRepository(t)
 	ruleRepo.EXPECT().
 		ListActiveByTenant(mock.Anything, pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}).
@@ -213,7 +257,28 @@ func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {
 	entity.Commodities = hazardousShipmentCommodities()
 
 	controlRepo := mockHazmatControlRepo(t, entity)
-	commodityRepo := mockHazmatCommodityRepo(t, entity)
+	commodityRepo := mocks.NewMockCommodityRepository(t)
+	commodityRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCommoditiesByIDsRequest) bool {
+			return req.TenantInfo.OrgID == entity.OrganizationID &&
+				req.TenantInfo.BuID == entity.BusinessUnitID &&
+				len(req.CommodityIDs) == 2
+		})).
+		Return([]*commodity.Commodity{
+			hazardousCommodity(
+				entity.Commodities[0].CommodityID,
+				"Explosive",
+				hazardousmaterial.HazardousClass1,
+				pulid.MustNew("hm_"),
+			),
+			hazardousCommodity(
+				entity.Commodities[1].CommodityID,
+				"Paint",
+				hazardousmaterial.HazardousClass3,
+				pulid.MustNew("hm_"),
+			),
+		}, nil).
+		Once()
 	ruleRepo := mocks.NewMockHazmatSegregationRuleRepository(t)
 	ruleRepo.EXPECT().
 		ListActiveByTenant(mock.Anything, pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}).
@@ -243,6 +308,99 @@ func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {
 	}
 
 	require.Nil(t, v.ValidateCreate(t.Context(), entity))
+}
+
+func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
+	t.Parallel()
+
+	entity := validShipmentForValidation()
+	entity.Commodities = hazardousShipmentCommodities()
+
+	controlRepo := mockHazmatControlRepo(t, entity)
+	commodityRepo := mocks.NewMockCommodityRepository(t)
+	commodityRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCommoditiesByIDsRequest) bool {
+			return req.TenantInfo.OrgID == entity.OrganizationID &&
+				req.TenantInfo.BuID == entity.BusinessUnitID &&
+				len(req.CommodityIDs) == 2
+		})).
+		Return([]*commodity.Commodity{
+			hazardousCommodity(
+				entity.Commodities[0].CommodityID,
+				"Explosive",
+				hazardousmaterial.HazardousClass1,
+				pulid.MustNew("hm_"),
+			),
+			hazardousCommodity(
+				entity.Commodities[1].CommodityID,
+				"Paint",
+				hazardousmaterial.HazardousClass3,
+				pulid.MustNew("hm_"),
+			),
+		}, nil).
+		Twice()
+	ruleRepo := mocks.NewMockHazmatSegregationRuleRepository(t)
+	activeRules := []*hazmatsegregationrule.HazmatSegregationRule{
+		{
+			ID:              pulid.MustNew("hsr_"),
+			Name:            "No explosives with flammables",
+			Status:          domaintypes.StatusActive,
+			ClassA:          hazardousmaterial.HazardousClass1,
+			ClassB:          hazardousmaterial.HazardousClass3,
+			SegregationType: hazmatsegregationrule.SegregationTypeProhibited,
+			OrganizationID:  entity.OrganizationID,
+			BusinessUnitID:  entity.BusinessUnitID,
+		},
+	}
+	ruleRepo.EXPECT().
+		ListActiveByTenant(mock.Anything, pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}).
+		Return(activeRules, nil).
+		Once()
+	ruleRepo.EXPECT().
+		ListActiveByTenant(mock.Anything, pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}).
+		Return(activeRules, nil).
+		Once()
+
+	v := &Validator{
+		validator: newValidatorBuilder(
+			nil,
+			controlRepo,
+			NewTestCustomerRepository(t),
+			commodityRepo,
+			ruleRepo,
+			mocks.NewMockShipmentRepository(t),
+		).Build(),
+	}
+
+	svc := &service{
+		l:              zap.NewNop(),
+		controlRepo:    controlRepo,
+		commodityRepo:  commodityRepo,
+		hazmatRuleRepo: ruleRepo,
+		validator:      v,
+		coordinator:    newStateCoordinator(),
+	}
+
+	validationErr := v.ValidateCreate(t.Context(), entity)
+	require.NotNil(t, validationErr)
+
+	serviceErr := svc.CheckHazmatSegregation(t.Context(), &repositories.CheckHazmatSegregationRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		CommodityIDs: []pulid.ID{
+			entity.Commodities[0].CommodityID,
+			entity.Commodities[1].CommodityID,
+		},
+	})
+	require.Error(t, serviceErr)
+
+	var serviceMultiErr *errortypes.MultiError
+	require.ErrorAs(t, serviceErr, &serviceMultiErr)
+	require.Equal(t, validationErr.Error(), serviceMultiErr.Error())
+	assertErrorField(t, serviceMultiErr, "commodities[0].commodityId")
+	assertErrorField(t, serviceMultiErr, "commodities[1].commodityId")
 }
 
 func mockHazmatControlRepo(

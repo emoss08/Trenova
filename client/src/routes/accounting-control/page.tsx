@@ -11,10 +11,11 @@ export function AccountingControlPage() {
       <PageHeader
         title="Accounting Control"
         description="Configure and manage your accounting control settings"
-        className="p-0 py-4"
       />
       <Suspense fallback={<PageSkeleton />}>
-        <AccountingControlForm />
+        <div className="p-4">
+          <AccountingControlForm />
+        </div>
       </Suspense>
     </AdminPageLayout>
   );
