@@ -129,7 +129,7 @@ func (p *Provider) getActiveShipments(
 			return sq.
 				Where("sp.organization_id = ?", orgID).
 				Where("sp.business_unit_id = ?", buID).
-				Where("sp.status IN (?)", bun.In(activeStatuses))
+				Where("sp.status IN (?)", bun.List(activeStatuses))
 		}).
 		Count(ctx)
 	if err != nil {
@@ -197,7 +197,7 @@ func (p *Provider) getOnTimePercent(
 				Where("stp.organization_id = ?", orgID).
 				Where("stp.business_unit_id = ?", buID).
 				Where("stp.status = ?", shipment.StopStatusCompleted).
-				Where("stp.type IN (?)", bun.In([]shipment.StopType{
+				Where("stp.type IN (?)", bun.List([]shipment.StopType{
 					shipment.StopTypeDelivery,
 					shipment.StopTypeSplitDelivery,
 				})).

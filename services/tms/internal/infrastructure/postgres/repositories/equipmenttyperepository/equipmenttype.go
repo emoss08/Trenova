@@ -55,7 +55,7 @@ func (r *repository) filterQuery(
 		}
 
 		if len(validClasses) > 0 {
-			q = q.Where("et.class IN (?)", bun.In(validClasses))
+			q = q.Where("et.class IN (?)", bun.List(validClasses))
 		}
 	}
 
@@ -194,7 +194,7 @@ func (r *repository) SelectOptions(
 					}
 
 					if len(validClasses) > 0 {
-						q = q.Where("et.class IN (?)", bun.In(validClasses))
+						q = q.Where("et.class IN (?)", bun.List(validClasses))
 					}
 				}
 
@@ -225,7 +225,7 @@ func (r *repository) BulkUpdateStatus(
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return uq.Where("et.organization_id = ?", req.TenantInfo.OrgID).
 				Where("et.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("et.id IN (?)", bun.In(req.EquipmentTypeIDs))
+				Where("et.id IN (?)", bun.List(req.EquipmentTypeIDs))
 		}).
 		Set("status = ?", req.Status).
 		Returning("*").
@@ -258,7 +258,7 @@ func (r *repository) GetByIDs(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("et.organization_id = ?", req.TenantInfo.OrgID).
 				Where("et.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("et.id IN (?)", bun.In(req.EquipmentTypeIDs))
+				Where("et.id IN (?)", bun.List(req.EquipmentTypeIDs))
 		}).
 		Scan(ctx)
 	if err != nil {

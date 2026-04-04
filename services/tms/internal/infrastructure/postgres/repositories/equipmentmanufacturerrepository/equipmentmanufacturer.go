@@ -63,7 +63,11 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*equipmentmanufacturer.EquipmentManufacturer, 0, req.Filter.Pagination.SafeLimit())
+	entities := make(
+		[]*equipmentmanufacturer.EquipmentManufacturer,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
@@ -176,7 +180,7 @@ func (r *repository) GetByIDs(
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.EquipmentManufacturerScopeTenant(sq, req.TenantInfo).
-				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.In(req.EquipmentManufacturerIDs))
+				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -234,7 +238,7 @@ func (r *repository) BulkUpdateStatus(
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.EquipmentManufacturerScopeTenantUpdate(uq, req.TenantInfo).
-				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.In(req.EquipmentManufacturerIDs))
+				Where(buncolgen.EquipmentManufacturerColumns.ID.In(), bun.List(req.EquipmentManufacturerIDs))
 		}).
 		Set(buncolgen.EquipmentManufacturerColumns.Status.Set(), req.Status).
 		Returning("*").

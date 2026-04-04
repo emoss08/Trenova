@@ -174,7 +174,7 @@ func (r *repository) BulkUpdateStatus(
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.CommodityScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.CommodityIDs))
+				Where(cols.ID.In(), bun.List(req.CommodityIDs))
 		}).
 		Set(cols.Status.Set(), req.Status).
 		Returning("*").
@@ -208,7 +208,7 @@ func (r *repository) GetByIDs(
 		Relation(buncolgen.CommodityRelations.HazardousMaterial).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.CommodityScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.CommodityIDs))
+				Where(cols.ID.In(), bun.List(req.CommodityIDs))
 		}).
 		Scan(ctx)
 	if err != nil {

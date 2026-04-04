@@ -87,7 +87,7 @@ func (r *repository) SyncForShipment(
 
 	_, err = tx.NewDelete().
 		Model((*shipment.ShipmentCommodity)(nil)).
-		Where("id IN (?)", bun.In(deleteIDs)).
+		Where("id IN (?)", bun.List(deleteIDs)).
 		Where("shipment_id = ?", entity.ID).
 		Where("organization_id = ?", entity.OrganizationID).
 		Where("business_unit_id = ?", entity.BusinessUnitID).

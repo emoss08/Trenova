@@ -184,7 +184,7 @@ func (r *repository) BulkUpdateStatus(
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return uq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
 				Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("hm.id IN (?)", bun.In(req.HazardousMaterialIDs))
+				Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
 		}).
 		Set("status = ?", req.Status).
 		Returning("*").
@@ -217,7 +217,7 @@ func (r *repository) GetByIDs(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("hm.organization_id = ?", req.TenantInfo.OrgID).
 				Where("hm.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("hm.id IN (?)", bun.In(req.HazardousMaterialIDs))
+				Where("hm.id IN (?)", bun.List(req.HazardousMaterialIDs))
 		}).
 		Scan(ctx)
 	if err != nil {

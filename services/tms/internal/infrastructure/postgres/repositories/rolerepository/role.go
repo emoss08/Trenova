@@ -141,7 +141,7 @@ func (r *repository) GetRolesWithInheritance(
 		NewSelect().
 		Model(&roles).
 		Relation("Permissions").
-		Where("r.id IN (?)", bun.In(roleIDs)).
+		Where("r.id IN (?)", bun.List(roleIDs)).
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to get roles", zap.Error(err))

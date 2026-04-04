@@ -166,7 +166,7 @@ func (c Column) Lte() string { return c.lte }
 // In returns a "alias.column IN (?)" fragment for WHERE clauses with multiple values.
 // Bun expands the single ? placeholder to match the slice length.
 //
-//	q.Where(WorkerColumns.Status.In(), bun.In([]string{"Active", "Inactive"}))
+//	q.Where(WorkerColumns.Status.In(), bun.List([]string{"Active", "Inactive"}))
 //	// WHERE wrk.status IN ('Active', 'Inactive')
 func (c Column) In() string { return c.in }
 

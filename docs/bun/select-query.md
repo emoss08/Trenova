@@ -37,7 +37,7 @@ db.NewSelect().
  Where("id = ?", 123).
  Where("name LIKE ?", "my%").
  Where("? = 123", bun.Ident("id")).
- Where("id IN (?)", bun.In([]int64{1, 2, 3})).
+ Where("id IN (?)", bun.List([]int64{1, 2, 3})).
  Where("id IN (?)", subquery).
  Where("FALSE").WhereOr("TRUE").
  WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {

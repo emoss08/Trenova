@@ -137,7 +137,7 @@ func (sc *SeedContext) GetDefaultOrganization(ctx context.Context) (*tenant.Orga
 	var org tenant.Organization
 	err := sc.DB.NewSelect().
 		Model(&org).
-		Where("scac_code IN (?)", bun.In([]string{"DFLT", "TRNV"})).
+		Where("scac_code IN (?)", bun.List([]string{"DFLT", "TRNV"})).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {

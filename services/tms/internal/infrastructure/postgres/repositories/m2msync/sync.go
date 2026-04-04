@@ -64,7 +64,7 @@ func (s *Syncer) SyncIDs(
 	}
 
 	if len(targetIDs) > 0 {
-		deleteQuery = deleteQuery.Where(config.TargetField+" NOT IN (?)", bun.In(targetIDs))
+		deleteQuery = deleteQuery.Where(config.TargetField+" NOT IN (?)", bun.List(targetIDs))
 	}
 
 	if _, err := deleteQuery.Exec(ctx); err != nil {

@@ -45,7 +45,7 @@ func DeleteEntitiesByTable(ctx context.Context, tx bun.Tx, table string, ids []s
 
 	result, err := tx.NewDelete().
 		Table(table).
-		Where("id IN (?)", bun.In(ids)).
+		Where("id IN (?)", bun.List(ids)).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("delete from %s: %w", table, err)

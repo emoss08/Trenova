@@ -170,7 +170,7 @@ func (r *repository) BulkUpdateStatus(
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return uq.Where("loc.organization_id = ?", req.TenantInfo.OrgID).
 				Where("loc.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("loc.id IN (?)", bun.In(req.LocationIDs))
+				Where("loc.id IN (?)", bun.List(req.LocationIDs))
 		}).
 		Set("status = ?", req.Status).
 		Returning("*").

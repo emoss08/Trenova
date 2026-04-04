@@ -202,7 +202,7 @@ func (r *repository) BulkUpdateStatus(
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.ServiceTypeScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.ServiceTypeIDs))
+				Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
 		}).
 		Set(cols.Status.Set(), req.Status).
 		Returning("*").
@@ -235,7 +235,7 @@ func (r *repository) GetByIDs(
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ServiceTypeScopeTenant(sq, req.TenantInfo).
-				Where(cols.ID.In(), bun.In(req.ServiceTypeIDs))
+				Where(cols.ID.In(), bun.List(req.ServiceTypeIDs))
 		}).
 		Scan(ctx)
 	if err != nil {

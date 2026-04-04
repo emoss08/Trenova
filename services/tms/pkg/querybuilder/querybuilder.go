@@ -317,9 +317,9 @@ func (qb *QueryBuilder) applyStatement( //nolint:cyclop,funlen // operator handl
 	case dbtype.OpILike:
 		qb.query = qb.query.Where(fmt.Sprintf("%s ILIKE ?", fieldRef), value)
 	case dbtype.OpIn:
-		qb.query = qb.query.Where(fmt.Sprintf("%s IN (?)", fieldRef), bun.In(value))
+		qb.query = qb.query.Where(fmt.Sprintf("%s IN (?)", fieldRef), bun.List(value))
 	case dbtype.OpNotIn:
-		qb.query = qb.query.Where(fmt.Sprintf("%s NOT IN (?)", fieldRef), bun.In(value))
+		qb.query = qb.query.Where(fmt.Sprintf("%s NOT IN (?)", fieldRef), bun.List(value))
 	case dbtype.OpIsNull:
 		qb.query = qb.query.Where(fmt.Sprintf("%s IS NULL", fieldRef))
 	case dbtype.OpIsNotNull:
@@ -935,9 +935,9 @@ func (qb *QueryBuilder) buildConditionStatement( //nolint:cyclop,funlen // opera
 	case dbtype.OpILike:
 		return fmt.Sprintf("%s ILIKE ?", fieldRef), []any{value}
 	case dbtype.OpIn:
-		return fmt.Sprintf("%s IN (?)", fieldRef), []any{bun.In(value)}
+		return fmt.Sprintf("%s IN (?)", fieldRef), []any{bun.List(value)}
 	case dbtype.OpNotIn:
-		return fmt.Sprintf("%s NOT IN (?)", fieldRef), []any{bun.In(value)}
+		return fmt.Sprintf("%s NOT IN (?)", fieldRef), []any{bun.List(value)}
 	case dbtype.OpIsNull:
 		return fmt.Sprintf("%s IS NULL", fieldRef), nil
 	case dbtype.OpIsNotNull:

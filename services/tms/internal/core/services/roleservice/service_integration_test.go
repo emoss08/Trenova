@@ -96,7 +96,7 @@ func (r *integrationRoleRepo) GetRolesWithInheritance(
 	roles := make([]*permission.Role, 0)
 	err := r.db.NewSelect().Model(&roles).
 		Relation("Permissions").
-		Where("r.id IN (?)", bun.In(roleIDs)).
+		Where("r.id IN (?)", bun.List(roleIDs)).
 		Scan(ctx)
 	return roles, err
 }

@@ -110,7 +110,11 @@ func (r *repository) List(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	entities := make([]*formulatemplate.FormulaTemplateVersion, 0, req.Filter.Pagination.SafeLimit())
+	entities := make(
+		[]*formulatemplate.FormulaTemplateVersion,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
@@ -150,7 +154,7 @@ func (r *repository) GetVersionRange(
 				Where("ftv.template_id = ?", req.TemplateID).
 				Where("ftv.organization_id = ?", req.TenantInfo.OrgID).
 				Where("ftv.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("ftv.version_number IN (?)", bun.In([]int64{req.FromVersion, req.ToVersion}))
+				Where("ftv.version_number IN (?)", bun.List([]int64{req.FromVersion, req.ToVersion}))
 		}).
 		Order("ftv.version_number ASC").
 		Scan(ctx)

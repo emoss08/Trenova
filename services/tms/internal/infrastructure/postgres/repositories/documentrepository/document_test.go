@@ -170,7 +170,7 @@ func (r *testRepository) GetByIDs(
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("doc.id IN (?)", bun.In(req.IDs)).
+			return sq.Where("doc.id IN (?)", bun.List(req.IDs)).
 				Where("doc.organization_id = ?", req.TenantInfo.OrgID).
 				Where("doc.business_unit_id = ?", req.TenantInfo.BuID)
 		}).
@@ -215,7 +215,7 @@ func (r *testRepository) BulkDelete(
 		NewDelete().
 		Model((*document.Document)(nil)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where("id IN (?)", bun.In(req.IDs)).
+			return dq.Where("id IN (?)", bun.List(req.IDs)).
 				Where("organization_id = ?", req.TenantInfo.OrgID).
 				Where("business_unit_id = ?", req.TenantInfo.BuID)
 		}).

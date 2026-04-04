@@ -153,7 +153,7 @@ func runSeedClean(cmd *cobra.Command, args []string) error {
 		Table("seed_history").
 		Set("status = ?", "Orphaned").
 		Set("notes = ?", "Seed file was deleted from filesystem").
-		Where("name IN (?)", bun.In(toDelete)).
+		Where("name IN (?)", bun.List(toDelete)).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("update seed history: %w", err)

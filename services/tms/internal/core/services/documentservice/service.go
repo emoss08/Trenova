@@ -732,7 +732,7 @@ func (s *Service) detachUploadSessionsForDocuments(
 		NewUpdate().
 		Table("document_upload_sessions").
 		Set("document_id = NULL").
-		Where("document_id IN (?)", bun.In(documentIDStrings)).
+		Where("document_id IN (?)", bun.List(documentIDStrings)).
 		Where("organization_id = ?", tenantInfo.OrgID).
 		Where("business_unit_id = ?", tenantInfo.BuID).
 		Exec(ctx); err != nil {
@@ -742,7 +742,7 @@ func (s *Service) detachUploadSessionsForDocuments(
 	remaining, err := db.
 		NewSelect().
 		Table("document_upload_sessions").
-		Where("document_id IN (?)", bun.In(documentIDStrings)).
+		Where("document_id IN (?)", bun.List(documentIDStrings)).
 		Where("organization_id = ?", tenantInfo.OrgID).
 		Where("business_unit_id = ?", tenantInfo.BuID).
 		Count(ctx)
