@@ -65,7 +65,6 @@
         "no-cond-assign": "error",
         "no-const-assign": "error",
         "no-constant-binary-expression": "error",
-        "logical-assignment-operators": "error",
         "no-constant-condition": "error",
         "no-control-regex": "error",
         "no-debugger": "error",
