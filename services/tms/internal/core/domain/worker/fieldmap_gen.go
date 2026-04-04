@@ -24,3 +24,10 @@ func (e *WorkerPTO) GetStaticFieldMap() map[string]string {
 func (e *WorkerProfile) GetStaticFieldMap() map[string]string {
 	return buncolgen.WorkerProfileFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [WorkerSyncDrift].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.WorkerSyncDriftFieldMap] instead of parsing struct tags via reflection.
+func (e *WorkerSyncDrift) GetStaticFieldMap() map[string]string {
+	return buncolgen.WorkerSyncDriftFieldMap
+}

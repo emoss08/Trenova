@@ -30,20 +30,6 @@ type repository struct {
 	l  *zap.Logger
 }
 
-type workerSyncDriftModel struct {
-	bun.BaseModel `bun:"table:samsara_worker_sync_drifts,alias:wsd"`
-
-	OrganizationID  string `bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  string `bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID        string `bun:"worker_id,pk,type:VARCHAR(100),notnull"`
-	DriftType       string `bun:"drift_type,pk,type:VARCHAR(64),notnull"`
-	WorkerName      string `bun:"worker_name,type:VARCHAR(255),notnull"`
-	Message         string `bun:"message,type:TEXT,notnull"`
-	LocalExternalID string `bun:"local_external_id,type:TEXT,nullzero"`
-	RemoteDriverID  string `bun:"remote_driver_id,type:TEXT,nullzero"`
-	DetectedAt      int64  `bun:"detected_at,type:BIGINT,notnull"`
-}
-
 func New(p Params) repositories.WorkerRepository {
 	return &repository{
 		db: p.DB,
@@ -169,7 +155,12 @@ func (r *repository) Create(
 	)
 
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		if _, insertErr := r.db.DBForContext(c).NewInsert().Model(entity).Returning("*").Exec(c); insertErr != nil {
+		if _, insertErr := r.db.
+			DBForContext(c).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(c); insertErr != nil {
 			log.Error("failed to create worker", zap.Error(insertErr))
 			return insertErr
 		}
@@ -222,7 +213,11 @@ func (r *repository) Update(
 			return updateErr
 		}
 
-		if checkErr := dberror.CheckRowsAffected(results, "Worker", entity.ID.String()); checkErr != nil {
+		if checkErr := dberror.CheckRowsAffected(
+			results,
+			"Worker",
+			entity.ID.String(),
+		); checkErr != nil {
 			return checkErr
 		}
 
@@ -246,7 +241,11 @@ func (r *repository) Update(
 				return profileErr
 			}
 
-			if checkErr := dberror.CheckRowsAffected(profileResults, "WorkerProfile", entity.Profile.ID.String()); checkErr != nil {
+			if checkErr := dberror.CheckRowsAffected(
+				profileResults,
+				"WorkerProfile",
+				entity.Profile.ID.String(),
+			); checkErr != nil {
 				return checkErr
 			}
 		}
@@ -299,9 +298,11 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 	return dberror.MapRetryableTransactionError(
 		r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 			if _, err := r.db.DBForContext(c).NewDelete().
-				Model((*workerSyncDriftModel)(nil)).
-				Where("organization_id = ?", tenantInfo.OrgID).
-				Where("business_unit_id = ?", tenantInfo.BuID).
+				Model((*worker.WorkerSyncDrift)(nil)).
+				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+					return buncolgen.WorkerSyncDriftScopeTenantDelete(dq, tenantInfo).
+						Where(buncolgen.WorkerSyncDriftColumns.WorkerID.In(), bun.List(drifts))
+				}).
 				Exec(c); err != nil {
 				return err
 			}
@@ -310,10 +311,10 @@ func (r *repository) ReplaceWorkerSyncDrifts(
 				return nil
 			}
 
-			models := make([]*workerSyncDriftModel, 0, len(drifts))
+			models := make([]*worker.WorkerSyncDrift, 0, len(drifts))
 			for idx := range drifts {
 				drift := drifts[idx]
-				models = append(models, &workerSyncDriftModel{
+				models = append(models, &worker.WorkerSyncDrift{
 					OrganizationID:  tenantInfo.OrgID.String(),
 					BusinessUnitID:  tenantInfo.BuID.String(),
 					WorkerID:        drift.WorkerID,
@@ -337,14 +338,12 @@ func (r *repository) ListWorkerSyncDrifts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) ([]repositories.WorkerSyncDriftRecord, error) {
-	models := make([]*workerSyncDriftModel, 0)
+	models := make([]*worker.WorkerSyncDrift, 0)
 
 	if err := r.db.DBForContext(ctx).NewSelect().
-		Model(&models).
-		Where("wsd.organization_id = ?", tenantInfo.OrgID).
-		Where("wsd.business_unit_id = ?", tenantInfo.BuID).
-		Order("wsd.detected_at DESC").
-		Order("wsd.worker_name ASC").
+		Model(&models).Apply(buncolgen.WorkerSyncDriftApplyTenant(tenantInfo)).
+		Order(buncolgen.WorkerSyncDriftColumns.DetectedAt.OrderDesc()).
+		Order(buncolgen.WorkerSyncDriftColumns.WorkerName.OrderAsc()).
 		Scan(ctx); err != nil {
 		return nil, err
 	}

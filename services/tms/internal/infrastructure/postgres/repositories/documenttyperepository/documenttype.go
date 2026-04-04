@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,14 +40,15 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListDocumentTypesRequest,
 ) *bun.SelectQuery {
+	cols := buncolgen.DocumentTypeColumns
 	q = querybuilder.ApplyFilters(
 		q,
-		"dt",
+		buncolgen.DocumentTypeTable.Alias,
 		req.Filter,
 		(*documenttype.DocumentType)(nil),
 	)
 
-	q = q.Order("dt.created_at DESC")
+	q = q.Order(cols.CreatedAt.OrderDesc())
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -106,11 +108,12 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.DocumentTypeColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
@@ -136,13 +139,13 @@ func (r *repository) GetByID(
 	)
 
 	entity := new(documenttype.DocumentType)
+	cols := buncolgen.DocumentTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("dt.id = ?", req.ID).
-				Where("dt.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dt.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -163,13 +166,13 @@ func (r *repository) GetByCode(
 	)
 
 	entity := new(documenttype.DocumentType)
+	cols := buncolgen.DocumentTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("dt.code = ?", req.Code).
-				Where("dt.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dt.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.Code.Eq(), req.Code)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -191,13 +194,13 @@ func (r *repository) GetByName(
 
 	entity := new(documenttype.DocumentType)
 	normalizedName := strings.TrimSpace(req.Name)
+	cols := buncolgen.DocumentTypeColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("lower(btrim(dt.name)) = lower(btrim(?))", normalizedName).
-				Where("dt.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dt.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentTypeScopeTenant(sq, req.TenantInfo).
+				Where(cols.Name.Expr("lower(btrim({})) = lower(btrim(?))"), normalizedName)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -218,19 +221,19 @@ func (r *repository) SelectOptions(
 		req,
 		&dbhelper.SelectOptionsConfig{
 			Columns: []string{
-				"id",
-				"code",
-				"name",
-				"description",
-				"color",
-				"document_classification",
-				"document_category",
-				"is_system",
+				buncolgen.DocumentTypeColumns.ID.Bare(),
+				buncolgen.DocumentTypeColumns.Code.Bare(),
+				buncolgen.DocumentTypeColumns.Name.Bare(),
+				buncolgen.DocumentTypeColumns.Description.Bare(),
+				buncolgen.DocumentTypeColumns.Color.Bare(),
+				buncolgen.DocumentTypeColumns.DocumentClassification.Bare(),
+				buncolgen.DocumentTypeColumns.DocumentCategory.Bare(),
+				buncolgen.DocumentTypeColumns.IsSystem.Bare(),
 			},
-			OrgColumn:     "dt.organization_id",
-			BuColumn:      "dt.business_unit_id",
+			OrgColumn:     buncolgen.DocumentTypeColumns.OrganizationID.Qualified(),
+			BuColumn:      buncolgen.DocumentTypeColumns.BusinessUnitID.Qualified(),
 			EntityName:    "DocumentType",
-			SearchColumns: []string{"dt.code", "dt.name"},
+			SearchColumns: []string{buncolgen.DocumentTypeColumns.Code.Qualified(), buncolgen.DocumentTypeColumns.Name.Qualified()},
 		},
 	)
 }

@@ -124,12 +124,14 @@ func (r *repository) GetByStoragePath(
 	req repositories.GetDocumentByStoragePathRequest,
 ) (*document.Document, error) {
 	entity := new(document.Document)
+	cols := buncolgen.DocumentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Where("doc.storage_path = ?", req.StoragePath).
-		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.StoragePath.Eq(), req.StoragePath)
+		}).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -150,17 +152,17 @@ func (r *repository) GetByResourceID(
 	)
 
 	entities := make([]*document.Document, 0)
+	cols := buncolgen.DocumentColumns
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("doc.resource_id = ?", req.ResourceID).
-				Where("doc.resource_type = ?", req.ResourceType).
-				Where("doc.is_current_version = ?", true).
-				Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("doc.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.ResourceID.Eq(), req.ResourceID).
+				Where(cols.ResourceType.Eq(), req.ResourceType).
+				Where(cols.IsCurrentVersion.Eq(), true)
 		}).
-		Order("doc.created_at DESC").
+		Order(cols.CreatedAt.OrderDesc()).
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to get documents by resource", zap.Error(err))
@@ -180,14 +182,19 @@ func (r *repository) ListPendingPreviewReconciliation(
 	}
 
 	entities := make([]*document.Document, 0, limit)
+	cols := buncolgen.DocumentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where("doc.is_current_version = ?", true).
-		Where("doc.preview_status = ?", document.PreviewStatusPending).
-		Where("(doc.preview_storage_path IS NULL OR doc.preview_storage_path = '')").
-		Where("doc.updated_at <= ?", olderThan).
-		Order("doc.updated_at ASC").
+		Where(cols.IsCurrentVersion.Eq(), true).
+		Where(cols.PreviewStatus.Eq(), document.PreviewStatusPending).
+		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(cols.PreviewStoragePath.IsNull()).
+				WhereOr(cols.PreviewStoragePath.Eq(), "")
+		}).
+		Where(cols.UpdatedAt.Lte(), olderThan).
+		Order(cols.UpdatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	if err != nil {
@@ -231,11 +238,12 @@ func (r *repository) Update(
 
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.DocumentColumns
 
 	results, err := r.db.DB().
 		NewUpdate().
 		Model(entity).WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -254,16 +262,18 @@ func (r *repository) UpdatePreview(
 	ctx context.Context,
 	req *repositories.UpdateDocumentPreviewRequest,
 ) error {
+	cols := buncolgen.DocumentColumns
 	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model((*document.Document)(nil)).
-		Set("preview_status = ?", req.PreviewStatus).
-		Set("preview_storage_path = ?", req.PreviewStoragePath).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Set("version = version + 1").
-		Where("id = ?", req.ID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Set(cols.PreviewStatus.Set(), req.PreviewStatus).
+		Set(cols.PreviewStoragePath.Set(), req.PreviewStoragePath).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Set(cols.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error(
@@ -285,20 +295,22 @@ func (r *repository) UpdateIntelligence(
 	ctx context.Context,
 	req *repositories.UpdateDocumentIntelligenceRequest,
 ) error {
+	cols := buncolgen.DocumentColumns
 	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model((*document.Document)(nil)).
-		Set("content_status = ?", req.ContentStatus).
-		Set("content_error = ?", req.ContentError).
-		Set("detected_kind = ?", req.DetectedKind).
-		Set("has_extracted_text = ?", req.HasExtractedText).
-		Set("shipment_draft_status = ?", req.ShipmentDraftStatus).
-		Set("document_type_id = ?", req.DocumentTypeID).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Set("version = version + 1").
-		Where("id = ?", req.ID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Set(cols.ContentStatus.Set(), req.ContentStatus).
+		Set(cols.ContentError.Set(), req.ContentError).
+		Set(cols.DetectedKind.Set(), req.DetectedKind).
+		Set(cols.HasExtractedText.Set(), req.HasExtractedText).
+		Set(cols.ShipmentDraftStatus.Set(), req.ShipmentDraftStatus).
+		Set(cols.DocumentTypeID.Set(), req.DocumentTypeID).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Set(cols.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		r.l.Error(
@@ -325,13 +337,13 @@ func (r *repository) Delete(
 		zap.String("id", req.ID.String()),
 	)
 
+	cols := buncolgen.DocumentColumns
 	results, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Table("documents").
+		Table(buncolgen.DocumentTable.Name).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where("id = ?", req.ID).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -357,13 +369,13 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*document.Document, 0, len(req.IDs))
+	cols := buncolgen.DocumentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("doc.id IN (?)", bun.In(req.IDs)).
-				Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("doc.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.List(req.IDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -379,13 +391,15 @@ func (r *repository) ListVersions(
 	req repositories.ListDocumentVersionsRequest,
 ) ([]*document.Document, error) {
 	entities := make([]*document.Document, 0)
+	cols := buncolgen.DocumentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where("doc.lineage_id = ?", req.LineageID).
-		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
-		Order("doc.version_number DESC, doc.created_at DESC").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.LineageID.Eq(), req.LineageID)
+		}).
+		Order(cols.VersionNumber.OrderDesc(), cols.CreatedAt.OrderDesc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -402,13 +416,13 @@ func (r *repository) BulkDelete(
 		zap.Int("count", len(req.IDs)),
 	)
 
+	cols := buncolgen.DocumentColumns
 	results, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Table("documents").
+		Table(buncolgen.DocumentTable.Name).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.Where("id IN (?)", bun.In(req.IDs)).
-				Where("organization_id = ?", req.TenantInfo.OrgID).
-				Where("business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.ID.In(), bun.List(req.IDs))
 		}).
 		Exec(ctx)
 	if err != nil {
@@ -427,29 +441,33 @@ func (r *repository) PromoteVersion(
 	req *repositories.PromoteDocumentVersionRequest,
 ) error {
 	db := r.db.DBForContext(ctx)
+	cols := buncolgen.DocumentColumns
+	now := timeutils.NowUnix()
 
 	if _, err := db.NewUpdate().
-		Table("documents").
-		Set("is_current_version = false").
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Set("version = version + 1").
-		Where("lineage_id = ?", req.LineageID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
-		Where("is_current_version = ?", true).
+		Table(buncolgen.DocumentTable.Name).
+		Set(cols.IsCurrentVersion.Set(), false).
+		Set(cols.UpdatedAt.Set(), now).
+		Set(cols.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.LineageID.Eq(), req.LineageID).
+				Where(cols.IsCurrentVersion.Eq(), true)
+		}).
 		Exec(ctx); err != nil {
 		return err
 	}
 
 	result, err := db.NewUpdate().
-		Table("documents").
-		Set("is_current_version = true").
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Set("version = version + 1").
-		Where("id = ?", req.CurrentDocumentID).
-		Where("lineage_id = ?", req.LineageID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Table(buncolgen.DocumentTable.Name).
+		Set(cols.IsCurrentVersion.Set(), true).
+		Set(cols.UpdatedAt.Set(), now).
+		Set(cols.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.CurrentDocumentID).
+				Where(cols.LineageID.Eq(), req.LineageID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -463,26 +481,30 @@ func (r *repository) MoveLineageToResource(
 	req *repositories.MoveDocumentLineageRequest,
 ) error {
 	db := r.db.DBForContext(ctx)
+	cols := buncolgen.DocumentColumns
+	now := timeutils.NowUnix()
 
 	current := new(document.Document)
 	if err := db.NewSelect().
 		Model(current).
-		Where("doc.id = ?", req.DocumentID).
-		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.DocumentID)
+		}).
 		Scan(ctx); err != nil {
 		return dberror.HandleNotFoundError(err, "Document")
 	}
 
 	result, err := db.NewUpdate().
-		Table("documents").
-		Set("resource_id = ?", req.ResourceID).
-		Set("resource_type = ?", req.ResourceType).
-		Set("updated_at = ?", timeutils.NowUnix()).
-		Set("version = version + 1").
-		Where("lineage_id = ?", current.LineageID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Table(buncolgen.DocumentTable.Name).
+		Set(cols.ResourceID.Set(), req.ResourceID).
+		Set(cols.ResourceType.Set(), req.ResourceType).
+		Set(cols.UpdatedAt.Set(), now).
+		Set(cols.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DocumentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.LineageID.Eq(), current.LineageID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -499,12 +521,14 @@ func (r *repository) DeleteByLineageIDs(
 		return nil
 	}
 
+	cols := buncolgen.DocumentColumns
 	_, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Table("documents").
-		Where("lineage_id IN (?)", bun.In(req.LineageIDs)).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Table(buncolgen.DocumentTable.Name).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.DocumentScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.LineageID.In(), bun.List(req.LineageIDs))
+		}).
 		Exec(ctx)
 	return err
 }

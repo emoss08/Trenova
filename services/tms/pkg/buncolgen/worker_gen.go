@@ -954,3 +954,112 @@ var WorkerProfileFilter = struct {
 		return NewFieldFilter("updatedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// WorkerSyncDrift — table "samsara_worker_sync_drifts", alias "wsd"
+// ---------------------------------------------------------------------------
+
+// WorkerSyncDriftTable holds the table name, alias, and primary key columns
+// for the "samsara_worker_sync_drifts" table. The alias "wsd" is used in all generated
+// SQL fragments (e.g. "wsd.id = ?").
+var WorkerSyncDriftTable = TableInfo{
+	Name:       "samsara_worker_sync_drifts",
+	Alias:      "wsd",
+	PrimaryKey: []string{"organization_id", "business_unit_id", "worker_id", "drift_type"},
+}
+
+// WorkerSyncDriftColumns provides type-safe column references for the "samsara_worker_sync_drifts" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(WorkerSyncDriftColumns.ID.String())
+//	// SELECT wsd.id FROM samsara_worker_sync_drifts AS wsd
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(WorkerSyncDriftColumns.ID.Eq(), id)           // WHERE wsd.id = ?
+//	q.Order(WorkerSyncDriftColumns.CreatedAt.OrderDesc())  // ORDER BY wsd.created_at DESC
+var WorkerSyncDriftColumns = struct {
+	OrganizationID  Column // "organization_id" → qualified: "wsd.organization_id"
+	BusinessUnitID  Column // "business_unit_id" → qualified: "wsd.business_unit_id"
+	WorkerID        Column // "worker_id" → qualified: "wsd.worker_id"
+	DriftType       Column // "drift_type" → qualified: "wsd.drift_type"
+	WorkerName      Column // "worker_name" → qualified: "wsd.worker_name"
+	Message         Column // "message" → qualified: "wsd.message"
+	LocalExternalID Column // "local_external_id" → qualified: "wsd.local_external_id"
+	RemoteDriverID  Column // "remote_driver_id" → qualified: "wsd.remote_driver_id"
+	DetectedAt      Column // "detected_at" → qualified: "wsd.detected_at"
+}{
+	OrganizationID:  NewColumn("organization_id", "wsd"),
+	BusinessUnitID:  NewColumn("business_unit_id", "wsd"),
+	WorkerID:        NewColumn("worker_id", "wsd"),
+	DriftType:       NewColumn("drift_type", "wsd"),
+	WorkerName:      NewColumn("worker_name", "wsd"),
+	Message:         NewColumn("message", "wsd"),
+	LocalExternalID: NewColumn("local_external_id", "wsd"),
+	RemoteDriverID:  NewColumn("remote_driver_id", "wsd"),
+	DetectedAt:      NewColumn("detected_at", "wsd"),
+}
+
+// WorkerSyncDriftFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by WorkerSyncDrift.GetStaticFieldMap().
+var WorkerSyncDriftFieldMap = map[string]string{}
+
+// WorkerSyncDriftInsertableColumns lists column names suitable for INSERT statements on the "samsara_worker_sync_drifts" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var WorkerSyncDriftInsertableColumns = []string{
+	"organization_id",
+	"business_unit_id",
+	"worker_id",
+	"drift_type",
+	"worker_name",
+	"message",
+	"local_external_id",
+	"remote_driver_id",
+	"detected_at",
+}
+
+// WorkerSyncDriftScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE wsd.organization_id = ? AND wsd.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.WorkerSyncDriftScopeTenant(sq, ti).
+//		Where(buncolgen.WorkerSyncDriftColumns.ID.Eq(), id)
+func WorkerSyncDriftScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, WorkerSyncDriftColumns.OrganizationID, WorkerSyncDriftColumns.BusinessUnitID, ti)
+}
+
+// WorkerSyncDriftScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.WorkerSyncDriftScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.WorkerSyncDriftColumns.ID.In(), bun.List(ids))
+//	})
+func WorkerSyncDriftScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, WorkerSyncDriftColumns.OrganizationID, WorkerSyncDriftColumns.BusinessUnitID, ti)
+}
+
+// WorkerSyncDriftScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.WorkerSyncDriftScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.WorkerSyncDriftColumns.ID.Eq(), id)
+//	})
+func WorkerSyncDriftScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, WorkerSyncDriftColumns.OrganizationID, WorkerSyncDriftColumns.BusinessUnitID, ti)
+}
+
+// WorkerSyncDriftApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.WorkerSyncDriftApplyTenant(tenantInfo))
+func WorkerSyncDriftApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(WorkerSyncDriftColumns.OrganizationID, WorkerSyncDriftColumns.BusinessUnitID, ti)
+}

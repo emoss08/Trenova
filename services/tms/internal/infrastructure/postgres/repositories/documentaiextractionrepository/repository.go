@@ -6,7 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,13 +37,15 @@ func (r *repository) GetByDocumentExtractedAt(
 	req repositories.GetDocumentAIExtractionRequest,
 ) (*documentaiextraction.Extraction, error) {
 	entity := new(documentaiextraction.Extraction)
+	cols := buncolgen.ExtractionColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Where("dae.document_id = ?", req.DocumentID).
-		Where("dae.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dae.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("dae.extracted_at = ?", req.ExtractedAt).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ExtractionScopeTenant(sq, req.TenantInfo).
+				Where(cols.DocumentID.Eq(), req.DocumentID).
+				Where(cols.ExtractedAt.Eq(), req.ExtractedAt)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "DocumentAIExtraction")
@@ -54,23 +58,24 @@ func (r *repository) SavePending(
 	ctx context.Context,
 	entity *documentaiextraction.Extraction,
 ) (*documentaiextraction.Extraction, error) {
+	cols := buncolgen.ExtractionColumns
 	if _, err := r.db.DBForContext(ctx).
 		NewInsert().
 		Model(entity).
 		On(`CONFLICT ("document_id", "organization_id", "business_unit_id", "extracted_at") DO UPDATE`).
-		Set("user_id = EXCLUDED.user_id").
-		Set("request_hash = EXCLUDED.request_hash").
-		Set("workflow_id = EXCLUDED.workflow_id").
-		Set("workflow_run_id = EXCLUDED.workflow_run_id").
-		Set("activity_id = EXCLUDED.activity_id").
-		Set("task_token = EXCLUDED.task_token").
-		Set("response_id = COALESCE(NULLIF(EXCLUDED.response_id, ''), dae.response_id)").
-		Set("model = COALESCE(NULLIF(EXCLUDED.model, ''), dae.model)").
-		Set("status = CASE WHEN dae.status IN (?, ?) THEN dae.status ELSE EXCLUDED.status END", documentaiextraction.StatusApplied, documentaiextraction.StatusSkipped).
-		Set("submitted_at = COALESCE(EXCLUDED.submitted_at, dae.submitted_at)").
-		Set("failure_code = EXCLUDED.failure_code").
-		Set("failure_message = EXCLUDED.failure_message").
-		Set("updated_at = EXCLUDED.updated_at").
+		Set(cols.UserID.SetExcluded()).
+		Set(cols.RequestHash.SetExcluded()).
+		Set(cols.WorkflowID.SetExcluded()).
+		Set(cols.WorkflowRunID.SetExcluded()).
+		Set(cols.ActivityID.SetExcluded()).
+		Set(cols.TaskToken.SetExcluded()).
+		Set(cols.ResponseID.SetExpr("COALESCE(NULLIF(EXCLUDED.response_id, ''), dae.response_id)")).
+		Set(cols.Model.SetExpr("COALESCE(NULLIF(EXCLUDED.model, ''), dae.model)")).
+		Set(cols.Status.SetExpr("CASE WHEN dae.status IN (?, ?) THEN dae.status ELSE EXCLUDED.status END"), documentaiextraction.StatusApplied, documentaiextraction.StatusSkipped).
+		Set(cols.SubmittedAt.SetExpr("COALESCE(EXCLUDED.submitted_at, dae.submitted_at)")).
+		Set(cols.FailureCode.SetExcluded()).
+		Set(cols.FailureMessage.SetExcluded()).
+		Set(cols.UpdatedAt.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		return nil, err
@@ -85,11 +90,12 @@ func (r *repository) Update(
 ) (*documentaiextraction.Extraction, error) {
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.ExtractionColumns
 	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -112,13 +118,19 @@ func (r *repository) ListPollable(
 	}
 
 	items := make([]*documentaiextraction.Extraction, 0, limit)
+	cols := buncolgen.ExtractionColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Where("dae.status = ?", documentaiextraction.StatusPending).
-		Where("dae.response_id <> ''").
-		Where("(dae.last_polled_at IS NULL OR dae.last_polled_at <= ?)", olderThan).
-		OrderExpr("COALESCE(dae.last_polled_at, 0) ASC, dae.created_at ASC").
+		Where(cols.Status.Eq(), documentaiextraction.StatusPending).
+		Where(cols.ResponseID.NotEq(), "").
+		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(cols.LastPolledAt.IsNull()).
+				WhereOr(cols.LastPolledAt.Lte(), olderThan)
+		}).
+		OrderExpr("COALESCE(dae.last_polled_at, 0) ASC").
+		Order(cols.CreatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	return items, err

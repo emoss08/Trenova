@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -48,12 +49,13 @@ func (r *repository) DelayShipments(
 			return err
 		}
 
+		cols := buncolgen.ShipmentColumns
 		shipmentIDs := shipmentIDsFromEntities(entities)
 		_, err = tx.NewUpdate().
 			Model((*shipment.Shipment)(nil)).
-			Set("status = ?", shipment.StatusDelayed).
-			Set("updated_at = ?", currentTime).
-			Where("sp.id IN (?)", bun.List(shipmentIDs)).
+			Set(cols.Status.Set(), shipment.StatusDelayed).
+			Set(cols.UpdatedAt.Set(), currentTime).
+			Where(cols.ID.In(), bun.List(shipmentIDs)).
 			Exec(c)
 		return err
 	})
@@ -80,12 +82,13 @@ func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipme
 			return err
 		}
 
+		cols := buncolgen.ShipmentColumns
 		shipmentIDs := shipmentIDsFromEntities(entities)
 		_, err = tx.NewUpdate().
 			Model((*shipment.Shipment)(nil)).
-			Set("status = ?", shipment.StatusDelayed).
-			Set("updated_at = ?", currentTime).
-			Where("sp.id IN (?)", bun.List(shipmentIDs)).
+			Set(cols.Status.Set(), shipment.StatusDelayed).
+			Set(cols.UpdatedAt.Set(), currentTime).
+			Where(cols.ID.In(), bun.List(shipmentIDs)).
 			Exec(c)
 		return err
 	})

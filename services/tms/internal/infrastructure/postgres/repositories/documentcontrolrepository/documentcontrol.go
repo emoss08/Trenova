@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -46,8 +48,9 @@ func (r *repository) Get(
 	if err := r.db.DB().
 		NewSelect().
 		Model(entity).
-		Where("dc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dc.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentControlScopeTenant(sq, req.TenantInfo)
+		}).
 		Scan(ctx); err != nil {
 		log.Error("failed to get document control", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "DocumentControl")
@@ -73,12 +76,13 @@ func (r *repository) Update(
 ) (*tenant.DocumentControl, error) {
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.DocumentControlColumns
 
 	result, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -119,8 +123,12 @@ func (r *repository) GetOrCreate(
 	if err = r.db.DB().
 		NewSelect().
 		Model(entity).
-		Where("dc.organization_id = ?", orgID).
-		Where("dc.business_unit_id = ?", buID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentControlScopeTenant(sq, pagination.TenantInfo{
+				OrgID: orgID,
+				BuID:  buID,
+			})
+		}).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "DocumentControl")
 	}

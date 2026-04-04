@@ -410,7 +410,10 @@ func (r *repository) Cancel(
 			return err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Shipment", req.ShipmentID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results, "Shipment",
+			req.ShipmentID.String(),
+		); err != nil {
 			return err
 		}
 
@@ -451,7 +454,11 @@ func (r *repository) Uncancel(
 			return err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Shipment", req.ShipmentID.String()); err != nil {
+		if err = dberror.CheckRowsAffected(
+			results,
+			"Shipment",
+			req.ShipmentID.String(),
+		); err != nil {
 			return err
 		}
 
@@ -488,7 +495,11 @@ func (r *repository) TransferOwnership(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "Shipment", req.ShipmentID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"Shipment",
+		req.ShipmentID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -558,31 +569,51 @@ func (r *repository) BulkDuplicate(
 
 	err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 		if len(graph.shipments) > 0 {
-			if _, insertErr := tx.NewInsert().Model(&graph.shipments).Returning("NULL").Exec(c); insertErr != nil {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.shipments).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
 				return insertErr
 			}
 		}
 
 		if len(graph.moves) > 0 {
-			if _, insertErr := tx.NewInsert().Model(&graph.moves).Returning("NULL").Exec(c); insertErr != nil {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.moves).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
 				return insertErr
 			}
 		}
 
 		if len(graph.stops) > 0 {
-			if _, insertErr := tx.NewInsert().Model(&graph.stops).Returning("NULL").Exec(c); insertErr != nil {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.stops).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
 				return insertErr
 			}
 		}
 
 		if len(graph.additionalCharges) > 0 {
-			if _, insertErr := tx.NewInsert().Model(&graph.additionalCharges).Returning("NULL").Exec(c); insertErr != nil {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.additionalCharges).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
 				return insertErr
 			}
 		}
 
 		if len(graph.commodities) > 0 {
-			if _, insertErr := tx.NewInsert().Model(&graph.commodities).Returning("NULL").Exec(c); insertErr != nil {
+			if _, insertErr := tx.
+				NewInsert().
+				Model(&graph.commodities).
+				Returning("NULL").
+				Exec(c); insertErr != nil {
 				return insertErr
 			}
 		}

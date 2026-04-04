@@ -46,6 +46,10 @@ func TestColumnOrderFragments(t *testing.T) {
 func TestColumnSelectAndUpdateHelpers(t *testing.T) {
 	assert.Equal(t, "wrk.first_name AS name", testCol.As("name"))
 	assert.Equal(t, "first_name = ?", testCol.Set())
+	assert.Equal(t, "first_name = NULL", testCol.SetNull())
+	assert.Equal(t, "first_name = EXCLUDED.first_name", testCol.SetExcluded())
+	assert.Equal(t, "first_name = EXCLUDED.first_name", testCol.SetExpr("EXCLUDED.first_name"))
+	assert.Equal(t, "first_name = COALESCE(first_name, ?)", testCol.SetExpr("COALESCE({}, ?)"))
 }
 
 func TestColumnInc(t *testing.T) {

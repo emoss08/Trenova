@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -208,11 +209,12 @@ func (r *repository) CreateVersion(ctx context.Context, entity *documentparsingr
 func (r *repository) UpdateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion) (*documentparsingrule.RuleVersion, error) {
 	ov := entity.Version
 	entity.Version++
+	cols := buncolgen.RuleVersionColumns
 	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -228,15 +230,16 @@ func (r *repository) ArchivePublishedVersions(
 	ctx context.Context,
 	ruleSetID, orgID, buID pulid.ID,
 ) error {
+	cols := buncolgen.RuleVersionColumns
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model((*documentparsingrule.RuleVersion)(nil)).
-		Set("status = ?", documentparsingrule.VersionStatusArchived).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
-		Where("rule_set_id = ?", ruleSetID).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
-		Where("status = ?", documentparsingrule.VersionStatusPublished).
+		Set(cols.Status.Set(), documentparsingrule.VersionStatusArchived).
+		Set(cols.UpdatedAt.SetExpr("extract(epoch from current_timestamp)::bigint")).
+		Where(cols.RuleSetID.Eq(), ruleSetID).
+		Where(cols.OrganizationID.Eq(), orgID).
+		Where(cols.BusinessUnitID.Eq(), buID).
+		Where(cols.Status.Eq(), documentparsingrule.VersionStatusPublished).
 		Exec(ctx)
 	return err
 }
@@ -245,14 +248,15 @@ func (r *repository) SetPublishedVersion(
 	ctx context.Context,
 	ruleSetID, versionID, orgID, buID pulid.ID,
 ) error {
+	cols := buncolgen.RuleSetColumns
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model((*documentparsingrule.RuleSet)(nil)).
-		Set("published_version_id = ?", versionID).
-		Set("updated_at = extract(epoch from current_timestamp)::bigint").
-		Where("id = ?", ruleSetID).
-		Where("organization_id = ?", orgID).
-		Where("business_unit_id = ?", buID).
+		Set(cols.PublishedVersionID.Set(), versionID).
+		Set(cols.UpdatedAt.SetExpr("extract(epoch from current_timestamp)::bigint")).
+		Where(cols.ID.Eq(), ruleSetID).
+		Where(cols.OrganizationID.Eq(), orgID).
+		Where(cols.BusinessUnitID.Eq(), buID).
 		Exec(ctx)
 	return err
 }

@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,12 +42,14 @@ func (r *repository) GetByDocumentID(
 	tenantInfo pagination.TenantInfo,
 ) (*documentcontent.Content, error) {
 	entity := new(documentcontent.Content)
+	cols := buncolgen.ContentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Where("dc.document_id = ?", documentID).
-		Where("dc.organization_id = ?", tenantInfo.OrgID).
-		Where("dc.business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ContentScopeTenant(sq, tenantInfo).
+				Where(cols.DocumentID.Eq(), documentID)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Document content")
@@ -60,13 +64,15 @@ func (r *repository) ListPagesByDocumentID(
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentcontent.Page, error) {
 	items := make([]*documentcontent.Page, 0)
+	cols := buncolgen.PageColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Where("dcp.document_id = ?", documentID).
-		Where("dcp.organization_id = ?", tenantInfo.OrgID).
-		Where("dcp.business_unit_id = ?", tenantInfo.BuID).
-		Order("dcp.page_number ASC").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.PageScopeTenant(sq, tenantInfo).
+				Where(cols.DocumentID.Eq(), documentID)
+		}).
+		Order(cols.PageNumber.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -79,22 +85,23 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *documentcontent.Content,
 ) (*documentcontent.Content, error) {
+	cols := buncolgen.ContentColumns
 	if _, err := r.db.DBForContext(ctx).
 		NewInsert().
 		Model(entity).
 		On(`CONFLICT ("document_id", "organization_id", "business_unit_id") DO UPDATE`).
-		Set("status = EXCLUDED.status").
-		Set("content_text = EXCLUDED.content_text").
-		Set("page_count = EXCLUDED.page_count").
-		Set("source_kind = EXCLUDED.source_kind").
-		Set("detected_language = EXCLUDED.detected_language").
-		Set("detected_document_kind = EXCLUDED.detected_document_kind").
-		Set("classification_confidence = EXCLUDED.classification_confidence").
-		Set("structured_data = EXCLUDED.structured_data").
-		Set("failure_code = EXCLUDED.failure_code").
-		Set("failure_message = EXCLUDED.failure_message").
-		Set("last_extracted_at = EXCLUDED.last_extracted_at").
-		Set("updated_at = EXCLUDED.updated_at").
+		Set(cols.Status.SetExcluded()).
+		Set(cols.ContentText.SetExcluded()).
+		Set(cols.PageCount.SetExcluded()).
+		Set(cols.SourceKind.SetExcluded()).
+		Set(cols.DetectedLanguage.SetExcluded()).
+		Set(cols.DetectedDocumentKind.SetExcluded()).
+		Set(cols.ClassificationConfidence.SetExcluded()).
+		Set(cols.StructuredData.SetExcluded()).
+		Set(cols.FailureCode.SetExcluded()).
+		Set(cols.FailureMessage.SetExcluded()).
+		Set(cols.LastExtractedAt.SetExcluded()).
+		Set(cols.UpdatedAt.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		return nil, err
@@ -109,12 +116,17 @@ func (r *repository) ReplacePages(
 	pages []*documentcontent.Page,
 ) error {
 	db := r.db.DBForContext(ctx)
+	cols := buncolgen.PageColumns
 
 	if _, err := db.NewDelete().
-		Table("document_content_pages").
-		Where("document_content_id = ?", content.ID).
-		Where("organization_id = ?", content.OrganizationID).
-		Where("business_unit_id = ?", content.BusinessUnitID).
+		Table(buncolgen.PageTable.Name).
+		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.PageScopeTenantDelete(sq, pagination.TenantInfo{
+				OrgID: content.OrganizationID,
+				BuID:  content.BusinessUnitID,
+			}).
+				Where(cols.DocumentContentID.Eq(), content.ID)
+		}).
 		Exec(ctx); err != nil {
 		return err
 	}
@@ -146,24 +158,31 @@ func (r *repository) ListPendingExtraction(
 	}
 
 	items := make([]*document.Document, 0, limit)
+	docCols := buncolgen.DocumentColumns
+	contentCols := buncolgen.ContentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Column("doc.*").
+		ColumnExpr(buncolgen.DocumentTable.Alias+".*").
 		Join(`LEFT JOIN document_contents AS dc
 			ON dc.document_id = doc.id
 			AND dc.organization_id = doc.organization_id
 			AND dc.business_unit_id = doc.business_unit_id`).
-		Where("doc.status = ?", document.StatusActive).
-		Where(`
-			(dc.document_id IS NULL OR dc.status IN (?, ?) OR doc.content_status IN (?, ?))`,
-			documentcontent.StatusPending,
-			documentcontent.StatusExtracting,
-			document.ContentStatusPending,
-			document.ContentStatusExtracting,
-		).
-		Where("doc.updated_at <= ?", olderThan).
-		Order("doc.updated_at ASC").
+		Where(docCols.Status.Eq(), document.StatusActive).
+		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(contentCols.DocumentID.IsNull()).
+				WhereOr(contentCols.Status.In(), bun.List([]documentcontent.Status{
+					documentcontent.StatusPending,
+					documentcontent.StatusExtracting,
+				})).
+				WhereOr(docCols.ContentStatus.In(), bun.List([]document.ContentStatus{
+					document.ContentStatusPending,
+					document.ContentStatusExtracting,
+				}))
+		}).
+		Where(docCols.UpdatedAt.Lte(), olderThan).
+		Order(docCols.UpdatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	if err != nil {
@@ -179,20 +198,22 @@ func (r *repository) SearchByResource(
 ) ([]*document.Document, error) {
 	items := make([]*document.Document, 0)
 	query := strings.TrimSpace(req.Query)
+	docCols := buncolgen.DocumentColumns
 
 	selectQuery := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Column("doc.*").
+		ColumnExpr(buncolgen.DocumentTable.Alias+".*").
 		Join(`LEFT JOIN document_contents AS dc
 			ON dc.document_id = doc.id
 			AND dc.organization_id = doc.organization_id
 			AND dc.business_unit_id = doc.business_unit_id`).
-		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("doc.is_current_version = ?", true).
-		Where("doc.resource_id = ?", req.ResourceID).
-		Where("doc.resource_type = ?", req.ResourceType)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
+				Where(docCols.IsCurrentVersion.Eq(), true).
+				Where(docCols.ResourceID.Eq(), req.ResourceID).
+				Where(docCols.ResourceType.Eq(), req.ResourceType)
+		})
 
 	if query != "" {
 		selectQuery = selectQuery.Where(`
@@ -209,7 +230,7 @@ func (r *repository) SearchByResource(
 			query,
 		)
 	} else {
-		selectQuery = selectQuery.Order("doc.created_at DESC")
+		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
 	}
 
 	if req.Limit > 0 {

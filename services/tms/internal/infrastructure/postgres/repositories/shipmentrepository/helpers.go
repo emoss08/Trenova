@@ -48,7 +48,7 @@ func filterQuery(
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		"sp",
+		buncolgen.ShipmentTable.Alias,
 		req.Filter,
 		(*shipment.Shipment)(nil),
 	)

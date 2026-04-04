@@ -75,7 +75,11 @@ func assertValidIdentifier(s, label string) {
 	}
 	for _, r := range s {
 		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_') {
-			panic("buncolgen: " + label + " contains invalid character '" + string(r) + "' in \"" + s + "\"")
+			panic(
+				"buncolgen: " + label + " contains invalid character '" + string(
+					r,
+				) + "' in \"" + s + "\"",
+			)
 		}
 	}
 }
@@ -238,6 +242,33 @@ func (c Column) Bare() string { return c.Name }
 //	// SET status = 'Inactive'
 func (c Column) Set() string { return c.Name + " = ?" }
 
+// SetNull returns a "column = NULL" fragment for UPDATE SET clauses.
+// Use this instead of raw string literals when clearing nullable columns.
+//
+//	q.Set(ShipmentColumns.CanceledByID.SetNull())
+//	// SET canceled_by_id = NULL
+func (c Column) SetNull() string { return c.Name + " = NULL" }
+
+// SetExcluded returns a "column = EXCLUDED.column" fragment for PostgreSQL upserts.
+// This is useful inside ON CONFLICT DO UPDATE clauses to copy the incoming value
+// from the excluded row without repeating the column name as a string literal.
+//
+//	q.Set(DocumentContentColumns.Status.SetExcluded())
+//	// SET status = EXCLUDED.status
+func (c Column) SetExcluded() string { return c.Name + " = EXCLUDED." + c.Name }
+
+// SetExpr returns a "column = <expr>" fragment for UPDATE SET clauses.
+// Pass any additional bind arguments to Bun's Set method as usual.
+//
+//	q.Set(WorkerColumns.Status.SetExpr("CASE WHEN {} = ? THEN ? ELSE {} END"), oldStatus, nextStatus, fallbackStatus)
+//	// SET status = CASE WHEN status = ? THEN ? ELSE status END
+//
+// The expression may include "{}" placeholders, which are replaced with the bare
+// column name to avoid repeating it in common self-referential updates.
+func (c Column) SetExpr(expr string) string {
+	return c.Name + " = " + strings.ReplaceAll(expr, "{}", c.Name)
+}
+
 // Inc returns a "column = column + n" fragment for UPDATE SET clauses that increment a value.
 // Use this for version bumps and counter updates.
 //
@@ -369,7 +400,11 @@ func Coalesce(col Column, fallback, alias string) string {
 
 // ScopeTenant adds WHERE organization_id = ? AND business_unit_id = ? to a SelectQuery.
 // Prefer the generated per-entity helpers (e.g. WorkerScopeTenant).
-func ScopeTenant(q *bun.SelectQuery, orgCol, buCol Column, ti pagination.TenantInfo) *bun.SelectQuery {
+func ScopeTenant(
+	q *bun.SelectQuery,
+	orgCol, buCol Column,
+	ti pagination.TenantInfo,
+) *bun.SelectQuery {
 	return q.Where(orgCol.eq, ti.OrgID).Where(buCol.eq, ti.BuID)
 }
 
@@ -380,13 +415,21 @@ func ScopeTenant(q *bun.SelectQuery, orgCol, buCol Column, ti pagination.TenantI
 //	    return buncolgen.TrailerScopeTenantUpdate(uq, req.TenantInfo).
 //	        Where(buncolgen.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
 //	})
-func ScopeTenantUpdate(q *bun.UpdateQuery, orgCol, buCol Column, ti pagination.TenantInfo) *bun.UpdateQuery {
+func ScopeTenantUpdate(
+	q *bun.UpdateQuery,
+	orgCol, buCol Column,
+	ti pagination.TenantInfo,
+) *bun.UpdateQuery {
 	return q.Where(orgCol.eq, ti.OrgID).Where(buCol.eq, ti.BuID)
 }
 
 // ScopeTenantDelete adds WHERE organization_id = ? AND business_unit_id = ? to a DeleteQuery.
 // Prefer the generated per-entity helpers (e.g. WorkerScopeTenantDelete).
-func ScopeTenantDelete(q *bun.DeleteQuery, orgCol, buCol Column, ti pagination.TenantInfo) *bun.DeleteQuery {
+func ScopeTenantDelete(
+	q *bun.DeleteQuery,
+	orgCol, buCol Column,
+	ti pagination.TenantInfo,
+) *bun.DeleteQuery {
 	return q.Where(orgCol.eq, ti.OrgID).Where(buCol.eq, ti.BuID)
 }
 
@@ -395,7 +438,10 @@ func ScopeTenantDelete(q *bun.DeleteQuery, orgCol, buCol Column, ti pagination.T
 //
 //	// Instead of wrapping ScopeTenant in an anonymous function:
 //	.Apply(buncolgen.WorkerApplyTenant(tenantInfo))
-func ApplyTenant(orgCol, buCol Column, ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+func ApplyTenant(
+	orgCol, buCol Column,
+	ti pagination.TenantInfo,
+) func(*bun.SelectQuery) *bun.SelectQuery {
 	return func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.Where(orgCol.eq, ti.OrgID).Where(buCol.eq, ti.BuID)
 	}

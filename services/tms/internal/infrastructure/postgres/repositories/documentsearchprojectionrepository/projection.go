@@ -38,23 +38,24 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *documentsearchprojection.Projection,
 ) (*documentsearchprojection.Projection, error) {
+	cols := buncolgen.ProjectionColumns
 	if _, err := r.db.DBForContext(ctx).
 		NewInsert().
 		Model(entity).
 		On(`CONFLICT ("id", "organization_id", "business_unit_id") DO UPDATE`).
-		Set("resource_id = EXCLUDED.resource_id").
-		Set("resource_type = EXCLUDED.resource_type").
-		Set("file_name = EXCLUDED.file_name").
-		Set("original_name = EXCLUDED.original_name").
-		Set("description = EXCLUDED.description").
-		Set("tags = EXCLUDED.tags").
-		Set("status = EXCLUDED.status").
-		Set("content_status = EXCLUDED.content_status").
-		Set("detected_kind = EXCLUDED.detected_kind").
-		Set("shipment_draft_status = EXCLUDED.shipment_draft_status").
-		Set("content_text = EXCLUDED.content_text").
-		Set("created_at = EXCLUDED.created_at").
-		Set("updated_at = EXCLUDED.updated_at").
+		Set(cols.ResourceID.SetExcluded()).
+		Set(cols.ResourceType.SetExcluded()).
+		Set(cols.FileName.SetExcluded()).
+		Set(cols.OriginalName.SetExcluded()).
+		Set(cols.Description.SetExcluded()).
+		Set(cols.Tags.SetExcluded()).
+		Set(cols.Status.SetExcluded()).
+		Set(cols.ContentStatus.SetExcluded()).
+		Set(cols.DetectedKind.SetExcluded()).
+		Set(cols.ShipmentDraftStatus.SetExcluded()).
+		Set(cols.ContentText.SetExcluded()).
+		Set(cols.CreatedAt.SetExcluded()).
+		Set(cols.UpdatedAt.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Document search projection")
