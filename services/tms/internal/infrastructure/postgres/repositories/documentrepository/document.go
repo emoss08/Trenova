@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,27 +40,29 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListDocumentsRequest,
 ) *bun.SelectQuery {
-	q = q.Where("doc.is_current_version = ?", true)
+	cols := buncolgen.DocumentColumns
+
+	q = q.Where(cols.IsCurrentVersion.Eq(), true)
 	q = querybuilder.ApplyFilters(
 		q,
-		"doc",
+		buncolgen.DocumentTable.Alias,
 		req.Filter,
 		(*document.Document)(nil),
 	)
 
 	if req.ResourceID != "" {
-		q = q.Where("doc.resource_id = ?", req.ResourceID)
+		q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
 	}
 
 	if req.ResourceType != "" {
-		q = q.Where("doc.resource_type = ?", req.ResourceType)
+		q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
 	}
 
 	if req.Status != "" {
-		q = q.Where("doc.status = ?", req.Status)
+		q = q.Where(cols.Status.Eq(), req.Status)
 	}
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -71,7 +74,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*document.Document, 0, req.Filter.Pagination.Limit)
+	entities := make([]*document.Document, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
@@ -98,14 +101,14 @@ func (r *repository) GetByID(
 		zap.String("id", req.ID.String()),
 	)
 
+	cols := buncolgen.DocumentColumns
 	entity := new(document.Document)
+
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("doc.id = ?", req.ID).
-				Where("doc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("doc.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -263,7 +266,11 @@ func (r *repository) UpdatePreview(
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
 		Exec(ctx)
 	if err != nil {
-		r.l.Error("failed to update document preview", zap.Error(err), zap.String("id", req.ID.String()))
+		r.l.Error(
+			"failed to update document preview",
+			zap.Error(err),
+			zap.String("id", req.ID.String()),
+		)
 		return err
 	}
 
@@ -294,7 +301,11 @@ func (r *repository) UpdateIntelligence(
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
 		Exec(ctx)
 	if err != nil {
-		r.l.Error("failed to update document intelligence", zap.Error(err), zap.String("id", req.ID.String()))
+		r.l.Error(
+			"failed to update document intelligence",
+			zap.Error(err),
+			zap.String("id", req.ID.String()),
+		)
 		return err
 	}
 

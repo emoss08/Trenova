@@ -66,7 +66,7 @@ func (r *repository) List(
 ) (*pagination.ListResult[*notification.Notification], error) {
 	log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*notification.Notification, 0, req.Filter.Pagination.Limit)
+	entities := make([]*notification.Notification, 0, req.Filter.Pagination.SafeLimit())
 	q := r.db.DB().
 		NewSelect().
 		Model(&entities)
@@ -81,7 +81,7 @@ func (r *repository) List(
 	q = q.Where("notif.organization_id = ?", req.Filter.TenantInfo.OrgID)
 	q = r.userOrGlobalFilter(q, req.Filter.TenantInfo)
 	q = q.Order("notif.created_at DESC")
-	q = q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	q = q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {

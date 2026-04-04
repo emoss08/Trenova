@@ -47,7 +47,7 @@ func (r *repository) filterQuery(
 	q = q.Relation("User")
 	q = q.Relation("APIKey")
 
-	return q.Limit(req.Pagination.Limit).Offset(req.Pagination.Offset)
+	return q.Limit(req.Pagination.SafeLimit()).Offset(req.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -56,7 +56,7 @@ func (r *repository) List(
 ) (*pagination.ListResult[*audit.Entry], error) {
 	log := r.l.With(zap.String("operation", "List"))
 
-	entities := make([]*audit.Entry, 0, req.Filter.Pagination.Limit)
+	entities := make([]*audit.Entry, 0, req.Filter.Pagination.SafeLimit())
 
 	total, err := r.db.DB().NewSelect().
 		Model(&entities).
@@ -113,7 +113,7 @@ func (r *repository) ListByResourceID(
 		zap.String("resourceID", req.ResourceID.String()),
 	)
 
-	entities := make([]*audit.Entry, 0, req.Filter.Pagination.Limit)
+	entities := make([]*audit.Entry, 0, req.Filter.Pagination.SafeLimit())
 
 	q := r.db.DB().
 		NewSelect().

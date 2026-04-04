@@ -98,7 +98,7 @@ func (r *repository) filterQuery(
 	q = q.Where("ftv.template_id = ?", req.TemplateID).
 		Relation("CreatedBy")
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -110,7 +110,7 @@ func (r *repository) List(
 		zap.String("templateID", req.TemplateID.String()),
 	)
 
-	entities := make([]*formulatemplate.FormulaTemplateVersion, 0, req.Filter.Pagination.Limit)
+	entities := make([]*formulatemplate.FormulaTemplateVersion, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).

@@ -49,7 +49,7 @@ func (r *repository) filterQuery(
 		q = q.Relation("Periods")
 	}
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -61,7 +61,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*fiscalyear.FiscalYear, 0, req.Filter.Pagination.Limit)
+	entities := make([]*fiscalyear.FiscalYear, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).

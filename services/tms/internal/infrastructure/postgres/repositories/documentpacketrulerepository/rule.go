@@ -45,14 +45,14 @@ func (r *repository) filterQuery(
 		(*documentpacketrule.DocumentPacketRule)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListDocumentPacketRulesRequest,
 ) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
-	items := make([]*documentpacketrule.DocumentPacketRule, 0, req.Filter.Pagination.Limit)
+	items := make([]*documentpacketrule.DocumentPacketRule, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&items).

@@ -57,5 +57,5 @@ func filterQuery(
 		return standardShipmentFilter(sq, req.ShipmentOptions)
 	})
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }

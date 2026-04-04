@@ -82,7 +82,7 @@ func (ur *repository) filterQuery(
 		q = q.Relation("Memberships").Relation("Memberships.Organization")
 	}
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (ur *repository) List(
@@ -94,7 +94,7 @@ func (ur *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*tenant.User, 0, req.Filter.Pagination.Limit)
+	entities := make([]*tenant.User, 0, req.Filter.Pagination.SafeLimit())
 
 	q := ur.db.DB().
 		NewSelect().

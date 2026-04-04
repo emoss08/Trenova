@@ -46,7 +46,7 @@ func (r *repository) filterQuery(
 		(*glaccount.GLAccount)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -58,7 +58,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*glaccount.GLAccount, 0, req.Filter.Pagination.Limit)
+	entities := make([]*glaccount.GLAccount, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).

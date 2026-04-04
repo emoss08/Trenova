@@ -39,7 +39,7 @@ func SelectOptions[T any](
 	req *pagination.SelectQueryRequest,
 	cfg *SelectOptionsConfig,
 ) (*pagination.ListResult[T], error) {
-	entities := make([]T, 0, req.Pagination.Limit)
+	entities := make([]T, 0, req.Pagination.SafeLimit())
 
 	if cfg == nil {
 		return nil, ErrSelectOptionsConfigRequired
@@ -52,8 +52,8 @@ func SelectOptions[T any](
 			return sq.Where(cfg.orgColumn()+" = ?", req.TenantInfo.OrgID).
 				Where(cfg.buColumn()+" = ?", req.TenantInfo.BuID)
 		}).
-		Limit(req.Pagination.Limit).
-		Offset(req.Pagination.Offset)
+		Limit(req.Pagination.SafeLimit()).
+		Offset(req.Pagination.SafeOffset())
 
 	if req.Query != "" && len(cfg.SearchColumns) > 0 {
 		q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

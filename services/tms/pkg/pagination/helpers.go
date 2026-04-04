@@ -28,6 +28,7 @@ func NewQueryOptions(c *gin.Context, authCtx *authctx.AuthContext) *QueryOptions
 	opts.Query = helpers.QueryString(c, "query", "")
 
 	_ = c.ShouldBindQuery(opts)
+	normalizePagination(&opts.Pagination)
 
 	return opts
 }
@@ -46,6 +47,7 @@ func NewSelectQueryRequest(c *gin.Context, authCtx *authctx.AuthContext) *Select
 	req.Query = helpers.QueryString(c, "query", "")
 
 	_ = c.ShouldBindQuery(req)
+	normalizePagination(&req.Pagination)
 
 	return req
 }
@@ -60,6 +62,7 @@ func List[T any](
 		eh.HandleError(c, err)
 		return
 	}
+	normalizePagination(&opts.Pagination)
 
 	parseFilters(c, opts)
 	parseFilterGroups(c, opts)
@@ -76,9 +79,14 @@ func List[T any](
 	c.JSON(http.StatusOK, Response[[]T]{
 		Count:   result.Total,
 		Results: result.Items,
-		Next:    GetNextPageURL(c, opts.Pagination.Limit, opts.Pagination.Offset, result.Total),
-		Prev:    GetPreviousPageURL(c, opts.Pagination.Limit, opts.Pagination.Offset),
+		Next:    GetNextPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset(), result.Total),
+		Prev:    GetPreviousPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset()),
 	})
+}
+
+func normalizePagination(info *Info) {
+	info.Limit = ClampLimit(info.Limit)
+	info.Offset = ClampOffset(info.Offset)
 }
 
 func SelectOptions[T any](
@@ -96,8 +104,8 @@ func SelectOptions[T any](
 	c.JSON(http.StatusOK, Response[[]T]{
 		Count:   result.Total,
 		Results: result.Items,
-		Next:    GetNextPageURL(c, req.Pagination.Limit, req.Pagination.Offset, result.Total),
-		Prev:    GetPreviousPageURL(c, req.Pagination.Limit, req.Pagination.Offset),
+		Next:    GetNextPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset(), result.Total),
+		Prev:    GetPreviousPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset()),
 	})
 }
 

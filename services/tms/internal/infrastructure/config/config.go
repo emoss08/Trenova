@@ -216,17 +216,17 @@ type DocumentIntelligenceConfig struct {
 	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
 	EnableAI                bool          `mapstructure:"enableAI"`
 	AITimeout               time.Duration `mapstructure:"aiTimeout"`
-	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars" validate:"omitempty,min=1000,max=500000"`
-	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens" validate:"omitempty,min=256,max=32768"`
+	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars"         validate:"omitempty,min=1000,max=500000"`
+	AIExtractionMaxTokens   int           `mapstructure:"aiExtractionMaxTokens"   validate:"omitempty,min=256,max=32768"`
 	AIClassificationModel   string        `mapstructure:"aiClassificationModel"`
 	AIExtractionModel       string        `mapstructure:"aiExtractionModel"`
-	AIMaxRetries            int           `mapstructure:"aiMaxRetries" validate:"omitempty,min=0,max=10"`
+	AIMaxRetries            int           `mapstructure:"aiMaxRetries"            validate:"omitempty,min=0,max=10"`
 	EnableOCRPreprocessing  bool          `mapstructure:"enableOCRPreprocessing"`
 	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
-	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension" validate:"omitempty,min=512,max=12000"`
-	MaxOCRPages             int           `mapstructure:"maxOCRPages"        validate:"omitempty,min=1,max=500"`
-	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"  validate:"omitempty,min=1000,max=1000000"`
-	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize" validate:"omitempty,min=1,max=1000"`
+	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension"    validate:"omitempty,min=512,max=12000"`
+	MaxOCRPages             int           `mapstructure:"maxOCRPages"             validate:"omitempty,min=1,max=500"`
+	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"       validate:"omitempty,min=1000,max=1000000"`
+	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize"      validate:"omitempty,min=1,max=1000"`
 	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
 }
 
@@ -344,7 +344,7 @@ func (c *DocumentIntelligenceConfig) GetReconcileBatchSize() int {
 }
 
 type MeilisearchConfig struct {
-	URL     string                 `mapstructure:"url" validate:"omitempty,url,no_trailing_slash"`
+	URL     string                 `mapstructure:"url"     validate:"omitempty,url,no_trailing_slash"`
 	APIKey  string                 `mapstructure:"apiKey"`
 	Timeout time.Duration          `mapstructure:"timeout"`
 	Indexes MeilisearchIndexConfig `mapstructure:"indexes"`
@@ -615,17 +615,17 @@ type SystemConfig struct {
 }
 
 type Config struct {
-	App                  AppConfig                  `mapstructure:"app"        validate:"required"`
-	Database             DatabaseConfig             `mapstructure:"database"   validate:"required"`
-	Monitoring           MonitoringConfig           `mapstructure:"monitoring" validate:"required"`
-	Cache                CacheConfig                `mapstructure:"cache"      validate:"required"`
-	Server               ServerConfig               `mapstructure:"server"     validate:"required"`
-	Security             SecurityConfig             `mapstructure:"security"   validate:"required"`
-	Logging              LoggingConfig              `mapstructure:"logging"    validate:"required"`
-	Temporal             TemporalConfig             `mapstructure:"temporal"   validate:"required"`
-	Storage              StorageConfig              `mapstructure:"storage"    validate:"required"`
-	System               SystemConfig               `mapstructure:"system"     validate:"required"`
-	Ably                 AblyConfig                 `mapstructure:"ably"       validate:"required"`
+	App                  AppConfig                  `mapstructure:"app"                  validate:"required"`
+	Database             DatabaseConfig             `mapstructure:"database"             validate:"required"`
+	Monitoring           MonitoringConfig           `mapstructure:"monitoring"           validate:"required"`
+	Cache                CacheConfig                `mapstructure:"cache"                validate:"required"`
+	Server               ServerConfig               `mapstructure:"server"               validate:"required"`
+	Security             SecurityConfig             `mapstructure:"security"             validate:"required"`
+	Logging              LoggingConfig              `mapstructure:"logging"              validate:"required"`
+	Temporal             TemporalConfig             `mapstructure:"temporal"             validate:"required"`
+	Storage              StorageConfig              `mapstructure:"storage"              validate:"required"`
+	System               SystemConfig               `mapstructure:"system"               validate:"required"`
+	Ably                 AblyConfig                 `mapstructure:"ably"                 validate:"required"`
 	Search               SearchConfig               `mapstructure:"search"`
 	DocumentIntelligence DocumentIntelligenceConfig `mapstructure:"documentIntelligence"`
 	Audit                AuditConfig                `mapstructure:"audit"`

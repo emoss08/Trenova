@@ -39,7 +39,7 @@ func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListAssignmentsRequest,
 ) (*pagination.ListResult[*shipment.Assignment], error) {
-	entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.Limit)
+	entities := make([]*shipment.Assignment, 0, req.Filter.Pagination.SafeLimit())
 
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().

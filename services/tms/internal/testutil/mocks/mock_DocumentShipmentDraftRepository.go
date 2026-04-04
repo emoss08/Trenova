@@ -18,7 +18,8 @@ import (
 func NewMockDocumentShipmentDraftRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockDocumentShipmentDraftRepository {
+},
+) *MockDocumentShipmentDraftRepository {
 	mock := &MockDocumentShipmentDraftRepository{}
 	mock.Mock.Test(t)
 
@@ -41,23 +42,23 @@ func (_m *MockDocumentShipmentDraftRepository) EXPECT() *MockDocumentShipmentDra
 }
 
 // GetByDocumentID provides a mock function for the type MockDocumentShipmentDraftRepository
-func (_mock *MockDocumentShipmentDraftRepository) GetByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.Draft, error) {
+func (_mock *MockDocumentShipmentDraftRepository) GetByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	ret := _mock.Called(ctx, documentID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByDocumentID")
 	}
 
-	var r0 *documentshipmentdraft.Draft
+	var r0 *documentshipmentdraft.DocumentShipmentDraft
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*documentshipmentdraft.Draft, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error)); ok {
 		return returnFunc(ctx, documentID, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *documentshipmentdraft.Draft); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *documentshipmentdraft.DocumentShipmentDraft); ok {
 		r0 = returnFunc(ctx, documentID, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentshipmentdraft.Draft)
+			r0 = ret.Get(0).(*documentshipmentdraft.DocumentShipmentDraft)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
@@ -104,37 +105,37 @@ func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Run(run func
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Return(draft *documentshipmentdraft.Draft, err error) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
+func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
 	_c.Call.Return(draft, err)
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) RunAndReturn(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.Draft, error)) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
+func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) RunAndReturn(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error)) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Upsert provides a mock function for the type MockDocumentShipmentDraftRepository
-func (_mock *MockDocumentShipmentDraftRepository) Upsert(ctx context.Context, entity *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error) {
+func (_mock *MockDocumentShipmentDraftRepository) Upsert(ctx context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Upsert")
 	}
 
-	var r0 *documentshipmentdraft.Draft
+	var r0 *documentshipmentdraft.DocumentShipmentDraft
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentshipmentdraft.Draft) *documentshipmentdraft.Draft); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentshipmentdraft.DocumentShipmentDraft) *documentshipmentdraft.DocumentShipmentDraft); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentshipmentdraft.Draft)
+			r0 = ret.Get(0).(*documentshipmentdraft.DocumentShipmentDraft)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentshipmentdraft.Draft) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentshipmentdraft.DocumentShipmentDraft) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -149,20 +150,20 @@ type MockDocumentShipmentDraftRepository_Upsert_Call struct {
 
 // Upsert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *documentshipmentdraft.Draft
+//   - entity *documentshipmentdraft.DocumentShipmentDraft
 func (_e *MockDocumentShipmentDraftRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDocumentShipmentDraftRepository_Upsert_Call {
 	return &MockDocumentShipmentDraftRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
 }
 
-func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Run(run func(ctx context.Context, entity *documentshipmentdraft.Draft)) *MockDocumentShipmentDraftRepository_Upsert_Call {
+func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Run(run func(ctx context.Context, entity *documentshipmentdraft.DocumentShipmentDraft)) *MockDocumentShipmentDraftRepository_Upsert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documentshipmentdraft.Draft
+		var arg1 *documentshipmentdraft.DocumentShipmentDraft
 		if args[1] != nil {
-			arg1 = args[1].(*documentshipmentdraft.Draft)
+			arg1 = args[1].(*documentshipmentdraft.DocumentShipmentDraft)
 		}
 		run(
 			arg0,
@@ -172,12 +173,12 @@ func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Return(draft *documentshipmentdraft.Draft, err error) *MockDocumentShipmentDraftRepository_Upsert_Call {
+func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_Upsert_Call {
 	_c.Call.Return(draft, err)
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, entity *documentshipmentdraft.Draft) (*documentshipmentdraft.Draft, error)) *MockDocumentShipmentDraftRepository_Upsert_Call {
+func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error)) *MockDocumentShipmentDraftRepository_Upsert_Call {
 	_c.Call.Return(run)
 	return _c
 }

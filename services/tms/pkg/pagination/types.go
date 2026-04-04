@@ -24,6 +24,33 @@ type Info struct {
 	Offset int `json:"offset" default:"0"  form:"offset" binding:"min=0"`
 }
 
+func ClampLimit(limit int) int {
+	switch {
+	case limit <= 0:
+		return DefaultLimit
+	case limit > MaxLimit:
+		return MaxLimit
+	default:
+		return limit
+	}
+}
+
+func ClampOffset(offset int) int {
+	if offset < 0 {
+		return DefaultOffset
+	}
+
+	return offset
+}
+
+func (i Info) SafeLimit() int {
+	return ClampLimit(i.Limit)
+}
+
+func (i Info) SafeOffset() int {
+	return ClampOffset(i.Offset)
+}
+
 type Response[T any] struct {
 	Results T      `json:"results"`
 	Count   int    `json:"count"`

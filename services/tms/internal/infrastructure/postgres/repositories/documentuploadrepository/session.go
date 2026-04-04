@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,12 +38,13 @@ func New(p Params) repositories.DocumentUploadSessionRepository {
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *documentupload.Session,
-) (*documentupload.Session, error) {
+	entity *documentupload.DocumentUploadSession,
+) (*documentupload.DocumentUploadSession, error) {
+	cols := buncolgen.DocumentUploadSessionColumns
 	err := r.db.WithTx(
 		ctx,
 		ports.TxOptions{Isolation: 0},
-		func(ctx context.Context, tx bun.Tx) error {
+		func(c context.Context, tx bun.Tx) error {
 			if _, err := tx.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 				return err
 			}
@@ -52,16 +54,16 @@ func (r *repository) Create(
 			}
 
 			_, err := tx.NewUpdate().
-				Table("document_upload_sessions").
-				Set("status = ?", documentupload.StatusCanceled).
-				Set("failure_code = ?", "SUPERSEDED_BY_NEWER_SESSION").
-				Set("failure_message = ?", "Superseded by a newer upload session").
-				Set("last_activity_at = ?", timeutils.NowUnix()).
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Where("lineage_id = ?", *entity.LineageID).
-				Where("id <> ?", entity.ID).
-				Where("status IN (?)", bun.In([]documentupload.Status{
+				Table(buncolgen.DocumentUploadSessionTable.Name).
+				Set(cols.Status.Set(), documentupload.StatusCanceled).
+				Set(cols.FailureCode.Set(), documentupload.FailureCodeSuspendedByNewerSession).
+				Set(cols.FailureMessage.Set(), "Superseded by a newer upload session").
+				Set(cols.LastActivityAt.Set(), timeutils.NowUnix()).
+				Where(cols.OrganizationID.Eq(), entity.OrganizationID).
+				Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
+				Where(cols.LineageID.Eq(), *entity.LineageID).
+				Where(cols.ID.NotEq(), entity.ID).
+				Where(cols.Status.In(), bun.List([]documentupload.Status{
 					documentupload.StatusInitiated,
 					documentupload.StatusUploading,
 					documentupload.StatusUploaded,
@@ -83,23 +85,28 @@ func (r *repository) Create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *documentupload.Session,
-) (*documentupload.Session, error) {
+	entity *documentupload.DocumentUploadSession,
+) (*documentupload.DocumentUploadSession, error) {
 	ov := entity.Version
 	entity.Version++
 
+	cols := buncolgen.DocumentUploadSessionColumns
 	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(result, "Document upload session", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"Document upload session",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -109,15 +116,17 @@ func (r *repository) Update(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetDocumentUploadSessionByIDRequest,
-) (*documentupload.Session, error) {
-	entity := new(documentupload.Session)
+) (*documentupload.DocumentUploadSession, error) {
+	entity := new(documentupload.DocumentUploadSession)
+	cols := buncolgen.DocumentUploadSessionColumns
 	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("dus.id = ?", req.ID).
-				Where("dus.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dus.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.DocumentUploadSessionScopeTenant(
+				sq,
+				req.TenantInfo,
+			).Where(cols.ID.Eq(), req.ID)
 		}).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Document upload session")
@@ -131,11 +140,13 @@ func (r *repository) ListForReconciliation(
 	staleBefore int64,
 	expiresBefore int64,
 	limit int,
-) ([]*documentupload.Session, error) {
-	sessions := make([]*documentupload.Session, 0, limit)
+) ([]*documentupload.DocumentUploadSession, error) {
+	sessions := make([]*documentupload.DocumentUploadSession, 0, limit)
 	if limit <= 0 {
 		limit = 100
 	}
+
+	cols := buncolgen.DocumentUploadSessionColumns
 
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -143,7 +154,7 @@ func (r *repository) ListForReconciliation(
 		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.WhereGroup(" AND ", func(active *bun.SelectQuery) *bun.SelectQuery {
 				return active.
-					Where("dus.status IN (?)", bun.In([]documentupload.Status{
+					Where(cols.Status.In(), bun.List([]documentupload.Status{
 						documentupload.StatusUploaded,
 						documentupload.StatusVerifying,
 						documentupload.StatusFinalizing,
@@ -151,18 +162,18 @@ func (r *repository) ListForReconciliation(
 						documentupload.StatusUploading,
 						documentupload.StatusPaused,
 					})).
-					Where("dus.last_activity_at <= ?", staleBefore)
+					Where(cols.LastActivityAt.Lte(), staleBefore)
 			}).WhereGroup(" AND ", func(expired *bun.SelectQuery) *bun.SelectQuery {
 				return expired.
-					Where("dus.status IN (?)", bun.In([]documentupload.Status{
+					Where(cols.Status.In(), bun.List([]documentupload.Status{
 						documentupload.StatusInitiated,
 						documentupload.StatusUploading,
 						documentupload.StatusPaused,
 					})).
-					Where("dus.expires_at <= ?", expiresBefore)
+					Where(cols.ExpiresAt.Lte(), expiresBefore)
 			})
 		}).
-		Order("dus.last_activity_at ASC").
+		Order(cols.LastActivityAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	if err != nil {
@@ -177,13 +188,14 @@ func (r *repository) ClearDocumentReference(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
+	cols := buncolgen.DocumentUploadSessionColumns
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
-		Table("document_upload_sessions").
-		Set("document_id = NULL").
-		Where("document_id = ?", documentID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		Table(buncolgen.DocumentUploadSessionTable.Name).
+		Set(cols.DocumentID.Set(), nil).
+		Where(cols.DocumentID.Eq(), documentID).
+		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
 		Exec(ctx)
 	return err
 }
@@ -197,13 +209,14 @@ func (r *repository) ClearDocumentReferences(
 		return nil
 	}
 
+	cols := buncolgen.DocumentUploadSessionColumns
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
-		Table("document_upload_sessions").
-		Set("document_id = NULL").
-		Where("document_id IN (?)", bun.In(documentIDs)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		Table(buncolgen.DocumentUploadSessionTable.Name).
+		Set(cols.DocumentID.Set(), nil).
+		Where(cols.DocumentID.In(), bun.List(documentIDs)).
+		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
 		Exec(ctx)
 	return err
 }
@@ -211,31 +224,33 @@ func (r *repository) ClearDocumentReferences(
 func (r *repository) ListActive(
 	ctx context.Context,
 	req *repositories.ListActiveDocumentUploadSessionsRequest,
-) ([]*documentupload.Session, error) {
-	sessions := make([]*documentupload.Session, 0)
+) ([]*documentupload.DocumentUploadSession, error) {
+	sessions := make([]*documentupload.DocumentUploadSession, 0)
+	cols := buncolgen.DocumentUploadSessionColumns
 	q := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&sessions).
-		Where("dus.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dus.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("dus.status NOT IN (?)", bun.In([]documentupload.Status{
-			documentupload.StatusCompleted,
-			documentupload.StatusAvailable,
-			documentupload.StatusQuarantined,
-			documentupload.StatusFailed,
-			documentupload.StatusCanceled,
-			documentupload.StatusExpired,
-		}))
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentUploadSessionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Status.NotIn(), bun.List([]documentupload.Status{
+					documentupload.StatusCompleted,
+					documentupload.StatusAvailable,
+					documentupload.StatusQuarantined,
+					documentupload.StatusFailed,
+					documentupload.StatusCanceled,
+					documentupload.StatusExpired,
+				}))
+		})
 
 	if req.ResourceID != "" {
-		q = q.Where("dus.resource_id = ?", req.ResourceID)
+		q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
 	}
 
 	if req.ResourceType != "" {
-		q = q.Where("dus.resource_type = ?", req.ResourceType)
+		q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
 	}
 
-	if err := q.Order("dus.created_at DESC").Scan(ctx); err != nil {
+	if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
 		return nil, err
 	}
 
@@ -245,26 +260,26 @@ func (r *repository) ListActive(
 func (r *repository) ListRelated(
 	ctx context.Context,
 	req *repositories.ListRelatedDocumentUploadSessionsRequest,
-) ([]*documentupload.Session, error) {
-	sessions := make([]*documentupload.Session, 0)
+) ([]*documentupload.DocumentUploadSession, error) {
+	sessions := make([]*documentupload.DocumentUploadSession, 0)
+	cols := buncolgen.DocumentUploadSessionColumns
 	q := r.db.DBForContext(ctx).
 		NewSelect().
-		Model(&sessions).
-		Where("dus.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dus.business_unit_id = ?", req.TenantInfo.BuID)
+		Model(&sessions).Apply(buncolgen.DocumentUploadSessionApplyTenant(req.TenantInfo))
 
 	switch {
 	case !req.DocumentID.IsNil() && !req.LineageID.IsNil():
-		q = q.Where("(dus.document_id = ? OR dus.lineage_id = ?)", req.DocumentID, req.LineageID)
+		q = q.WhereOr(cols.DocumentID.Eq(), req.DocumentID).
+			WhereOr(cols.LineageID.Eq(), req.LineageID)
 	case !req.DocumentID.IsNil():
-		q = q.Where("dus.document_id = ?", req.DocumentID)
+		q = q.Where(cols.DocumentID.Eq(), req.DocumentID)
 	case !req.LineageID.IsNil():
-		q = q.Where("dus.lineage_id = ?", req.LineageID)
+		q = q.Where(cols.LineageID.Eq(), req.LineageID)
 	default:
 		return sessions, nil
 	}
 
-	if err := q.Order("dus.created_at DESC").Scan(ctx); err != nil {
+	if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
 		return nil, err
 	}
 

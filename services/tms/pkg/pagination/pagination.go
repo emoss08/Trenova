@@ -11,8 +11,8 @@ import (
 
 func Params(c *gin.Context) (*Info, error) {
 	return &Info{
-		Offset: max(helpers.QueryInt(c, "offset", DefaultOffset), 0),
-		Limit:  helpers.QueryBounded(c, "limit", 1, 100, DefaultLimit),
+		Offset: ClampOffset(helpers.QueryInt(c, "offset", DefaultOffset)),
+		Limit:  helpers.QueryBounded(c, "limit", 1, MaxLimit, DefaultLimit),
 	}, nil
 }
 

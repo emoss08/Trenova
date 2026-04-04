@@ -84,7 +84,7 @@ func (r *repository) filterQuery(
 
 	q = q.Order("tc.is_default DESC", "tc.created_at DESC")
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -96,7 +96,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*tableconfiguration.TableConfiguration, 0, req.Filter.Pagination.Limit)
+	entities := make([]*tableconfiguration.TableConfiguration, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).

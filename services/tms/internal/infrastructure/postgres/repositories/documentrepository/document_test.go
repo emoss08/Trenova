@@ -58,14 +58,14 @@ func (r *testRepository) filterQuery(
 		q = q.Where("doc.status = ?", req.Status)
 	}
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *testRepository) List(
 	ctx context.Context,
 	req *repositories.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
-	entities := make([]*document.Document, 0, req.Filter.Pagination.Limit)
+	entities := make([]*document.Document, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.
 		NewSelect().
 		Model(&entities).

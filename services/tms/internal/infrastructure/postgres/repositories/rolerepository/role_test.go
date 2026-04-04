@@ -120,7 +120,7 @@ func (r *testRepository) List(
 		Order("r.name ASC")
 
 	if req.Filter != nil && req.Filter.Pagination.Limit > 0 {
-		q = q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+		q = q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 	}
 
 	total, err := q.ScanAndCount(ctx)

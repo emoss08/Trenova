@@ -45,7 +45,7 @@ func (r *repository) filterQuery(
 		(*hazmatsegregationrule.HazmatSegregationRule)(nil),
 	)
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -57,7 +57,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0, req.Filter.Pagination.Limit)
+	entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).

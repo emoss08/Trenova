@@ -59,7 +59,7 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*dothazmatreference.DotHazmatReference], error) {
-	entities := make([]*dothazmatreference.DotHazmatReference, 0, req.Pagination.Limit)
+	entities := make([]*dothazmatreference.DotHazmatReference, 0, req.Pagination.SafeLimit())
 
 	q := r.db.DB().
 		NewSelect().

@@ -609,6 +609,7 @@ func TestConstants(t *testing.T) {
 
 	assert.Equal(t, 20, DefaultLimit)
 	assert.Equal(t, 0, DefaultOffset)
+	assert.Equal(t, 100, MaxLimit)
 }
 
 func TestNewQueryOptions_LargeLimit(t *testing.T) {
@@ -621,7 +622,7 @@ func TestNewQueryOptions_LargeLimit(t *testing.T) {
 
 	opts := NewQueryOptions(c, authCtx)
 
-	assert.LessOrEqual(t, opts.Pagination.Limit, 200)
+	assert.Equal(t, MaxLimit, opts.Pagination.Limit)
 }
 
 func TestNewQueryOptions_ZeroLimit(t *testing.T) {
@@ -635,6 +636,7 @@ func TestNewQueryOptions_ZeroLimit(t *testing.T) {
 	opts := NewQueryOptions(c, authCtx)
 
 	require.NotNil(t, opts)
+	assert.Equal(t, DefaultLimit, opts.Pagination.Limit)
 }
 
 func TestNewQueryOptions_NegativeOffset(t *testing.T) {
@@ -648,6 +650,7 @@ func TestNewQueryOptions_NegativeOffset(t *testing.T) {
 	opts := NewQueryOptions(c, authCtx)
 
 	require.NotNil(t, opts)
+	assert.Equal(t, DefaultOffset, opts.Pagination.Offset)
 }
 
 func TestNewSelectQueryRequest_LargeOffset(t *testing.T) {
@@ -661,6 +664,61 @@ func TestNewSelectQueryRequest_LargeOffset(t *testing.T) {
 	req := NewSelectQueryRequest(c, authCtx)
 
 	assert.Equal(t, 10000, req.Pagination.Offset)
+}
+
+func TestNewSelectQueryRequest_LargeLimit(t *testing.T) {
+	t.Parallel()
+
+	params := url.Values{}
+	params.Set("limit", "500")
+	c := createTestContextWithParams(params)
+	authCtx := newTestAuthContext()
+
+	req := NewSelectQueryRequest(c, authCtx)
+
+	assert.Equal(t, MaxLimit, req.Pagination.Limit)
+}
+
+func TestNewSelectQueryRequest_ZeroLimit(t *testing.T) {
+	t.Parallel()
+
+	params := url.Values{}
+	params.Set("limit", "0")
+	c := createTestContextWithParams(params)
+	authCtx := newTestAuthContext()
+
+	req := NewSelectQueryRequest(c, authCtx)
+
+	assert.Equal(t, DefaultLimit, req.Pagination.Limit)
+}
+
+func TestNewSelectQueryRequest_NegativeOffset(t *testing.T) {
+	t.Parallel()
+
+	params := url.Values{}
+	params.Set("offset", "-100")
+	c := createTestContextWithParams(params)
+	authCtx := newTestAuthContext()
+
+	req := NewSelectQueryRequest(c, authCtx)
+
+	assert.Equal(t, DefaultOffset, req.Pagination.Offset)
+}
+
+func TestClampLimit(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, DefaultLimit, ClampLimit(0))
+	assert.Equal(t, DefaultLimit, ClampLimit(-1))
+	assert.Equal(t, MaxLimit, ClampLimit(MaxLimit+1))
+	assert.Equal(t, 25, ClampLimit(25))
+}
+
+func TestClampOffset(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, DefaultOffset, ClampOffset(-1))
+	assert.Equal(t, 42, ClampOffset(42))
 }
 
 func TestQueryOptions_Fields(t *testing.T) {

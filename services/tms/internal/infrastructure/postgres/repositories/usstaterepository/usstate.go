@@ -64,7 +64,7 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*usstate.UsState], error) {
-	entities := make([]*usstate.UsState, 0, req.Pagination.Limit)
+	entities := make([]*usstate.UsState, 0, req.Pagination.SafeLimit())
 
 	q := r.db.DB().
 		NewSelect().

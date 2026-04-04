@@ -19,7 +19,8 @@ import (
 func NewMockDocumentUploadSessionRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockDocumentUploadSessionRepository {
+},
+) *MockDocumentUploadSessionRepository {
 	mock := &MockDocumentUploadSessionRepository{}
 	mock.Mock.Test(t)
 
@@ -168,26 +169,26 @@ func (_c *MockDocumentUploadSessionRepository_ClearDocumentReferences_Call) RunA
 }
 
 // Create provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) Create(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) Create(ctx context.Context, entity *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *documentupload.Session
+	var r0 *documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.Session) (*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.Session) *documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.DocumentUploadSession) *documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentupload.Session)
+			r0 = ret.Get(0).(*documentupload.DocumentUploadSession)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentupload.Session) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentupload.DocumentUploadSession) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -202,20 +203,20 @@ type MockDocumentUploadSessionRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *documentupload.Session
+//   - entity *documentupload.DocumentUploadSession
 func (_e *MockDocumentUploadSessionRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentUploadSessionRepository_Create_Call {
 	return &MockDocumentUploadSessionRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockDocumentUploadSessionRepository_Create_Call) Run(run func(ctx context.Context, entity *documentupload.Session)) *MockDocumentUploadSessionRepository_Create_Call {
+func (_c *MockDocumentUploadSessionRepository_Create_Call) Run(run func(ctx context.Context, entity *documentupload.DocumentUploadSession)) *MockDocumentUploadSessionRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documentupload.Session
+		var arg1 *documentupload.DocumentUploadSession
 		if args[1] != nil {
-			arg1 = args[1].(*documentupload.Session)
+			arg1 = args[1].(*documentupload.DocumentUploadSession)
 		}
 		run(
 			arg0,
@@ -225,34 +226,34 @@ func (_c *MockDocumentUploadSessionRepository_Create_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Create_Call) Return(session *documentupload.Session, err error) *MockDocumentUploadSessionRepository_Create_Call {
+func (_c *MockDocumentUploadSessionRepository_Create_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Create_Call {
 	_c.Call.Return(session, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error)) *MockDocumentUploadSessionRepository_Create_Call {
+func (_c *MockDocumentUploadSessionRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) GetByID(ctx context.Context, req repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) GetByID(ctx context.Context, req repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *documentupload.Session
+	var r0 *documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentUploadSessionByIDRequest) *documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentUploadSessionByIDRequest) *documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentupload.Session)
+			r0 = ret.Get(0).(*documentupload.DocumentUploadSession)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetDocumentUploadSessionByIDRequest) error); ok {
@@ -293,34 +294,34 @@ func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Return(session *documentupload.Session, err error) *MockDocumentUploadSessionRepository_GetByID_Call {
+func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_GetByID_Call {
 	_c.Call.Return(session, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.Session, error)) *MockDocumentUploadSessionRepository_GetByID_Call {
+func (_c *MockDocumentUploadSessionRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetDocumentUploadSessionByIDRequest) (*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListActive provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) ListActive(ctx context.Context, req *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) ListActive(ctx context.Context, req *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListActive")
 	}
 
-	var r0 []*documentupload.Session
+	var r0 []*documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveDocumentUploadSessionsRequest) []*documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListActiveDocumentUploadSessionsRequest) []*documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*documentupload.Session)
+			r0 = ret.Get(0).([]*documentupload.DocumentUploadSession)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListActiveDocumentUploadSessionsRequest) error); ok {
@@ -361,34 +362,34 @@ func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Return(sessions []*documentupload.Session, err error) *MockDocumentUploadSessionRepository_ListActive_Call {
+func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListActive_Call {
 	_c.Call.Return(sessions, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListActive_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.Session, error)) *MockDocumentUploadSessionRepository_ListActive_Call {
+func (_c *MockDocumentUploadSessionRepository_ListActive_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListActiveDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_ListActive_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListForReconciliation provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) ListForReconciliation(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) ListForReconciliation(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, staleBefore, expiresBefore, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListForReconciliation")
 	}
 
-	var r0 []*documentupload.Session
+	var r0 []*documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) ([]*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) ([]*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, staleBefore, expiresBefore, limit)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) []*documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) []*documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, staleBefore, expiresBefore, limit)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*documentupload.Session)
+			r0 = ret.Get(0).([]*documentupload.DocumentUploadSession)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64, int) error); ok {
@@ -441,34 +442,34 @@ func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Run(ru
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Return(sessions []*documentupload.Session, err error) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
 	_c.Call.Return(sessions, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) RunAndReturn(run func(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.Session, error)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) RunAndReturn(run func(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListRelated provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) ListRelated(ctx context.Context, req *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) ListRelated(ctx context.Context, req *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRelated")
 	}
 
-	var r0 []*documentupload.Session
+	var r0 []*documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRelatedDocumentUploadSessionsRequest) []*documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRelatedDocumentUploadSessionsRequest) []*documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*documentupload.Session)
+			r0 = ret.Get(0).([]*documentupload.DocumentUploadSession)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListRelatedDocumentUploadSessionsRequest) error); ok {
@@ -509,37 +510,37 @@ func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Return(sessions []*documentupload.Session, err error) *MockDocumentUploadSessionRepository_ListRelated_Call {
+func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListRelated_Call {
 	_c.Call.Return(sessions, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.Session, error)) *MockDocumentUploadSessionRepository_ListRelated_Call {
+func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListRelatedDocumentUploadSessionsRequest) ([]*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_ListRelated_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) Update(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error) {
+func (_mock *MockDocumentUploadSessionRepository) Update(ctx context.Context, entity *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *documentupload.Session
+	var r0 *documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.Session) (*documentupload.Session, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.Session) *documentupload.Session); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentupload.DocumentUploadSession) *documentupload.DocumentUploadSession); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentupload.Session)
+			r0 = ret.Get(0).(*documentupload.DocumentUploadSession)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentupload.Session) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentupload.DocumentUploadSession) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -554,20 +555,20 @@ type MockDocumentUploadSessionRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *documentupload.Session
+//   - entity *documentupload.DocumentUploadSession
 func (_e *MockDocumentUploadSessionRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentUploadSessionRepository_Update_Call {
 	return &MockDocumentUploadSessionRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockDocumentUploadSessionRepository_Update_Call) Run(run func(ctx context.Context, entity *documentupload.Session)) *MockDocumentUploadSessionRepository_Update_Call {
+func (_c *MockDocumentUploadSessionRepository_Update_Call) Run(run func(ctx context.Context, entity *documentupload.DocumentUploadSession)) *MockDocumentUploadSessionRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documentupload.Session
+		var arg1 *documentupload.DocumentUploadSession
 		if args[1] != nil {
-			arg1 = args[1].(*documentupload.Session)
+			arg1 = args[1].(*documentupload.DocumentUploadSession)
 		}
 		run(
 			arg0,
@@ -577,12 +578,12 @@ func (_c *MockDocumentUploadSessionRepository_Update_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Update_Call) Return(session *documentupload.Session, err error) *MockDocumentUploadSessionRepository_Update_Call {
+func (_c *MockDocumentUploadSessionRepository_Update_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Update_Call {
 	_c.Call.Return(session, err)
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documentupload.Session) (*documentupload.Session, error)) *MockDocumentUploadSessionRepository_Update_Call {
+func (_c *MockDocumentUploadSessionRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documentupload.DocumentUploadSession) (*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

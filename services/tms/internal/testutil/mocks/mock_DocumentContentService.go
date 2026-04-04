@@ -20,7 +20,8 @@ import (
 func NewMockDocumentContentService(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockDocumentContentService {
+},
+) *MockDocumentContentService {
 	mock := &MockDocumentContentService{}
 	mock.Mock.Test(t)
 
@@ -180,23 +181,23 @@ func (_c *MockDocumentContentService_GetContent_Call) RunAndReturn(run func(ctx 
 }
 
 // GetShipmentDraft provides a mock function for the type MockDocumentContentService
-func (_mock *MockDocumentContentService) GetShipmentDraft(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.Draft, error) {
+func (_mock *MockDocumentContentService) GetShipmentDraft(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	ret := _mock.Called(ctx, documentID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetShipmentDraft")
 	}
 
-	var r0 *documentshipmentdraft.Draft
+	var r0 *documentshipmentdraft.DocumentShipmentDraft
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*documentshipmentdraft.Draft, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error)); ok {
 		return returnFunc(ctx, documentID, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *documentshipmentdraft.Draft); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *documentshipmentdraft.DocumentShipmentDraft); ok {
 		r0 = returnFunc(ctx, documentID, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentshipmentdraft.Draft)
+			r0 = ret.Get(0).(*documentshipmentdraft.DocumentShipmentDraft)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
@@ -243,12 +244,12 @@ func (_c *MockDocumentContentService_GetShipmentDraft_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockDocumentContentService_GetShipmentDraft_Call) Return(draft *documentshipmentdraft.Draft, err error) *MockDocumentContentService_GetShipmentDraft_Call {
+func (_c *MockDocumentContentService_GetShipmentDraft_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentContentService_GetShipmentDraft_Call {
 	_c.Call.Return(draft, err)
 	return _c
 }
 
-func (_c *MockDocumentContentService_GetShipmentDraft_Call) RunAndReturn(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.Draft, error)) *MockDocumentContentService_GetShipmentDraft_Call {
+func (_c *MockDocumentContentService_GetShipmentDraft_Call) RunAndReturn(run func(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentshipmentdraft.DocumentShipmentDraft, error)) *MockDocumentContentService_GetShipmentDraft_Call {
 	_c.Call.Return(run)
 	return _c
 }

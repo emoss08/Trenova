@@ -91,7 +91,7 @@ func (r *repository) filterQuery(
 		q = q.Relation("Worker")
 	}
 
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) List(
@@ -103,7 +103,7 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.Limit)
+	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.SafeLimit())
 
 	total, err := r.db.DB().
 		NewSelect().
@@ -365,7 +365,7 @@ func (r *repository) filterUpcomingPTOQuery(
 	q = q.RelationWithOpts("Worker", bun.RelationOpts{
 		Apply: r.workerRelationApplyForUpcoming(req, log),
 	})
-	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
 func (r *repository) ListUpcoming(
@@ -377,7 +377,7 @@ func (r *repository) ListUpcoming(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.Limit)
+	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).

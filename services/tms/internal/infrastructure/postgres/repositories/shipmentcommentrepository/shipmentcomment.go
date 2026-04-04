@@ -47,7 +47,7 @@ func (r *repository) ListByShipmentID(
 	sc := buncolgen.ShipmentCommentColumns
 	scm := buncolgen.ShipmentCommentMentionColumns
 	db := r.db.DBForContext(ctx)
-	comments := make([]*shipment.ShipmentComment, 0, req.Filter.Pagination.Limit)
+	comments := make([]*shipment.ShipmentComment, 0, req.Filter.Pagination.SafeLimit())
 
 	total, err := db.NewSelect().
 		Model(&comments).

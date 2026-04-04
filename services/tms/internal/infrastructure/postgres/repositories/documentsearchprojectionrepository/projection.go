@@ -6,8 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentsearchprojection"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -54,7 +57,7 @@ func (r *repository) Upsert(
 		Set("updated_at = EXCLUDED.updated_at").
 		Returning("*").
 		Exec(ctx); err != nil {
-		return nil, err
+		return nil, dberror.HandleNotFoundError(err, "Document search projection")
 	}
 
 	return entity, nil
@@ -65,12 +68,18 @@ func (r *repository) Delete(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) error {
+	cols := buncolgen.ProjectionColumns
 	_, err := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*documentsearchprojection.Projection)(nil)).
-		Where("id = ?", documentID).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.ProjectionScopeTenantDelete(dq, tenantInfo).
+				Where(cols.ID.Eq(), documentID)
+		}).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return dberror.HandleNotFoundError(err, "Document search projection")
+	}
+
+	return nil
 }

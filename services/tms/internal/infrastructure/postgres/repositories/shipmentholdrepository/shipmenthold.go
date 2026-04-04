@@ -45,7 +45,7 @@ func (r *repository) ListByShipmentID(
 
 	shh := buncolgen.ShipmentHoldColumns
 	db := r.db.DBForContext(ctx)
-	holds := make([]*shipment.ShipmentHold, 0, req.Filter.Pagination.Limit)
+	holds := make([]*shipment.ShipmentHold, 0, req.Filter.Pagination.SafeLimit())
 
 	total, err := db.NewSelect().
 		Model(&holds).

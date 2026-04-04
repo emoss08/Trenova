@@ -6,9 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -36,14 +38,16 @@ func (r *repository) GetByDocumentID(
 	ctx context.Context,
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*documentshipmentdraft.Draft, error) {
-	entity := new(documentshipmentdraft.Draft)
+) (*documentshipmentdraft.DocumentShipmentDraft, error) {
+	entity := new(documentshipmentdraft.DocumentShipmentDraft)
+	cols := buncolgen.DocumentShipmentDraftColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Where("dsd.document_id = ?", documentID).
-		Where("dsd.organization_id = ?", tenantInfo.OrgID).
-		Where("dsd.business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentShipmentDraftScopeTenant(sq, tenantInfo).
+				Where(cols.DocumentID.Eq(), documentID)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
@@ -54,8 +58,8 @@ func (r *repository) GetByDocumentID(
 
 func (r *repository) Upsert(
 	ctx context.Context,
-	entity *documentshipmentdraft.Draft,
-) (*documentshipmentdraft.Draft, error) {
+	entity *documentshipmentdraft.DocumentShipmentDraft,
+) (*documentshipmentdraft.DocumentShipmentDraft, error) {
 	if _, err := r.db.DBForContext(ctx).
 		NewInsert().
 		Model(entity).
@@ -72,7 +76,7 @@ func (r *repository) Upsert(
 		Set("updated_at = EXCLUDED.updated_at").
 		Returning("*").
 		Exec(ctx); err != nil {
-		return nil, err
+		return nil, dberror.HandleNotFoundError(err, "Document shipment draft")
 	}
 
 	return entity, nil
