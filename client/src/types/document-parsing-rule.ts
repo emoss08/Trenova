@@ -1,34 +1,26 @@
 import { z } from "zod";
-import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
-} from "./helpers";
+import { optionalStringSchema, timestampSchema, versionSchema } from "./helpers";
 
 const stringArraySchema = z.array(z.string()).optional().default([]);
 const stringSchemaWithDefault = z.string().optional().default("");
 const booleanSchemaWithDefault = z.boolean().optional().default(false);
 const numberSchemaWithDefault = z.number().optional().default(0);
 
-export const documentKindSchema = z.enum(["RateConfirmation"]);
+export const documentKindSchema = z.enum([
+  "RateConfirmation",
+  "BillOfLading",
+  "ProofOfDelivery",
+  "Invoice",
+]);
 export type DocumentKind = z.infer<typeof documentKindSchema>;
 
-export const ruleVersionStatusSchema = z.enum([
-  "Draft",
-  "Published",
-  "Archived",
-]);
+export const ruleVersionStatusSchema = z.enum(["Draft", "Published", "Archived"]);
 export type RuleVersionStatus = z.infer<typeof ruleVersionStatusSchema>;
 
 export const parserModeSchema = z.enum(["merge_with_base", "override_base"]);
 export type ParserMode = z.infer<typeof parserModeSchema>;
 
-export const reviewStatusSchema = z.enum([
-  "",
-  "Ready",
-  "NeedsReview",
-  "Unavailable",
-]);
+export const reviewStatusSchema = z.enum(["", "Ready", "NeedsReview", "Unavailable"]);
 export type ReviewStatus = z.infer<typeof reviewStatusSchema>;
 
 export const fixtureFieldAssertionOperatorSchema = z.enum([
@@ -38,9 +30,7 @@ export const fixtureFieldAssertionOperatorSchema = z.enum([
   "matches_regex",
   "one_of",
 ]);
-export type FixtureFieldAssertionOperator = z.infer<
-  typeof fixtureFieldAssertionOperatorSchema
->;
+export type FixtureFieldAssertionOperator = z.infer<typeof fixtureFieldAssertionOperatorSchema>;
 
 export const matchConfigSchema = z.object({
   providerFingerprints: stringArraySchema,
@@ -175,10 +165,7 @@ export type FixtureFieldAssertion = z.infer<typeof fixtureFieldAssertionSchema>;
 export const fixtureAssertionsSchema = z.object({
   expectedFields: z.record(z.string(), z.string()).optional().default({}),
   fieldAssertions: z
-    .record(
-      z.string(),
-      z.array(fixtureFieldAssertionSchema).optional().default([]),
-    )
+    .record(z.string(), z.array(fixtureFieldAssertionSchema).optional().default([]))
     .optional()
     .default({}),
   requiredStopRoles: stringArraySchema,
@@ -253,9 +240,7 @@ export const documentParsingConflictSchema = z.object({
   evidenceExcerpt: z.string(),
   source: z.string(),
 });
-export type DocumentParsingConflict = z.infer<
-  typeof documentParsingConflictSchema
->;
+export type DocumentParsingConflict = z.infer<typeof documentParsingConflictSchema>;
 
 export const documentParsingRuleMetadataSchema = z.object({
   ruleSetId: z.string(),
@@ -266,9 +251,7 @@ export const documentParsingRuleMetadataSchema = z.object({
   providerMatched: z.string(),
   matchSpecificity: z.number(),
 });
-export type DocumentParsingRuleMetadata = z.infer<
-  typeof documentParsingRuleMetadataSchema
->;
+export type DocumentParsingRuleMetadata = z.infer<typeof documentParsingRuleMetadataSchema>;
 
 export const documentParsingAnalysisSchema = z.object({
   fields: z.record(z.string(), documentParsingFieldSchema).optional(),
@@ -280,9 +263,7 @@ export const documentParsingAnalysisSchema = z.object({
   overallConfidence: z.number().optional(),
   metadata: documentParsingRuleMetadataSchema.nullable().optional(),
 });
-export type DocumentParsingAnalysis = z.infer<
-  typeof documentParsingAnalysisSchema
->;
+export type DocumentParsingAnalysis = z.infer<typeof documentParsingAnalysisSchema>;
 
 export const simulationRequestSchema = z.object({
   fileName: z.string(),

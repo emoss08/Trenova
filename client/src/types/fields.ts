@@ -33,3 +33,8 @@ export type GenericSelectOption<T extends string | boolean | number> = {
   icon?: React.ReactNode;
   disabled?: boolean;
 };
+
+export type WarningProps = {
+  show: boolean
+  message: string
+}
