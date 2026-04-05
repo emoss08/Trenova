@@ -107,6 +107,15 @@ function ColorFieldInput<T extends FieldValues>({
   const [isOpen, setIsOpen] = useState(false);
   const { onChange, value, ...restField } = field;
 
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      if (!disabled) {
+        setIsOpen(open);
+      }
+    },
+    [disabled],
+  );
+
   const handleChange = useCallback(
     (color: string) => {
       setIsOpen(false);
@@ -116,7 +125,7 @@ function ColorFieldInput<T extends FieldValues>({
   );
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger
         render={
           <Button
