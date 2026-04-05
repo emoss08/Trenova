@@ -18,12 +18,7 @@ import {
   UploadIcon,
 } from "lucide-react";
 
-export type FileTypeFilter =
-  | "all"
-  | "pdf"
-  | "images"
-  | "documents"
-  | "spreadsheets";
+export type FileTypeFilter = "all" | "pdf" | "images" | "documents" | "spreadsheets";
 export type SortField = "name" | "date" | "size";
 export type SortDirection = "asc" | "desc";
 export type ViewMode = "grid" | "list";
@@ -81,7 +76,7 @@ export function DocumentToolbar({
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <div className="flex-1">
         <Input
-          placeholder="Search documents..."
+          placeholder="Search..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           leftElement={<SearchIcon className="size-4 text-muted-foreground" />}
@@ -91,10 +86,11 @@ export function DocumentToolbar({
 
       <Select
         value={fileTypeFilter}
+        items={fileTypeOptions}
         onValueChange={(val) => onFileTypeFilterChange(val as FileTypeFilter)}
       >
         <SelectTrigger>
-          <SelectValue />
+          <SelectValue placeholder="Select file type" />
         </SelectTrigger>
         <SelectContent>
           {fileTypeOptions.map((option) => (
@@ -108,10 +104,11 @@ export function DocumentToolbar({
       <ButtonGroup>
         <Select
           value={sortField}
+          items={sortFieldOptions}
           onValueChange={(val) => onSortFieldChange(val as SortField)}
         >
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select sort field" />
           </SelectTrigger>
           <SelectContent>
             {sortFieldOptions.map((option) => (

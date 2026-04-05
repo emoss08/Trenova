@@ -1,15 +1,21 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@/types/document";
 import {
-  BrainCircuitIcon,
   DownloadIcon,
+  EllipsisVerticalIcon,
   EyeIcon,
   HistoryIcon,
   LoaderCircleIcon,
+  ScanSearchIcon,
   Trash2Icon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -77,6 +83,9 @@ export function DocumentGridCard({
     document.previewStoragePath;
   const isGeneratingThumbnail = document.previewStatus === "Pending";
   const isPreviewUnavailable = document.previewStatus === "Failed";
+  const hasActions = Boolean(
+    (canPreview && onPreview) || onDownload || onInspect || onVersions || onDelete,
+  );
 
   useEffect(() => {
     if (document.previewStatus !== "Ready" || !document.previewStoragePath) {
@@ -115,9 +124,7 @@ export function DocumentGridCard({
             title="Generating thumbnail..."
           >
             <LoaderCircleIcon className="size-8 animate-spin text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              Generating preview...
-            </span>
+            <span className="text-xs text-muted-foreground">Generating preview...</span>
           </div>
         ) : isPreviewUnavailable ? (
           <div
@@ -129,9 +136,7 @@ export function DocumentGridCard({
               fileName={document.originalName}
               size="xl"
             />
-            <span className="text-xs text-muted-foreground">
-              Preview unavailable
-            </span>
+            <span className="text-xs text-muted-foreground">Preview unavailable</span>
           </div>
         ) : (
           <DocumentFileTypeIcon
@@ -143,59 +148,27 @@ export function DocumentGridCard({
       </div>
 
       <div className="flex flex-col gap-0.5 border-t px-3 py-2.5">
-        <p
-          className="truncate text-sm font-medium"
-          title={document.originalName}
-        >
+        <p className="truncate text-sm font-medium" title={document.originalName}>
           {document.originalName}
         </p>
         <p className="truncate text-xs text-muted-foreground">
           {formatFileSize(document.fileSize)} · {formatDate(document.createdAt)}
         </p>
         {documentTypeName && (
-          <p className="truncate text-xs text-muted-foreground">
-            {documentTypeName}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{documentTypeName}</p>
         )}
-        <div className="mt-1 flex flex-wrap gap-1">
-          {document.detectedKind && document.detectedKind !== "Other" && (
-            <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
-              {document.detectedKind}
-            </Badge>
-          )}
-          {document.versionNumber > 1 && onVersions && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onVersions(document);
-              }}
-            >
-              <Badge
-                variant="secondary"
-                className="h-5 cursor-pointer px-1.5 py-0 text-[10px] hover:bg-secondary/80"
-              >
-                <HistoryIcon className="mr-0.5 size-3" />
-                v{document.versionNumber}
-              </Badge>
-            </button>
-          )}
-          {document.contentStatus === "Extracting" && (
-            <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
-              Extracting
-            </Badge>
-          )}
-          {document.contentStatus === "Failed" && (
-            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
-              Text unavailable
-            </Badge>
-          )}
-          {document.shipmentDraftStatus === "Ready" && (
-            <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
-              Draft ready
-            </Badge>
-          )}
-        </div>
+        {document.versionNumber > 1 && onVersions && (
+          <button
+            type="button"
+            className="mt-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            onClick={(e) => {
+              e.stopPropagation();
+              onVersions(document);
+            }}
+          >
+            v{document.versionNumber} · View history
+          </button>
+        )}
       </div>
 
       {onSelect && (
@@ -214,59 +187,79 @@ export function DocumentGridCard({
         </div>
       )}
 
-      <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-md bg-background/80 p-0.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-        {canPreview && onPreview && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => onPreview(document)}
-            aria-label="Preview document"
-          >
-            <EyeIcon className="size-3.5" />
-          </Button>
-        )}
-        {onDownload && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => onDownload(document)}
-            aria-label="Download document"
-          >
-            <DownloadIcon className="size-3.5" />
-          </Button>
-        )}
-        {onInspect && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => onInspect(document)}
-            aria-label="Inspect document intelligence"
-          >
-            <BrainCircuitIcon className="size-3.5" />
-          </Button>
-        )}
-        {onVersions && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => onVersions(document)}
-            aria-label="View document versions"
-          >
-            <HistoryIcon className="size-3.5" />
-          </Button>
-        )}
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => onDelete(document)}
-            disabled={isDeleting}
-            aria-label="Delete document"
-          >
-            <Trash2Icon className="size-3.5 text-destructive" />
-          </Button>
-        )}
-      </div>
+      {hasActions && (
+        <div className="absolute top-1.5 right-1.5 rounded-md border bg-background/80 p-0.5 opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  className="rounded-sm"
+                  aria-label="Document actions"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                  }}
+                >
+                  <EllipsisVerticalIcon className="size-3.5" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent
+              align="end"
+              sideOffset={4}
+              className="min-w-44"
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+            >
+              {canPreview && onPreview && (
+                <DropdownMenuItem
+                  title="Preview"
+                  description="Open the document preview"
+                  startContent={<EyeIcon className="size-3.5" />}
+                  onClick={() => onPreview(document)}
+                />
+              )}
+              {onDownload && (
+                <DropdownMenuItem
+                  title="Download"
+                  description="Save the original file"
+                  startContent={<DownloadIcon className="size-3.5" />}
+                  onClick={() => onDownload(document)}
+                />
+              )}
+              {onInspect && (
+                <DropdownMenuItem
+                  title="Inspect"
+                  description="Review extraction details"
+                  startContent={<ScanSearchIcon className="size-3.5" />}
+                  onClick={() => onInspect(document)}
+                />
+              )}
+              {onVersions && (
+                <DropdownMenuItem
+                  title="Versions"
+                  description="View document history"
+                  startContent={<HistoryIcon className="size-3.5" />}
+                  onClick={() => onVersions(document)}
+                />
+              )}
+              {onDelete && (
+                <DropdownMenuItem
+                  title="Delete"
+                  description="Remove this document"
+                  color="danger"
+                  startContent={<Trash2Icon className="size-3.5" />}
+                  disabled={isDeleting}
+                  onClick={() => onDelete(document)}
+                />
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 }
