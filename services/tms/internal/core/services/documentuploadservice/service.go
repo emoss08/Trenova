@@ -53,6 +53,7 @@ type Params struct {
 	Config             *config.Config
 	ThumbnailGenerator *thumbnailservice.Generator
 	WorkflowStarter    services.WorkflowStarter
+	DocTypeRepo        repositories.DocumentTypeRepository
 	Redis              *goredis.Client `optional:"true"`
 }
 
@@ -66,6 +67,7 @@ type Service struct {
 	config             *config.StorageConfig
 	thumbnailGenerator *thumbnailservice.Generator
 	workflowStarter    services.WorkflowStarter
+	docTypeRepo        repositories.DocumentTypeRepository
 	redis              *goredis.Client
 }
 
@@ -81,6 +83,7 @@ func New(p Params) *Service {
 		config:             p.Config.GetStorageConfig(),
 		thumbnailGenerator: p.ThumbnailGenerator,
 		workflowStarter:    p.WorkflowStarter,
+		docTypeRepo:        p.DocTypeRepo,
 		redis:              p.Redis,
 	}
 }
@@ -150,6 +153,16 @@ func (s *Service) CreateSession(
 			)
 		}
 		session.DocumentTypeID = &docTypeID
+	}
+
+	if session.DocumentTypeID == nil && processingProfile == document.ProcessingProfileRateConfirmationImport {
+		dt, dtErr := s.docTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
+			Code:       "RATECONF",
+			TenantInfo: req.TenantInfo,
+		})
+		if dtErr == nil {
+			session.DocumentTypeID = &dt.ID
+		}
 	}
 
 	if req.FileSize >= multipartThreshold {

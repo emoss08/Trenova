@@ -71,14 +71,20 @@ func (r *repository) GetRuleSet(
 	return entity, nil
 }
 
-func (r *repository) CreateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error) {
+func (r *repository) CreateRuleSet(
+	ctx context.Context,
+	entity *documentparsingrule.RuleSet,
+) (*documentparsingrule.RuleSet, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil
 }
 
-func (r *repository) UpdateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error) {
+func (r *repository) UpdateRuleSet(
+	ctx context.Context,
+	entity *documentparsingrule.RuleSet,
+) (*documentparsingrule.RuleSet, error) {
 	ov := entity.Version
 	entity.Version++
 	result, err := r.db.DBForContext(ctx).
@@ -97,7 +103,10 @@ func (r *repository) UpdateRuleSet(ctx context.Context, entity *documentparsingr
 	return entity, nil
 }
 
-func (r *repository) DeleteRuleSet(ctx context.Context, req repositories.GetDocumentParsingRuleSetRequest) error {
+func (r *repository) DeleteRuleSet(
+	ctx context.Context,
+	req repositories.GetDocumentParsingRuleSetRequest,
+) error {
 	result, err := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*documentparsingrule.RuleSet)(nil)).
@@ -168,7 +177,10 @@ func (r *repository) GetVersionWithRuleSet(
 	return version, set, nil
 }
 
-func (r *repository) CreateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion) (*documentparsingrule.RuleVersion, error) {
+func (r *repository) CreateVersion(
+	ctx context.Context,
+	entity *documentparsingrule.RuleVersion,
+) (*documentparsingrule.RuleVersion, error) {
 	if entity.VersionNumber > 0 {
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 			return nil, r.mapCreateVersionError(err)
@@ -190,7 +202,12 @@ func (r *repository) CreateVersion(ctx context.Context, entity *documentparsingr
 			return dberror.HandleNotFoundError(err, "DocumentParsingRuleSet")
 		}
 
-		next, err := r.NextVersionNumber(c, entity.RuleSetID, entity.OrganizationID, entity.BusinessUnitID)
+		next, err := r.NextVersionNumber(
+			c,
+			entity.RuleSetID,
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+		)
 		if err != nil {
 			return err
 		}
@@ -200,13 +217,19 @@ func (r *repository) CreateVersion(ctx context.Context, entity *documentparsingr
 		return r.mapCreateVersionError(err)
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "The parsing rule version is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"The parsing rule version is busy. Retry the request.",
+		)
 	}
 
 	return entity, nil
 }
 
-func (r *repository) UpdateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion) (*documentparsingrule.RuleVersion, error) {
+func (r *repository) UpdateVersion(
+	ctx context.Context,
+	entity *documentparsingrule.RuleVersion,
+) (*documentparsingrule.RuleVersion, error) {
 	ov := entity.Version
 	entity.Version++
 	cols := buncolgen.RuleVersionColumns
@@ -409,14 +432,20 @@ func (r *repository) GetFixture(
 	return entity, nil
 }
 
-func (r *repository) CreateFixture(ctx context.Context, entity *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error) {
+func (r *repository) CreateFixture(
+	ctx context.Context,
+	entity *documentparsingrule.Fixture,
+) (*documentparsingrule.Fixture, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil
 }
 
-func (r *repository) UpdateFixture(ctx context.Context, entity *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error) {
+func (r *repository) UpdateFixture(
+	ctx context.Context,
+	entity *documentparsingrule.Fixture,
+) (*documentparsingrule.Fixture, error) {
 	ov := entity.Version
 	entity.Version++
 	result, err := r.db.DBForContext(ctx).
@@ -435,7 +464,10 @@ func (r *repository) UpdateFixture(ctx context.Context, entity *documentparsingr
 	return entity, nil
 }
 
-func (r *repository) DeleteFixture(ctx context.Context, req repositories.GetDocumentParsingRuleFixtureRequest) error {
+func (r *repository) DeleteFixture(
+	ctx context.Context,
+	req repositories.GetDocumentParsingRuleFixtureRequest,
+) error {
 	result, err := r.db.DBForContext(ctx).
 		NewDelete().
 		Model((*documentparsingrule.Fixture)(nil)).
@@ -453,8 +485,10 @@ func (r *repository) mapCreateVersionError(err error) error {
 	if err == nil {
 		return nil
 	}
-	if dberror.IsUniqueConstraintViolation(err) && dberror.ExtractConstraintName(err) == "uq_document_parsing_rule_versions_rule_set_version" {
-		return errortypes.NewConflictError("A parsing rule version was created concurrently. Retry the request.").WithInternal(err)
+	if dberror.IsUniqueConstraintViolation(err) &&
+		dberror.ExtractConstraintName(err) == "uq_document_parsing_rule_versions_rule_set_version" {
+		return errortypes.NewConflictError("A parsing rule version was created concurrently. Retry the request.").
+			WithInternal(err)
 	}
 	return err
 }

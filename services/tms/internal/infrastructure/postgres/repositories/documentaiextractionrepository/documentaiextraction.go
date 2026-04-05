@@ -101,7 +101,11 @@ func (r *repository) Update(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(result, "DocumentAIExtraction", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"DocumentAIExtraction",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
