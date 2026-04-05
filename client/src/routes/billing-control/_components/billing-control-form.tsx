@@ -5,13 +5,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormSaveDock } from "@/components/form-save-dock";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { paymentTermChoices, transferScheduleChoices } from "@/lib/choices";
@@ -22,13 +16,7 @@ import { billingControlSchema } from "@/types/billing-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import {
-  FormProvider,
-  type Resolver,
-  useForm,
-  useFormContext,
-  useWatch,
-} from "react-hook-form";
+import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 
 export default function BillingControlForm() {
   const { data } = useSuspenseQuery({
@@ -49,8 +37,7 @@ export default function BillingControlForm() {
     BillingControl
   >({
     queryKey: queries.billingControl.get._def,
-    mutationFn: async (values: BillingControl) =>
-      apiService.billingControlService.update(values),
+    mutationFn: async (values: BillingControl) => apiService.billingControlService.update(values),
     resourceName: "Billing Control",
     resetForm: reset,
     setFormError: setError,
@@ -88,12 +75,10 @@ function InvoiceSettingsForm() {
       <CardHeader>
         <CardTitle>Invoice Document Configuration</CardTitle>
         <CardDescription>
-          Define how invoices are formatted, what information they contain, and
-          how they are presented to customers. These settings determine the
-          professional appearance and content of your billing documents,
-          ensuring clarity and consistency while facilitating prompt payment
-          processing and maintaining compliance with financial documentation
-          standards.
+          Define how invoices are formatted, what information they contain, and how they are
+          presented to customers. These settings determine the professional appearance and content
+          of your billing documents, ensuring clarity and consistency while facilitating prompt
+          payment processing and maintaining compliance with financial documentation standards.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -173,6 +158,8 @@ function InvoiceSettingsForm() {
 function TransferSettingsForm() {
   const { control } = useFormContext<BillingControl>();
   const autoTransfer = useWatch({ control, name: "autoTransfer" });
+  const enforceCustomerBillingReq = useWatch({ control, name: "enforceCustomerBillingReq" });
+  const autoMarkReadyToBill = useWatch({ control, name: "autoMarkReadyToBill" });
 
   return (
     <Card>
@@ -181,13 +168,11 @@ function TransferSettingsForm() {
           Operational-to-Financial Transfer Gateway <BetaTag />
         </CardTitle>
         <CardDescription>
-          Define the criteria that govern when completed shipments transition
-          from operational status to financial processing. This critical gateway
-          bridges your operational and accounting systems, ensuring that only
-          properly documented and validated shipments enter your revenue cycle.
-          Effective transfer controls accelerate revenue recognition while
-          maintaining billing accuracy and compliance with customer-specific
-          requirements.
+          Define the criteria that govern when completed shipments transition from operational
+          status to financial processing. This critical gateway bridges your operational and
+          accounting systems, ensuring that only properly documented and validated shipments enter
+          your revenue cycle. Effective transfer controls accelerate revenue recognition while
+          maintaining billing accuracy and compliance with customer-specific requirements.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -199,6 +184,12 @@ function TransferSettingsForm() {
               label="Automate Ready-to-Bill Designation"
               description="When enabled, shipments that satisfy all transfer criteria are automatically flagged as 'Ready to Bill' without requiring manual verification."
               position="left"
+              recommended={enforceCustomerBillingReq && autoMarkReadyToBill === false}
+              warning={{
+                show: autoMarkReadyToBill === false && enforceCustomerBillingReq,
+                message:
+                  "Due to the enforcement of customer billing requirements, shipments will not be automatically marked as ready to bill if they do not satisfy all transfer criteria.",
+              }}
             />
           </FormControl>
           <FormControl>
@@ -208,6 +199,12 @@ function TransferSettingsForm() {
               label="Enable Automatic Transfers"
               description="When enabled, shipments that satisfy all transfer criteria are automatically transferred to the billing system without requiring manual verification."
               position="left"
+              recommended={enforceCustomerBillingReq && autoTransfer === false}
+              warning={{
+                show: autoTransfer === false && enforceCustomerBillingReq,
+                message:
+                  "Due to the enforcement of customer billing requirements, shipments will not be automatically transferred to the billing system if they do not satisfy all transfer criteria.",
+              }}
             />
           </FormControl>
           {autoTransfer && (
@@ -251,12 +248,10 @@ function BillingAutomationForm() {
           Invoice Generation Automation <BetaTag />
         </CardTitle>
         <CardDescription>
-          Configure the intelligent automation system that determines when
-          shipments are converted into customer invoices without manual
-          intervention. This autonomous billing framework minimizes human
-          touchpoints in the revenue cycle, reduces days-to-invoice metrics, and
-          ensures consistent application of billing practices across your
-          organization.
+          Configure the intelligent automation system that determines when shipments are converted
+          into customer invoices without manual intervention. This autonomous billing framework
+          minimizes human touchpoints in the revenue cycle, reduces days-to-invoice metrics, and
+          ensures consistent application of billing practices across your organization.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -301,19 +296,19 @@ function BillingAutomationForm() {
 
 function BillingValidationSettings() {
   const { control } = useFormContext<BillingControl>();
+  const enforceCustomerBillingReq = useWatch({ control, name: "enforceCustomerBillingReq" });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Pre-Billing Validation Framework</CardTitle>
         <CardDescription>
-          Configure the comprehensive validation checks that shipments must pass
-          before entering the invoicing process. These validation controls
-          prevent billing errors, ensure compliance with customer-specific
-          requirements, and verify rate accuracy before invoices are generated.
-          A robust validation framework minimizes billing disputes, accelerates
-          payment collection, and maintains strong customer relationships by
-          ensuring billing accuracy and contractual compliance.
+          Configure the comprehensive validation checks that shipments must pass before entering the
+          invoicing process. These validation controls prevent billing errors, ensure compliance
+          with customer-specific requirements, and verify rate accuracy before invoices are
+          generated. A robust validation framework minimizes billing disputes, accelerates payment
+          collection, and maintains strong customer relationships by ensuring billing accuracy and
+          contractual compliance.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -325,6 +320,11 @@ function BillingValidationSettings() {
               label="Enforce Customer-Specific Billing Requirements"
               description="When enabled, the system verifies that all customer-mandated documentation, reference numbers, and special handling instructions are fulfilled before allowing shipment transfer to billing."
               position="left"
+              warning={{
+                show: enforceCustomerBillingReq === false,
+                message:
+                  "We recommend enabling this to ensure that all customer-mandated documentation, reference numbers, and special handling instructions are fulfilled before allowing shipment transfer to billing.",
+              }}
             />
           </FormControl>
           <FormControl>
@@ -354,12 +354,10 @@ function ConsolidationSettingsForm() {
       <CardHeader>
         <CardTitle>Invoice Consolidation & Grouping Strategy</CardTitle>
         <CardDescription>
-          Define how multiple shipments and services are combined into unified
-          invoices for your customers. Effective consolidation strategies reduce
-          billing administrative costs, minimize the volume of payment
-          transactions, and provide customers with comprehensive invoices that
-          align with their accounting preferences and payment processing
-          capabilities.
+          Define how multiple shipments and services are combined into unified invoices for your
+          customers. Effective consolidation strategies reduce billing administrative costs,
+          minimize the volume of payment transactions, and provide customers with comprehensive
+          invoices that align with their accounting preferences and payment processing capabilities.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
