@@ -33,7 +33,7 @@ export default function AdditionalChargesSection() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const charges = useWatch({ control, name: "additionalCharges" });
+  const charges = useWatch({ control, name: "additionalCharges" }) ?? [];
 
   function handleAdd() {
     const newIndex = fields.length;
