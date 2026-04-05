@@ -2,6 +2,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import path from "path";
+// import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
@@ -20,6 +21,11 @@ export default defineConfig({
       algorithms: ["gzip", "brotliCompress"],
       threshold: 10240,
     }),
+    // visualizer({
+    //   open: !process.env.CI,
+    //   gzipSize: true,
+    //   brotliSize: true,
+    // }),
     viteStaticCopy({
       targets: [
         {
@@ -75,6 +81,7 @@ export default defineConfig({
             { name: "lodash", test: /lodash/ },
             { name: "toast", test: /sonner/ },
             { name: "icons", test: /lucide-react/ },
+            { name: "pdfjs", test: /pdfjs-dist/ },
             {
               name: "phone-utils",
               test(id) {

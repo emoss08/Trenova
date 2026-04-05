@@ -1,23 +1,25 @@
-import { useDocumentUpload } from "@/hooks/use-document-upload";
+import { SuspenseLoader } from "@/components/component-loader";
 import { Button } from "@/components/ui/button";
+import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { clearConversation } from "@/lib/import-chat-store";
 import { apiService } from "@/services/api";
 import { shipmentCreateSchema } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeftIcon } from "lucide-react";
 import { nanoid } from "nanoid";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ProcessingPhase } from "./processing-phase";
-import { ReconciliationWorkspace } from "./reconciliation-workspace";
 import { SuccessPhase } from "./success-phase";
 import type { ReconciliationPhase, RequiredFieldsForm } from "./types";
 import { UploadPhase } from "./upload-phase";
 import { useReconciliationState } from "./use-reconciliation-state";
 
 const IMPORT_RESOURCE_TYPE = "shipment_import";
+
+const ReconciliationWorkspace = lazy(() => import("./reconciliation-workspace"));
 
 function createImportResourceId() {
   return `shipment-import-${nanoid(12)}`;
@@ -33,25 +35,19 @@ export function ImportWorkspace() {
   const [reconciliationInitialized, setReconciliationInitialized] = useState(false);
   const [lastCreateError, setLastCreateError] = useState<string | null>(null);
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearAll,
-  } = useDocumentUpload({
-    resourceId: importResourceId,
-    resourceType: IMPORT_RESOURCE_TYPE,
-    processingProfile: "rate_confirmation_import",
-    invalidateQueryKey: ["documents", IMPORT_RESOURCE_TYPE, importResourceId],
-    onSuccess: (document) => {
-      setUploadedDocumentId(document.id);
-    },
-    onError: (error) => {
-      toast.error(`Upload failed: ${error.message}`);
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearAll } =
+    useDocumentUpload({
+      resourceId: importResourceId,
+      resourceType: IMPORT_RESOURCE_TYPE,
+      processingProfile: "rate_confirmation_import",
+      invalidateQueryKey: ["documents", IMPORT_RESOURCE_TYPE, importResourceId],
+      onSuccess: (document) => {
+        setUploadedDocumentId(document.id);
+      },
+      onError: (error) => {
+        toast.error(`Upload failed: ${error.message}`);
+      },
+    });
 
   const currentUpload = uploads[0] ?? null;
 
@@ -75,11 +71,7 @@ export function ImportWorkspace() {
   });
 
   const { data: importedDraft } = useQuery({
-    queryKey: [
-      "shipment-import-draft",
-      uploadedDocumentId,
-      importedDocument?.shipmentDraftStatus,
-    ],
+    queryKey: ["shipment-import-draft", uploadedDocumentId, importedDocument?.shipmentDraftStatus],
     queryFn: async () => {
       if (!uploadedDocumentId) return null;
       try {
@@ -260,16 +252,28 @@ export function ImportWorkspace() {
   );
 
   const watchedCustomerId = useWatch({ control: requiredFieldsForm.control, name: "customerId" });
-  const watchedServiceTypeId = useWatch({ control: requiredFieldsForm.control, name: "serviceTypeId" });
-  const watchedShipmentTypeId = useWatch({ control: requiredFieldsForm.control, name: "shipmentTypeId" });
-  const watchedFormulaTemplateId = useWatch({ control: requiredFieldsForm.control, name: "formulaTemplateId" });
+  const watchedServiceTypeId = useWatch({
+    control: requiredFieldsForm.control,
+    name: "serviceTypeId",
+  });
+  const watchedShipmentTypeId = useWatch({
+    control: requiredFieldsForm.control,
+    name: "shipmentTypeId",
+  });
+  const watchedFormulaTemplateId = useWatch({
+    control: requiredFieldsForm.control,
+    name: "formulaTemplateId",
+  });
 
-  const requiredFieldValues = useMemo(() => ({
-    customerId: watchedCustomerId ?? "",
-    serviceTypeId: watchedServiceTypeId ?? "",
-    shipmentTypeId: watchedShipmentTypeId ?? "",
-    formulaTemplateId: watchedFormulaTemplateId ?? "",
-  }), [watchedCustomerId, watchedServiceTypeId, watchedShipmentTypeId, watchedFormulaTemplateId]);
+  const requiredFieldValues = useMemo(
+    () => ({
+      customerId: watchedCustomerId ?? "",
+      serviceTypeId: watchedServiceTypeId ?? "",
+      shipmentTypeId: watchedShipmentTypeId ?? "",
+      formulaTemplateId: watchedFormulaTemplateId ?? "",
+    }),
+    [watchedCustomerId, watchedServiceTypeId, watchedShipmentTypeId, watchedFormulaTemplateId],
+  );
 
   const canCreateShipment =
     !!requiredFieldValues.customerId &&
@@ -279,7 +283,12 @@ export function ImportWorkspace() {
 
   const handleSetRequiredField = useCallback(
     (fieldKey: string, value: string) => {
-      const validKeys = ["customerId", "serviceTypeId", "shipmentTypeId", "formulaTemplateId"] as const;
+      const validKeys = [
+        "customerId",
+        "serviceTypeId",
+        "shipmentTypeId",
+        "formulaTemplateId",
+      ] as const;
       type ValidKey = (typeof validKeys)[number];
       if (validKeys.includes(fieldKey as ValidKey)) {
         requiredFieldsForm.setValue(fieldKey as ValidKey, value);
@@ -306,7 +315,10 @@ export function ImportWorkspace() {
       const stopsVal = requiredFieldsForm.getValues("stops");
       if (stopsVal && stopsVal[stopIndex]) {
         // Store the unix timestamp for later use
-        requiredFieldsForm.setValue(`stops.${stopIndex}.locationId` as any, stopsVal[stopIndex].locationId);
+        requiredFieldsForm.setValue(
+          `stops.${stopIndex}.locationId` as any,
+          stopsVal[stopIndex].locationId,
+        );
       }
     },
     [reconciliation, requiredFieldsForm],
@@ -339,9 +351,11 @@ export function ImportWorkspace() {
           <div>
             <h1 className="text-sm font-medium">Import from Rate Confirmation</h1>
             <p className="text-xs text-muted-foreground">
-              {currentPhase === "upload" && "Upload a rate confirmation to extract shipment details."}
+              {currentPhase === "upload" &&
+                "Upload a rate confirmation to extract shipment details."}
               {currentPhase === "processing" && "Extracting shipment details from your document..."}
-              {currentPhase === "reconciliation" && "Review extracted fields, resolve issues, and create the shipment."}
+              {currentPhase === "reconciliation" &&
+                "Review extracted fields, resolve issues, and create the shipment."}
               {currentPhase === "success" && "Import complete."}
             </p>
           </div>
@@ -382,31 +396,33 @@ export function ImportWorkspace() {
       )}
 
       {currentPhase === "reconciliation" && uploadedDocumentId && (
-        <ReconciliationWorkspace
-          documentId={uploadedDocumentId}
-          fileName={importedDocument?.originalName}
-          state={reconciliation.state}
-          counts={reconciliation.counts}
-          issueCount={reconciliation.issueCount}
-          onAcceptField={reconciliation.acceptField}
-          onEditField={reconciliation.editField}
-          onResetField={reconciliation.resetField}
-          onAcceptAllConfident={reconciliation.acceptAllConfident}
-          onEditStopField={reconciliation.editStopField}
-          requiredFieldsControl={requiredFieldsForm.control}
-          canCreateShipment={canCreateShipment}
-          isCreating={createShipment.isPending}
-          onCreateShipment={() => createShipment.mutate()}
-          hasRequiredValues={canCreateShipment}
-          requiredFieldValues={requiredFieldValues}
-          onSetRequiredField={handleSetRequiredField}
-          onSetStopLocation={handleSetStopLocation}
-          onSetStopSchedule={handleSetStopSchedule}
-          onSetShipmentField={handleSetShipmentField}
-          onShipmentCreated={handleShipmentCreated}
-          lastCreateError={lastCreateError}
-          onClearCreateError={() => setLastCreateError(null)}
-        />
+        <SuspenseLoader componentLoaderProps={{ message: "Loading reconciliation workspace..." }}>
+          <ReconciliationWorkspace
+            documentId={uploadedDocumentId}
+            fileName={importedDocument?.originalName}
+            state={reconciliation.state}
+            counts={reconciliation.counts}
+            issueCount={reconciliation.issueCount}
+            onAcceptField={reconciliation.acceptField}
+            onEditField={reconciliation.editField}
+            onResetField={reconciliation.resetField}
+            onAcceptAllConfident={reconciliation.acceptAllConfident}
+            onEditStopField={reconciliation.editStopField}
+            requiredFieldsControl={requiredFieldsForm.control}
+            canCreateShipment={canCreateShipment}
+            isCreating={createShipment.isPending}
+            onCreateShipment={() => createShipment.mutate()}
+            hasRequiredValues={canCreateShipment}
+            requiredFieldValues={requiredFieldValues}
+            onSetRequiredField={handleSetRequiredField}
+            onSetStopLocation={handleSetStopLocation}
+            onSetStopSchedule={handleSetStopSchedule}
+            onSetShipmentField={handleSetShipmentField}
+            onShipmentCreated={handleShipmentCreated}
+            lastCreateError={lastCreateError}
+            onClearCreateError={() => setLastCreateError(null)}
+          />
+        </SuspenseLoader>
       )}
 
       {currentPhase === "success" && createdShipmentId && (

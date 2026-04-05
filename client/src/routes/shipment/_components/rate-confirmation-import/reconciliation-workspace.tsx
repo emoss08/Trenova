@@ -1,20 +1,18 @@
+import { SuspenseLoader } from "@/components/component-loader";
 import { Button } from "@/components/ui/button";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoaderCircleIcon } from "lucide-react";
-import { useState } from "react";
+import { lazy, useState } from "react";
 import type { Control, Path } from "react-hook-form";
-import { AIActivityPanel } from "./ai-activity-panel";
-import { DocumentPreviewPanel } from "./document-preview-panel";
 import { FieldReconciliationList } from "./field-reconciliation-list";
 import { ReconciliationHeader } from "./reconciliation-header";
 import { RequiredFieldsSection } from "./required-fields-section";
 import { StopReconciliationCard } from "./stop-reconciliation-card";
 import type { ReconciliationCounts, ReconciliationState, RequiredFieldsForm } from "./types";
+
+const DocumentPreviewPanel = lazy(() => import("./document-preview-panel"));
+const AIActivityPanel = lazy(() => import("./ai-activity-panel"));
 
 type ReconciliationWorkspaceProps = {
   documentId: string;
@@ -47,7 +45,7 @@ type ReconciliationWorkspaceProps = {
   onClearCreateError?: () => void;
 };
 
-export function ReconciliationWorkspace({
+export default function ReconciliationWorkspace({
   documentId,
   fileName,
   state,
@@ -77,13 +75,12 @@ export function ReconciliationWorkspace({
   return (
     <div className="flex flex-1 flex-col min-h-0">
       <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0">
-        {/* PDF viewer */}
         <ResizablePanel defaultSize={35} minSize={20}>
-          <DocumentPreviewPanel documentId={documentId} fileName={fileName} />
+          <SuspenseLoader componentLoaderProps={{ message: "Loading document preview..." }}>
+            <DocumentPreviewPanel documentId={documentId} fileName={fileName} />
+          </SuspenseLoader>
         </ResizablePanel>
         <ResizableHandle withHandle />
-
-        {/* Reconciliation */}
         <ResizablePanel defaultSize={40} minSize={30}>
           <div className="flex h-full flex-col">
             <ReconciliationHeader
@@ -145,7 +142,6 @@ export function ReconciliationWorkspace({
                 </div>
               )}
             </ScrollArea>
-
             <div className="shrink-0 flex items-center justify-between border-t bg-muted/30 px-4 py-2.5">
               <div className="text-xs text-muted-foreground">
                 {counts.total} fields
@@ -165,25 +161,25 @@ export function ReconciliationWorkspace({
           </div>
         </ResizablePanel>
         <ResizableHandle withHandle />
-
-        {/* AI Activity feed */}
         <ResizablePanel defaultSize={25} minSize={18} collapsible collapsedSize={0}>
-          <AIActivityPanel
-            documentId={documentId}
-            state={state}
-            onAcceptField={onAcceptField}
-            onAcceptAllConfident={onAcceptAllConfident}
-            onEditField={onEditField}
-            onSetRequiredField={onSetRequiredField}
-            onSetStopLocation={onSetStopLocation}
-            onSetStopSchedule={onSetStopSchedule}
-            onSetShipmentField={onSetShipmentField}
-            onCreateShipment={onCreateShipment}
-            onShipmentCreated={onShipmentCreated}
-            requiredFieldValues={requiredFieldValues}
-            lastCreateError={lastCreateError}
-            onClearCreateError={onClearCreateError}
-          />
+          <SuspenseLoader componentLoaderProps={{ message: "Loading AI activity panel..." }}>
+            <AIActivityPanel
+              documentId={documentId}
+              state={state}
+              onAcceptField={onAcceptField}
+              onAcceptAllConfident={onAcceptAllConfident}
+              onEditField={onEditField}
+              onSetRequiredField={onSetRequiredField}
+              onSetStopLocation={onSetStopLocation}
+              onSetStopSchedule={onSetStopSchedule}
+              onSetShipmentField={onSetShipmentField}
+              onCreateShipment={onCreateShipment}
+              onShipmentCreated={onShipmentCreated}
+              requiredFieldValues={requiredFieldValues}
+              lastCreateError={lastCreateError}
+              onClearCreateError={onClearCreateError}
+            />
+          </SuspenseLoader>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

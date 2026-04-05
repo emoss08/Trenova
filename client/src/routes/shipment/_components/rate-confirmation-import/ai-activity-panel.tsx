@@ -1,13 +1,18 @@
 import {
   AiToolCall,
-  AiToolCallHeader,
   AiToolCallContent,
+  AiToolCallHeader,
   AiToolCallOutput,
 } from "@/components/elements/ai-tool-call";
 import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { TextShimmer } from "@/components/ui/text-shimmer";
-import { saveConversation, loadConversation, type PersistedChatMessage } from "@/lib/import-chat-store";
+import {
+  loadConversation,
+  saveConversation,
+  type PersistedChatMessage,
+} from "@/lib/import-chat-store";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type {
@@ -16,9 +21,8 @@ import type {
   ImportAssistantSuggestion,
   ImportAssistantToolCallRecord,
 } from "@/types/document";
-import { Input } from "@/components/ui/input";
+import { ArrowUpIcon, CheckCircle2Icon, InfoIcon, SparklesIcon } from "lucide-react";
 import { m } from "motion/react";
-import { ArrowUpIcon, SparklesIcon, CheckCircle2Icon, InfoIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReconciliationState } from "./types";
 
@@ -75,9 +79,7 @@ function getTextValue(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-function toLocalToolCalls(
-  toolCalls: ImportAssistantToolCallRecord[],
-): ToolCallState[] {
+function toLocalToolCalls(toolCalls: ImportAssistantToolCallRecord[]): ToolCallState[] {
   return toolCalls.map((toolCall, index) => ({
     name: toolCall.name,
     callId: toolCall.callId || `${toolCall.name}-${index}`,
@@ -244,11 +246,14 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
 
     if (name === "search_customers" && data.customers) {
       const customers = data.customers as Array<{ id: string; name: string }>;
-      if (customers.length === 0) return <span className="text-muted-foreground">No customers found</span>;
+      if (customers.length === 0)
+        return <span className="text-muted-foreground">No customers found</span>;
       return (
         <div className="space-y-1">
           {customers.map((c) => (
-            <div key={c.id} className="text-2xs">{c.name}</div>
+            <div key={c.id} className="text-2xs">
+              {c.name}
+            </div>
           ))}
           <div className="text-2xs text-muted-foreground">{data.total} total</div>
         </div>
@@ -256,10 +261,29 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
     }
 
     if (name === "search_locations" && (data.locations || data.availableLocations)) {
-      const exactLocations = data.locations as Array<{ id: string; name: string; code: string; addressLine1?: string; city?: string; postalCode?: string }> | undefined;
-      const fallbackLocations = data.availableLocations as Array<{ id: string; name: string; code: string; addressLine1?: string; city?: string; postalCode?: string }> | undefined;
+      const exactLocations = data.locations as
+        | Array<{
+            id: string;
+            name: string;
+            code: string;
+            addressLine1?: string;
+            city?: string;
+            postalCode?: string;
+          }>
+        | undefined;
+      const fallbackLocations = data.availableLocations as
+        | Array<{
+            id: string;
+            name: string;
+            code: string;
+            addressLine1?: string;
+            city?: string;
+            postalCode?: string;
+          }>
+        | undefined;
       const locations = (exactLocations?.length ? exactLocations : fallbackLocations) ?? [];
-      if (locations.length === 0) return <span className="text-muted-foreground">No locations found</span>;
+      if (locations.length === 0)
+        return <span className="text-muted-foreground">No locations found</span>;
       const label = data.noExactMatch ? "Available locations:" : "";
       return (
         <div className="space-y-1">
@@ -276,11 +300,14 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
 
     if (name === "search_service_types" && data.serviceTypes) {
       const types = data.serviceTypes as Array<{ id: string; name: string; code: string }>;
-      if (types.length === 0) return <span className="text-muted-foreground">No service types found</span>;
+      if (types.length === 0)
+        return <span className="text-muted-foreground">No service types found</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
-            <div key={t.id} className="text-2xs">{t.code} — {t.name}</div>
+            <div key={t.id} className="text-2xs">
+              {t.code} — {t.name}
+            </div>
           ))}
         </div>
       );
@@ -288,11 +315,14 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
 
     if (name === "search_shipment_types" && data.shipmentTypes) {
       const types = data.shipmentTypes as Array<{ id: string; name: string }>;
-      if (types.length === 0) return <span className="text-muted-foreground">No shipment types found</span>;
+      if (types.length === 0)
+        return <span className="text-muted-foreground">No shipment types found</span>;
       return (
         <div className="space-y-1">
           {types.map((t) => (
-            <div key={t.id} className="text-2xs">{t.name}</div>
+            <div key={t.id} className="text-2xs">
+              {t.name}
+            </div>
           ))}
         </div>
       );
@@ -300,20 +330,31 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
 
     if (name === "search_formula_templates" && data.formulaTemplates) {
       const templates = data.formulaTemplates as Array<{ id: string; name: string }>;
-      if (templates.length === 0) return <span className="text-muted-foreground">No rating methods found</span>;
+      if (templates.length === 0)
+        return <span className="text-muted-foreground">No rating methods found</span>;
       return (
         <div className="space-y-1">
           {templates.map((t) => (
-            <div key={t.id} className="text-2xs">{t.name}</div>
+            <div key={t.id} className="text-2xs">
+              {t.name}
+            </div>
           ))}
         </div>
       );
     }
 
-    if (data.accepted) return <span className="text-2xs text-emerald-500">Accepted: {data.accepted}</span>;
-    if (data.set) return <span className="text-2xs">Set {data.set} = {data.value}</span>;
+    if (data.accepted)
+      return <span className="text-2xs text-emerald-500">Accepted: {data.accepted}</span>;
+    if (data.set)
+      return (
+        <span className="text-2xs">
+          Set {data.set} = {data.value}
+        </span>
+      );
     if (data.set_required) {
-      const label = data.entity_id ? `Set to ${data.label || data.entity_id}` : `Set ${data.set_required}`;
+      const label = data.entity_id
+        ? `Set to ${data.label || data.entity_id}`
+        : `Set ${data.set_required}`;
       return <span className="text-2xs text-emerald-500">{label}</span>;
     }
 
@@ -323,7 +364,7 @@ function ToolResultSummary({ result, name }: { result: string; name: string }) {
   }
 }
 
-export function AIActivityPanel({
+export default function AIActivityPanel({
   documentId,
   state,
   onAcceptField,
@@ -352,7 +393,8 @@ export function AIActivityPanel({
   const streamingMsgId = useRef<string | null>(null);
   const lastContentMsgId = useRef<string | null>(null);
 
-  const isConversationClosed = conversationStatus === "Completed" || conversationStatus === "Superseded";
+  const isConversationClosed =
+    conversationStatus === "Completed" || conversationStatus === "Superseded";
 
   const filledRequired = [
     requiredFieldValues.customerId,
@@ -371,32 +413,70 @@ export function AIActivityPanel({
   const reconciliationStateForAPI = useMemo(() => {
     const fields: Record<string, unknown> = {};
     for (const [key, field] of Object.entries(state.fields)) {
-      fields[key] = { label: field.label, value: field.value, confidence: field.confidence, status: field.status };
+      fields[key] = {
+        label: field.label,
+        value: field.value,
+        confidence: field.confidence,
+        status: field.status,
+      };
     }
     return fields;
   }, [state.fields]);
 
   const processActions = useCallback(
-    (actions: Array<{ type: string; fieldKey: string; value: string; metadata?: Record<string, unknown> }>) => {
+    (
+      actions: Array<{
+        type: string;
+        fieldKey: string;
+        value: string;
+        metadata?: Record<string, unknown>;
+      }>,
+    ) => {
       for (const action of actions) {
         switch (action.type) {
-          case "accept_field": onAcceptField(action.fieldKey); break;
-          case "accept_all_confident": onAcceptAllConfident(); break;
-          case "set_field": onEditField(action.fieldKey, action.value); break;
-          case "set_required_field": onSetRequiredField?.(action.fieldKey, action.value); break;
-          case "set_stop_location": onSetStopLocation?.(Number.parseInt(action.fieldKey, 10), action.value); break;
+          case "accept_field":
+            onAcceptField(action.fieldKey);
+            break;
+          case "accept_all_confident":
+            onAcceptAllConfident();
+            break;
+          case "set_field":
+            onEditField(action.fieldKey, action.value);
+            break;
+          case "set_required_field":
+            onSetRequiredField?.(action.fieldKey, action.value);
+            break;
+          case "set_stop_location":
+            onSetStopLocation?.(Number.parseInt(action.fieldKey, 10), action.value);
+            break;
           case "set_stop_schedule": {
             const windowEnd = (action.metadata?.window_end as string) || undefined;
             onSetStopSchedule?.(Number.parseInt(action.fieldKey, 10), action.value, windowEnd);
             break;
           }
-          case "set_shipment_field": onSetShipmentField?.(action.fieldKey, action.value); break;
-          case "shipment_created": onShipmentCreated?.(action.value); break;
-          case "create_shipment": onCreateShipment?.(); break;
+          case "set_shipment_field":
+            onSetShipmentField?.(action.fieldKey, action.value);
+            break;
+          case "shipment_created":
+            onShipmentCreated?.(action.value);
+            break;
+          case "create_shipment":
+            onCreateShipment?.();
+            break;
         }
       }
     },
-    [onAcceptField, onAcceptAllConfident, onEditField, onSetRequiredField, onSetStopLocation, onSetStopSchedule, onSetShipmentField, onCreateShipment, onShipmentCreated],
+    [
+      onAcceptField,
+      onAcceptAllConfident,
+      onEditField,
+      onSetRequiredField,
+      onSetStopLocation,
+      onSetStopSchedule,
+      onSetShipmentField,
+      onCreateShipment,
+      onShipmentCreated,
+    ],
   );
 
   const sendMessage = useCallback(
@@ -407,7 +487,11 @@ export function AIActivityPanel({
       const assistantId = `assist-${Date.now()}`;
       streamingMsgId.current = assistantId;
 
-      setMessages((prev) => [...prev, userMsg, { id: assistantId, role: "assistant", text: "", toolCalls: [] }]);
+      setMessages((prev) => [
+        ...prev,
+        userMsg,
+        { id: assistantId, role: "assistant", text: "", toolCalls: [] },
+      ]);
       setIsStreaming(true);
       setInputValue("");
       scrollToBottom();
@@ -485,7 +569,13 @@ export function AIActivityPanel({
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === streamingMsgId.current
-                  ? { ...m, toolCalls: [...(m.toolCalls ?? []), { name, callId, status: "running" as const }] }
+                  ? {
+                      ...m,
+                      toolCalls: [
+                        ...(m.toolCalls ?? []),
+                        { name, callId, status: "running" as const },
+                      ],
+                    }
                   : m,
               ),
             );
@@ -499,7 +589,7 @@ export function AIActivityPanel({
                 const updated = [...(m.toolCalls ?? [])];
                 updated[tcIdx] = {
                   ...updated[tcIdx],
-                  status: status === "error" ? "error" as const : "completed" as const,
+                  status: status === "error" ? ("error" as const) : ("completed" as const),
                   result,
                 };
                 return { ...m, toolCalls: updated };
@@ -512,9 +602,7 @@ export function AIActivityPanel({
             const targetId = lastContentMsgId.current ?? streamingMsgId.current;
             setMessages((prev) =>
               prev.map((message) =>
-                message.id === targetId
-                  ? { ...message, suggestions: newSuggestions }
-                  : message,
+                message.id === targetId ? { ...message, suggestions: newSuggestions } : message,
               ),
             );
           },
@@ -541,7 +629,18 @@ export function AIActivityPanel({
         },
       );
     },
-    [documentId, conversationId, reconciliationStateForAPI, requiredFieldValues, isStreaming, isConversationClosed, processActions, scrollToBottom, state.fields, state.stops],
+    [
+      documentId,
+      conversationId,
+      reconciliationStateForAPI,
+      requiredFieldValues,
+      isStreaming,
+      isConversationClosed,
+      processActions,
+      scrollToBottom,
+      state.fields,
+      state.stops,
+    ],
   );
 
   // When shipment creation fails, parse errors and send readable summary to AI
@@ -554,17 +653,21 @@ export function AIActivityPanel({
       try {
         const errors = JSON.parse(lastCreateError) as Array<{ path: string[]; message: string }>;
         if (Array.isArray(errors)) {
-          const summary = errors.map((e) => {
-            const path = e.path?.join(".") ?? "unknown";
-            return `- ${path}: ${e.message}`;
-          }).join("\n");
+          const summary = errors
+            .map((e) => {
+              const path = e.path?.join(".") ?? "unknown";
+              return `- ${path}: ${e.message}`;
+            })
+            .join("\n");
           readableError = `Validation failed:\n${summary}`;
         }
       } catch {
         // Not JSON, use as-is
       }
 
-      void sendMessage(`Shipment creation failed. Here are the issues:\n${readableError}\n\nPlease help me fix these one at a time.`);
+      void sendMessage(
+        `Shipment creation failed. Here are the issues:\n${readableError}\n\nPlease help me fix these one at a time.`,
+      );
     }
   }, [lastCreateError, isStreaming, onClearCreateError, sendMessage]);
 
@@ -594,32 +697,35 @@ export function AIActivityPanel({
       });
     };
 
-    void apiService.documentService.getImportAssistantHistory(documentId).then((history) => {
-      if (history.status) setConversationStatus(history.status);
-      if (history.statusReason) setStatusReason(history.statusReason);
+    void apiService.documentService
+      .getImportAssistantHistory(documentId)
+      .then((history) => {
+        if (history.status) setConversationStatus(history.status);
+        if (history.statusReason) setStatusReason(history.statusReason);
 
-      if (history.messages.length > 0) {
-        hasSentInitial.current = true;
-        setMessages(
-          history.messages.map((message) => ({
-            id: message.id,
-            role: message.role,
-            text: message.text,
-            toolCalls: toLocalToolCalls(message.toolCalls),
-            suggestions: message.suggestions,
-          })),
-        );
-        if (history.conversationId) {
-          setConversationId(history.conversationId);
+        if (history.messages.length > 0) {
+          hasSentInitial.current = true;
+          setMessages(
+            history.messages.map((message) => ({
+              id: message.id,
+              role: message.role,
+              text: message.text,
+              toolCalls: toLocalToolCalls(message.toolCalls),
+              suggestions: message.suggestions,
+            })),
+          );
+          if (history.conversationId) {
+            setConversationId(history.conversationId);
+          }
+          setHasHydrated(true);
+          return;
         }
-        setHasHydrated(true);
-        return;
-      }
 
-      hydrateFromIndexedDB();
-    }).catch(() => {
-      hydrateFromIndexedDB();
-    });
+        hydrateFromIndexedDB();
+      })
+      .catch(() => {
+        hydrateFromIndexedDB();
+      });
   }, [documentId]);
 
   // Persist conversation after each completed message exchange
@@ -658,7 +764,15 @@ export function AIActivityPanel({
       ? `Help me complete this shipment. The extracted shipper name is "${shipperName}".`
       : "Help me complete this shipment.";
     void sendMessage(initialMsg);
-  }, [documentId, hasHydrated, isStreaming, isConversationClosed, messages.length, sendMessage, state.fields.shipper?.value]);
+  }, [
+    documentId,
+    hasHydrated,
+    isStreaming,
+    isConversationClosed,
+    messages.length,
+    sendMessage,
+    state.fields.shipper?.value,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -677,12 +791,17 @@ export function AIActivityPanel({
     el.style.height = `${Math.min(el.scrollHeight, 100)}px`;
   }, []);
 
-  useEffect(() => { adjustHeight(); }, [inputValue, adjustHeight]);
+  useEffect(() => {
+    adjustHeight();
+  }, [inputValue, adjustHeight]);
 
   // Find last assistant message index
   let lastAssistantIdx = -1;
   for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant") { lastAssistantIdx = i; break; }
+    if (messages[i].role === "assistant") {
+      lastAssistantIdx = i;
+      break;
+    }
   }
 
   return (
@@ -730,7 +849,9 @@ export function AIActivityPanel({
               className="flex items-center gap-2 rounded-md bg-emerald-500/10 px-2.5 py-1.5"
             >
               <CheckCircle2Icon className="size-3 text-emerald-500" />
-              <span className="text-2xs text-emerald-600 dark:text-emerald-400">Ready to create shipment</span>
+              <span className="text-2xs text-emerald-600 dark:text-emerald-400">
+                Ready to create shipment
+              </span>
             </m.div>
           )}
 
@@ -781,36 +902,43 @@ export function AIActivityPanel({
                   </div>
 
                   {/* Thinking shimmer when streaming with no text yet */}
-                  {isStreaming && msg.id === streamingMsgId.current && msg.text.length === 0 && msg.toolCalls?.length === 0 && (
-                    <TextShimmer as="span" className="text-[13px]" duration={2}>
-                      Thinking
-                    </TextShimmer>
-                  )}
+                  {isStreaming &&
+                    msg.id === streamingMsgId.current &&
+                    msg.text.length === 0 &&
+                    msg.toolCalls?.length === 0 && (
+                      <TextShimmer as="span" className="text-[13px]" duration={2}>
+                        Thinking
+                      </TextShimmer>
+                    )}
 
                   {/* Suggestions — only on latest assistant message, after streaming completes */}
-                  {idx === lastAssistantIdx && !isStreaming && (msg.suggestions?.length ?? 0) > 0 && (
-                    <m.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 }}
-                      className="mt-1.5 flex flex-col gap-1"
-                    >
-                      {msg.suggestions?.map((s) => (
-                        <SuggestionButton
-                          key={s.label}
-                          suggestion={s}
-                          onSend={sendMessage}
-                          onAction={(action) => {
-                            if (action === "create_shipment") onCreateShipment?.();
-                            if (action === "review_details") {
-                              // Scroll the reconciliation panel to top
-                              document.querySelector('[data-slot="scroll-area-viewport"]')?.scrollTo({ top: 0, behavior: "smooth" });
-                            }
-                          }}
-                        />
-                      ))}
-                    </m.div>
-                  )}
+                  {idx === lastAssistantIdx &&
+                    !isStreaming &&
+                    (msg.suggestions?.length ?? 0) > 0 && (
+                      <m.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="mt-1.5 flex flex-col gap-1"
+                      >
+                        {msg.suggestions?.map((s) => (
+                          <SuggestionButton
+                            key={s.label}
+                            suggestion={s}
+                            onSend={sendMessage}
+                            onAction={(action) => {
+                              if (action === "create_shipment") onCreateShipment?.();
+                              if (action === "review_details") {
+                                // Scroll the reconciliation panel to top
+                                document
+                                  .querySelector('[data-slot="scroll-area-viewport"]')
+                                  ?.scrollTo({ top: 0, behavior: "smooth" });
+                              }
+                            }}
+                          />
+                        ))}
+                      </m.div>
+                    )}
                 </div>
               )}
             </m.div>
