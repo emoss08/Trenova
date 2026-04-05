@@ -10,6 +10,7 @@ import { RouteCommandPalette } from "../command-palette/route-command-palette";
 import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
+import { FavoritesPanel } from "./favorites-panel";
 import { IconRail } from "./icon-rail";
 import { ModulePanel } from "./module-panel";
 
@@ -26,7 +27,10 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     activeModuleId,
     setActiveModuleId,
     modulePanelCollapsed,
+    setModulePanelCollapsed,
     toggleModulePanel,
+    panelView,
+    setPanelView,
   } = useNavigationStore();
 
   useEffect(() => {
@@ -45,8 +49,9 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     });
     if (matched) {
       setActiveModuleId(matched.id);
+      setPanelView("module");
     }
-  }, [location.pathname, filteredModules, setActiveModuleId]);
+  }, [location.pathname, filteredModules, setActiveModuleId, setPanelView]);
 
   const activeModule = useMemo(
     () => filteredModules.find((m) => m.id === activeModuleId) ?? null,
@@ -55,19 +60,34 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
 
   const handleModuleSelect = useCallback(
     (id: ModuleId) => {
-      if (id === activeModuleId) {
+      setPanelView("module");
+      if (id === activeModuleId && panelView === "module") {
         toggleModulePanel();
         return;
       }
       setActiveModuleId(id);
+      if (modulePanelCollapsed) {
+        setModulePanelCollapsed(false);
+      }
       const mod = filteredModules.find((m) => m.id === id);
       if (mod) {
         const targetPath = getFirstNavPath(mod);
         void navigate(targetPath);
       }
     },
-    [activeModuleId, filteredModules, navigate, setActiveModuleId, toggleModulePanel],
+    [activeModuleId, filteredModules, navigate, setActiveModuleId, toggleModulePanel, setPanelView, panelView, modulePanelCollapsed, setModulePanelCollapsed],
   );
+
+  const handleFavoritesSelect = useCallback(() => {
+    if (panelView === "favorites") {
+      toggleModulePanel();
+    } else {
+      setPanelView("favorites");
+      if (modulePanelCollapsed) {
+        setModulePanelCollapsed(false);
+      }
+    }
+  }, [panelView, toggleModulePanel, setPanelView, modulePanelCollapsed, setModulePanelCollapsed]);
 
   // Keyboard shortcut: Ctrl+B toggles module panel
   useEffect(() => {
@@ -88,15 +108,24 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
       <div className="flex h-screen overflow-hidden">
         <IconRail
           modules={filteredModules}
-          activeModuleId={activeModuleId}
+          activeModuleId={panelView === "favorites" ? null : activeModuleId}
           onModuleSelect={handleModuleSelect}
+          isFavoritesActive={panelView === "favorites" && !modulePanelCollapsed}
+          onFavoritesSelect={handleFavoritesSelect}
         />
-        {activeModule && (!activeModule.hideSecondarySidebar || activeModule.id === "admin") && (
-          <ModulePanel
-            module={activeModule}
+        {panelView === "favorites" ? (
+          <FavoritesPanel
             collapsed={modulePanelCollapsed}
             onToggleCollapse={toggleModulePanel}
           />
+        ) : (
+          activeModule && (!activeModule.hideSecondarySidebar || activeModule.id === "admin") && (
+            <ModulePanel
+              module={activeModule}
+              collapsed={modulePanelCollapsed}
+              onToggleCollapse={toggleModulePanel}
+            />
+          )
         )}
         <div className="flex min-w-0 flex-1 flex-col">
           <Header />

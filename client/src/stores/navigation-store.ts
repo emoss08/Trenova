@@ -2,11 +2,14 @@ import type { ModuleId } from "@/config/navigation.types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+type PanelView = "module" | "favorites";
+
 interface NavigationState {
   sidebarOpen: boolean;
   mobileNavOpen: boolean;
   activeModuleId: ModuleId | null;
   modulePanelCollapsed: boolean;
+  panelView: PanelView;
 
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -14,6 +17,7 @@ interface NavigationState {
   setActiveModuleId: (id: ModuleId | null) => void;
   toggleModulePanel: () => void;
   setModulePanelCollapsed: (collapsed: boolean) => void;
+  setPanelView: (view: PanelView) => void;
 }
 
 export const useNavigationStore = create<NavigationState>()(
@@ -23,6 +27,7 @@ export const useNavigationStore = create<NavigationState>()(
       mobileNavOpen: false,
       activeModuleId: null,
       modulePanelCollapsed: false,
+      panelView: "module" as PanelView,
 
       toggleSidebar: () => {
         set((state) => ({
@@ -50,6 +55,10 @@ export const useNavigationStore = create<NavigationState>()(
 
       setModulePanelCollapsed: (collapsed: boolean) => {
         set({ modulePanelCollapsed: collapsed });
+      },
+
+      setPanelView: (view: PanelView) => {
+        set({ panelView: view });
       },
     }),
     {

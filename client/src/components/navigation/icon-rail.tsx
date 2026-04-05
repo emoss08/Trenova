@@ -26,7 +26,7 @@ import type { UserOrganization } from "@/types/organization";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2, LogOut, Palette, Search, Settings, User } from "lucide-react";
+import { Check, Loader2, LogOut, Palette, Search, Settings, Star, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useTheme } from "@/components/theme-provider";
@@ -36,6 +36,8 @@ type IconRailProps = {
   modules: NavModule[];
   activeModuleId: ModuleId | null;
   onModuleSelect: (id: ModuleId) => void;
+  isFavoritesActive: boolean;
+  onFavoritesSelect: () => void;
 };
 
 function OrgAvatar() {
@@ -243,6 +245,32 @@ function ModuleButton({
   );
 }
 
+function FavoritesButton({ isActive, onSelect }: { isActive: boolean; onSelect: () => void }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={onSelect}
+            className={cn(
+              "flex size-8 items-center justify-center rounded-md transition-colors",
+              isActive
+                ? "bg-accent text-foreground"
+                : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50",
+            )}
+          />
+        }
+      >
+        <Star className={cn("size-4", isActive && "fill-amber-400 text-amber-400")} strokeWidth={isActive ? 2 : 1.5} />
+      </TooltipTrigger>
+      <TooltipContent side="right" sideOffset={6}>
+        Favorites
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function SearchButton() {
   const setOpen = useCommandPaletteStore((s) => s.setOpen);
 
@@ -388,6 +416,8 @@ export function IconRail({
   modules,
   activeModuleId,
   onModuleSelect,
+  isFavoritesActive,
+  onFavoritesSelect,
 }: IconRailProps) {
   return (
     <div className="flex h-screen w-12 flex-col items-center border-r border-border bg-sidebar">
@@ -410,6 +440,7 @@ export function IconRail({
 
       {/* Bottom utilities */}
       <div className="flex flex-col items-center gap-1 px-1.5 pb-3">
+        <FavoritesButton isActive={isFavoritesActive} onSelect={onFavoritesSelect} />
         <SearchButton />
         <div className="my-1 h-px w-5 bg-border" />
         <UserMenu />
