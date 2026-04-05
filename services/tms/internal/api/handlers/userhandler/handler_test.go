@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
@@ -34,6 +35,7 @@ type setupOptions struct {
 	userRepo    *mocks.MockUserRepository
 	roleRepo    *mocks.MockRoleRepository
 	sessionRepo *mocks.MockSessionRepository
+	storage     *mocks.MockClient
 	permEngine  services.PermissionEngine
 	cfg         *config.Config
 }
@@ -124,6 +126,14 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	if opts.permEngine == nil {
 		opts.permEngine = &mocks.AllowAllPermissionEngine{}
 	}
+	if opts.storage == nil {
+		opts.storage = mocks.NewMockClient(t)
+		opts.storage.On("Upload", mock.Anything, mock.Anything).Maybe().Return((*storage.FileInfo)(nil), nil)
+		opts.storage.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
+		opts.storage.On("GetPresignedURL", mock.Anything, mock.Anything).
+			Maybe().
+			Return("https://example.test/profile-picture.png", nil)
+	}
 	if opts.cfg == nil {
 		opts.cfg = &config.Config{
 			App: config.AppConfig{Debug: true},
@@ -131,6 +141,11 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 				Session: config.SessionConfig{
 					Name: "trenova_session",
 				},
+			},
+			Storage: config.StorageConfig{
+				MaxFileSize:         5 * 1024 * 1024,
+				PresignedURLExpiry:  15 * time.Minute,
+				AllowedMIMETypes:    []string{"image/jpeg", "image/png", "image/webp"},
 			},
 		}
 	}
@@ -143,6 +158,8 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		SessionRepository: opts.sessionRepo,
 		AuditService:      &mocks.NoopAuditService{},
 		Realtime:          &mocks.NoopRealtimeService{},
+		Storage:           opts.storage,
+		Config:            opts.cfg,
 		Validator:         userservice.NewTestValidator(),
 	})
 

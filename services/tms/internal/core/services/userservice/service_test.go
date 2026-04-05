@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,6 +34,7 @@ type testDeps struct {
 	repo        *mocks.MockUserRepository
 	roleRepo    *mocks.MockRoleRepository
 	sessionRepo *mocks.MockSessionRepository
+	storage     *mocks.MockClient
 	audit       *mocks.MockAuditService
 	svc         *Service
 }
@@ -45,6 +48,12 @@ func setupTest(t *testing.T) *testDeps {
 		Maybe().
 		Return(false, nil)
 	sessionRepo := mocks.NewMockSessionRepository(t)
+	storageClient := mocks.NewMockClient(t)
+	storageClient.On("Upload", mock.Anything, mock.Anything).Maybe().Return((*storage.FileInfo)(nil), nil)
+	storageClient.On("Delete", mock.Anything, mock.Anything).Maybe().Return(nil)
+	storageClient.On("GetPresignedURL", mock.Anything, mock.Anything).
+		Maybe().
+		Return("https://example.test/profile-picture.png", nil)
 	auditSvc := mocks.NewMockAuditService(t)
 	auditSvc.On("LogAction", mock.Anything, mock.Anything).Maybe().Return(nil)
 	svc := &Service{
@@ -54,12 +63,19 @@ func setupTest(t *testing.T) *testDeps {
 		sr:           sessionRepo,
 		auditService: auditSvc,
 		realtime:     &mocks.NoopRealtimeService{},
-		validator:    newTestValidator(),
+		storage:      storageClient,
+		storageCfg: &config.StorageConfig{
+			MaxFileSize:        5 * 1024 * 1024,
+			PresignedURLExpiry: 15 * time.Minute,
+			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
+		},
+		validator: newTestValidator(),
 	}
 	return &testDeps{
 		repo:        repo,
 		roleRepo:    roleRepo,
 		sessionRepo: sessionRepo,
+		storage:     storageClient,
 		audit:       auditSvc,
 		svc:         svc,
 	}
@@ -585,8 +601,8 @@ func TestUpdateMySettings_Success(t *testing.T) {
 			updated.EmailAddress == user.EmailAddress &&
 			updated.Timezone == "America/Chicago" &&
 			updated.TimeFormat == domaintypes.TimeFormat24Hour &&
-			updated.ProfilePicURL == "https://cdn.example.com/profile.png" &&
-			updated.ThumbnailURL == "https://cdn.example.com/thumb.png" &&
+			updated.ProfilePicURL == user.ProfilePicURL &&
+			updated.ThumbnailURL == user.ThumbnailURL &&
 			updated.IsPlatformAdmin == user.IsPlatformAdmin
 	})).Return(func(_ context.Context, updated *tenant.User) *tenant.User {
 		return updated
@@ -595,10 +611,8 @@ func TestUpdateMySettings_Success(t *testing.T) {
 	}).Once()
 
 	result, err := deps.svc.UpdateMySettings(ctx, tenantInfo, UpdateMySettingsRequest{
-		Timezone:      "America/Chicago",
-		TimeFormat:    domaintypes.TimeFormat24Hour,
-		ProfilePicURL: "https://cdn.example.com/profile.png",
-		ThumbnailURL:  "https://cdn.example.com/thumb.png",
+		Timezone:   "America/Chicago",
+		TimeFormat: domaintypes.TimeFormat24Hour,
 	})
 
 	require.NoError(t, err)
@@ -703,8 +717,16 @@ func TestNew(t *testing.T) {
 
 	repo := mocks.NewMockUserRepository(t)
 	sessionRepo := mocks.NewMockSessionRepository(t)
+	storageClient := mocks.NewMockClient(t)
 	auditSvc := mocks.NewMockAuditService(t)
 	validator := newTestValidator()
+	cfg := &config.Config{
+		Storage: config.StorageConfig{
+			MaxFileSize:        5 * 1024 * 1024,
+			PresignedURLExpiry: 15 * time.Minute,
+			AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
+		},
+	}
 
 	svc := New(Params{
 		Logger:            zap.NewNop(),
@@ -712,6 +734,8 @@ func TestNew(t *testing.T) {
 		SessionRepository: sessionRepo,
 		AuditService:      auditSvc,
 		Realtime:          &mocks.NoopRealtimeService{},
+		Storage:           storageClient,
+		Config:            cfg,
 		Validator:         validator,
 	})
 

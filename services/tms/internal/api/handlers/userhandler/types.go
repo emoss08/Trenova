@@ -19,10 +19,12 @@ type ReplaceOrganizationMembershipsRequest struct {
 }
 
 type UpdateMySettingsRequest struct {
-	Timezone      string                 `json:"timezone"`
-	TimeFormat    domaintypes.TimeFormat `json:"timeFormat"`
-	ProfilePicURL string                 `json:"profilePicUrl"`
-	ThumbnailURL  string                 `json:"thumbnailUrl"`
+	Timezone   string                 `json:"timezone"`
+	TimeFormat domaintypes.TimeFormat `json:"timeFormat"`
+}
+
+type ProfilePictureURLResponse struct {
+	URL string `json:"url"`
 }
 
 type ChangeMyPasswordRequest struct {

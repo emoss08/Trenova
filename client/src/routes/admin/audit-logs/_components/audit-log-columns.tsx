@@ -1,5 +1,5 @@
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { AuditEntry } from "@/types/audit-entry";
 import { Resource } from "@/types/permission";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -7,7 +7,6 @@ import {
   auditOperationFilterOptions,
   operationLabel,
   resourceLabel,
-  userInitials,
 } from "./audit-log-formatters";
 
 const auditResourceFilterOptions = Object.values(Resource).map((value) => ({
@@ -108,14 +107,16 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
 
         return (
           <div className="flex items-center gap-3">
-            <Avatar className="size-8 rounded-md bg-muted">
-              <AvatarImage
-                className="rounded-md bg-muted"
-                src={user?.thumbnailUrl || user?.profilePicUrl}
-                alt={name}
-              />
-              <AvatarFallback className="text-xs">{userInitials(user?.name)}</AvatarFallback>
-            </Avatar>
+            <ResolvedUserAvatar
+              userId={user?.id}
+              name={user?.name}
+              profilePicUrl={user?.profilePicUrl}
+              thumbnailUrl={user?.thumbnailUrl}
+              className="size-8 rounded-md bg-muted"
+              imageClassName="rounded-md bg-muted"
+              fallbackClassName="text-xs"
+              alt={name}
+            />
             <div className="flex flex-col">
               <span className="font-medium">{name}</span>
               <span className="text-xs text-muted-foreground">{email}</span>

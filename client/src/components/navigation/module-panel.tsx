@@ -124,7 +124,7 @@ function AdminSection({ currentPath }: { currentPath: string }) {
             const active = isRouteActive(currentPath, link.href);
             return (
               <Link
-                key={link.href}
+                key={`${groupName}:${link.title}:${link.href}`}
                 to={link.href}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2 h-7 text-[13px] transition-colors",

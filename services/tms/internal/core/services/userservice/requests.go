@@ -7,10 +7,8 @@ import (
 )
 
 type UpdateMySettingsRequest struct {
-	Timezone      string                 `json:"timezone"`
-	TimeFormat    domaintypes.TimeFormat `json:"timeFormat"`
-	ProfilePicURL string                 `json:"profilePicUrl"`
-	ThumbnailURL  string                 `json:"thumbnailUrl"`
+	Timezone   string                 `json:"timezone"`
+	TimeFormat domaintypes.TimeFormat `json:"timeFormat"`
 }
 
 func (r *UpdateMySettingsRequest) Validate() error {
@@ -29,14 +27,6 @@ func (r *UpdateMySettingsRequest) Validate() error {
 				domaintypes.TimeFormat12Hour,
 				domaintypes.TimeFormat24Hour,
 			).Error("Time format must be either 12-hour or 24-hour"),
-		),
-		validation.Field(
-			&r.ProfilePicURL,
-			validation.Length(0, 255).Error("Profile picture URL must be 255 characters or fewer"),
-		),
-		validation.Field(
-			&r.ThumbnailURL,
-			validation.Length(0, 255).Error("Thumbnail URL must be 255 characters or fewer"),
 		),
 	)
 

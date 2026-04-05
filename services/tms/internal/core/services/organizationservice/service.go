@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -19,9 +17,9 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/google/uuid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -149,12 +147,10 @@ func (s *service) UploadLogo(
 	defer file.Close()
 
 	contentType := req.File.Header.Get("Content-Type")
-	ext := strings.ToLower(filepath.Ext(req.File.Filename))
-	key := fmt.Sprintf(
-		"%s/organization/logo/%s%s",
+	key := fileutils.GenerateStoragePath(
 		req.OrganizationID.String(),
-		uuid.NewString(),
-		ext,
+		"organization/logo",
+		req.File.Filename,
 	)
 
 	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
@@ -192,7 +188,7 @@ func (s *service) UploadLogo(
 		return nil, err
 	}
 
-	if previousLogo != "" && !isExternalLogoURL(previousLogo) && previousLogo != key {
+	if previousLogo != "" && !fileutils.IsExternalURL(previousLogo) && previousLogo != key {
 		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
 			s.l.Warn(
 				"failed to delete previous organization logo",
@@ -237,7 +233,7 @@ func (s *service) GetLogoURL(
 		return nil, errortypes.NewNotFoundError("Organization logo not found")
 	}
 
-	if isExternalLogoURL(entity.LogoURL) {
+	if fileutils.IsExternalURL(entity.LogoURL) {
 		return &services.GetLogoURLResponse{URL: entity.LogoURL}, nil
 	}
 
@@ -277,7 +273,7 @@ func (s *service) DeleteLogo(
 		return nil, err
 	}
 
-	if !isExternalLogoURL(previousLogo) {
+	if !fileutils.IsExternalURL(previousLogo) {
 		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
 			s.l.Warn(
 				"failed to delete organization logo object after clearing logo URL",
@@ -306,11 +302,7 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 		multiErr.Add("file", errortypes.ErrInvalidLength, "Logo file exceeds maximum allowed size")
 	}
 
-	contentType := strings.ToLower(file.Header.Get("Content-Type"))
-	allowedMIMETypes := []string{"image/jpeg", "image/png", "image/webp"}
-	if contentType != "" &&
-		contentType != "application/octet-stream" &&
-		!slices.Contains(allowedMIMETypes, contentType) {
+	if !fileutils.IsSupportedImageContentType(file.Header.Get("Content-Type")) {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidFormat,
@@ -318,9 +310,7 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 		)
 	}
 
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-	allowedExtensions := []string{".jpg", ".jpeg", ".png", ".webp"}
-	if ext == "" || !slices.Contains(allowedExtensions, ext) {
+	if !fileutils.HasSupportedImageExtension(file.Filename) {
 		multiErr.Add("file", errortypes.ErrInvalidFormat, "Unsupported logo file extension")
 	}
 
@@ -329,10 +319,6 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 	}
 
 	return nil
-}
-
-func isExternalLogoURL(value string) bool {
-	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
 }
 
 func (s *service) GetMicrosoftSSOConfig(

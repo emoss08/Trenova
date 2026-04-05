@@ -1,7 +1,6 @@
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
-import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
-import { UploadPanel } from "@/components/documents/upload-panel";
 import { InputField } from "@/components/fields/input-field";
+import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Button } from "@/components/ui/button";
@@ -9,10 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { timezoneGroupedChoices } from "@/lib/choices";
-import { convertOrganizationLogoToWebP } from "@/lib/images/organization-logo";
+import { validateCroppableImage } from "@/lib/images/crop-image";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  organizationLogoCropConfig,
+} from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
+import { isAbsoluteUrl } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { organizationSettingsSchema, type OrganizationSettings } from "@/types/organization";
@@ -20,16 +23,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, ShieldIcon, UploadIcon } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MicrosoftSSOCard } from "./microsoft-sso-card";
 import { OktaSSOCard } from "./okta-sso-card";
 
 const tabValues = ["general", "security"] as const;
-const LOGO_ACCEPT = ".jpg,.jpeg,.png,.webp";
-const LOGO_MAX_SIZE = 5 * 1024 * 1024;
-
 const emptyOrganizationDefaults: OrganizationSettings = {
   id: "",
   version: 0,
@@ -185,8 +186,10 @@ function LogoForm({
   organizationId: string;
   onLogoUpdated: (updatedOrganization: OrganizationSettings) => Promise<void>;
 }) {
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isRemovingLogo, setIsRemovingLogo] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
   const { control } = useFormContext<OrganizationSettings>();
   const rawLogoValue = useWatch({ control, name: "logoUrl" });
 
@@ -201,76 +204,53 @@ function LogoForm({
       return resolvedLogoURL;
     }
 
-    if (
-      rawLogoValue &&
-      (rawLogoValue.startsWith("http://") || rawLogoValue.startsWith("https://"))
-    ) {
+    if (isAbsoluteUrl(rawLogoValue)) {
       return rawLogoValue;
     }
 
     return null;
   }, [rawLogoValue, resolvedLogoURL]);
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearCompleted,
-    isUploading,
-  } = useUploadWithProgress({
-    resourceId: organizationId,
-    resourceType: "organization-logo",
-    maxConcurrent: 1,
-    uploadEndpoint: `/organizations/${organizationId}/logo`,
-    parseResponse: (response) => organizationSettingsSchema.parse(response as OrganizationSettings),
-    invalidateQueryKey: queries.organization.detail(organizationId).queryKey,
-    transformFile: (file) => convertOrganizationLogoToWebP(file),
-    onSuccess: async (result) => {
-      await onLogoUpdated(result as OrganizationSettings);
-      toast.success("Organization logo updated");
-    },
-    onError: (error, file) => {
-      toast.error(`Failed to upload ${file.name}`, {
-        description: error.message,
+  const handleLogoFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!selectedFile) {
+      return;
+    }
+
+    try {
+      validateCroppableImage(selectedFile, "logos");
+      setPendingFile(selectedFile);
+      setIsCropOpen(true);
+    } catch (error) {
+      toast.error("Unsupported logo file", {
+        description: error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
       });
-    },
-  });
-
-  const handleFilesRejected = useCallback((rejectedFiles: RejectedFile[]) => {
-    rejectedFiles.forEach(({ file, reason }) => {
-      if (reason === "size") {
-        toast.error(`File too large: ${file.name}`, {
-          description: `Maximum file size is 5MB. This file is ${formatFileSize(file.size)}.`,
-        });
-        return;
-      }
-
-      if (reason === "type") {
-        toast.error(`Unsupported file type: ${file.name}`, {
-          description: "Only JPG, PNG, and WEBP files are supported.",
-        });
-      }
-    });
+    }
   }, []);
+
+  const handleLogoUpload = useCallback(async (file: File) => {
+    const updatedOrganization = await apiService.organizationService.uploadLogo(organizationId, file);
+    await onLogoUpdated(updatedOrganization);
+    toast.success("Organization logo updated");
+  }, [onLogoUpdated, organizationId]);
 
   const handleRemoveLogo = useCallback(async () => {
     if (isRemovingLogo) {
       return;
     }
 
+    setIsRemovingLogo(true);
     try {
-      setIsRemovingLogo(true);
       const updated = await apiService.organizationService.deleteLogo(organizationId);
       await onLogoUpdated(updated);
       toast.success("Organization logo removed");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to remove logo";
       toast.error("Failed to remove logo", { description: message });
-    } finally {
-      setIsRemovingLogo(false);
     }
+
+    setIsRemovingLogo(false);
   }, [isRemovingLogo, onLogoUpdated, organizationId]);
 
   return (
@@ -297,7 +277,7 @@ function LogoForm({
               <button
                 type="button"
                 onClick={handleRemoveLogo}
-                disabled={isRemovingLogo || isUploading}
+                disabled={isRemovingLogo}
                 className="absolute top-0 right-0 z-10 inline-flex size-6 translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-background/95 text-foreground shadow-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Remove logo"
                 title="Remove logo"
@@ -310,32 +290,34 @@ function LogoForm({
           <Button
             type="button"
             variant="secondary"
-            onClick={() => setIsUploadOpen(true)}
-            disabled={isUploading || isRemovingLogo}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isRemovingLogo}
           >
             <UploadIcon className="size-4" />
             Upload Logo
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={IMAGE_UPLOAD_ACCEPT}
+            className="hidden"
+            onChange={handleLogoFileChange}
+          />
         </div>
       </CardContent>
 
-      <UploadPanel
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        uploads={uploads}
-        onFilesSelected={uploadFiles}
-        onFilesRejected={handleFilesRejected}
-        onCancel={cancelUpload}
-        onRetry={retryUpload}
-        onRemove={removeUpload}
-        onClearCompleted={clearCompleted}
-        disabled={isUploading || isRemovingLogo}
-        title="Upload Organization Logo"
-        accept={LOGO_ACCEPT}
-        maxFileSize={LOGO_MAX_SIZE}
-        multiple={false}
-        supportedFormatsLabel="JPG, PNG, WEBP"
-        maxFileSizeLabel="5 MB"
+      <ImageCropUploadDialog
+        open={isCropOpen}
+        file={pendingFile}
+        title="Crop Organization Logo"
+        description="Adjust the visible bounds before uploading your organization logo."
+        {...organizationLogoCropConfig}
+        confirmLabel="Upload Logo"
+        onClose={() => {
+          setIsCropOpen(false);
+          setPendingFile(null);
+        }}
+        onConfirm={handleLogoUpload}
       />
     </Card>
   );

@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { User } from "@/types/user";
@@ -36,19 +36,17 @@ function UserStatusCell({ row }: { row: User }) {
 }
 
 function UserNameCell({ user, isOnline }: { user: User; isOnline: boolean }) {
-  const initials = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
     <div className="flex items-center gap-3">
-      <Avatar className="size-8 rounded-md bg-muted">
-        <AvatarImage className="rounded-md bg-muted" src={user.thumbnailUrl} alt={user.name} />
-        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-      </Avatar>
+      <ResolvedUserAvatar
+        userId={user.id}
+        name={user.name}
+        profilePicUrl={user.profilePicUrl}
+        thumbnailUrl={user.thumbnailUrl}
+        className="size-8 rounded-md bg-muted"
+        imageClassName="rounded-md bg-muted"
+        fallbackClassName="text-xs"
+      />
       <div className="flex flex-col">
         <span className="flex items-center gap-2 font-medium">
           {user.name}

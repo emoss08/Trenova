@@ -106,7 +106,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	meAPI.POST("/switch-organization/", h.switchOrganization)
 	meAPI.GET("/organizations/", h.getOrganizations)
 	meAPI.PATCH("/settings/", h.updateMySettings)
+	meAPI.POST("/profile-picture/", h.uploadProfilePicture)
+	meAPI.DELETE("/profile-picture/", h.deleteProfilePicture)
 	meAPI.POST("/change-password/", h.changeMyPassword)
+	api.GET("/:userID/profile-picture/", h.getProfilePictureURL)
 
 	selectOptions := api.Group("/select-options")
 	selectOptions.GET("/", h.selectOptions)
@@ -473,10 +476,8 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 			UserID: authCtx.UserID,
 		},
 		userservice.UpdateMySettingsRequest{
-			Timezone:      req.Timezone,
-			TimeFormat:    req.TimeFormat,
-			ProfilePicURL: req.ProfilePicURL,
-			ThumbnailURL:  req.ThumbnailURL,
+			Timezone:   req.Timezone,
+			TimeFormat: req.TimeFormat,
 		},
 	)
 	if err != nil {
@@ -485,6 +486,105 @@ func (h *Handler) updateMySettings(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Upload current user profile picture
+// @ID uploadCurrentUserProfilePicture
+// @Tags Users
+// @Accept mpfd
+// @Produce json
+// @Param file formData file true "Profile picture file"
+// @Success 200 {object} tenant.User
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /users/me/profile-picture/ [post]
+func (h *Handler) uploadProfilePicture(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	updated, err := h.service.UploadProfilePicture(c.Request.Context(), pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}, file)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Delete current user profile picture
+// @ID deleteCurrentUserProfilePicture
+// @Tags Users
+// @Produce json
+// @Success 200 {object} tenant.User
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /users/me/profile-picture/ [delete]
+func (h *Handler) deleteProfilePicture(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	updated, err := h.service.DeleteProfilePicture(c.Request.Context(), pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
+}
+
+// @Summary Get user profile picture URL
+// @ID getUserProfilePictureURL
+// @Tags Users
+// @Produce json
+// @Param userID path string true "User ID"
+// @Param variant query string false "Image variant"
+// @Success 200 {object} userhandler.ProfilePictureURLResponse
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /users/{userID}/profile-picture/ [get]
+func (h *Handler) getProfilePictureURL(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	userID, err := pulid.MustParse(c.Param("userID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	url, err := h.service.GetProfilePictureURL(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		userID,
+		c.Query("variant"),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, ProfilePictureURLResponse{URL: url})
 }
 
 // @Summary Change current user password

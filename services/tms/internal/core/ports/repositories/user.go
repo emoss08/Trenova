@@ -11,6 +11,7 @@ import (
 
 type GetUserByIDRequest struct {
 	TenantInfo         pagination.TenantInfo
+	LookupUserID       pulid.ID
 	IncludeMemberships bool `json:"includeMemberships"`
 }
 

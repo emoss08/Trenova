@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { ApiRequestError, api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   switchOrganizationResponseSchema,
@@ -10,10 +10,12 @@ import {
 import {
   bulkUpdateUserStatusResponseSchema,
   userOrganizationMembershipsResponseSchema,
+  profilePictureUrlResponseSchema,
   userSchema,
   type BulkUpdateUserStatusRequest,
   type BulkUpdateUserStatusResponse,
   type ChangeMyPassword,
+  type ProfilePictureUrlResponse,
   type ReplaceOrganizationMembershipsRequest,
   type UpdateMySettings,
   type User,
@@ -100,5 +102,41 @@ export class UserService {
   public async changeMyPassword(data: ChangeMyPassword) {
     const response = await api.post<User>(`${this.base_url}/me/change-password/`, data);
     return safeParse(userSchema, response, "Change Password");
+  }
+
+  public async uploadMyProfilePicture(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.upload<User>(`${this.base_url}/me/profile-picture/`, formData);
+    return safeParse(userSchema, response, "User Profile Picture");
+  }
+
+  public async deleteMyProfilePicture() {
+    const response = await api.delete<User>(`${this.base_url}/me/profile-picture/`);
+    return safeParse(userSchema, response, "User Profile Picture");
+  }
+
+  public async getProfilePictureURL(
+    userId: User["id"],
+    variant: "thumbnail" | "full" = "thumbnail",
+  ) {
+    try {
+      const response = await api.get<ProfilePictureUrlResponse>(
+        `${this.base_url}/${userId}/profile-picture/?variant=${variant}`,
+      );
+
+      return (await safeParse(
+        profilePictureUrlResponseSchema,
+        response,
+        "User Profile Picture URL",
+      )).url;
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.isNotFoundError()) {
+        return null;
+      }
+
+      throw error;
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +10,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -309,10 +309,14 @@ function CommentItem({
   return (
     <div className="group/comment flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50">
       <div className="relative shrink-0">
-        <Avatar className="size-9">
-          <AvatarImage src={comment.user?.profilePicUrl ?? undefined} />
-          <AvatarFallback className="text-xs">{userInitials(comment.user?.name)}</AvatarFallback>
-        </Avatar>
+        <ResolvedUserAvatar
+          userId={comment.user?.id}
+          name={comment.user?.name}
+          profilePicUrl={comment.user?.profilePicUrl}
+          thumbnailUrl={comment.user?.thumbnailUrl}
+          className="size-9"
+          fallbackClassName="text-xs"
+        />
         {PRIORITY_INDICATOR[comment.priority] && (
           <span
             className={cn(

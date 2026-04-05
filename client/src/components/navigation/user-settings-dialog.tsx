@@ -1,6 +1,7 @@
+import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,11 +15,19 @@ import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { timeFormatChoices, timezoneChoices } from "@/lib/choices";
+import { validateCroppableImage } from "@/lib/images/crop-image";
+import {
+  IMAGE_UPLOAD_ACCEPT,
+  profilePictureCropConfig,
+} from "@/lib/images/upload-config";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import type { ChangeMyPassword, UpdateMySettings, User } from "@/types/user";
-import { Globe, KeyRound, Mail } from "lucide-react";
-import { useCallback } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Camera, Globe, KeyRound, Mail, Trash2 } from "lucide-react";
+import type { ChangeEvent, ComponentType } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -32,7 +41,7 @@ function SectionHeader({
   title,
   description,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
   title: string;
   description: string;
 }) {
@@ -51,22 +60,16 @@ function SectionHeader({
 
 export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogProps) {
   const user = useAuthStore((s) => s.user);
-
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U";
+  const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isRemovingProfilePicture, setIsRemovingProfilePicture] = useState(false);
 
   const settingsForm = useForm<UpdateMySettings>({
     defaultValues: {
       timezone: user?.timezone ?? "",
       timeFormat: user?.timeFormat ?? "12-hour",
-      profilePicUrl: user?.profilePicUrl ?? undefined,
-      thumbnailUrl: user?.thumbnailUrl ?? undefined,
     },
   });
 
@@ -77,6 +80,13 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
       confirmPassword: "",
     },
   });
+
+  useEffect(() => {
+    settingsForm.reset({
+      timezone: user?.timezone ?? "",
+      timeFormat: user?.timeFormat ?? "12-hour",
+    });
+  }, [settingsForm, user]);
 
   const { mutateAsync: updateSettings } = useApiMutation<
     User,
@@ -114,7 +124,66 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
   const handleClose = useCallback(() => {
     onOpenChange(false);
     passwordForm.reset();
+    setPendingFile(null);
+    setIsCropOpen(false);
   }, [onOpenChange, passwordForm]);
+
+  const syncUserSettings = useCallback(async (updatedUser: User) => {
+    useAuthStore.getState().setUser(updatedUser);
+    if (updatedUser.id) {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.user.profilePicture(updatedUser.id, "thumbnail").queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.user.profilePicture(updatedUser.id, "full").queryKey,
+        }),
+      ]);
+    }
+  }, [queryClient]);
+
+  const handleFileSelection = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = "";
+    if (!selectedFile) {
+      return;
+    }
+
+    try {
+      validateCroppableImage(selectedFile, "profile pictures");
+      setPendingFile(selectedFile);
+      setIsCropOpen(true);
+    } catch (error) {
+      toast.error("Unsupported profile picture", {
+        description: error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+      });
+    }
+  }, []);
+
+  const handleProfilePictureUpload = useCallback(async (file: File) => {
+    const updatedUser = await apiService.userService.uploadMyProfilePicture(file);
+    await syncUserSettings(updatedUser);
+    toast.success("Profile picture updated");
+  }, [syncUserSettings]);
+
+  const handleRemoveProfilePicture = useCallback(async () => {
+    if (isRemovingProfilePicture) {
+      return;
+    }
+
+    setIsRemovingProfilePicture(true);
+    try {
+      const updatedUser = await apiService.userService.deleteMyProfilePicture();
+      await syncUserSettings(updatedUser);
+      toast.success("Profile picture removed");
+    } catch (error) {
+      toast.error("Failed to remove profile picture", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    }
+
+    setIsRemovingProfilePicture(false);
+  }, [isRemovingProfilePicture, syncUserSettings]);
 
   const onSubmit = useCallback(async () => {
     const settingsValid = await settingsForm.trigger();
@@ -148,11 +217,14 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
         </DialogHeader>
 
         <div className="flex items-center gap-4 rounded-md border bg-sidebar p-4">
-          <Avatar size="lg">
-            <AvatarFallback className="rounded-md bg-linear-to-br from-sidebar-accent to-sidebar-accent/80 text-sm font-semibold text-sidebar-accent-foreground">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
+          <ResolvedUserAvatar
+            size="lg"
+            userId={user?.id}
+            name={user?.name}
+            profilePicUrl={user?.profilePicUrl}
+            thumbnailUrl={user?.thumbnailUrl}
+            fallbackClassName="rounded-md bg-linear-to-br from-sidebar-accent to-sidebar-accent/80 text-sm font-semibold text-sidebar-accent-foreground"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{user?.name}</p>
             <p className="truncate text-xs text-muted-foreground">@{user?.username}</p>
@@ -161,7 +233,37 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
               <span className="truncate">{user?.emailAddress}</span>
             </div>
           </div>
+          <div className="flex shrink-0 gap-2 self-start">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Camera className="size-4" />
+              {user?.profilePicUrl ? "Change" : "Upload"}
+            </Button>
+            {user?.profilePicUrl ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => void handleRemoveProfilePicture()}
+                disabled={isRemovingProfilePicture}
+                aria-label="Remove profile picture"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            ) : null}
+          </div>
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={IMAGE_UPLOAD_ACCEPT}
+          className="hidden"
+          onChange={handleFileSelection}
+        />
 
         <Separator />
 
@@ -248,6 +350,20 @@ export function UserSettingsDialog({ open, onOpenChange }: UserSettingsDialogPro
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <ImageCropUploadDialog
+        open={isCropOpen}
+        file={pendingFile}
+        title="Crop Profile Picture"
+        description="Adjust your image before uploading. Profile pictures are cropped to a square."
+        {...profilePictureCropConfig}
+        confirmLabel="Upload Picture"
+        onClose={() => {
+          setIsCropOpen(false);
+          setPendingFile(null);
+        }}
+        onConfirm={handleProfilePictureUpload}
+      />
     </Dialog>
   );
 }

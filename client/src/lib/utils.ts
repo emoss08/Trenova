@@ -123,6 +123,26 @@ export function formatLocation(location?: Location) {
 export const initials = (first?: string, last?: string) =>
   `${(first?.[0] ?? "").toUpperCase()}${(last?.[0] ?? "").toUpperCase()}`.trim() || "•";
 
+export function getNameInitials(name?: string, fallback = "U") {
+  if (!name) {
+    return fallback;
+  }
+
+  const letters = name
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return letters || fallback;
+}
+
+export function isAbsoluteUrl(value?: string | null) {
+  return Boolean(value) && (value!.startsWith("http://") || value!.startsWith("https://"));
+}
+
 export function findDuplicateIds<T>(items: T[], getId: (item: T) => string | undefined): Set<string> {
   const seen = new Set<string>();
   const dupes = new Set<string>();

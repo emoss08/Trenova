@@ -2,15 +2,19 @@ package userservice
 
 import (
 	"context"
+	"mime/multipart"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -26,6 +30,8 @@ type Params struct {
 	SessionRepository repositories.SessionRepository
 	AuditService      services.AuditService
 	Realtime          services.RealtimeService
+	Storage           storage.Client
+	Config            *config.Config
 	Validator         *Validator
 }
 
@@ -36,6 +42,8 @@ type Service struct {
 	sr           repositories.SessionRepository
 	auditService services.AuditService
 	realtime     services.RealtimeService
+	storage      storage.Client
+	storageCfg   *config.StorageConfig
 	validator    *Validator
 }
 
@@ -47,6 +55,8 @@ func New(p Params) *Service {
 		roleRepo:     p.RoleRepository,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
+		storage:      p.Storage,
+		storageCfg:   p.Config.GetStorageConfig(),
 		validator:    p.Validator,
 	}
 }
@@ -311,6 +321,187 @@ func organizationStateName(org *tenant.Organization) string {
 	return org.State.Name
 }
 
+func (s *Service) UploadProfilePicture(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	fileHeader *multipart.FileHeader,
+) (*tenant.User, error) {
+	if multiErr := s.validateProfilePictureFile(fileHeader); multiErr != nil {
+		return nil, multiErr
+	}
+
+	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:         tenantInfo,
+		IncludeMemberships: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded profile picture").WithInternal(err)
+	}
+	defer file.Close()
+
+	contentType := fileHeader.Header.Get("Content-Type")
+	key := fileutils.GenerateStoragePath(
+		tenantInfo.OrgID.String(),
+		"user/profile-picture",
+		fileHeader.Filename,
+	)
+
+	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+		Key:         key,
+		ContentType: contentType,
+		Size:        fileHeader.Size,
+		Body:        file,
+		Metadata: map[string]string{
+			"original_name": fileHeader.Filename,
+			"resource_type": "user-profile-picture",
+			"resource_id":   tenantInfo.UserID.String(),
+		},
+	}); err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to upload profile picture").WithInternal(err)
+	}
+
+	previousProfilePicture := user.ProfilePicURL
+	previousThumbnail := user.ThumbnailURL
+	user.ProfilePicURL = key
+	user.ThumbnailURL = key
+
+	updatedUser, err := s.Update(ctx, user, tenantInfo.UserID)
+	if err != nil {
+		_ = s.storage.Delete(ctx, key)
+		return nil, err
+	}
+
+	s.deleteProfilePictureObject(ctx, previousProfilePicture, key)
+	if previousThumbnail != previousProfilePicture {
+		s.deleteProfilePictureObject(ctx, previousThumbnail, key)
+	}
+
+	return updatedUser, nil
+}
+
+func (s *Service) DeleteProfilePicture(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*tenant.User, error) {
+	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:         tenantInfo,
+		IncludeMemberships: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	previousProfilePicture := user.ProfilePicURL
+	previousThumbnail := user.ThumbnailURL
+	user.ProfilePicURL = ""
+	user.ThumbnailURL = ""
+
+	updatedUser, err := s.Update(ctx, user, tenantInfo.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.deleteProfilePictureObject(ctx, previousProfilePicture, "")
+	if previousThumbnail != previousProfilePicture {
+		s.deleteProfilePictureObject(ctx, previousThumbnail, "")
+	}
+
+	return updatedUser, nil
+}
+
+func (s *Service) GetProfilePictureURL(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+	variant string,
+) (string, error) {
+	user, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+		TenantInfo:   tenantInfo,
+		LookupUserID: userID,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	profilePictureKey := user.ProfilePicURL
+	if variant == "thumbnail" && user.ThumbnailURL != "" {
+		profilePictureKey = user.ThumbnailURL
+	}
+	if profilePictureKey == "" {
+		profilePictureKey = user.ProfilePicURL
+	}
+	if profilePictureKey == "" {
+		return "", errortypes.NewNotFoundError("Profile picture not found")
+	}
+
+	if fileutils.IsExternalURL(profilePictureKey) {
+		return profilePictureKey, nil
+	}
+
+	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+		Key:    profilePictureKey,
+		Expiry: s.storageCfg.GetPresignedURLExpiry(),
+	})
+	if err != nil {
+		return "", errortypes.NewDatabaseError("Failed to generate profile picture URL").WithInternal(err)
+	}
+
+	return url, nil
+}
+
+func (s *Service) validateProfilePictureFile(file *multipart.FileHeader) *errortypes.MultiError {
+	me := errortypes.NewMultiError()
+	if file == nil {
+		me.Add("file", errortypes.ErrRequired, "Profile picture file is required")
+		return me
+	}
+
+	if file.Size == 0 {
+		me.Add("file", errortypes.ErrRequired, "Profile picture file cannot be empty")
+	}
+
+	if file.Size > s.storageCfg.GetMaxFileSize() {
+		me.Add("file", errortypes.ErrInvalidLength, "Profile picture file exceeds maximum allowed size")
+	}
+
+	if !fileutils.IsSupportedImageContentType(file.Header.Get("Content-Type")) {
+		me.Add(
+			"file",
+			errortypes.ErrInvalidFormat,
+			"Only image files are allowed for profile pictures",
+		)
+	}
+
+	if !fileutils.HasSupportedImageExtension(file.Filename) {
+		me.Add("file", errortypes.ErrInvalidFormat, "Unsupported profile picture file extension")
+	}
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
+}
+
+func (s *Service) deleteProfilePictureObject(ctx context.Context, objectKey, currentKey string) {
+	if objectKey == "" || objectKey == currentKey || fileutils.IsExternalURL(objectKey) {
+		return
+	}
+
+	if err := s.storage.Delete(ctx, objectKey); err != nil {
+		s.l.Warn(
+			"failed to delete profile picture object",
+			zap.String("objectKey", objectKey),
+			zap.Error(err),
+		)
+	}
+}
+
 func (s *Service) UpdateMySettings(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -330,8 +521,6 @@ func (s *Service) UpdateMySettings(
 
 	user.Timezone = req.Timezone
 	user.TimeFormat = req.TimeFormat
-	user.ProfilePicURL = req.ProfilePicURL
-	user.ThumbnailURL = req.ThumbnailURL
 
 	return s.Update(ctx, user, tenantInfo.UserID)
 }

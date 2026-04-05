@@ -120,13 +120,17 @@ func (ur *repository) GetByID(
 	req repositories.GetUserByIDRequest,
 ) (*tenant.User, error) {
 	entity := new(tenant.User)
+	targetUserID := req.LookupUserID
+	if targetUserID == "" {
+		targetUserID = req.TenantInfo.UserID
+	}
 	q := ur.db.DB().
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("usr.current_organization_id = ?", req.TenantInfo.OrgID).
 				Where("usr.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("usr.id = ?", req.TenantInfo.UserID)
+				Where("usr.id = ?", targetUserID)
 		})
 
 	if req.IncludeMemberships {

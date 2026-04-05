@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LazyImage } from "@/components/image";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import type { ModuleId, NavModule } from "@/config/navigation.types";
 import { useSwitchOrganization } from "@/hooks/use-organization-switch";
 import { queries } from "@/lib/queries";
@@ -302,12 +303,6 @@ function UserMenu() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const displayName = user?.name ?? user?.username ?? "User";
-  const initials = displayName
-    .split(" ")
-    .map((w: string) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 
   const handleLogout = async () => {
     await logout();
@@ -325,13 +320,20 @@ function UserMenu() {
                 render={
                   <button
                     type="button"
-                    className="flex size-8 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground transition-colors hover:bg-accent"
+                    className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-accent/50"
                   />
                 }
               />
             }
           >
-            {initials}
+            <ResolvedUserAvatar
+              userId={user?.id}
+              name={user?.name}
+              profilePicUrl={user?.profilePicUrl}
+              thumbnailUrl={user?.thumbnailUrl}
+              className="size-8"
+              fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
+            />
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={6}>
             {displayName}
@@ -346,9 +348,14 @@ function UserMenu() {
           <DropdownMenuGroup>
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-sidebar-accent-foreground">
-                  <span className="text-xs font-semibold">{initials}</span>
-                </div>
+                <ResolvedUserAvatar
+                  userId={user?.id}
+                  name={user?.name}
+                  profilePicUrl={user?.profilePicUrl}
+                  thumbnailUrl={user?.thumbnailUrl}
+                  className="size-8"
+                  fallbackClassName="rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-xs font-semibold text-sidebar-accent-foreground"
+                />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">{user?.name}</span>
                   <span className="truncate text-xs text-muted-foreground">

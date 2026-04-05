@@ -116,8 +116,6 @@ export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export const updateMySettingsSchema = z.object({
   timezone: z.string().min(1, { error: "Timezone is required" }),
   timeFormat: TimeFormat,
-  profilePicUrl: z.string().optional(),
-  thumbnailUrl: z.string().optional(),
 });
 
 export type UpdateMySettings = z.infer<typeof updateMySettingsSchema>;
@@ -129,6 +127,12 @@ export const changeMyPasswordSchema = z.object({
 });
 
 export type ChangeMyPassword = z.infer<typeof changeMyPasswordSchema>;
+
+export const profilePictureUrlResponseSchema = z.object({
+  url: z.string(),
+});
+
+export type ProfilePictureUrlResponse = z.infer<typeof profilePictureUrlResponseSchema>;
 
 export const bulkUpdateUserStatusRequestSchema = z.object({
   userIds: z.array(z.string()),

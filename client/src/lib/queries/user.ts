@@ -16,4 +16,8 @@ export const user = createQueryKeys("user", {
     queryKey: ["detail", id],
     queryFn: async () => apiService.userService.get(id),
   }),
+  profilePicture: (id: User["id"], variant: "thumbnail" | "full" = "thumbnail") => ({
+    queryKey: ["profile-picture", id, variant],
+    queryFn: async () => (id ? apiService.userService.getProfilePictureURL(id, variant) : null),
+  }),
 });
