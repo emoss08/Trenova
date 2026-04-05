@@ -2,6 +2,7 @@ package documentcontentrepository
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -64,15 +65,14 @@ func (r *repository) ListPagesByDocumentID(
 	tenantInfo pagination.TenantInfo,
 ) ([]*documentcontent.Page, error) {
 	items := make([]*documentcontent.Page, 0)
-	cols := buncolgen.PageColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return buncolgen.PageScopeTenant(sq, tenantInfo).
-				Where(cols.DocumentID.Eq(), documentID)
+			return sq.Where("business_unit_id = ? AND organization_id = ?", tenantInfo.BuID, tenantInfo.OrgID).
+				Where("document_id = ?", documentID)
 		}).
-		Order(cols.PageNumber.OrderAsc()).
+		Order("page_number ASC").
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (r *repository) ReplacePages(
 	cols := buncolgen.PageColumns
 
 	if _, err := db.NewDelete().
-		Table(buncolgen.PageTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.PageTable.Name, buncolgen.PageTable.Alias)).
 		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
 			return buncolgen.PageScopeTenantDelete(sq, pagination.TenantInfo{
 				OrgID: content.OrganizationID,

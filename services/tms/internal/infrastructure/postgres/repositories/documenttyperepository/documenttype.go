@@ -114,7 +114,6 @@ func (r *repository) Update(
 		NewUpdate().
 		Model(entity).WherePK().
 		Where(cols.Version.Eq(), ov).
-		OmitZero().
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -215,6 +214,7 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*documenttype.DocumentType], error) {
+	cols := buncolgen.DocumentTypeColumns
 	return dbhelper.SelectOptions[*documenttype.DocumentType](
 		ctx,
 		r.db.DB(),
@@ -230,10 +230,23 @@ func (r *repository) SelectOptions(
 				buncolgen.DocumentTypeColumns.DocumentCategory.Bare(),
 				buncolgen.DocumentTypeColumns.IsSystem.Bare(),
 			},
-			OrgColumn:     buncolgen.DocumentTypeColumns.OrganizationID.Qualified(),
-			BuColumn:      buncolgen.DocumentTypeColumns.BusinessUnitID.Qualified(),
-			EntityName:    "DocumentType",
-			SearchColumns: []string{buncolgen.DocumentTypeColumns.Code.Qualified(), buncolgen.DocumentTypeColumns.Name.Qualified()},
+			OrgColumn:  buncolgen.DocumentTypeColumns.OrganizationID.Qualified(),
+			BuColumn:   buncolgen.DocumentTypeColumns.BusinessUnitID.Qualified(),
+			EntityName: "DocumentType",
+			SearchColumns: []string{
+				buncolgen.DocumentTypeColumns.Code.Qualified(),
+				buncolgen.DocumentTypeColumns.Name.Qualified(),
+			},
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				// exclude INVOICE, CREDITMEMO, DEBITMEMO
+				// These document types are system document types and should not be set by the user
+				return q.WhereGroup("AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where(
+						cols.Code.NotIn(),
+						bun.List([]string{"INVOICE", "CREDITMEMO", "DEBITMEMO"}),
+					)
+				})
+			},
 		},
 	)
 }

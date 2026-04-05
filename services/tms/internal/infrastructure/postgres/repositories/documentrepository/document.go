@@ -2,13 +2,13 @@ package documentrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -340,7 +340,7 @@ func (r *repository) Delete(
 	cols := buncolgen.DocumentColumns
 	results, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Table(buncolgen.DocumentTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.DocumentTable.Name, buncolgen.DocumentTable.Alias)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			return buncolgen.DocumentScopeTenantDelete(dq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.ID)
@@ -351,12 +351,7 @@ func (r *repository) Delete(
 		return err
 	}
 
-	rowsAffected, _ := results.RowsAffected()
-	if rowsAffected == 0 {
-		return errortypes.NewNotFoundError("Document not found within your organization")
-	}
-
-	return nil
+	return dberror.CheckRowsAffected(results, "Document", req.ID.String())
 }
 
 func (r *repository) GetByIDs(
@@ -524,7 +519,7 @@ func (r *repository) DeleteByLineageIDs(
 	cols := buncolgen.DocumentColumns
 	_, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Table(buncolgen.DocumentTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.DocumentTable.Name, buncolgen.DocumentTable.Alias)).
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			return buncolgen.DocumentScopeTenantDelete(dq, req.TenantInfo).
 				Where(cols.LineageID.In(), bun.List(req.LineageIDs))
