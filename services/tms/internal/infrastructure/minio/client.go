@@ -379,30 +379,6 @@ func (c *Client) GetFileInfo(ctx context.Context, key string) (*storage.FileInfo
 		VersionID:    stat.VersionID,
 	}
 
-	retentionMode, retentionUntil, retentionErr := c.client.GetObjectRetention(
-		ctx,
-		c.bucket,
-		key,
-		stat.VersionID,
-	)
-	if retentionErr == nil {
-		if retentionMode != nil {
-			info.RetentionMode = string(*retentionMode)
-		}
-		info.RetentionUntil = retentionUntil
-	} else {
-		log.Debug("failed to fetch object retention metadata", zap.Error(retentionErr))
-	}
-
-	legalHold, legalHoldErr := c.client.GetObjectLegalHold(ctx, c.bucket, key, minio.GetObjectLegalHoldOptions{
-		VersionID: stat.VersionID,
-	})
-	if legalHoldErr == nil && legalHold != nil {
-		info.LegalHold = string(*legalHold) == "ON"
-	} else if legalHoldErr != nil {
-		log.Debug("failed to fetch object legal hold metadata", zap.Error(legalHoldErr))
-	}
-
 	return info, nil
 }
 
