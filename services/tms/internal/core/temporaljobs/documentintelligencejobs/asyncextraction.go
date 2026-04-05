@@ -323,7 +323,7 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 
 		if poll.Status == services.AIBackgroundExtractionStatusPending {
 			if _, err = a.aiExtractionRepo.Update(ctx, row); err != nil {
-				a.logger.Warn(
+				a.logger.Error(
 					"failed to update pending AI extraction poll time",
 					zap.String("documentId", row.DocumentID.String()),
 					zap.Error(err),
@@ -699,7 +699,7 @@ func analysisFromMap(data map[string]any) *DocumentIntelligenceAnalysis {
 				Value:      sliceutils.StringValue(fieldMap["value"]),
 				Confidence: floatutils.FloatValue(fieldMap["confidence"]),
 				Excerpt:    sliceutils.StringValue(fieldMap["excerpt"]),
-				EvidenceExcerpt: firstNonEmpty(
+				EvidenceExcerpt: stringutils.FirstNonEmpty(
 					sliceutils.StringValue(fieldMap["evidenceExcerpt"]),
 					sliceutils.StringValue(fieldMap["excerpt"]),
 				),
@@ -771,7 +771,7 @@ func parseParsingRuleMetadata(data map[string]any) *services.DocumentParsingRule
 		RuleVersionID:    ruleVersionID,
 		VersionNumber:    intutils.IntValue(data["versionNumber"]),
 		ParserMode:       sliceutils.StringValue(data["parserMode"]),
-		ProviderMatched:  sliceutils.StringValue(data["providerMatmatched"]),
+		ProviderMatched:  sliceutils.StringValue(data["providerMatched"]),
 		MatchSpecificity: intutils.IntValue(data["matchSpecificity"]),
 	}
 }
@@ -782,34 +782,11 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 	control *tenant.DocumentControl,
 	intelligence *DocumentIntelligenceAnalysis,
 ) error {
-	draftStatus := document.ShipmentDraftStatusUnavailable
-	if canGenerateShipmentDraft(control, doc.ResourceType, doc.DetectedKind) &&
-		hasUsableShipmentDraft(intelligence) {
-		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
-			DocumentID:     doc.ID,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			Status:         documentshipmentdraft.StatusReady,
-			DocumentKind:   doc.DetectedKind,
-			Confidence:     intelligence.OverallConfidence,
-			DraftData:      intelligence.ToMap(),
-		}); err != nil {
-			return err
-		}
-		draftStatus = document.ShipmentDraftStatusReady
-	} else {
-		draftState := documentshipmentdraft.StatusUnavailable
-		if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
-			DocumentID:     doc.ID,
-			OrganizationID: doc.OrganizationID,
-			BusinessUnitID: doc.BusinessUnitID,
-			Status:         draftState,
-			DocumentKind:   doc.DetectedKind,
-			Confidence:     intelligence.OverallConfidence,
-			DraftData:      intelligence.ToMap(),
-		}); err != nil {
-			return err
-		}
+	isUsable := canGenerateShipmentDraft(control, doc.ResourceType, doc.DetectedKind) &&
+		hasUsableShipmentDraft(intelligence)
+	draftStatus, err := a.upsertDraft(ctx, doc, doc.DetectedKind, intelligence, isUsable)
+	if err != nil {
+		return err
 	}
 
 	doc.ShipmentDraftStatus = draftStatus
@@ -826,4 +803,33 @@ func (a *Activities) updateShipmentDraftFromIntelligence(
 		ShipmentDraftStatus: doc.ShipmentDraftStatus,
 		DocumentTypeID:      doc.DocumentTypeID,
 	})
+}
+
+func (a *Activities) upsertDraft(
+	ctx context.Context,
+	doc *document.Document,
+	kind string,
+	intelligence *DocumentIntelligenceAnalysis,
+	isReady bool,
+) (document.ShipmentDraftStatus, error) {
+	draftState := documentshipmentdraft.StatusUnavailable
+	draftStatus := document.ShipmentDraftStatusUnavailable
+	if isReady {
+		draftState = documentshipmentdraft.StatusReady
+		draftStatus = document.ShipmentDraftStatusReady
+	}
+
+	if _, err := a.draftRepo.Upsert(ctx, &documentshipmentdraft.DocumentShipmentDraft{
+		DocumentID:     doc.ID,
+		OrganizationID: doc.OrganizationID,
+		BusinessUnitID: doc.BusinessUnitID,
+		Status:         draftState,
+		DocumentKind:   kind,
+		Confidence:     intelligence.OverallConfidence,
+		DraftData:      intelligence.ToMap(),
+	}); err != nil {
+		return "", err
+	}
+
+	return draftStatus, nil
 }

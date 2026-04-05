@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { FormControlProps } from "@/types/fields";
+import type { FormControlProps, WarningProps } from "@/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
 import { RecommendedBadge } from "../recommended-badge";
@@ -15,10 +15,7 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   switchInputClassName?: string;
   recommended?: boolean;
   readOnly?: boolean;
-  warning?: {
-    show: boolean;
-    message: string;
-  };
+  warning?: WarningProps;
   tooltip?: React.ReactNode;
 };
 

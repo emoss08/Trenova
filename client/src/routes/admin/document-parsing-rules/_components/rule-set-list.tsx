@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -128,7 +127,7 @@ function RuleSetCard({
       onClick={onSelect}
       className={cn(
         "w-full rounded-md border p-3 text-left transition-colors",
-        isSelected ? "border-brand/30 bg-brand/5" : "border-transparent hover:bg-muted/50",
+        isSelected ? "border-border bg-muted" : "border-transparent hover:bg-muted/50",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -144,7 +143,9 @@ function RuleSetCard({
                     </span>
                   }
                 />
-                <TooltipContent side="right">Published</TooltipContent>
+                <TooltipContent side="right" sideOffset={10}>
+                  Published
+                </TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -153,12 +154,6 @@ function RuleSetCard({
               {ruleSet.description}
             </p>
           )}
-          <div className="mt-1.5 flex items-center gap-2">
-            <Badge variant="info" className="text-2xs">
-              {ruleSet.documentKind}
-            </Badge>
-            <span className="text-2xs text-muted-foreground">Priority {ruleSet.priority}</span>
-          </div>
         </div>
       </div>
     </button>

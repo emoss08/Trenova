@@ -25,6 +25,7 @@ import type {
   ServiceIncidentType,
 } from "@/types/dispatch-control";
 import type { ResourceType } from "@/types/document-packet-rule";
+import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@/types/fields";
@@ -673,3 +674,10 @@ export const resourceTypeChoices = [
   { value: "Tractor", label: "Tractor" },
   { value: "Worker", label: "Worker" },
 ] satisfies ReadonlyArray<GenericSelectOption<ResourceType>>;
+
+export const documentKindChoices = [
+  { value: "RateConfirmation", label: "Rate Confirmation" },
+  { value: "BillOfLading", label: "Bill of Lading" },
+  { value: "ProofOfDelivery", label: "Proof of Delivery" },
+  { value: "Invoice", label: "Invoice" },
+] satisfies ReadonlyArray<GenericSelectOption<DocumentKind>>;

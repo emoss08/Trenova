@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
-import type { FormControlProps, SelectOption, SelectOptionGroup } from "@/types/fields";
+import type {
+  FormControlProps,
+  SelectOption,
+  SelectOptionGroup,
+  WarningProps,
+} from "@/types/fields";
 import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -29,6 +34,7 @@ export type BaseSelectFieldProps = {
   placeholder?: string;
   isClearable?: boolean;
   renderOption?: (option: SelectOption, searchValue: string) => React.ReactNode;
+  warning?: WarningProps;
 };
 
 type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps & FormControlProps<T>;
@@ -42,6 +48,7 @@ export function SelectField<T extends FieldValues>({
   className,
   options,
   groups,
+  warning,
   placeholder,
   isReadOnly,
   isClearable = false,
@@ -114,6 +121,7 @@ export function SelectField<T extends FieldValues>({
           <FieldWrapper
             label={label}
             description={description}
+            warning={warning}
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
@@ -133,6 +141,8 @@ export function SelectField<T extends FieldValues>({
                       "cursor-default disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
                       fieldState.invalid && "data-pressed:ring-destructive/20",
                       isReadOnly && "pointer-events-none cursor-not-allowed opacity-60",
+                      warning?.show &&
+                        "border-amber-500 bg-amber-500/10 ring-0 ring-amber-500 placeholder:text-amber-600 focus:outline-hidden focus-visible:border-amber-600 focus-visible:ring-4 focus-visible:ring-amber-400/20",
                     )}
                   >
                     <div

@@ -1,6 +1,7 @@
+import { cn } from "@/lib/utils";
+import type { WarningProps } from "@/types/fields";
 import React, { useMemo } from "react";
 import { Label } from "../ui/label";
-import { cn } from "@/lib/utils";
 
 export function ErrorMessage({ formError }: { formError?: string }) {
   return (
@@ -15,9 +16,15 @@ export function ErrorMessage({ formError }: { formError?: string }) {
 
 export function FieldDescription({
   description,
+  warning,
 }: {
-  description: string | React.ReactNode;
+  description?: string | React.ReactNode;
+  warning?: WarningProps;
 }) {
+  if (warning?.show) {
+    return <p className="text-left text-2xs text-amber-600">{warning.message}</p>;
+  }
+
   if (!description) {
     return null;
   }
@@ -31,24 +38,17 @@ export function FieldDescription({
 
 type FieldWrapperProps = {
   label?: string;
-  description?: string;
+  description?: string | React.ReactNode;
+  warning?: WarningProps;
   required?: boolean;
   className?: string;
   children: React.ReactNode;
   error?: string;
 };
 
-export function FieldLabel({
-  label,
-  required,
-}: {
-  label?: string;
-  required?: boolean;
-}) {
+export function FieldLabel({ label, required }: { label?: string; required?: boolean }) {
   return label ? (
-    <Label className={cn("block text-xs font-medium", required && "required")}>
-      {label}
-    </Label>
+    <Label className={cn("block text-xs font-medium", required && "required")}>{label}</Label>
   ) : null;
 }
 
@@ -56,27 +56,24 @@ function FieldWrapperInner({ children }: { children: React.ReactNode }) {
   return <div className="mb-0.5 flex items-center">{children}</div>;
 }
 
-function FieldWrapperDescriptionInner({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function FieldWrapperDescriptionInner({ children }: { children: React.ReactNode }) {
   return <div className="flex justify-start">{children}</div>;
 }
 
 export function FieldWrapper({
   label,
   description,
+  warning,
   required,
   className,
   children,
   error,
 }: FieldWrapperProps) {
   const descriptionElement = useMemo(() => {
-    return description && !error ? (
-      <FieldDescription description={description} />
+    return !error && (description || warning?.show) ? (
+      <FieldDescription description={description} warning={warning} />
     ) : null;
-  }, [description, error]);
+  }, [description, error, warning]);
 
   const errorElement = useMemo(() => {
     return error ? <ErrorMessage formError={error} /> : null;

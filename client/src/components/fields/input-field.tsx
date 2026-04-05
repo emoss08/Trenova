@@ -12,8 +12,7 @@ type BaseInputFieldProps = Omit<InputProps, "name"> & {
   maxLength?: number;
 };
 
-export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
-  FormControlProps<T>;
+export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps & FormControlProps<T>;
 
 export function InputField<T extends FieldValues>({
   label,
@@ -51,9 +50,7 @@ export function InputField<T extends FieldValues>({
               onChange={field.onChange}
               className={inputClassProps}
               aria-invalid={fieldState.invalid}
-              aria-describedby={
-                (description && descriptionId) || (fieldState.error && errorId)
-              }
+              aria-describedby={(description && descriptionId) || (fieldState.error && errorId)}
             />
           </FieldWrapper>
         );

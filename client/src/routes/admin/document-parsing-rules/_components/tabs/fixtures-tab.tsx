@@ -1,11 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { Operation, Resource } from "@/types/permission";
-import { usePermission } from "@/hooks/use-permission";
 import type { Fixture } from "@/types/document-parsing-rule";
+import { Operation, Resource } from "@/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FlaskConicalIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
@@ -40,9 +40,7 @@ const NEW_FIXTURE_TEMPLATE = {
 };
 
 export default function FixturesTab({ ruleSetId }: { ruleSetId: string }) {
-  const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(
-    null,
-  );
+  const [selectedFixtureId, setSelectedFixtureId] = useState<string | null>(null);
 
   if (selectedFixtureId) {
     return (
@@ -55,12 +53,7 @@ export default function FixturesTab({ ruleSetId }: { ruleSetId: string }) {
     );
   }
 
-  return (
-    <FixtureList
-      ruleSetId={ruleSetId}
-      onSelectFixture={setSelectedFixtureId}
-    />
-  );
+  return <FixtureList ruleSetId={ruleSetId} onSelectFixture={setSelectedFixtureId} />;
 }
 
 function FixtureList({
@@ -71,10 +64,7 @@ function FixtureList({
   onSelectFixture: (id: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const { allowed: canCreate } = usePermission(
-    Resource.DocumentParsingRule,
-    Operation.Create,
-  );
+  const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
   const { data: fixtures, isLoading } = useQuery({
     ...queries.documentParsingRule.fixtures(ruleSetId),
@@ -82,10 +72,7 @@ function FixtureList({
 
   const createMutation = useMutation({
     mutationFn: () =>
-      apiService.documentParsingRuleService.createFixture(
-        ruleSetId,
-        NEW_FIXTURE_TEMPLATE,
-      ),
+      apiService.documentParsingRuleService.createFixture(ruleSetId, NEW_FIXTURE_TEMPLATE),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.fixtures._def,
@@ -94,9 +81,7 @@ function FixtureList({
       if (data.id) onSelectFixture(data.id);
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create fixture",
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to create fixture");
     },
   });
 
@@ -119,7 +104,6 @@ function FixtureList({
         {canCreate && (
           <Button
             type="button"
-            variant="outline"
             size="sm"
             className="gap-1"
             onClick={() => createMutation.mutate()}
@@ -139,9 +123,8 @@ function FixtureList({
           <div className="space-y-1">
             <p className="text-sm font-medium">No fixtures yet</p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              Fixtures are sample documents with expected extraction results. They
-              let you validate that rules produce the correct fields and stops
-              before publishing.
+              Fixtures are sample documents with expected extraction results. They let you validate
+              that rules produce the correct fields and stops before publishing.
             </p>
           </div>
         </div>
@@ -162,9 +145,7 @@ function FixtureList({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{f.name}</span>
                   {f.fileName && (
-                    <span className="text-xs text-muted-foreground">
-                      {f.fileName}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{f.fileName}</span>
                   )}
                 </div>
                 {assertionCount > 0 && (
@@ -178,8 +159,7 @@ function FixtureList({
                   <Badge
                     variant={
                       REVIEW_STATUS_VARIANT[
-                        f.assertions
-                          .reviewStatus as keyof typeof REVIEW_STATUS_VARIANT
+                        f.assertions.reviewStatus as keyof typeof REVIEW_STATUS_VARIANT
                       ] ?? "secondary"
                     }
                   >

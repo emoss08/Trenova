@@ -10,7 +10,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
@@ -131,12 +130,6 @@ export function RuleSetDetail({ ruleSetId, onDeleted }: RuleSetDetailProps) {
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">{ruleSet.name}</h2>
-          <Badge variant="info">{ruleSet.documentKind}</Badge>
-          {ruleSet.publishedVersionId ? (
-            <Badge variant="active">Published</Badge>
-          ) : (
-            <Badge variant="secondary">No Published Version</Badge>
-          )}
         </div>
         {canDelete && (
           <AlertDialog>

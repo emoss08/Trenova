@@ -1,19 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePermission } from "@/hooks/use-permission";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { Operation, Resource } from "@/types/permission";
-import { usePermission } from "@/hooks/use-permission";
 import type { RuleVersion } from "@/types/document-parsing-rule";
+import { Operation, Resource } from "@/types/permission";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  GitBranchIcon,
-  LayersIcon,
-  MapPinIcon,
-  PlusIcon,
-  TextIcon,
-} from "lucide-react";
+import { GitBranchIcon, LayersIcon, MapPinIcon, PlusIcon, TextIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { VersionDetail } from "../version-detail/version-detail";
@@ -58,25 +52,15 @@ const NEW_VERSION_TEMPLATE = {
 };
 
 export default function VersionsTab({ ruleSetId }: { ruleSetId: string }) {
-  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
-    null,
-  );
+  const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
 
   if (selectedVersionId) {
     return (
-      <VersionDetail
-        versionId={selectedVersionId}
-        onBack={() => setSelectedVersionId(null)}
-      />
+      <VersionDetail versionId={selectedVersionId} onBack={() => setSelectedVersionId(null)} />
     );
   }
 
-  return (
-    <VersionList
-      ruleSetId={ruleSetId}
-      onSelectVersion={setSelectedVersionId}
-    />
-  );
+  return <VersionList ruleSetId={ruleSetId} onSelectVersion={setSelectedVersionId} />;
 }
 
 function VersionList({
@@ -87,29 +71,20 @@ function VersionList({
   onSelectVersion: (id: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const { allowed: canCreate } = usePermission(
-    Resource.DocumentParsingRule,
-    Operation.Create,
-  );
+  const { allowed: canCreate } = usePermission(Resource.DocumentParsingRule, Operation.Create);
 
   const { data: versions, isLoading } = useQuery({
     ...queries.documentParsingRule.versions(ruleSetId),
   });
 
   const sortedVersions = useMemo(
-    () =>
-      [...(versions ?? [])].sort(
-        (a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0),
-      ),
+    () => [...(versions ?? [])].sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0)),
     [versions],
   );
 
   const createMutation = useMutation({
     mutationFn: () =>
-      apiService.documentParsingRuleService.createVersion(
-        ruleSetId,
-        NEW_VERSION_TEMPLATE,
-      ),
+      apiService.documentParsingRuleService.createVersion(ruleSetId, NEW_VERSION_TEMPLATE),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({
         queryKey: queries.documentParsingRule.versions._def,
@@ -118,9 +93,7 @@ function VersionList({
       if (data.id) onSelectVersion(data.id);
     },
     onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create draft version",
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to create draft version");
     },
   });
 
@@ -143,7 +116,6 @@ function VersionList({
         {canCreate && (
           <Button
             type="button"
-            variant="outline"
             size="sm"
             className="gap-1"
             onClick={() => createMutation.mutate()}
@@ -163,9 +135,8 @@ function VersionList({
           <div className="space-y-1">
             <p className="text-sm font-medium">No versions yet</p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              Versions define how documents are parsed. Each version contains match
-              criteria, field extraction rules, and stop definitions. Create a draft to
-              get started.
+              Versions define how documents are parsed. Each version contains match criteria, field
+              extraction rules, and stop definitions. Create a draft to get started.
             </p>
           </div>
         </div>
@@ -186,14 +157,8 @@ function VersionList({
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">
-                    Version {v.versionNumber}
-                  </span>
-                  {v.label && (
-                    <span className="text-xs text-muted-foreground">
-                      {v.label}
-                    </span>
-                  )}
+                  <span className="text-sm font-medium">Version {v.versionNumber}</span>
+                  {v.label && <span className="text-xs text-muted-foreground">{v.label}</span>}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -213,9 +178,8 @@ function VersionList({
               <div className="flex items-center gap-2">
                 <Badge
                   variant={
-                    STATUS_BADGE_VARIANT[
-                      v.status as keyof typeof STATUS_BADGE_VARIANT
-                    ] ?? "secondary"
+                    STATUS_BADGE_VARIANT[v.status as keyof typeof STATUS_BADGE_VARIANT] ??
+                    "secondary"
                   }
                 >
                   {v.status}

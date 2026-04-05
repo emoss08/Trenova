@@ -1,12 +1,6 @@
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Command,
   CommandEmpty,
@@ -20,8 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type {
   RuleVersion,
@@ -124,11 +118,7 @@ function VersionSelect({
                     onChange(val === value ? "" : val);
                     setOpen(false);
                   }}
-                  keywords={[
-                    `Version ${v.versionNumber}`,
-                    v.status,
-                    v.label ?? "",
-                  ]}
+                  keywords={[`Version ${v.versionNumber}`, v.status, v.label ?? ""]}
                 >
                   {value === v.id && <CheckIcon className="size-3.5 shrink-0" />}
                   <Badge variant={VERSION_STATUS_BADGE[v.status]} className="shrink-0">
@@ -152,13 +142,7 @@ function HelpText({ children }: { children: React.ReactNode }) {
   return <p className="text-2xs text-foreground/70">{children}</p>;
 }
 
-function SectionHeading({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
+function SectionHeading({ title, description }: { title: string; description: string }) {
   return (
     <div className="space-y-0.5">
       <h3 className="text-sm font-medium">{title}</h3>
@@ -193,10 +177,7 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
         providerFingerprint,
         baseline: baselineJson ? JSON.parse(baselineJson) : undefined,
       };
-      return apiService.documentParsingRuleService.simulate(
-        selectedVersionId,
-        request,
-      );
+      return apiService.documentParsingRuleService.simulate(selectedVersionId, request);
     },
     onSuccess: (data) => {
       setResult(data);
@@ -219,14 +200,12 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
   }
 
   const eligibleVersions =
-    versions?.filter(
-      (v: RuleVersion) => v.status === "Draft" || v.status === "Published",
-    ) ?? [];
+    versions?.filter((v: RuleVersion) => v.status === "Draft" || v.status === "Published") ?? [];
 
   const canRun = selectedVersionId && text.trim();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 py-2">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -381,8 +360,8 @@ export default function SimulationTab({ ruleSetId }: { ruleSetId: string }) {
                 <InfoIcon className="mt-0.5 size-3 shrink-0 text-muted-foreground" />
                 <p className="text-2xs text-muted-foreground">
                   Check that the selected version has valid rule configuration and the document text
-                  is not empty. If the issue persists, verify the rule version status on the Versions
-                  tab.
+                  is not empty. If the issue persists, verify the rule version status on the
+                  Versions tab.
                 </p>
               </div>
             </div>
