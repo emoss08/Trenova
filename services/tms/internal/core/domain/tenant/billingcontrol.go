@@ -13,35 +13,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type TransferSchedule string
-
-const (
-	TransferScheduleContinuous = TransferSchedule("Continuous")
-	TransferScheduleHourly     = TransferSchedule("Hourly")
-	TransferScheduleDaily      = TransferSchedule("Daily")
-	TransferScheduleWeekly     = TransferSchedule("Weekly")
-)
-
-type ExceptionHandling string
-
-const (
-	BillingExceptionQueue       = ExceptionHandling("Queue")
-	BillingExceptionNotify      = ExceptionHandling("Notify")
-	BillingExceptionAutoResolve = ExceptionHandling("AutoResolve")
-	BillingExceptionReject      = ExceptionHandling("Reject")
-)
-
-type PaymentTerm string
-
-const (
-	PaymentTermNet15        = PaymentTerm("Net15")
-	PaymentTermNet30        = PaymentTerm("Net30")
-	PaymentTermNet45        = PaymentTerm("Net45")
-	PaymentTermNet60        = PaymentTerm("Net60")
-	PaymentTermNet90        = PaymentTerm("Net90")
-	PaymentTermDueOnReceipt = PaymentTerm("DueOnReceipt")
-)
-
 var (
 	_ bun.BeforeAppendModelHook          = (*BillingControl)(nil)
 	_ validationframework.TenantedEntity = (*BillingControl)(nil)
@@ -62,11 +33,11 @@ type BillingControl struct {
 	PaymentTerm                   PaymentTerm       `json:"paymentTerm"                   bun:"payment_term,type:payment_term_enum,notnull,default:'Net30'"`
 	ShowInvoiceDueDate            bool              `json:"showInvoiceDueDate"            bun:"show_invoice_due_date,type:BOOLEAN,notnull,default:true"`
 	ShowAmountDue                 bool              `json:"showAmountDue"                 bun:"show_amount_due,type:BOOLEAN,notnull,default:true"`
-	AutoTransfer                  bool              `json:"autoTransfer"                  bun:"auto_transfer,type:BOOLEAN,notnull,default:false"`                // * Automatically transfer shipments if they meet billing requirements
-	AutoMarkReadyToBill           bool              `json:"autoMarkReadyToBill"           bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:false"`      // * Automatically mark shipment as ready to bill if it meets billing requirements
-	EnforceCustomerBillingReq     bool              `json:"enforceCustomerBillingReq"     bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:false"` // * Enforce customer billing requirements before billing
-	ValidateCustomerRates         bool              `json:"validateCustomerRates"         bun:"validate_customer_rates,type:BOOLEAN,notnull,default:false"`      // * Validate customer rates before billing
-	AutoBill                      bool              `json:"autoBill"                      bun:"auto_bill,type:BOOLEAN,notnull,default:false"`                    // * Automatically bill shipment if it meets billing requirements
+	AutoTransfer                  bool              `json:"autoTransfer"                  bun:"auto_transfer,type:BOOLEAN,notnull,default:true"`                // * Automatically transfer shipments if they meet billing requirements
+	AutoMarkReadyToBill           bool              `json:"autoMarkReadyToBill"           bun:"auto_mark_ready_to_bill,type:BOOLEAN,notnull,default:true"`      // * Automatically mark shipment as ready to bill if it meets billing requirements
+	EnforceCustomerBillingReq     bool              `json:"enforceCustomerBillingReq"     bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"` // * Enforce customer billing requirements before billing
+	ValidateCustomerRates         bool              `json:"validateCustomerRates"         bun:"validate_customer_rates,type:BOOLEAN,notnull,default:false"`     // * Validate customer rates before billing
+	AutoBill                      bool              `json:"autoBill"                      bun:"auto_bill,type:BOOLEAN,notnull,default:false"`                   // * Automatically bill shipment if it meets billing requirements
 	AutoResolveMinorDiscrepancies bool              `json:"autoResolveMinorDiscrepancies" bun:"auto_resolve_minor_discrepancies,type:BOOLEAN,notnull,default:false"`
 	AllowInvoiceConsolidation     bool              `json:"allowInvoiceConsolidation"     bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:false"`     // * Allow combining multiple shipments in one invoice
 	GroupConsolidatedInvoices     bool              `json:"groupConsolidatedInvoices"     bun:"group_consolidated_invoices,type:BOOLEAN,notnull,default:false"`     // * Group line items by service type in consolidated invoices

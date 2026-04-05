@@ -1,7 +1,3 @@
---
--- Copyright 2023-2025 Eric Moss
--- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
--- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
 CREATE TYPE "billing_exception_handling_enum" AS ENUM(
     'Queue',
     'Notify',
@@ -50,16 +46,16 @@ CREATE TABLE IF NOT EXISTS "billing_controls"(
     "invoice_footer" text,
     "show_amount_due" boolean NOT NULL DEFAULT TRUE,
     -- Controls for the billing process
-    "auto_transfer" boolean NOT NULL DEFAULT FALSE,
+    "auto_transfer" boolean NOT NULL DEFAULT TRUE,
     "transfer_schedule" transfer_schedule_enum NOT NULL DEFAULT 'Continuous',
     "transfer_batch_size" integer NOT NULL DEFAULT 100 CHECK ("transfer_batch_size" >= 1),
-    "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT FALSE,
+    "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
     -- Enforce customer billing requirements before billing
-    "enforce_customer_billing_req" boolean NOT NULL DEFAULT FALSE,
+    "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT FALSE,
     -- Automated billing controls
     "auto_bill" boolean NOT NULL DEFAULT FALSE,
-    "send_auto_bill_notifications" boolean NOT NULL DEFAULT FALSE,
+    "send_auto_bill_notifications" boolean NOT NULL DEFAULT TRUE,
     "auto_bill_batch_size" integer NOT NULL DEFAULT 100 CHECK ("auto_bill_batch_size" >= 1),
     -- Exception handling
     "billing_exception_handling" billing_exception_handling_enum NOT NULL DEFAULT 'Queue',
