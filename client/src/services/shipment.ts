@@ -6,6 +6,7 @@ import {
   previousRatesResponseSchema,
   shipmentCreateSchema,
   shipmentSchema,
+  shipmentBillingReadinessSchema,
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
   shipmentUpdateSchema,
@@ -14,6 +15,7 @@ import {
   type GetPreviousRatesRequest,
   type PreviousRatesResponse,
   type Shipment,
+  type ShipmentBillingReadiness,
   type ShipmentCreateInput,
   type ShipmentTotalsResponse,
   type ShipmentUIPolicy,
@@ -117,5 +119,12 @@ export class ShipmentService {
   public async getUIPolicy() {
     const response = await api.get<ShipmentUIPolicy>("/shipments/ui-policy/");
     return safeParse(shipmentUIPolicySchema, response, "Shipment UI Policy");
+  }
+
+  public async getBillingReadiness(shipmentId: Shipment["id"]) {
+    const response = await api.get<ShipmentBillingReadiness>(
+      `/shipments/${shipmentId}/billing-readiness/`,
+    );
+    return safeParse(shipmentBillingReadinessSchema, response, "Shipment Billing Readiness");
   }
 }

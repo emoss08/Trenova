@@ -32,13 +32,6 @@ type BulkUpdateCustomerStatusRequest struct {
 	Status      domaintypes.Status    `json:"status"`
 }
 
-type CustomerDocRequirementResponse struct {
-	Name        string `json:"name"`
-	DocID       string `json:"docId"`
-	Description string `json:"description"`
-	Color       string `json:"color"`
-}
-
 type GetCustomersByIDsRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"-"`
 	CustomerIDs []pulid.ID            `json:"customerIds"`
@@ -61,10 +54,6 @@ type CustomerRepository interface {
 		ctx context.Context,
 		req GetCustomersByIDsRequest,
 	) ([]*customer.Customer, error)
-	GetDocumentRequirements(
-		ctx context.Context,
-		cusID pulid.ID,
-	) ([]*CustomerDocRequirementResponse, error)
 	GetBillingProfile(
 		ctx context.Context,
 		cusID pulid.ID,

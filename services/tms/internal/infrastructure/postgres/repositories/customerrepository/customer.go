@@ -23,14 +23,12 @@ type Params struct {
 	fx.In
 
 	DB      *postgres.Connection
-	DocRepo repositories.DocumentTypeRepository
 	Logger  *zap.Logger
 	M2MSync *m2msync.Syncer
 }
 
 type repository struct {
 	db      *postgres.Connection
-	docRepo repositories.DocumentTypeRepository
 	l       *zap.Logger
 	m2mSync *m2msync.Syncer
 }
@@ -38,7 +36,6 @@ type repository struct {
 func New(p Params) repositories.CustomerRepository {
 	return &repository{
 		db:      p.DB,
-		docRepo: p.DocRepo,
 		l:       p.Logger.Named("postgres.customer-repository"),
 		m2mSync: p.M2MSync,
 	}
@@ -138,39 +135,6 @@ func (r *repository) GetByID(
 	}
 
 	return entity, nil
-}
-
-func (r *repository) GetDocumentRequirements(
-	ctx context.Context,
-	cusID pulid.ID,
-) ([]*repositories.CustomerDocRequirementResponse, error) {
-	log := r.l.With(
-		zap.String("operation", "GetDocumentRequirements"),
-		zap.String("customerID", cusID.String()),
-	)
-
-	billingProfile, err := r.GetBillingProfile(ctx, cusID)
-	if err != nil {
-		log.Error("failed to get customer billing profile", zap.Error(err))
-		return nil, err
-	}
-
-	response := make(
-		[]*repositories.CustomerDocRequirementResponse,
-		0,
-		len(billingProfile.DocumentTypes),
-	)
-
-	for _, docType := range billingProfile.DocumentTypes {
-		response = append(response, &repositories.CustomerDocRequirementResponse{
-			Name:        docType.Name,
-			DocID:       docType.ID.String(),
-			Description: docType.Description,
-			Color:       docType.Color,
-		})
-	}
-
-	return response, nil
 }
 
 func (r *repository) GetBillingProfile(

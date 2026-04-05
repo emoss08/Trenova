@@ -68,6 +68,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.getUIPolicy,
 	)
 	api.GET(
+		"/:shipmentID/billing-readiness/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.getBillingReadiness,
+	)
+	api.GET(
 		"/:shipmentID",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.get,
@@ -256,6 +261,41 @@ func (h *Handler) getUIPolicy(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, policy)
+}
+
+// @Summary Get shipment billing readiness
+// @Description Returns billing-readiness details for a shipment, including required customer documents and resolved billing policy.
+// @ID getShipmentBillingReadiness
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} services.ShipmentBillingReadiness
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/billing-readiness/ [get]
+func (h *Handler) getBillingReadiness(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	readiness, err := h.service.GetBillingReadiness(c.Request.Context(), shipmentID, pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, readiness)
 }
 
 // @Summary Get a shipment

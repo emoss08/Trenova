@@ -3,9 +3,16 @@ import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-cont
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Document, DocumentPacketSummary } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
+import type {
+  Shipment,
+  ShipmentBillingReadiness,
+  ShipmentBillingRequirement,
+} from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
@@ -24,6 +31,7 @@ import {
 import { formatFileSize, type RejectedFile } from "./document-upload-zone";
 import { getFileCategory } from "./document-utils";
 import { PacketCompletenessPanel } from "./packet-completeness-panel";
+import { ShipmentBillingReadinessPanel } from "./shipment-billing-readiness-panel";
 import { UploadPanel } from "./upload-panel";
 
 interface DocumentsTabProps {
@@ -55,11 +63,7 @@ function hasTargetedProcessing(doc: Document): boolean {
   return doc.processingProfile === "rate_confirmation_import";
 }
 
-function sortDocuments(
-  docs: Document[],
-  field: SortField,
-  direction: SortDirection,
-): Document[] {
+function sortDocuments(docs: Document[], field: SortField, direction: SortDirection): Document[] {
   const sorted = [...docs].sort((a, b) => {
     let comparison = 0;
 
@@ -81,46 +85,35 @@ function sortDocuments(
   return sorted;
 }
 
-export function DocumentsTab({
-  resourceId,
-  resourceType,
-  disabled = false,
-}: DocumentsTabProps) {
+export function DocumentsTab({ resourceId, resourceType, disabled = false }: DocumentsTabProps) {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(
-    null,
-  );
+  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(null);
   const [versionDocument, setVersionDocument] = useState<Document | null>(null);
-  const [replacementLineageId, setReplacementLineageId] = useState<
-    string | undefined
-  >(undefined);
+  const [replacementLineageId, setReplacementLineageId] = useState<string | undefined>(undefined);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
     "upload",
     parseAsBoolean.withDefault(false),
   );
 
-  const [viewMode, setViewMode] = useLocalStorage<ViewMode>(
-    "documents-view-mode",
-    "grid",
-  );
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("documents-view-mode", "grid");
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<string | undefined>(
+    undefined,
+  );
+  const [requiredUploadTypeId, setRequiredUploadTypeId] = useState<string | undefined>(undefined);
 
   const isShipment = resourceType === "shipment";
 
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
-    queryFn: () =>
-      fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
+    queryFn: () => fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });
@@ -148,14 +141,27 @@ export function DocumentsTab({
 
   const queryKey = ["documents", resourceType, resourceId, deferredSearchQuery];
 
+  const shipmentDetailsQuery = queries.shipment.get(resourceId, {
+    expandShipmentDetails: "true",
+  });
+  const billingReadinessQuery = queries.shipment.billingReadiness(resourceId);
+
+  const { data: shipment } = useQuery({
+    queryKey: shipmentDetailsQuery.queryKey,
+    queryFn: shipmentDetailsQuery.queryFn,
+    enabled: isShipment && !!resourceId,
+  });
+
+  const { data: billingReadiness } = useQuery({
+    queryKey: billingReadinessQuery.queryKey,
+    queryFn: billingReadinessQuery.queryFn,
+    enabled: isShipment && !!resourceId,
+  });
+
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(
-        resourceType,
-        resourceId,
-        deferredSearchQuery,
-      ),
+      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;
@@ -176,8 +182,7 @@ export function DocumentsTab({
 
   const { data: packetSummary } = useQuery<DocumentPacketSummary>({
     queryKey: ["document-packet-summary", resourceType, resourceId],
-    queryFn: () =>
-      apiService.documentService.getPacketSummary(resourceType, resourceId),
+    queryFn: () => apiService.documentService.getPacketSummary(resourceType, resourceId),
     enabled: !!resourceId,
   });
   const versionDocumentID = versionDocument?.id;
@@ -201,33 +206,54 @@ export function DocumentsTab({
     return result;
   }, [documents, fileTypeFilter, sortField, sortDirection]);
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearCompleted,
-  } = useDocumentUpload({
-    resourceId,
-    resourceType,
-    uploadMetadata,
-    onSuccess: () => {
-      setReplacementLineageId(undefined);
-      toast.success("Document uploaded successfully");
-    },
-    onError: (error) => {
-      toast.error(`Upload failed: ${error.message}`);
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
+    useDocumentUpload({
+      resourceId,
+      resourceType,
+      uploadMetadata,
+      onSuccess: (uploadedDocument) => {
+        setReplacementLineageId(undefined);
+        setRequiredUploadTypeId(undefined);
+        if (isShipment && uploadedDocument.documentTypeId) {
+          void queryClient
+            .fetchQuery<ShipmentBillingReadiness>({
+              queryKey: billingReadinessQuery.queryKey,
+              queryFn: billingReadinessQuery.queryFn,
+            })
+            .then((nextReadiness) => {
+              const nextMissing = nextReadiness.missingRequirements[0];
+              setSelectedDocumentTypeId(
+                nextMissing?.documentTypeId ?? uploadedDocument.documentTypeId ?? undefined,
+              );
+            });
+        }
+        void queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: shipmentDetailsQuery.queryKey,
+        });
+        toast.success("Document uploaded successfully");
+      },
+      onError: (error) => {
+        toast.error(`Upload failed: ${error.message}`);
+      },
+    });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["documents", resourceType, resourceId],
       });
+      if (isShipment) {
+        void queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: shipmentDetailsQuery.queryKey,
+        });
+      }
       toast.success("Document deleted");
       setDeletingId(null);
     },
@@ -238,12 +264,19 @@ export function DocumentsTab({
   });
 
   const { mutateAsync: bulkDelete, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (documentIds: string[]) =>
-      apiService.documentService.bulkDelete(documentIds),
+    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({
         queryKey: ["documents", resourceType, resourceId],
       });
+      if (isShipment) {
+        void queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: shipmentDetailsQuery.queryKey,
+        });
+      }
       toast.success(`${result.deletedCount} document(s) deleted`);
       setSelectedIds(new Set());
     },
@@ -253,8 +286,7 @@ export function DocumentsTab({
   });
 
   const restoreVersionMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      apiService.documentService.restoreVersion(documentId),
+    mutationFn: (documentId: string) => apiService.documentService.restoreVersion(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["documents", resourceType, resourceId],
@@ -265,6 +297,14 @@ export function DocumentsTab({
       void queryClient.invalidateQueries({
         queryKey: ["document-packet-summary", resourceType, resourceId],
       });
+      if (isShipment) {
+        void queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        });
+        void queryClient.invalidateQueries({
+          queryKey: shipmentDetailsQuery.queryKey,
+        });
+      }
       toast.success("Document version restored");
     },
     onError: (error) => {
@@ -350,6 +390,7 @@ export function DocumentsTab({
   const handleUploadNewVersion = useCallback(
     (document: Document) => {
       setReplacementLineageId(document.lineageId);
+      setRequiredUploadTypeId(undefined);
       if (document.documentTypeId) {
         setSelectedDocumentTypeId(document.documentTypeId);
       }
@@ -374,6 +415,7 @@ export function DocumentsTab({
 
       const files = Array.from(e.dataTransfer.files);
       if (files.length > 0) {
+        setRequiredUploadTypeId(undefined);
         void setIsUploadOpen(true);
         uploadFiles(files);
       }
@@ -381,24 +423,69 @@ export function DocumentsTab({
     [disabled, setIsUploadOpen, uploadFiles],
   );
 
+  const handleRequiredUpload = useCallback(
+    (requirement: ShipmentBillingRequirement) => {
+      setRequiredUploadTypeId(requirement.documentTypeId);
+      setSelectedDocumentTypeId(requirement.documentTypeId);
+      void setIsUploadOpen(true);
+    },
+    [setIsUploadOpen],
+  );
+
+  const { mutateAsync: markReadyToInvoice, isPending: isMarkingReady } = useApiMutation<
+    Shipment,
+    Shipment
+  >({
+    mutationFn: async (payload) => apiService.shipmentService.update(payload.id, payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: shipmentDetailsQuery.queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: billingReadinessQuery.queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
+      ]);
+      toast.success("Shipment marked ready to invoice");
+    },
+    resourceName: "Shipment",
+  });
+
+  const handleMarkReadyToInvoice = useCallback(async () => {
+    if (!shipment) return;
+
+    await markReadyToInvoice({
+      ...shipment,
+      status: "ReadyToInvoice",
+    });
+  }, [markReadyToInvoice, shipment]);
+
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          Save the record first to manage documents.
-        </p>
+        <p className="text-sm text-muted-foreground">Save the record first to manage documents.</p>
       </div>
     );
   }
 
   return (
-    <div
-      className="space-y-4"
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-    >
+    <div className="space-y-4" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
       {packetSummary && packetSummary.totalRules > 0 && (
         <PacketCompletenessPanel summary={packetSummary} />
+      )}
+
+      {isShipment && billingReadiness && (
+        <ShipmentBillingReadinessPanel
+          readiness={billingReadiness}
+          shipment={shipment}
+          onUploadRequired={handleRequiredUpload}
+          onMarkReadyToInvoice={() => {
+            void handleMarkReadyToInvoice();
+          }}
+          isMarkingReady={isMarkingReady}
+          disabled={disabled}
+        />
       )}
 
       <DocumentToolbar
@@ -412,7 +499,10 @@ export function DocumentsTab({
         onSortDirectionChange={setSortDirection}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onUploadClick={() => void setIsUploadOpen(true)}
+        onUploadClick={() => {
+          setRequiredUploadTypeId(undefined);
+          void setIsUploadOpen(true);
+        }}
         disabled={disabled}
       />
 
@@ -421,22 +511,14 @@ export function DocumentsTab({
           link="/document-types/select-options/"
           extraSearchParams={{ documentCategory: "Shipment" }}
           value={selectedDocumentTypeId ?? null}
-          onChange={(value: string | null) =>
-            setSelectedDocumentTypeId(value ?? undefined)
-          }
+          onChange={(value: string | null) => setSelectedDocumentTypeId(value ?? undefined)}
           getOptionValue={(option) => option.id || ""}
           getDisplayValue={(option) => (
-            <ColorOptionValue
-              color={option.color ?? undefined}
-              value={option.code}
-            />
+            <ColorOptionValue color={option.color ?? undefined} value={option.code} />
           )}
           renderOption={(option) => (
             <div className="flex size-full flex-col items-start">
-              <ColorOptionValue
-                color={option.color ?? undefined}
-                value={option.code}
-              />
+              <ColorOptionValue color={option.color ?? undefined} value={option.code} />
               {option?.name && (
                 <span className="w-full truncate text-2xs text-muted-foreground">
                   {option.name}
@@ -447,6 +529,7 @@ export function DocumentsTab({
           placeholder="Document type (optional)"
           clearable
           triggerClassName="w-[220px]"
+          disabled={!!requiredUploadTypeId}
         />
       )}
 
@@ -478,6 +561,7 @@ export function DocumentsTab({
         isOpen={isUploadOpen}
         onClose={() => {
           setReplacementLineageId(undefined);
+          setRequiredUploadTypeId(undefined);
           void setIsUploadOpen(false);
         }}
         uploads={uploads}
@@ -490,9 +574,15 @@ export function DocumentsTab({
         disabled={disabled}
         title={replacementLineageId ? "Upload New Version" : undefined}
         description={
-          replacementLineageId
-            ? "This file will be added as a new version in the same document lineage."
-            : undefined
+          requiredUploadTypeId && billingReadiness
+            ? `This upload will be classified as ${
+                billingReadiness.requirements.find(
+                  (item) => item.documentTypeId === requiredUploadTypeId,
+                )?.documentTypeName ?? "the selected required document"
+              }.`
+            : replacementLineageId
+              ? "This file will be added as a new version in the same document lineage."
+              : undefined
         }
         multiple={!replacementLineageId}
       />

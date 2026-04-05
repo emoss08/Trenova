@@ -30,6 +30,41 @@ export const shipmentStatusSchema = z.enum([
 ]);
 export type ShipmentStatus = z.infer<typeof shipmentStatusSchema>;
 
+export const shipmentBillingReadinessPolicySchema = z.object({
+  enforceCustomerBillingReq: z.boolean(),
+  autoMarkReadyToBill: z.boolean(),
+});
+
+export const shipmentBillingValidationSchema = z.object({
+  field: z.string(),
+  code: z.string(),
+  message: z.string(),
+});
+
+export const shipmentBillingRequirementSchema = z.object({
+  documentTypeId: z.string(),
+  documentTypeCode: z.string(),
+  documentTypeName: z.string(),
+  satisfied: z.boolean(),
+  documentCount: z.number(),
+  documentIds: z.array(z.string()),
+});
+
+export const shipmentBillingReadinessSchema = z.object({
+  shipmentId: z.string(),
+  shipmentStatus: shipmentStatusSchema,
+  policy: shipmentBillingReadinessPolicySchema,
+  requirements: z.array(shipmentBillingRequirementSchema),
+  missingRequirements: z.array(shipmentBillingRequirementSchema),
+  validationFailures: z.array(shipmentBillingValidationSchema),
+  canMarkReadyToInvoice: z.boolean(),
+  shouldAutoMarkReadyToInvoice: z.boolean(),
+});
+
+export type ShipmentBillingReadiness = z.infer<typeof shipmentBillingReadinessSchema>;
+export type ShipmentBillingRequirement = z.infer<typeof shipmentBillingRequirementSchema>;
+export type ShipmentBillingValidation = z.infer<typeof shipmentBillingValidationSchema>;
+
 export const moveStatusSchema = z.enum(["New", "Assigned", "InTransit", "Completed", "Canceled"]);
 export type MoveStatus = z.infer<typeof moveStatusSchema>;
 

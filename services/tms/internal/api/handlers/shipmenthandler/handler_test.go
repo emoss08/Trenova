@@ -440,6 +440,41 @@ func TestShipmentHandler_GetUIPolicy_Success(t *testing.T) {
 	assert.Equal(t, int32(80000), resp.MaxShipmentWeightLimit)
 }
 
+func TestShipmentHandler_GetBillingReadiness_Success(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	shipmentID := pulid.MustNew("shp_")
+	service.EXPECT().
+		GetBillingReadiness(mock.Anything, shipmentID, pagination.TenantInfo{
+			OrgID: testutil.TestOrgID,
+			BuID:  testutil.TestBuID,
+		}).
+		Return(&servicesport.ShipmentBillingReadiness{
+			ShipmentID:            shipmentID.String(),
+			ShipmentStatus:        shipment.StatusCompleted,
+			CanMarkReadyToInvoice: true,
+		}, nil).
+		Once()
+
+	handler := setupShipmentHandler(t, service)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/shipments/" + shipmentID.String() + "/billing-readiness/").
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+
+	var resp servicesport.ShipmentBillingReadiness
+	require.NoError(t, ginCtx.ResponseJSON(&resp))
+	assert.Equal(t, shipmentID.String(), resp.ShipmentID)
+	assert.True(t, resp.CanMarkReadyToInvoice)
+}
+
 func TestShipmentHandler_Duplicate_Success(t *testing.T) {
 	t.Parallel()
 

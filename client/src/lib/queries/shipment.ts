@@ -11,4 +11,8 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["get", shipmentId, params],
     queryFn: async () => apiService.shipmentService.get(shipmentId, params),
   }),
+  billingReadiness: (shipmentId: Shipment["id"]) => ({
+    queryKey: ["billing-readiness", shipmentId],
+    queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),
+  }),
 });

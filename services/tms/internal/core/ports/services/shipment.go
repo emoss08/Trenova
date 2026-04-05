@@ -16,6 +16,37 @@ type ShipmentUIPolicy struct {
 	MaxShipmentWeightLimit int32 `json:"maxShipmentWeightLimit"`
 }
 
+type ShipmentBillingReadinessPolicy struct {
+	EnforceCustomerBillingReq bool `json:"enforceCustomerBillingReq"`
+	AutoMarkReadyToBill       bool `json:"autoMarkReadyToBill"`
+}
+
+type ShipmentBillingValidation struct {
+	Field   string `json:"field"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type ShipmentBillingRequirement struct {
+	DocumentTypeID   string   `json:"documentTypeId"`
+	DocumentTypeCode string   `json:"documentTypeCode"`
+	DocumentTypeName string   `json:"documentTypeName"`
+	Satisfied        bool     `json:"satisfied"`
+	DocumentCount    int      `json:"documentCount"`
+	DocumentIDs      []string `json:"documentIds"`
+}
+
+type ShipmentBillingReadiness struct {
+	ShipmentID                   string                         `json:"shipmentId"`
+	ShipmentStatus               shipment.Status                `json:"shipmentStatus"`
+	Policy                       ShipmentBillingReadinessPolicy `json:"policy"`
+	Requirements                 []ShipmentBillingRequirement   `json:"requirements"`
+	MissingRequirements          []ShipmentBillingRequirement   `json:"missingRequirements"`
+	ValidationFailures           []ShipmentBillingValidation    `json:"validationFailures"`
+	CanMarkReadyToInvoice        bool                           `json:"canMarkReadyToInvoice"`
+	ShouldAutoMarkReadyToInvoice bool                           `json:"shouldAutoMarkReadyToInvoice"`
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -29,6 +60,11 @@ type ShipmentService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) (*ShipmentUIPolicy, error)
+	GetBillingReadiness(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*ShipmentBillingReadiness, error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *repositories.GetPreviousRatesRequest,
@@ -93,4 +129,10 @@ type ShipmentService interface {
 		entity *shipment.Shipment,
 		userID pulid.ID,
 	) (*repositories.ShipmentTotalsResponse, error)
+	AutoMarkReadyToInvoiceIfEligible(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		userID pulid.ID,
+	) (*shipment.Shipment, error)
 }

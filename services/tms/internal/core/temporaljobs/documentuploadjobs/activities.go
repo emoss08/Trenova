@@ -45,6 +45,7 @@ type ActivitiesParams struct {
 	WorkflowStarter      services.WorkflowStarter
 	Redis                *goredis.Client `optional:"true"`
 	DocumentIntelligence services.DocumentContentService
+	ShipmentService      services.ShipmentService `optional:"true"`
 }
 
 type Activities struct {
@@ -57,6 +58,7 @@ type Activities struct {
 	workflowStarter      services.WorkflowStarter
 	redis                *goredis.Client
 	documentIntelligence services.DocumentContentService
+	shipmentService      services.ShipmentService
 }
 
 //nolint:gocritic // dependency injection param
@@ -86,6 +88,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflowStarter:      workflowStarter,
 		redis:                p.Redis,
 		documentIntelligence: documentIntelligence,
+		shipmentService:      p.ShipmentService,
 	}
 }
 
@@ -275,6 +278,16 @@ func (a *Activities) finalizeUploadPersistDocument(
 	if doc.ProcessingProfile.SupportsIntelligence() {
 		_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
 	}
+	a.tryAutoMarkShipmentReadyToInvoice(
+		ctx,
+		doc.ResourceType,
+		doc.ResourceID,
+		pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+		payload.UserID,
+	)
 
 	return &FinalizeUploadResult{
 		SessionID:   session.ID,
@@ -282,6 +295,39 @@ func (a *Activities) finalizeUploadPersistDocument(
 		Status:      session.Status.String(),
 		PreviewPath: previewPath,
 	}, nil
+}
+
+func (a *Activities) tryAutoMarkShipmentReadyToInvoice(
+	ctx context.Context,
+	resourceType string,
+	resourceID string,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) {
+	if a.shipmentService == nil || resourceType != "shipment" || resourceID == "" {
+		return
+	}
+
+	shipmentID, err := pulid.MustParse(resourceID)
+	if err != nil {
+		activity.GetLogger(ctx).Warn("failed to parse shipment id for auto-mark after upload finalization",
+			"resourceId", resourceID,
+			"error", err,
+		)
+		return
+	}
+
+	if _, err = a.shipmentService.AutoMarkReadyToInvoiceIfEligible(
+		ctx,
+		shipmentID,
+		tenantInfo,
+		userID,
+	); err != nil {
+		activity.GetLogger(ctx).Warn("failed to auto-mark shipment ready to invoice after upload finalization",
+			"shipmentId", shipmentID.String(),
+			"error", err,
+		)
+	}
 }
 
 func (a *Activities) ReconcileUploadsActivity(

@@ -51,6 +51,7 @@ type Params struct {
 	Storage              storage.Client
 	Validator            *Validator
 	AuditService         services.AuditService
+	ShipmentService      services.ShipmentService `optional:"true"`
 	DocumentIntelligence services.DocumentContentService
 	SearchProjection     services.DocumentSearchProjectionService
 	WorkflowStarter      services.WorkflowStarter
@@ -70,6 +71,7 @@ type Service struct {
 	storage              storage.Client
 	validator            *Validator
 	auditService         services.AuditService
+	shipmentService      services.ShipmentService
 	documentIntelligence services.DocumentContentService
 	searchProjection     services.DocumentSearchProjectionService
 	workflowStarter      services.WorkflowStarter
@@ -106,6 +108,7 @@ func New(p Params) *Service {
 		storage:              p.Storage,
 		validator:            p.Validator,
 		auditService:         p.AuditService,
+		shipmentService:      p.ShipmentService,
 		documentIntelligence: documentIntelligence,
 		searchProjection:     searchProjection,
 		workflowStarter:      workflowStarter,
@@ -329,6 +332,13 @@ func (s *Service) Upload(
 	if createdDoc.ProcessingProfile.SupportsIntelligence() {
 		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
 	}
+	s.tryAutoMarkShipmentReadyToInvoice(
+		ctx,
+		createdDoc.ResourceType,
+		createdDoc.ResourceID,
+		req.TenantInfo,
+		req.TenantInfo.UserID,
+	)
 
 	return &UploadResult{Document: createdDoc}, nil
 }
@@ -375,6 +385,39 @@ func (s *Service) startThumbnailWorkflow(
 		}
 		log.Warn("failed to start thumbnail workflow",
 			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func (s *Service) tryAutoMarkShipmentReadyToInvoice(
+	ctx context.Context,
+	resourceType string,
+	resourceID string,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) {
+	if s.shipmentService == nil || resourceType != "shipment" || resourceID == "" {
+		return
+	}
+
+	shipmentID, err := pulid.MustParse(resourceID)
+	if err != nil {
+		s.l.Warn("failed to parse shipment id for auto-mark after document upload",
+			zap.String("resourceId", resourceID),
+			zap.Error(err),
+		)
+		return
+	}
+
+	if _, err = s.shipmentService.AutoMarkReadyToInvoiceIfEligible(
+		ctx,
+		shipmentID,
+		tenantInfo,
+		userID,
+	); err != nil {
+		s.l.Warn("failed to auto-mark shipment ready to invoice after document upload",
+			zap.String("shipmentId", shipmentID.String()),
 			zap.Error(err),
 		)
 	}

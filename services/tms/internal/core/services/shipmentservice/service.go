@@ -44,6 +44,9 @@ type Params struct {
 	CommodityRepo   repositories.CommodityRepository
 	HazmatRuleRepo  repositories.HazmatSegregationRuleRepository
 	AccessorialRepo repositories.AccessorialChargeRepository
+	CustomerRepo    repositories.CustomerRepository
+	DocumentRepo    repositories.DocumentRepository
+	BillingRepo     repositories.BillingControlRepository
 	Permissions     services.PermissionEngine
 	Validator       *Validator
 	AuditService    services.AuditService
@@ -64,6 +67,9 @@ type service struct {
 	commodityRepo   repositories.CommodityRepository
 	hazmatRuleRepo  repositories.HazmatSegregationRuleRepository
 	accessorialRepo repositories.AccessorialChargeRepository
+	customerRepo    repositories.CustomerRepository
+	documentRepo    repositories.DocumentRepository
+	billingRepo     repositories.BillingControlRepository
 	permissions     services.PermissionEngine
 	validator       *Validator
 	auditService    services.AuditService
@@ -86,6 +92,9 @@ func New(p Params) services.ShipmentService {
 		commodityRepo:   p.CommodityRepo,
 		hazmatRuleRepo:  p.HazmatRuleRepo,
 		accessorialRepo: p.AccessorialRepo,
+		customerRepo:    p.CustomerRepo,
+		documentRepo:    p.DocumentRepo,
+		billingRepo:     p.BillingRepo,
 		permissions:     p.Permissions,
 		validator:       p.Validator,
 		auditService:    p.AuditService,
@@ -290,6 +299,9 @@ func (s *service) Update(
 	if multiErr := s.validator.ValidateUpdateWithOriginal(ctx, original, entity); multiErr != nil {
 		return nil, multiErr
 	}
+	if multiErr := s.validateBillingReadinessForStatusChange(ctx, entity); multiErr != nil {
+		return nil, multiErr
+	}
 	if err = s.ensureEquipmentAvailableForShipmentUpdate(ctx, original, entity); err != nil {
 		return nil, err
 	}
@@ -328,6 +340,26 @@ func (s *service) Update(
 		updatedEntity,
 	); err != nil {
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
+	}
+
+	if updatedEntity.Status == shipment.StatusCompleted &&
+		s.customerRepo != nil &&
+		s.documentRepo != nil &&
+		s.billingRepo != nil {
+		autoMarkedEntity, autoMarkErr := s.AutoMarkReadyToInvoiceIfEligible(
+			ctx,
+			updatedEntity.ID,
+			pagination.TenantInfo{
+				OrgID: updatedEntity.OrganizationID,
+				BuID:  updatedEntity.BusinessUnitID,
+			},
+			auditActor.UserID,
+		)
+		if autoMarkErr != nil {
+			log.Warn("failed to auto-mark shipment ready to invoice after completion", zap.Error(autoMarkErr))
+		} else if autoMarkedEntity != nil {
+			updatedEntity = autoMarkedEntity
+		}
 	}
 
 	return updatedEntity, nil
