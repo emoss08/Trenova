@@ -284,68 +284,64 @@ func (qb *QueryBuilder) applyStatement( //nolint:cyclop,funlen // operator handl
 	fieldRef string,
 	value any,
 ) {
+	fExpr, fIdent := fieldExpr(fieldRef)
+
 	switch operator { //nolint:exhaustive // count operators handled in ApplyAggregateFilters
 	case dbtype.OpEqual:
 		if qb.isEmptyEnumValue(value) {
 			return
 		}
-		qb.query = qb.query.Where(fmt.Sprintf("%s = ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" = ?", fIdent, value)
 	case dbtype.OpNotEqual:
 		if qb.isEmptyEnumValue(value) {
 			return
 		}
-		qb.query = qb.query.Where(fmt.Sprintf("%s != ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" != ?", fIdent, value)
 	case dbtype.OpGreaterThan:
-		qb.query = qb.query.Where(fmt.Sprintf("%s > ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" > ?", fIdent, value)
 	case dbtype.OpGreaterThanOrEqual:
-		qb.query = qb.query.Where(fmt.Sprintf("%s >= ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" >= ?", fIdent, value)
 	case dbtype.OpLessThan:
-		qb.query = qb.query.Where(fmt.Sprintf("%s < ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" < ?", fIdent, value)
 	case dbtype.OpLessThanOrEqual:
-		qb.query = qb.query.Where(fmt.Sprintf("%s <= ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" <= ?", fIdent, value)
 	case dbtype.OpContains:
-		qb.query = qb.query.Where(
-			fmt.Sprintf("%s ILIKE ?", fieldRef),
-			fmt.Sprintf("%%%v%%", value),
-		)
+		qb.query = qb.query.Where(fExpr+" ILIKE ?", fIdent, fmt.Sprintf("%%%v%%", value))
 	case dbtype.OpStartsWith:
-		qb.query = qb.query.Where(fmt.Sprintf("%s ILIKE ?", fieldRef), fmt.Sprintf("%v%%", value))
+		qb.query = qb.query.Where(fExpr+" ILIKE ?", fIdent, fmt.Sprintf("%v%%", value))
 	case dbtype.OpEndsWith:
-		qb.query = qb.query.Where(fmt.Sprintf("%s ILIKE ?", fieldRef), fmt.Sprintf("%%%v", value))
+		qb.query = qb.query.Where(fExpr+" ILIKE ?", fIdent, fmt.Sprintf("%%%v", value))
 	case dbtype.OpLike:
-		qb.query = qb.query.Where(fmt.Sprintf("%s LIKE ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" LIKE ?", fIdent, value)
 	case dbtype.OpILike:
-		qb.query = qb.query.Where(fmt.Sprintf("%s ILIKE ?", fieldRef), value)
+		qb.query = qb.query.Where(fExpr+" ILIKE ?", fIdent, value)
 	case dbtype.OpIn:
-		qb.query = qb.query.Where(fmt.Sprintf("%s IN (?)", fieldRef), bun.List(value))
+		qb.query = qb.query.Where(fExpr+" IN (?)", fIdent, bun.List(value))
 	case dbtype.OpNotIn:
-		qb.query = qb.query.Where(fmt.Sprintf("%s NOT IN (?)", fieldRef), bun.List(value))
+		qb.query = qb.query.Where(fExpr+" NOT IN (?)", fIdent, bun.List(value))
 	case dbtype.OpIsNull:
-		qb.query = qb.query.Where(fmt.Sprintf("%s IS NULL", fieldRef))
+		qb.query = qb.query.Where(fExpr+" IS NULL", fIdent)
 	case dbtype.OpIsNotNull:
-		qb.query = qb.query.Where(fmt.Sprintf("%s IS NOT NULL", fieldRef))
+		qb.query = qb.query.Where(fExpr+" IS NOT NULL", fIdent)
 	case dbtype.OpDateRange:
 		qb.applyDateRangeFilter(fieldRef, value)
 	case dbtype.OpLastNDays:
 		days := extractDays(value)
 		startTime := time.Now().AddDate(0, 0, -days).Unix()
-		qb.query = qb.query.Where(fmt.Sprintf("%s >= ?", fieldRef), startTime)
+		qb.query = qb.query.Where(fExpr+" >= ?", fIdent, startTime)
 	case dbtype.OpNextNDays:
 		days := extractDays(value)
 		endTime := time.Now().AddDate(0, 0, days).Unix()
-		qb.query = qb.query.Where(fmt.Sprintf("%s <= ?", fieldRef), endTime)
+		qb.query = qb.query.Where(fExpr+" <= ?", fIdent, endTime)
 	case dbtype.OpToday:
 		start, end := getDayBounds(time.Now())
-		cond := fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef)
-		qb.query = qb.query.Where(cond, start, end)
+		qb.query = qb.query.Where(fExpr+" >= ? AND "+fExpr+" <= ?", fIdent, start, fIdent, end)
 	case dbtype.OpYesterday:
 		start, end := getDayBounds(time.Now().AddDate(0, 0, -1))
-		cond := fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef)
-		qb.query = qb.query.Where(cond, start, end)
+		qb.query = qb.query.Where(fExpr+" >= ? AND "+fExpr+" <= ?", fIdent, start, fIdent, end)
 	case dbtype.OpTomorrow:
 		start, end := getDayBounds(time.Now().AddDate(0, 0, 1))
-		cond := fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef)
-		qb.query = qb.query.Where(cond, start, end)
+		qb.query = qb.query.Where(fExpr+" >= ? AND "+fExpr+" <= ?", fIdent, start, fIdent, end)
 	}
 }
 
@@ -388,7 +384,8 @@ func (qb *QueryBuilder) applyFromDateFilter(fieldRef string, dateRange map[strin
 
 	from, ok := fromVal.(float64)
 	if ok {
-		qb.query = qb.query.Where(fmt.Sprintf("%s >= ?", fieldRef), from)
+		fExpr, fIdent := fieldExpr(fieldRef)
+		qb.query = qb.query.Where(fExpr+" >= ?", fIdent, from)
 	}
 }
 
@@ -400,8 +397,9 @@ func (qb *QueryBuilder) applyToDateFilter(fieldRef string, dateRange map[string]
 
 	to, ok := toVal.(float64)
 	if ok {
+		fExpr, fIdent := fieldExpr(fieldRef)
 		endExclusive := to + 86400 // 1 day in seconds to make it inclusive
-		qb.query = qb.query.Where(fmt.Sprintf("%s < ?", fieldRef), endExclusive)
+		qb.query = qb.query.Where(fExpr+" < ?", fIdent, endExclusive)
 	}
 }
 
@@ -612,6 +610,13 @@ func (qb *QueryBuilder) getFieldReference(dbField string) string {
 		return fmt.Sprintf("%s.%s", qb.tableAlias, dbField)
 	}
 	return dbField
+}
+
+func fieldExpr(fieldRef string) (string, bun.Ident) {
+	if idx := strings.Index(fieldRef, "::"); idx != -1 {
+		return "?" + fieldRef[idx:], bun.Ident(fieldRef[:idx])
+	}
+	return "?", bun.Ident(fieldRef)
 }
 
 func (qb *QueryBuilder) ApplyTenantFilters(tenantInfo pagination.TenantInfo) *QueryBuilder {
@@ -905,60 +910,62 @@ func (qb *QueryBuilder) buildConditionStatement( //nolint:cyclop,funlen // opera
 	fieldRef string,
 	value any,
 ) (condition string, args []any) {
+	fExpr, fIdent := fieldExpr(fieldRef)
+
 	switch operator { //nolint:exhaustive // count and daterange operators handled elsewhere
 	case dbtype.OpEqual:
 		if qb.isEmptyEnumValue(value) {
 			return "", nil
 		}
-		return fmt.Sprintf("%s = ?", fieldRef), []any{value}
+		return fExpr + " = ?", []any{fIdent, value}
 	case dbtype.OpNotEqual:
 		if qb.isEmptyEnumValue(value) {
 			return "", nil
 		}
-		return fmt.Sprintf("%s != ?", fieldRef), []any{value}
+		return fExpr + " != ?", []any{fIdent, value}
 	case dbtype.OpGreaterThan:
-		return fmt.Sprintf("%s > ?", fieldRef), []any{value}
+		return fExpr + " > ?", []any{fIdent, value}
 	case dbtype.OpGreaterThanOrEqual:
-		return fmt.Sprintf("%s >= ?", fieldRef), []any{value}
+		return fExpr + " >= ?", []any{fIdent, value}
 	case dbtype.OpLessThan:
-		return fmt.Sprintf("%s < ?", fieldRef), []any{value}
+		return fExpr + " < ?", []any{fIdent, value}
 	case dbtype.OpLessThanOrEqual:
-		return fmt.Sprintf("%s <= ?", fieldRef), []any{value}
+		return fExpr + " <= ?", []any{fIdent, value}
 	case dbtype.OpContains:
-		return fmt.Sprintf("%s ILIKE ?", fieldRef), []any{fmt.Sprintf("%%%v%%", value)}
+		return fExpr + " ILIKE ?", []any{fIdent, fmt.Sprintf("%%%v%%", value)}
 	case dbtype.OpStartsWith:
-		return fmt.Sprintf("%s ILIKE ?", fieldRef), []any{fmt.Sprintf("%v%%", value)}
+		return fExpr + " ILIKE ?", []any{fIdent, fmt.Sprintf("%v%%", value)}
 	case dbtype.OpEndsWith:
-		return fmt.Sprintf("%s ILIKE ?", fieldRef), []any{fmt.Sprintf("%%%v", value)}
+		return fExpr + " ILIKE ?", []any{fIdent, fmt.Sprintf("%%%v", value)}
 	case dbtype.OpLike:
-		return fmt.Sprintf("%s LIKE ?", fieldRef), []any{value}
+		return fExpr + " LIKE ?", []any{fIdent, value}
 	case dbtype.OpILike:
-		return fmt.Sprintf("%s ILIKE ?", fieldRef), []any{value}
+		return fExpr + " ILIKE ?", []any{fIdent, value}
 	case dbtype.OpIn:
-		return fmt.Sprintf("%s IN (?)", fieldRef), []any{bun.List(value)}
+		return fExpr + " IN (?)", []any{fIdent, bun.List(value)}
 	case dbtype.OpNotIn:
-		return fmt.Sprintf("%s NOT IN (?)", fieldRef), []any{bun.List(value)}
+		return fExpr + " NOT IN (?)", []any{fIdent, bun.List(value)}
 	case dbtype.OpIsNull:
-		return fmt.Sprintf("%s IS NULL", fieldRef), nil
+		return fExpr + " IS NULL", []any{fIdent}
 	case dbtype.OpIsNotNull:
-		return fmt.Sprintf("%s IS NOT NULL", fieldRef), nil
+		return fExpr + " IS NOT NULL", []any{fIdent}
 	case dbtype.OpLastNDays:
 		days := extractDays(value)
 		startTime := time.Now().AddDate(0, 0, -days).Unix()
-		return fmt.Sprintf("%s >= ?", fieldRef), []any{startTime}
+		return fExpr + " >= ?", []any{fIdent, startTime}
 	case dbtype.OpNextNDays:
 		days := extractDays(value)
 		endTime := time.Now().AddDate(0, 0, days).Unix()
-		return fmt.Sprintf("%s <= ?", fieldRef), []any{endTime}
+		return fExpr + " <= ?", []any{fIdent, endTime}
 	case dbtype.OpToday:
 		start, end := getDayBounds(time.Now())
-		return fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef), []any{start, end}
+		return fExpr + " >= ? AND " + fExpr + " <= ?", []any{fIdent, start, fIdent, end}
 	case dbtype.OpYesterday:
 		start, end := getDayBounds(time.Now().AddDate(0, 0, -1))
-		return fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef), []any{start, end}
+		return fExpr + " >= ? AND " + fExpr + " <= ?", []any{fIdent, start, fIdent, end}
 	case dbtype.OpTomorrow:
 		start, end := getDayBounds(time.Now().AddDate(0, 0, 1))
-		return fmt.Sprintf("%s >= ? AND %s <= ?", fieldRef, fieldRef), []any{start, end}
+		return fExpr + " >= ? AND " + fExpr + " <= ?", []any{fIdent, start, fIdent, end}
 	default:
 		return "", nil
 	}
