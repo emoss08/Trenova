@@ -217,8 +217,8 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
         if (isShipment && uploadedDocument.documentTypeId) {
           void queryClient
             .fetchQuery<ShipmentBillingReadiness>({
-              queryKey: billingReadinessQuery.queryKey,
-              queryFn: billingReadinessQuery.queryFn,
+              queryKey: ["shipment", "billing-readiness", resourceId],
+              queryFn: () => apiService.shipmentService.getBillingReadiness(resourceId),
             })
             .then((nextReadiness) => {
               const nextMissing = nextReadiness.missingRequirements[0];

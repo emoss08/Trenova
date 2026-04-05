@@ -239,7 +239,7 @@ export function ImportWorkspace() {
   }, [clearAll, requiredFieldsForm]);
 
   const handleBack = useCallback(() => {
-    navigate("/shipment-management/shipments");
+    void navigate("/shipment-management/shipments");
   }, [navigate]);
 
   const handleFilesSelected = useCallback(
