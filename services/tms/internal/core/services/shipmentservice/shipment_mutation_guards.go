@@ -10,6 +10,26 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+var billingUnlockedStatuses = map[shipment.BillingTransferStatus]struct{}{
+	shipment.BillingTransferNone:         {},
+	shipment.BillingTransferSentBackToOps: {},
+}
+
+func validateShipmentNotLockedForBilling(entity *shipment.Shipment) *errortypes.MultiError {
+	if _, unlocked := billingUnlockedStatuses[entity.BillingTransferStatus]; unlocked {
+		return nil
+	}
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		"billingTransferStatus",
+		errortypes.ErrInvalidOperation,
+		"Shipment cannot be updated while in the billing queue. Send it back to operations from the billing queue to make changes.",
+	)
+
+	return multiErr
+}
+
 func (s *service) ensureEquipmentAvailableForShipmentUpdate(
 	ctx context.Context,
 	original *shipment.Shipment,

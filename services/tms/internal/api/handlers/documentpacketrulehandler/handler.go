@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -63,19 +64,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 
 func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	items, err := h.service.ListByResourceType(
-		c.Request.Context(),
-		helpers.QueryEnumIgnoreCase(c, "resourceType", []string{}),
-		pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	req := pagination.NewQueryOptions(c, authCtx)
+
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
+			return h.service.List(c.Request.Context(), &repositories.ListDocumentPacketRulesRequest{
+				Filter: req,
+			})
 		},
 	)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, items)
 }
 
 func (h *Handler) create(c *gin.Context) {

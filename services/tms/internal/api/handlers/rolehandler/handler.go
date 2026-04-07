@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	_ "github.com/emoss08/trenova/internal/core/domain/tenant" // import for documentation generation
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
@@ -15,8 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
-
-var _ *tenant.User
 
 type Params struct {
 	fx.In

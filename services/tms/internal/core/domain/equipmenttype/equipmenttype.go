@@ -31,6 +31,7 @@ type EquipmentType struct {
 	Description    string             `json:"description"    bun:"description,type:TEXT,nullzero"`
 	Class          Class              `json:"class"          bun:"class,type:equipment_class_enum,notnull"`
 	Color          string             `json:"color"          bun:"color,type:VARCHAR(10),nullzero"`
+	InteriorLength *float64           `json:"interiorLength" bun:"interior_length,type:NUMERIC(10,2),nullzero"`
 	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
 	Version        int64              `json:"version"        bun:"version,type:BIGINT"`

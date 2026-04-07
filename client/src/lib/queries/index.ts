@@ -3,6 +3,7 @@ import { accountingControl } from "./accounting-control";
 import { analytics } from "./analytics";
 import { audit } from "./audit";
 import { billingControl } from "./billing-control";
+import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
 import { dataEntryControl } from "./data-entry-control";
 import { documentControl } from "./document-control";
@@ -25,6 +26,7 @@ import { worker } from "./worker";
 export const queries = mergeQueryKeys(
   accountingControl,
   billingControl,
+  billingQueue,
   dataEntryControl,
   dispatchControl,
   documentControl,

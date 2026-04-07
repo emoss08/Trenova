@@ -12,7 +12,7 @@ export function useShipmentTotalsPreview() {
   const abortRef = useRef<AbortController | null>(null);
 
   const formulaTemplateId = useWatch({ control, name: "formulaTemplateId" });
-  const freightChargeAmount = useWatch({ control, name: "freightChargeAmount" });
+  const baseRate = useWatch({ control, name: "baseRate" });
   const additionalCharges = useWatch({ control, name: "additionalCharges" });
   const commodities = useWatch({ control, name: "commodities" });
   const moves = useWatch({ control, name: "moves" });
@@ -24,7 +24,7 @@ export function useShipmentTotalsPreview() {
 
   const watchedFieldsHash = JSON.stringify({
     formulaTemplateId,
-    freightChargeAmount,
+    baseRate,
     additionalCharges: completeCharges,
     commodities,
     moves,
@@ -70,6 +70,9 @@ export function useShipmentTotalsPreview() {
     apiService.shipmentService
       .calculateTotals(payload as Shipment, controller.signal)
       .then((result) => {
+        setValue("freightChargeAmount", result.freightChargeAmount ?? null, {
+          shouldDirty: false,
+        });
         setValue("otherChargeAmount", result.otherChargeAmount ?? null, {
           shouldDirty: false,
         });

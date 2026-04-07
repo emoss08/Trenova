@@ -17,6 +17,7 @@ const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
   trailers: ["trailer-list"],
   workers: ["worker-list"],
   "audit-logs": ["audit-entry-list"],
+  billing_queue: ["billing-queue-list", "billingQueue"],
 };
 
 const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {

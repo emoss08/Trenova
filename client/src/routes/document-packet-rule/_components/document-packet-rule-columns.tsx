@@ -13,8 +13,7 @@ export function getColumns(
       accessorKey: "resourceType",
       header: "Resource Type",
       cell: ({ row }) => {
-        const choice = resourceTypeChoices.find((c) => c.value === row.original.resourceType);
-        return <Badge variant="outline">{choice?.label ?? row.original.resourceType}</Badge>;
+        return <p>{row.original.resourceType}</p>;
       },
       size: 140,
       minSize: 120,
@@ -37,7 +36,9 @@ export function getColumns(
         return docType ? (
           <span className="font-medium">{docType.name}</span>
         ) : (
-          <span className="text-muted-foreground">{row.original.documentTypeId}</span>
+          <span className="text-muted-foreground">
+            {row.original.documentTypeId}
+          </span>
         );
       },
       size: 200,
@@ -106,7 +107,9 @@ export function getColumns(
       accessorKey: "expirationRequired",
       header: "Expiration Req.",
       cell: ({ row }) => (
-        <Badge variant={row.original.expirationRequired ? "warning" : "outline"}>
+        <Badge
+          variant={row.original.expirationRequired ? "warning" : "outline"}
+        >
           {row.original.expirationRequired ? "Yes" : "No"}
         </Badge>
       ),
@@ -142,7 +145,9 @@ export function getColumns(
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
+      cell: ({ row }) => (
+        <HoverCardTimestamp timestamp={row.original.createdAt} />
+      ),
       meta: {
         apiField: "createdAt",
         filterable: false,

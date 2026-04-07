@@ -95,6 +95,7 @@ export const customerBillingProfileSchema = z.object({
   requirePONumber: z.boolean().default(false),
   requireBOLNumber: z.boolean().default(false),
   requireDeliveryNumber: z.boolean().default(false),
+  defaultBillerId: nullableStringSchema,
   billingNotes: z.string().default(""),
   documentTypes: z.array(z.any()).nullish(),
 });

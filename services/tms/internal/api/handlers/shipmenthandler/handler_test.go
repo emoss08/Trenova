@@ -145,9 +145,9 @@ func TestShipmentHandler_CalculateTotals_Success(t *testing.T) {
 			assert.Equal(t, testutil.TestBuID, entity.BusinessUnitID)
 			assert.Equal(t, "BOL-100", entity.BOL)
 			return &repositories.ShipmentTotalsResponse{
-				BaseCharge:        decimal.NewFromInt(250),
-				OtherChargeAmount: decimal.NewFromInt(10),
-				TotalChargeAmount: decimal.NewFromInt(260),
+				FreightChargeAmount: decimal.NewFromInt(250),
+				OtherChargeAmount:   decimal.NewFromInt(10),
+				TotalChargeAmount:   decimal.NewFromInt(260),
 			}, nil
 		})
 
@@ -171,7 +171,7 @@ func TestShipmentHandler_CalculateTotals_Success(t *testing.T) {
 
 	var resp repositories.ShipmentTotalsResponse
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.True(t, decimal.NewFromInt(250).Equal(resp.BaseCharge))
+	assert.True(t, decimal.NewFromInt(250).Equal(resp.FreightChargeAmount))
 	assert.True(t, decimal.NewFromInt(10).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(260).Equal(resp.TotalChargeAmount))
 }

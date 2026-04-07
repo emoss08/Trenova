@@ -3,7 +3,7 @@ import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { fieldSensitivityChoices } from "@/lib/choices";
+import { coreResponsibilityChoices, fieldSensitivityChoices } from "@/lib/choices";
 import type { Role } from "@/types/role";
 import { useFormContext } from "react-hook-form";
 
@@ -30,6 +30,17 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           label="Max Sensitivity Level"
           options={fieldSensitivityChoices}
           isReadOnly={isSystemRole}
+        />
+      </FormControl>
+      <FormControl>
+        <SelectField
+          control={control}
+          name="coreResponsibility"
+          label="Core Responsibility"
+          options={coreResponsibilityChoices}
+          isClearable
+          isReadOnly={isSystemRole}
+          placeholder="Select responsibility..."
         />
       </FormControl>
       <FormControl cols="full">

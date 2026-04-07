@@ -33,7 +33,7 @@ export function AdditionalChargeDialog({
   isEditing: boolean;
   update: (index: number, value: any) => void;
 }) {
-  const { control, setValue, getValues } = useFormContext<Shipment>();
+  const { control, setValue, getValues, trigger } = useFormContext<Shipment>();
   const lastAppliedChargeIdRef = useRef<string | null>(
     isEditing ? (getValues(`additionalCharges.${index}.accessorialChargeId`) ?? null) : null,
   );
@@ -50,7 +50,18 @@ export function AdditionalChargeDialog({
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
+    const isValid = await trigger([
+      `additionalCharges.${index}.accessorialChargeId`,
+      `additionalCharges.${index}.unit`,
+      `additionalCharges.${index}.method`,
+      `additionalCharges.${index}.amount`,
+    ]);
+
+    if (!isValid) {
+      return;
+    }
+
     const values = getValues(`additionalCharges.${index}`);
     update(index, values);
     onSave();

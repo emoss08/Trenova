@@ -504,6 +504,7 @@ func (c *StorageConfig) GetAllowedMIMETypes() []string {
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			"text/plain",
 			"text/csv",
+			"text/html",
 		}
 	}
 	return c.AllowedMIMETypes

@@ -24,6 +24,7 @@ func RegisterDefaultComputed(r *Resolver) {
 	r.RegisterComputed("computeTotalWeight", computeTotalWeight)
 	r.RegisterComputed("computeTotalPieces", computeTotalPieces)
 	r.RegisterComputed("computeTotalLinearFeet", computeTotalLinearFeet)
+	r.RegisterComputed("computeBaseRate", computeBaseRate)
 	r.RegisterComputed("computeFreightChargeAmount", computeFreightChargeAmount)
 	r.RegisterComputed("computeOtherChargeAmount", computeOtherChargeAmount)
 	r.RegisterComputed("computeCurrentTotalCharge", computeCurrentTotalCharge)
@@ -301,6 +302,10 @@ func isNilInterface(i any) bool {
 	}
 	v := reflect.ValueOf(i)
 	return v.Kind() == reflect.Pointer && v.IsNil()
+}
+
+func computeBaseRate(entity any) (any, error) {
+	return getFieldDecimal(entity, "BaseRate")
 }
 
 func computeFreightChargeAmount(entity any) (any, error) {

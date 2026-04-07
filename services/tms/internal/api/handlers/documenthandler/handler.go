@@ -910,8 +910,9 @@ func (h *Handler) getByResource(c *gin.Context) {
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,
 			},
-			ResourceID:   resourceID,
-			ResourceType: resourceType,
+			ResourceID:          resourceID,
+			ResourceType:        resourceType,
+			IncludeDocumentType: helpers.QueryBool(c, "includeDocumentType", false),
 		},
 	)
 	if err != nil {

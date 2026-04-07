@@ -208,10 +208,10 @@ export default function ShipmentBillingDetails() {
             thousandSeparator
             control={control}
             rules={{ required: true }}
-            name="freightChargeAmount"
-            label="Freight Charges"
-            placeholder="Enter Freight Charges"
-            description="Base charge for transporting the shipment, excluding additional fees."
+            name="baseRate"
+            label="Base Rate"
+            placeholder="Enter Base Rate"
+            description="Per-unit rate used by the formula template to calculate freight charges."
             sideText="USD"
           />
         </FormControl>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  decimalStringSchema,
   optionalStringSchema,
   statusSchema,
   tenantInfoSchema,
@@ -21,6 +22,7 @@ export const equipmentTypeSchema = z.object({
   description: optionalStringSchema,
   class: equipmentClassSchema,
   color: optionalStringSchema,
+  interiorLength: decimalStringSchema,
 });
 
 export type EquipmentType = z.infer<typeof equipmentTypeSchema>;

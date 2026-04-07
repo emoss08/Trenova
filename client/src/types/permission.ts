@@ -90,6 +90,7 @@ export const Resource = {
   DataEntryControl: "data_entry_control",
   DispatchControl: "dispatch_control",
   Invoice: "invoice",
+  BillingQueue: "billing_queue",
   AccessorialCharge: "accessorial_charge",
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",

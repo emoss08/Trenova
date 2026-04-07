@@ -42,6 +42,7 @@ type ShipmentEntity struct {
 	TemperatureMax      *int16
 	Moves               []Move
 	Commodities         []Commodity
+	BaseRate            *float64
 	FreightChargeAmount *float64
 	OtherChargeAmount   *float64
 	TotalChargeAmount   *float64
@@ -62,6 +63,7 @@ func TestRegisterDefaultComputed(t *testing.T) {
 		"computeTotalWeight",
 		"computeTotalPieces",
 		"computeTotalLinearFeet",
+		"computeBaseRate",
 		"computeFreightChargeAmount",
 		"computeOtherChargeAmount",
 		"computeCurrentTotalCharge",
@@ -607,6 +609,43 @@ func TestComputeTotalLinearFeet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got, err := r.ResolveComputed(tt.entity, "computeTotalLinearFeet")
+			require.NoError(t, err)
+			assert.InDelta(t, tt.want, got, 0.001)
+		})
+	}
+}
+
+func TestComputeBaseRate(t *testing.T) {
+	t.Parallel()
+
+	r := resolver.NewResolver()
+	resolver.RegisterDefaultComputed(r)
+
+	tests := []struct {
+		name   string
+		entity *ShipmentEntity
+		want   float64
+	}{
+		{
+			name: "with base rate",
+			entity: &ShipmentEntity{
+				BaseRate: new(2500.75),
+			},
+			want: 2500.75,
+		},
+		{
+			name: "nil base rate",
+			entity: &ShipmentEntity{
+				BaseRate: nil,
+			},
+			want: 0.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := r.ResolveComputed(tt.entity, "computeBaseRate")
 			require.NoError(t, err)
 			assert.InDelta(t, tt.want, got, 0.001)
 		})

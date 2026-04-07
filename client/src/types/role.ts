@@ -41,11 +41,20 @@ export const resourcePermissionSchema = z.object({
 });
 export type ResourcePermission = z.infer<typeof resourcePermissionSchema>;
 
+export const coreResponsibilitySchema = z.enum([
+  "Billing",
+  "Operations",
+  "Finance",
+  "Leadership",
+]);
+export type CoreResponsibility = z.infer<typeof coreResponsibilitySchema>;
+
 export const roleSchema = z.object({
   id: optionalStringSchema,
   organizationId: optionalStringSchema,
   name: z.string().min(1, "Name is required").max(255),
   description: optionalStringSchema,
+  coreResponsibility: coreResponsibilitySchema.nullish(),
   parentRoleIds: z.array(z.string()).nullish(),
   maxSensitivity: fieldSensitivitySchema,
   isSystem: z.boolean().optional(),

@@ -131,7 +131,7 @@ export function FormSaveDock<T extends string = string>({
       {},
       {
         keepDirty: false,
-        keepValues: false,
+        keepValues: true,
       },
     );
   }, [reset]);

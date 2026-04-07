@@ -3,8 +3,8 @@ import {
   NestedEntityRefCell,
 } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { ShipmentStatusBadge } from "@/components/status-badge";
-import { shipmentStatusChoices } from "@/lib/choices";
+import { BillingQueueStatusBadge, ShipmentStatusBadge } from "@/components/status-badge";
+import { billingTransferStatusChoices, shipmentStatusChoices } from "@/lib/choices";
 import {
   getDestinationLocation,
   getDestinationStop,
@@ -304,6 +304,27 @@ export function getColumns(): ColumnDef<Shipment>[] {
         filterType: "text",
         defaultFilterOperator: "contains",
       },
+    },
+    {
+      accessorKey: "billingTransferStatus",
+      header: "Billing Status",
+      cell: ({ row }) => {
+        const status = row.original.billingTransferStatus;
+        if (!status) return <p className="text-muted-foreground">-</p>;
+        return <BillingQueueStatusBadge status={status as any} />;
+      },
+      meta: {
+        apiField: "billingTransferStatus",
+        label: "Billing Status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: billingTransferStatusChoices,
+        defaultFilterOperator: "eq",
+      },
+      size: 200,
+      minSize: 150,
+      maxSize: 250,
     },
     {
       accessorKey: "createdAt",

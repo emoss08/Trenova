@@ -301,6 +301,127 @@ definitions:
             userId:
                 type: string
         type: object
+    github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType:
+        enum:
+            - Invoice
+            - CreditMemo
+            - DebitMemo
+        type: string
+        x-enum-varnames:
+            - BillTypeInvoice
+            - BillTypeCreditMemo
+            - BillTypeDebitMemo
+    github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem:
+        properties:
+            assignedBiller:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            assignedBillerId:
+                type: string
+            billType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType'
+            businessUnitId:
+                type: string
+            cancelReason:
+                type: string
+            canceledAt:
+                type: integer
+            canceledBy:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            canceledById:
+                type: string
+            createdAt:
+                type: integer
+            exceptionNotes:
+                type: string
+            exceptionReasonCode:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode'
+            id:
+                type: string
+            organizationId:
+                type: string
+            reviewCompletedAt:
+                type: integer
+            reviewNotes:
+                type: string
+            reviewStartedAt:
+                type: integer
+            shipment:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment'
+            shipmentId:
+                type: string
+            status:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.Status'
+            updatedAt:
+                type: integer
+            version:
+                type: integer
+        type: object
+    github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode:
+        enum:
+            - MissingDocumentation
+            - IncorrectRates
+            - WeightDiscrepancy
+            - AccessorialDispute
+            - DuplicateCharge
+            - MissingReferenceNumber
+            - CustomerInformationError
+            - ServiceFailure
+            - RateNotOnFile
+            - Other
+        type: string
+        x-enum-varnames:
+            - ExceptionMissingDocumentation
+            - ExceptionIncorrectRates
+            - ExceptionWeightDiscrepancy
+            - ExceptionAccessorialDispute
+            - ExceptionDuplicateCharge
+            - ExceptionMissingReferenceNumber
+            - ExceptionCustomerInformationError
+            - ExceptionServiceFailure
+            - ExceptionRateNotOnFile
+            - ExceptionOther
+    github_com_emoss08_trenova_internal_core_domain_billingqueue.Status:
+        enum:
+            - ReadyForReview
+            - InReview
+            - Approved
+            - OnHold
+            - SentBackToOps
+            - Exception
+            - Canceled
+        type: string
+        x-enum-varnames:
+            - StatusReadyForReview
+            - StatusInReview
+            - StatusApproved
+            - StatusOnHold
+            - StatusSentBackToOps
+            - StatusException
+            - StatusCanceled
+    github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset:
+        properties:
+            businessUnitId:
+                type: string
+            createdAt:
+                type: integer
+            filters:
+                additionalProperties: {}
+                type: object
+            id:
+                type: string
+            isDefault:
+                type: boolean
+            name:
+                type: string
+            organizationId:
+                type: string
+            updatedAt:
+                type: integer
+            userId:
+                type: string
+            version:
+                type: integer
+        type: object
     github_com_emoss08_trenova_internal_core_domain_commodity.Commodity:
         properties:
             businessUnit:
@@ -546,6 +667,10 @@ definitions:
             customerId:
                 type: string
             customerInvoicePrefix:
+                type: string
+            defaultBiller:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+            defaultBillerId:
                 type: string
             detentionBillingEnabled:
                 type: boolean
@@ -887,6 +1012,20 @@ definitions:
             locationId:
                 type: string
         type: object
+    github_com_emoss08_trenova_internal_core_domain_document.ContentStatus:
+        enum:
+            - Pending
+            - Extracting
+            - Extracted
+            - Indexed
+            - Failed
+        type: string
+        x-enum-varnames:
+            - ContentStatusPending
+            - ContentStatusExtracting
+            - ContentStatusExtracted
+            - ContentStatusIndexed
+            - ContentStatusFailed
     github_com_emoss08_trenova_internal_core_domain_document.Document:
         properties:
             approvedAt:
@@ -897,10 +1036,20 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit'
             businessUnitId:
                 type: string
+            checksumSha256:
+                type: string
+            contentError:
+                type: string
+            contentStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ContentStatus'
             createdAt:
                 type: integer
             description:
                 type: string
+            detectedKind:
+                type: string
+            documentType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_documenttype.DocumentType'
             documentTypeId:
                 type: string
             expirationDate:
@@ -911,25 +1060,45 @@ definitions:
                 type: integer
             fileType:
                 type: string
+            hasExtractedText:
+                type: boolean
             id:
                 type: string
+            isCurrentVersion:
+                type: boolean
             isPublic:
                 type: boolean
+            lineageId:
+                type: string
             organization:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
             organizationId:
                 type: string
             originalName:
                 type: string
+            previewStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_document.PreviewStatus'
             previewStoragePath:
                 type: string
+            processingProfile:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ProcessingProfile'
             resourceId:
                 type: string
             resourceType:
                 type: string
+            shipmentDraftStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ShipmentDraftStatus'
             status:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Status'
+            storageLegalHold:
+                type: boolean
             storagePath:
+                type: string
+            storageRetentionMode:
+                type: string
+            storageRetentionUntil:
+                type: integer
+            storageVersionId:
                 type: string
             tags:
                 items:
@@ -941,7 +1110,41 @@ definitions:
                 type: string
             version:
                 type: integer
+            versionNumber:
+                type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_domain_document.PreviewStatus:
+        enum:
+            - Pending
+            - Ready
+            - Failed
+            - Unsupported
+        type: string
+        x-enum-varnames:
+            - PreviewStatusPending
+            - PreviewStatusReady
+            - PreviewStatusFailed
+            - PreviewStatusUnsupported
+    github_com_emoss08_trenova_internal_core_domain_document.ProcessingProfile:
+        enum:
+            - none
+            - rate_confirmation_import
+        type: string
+        x-enum-varnames:
+            - ProcessingProfileNone
+            - ProcessingProfileRateConfirmationImport
+    github_com_emoss08_trenova_internal_core_domain_document.ShipmentDraftStatus:
+        enum:
+            - Unavailable
+            - Pending
+            - Ready
+            - Failed
+        type: string
+        x-enum-varnames:
+            - ShipmentDraftStatusUnavailable
+            - ShipmentDraftStatusPending
+            - ShipmentDraftStatusReady
+            - ShipmentDraftStatusFailed
     github_com_emoss08_trenova_internal_core_domain_document.Status:
         enum:
             - Draft
@@ -1119,6 +1322,8 @@ definitions:
                 type: string
             id:
                 type: string
+            interiorLength:
+                type: number
             organization:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
             organizationId:
@@ -1843,24 +2048,6 @@ definitions:
             - HoldTypeCompliance
             - HoldTypeCustomer
             - HoldTypeFinance
-    github_com_emoss08_trenova_internal_core_domain_integration.Category:
-        enum:
-            - MappingRouting
-            - FreightLogistics
-            - Telematics
-        type: string
-        x-enum-varnames:
-            - CategoryMappingRouting
-            - CategoryFreightLogistics
-            - CategoryTelematics
-    github_com_emoss08_trenova_internal_core_domain_integration.Type:
-        enum:
-            - GoogleMaps
-            - Samsara
-        type: string
-        x-enum-varnames:
-            - TypeGoogleMaps
-            - TypeSamsara
     github_com_emoss08_trenova_internal_core_domain_location.Location:
         properties:
             addressLine1:
@@ -2010,6 +2197,18 @@ definitions:
             version:
                 type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_domain_permission.CoreResponsibility:
+        enum:
+            - Billing
+            - Operations
+            - Finance
+            - Leadership
+        type: string
+        x-enum-varnames:
+            - CoreResponsibilityBilling
+            - CoreResponsibilityOperations
+            - CoreResponsibilityFinance
+            - CoreResponsibilityLeadership
     github_com_emoss08_trenova_internal_core_domain_permission.DataScope:
         enum:
             - own
@@ -2097,6 +2296,7 @@ definitions:
             - sequence_config
             - integration
             - api_key
+            - data_entry_control
             - equipment_type
             - equipment_manufacturer
             - trailer
@@ -2115,6 +2315,7 @@ definitions:
             - hazmat_segregation_rule
             - distance_override
             - invoice
+            - billing_queue
             - accessorial_charge
             - charge_type
             - revenue_code
@@ -2136,6 +2337,8 @@ definitions:
             - document_classification
             - document
             - document_type
+            - document_control
+            - document_parsing_rule
             - shipment_type
             - service_type
             - delay_code
@@ -2156,6 +2359,7 @@ definitions:
             - ResourceSequenceConfig
             - ResourceIntegration
             - ResourceAPIKey
+            - ResourceDataEntryControl
             - ResourceEquipmentType
             - ResourceEquipmentManufacturer
             - ResourceTrailer
@@ -2174,6 +2378,7 @@ definitions:
             - ResourceHazmatSegregationRule
             - ResourceDistanceOverride
             - ResourceInvoice
+            - ResourceBillingQueue
             - ResourceAccessorialCharge
             - ResourceChargeType
             - ResourceRevenueCode
@@ -2195,6 +2400,8 @@ definitions:
             - ResourceDocumentClassification
             - ResourceDocument
             - ResourceDocumentType
+            - ResourceDocumentControl
+            - ResourceDocumentParsingRule
             - ResourceShipmentType
             - ResourceServiceType
             - ResourceDelayCode
@@ -2255,6 +2462,8 @@ definitions:
         properties:
             businessUnitId:
                 type: string
+            coreResponsibility:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.CoreResponsibility'
             createdAt:
                 type: integer
             createdBy:
@@ -2350,6 +2559,8 @@ definitions:
                 type: integer
             id:
                 type: string
+            isSystemGenerated:
+                type: boolean
             method:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method'
             organization:
@@ -2418,6 +2629,92 @@ definitions:
             - AssignmentStatusInProgress
             - AssignmentStatusCompleted
             - AssignmentStatusCanceled
+    github_com_emoss08_trenova_internal_core_domain_shipment.BillingTransferStatus:
+        enum:
+            - ""
+            - ReadyForReview
+            - InReview
+            - OnHold
+            - Exception
+            - SentBackToOps
+            - Approved
+            - Canceled
+        type: string
+        x-enum-varnames:
+            - BillingTransferNone
+            - BillingTransferReadyForReview
+            - BillingTransferInReview
+            - BillingTransferOnHold
+            - BillingTransferException
+            - BillingTransferSentBackToOps
+            - BillingTransferApproved
+            - BillingTransferCanceled
+    github_com_emoss08_trenova_internal_core_domain_shipment.CommentPriority:
+        enum:
+            - Low
+            - Normal
+            - High
+            - Urgent
+        type: string
+        x-enum-varnames:
+            - CommentPriorityLow
+            - CommentPriorityNormal
+            - CommentPriorityHigh
+            - CommentPriorityUrgent
+    github_com_emoss08_trenova_internal_core_domain_shipment.CommentSource:
+        enum:
+            - User
+            - System
+            - Integration
+            - AI
+        type: string
+        x-enum-varnames:
+            - CommentSourceUser
+            - CommentSourceSystem
+            - CommentSourceIntegration
+            - CommentSourceAI
+    github_com_emoss08_trenova_internal_core_domain_shipment.CommentType:
+        enum:
+            - Internal
+            - Dispatch
+            - DriverUpdate
+            - PickupInstruction
+            - DeliveryInstruction
+            - StatusUpdate
+            - Exception
+            - CustomerUpdate
+            - Appointment
+            - Document
+            - Billing
+            - Compliance
+        type: string
+        x-enum-varnames:
+            - CommentTypeInternal
+            - CommentTypeDispatch
+            - CommentTypeDriverUpdate
+            - CommentTypePickupInstruction
+            - CommentTypeDeliveryInstruction
+            - CommentTypeStatusUpdate
+            - CommentTypeException
+            - CommentTypeCustomerUpdate
+            - CommentTypeAppointment
+            - CommentTypeDocument
+            - CommentTypeBilling
+            - CommentTypeCompliance
+    github_com_emoss08_trenova_internal_core_domain_shipment.CommentVisibility:
+        enum:
+            - Internal
+            - Operations
+            - Customer
+            - Driver
+            - Accounting
+        type: string
+        x-enum-varnames:
+            - CommentVisibilityInternal
+            - CommentVisibilityOperations
+            - CommentVisibilityCustomer
+            - CommentVisibilityDriver
+            - CommentVisibilityAccounting
     github_com_emoss08_trenova_internal_core_domain_shipment.HoldSource:
         enum:
             - User
@@ -2446,6 +2743,22 @@ definitions:
             - MoveStatusInTransit
             - MoveStatusCompleted
             - MoveStatusCanceled
+    github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail:
+        properties:
+            expression:
+                type: string
+            formulaTemplateId:
+                type: string
+            formulaTemplateName:
+                type: string
+            ratedAt:
+                type: integer
+            resolvedVariables:
+                additionalProperties: {}
+                type: object
+            result:
+                type: number
+        type: object
     github_com_emoss08_trenova_internal_core_domain_shipment.Shipment:
         properties:
             actualDeliveryDate:
@@ -2456,6 +2769,12 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge'
                 type: array
+            baseRate:
+                $ref: '#/definitions/decimal.NullDecimal'
+            billedAt:
+                type: integer
+            billingTransferStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.BillingTransferStatus'
             bol:
                 type: string
             businessUnit:
@@ -2470,6 +2789,10 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
             canceledById:
                 type: string
+            comments:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentComment'
+                type: array
             commodities:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentCommodity'
@@ -2494,6 +2817,8 @@ definitions:
                 $ref: '#/definitions/decimal.NullDecimal'
             id:
                 type: string
+            markedReadyToBillAt:
+                type: integer
             moves:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentMove'
@@ -2512,6 +2837,8 @@ definitions:
                 type: integer
             proNumber:
                 type: string
+            ratingDetail:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail'
             ratingUnit:
                 type: integer
             serviceType:
@@ -2521,6 +2848,8 @@ definitions:
             shipmentType:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipmenttype.ShipmentType'
             shipmentTypeId:
+                type: string
+            sourceDocumentId:
                 type: string
             status:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Status'
@@ -2538,6 +2867,8 @@ definitions:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_equipmenttype.EquipmentType'
             trailerTypeId:
                 type: string
+            transferredToBillingAt:
+                type: integer
             updatedAt:
                 type: integer
             version:
@@ -2565,10 +2896,19 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentCommentMention'
                 type: array
+            metadata:
+                additionalProperties: {}
+                type: object
             organizationId:
                 type: string
+            priority:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentPriority'
             shipmentId:
                 type: string
+            source:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentSource'
+            type:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentType'
             updatedAt:
                 type: integer
             user:
@@ -2577,6 +2917,8 @@ definitions:
                 type: string
             version:
                 type: integer
+            visibility:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentVisibility'
         type: object
     github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentCommentMention:
         properties:
@@ -2968,20 +3310,26 @@ definitions:
             - VisibilityShared
     github_com_emoss08_trenova_internal_core_domain_tenant.AccountingControl:
         properties:
+            accountingMethod:
+                allOf:
+                    - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.AccountingMethodType'
+                description: |-
+                    --- Accounting Method ---
+                    Top-level method that constrains which revenue/expense recognition options are valid.
             accrueExpenses:
                 type: boolean
             allowPostingToClosedPeriods:
-                description: Period Controls
+                description: '--- Period Controls ---'
                 type: boolean
             autoClosePeriods:
                 type: boolean
             autoCreateJournalEntries:
-                description: Journal Entry Automation
+                description: '--- Journal Entry Automation ---'
                 type: boolean
             businessUnit:
                 allOf:
                     - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit'
-                description: Relationships
+                description: '--- Relationships ---'
             businessUnitId:
                 type: string
             createdAt:
@@ -2994,69 +3342,87 @@ definitions:
                 type: string
             defaultArAccountId:
                 type: string
+            defaultCostOfServiceAccountId:
+                type: string
             defaultCurrencyCode:
+                type: string
+            defaultDeferredRevenueAccountId:
                 type: string
             defaultExpenseAccountId:
                 type: string
+            defaultRetainedEarningsAccountId:
+                type: string
             defaultRevenueAccountId:
-                description: Default GL Accounts
+                description: '--- Default GL Accounts ---'
                 type: string
             defaultTaxAccountId:
                 type: string
             deferRevenueUntilPaid:
                 type: boolean
             enableAutomaticTaxCalculation:
-                description: Tax Settings
+                description: '--- Tax Settings ---'
                 type: boolean
             enableJournalEntryReversal:
                 type: boolean
             enableMultiCurrency:
-                description: Multi-Currency (for future expansion)
+                description: '--- Multi-Currency ---'
                 type: boolean
             enableReconciliation:
-                description: Reconciliation Settings
+                description: '--- Reconciliation Settings ---'
                 type: boolean
             enableReconciliationNotifications:
                 type: boolean
             expenseRecognitionMethod:
                 allOf:
                     - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.ExpenseRecognitionType'
-                description: Expense Recognition
+                description: '--- Expense Recognition ---'
             haltOnPendingReconciliation:
                 type: boolean
             id:
                 type: string
             journalEntryCriteria:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType'
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType'
+                type: array
             organization:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization'
             organizationId:
                 type: string
             reconciliationThreshold:
-                type: integer
+                type: number
             reconciliationThresholdAction:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.ThresholdActionType'
             requireDocumentAttachment:
-                description: Audit & Compliance
+                description: '--- Audit & Compliance ---'
                 type: boolean
             requireJournalEntryApproval:
                 type: boolean
             requirePeriodEndApproval:
                 type: boolean
             restrictManualJournalEntries:
-                description: Journal Entry Controls
+                description: '--- Journal Entry Controls ---'
                 type: boolean
             retainDeletedEntries:
                 type: boolean
             revenueRecognitionMethod:
                 allOf:
                     - $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.RevenueRecognitionType'
-                description: Revenue Recognition
+                description: '--- Revenue Recognition ---'
             updatedAt:
                 type: integer
             version:
                 type: integer
         type: object
+    github_com_emoss08_trenova_internal_core_domain_tenant.AccountingMethodType:
+        enum:
+            - Accrual
+            - Cash
+            - Hybrid
+        type: string
+        x-enum-varnames:
+            - AccountingMethodAccrual
+            - AccountingMethodCash
+            - AccountingMethodHybrid
     github_com_emoss08_trenova_internal_core_domain_tenant.BillingControl:
         properties:
             allowInvoiceConsolidation:
@@ -3166,13 +3532,11 @@ definitions:
             - OnIncurrence
             - OnPayment
             - OnAccrual
-            - OnBilling
         type: string
         x-enum-varnames:
             - ExpenseRecognitionOnIncurrence
             - ExpenseRecognitionOnPayment
             - ExpenseRecognitionOnAccrual
-            - ExpenseRecognitionOnBilling
     github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType:
         enum:
             - InvoicePosted
@@ -3208,6 +3572,8 @@ definitions:
             dotNumber:
                 type: string
             id:
+                type: string
+            loginSlug:
                 type: string
             logoUrl:
                 type: string
@@ -4126,7 +4492,7 @@ definitions:
         type: object
     github_com_emoss08_trenova_internal_core_ports_repositories.ShipmentTotalsResponse:
         properties:
-            baseCharge:
+            freightChargeAmount:
                 type: number
             otherChargeAmount:
                 type: number
@@ -4290,101 +4656,24 @@ definitions:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.PermissionCheckResult'
                 type: array
         type: object
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogConfigurationStatus:
-        enum:
-            - configured
-            - needs_setup
-        type: string
-        x-enum-varnames:
-            - CatalogConfigurationStatusConfigured
-            - CatalogConfigurationStatusNeedsSetup
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogConnectionStatus:
-        enum:
-            - connected
-            - disconnected
-        type: string
-        x-enum-varnames:
-            - CatalogConnectionStatusConnected
-            - CatalogConnectionStatusDisconnected
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogItem:
+    github_com_emoss08_trenova_internal_core_ports_services.BillingQueueStats:
         properties:
-            category:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Category'
-            categoryLabel:
-                type: string
-            color:
-                type: string
-            configured:
-                type: boolean
-            description:
-                type: string
-            docsUrl:
-                type: string
-            enabled:
-                type: boolean
-            featured:
-                type: boolean
-            links:
-                items:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogLink'
-                type: array
-            logoDarkUrl:
-                type: string
-            logoLightUrl:
-                type: string
-            logoUrl:
-                type: string
-            name:
-                type: string
-            primaryActionLabel:
-                type: string
-            sortOrder:
+            approved:
                 type: integer
-            status:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogStatus'
-            type:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Type'
-            websiteUrl:
-                type: string
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogLink:
-        properties:
-            kind:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogLinkKind'
-            label:
-                type: string
-            url:
-                type: string
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogLinkKind:
-        enum:
-            - docs
-            - website
-            - support
-            - api
-        type: string
-        x-enum-varnames:
-            - CatalogLinkKindDocs
-            - CatalogLinkKindWebsite
-            - CatalogLinkKindSupport
-            - CatalogLinkKindAPI
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogResponse:
-        properties:
-            items:
-                items:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogItem'
-                type: array
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.CatalogStatus:
-        properties:
-            configuration:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogConfigurationStatus'
-            configurationLabel:
-                type: string
-            connection:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogConnectionStatus'
-            connectionLabel:
-                type: string
+            canceled:
+                type: integer
+            exception:
+                type: integer
+            inReview:
+                type: integer
+            onHold:
+                type: integer
+            readyForReview:
+                type: integer
+            sentBackToOps:
+                type: integer
+            total:
+                type: integer
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.CreateAPIKeyRequest:
         properties:
@@ -4497,6 +4786,8 @@ definitions:
         properties:
             emailAddress:
                 type: string
+            organizationSlug:
+                type: string
             password:
                 type: string
         required:
@@ -4550,13 +4841,6 @@ definitions:
             ttl:
                 type: integer
         type: object
-    github_com_emoss08_trenova_internal_core_ports_services.RepairWorkerSyncDriftRequest:
-        properties:
-            workerIds:
-                items:
-                    type: string
-                type: array
-        type: object
     github_com_emoss08_trenova_internal_core_ports_services.ResourcePermissionDetail:
         properties:
             accessibleFields:
@@ -4589,63 +4873,74 @@ definitions:
             name:
                 type: string
         type: object
-    github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse:
+    github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness:
         properties:
-            baseUrl:
+            canMarkReadyToInvoice:
+                type: boolean
+            missingRequirements:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement'
+                type: array
+            policy:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadinessPolicy'
+            requirements:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement'
+                type: array
+            shipmentId:
                 type: string
-            enabled:
+            shipmentStatus:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Status'
+            shouldAutoMarkReadyToInvoice:
                 type: boolean
-            hasToken:
-                type: boolean
-            updatedAt:
-                type: integer
+            validationFailures:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation'
+                type: array
         type: object
-    github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncFailure:
+    github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadinessPolicy:
         properties:
+            autoMarkReadyToBill:
+                type: boolean
+            enforceCustomerBillingReq:
+                type: boolean
+        type: object
+    github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement:
+        properties:
+            documentCount:
+                type: integer
+            documentIds:
+                items:
+                    type: string
+                type: array
+            documentTypeCode:
+                type: string
+            documentTypeId:
+                type: string
+            documentTypeName:
+                type: string
+            satisfied:
+                type: boolean
+        type: object
+    github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation:
+        properties:
+            code:
+                type: string
+            field:
+                type: string
             message:
                 type: string
-            operation:
-                type: string
-            worker:
-                type: string
-            workerId:
-                type: string
         type: object
-    github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncResult:
+    github_com_emoss08_trenova_internal_core_ports_services.ShipmentUIPolicy:
         properties:
-            activeWorkers:
-                type: integer
-            alreadyMapped:
-                type: integer
-            createdDrivers:
-                type: integer
-            failed:
-                type: integer
-            failures:
-                items:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncFailure'
-                type: array
-            mappedFromExternalIds:
-                type: integer
-            remoteDrivers:
-                type: integer
-            skippedInactive:
-                type: integer
-            totalWorkers:
-                type: integer
-            updatedMappings:
-                type: integer
-            updatedRemoteDrivers:
-                type: integer
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.TestConnectionResponse:
-        properties:
-            checkedAt:
-                type: integer
-            provider:
-                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Type'
-            success:
+            allowMoveRemovals:
                 type: boolean
+            checkForDuplicateBols:
+                type: boolean
+            checkHazmatSegregation:
+                type: boolean
+            maxShipmentWeightLimit:
+                type: integer
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.UpdateAPIKeyRequest:
         properties:
@@ -4659,68 +4954,6 @@ definitions:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyPermissionInput'
                 type: array
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.UpdateSamsaraConfigRequest:
-        properties:
-            baseUrl:
-                type: string
-            enabled:
-                type: boolean
-            token:
-                type: string
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDrift:
-        properties:
-            detectedAt:
-                type: integer
-            driftType:
-                type: string
-            localExternalId:
-                type: string
-            message:
-                type: string
-            remoteDriverId:
-                type: string
-            workerId:
-                type: string
-            workerName:
-                type: string
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse:
-        properties:
-            drifts:
-                items:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDrift'
-                type: array
-            lastCalculatedAt:
-                type: integer
-            mappingMismatch:
-                type: integer
-            missingMapping:
-                type: integer
-            missingRemoteDriver:
-                type: integer
-            remoteDeactivated:
-                type: integer
-            totalDrifts:
-                type: integer
-            workersWithDrift:
-                type: integer
-        type: object
-    github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncReadinessResponse:
-        properties:
-            activeWorkers:
-                type: integer
-            allActiveWorkersSynced:
-                type: boolean
-            lastCalculatedAt:
-                type: integer
-            syncedActiveWorkers:
-                type: integer
-            totalWorkers:
-                type: integer
-            unsyncedActiveWorkers:
-                type: integer
         type: object
     github_com_emoss08_trenova_internal_core_services_apikeyservice.AllowedResourceCategory:
         properties:
@@ -4968,6 +5201,19 @@ definitions:
             results:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_audit.Entry'
+                type: array
+        type: object
+    ? github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_billingqueue_BillingQueueItem
+    :   properties:
+            count:
+                type: integer
+            next:
+                type: string
+            previous:
+                type: string
+            results:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
                 type: array
         type: object
     github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_commodity_Commodity:
@@ -5449,6 +5695,61 @@ definitions:
             trailerId:
                 type: string
         type: object
+    internal_api_handlers_billingqueuehandler.assignRequest:
+        properties:
+            billerId:
+                type: string
+        required:
+            - billerId
+        type: object
+    internal_api_handlers_billingqueuehandler.filterPresetRequest:
+        properties:
+            filters:
+                additionalProperties: {}
+                type: object
+            isDefault:
+                type: boolean
+            name:
+                type: string
+        required:
+            - filters
+            - name
+        type: object
+    internal_api_handlers_billingqueuehandler.transferRequest:
+        properties:
+            billType:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType'
+            shipmentId:
+                type: string
+        required:
+            - shipmentId
+        type: object
+    internal_api_handlers_billingqueuehandler.updateChargesRequest:
+        properties:
+            additionalCharges:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge'
+                type: array
+            baseRate:
+                type: string
+            formulaTemplateId:
+                type: string
+        type: object
+    internal_api_handlers_billingqueuehandler.updateStatusRequest:
+        properties:
+            cancelReason:
+                type: string
+            exceptionNotes:
+                type: string
+            exceptionReasonCode:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode'
+            reviewNotes:
+                type: string
+            status:
+                $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.Status'
+        required:
+            - status
+        type: object
     internal_api_handlers_documenthandler.bulkDeleteRequest:
         properties:
             ids:
@@ -5593,6 +5894,11 @@ definitions:
             newPassword:
                 type: string
         type: object
+    internal_api_handlers_userhandler.ProfilePictureURLResponse:
+        properties:
+            url:
+                type: string
+        type: object
     internal_api_handlers_userhandler.ReplaceOrganizationMembershipsRequest:
         properties:
             organizationIds:
@@ -5620,10 +5926,6 @@ definitions:
         type: object
     internal_api_handlers_userhandler.UpdateMySettingsRequest:
         properties:
-            profilePicUrl:
-                type: string
-            thumbnailUrl:
-                type: string
             timeFormat:
                 $ref: '#/definitions/github_com_emoss08_trenova_pkg_domaintypes.TimeFormat'
             timezone:
@@ -7154,6 +7456,487 @@ paths:
             summary: Update billing control settings
             tags:
                 - Billing Controls
+    /billing-queue/:
+        get:
+            consumes:
+                - application/json
+            operationId: listBillingQueueItems
+            parameters:
+                - description: Search query
+                  in: query
+                  name: query
+                  type: string
+                - description: Page size
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - description: Page offset
+                  in: query
+                  minimum: 0
+                  name: offset
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_billingqueue_BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List billing queue items
+            tags:
+                - Billing Queue
+    /billing-queue/{itemID}/:
+        get:
+            operationId: getBillingQueueItem
+            parameters:
+                - description: Billing queue item ID
+                  in: path
+                  name: itemID
+                  required: true
+                  type: string
+                - description: Expand shipment details
+                  in: query
+                  name: expandShipmentDetails
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get a billing queue item
+            tags:
+                - Billing Queue
+    /billing-queue/{itemID}/assign/:
+        put:
+            consumes:
+                - application/json
+            operationId: assignBillingQueueBiller
+            parameters:
+                - description: Billing queue item ID
+                  in: path
+                  name: itemID
+                  required: true
+                  type: string
+                - description: Assign biller payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.assignRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Assign a biller to a billing queue item
+            tags:
+                - Billing Queue
+    /billing-queue/{itemID}/charges/:
+        put:
+            consumes:
+                - application/json
+            operationId: updateBillingQueueCharges
+            parameters:
+                - description: Billing queue item ID
+                  in: path
+                  name: itemID
+                  required: true
+                  type: string
+                - description: Update charges payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.updateChargesRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Update charges on a billing queue item
+            tags:
+                - Billing Queue
+    /billing-queue/{itemID}/status/:
+        put:
+            consumes:
+                - application/json
+            operationId: updateBillingQueueStatus
+            parameters:
+                - description: Billing queue item ID
+                  in: path
+                  name: itemID
+                  required: true
+                  type: string
+                - description: Update status payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.updateStatusRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Update billing queue item status
+            tags:
+                - Billing Queue
+    /billing-queue/filter-presets/:
+        get:
+            operationId: listBillingQueueFilterPresets
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List billing queue filter presets
+            tags:
+                - Billing Queue
+        post:
+            consumes:
+                - application/json
+            operationId: createBillingQueueFilterPreset
+            parameters:
+                - description: Filter preset payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.filterPresetRequest'
+            produces:
+                - application/json
+            responses:
+                "201":
+                    description: Created
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Create a billing queue filter preset
+            tags:
+                - Billing Queue
+    /billing-queue/filter-presets/{presetId}/:
+        delete:
+            operationId: deleteBillingQueueFilterPreset
+            parameters:
+                - description: Filter preset ID
+                  in: path
+                  name: presetId
+                  required: true
+                  type: string
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Delete a billing queue filter preset
+            tags:
+                - Billing Queue
+        put:
+            consumes:
+                - application/json
+            operationId: updateBillingQueueFilterPreset
+            parameters:
+                - description: Filter preset ID
+                  in: path
+                  name: presetId
+                  required: true
+                  type: string
+                - description: Filter preset payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.filterPresetRequest'
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Update a billing queue filter preset
+            tags:
+                - Billing Queue
+    /billing-queue/stats/:
+        get:
+            operationId: getBillingQueueStats
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.BillingQueueStats'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get billing queue stats
+            tags:
+                - Billing Queue
+    /billing-queue/transfer/:
+        post:
+            consumes:
+                - application/json
+            operationId: transferToBillingQueue
+            parameters:
+                - description: Transfer request payload
+                  in: body
+                  name: request
+                  required: true
+                  schema:
+                    $ref: '#/definitions/internal_api_handlers_billingqueuehandler.transferRequest'
+            produces:
+                - application/json
+            responses:
+                "201":
+                    description: Created
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "422":
+                    description: Unprocessable Entity
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Transfer a shipment to billing queue
+            tags:
+                - Billing Queue
     /commodities/:
         get:
             consumes:
@@ -13128,338 +13911,6 @@ paths:
             summary: Get a hold reason option
             tags:
                 - Hold Reasons
-    /integrations/catalog/:
-        get:
-            operationId: listIntegrationCatalog
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: List integration catalog
-            tags:
-                - Integrations
-    /integrations/google/api-key/:
-        get:
-            operationId: getGoogleMapsAPIKey
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/gin.H'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get Google API key
-            tags:
-                - Integrations
-    /integrations/samsara/config/:
-        get:
-            operationId: getSamsaraConfig
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get Samsara config
-            tags:
-                - Integrations
-        put:
-            consumes:
-                - application/json
-            operationId: updateSamsaraConfig
-            parameters:
-                - description: Samsara config update request
-                  in: body
-                  name: request
-                  required: true
-                  schema:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.UpdateSamsaraConfigRequest'
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Update Samsara config
-            tags:
-                - Integrations
-    /integrations/samsara/test-connection/:
-        post:
-            operationId: testSamsaraConnection
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.TestConnectionResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Test Samsara connection
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/:
-        post:
-            operationId: startSamsaraWorkerSync
-            produces:
-                - application/json
-            responses:
-                "202":
-                    description: Accepted
-                    schema:
-                        $ref: '#/definitions/gin.H'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Start worker sync
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/{workflowID}/:
-        get:
-            operationId: getSamsaraWorkerSyncStatus
-            parameters:
-                - description: Workflow ID
-                  in: path
-                  name: workflowID
-                  required: true
-                  type: string
-                - description: Run ID
-                  in: query
-                  name: runId
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/gin.H'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get worker sync status
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/drift/:
-        get:
-            operationId: getSamsaraWorkerSyncDrift
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get worker sync drift
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/drift/detect/:
-        post:
-            operationId: detectSamsaraWorkerSyncDrift
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Detect worker sync drift
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/drift/repair/:
-        post:
-            consumes:
-                - application/json
-            operationId: repairSamsaraWorkerSyncDrift
-            parameters:
-                - description: Repair drift request
-                  in: body
-                  name: request
-                  required: true
-                  schema:
-                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RepairWorkerSyncDriftRequest'
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncResult'
-                "400":
-                    description: Bad Request
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Repair worker sync drift
-            tags:
-                - Integrations
-    /integrations/samsara/workers/sync/readiness/:
-        get:
-            operationId: getSamsaraWorkerSyncReadiness
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: OK
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncReadinessResponse'
-                "401":
-                    description: Unauthorized
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "403":
-                    description: Forbidden
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                "500":
-                    description: Internal Server Error
-                    schema:
-                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-            security:
-                - BearerAuth: []
-            summary: Get worker sync readiness
-            tags:
-                - Integrations
     /location-categories/:
         get:
             consumes:
@@ -14247,7 +14698,7 @@ paths:
             summary: Get permission manifest version
             tags:
                 - Permissions
-    /organizations//{id}:
+    /organizations/{id}:
         get:
             operationId: getOrganization
             parameters:
@@ -14336,7 +14787,7 @@ paths:
             summary: Update an organization
             tags:
                 - Organizations
-    /organizations//{id}/logo:
+    /organizations/{id}/logo:
         delete:
             operationId: deleteOrganizationLogo
             parameters:
@@ -16453,6 +16904,48 @@ paths:
             summary: Update a shipment
             tags:
                 - Shipments
+    /shipments/{shipmentID}/billing-readiness/:
+        get:
+            description: Returns billing-readiness details for a shipment, including required customer documents and resolved billing policy.
+            operationId: getShipmentBillingReadiness
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get shipment billing readiness
+            tags:
+                - Shipments
     /shipments/{shipmentID}/cancel/:
         post:
             consumes:
@@ -17277,6 +17770,34 @@ paths:
             security:
                 - BearerAuth: []
             summary: Duplicate a shipment
+            tags:
+                - Shipments
+    /shipments/ui-policy/:
+        get:
+            description: Returns shipment UI capability flags for the authenticated tenant.
+            operationId: getShipmentUIPolicy
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentUIPolicy'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get shipment UI policy
             tags:
                 - Shipments
     /system/check-updates:
@@ -18755,6 +19276,47 @@ paths:
             summary: Simulate user permissions
             tags:
                 - Users
+    /users/{userID}/profile-picture/:
+        get:
+            operationId: getUserProfilePictureURL
+            parameters:
+                - description: User ID
+                  in: path
+                  name: userID
+                  required: true
+                  type: string
+                - description: Image variant
+                  in: query
+                  name: variant
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/internal_api_handlers_userhandler.ProfilePictureURLResponse'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "404":
+                    description: Not Found
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Get user profile picture URL
+            tags:
+                - Users
     /users/{userID}/role-assignments/:
         get:
             operationId: getUserRoleAssignments
@@ -18914,6 +19476,63 @@ paths:
             security:
                 - BearerAuth: []
             summary: List current user organizations
+            tags:
+                - Users
+    /users/me/profile-picture/:
+        delete:
+            operationId: deleteCurrentUserProfilePicture
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Delete current user profile picture
+            tags:
+                - Users
+        post:
+            consumes:
+                - multipart/form-data
+            operationId: uploadCurrentUserProfilePicture
+            parameters:
+                - description: Profile picture file
+                  in: formData
+                  name: file
+                  required: true
+                  type: file
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User'
+                "400":
+                    description: Bad Request
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                "500":
+                    description: Internal Server Error
+                    schema:
+                        $ref: '#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Upload current user profile picture
             tags:
                 - Users
     /users/me/settings/:
@@ -19734,6 +20353,8 @@ tags:
       x-displayName: Users
     - name: Assignments
       x-displayName: Assignments
+    - name: Billing Queue
+      x-displayName: Billing Queue
     - name: Documents
       x-displayName: Documents
     - name: Shipment Moves
@@ -19800,8 +20421,6 @@ tags:
       x-displayName: Formula Templates
     - name: Google Maps
       x-displayName: Google Maps
-    - name: Integrations
-      x-displayName: Integrations
     - name: Sequence Configs
       x-displayName: Sequence Configurations
     - name: Shipment Controls
@@ -19834,6 +20453,7 @@ x-tagGroups:
     - name: Operations
       tags:
         - Assignments
+        - Billing Queue
         - Documents
         - Shipment Moves
         - Shipments
@@ -19871,7 +20491,6 @@ x-tagGroups:
         - Distance Overrides
         - Formula Templates
         - Google Maps
-        - Integrations
         - Sequence Configs
         - Shipment Controls
         - Table Configurations

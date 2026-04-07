@@ -6,6 +6,7 @@ import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { AuditService } from "./audit";
 import { BillingControlService } from "./billing-control";
+import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
 import { CustomerService } from "./customer";
@@ -84,6 +85,7 @@ class APIService {
   public shipmentControlService: ShipmentControlService;
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
+  public billingQueueService: BillingQueueService;
   public dataEntryControlService: DataEntryControlService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
@@ -135,6 +137,7 @@ class APIService {
     this.shipmentControlService = new ShipmentControlService();
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
+    this.billingQueueService = new BillingQueueService();
     this.dataEntryControlService = new DataEntryControlService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();

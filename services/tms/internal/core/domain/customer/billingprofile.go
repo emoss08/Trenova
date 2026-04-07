@@ -61,6 +61,7 @@ type CustomerBillingProfile struct {
 	RequirePONumber                      bool                 `json:"requirePONumber"                      bun:"require_po_number,type:BOOLEAN,notnull,default:false"`
 	RequireBOLNumber                     bool                 `json:"requireBOLNumber"                     bun:"require_bol_number,type:BOOLEAN,notnull,default:false"`
 	RequireDeliveryNumber                bool                 `json:"requireDeliveryNumber"                bun:"require_delivery_number,type:BOOLEAN,notnull,default:false"`
+	DefaultBillerID                      *pulid.ID             `json:"defaultBillerId"                      bun:"default_biller_id,type:VARCHAR(100),nullzero"`
 	BillingNotes                         string               `json:"billingNotes"                         bun:"billing_notes,type:TEXT,nullzero"`
 	// UseFactoring                bool                 `json:"useFactoring"                bun:"use_factoring,type:BOOLEAN,notnull,default:false"`
 	// FuelSurchargeMethod         FuelSurchargeMethod  `json:"fuelSurchargeMethod"         bun:"fuel_surcharge_method,type:fuel_surcharge_method_enum,notnull,default:'None'"`
@@ -75,6 +76,7 @@ type CustomerBillingProfile struct {
 	// Relationships
 	BusinessUnit   *tenant.BusinessUnit         `json:"-"              bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization   *tenant.Organization         `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
+	DefaultBiller  *tenant.User                 `json:"defaultBiller"  bun:"rel:belongs-to,join:default_biller_id=id"`
 	RevenueAccount *glaccount.GLAccount         `json:"revenueAccount" bun:"rel:belongs-to,join:revenue_account_id=id"`
 	ARAccount      *glaccount.GLAccount         `json:"arAccount"      bun:"rel:belongs-to,join:ar_account_id=id"`
 	DocumentTypes  []*documenttype.DocumentType `json:"documentTypes"  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`

@@ -2303,6 +2303,754 @@ const docTemplate = `{
                 }
             }
         },
+        "/billing-queue/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "List billing queue items",
+                "operationId": "listBillingQueueItems",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "query",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "Page size",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "minimum": 0,
+                        "type": "integer",
+                        "description": "Page offset",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_billingqueue_BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/filter-presets/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "List billing queue filter presets",
+                "operationId": "listBillingQueueFilterPresets",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Create a billing queue filter preset",
+                "operationId": "createBillingQueueFilterPreset",
+                "parameters": [
+                    {
+                        "description": "Filter preset payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.filterPresetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/filter-presets/{presetId}/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Update a billing queue filter preset",
+                "operationId": "updateBillingQueueFilterPreset",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter preset ID",
+                        "name": "presetId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Filter preset payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.filterPresetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Delete a billing queue filter preset",
+                "operationId": "deleteBillingQueueFilterPreset",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter preset ID",
+                        "name": "presetId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/stats/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Get billing queue stats",
+                "operationId": "getBillingQueueStats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.BillingQueueStats"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/transfer/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Transfer a shipment to billing queue",
+                "operationId": "transferToBillingQueue",
+                "parameters": [
+                    {
+                        "description": "Transfer request payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.transferRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/{itemID}/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Get a billing queue item",
+                "operationId": "getBillingQueueItem",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Billing queue item ID",
+                        "name": "itemID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Expand shipment details",
+                        "name": "expandShipmentDetails",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/{itemID}/assign/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Assign a biller to a billing queue item",
+                "operationId": "assignBillingQueueBiller",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Billing queue item ID",
+                        "name": "itemID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assign biller payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.assignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/{itemID}/charges/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Update charges on a billing queue item",
+                "operationId": "updateBillingQueueCharges",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Billing queue item ID",
+                        "name": "itemID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update charges payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.updateChargesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/billing-queue/{itemID}/status/": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Billing Queue"
+                ],
+                "summary": "Update billing queue item status",
+                "operationId": "updateBillingQueueStatus",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Billing queue item ID",
+                        "name": "itemID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update status payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_billingqueuehandler.updateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ValidationError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/commodities/": {
             "get": {
                 "security": [
@@ -11562,532 +12310,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/integrations/catalog/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "List integration catalog",
-                "operationId": "listIntegrationCatalog",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/google/api-key/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Get Google API key",
-                "operationId": "getGoogleMapsAPIKey",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/config/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Get Samsara config",
-                "operationId": "getSamsaraConfig",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Update Samsara config",
-                "operationId": "updateSamsaraConfig",
-                "parameters": [
-                    {
-                        "description": "Samsara config update request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.UpdateSamsaraConfigRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/test-connection/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Test Samsara connection",
-                "operationId": "testSamsaraConnection",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.TestConnectionResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Start worker sync",
-                "operationId": "startSamsaraWorkerSync",
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/drift/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Get worker sync drift",
-                "operationId": "getSamsaraWorkerSyncDrift",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/drift/detect/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Detect worker sync drift",
-                "operationId": "detectSamsaraWorkerSyncDrift",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/drift/repair/": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Repair worker sync drift",
-                "operationId": "repairSamsaraWorkerSyncDrift",
-                "parameters": [
-                    {
-                        "description": "Repair drift request",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RepairWorkerSyncDriftRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncResult"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/readiness/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Get worker sync readiness",
-                "operationId": "getSamsaraWorkerSyncReadiness",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncReadinessResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
-        "/integrations/samsara/workers/sync/{workflowID}/": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Integrations"
-                ],
-                "summary": "Get worker sync status",
-                "operationId": "getSamsaraWorkerSyncStatus",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Workflow ID",
-                        "name": "workflowID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Run ID",
-                        "name": "runId",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/gin.H"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
-                        }
-                    }
-                }
-            }
-        },
         "/location-categories/": {
             "get": {
                 "security": [
@@ -13309,7 +13531,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/organizations//{id}": {
+        "/organizations/{id}": {
             "get": {
                 "security": [
                     {
@@ -13447,7 +13669,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/organizations//{id}/logo": {
+        "/organizations/{id}/logo": {
             "get": {
                 "security": [
                     {
@@ -16918,6 +17140,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/shipments/ui-policy/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns shipment UI capability flags for the authenticated tenant.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Get shipment UI policy",
+                "operationId": "getShipmentUIPolicy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentUIPolicy"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/shipments/{shipmentID}": {
             "get": {
                 "security": [
@@ -17035,6 +17301,71 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/billing-readiness/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns billing-readiness details for a shipment, including required customer documents and resolved billing policy.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Get shipment billing readiness",
+                "operationId": "getShipmentBillingReadiness",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness"
                         }
                     },
                     "400": {
@@ -20058,6 +20389,96 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/me/profile-picture/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Upload current user profile picture",
+                "operationId": "uploadCurrentUserProfilePicture",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Profile picture file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete current user profile picture",
+                "operationId": "deleteCurrentUserProfilePicture",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
         "/users/me/settings/": {
             "patch": {
                 "security": [
@@ -20708,6 +21129,70 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{userID}/profile-picture/": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user profile picture URL",
+                "operationId": "getUserProfilePictureURL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Image variant",
+                        "name": "variant",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_userhandler.ProfilePictureURLResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
@@ -22222,6 +22707,171 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType": {
+            "type": "string",
+            "enum": [
+                "Invoice",
+                "CreditMemo",
+                "DebitMemo"
+            ],
+            "x-enum-varnames": [
+                "BillTypeInvoice",
+                "BillTypeCreditMemo",
+                "BillTypeDebitMemo"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem": {
+            "type": "object",
+            "properties": {
+                "assignedBiller": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                },
+                "assignedBillerId": {
+                    "type": "string"
+                },
+                "billType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "cancelReason": {
+                    "type": "string"
+                },
+                "canceledAt": {
+                    "type": "integer"
+                },
+                "canceledBy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                },
+                "canceledById": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "exceptionNotes": {
+                    "type": "string"
+                },
+                "exceptionReasonCode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "reviewCompletedAt": {
+                    "type": "integer"
+                },
+                "reviewNotes": {
+                    "type": "string"
+                },
+                "reviewStartedAt": {
+                    "type": "integer"
+                },
+                "shipment": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment"
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.Status"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode": {
+            "type": "string",
+            "enum": [
+                "MissingDocumentation",
+                "IncorrectRates",
+                "WeightDiscrepancy",
+                "AccessorialDispute",
+                "DuplicateCharge",
+                "MissingReferenceNumber",
+                "CustomerInformationError",
+                "ServiceFailure",
+                "RateNotOnFile",
+                "Other"
+            ],
+            "x-enum-varnames": [
+                "ExceptionMissingDocumentation",
+                "ExceptionIncorrectRates",
+                "ExceptionWeightDiscrepancy",
+                "ExceptionAccessorialDispute",
+                "ExceptionDuplicateCharge",
+                "ExceptionMissingReferenceNumber",
+                "ExceptionCustomerInformationError",
+                "ExceptionServiceFailure",
+                "ExceptionRateNotOnFile",
+                "ExceptionOther"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueue.Status": {
+            "type": "string",
+            "enum": [
+                "ReadyForReview",
+                "InReview",
+                "Approved",
+                "OnHold",
+                "SentBackToOps",
+                "Exception",
+                "Canceled"
+            ],
+            "x-enum-varnames": [
+                "StatusReadyForReview",
+                "StatusInReview",
+                "StatusApproved",
+                "StatusOnHold",
+                "StatusSentBackToOps",
+                "StatusException",
+                "StatusCanceled"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_billingqueuefilterpreset.BillingQueueFilterPreset": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "userId": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_domain_commodity.Commodity": {
             "type": "object",
             "properties": {
@@ -22563,6 +23213,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "customerInvoicePrefix": {
+                    "type": "string"
+                },
+                "defaultBiller": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.User"
+                },
+                "defaultBillerId": {
                     "type": "string"
                 },
                 "detentionBillingEnabled": {
@@ -23056,6 +23712,23 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_domain_document.ContentStatus": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Extracting",
+                "Extracted",
+                "Indexed",
+                "Failed"
+            ],
+            "x-enum-varnames": [
+                "ContentStatusPending",
+                "ContentStatusExtracting",
+                "ContentStatusExtracted",
+                "ContentStatusIndexed",
+                "ContentStatusFailed"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_document.Document": {
             "type": "object",
             "properties": {
@@ -23071,11 +23744,26 @@ const docTemplate = `{
                 "businessUnitId": {
                     "type": "string"
                 },
+                "checksumSha256": {
+                    "type": "string"
+                },
+                "contentError": {
+                    "type": "string"
+                },
+                "contentStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ContentStatus"
+                },
                 "createdAt": {
                     "type": "integer"
                 },
                 "description": {
                     "type": "string"
+                },
+                "detectedKind": {
+                    "type": "string"
+                },
+                "documentType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_documenttype.DocumentType"
                 },
                 "documentTypeId": {
                     "type": "string"
@@ -23092,11 +23780,20 @@ const docTemplate = `{
                 "fileType": {
                     "type": "string"
                 },
+                "hasExtractedText": {
+                    "type": "boolean"
+                },
                 "id": {
                     "type": "string"
                 },
+                "isCurrentVersion": {
+                    "type": "boolean"
+                },
                 "isPublic": {
                     "type": "boolean"
+                },
+                "lineageId": {
+                    "type": "string"
                 },
                 "organization": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
@@ -23107,8 +23804,14 @@ const docTemplate = `{
                 "originalName": {
                     "type": "string"
                 },
+                "previewStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.PreviewStatus"
+                },
                 "previewStoragePath": {
                     "type": "string"
+                },
+                "processingProfile": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ProcessingProfile"
                 },
                 "resourceId": {
                     "type": "string"
@@ -23116,10 +23819,25 @@ const docTemplate = `{
                 "resourceType": {
                     "type": "string"
                 },
+                "shipmentDraftStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.ShipmentDraftStatus"
+                },
                 "status": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Status"
                 },
+                "storageLegalHold": {
+                    "type": "boolean"
+                },
                 "storagePath": {
+                    "type": "string"
+                },
+                "storageRetentionMode": {
+                    "type": "string"
+                },
+                "storageRetentionUntil": {
+                    "type": "integer"
+                },
+                "storageVersionId": {
                     "type": "string"
                 },
                 "tags": {
@@ -23136,8 +23854,52 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "integer"
+                },
+                "versionNumber": {
+                    "type": "integer"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_document.PreviewStatus": {
+            "type": "string",
+            "enum": [
+                "Pending",
+                "Ready",
+                "Failed",
+                "Unsupported"
+            ],
+            "x-enum-varnames": [
+                "PreviewStatusPending",
+                "PreviewStatusReady",
+                "PreviewStatusFailed",
+                "PreviewStatusUnsupported"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_document.ProcessingProfile": {
+            "type": "string",
+            "enum": [
+                "none",
+                "rate_confirmation_import"
+            ],
+            "x-enum-varnames": [
+                "ProcessingProfileNone",
+                "ProcessingProfileRateConfirmationImport"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_document.ShipmentDraftStatus": {
+            "type": "string",
+            "enum": [
+                "Unavailable",
+                "Pending",
+                "Ready",
+                "Failed"
+            ],
+            "x-enum-varnames": [
+                "ShipmentDraftStatusUnavailable",
+                "ShipmentDraftStatusPending",
+                "ShipmentDraftStatusReady",
+                "ShipmentDraftStatusFailed"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_document.Status": {
             "type": "string",
@@ -23388,6 +24150,9 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
+                },
+                "interiorLength": {
+                    "type": "number"
                 },
                 "organization": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
@@ -24333,30 +25098,6 @@ const docTemplate = `{
                 "HoldTypeFinance"
             ]
         },
-        "github_com_emoss08_trenova_internal_core_domain_integration.Category": {
-            "type": "string",
-            "enum": [
-                "MappingRouting",
-                "FreightLogistics",
-                "Telematics"
-            ],
-            "x-enum-varnames": [
-                "CategoryMappingRouting",
-                "CategoryFreightLogistics",
-                "CategoryTelematics"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_domain_integration.Type": {
-            "type": "string",
-            "enum": [
-                "GoogleMaps",
-                "Samsara"
-            ],
-            "x-enum-varnames": [
-                "TypeGoogleMaps",
-                "TypeSamsara"
-            ]
-        },
         "github_com_emoss08_trenova_internal_core_domain_location.Location": {
             "type": "object",
             "properties": {
@@ -24572,6 +25313,21 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_emoss08_trenova_internal_core_domain_permission.CoreResponsibility": {
+            "type": "string",
+            "enum": [
+                "Billing",
+                "Operations",
+                "Finance",
+                "Leadership"
+            ],
+            "x-enum-varnames": [
+                "CoreResponsibilityBilling",
+                "CoreResponsibilityOperations",
+                "CoreResponsibilityFinance",
+                "CoreResponsibilityLeadership"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_permission.DataScope": {
             "type": "string",
             "enum": [
@@ -24674,6 +25430,7 @@ const docTemplate = `{
                 "sequence_config",
                 "integration",
                 "api_key",
+                "data_entry_control",
                 "equipment_type",
                 "equipment_manufacturer",
                 "trailer",
@@ -24692,6 +25449,7 @@ const docTemplate = `{
                 "hazmat_segregation_rule",
                 "distance_override",
                 "invoice",
+                "billing_queue",
                 "accessorial_charge",
                 "charge_type",
                 "revenue_code",
@@ -24713,6 +25471,8 @@ const docTemplate = `{
                 "document_classification",
                 "document",
                 "document_type",
+                "document_control",
+                "document_parsing_rule",
                 "shipment_type",
                 "service_type",
                 "delay_code",
@@ -24733,6 +25493,7 @@ const docTemplate = `{
                 "ResourceSequenceConfig",
                 "ResourceIntegration",
                 "ResourceAPIKey",
+                "ResourceDataEntryControl",
                 "ResourceEquipmentType",
                 "ResourceEquipmentManufacturer",
                 "ResourceTrailer",
@@ -24751,6 +25512,7 @@ const docTemplate = `{
                 "ResourceHazmatSegregationRule",
                 "ResourceDistanceOverride",
                 "ResourceInvoice",
+                "ResourceBillingQueue",
                 "ResourceAccessorialCharge",
                 "ResourceChargeType",
                 "ResourceRevenueCode",
@@ -24772,6 +25534,8 @@ const docTemplate = `{
                 "ResourceDocumentClassification",
                 "ResourceDocument",
                 "ResourceDocumentType",
+                "ResourceDocumentControl",
+                "ResourceDocumentParsingRule",
                 "ResourceShipmentType",
                 "ResourceServiceType",
                 "ResourceDelayCode",
@@ -24860,6 +25624,9 @@ const docTemplate = `{
             "properties": {
                 "businessUnitId": {
                     "type": "string"
+                },
+                "coreResponsibility": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.CoreResponsibility"
                 },
                 "createdAt": {
                     "type": "integer"
@@ -25007,6 +25774,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "isSystemGenerated": {
+                    "type": "boolean"
+                },
                 "method": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_accessorialcharge.Method"
                 },
@@ -25107,6 +25877,107 @@ const docTemplate = `{
                 "AssignmentStatusCanceled"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.BillingTransferStatus": {
+            "type": "string",
+            "enum": [
+                "",
+                "ReadyForReview",
+                "InReview",
+                "OnHold",
+                "Exception",
+                "SentBackToOps",
+                "Approved",
+                "Canceled"
+            ],
+            "x-enum-varnames": [
+                "BillingTransferNone",
+                "BillingTransferReadyForReview",
+                "BillingTransferInReview",
+                "BillingTransferOnHold",
+                "BillingTransferException",
+                "BillingTransferSentBackToOps",
+                "BillingTransferApproved",
+                "BillingTransferCanceled"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.CommentPriority": {
+            "type": "string",
+            "enum": [
+                "Low",
+                "Normal",
+                "High",
+                "Urgent"
+            ],
+            "x-enum-varnames": [
+                "CommentPriorityLow",
+                "CommentPriorityNormal",
+                "CommentPriorityHigh",
+                "CommentPriorityUrgent"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.CommentSource": {
+            "type": "string",
+            "enum": [
+                "User",
+                "System",
+                "Integration",
+                "AI"
+            ],
+            "x-enum-varnames": [
+                "CommentSourceUser",
+                "CommentSourceSystem",
+                "CommentSourceIntegration",
+                "CommentSourceAI"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.CommentType": {
+            "type": "string",
+            "enum": [
+                "Internal",
+                "Dispatch",
+                "DriverUpdate",
+                "PickupInstruction",
+                "DeliveryInstruction",
+                "StatusUpdate",
+                "Exception",
+                "CustomerUpdate",
+                "Appointment",
+                "Document",
+                "Billing",
+                "Compliance"
+            ],
+            "x-enum-varnames": [
+                "CommentTypeInternal",
+                "CommentTypeDispatch",
+                "CommentTypeDriverUpdate",
+                "CommentTypePickupInstruction",
+                "CommentTypeDeliveryInstruction",
+                "CommentTypeStatusUpdate",
+                "CommentTypeException",
+                "CommentTypeCustomerUpdate",
+                "CommentTypeAppointment",
+                "CommentTypeDocument",
+                "CommentTypeBilling",
+                "CommentTypeCompliance"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.CommentVisibility": {
+            "type": "string",
+            "enum": [
+                "Internal",
+                "Operations",
+                "Customer",
+                "Driver",
+                "Accounting"
+            ],
+            "x-enum-varnames": [
+                "CommentVisibilityInternal",
+                "CommentVisibilityOperations",
+                "CommentVisibilityCustomer",
+                "CommentVisibilityDriver",
+                "CommentVisibilityAccounting"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_shipment.HoldSource": {
             "type": "string",
             "enum": [
@@ -25141,6 +26012,30 @@ const docTemplate = `{
                 "MoveStatusCanceled"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "type": "string"
+                },
+                "formulaTemplateId": {
+                    "type": "string"
+                },
+                "formulaTemplateName": {
+                    "type": "string"
+                },
+                "ratedAt": {
+                    "type": "integer"
+                },
+                "resolvedVariables": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "result": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_emoss08_trenova_internal_core_domain_shipment.Shipment": {
             "type": "object",
             "properties": {
@@ -25155,6 +26050,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge"
                     }
+                },
+                "baseRate": {
+                    "$ref": "#/definitions/decimal.NullDecimal"
+                },
+                "billedAt": {
+                    "type": "integer"
+                },
+                "billingTransferStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.BillingTransferStatus"
                 },
                 "bol": {
                     "type": "string"
@@ -25176,6 +26080,12 @@ const docTemplate = `{
                 },
                 "canceledById": {
                     "type": "string"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentComment"
+                    }
                 },
                 "commodities": {
                     "type": "array",
@@ -25213,6 +26123,9 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
+                "markedReadyToBillAt": {
+                    "type": "integer"
+                },
                 "moves": {
                     "type": "array",
                     "items": {
@@ -25240,6 +26153,9 @@ const docTemplate = `{
                 "proNumber": {
                     "type": "string"
                 },
+                "ratingDetail": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.RatingDetail"
+                },
                 "ratingUnit": {
                     "type": "integer"
                 },
@@ -25253,6 +26169,9 @@ const docTemplate = `{
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipmenttype.ShipmentType"
                 },
                 "shipmentTypeId": {
+                    "type": "string"
+                },
+                "sourceDocumentId": {
                     "type": "string"
                 },
                 "status": {
@@ -25278,6 +26197,9 @@ const docTemplate = `{
                 },
                 "trailerTypeId": {
                     "type": "string"
+                },
+                "transferredToBillingAt": {
+                    "type": "integer"
                 },
                 "updatedAt": {
                     "type": "integer"
@@ -25320,11 +26242,24 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.ShipmentCommentMention"
                     }
                 },
+                "metadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
                 "organizationId": {
                     "type": "string"
                 },
+                "priority": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentPriority"
+                },
                 "shipmentId": {
                     "type": "string"
+                },
+                "source": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentSource"
+                },
+                "type": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentType"
                 },
                 "updatedAt": {
                     "type": "integer"
@@ -25337,6 +26272,9 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "integer"
+                },
+                "visibility": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.CommentVisibility"
                 }
             }
         },
@@ -25915,22 +26853,30 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_domain_tenant.AccountingControl": {
             "type": "object",
             "properties": {
+                "accountingMethod": {
+                    "description": "--- Accounting Method ---\nTop-level method that constrains which revenue/expense recognition options are valid.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.AccountingMethodType"
+                        }
+                    ]
+                },
                 "accrueExpenses": {
                     "type": "boolean"
                 },
                 "allowPostingToClosedPeriods": {
-                    "description": "Period Controls",
+                    "description": "--- Period Controls ---",
                     "type": "boolean"
                 },
                 "autoClosePeriods": {
                     "type": "boolean"
                 },
                 "autoCreateJournalEntries": {
-                    "description": "Journal Entry Automation",
+                    "description": "--- Journal Entry Automation ---",
                     "type": "boolean"
                 },
                 "businessUnit": {
-                    "description": "Relationships",
+                    "description": "--- Relationships ---",
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.BusinessUnit"
@@ -25955,14 +26901,23 @@ const docTemplate = `{
                 "defaultArAccountId": {
                     "type": "string"
                 },
+                "defaultCostOfServiceAccountId": {
+                    "type": "string"
+                },
                 "defaultCurrencyCode": {
+                    "type": "string"
+                },
+                "defaultDeferredRevenueAccountId": {
                     "type": "string"
                 },
                 "defaultExpenseAccountId": {
                     "type": "string"
                 },
+                "defaultRetainedEarningsAccountId": {
+                    "type": "string"
+                },
                 "defaultRevenueAccountId": {
-                    "description": "Default GL Accounts",
+                    "description": "--- Default GL Accounts ---",
                     "type": "string"
                 },
                 "defaultTaxAccountId": {
@@ -25972,25 +26927,25 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "enableAutomaticTaxCalculation": {
-                    "description": "Tax Settings",
+                    "description": "--- Tax Settings ---",
                     "type": "boolean"
                 },
                 "enableJournalEntryReversal": {
                     "type": "boolean"
                 },
                 "enableMultiCurrency": {
-                    "description": "Multi-Currency (for future expansion)",
+                    "description": "--- Multi-Currency ---",
                     "type": "boolean"
                 },
                 "enableReconciliation": {
-                    "description": "Reconciliation Settings",
+                    "description": "--- Reconciliation Settings ---",
                     "type": "boolean"
                 },
                 "enableReconciliationNotifications": {
                     "type": "boolean"
                 },
                 "expenseRecognitionMethod": {
-                    "description": "Expense Recognition",
+                    "description": "--- Expense Recognition ---",
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.ExpenseRecognitionType"
@@ -26004,7 +26959,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "journalEntryCriteria": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType"
+                    }
                 },
                 "organization": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.Organization"
@@ -26013,13 +26971,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "reconciliationThreshold": {
-                    "type": "integer"
+                    "type": "number"
                 },
                 "reconciliationThresholdAction": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.ThresholdActionType"
                 },
                 "requireDocumentAttachment": {
-                    "description": "Audit \u0026 Compliance",
+                    "description": "--- Audit \u0026 Compliance ---",
                     "type": "boolean"
                 },
                 "requireJournalEntryApproval": {
@@ -26029,14 +26987,14 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "restrictManualJournalEntries": {
-                    "description": "Journal Entry Controls",
+                    "description": "--- Journal Entry Controls ---",
                     "type": "boolean"
                 },
                 "retainDeletedEntries": {
                     "type": "boolean"
                 },
                 "revenueRecognitionMethod": {
-                    "description": "Revenue Recognition",
+                    "description": "--- Revenue Recognition ---",
                     "allOf": [
                         {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_tenant.RevenueRecognitionType"
@@ -26050,6 +27008,19 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_tenant.AccountingMethodType": {
+            "type": "string",
+            "enum": [
+                "Accrual",
+                "Cash",
+                "Hybrid"
+            ],
+            "x-enum-varnames": [
+                "AccountingMethodAccrual",
+                "AccountingMethodCash",
+                "AccountingMethodHybrid"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_tenant.BillingControl": {
             "type": "object",
@@ -26206,14 +27177,12 @@ const docTemplate = `{
             "enum": [
                 "OnIncurrence",
                 "OnPayment",
-                "OnAccrual",
-                "OnBilling"
+                "OnAccrual"
             ],
             "x-enum-varnames": [
                 "ExpenseRecognitionOnIncurrence",
                 "ExpenseRecognitionOnPayment",
-                "ExpenseRecognitionOnAccrual",
-                "ExpenseRecognitionOnBilling"
+                "ExpenseRecognitionOnAccrual"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_tenant.JournalEntryCriteriaType": {
@@ -26263,6 +27232,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
+                    "type": "string"
+                },
+                "loginSlug": {
                     "type": "string"
                 },
                 "logoUrl": {
@@ -27621,7 +28593,7 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_ports_repositories.ShipmentTotalsResponse": {
             "type": "object",
             "properties": {
-                "baseCharge": {
+                "freightChargeAmount": {
                     "type": "number"
                 },
                 "otherChargeAmount": {
@@ -27872,144 +28844,32 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogConfigurationStatus": {
-            "type": "string",
-            "enum": [
-                "configured",
-                "needs_setup"
-            ],
-            "x-enum-varnames": [
-                "CatalogConfigurationStatusConfigured",
-                "CatalogConfigurationStatusNeedsSetup"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogConnectionStatus": {
-            "type": "string",
-            "enum": [
-                "connected",
-                "disconnected"
-            ],
-            "x-enum-varnames": [
-                "CatalogConnectionStatusConnected",
-                "CatalogConnectionStatusDisconnected"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogItem": {
+        "github_com_emoss08_trenova_internal_core_ports_services.BillingQueueStats": {
             "type": "object",
             "properties": {
-                "category": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Category"
-                },
-                "categoryLabel": {
-                    "type": "string"
-                },
-                "color": {
-                    "type": "string"
-                },
-                "configured": {
-                    "type": "boolean"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "docsUrl": {
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "featured": {
-                    "type": "boolean"
-                },
-                "links": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogLink"
-                    }
-                },
-                "logoDarkUrl": {
-                    "type": "string"
-                },
-                "logoLightUrl": {
-                    "type": "string"
-                },
-                "logoUrl": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "primaryActionLabel": {
-                    "type": "string"
-                },
-                "sortOrder": {
+                "approved": {
                     "type": "integer"
                 },
-                "status": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogStatus"
+                "canceled": {
+                    "type": "integer"
                 },
-                "type": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Type"
+                "exception": {
+                    "type": "integer"
                 },
-                "websiteUrl": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogLink": {
-            "type": "object",
-            "properties": {
-                "kind": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogLinkKind"
+                "inReview": {
+                    "type": "integer"
                 },
-                "label": {
-                    "type": "string"
+                "onHold": {
+                    "type": "integer"
                 },
-                "url": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogLinkKind": {
-            "type": "string",
-            "enum": [
-                "docs",
-                "website",
-                "support",
-                "api"
-            ],
-            "x-enum-varnames": [
-                "CatalogLinkKindDocs",
-                "CatalogLinkKindWebsite",
-                "CatalogLinkKindSupport",
-                "CatalogLinkKindAPI"
-            ]
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogResponse": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogItem"
-                    }
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.CatalogStatus": {
-            "type": "object",
-            "properties": {
-                "configuration": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogConfigurationStatus"
+                "readyForReview": {
+                    "type": "integer"
                 },
-                "configurationLabel": {
-                    "type": "string"
+                "sentBackToOps": {
+                    "type": "integer"
                 },
-                "connection": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.CatalogConnectionStatus"
-                },
-                "connectionLabel": {
-                    "type": "string"
+                "total": {
+                    "type": "integer"
                 }
             }
         },
@@ -28186,6 +29046,9 @@ const docTemplate = `{
                 "emailAddress": {
                     "type": "string"
                 },
+                "organizationSlug": {
+                    "type": "string"
+                },
                 "password": {
                     "type": "string"
                 }
@@ -28263,17 +29126,6 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.RepairWorkerSyncDriftRequest": {
-            "type": "object",
-            "properties": {
-                "workerIds": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
         "github_com_emoss08_trenova_internal_core_ports_services.ResourcePermissionDetail": {
             "type": "object",
             "properties": {
@@ -28323,92 +29175,109 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.SamsaraConfigResponse": {
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadiness": {
             "type": "object",
             "properties": {
-                "baseUrl": {
-                    "type": "string"
-                },
-                "enabled": {
+                "canMarkReadyToInvoice": {
                     "type": "boolean"
                 },
-                "hasToken": {
-                    "type": "boolean"
-                },
-                "updatedAt": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncFailure": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "operation": {
-                    "type": "string"
-                },
-                "worker": {
-                    "type": "string"
-                },
-                "workerId": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncResult": {
-            "type": "object",
-            "properties": {
-                "activeWorkers": {
-                    "type": "integer"
-                },
-                "alreadyMapped": {
-                    "type": "integer"
-                },
-                "createdDrivers": {
-                    "type": "integer"
-                },
-                "failed": {
-                    "type": "integer"
-                },
-                "failures": {
+                "missingRequirements": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.SamsaraWorkerSyncFailure"
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement"
                     }
                 },
-                "mappedFromExternalIds": {
-                    "type": "integer"
+                "policy": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadinessPolicy"
                 },
-                "remoteDrivers": {
-                    "type": "integer"
+                "requirements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement"
+                    }
                 },
-                "skippedInactive": {
-                    "type": "integer"
+                "shipmentId": {
+                    "type": "string"
                 },
-                "totalWorkers": {
-                    "type": "integer"
+                "shipmentStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Status"
                 },
-                "updatedMappings": {
-                    "type": "integer"
+                "shouldAutoMarkReadyToInvoice": {
+                    "type": "boolean"
                 },
-                "updatedRemoteDrivers": {
-                    "type": "integer"
+                "validationFailures": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation"
+                    }
                 }
             }
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.TestConnectionResponse": {
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadinessPolicy": {
             "type": "object",
             "properties": {
-                "checkedAt": {
+                "autoMarkReadyToBill": {
+                    "type": "boolean"
+                },
+                "enforceCustomerBillingReq": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement": {
+            "type": "object",
+            "properties": {
+                "documentCount": {
                     "type": "integer"
                 },
-                "provider": {
-                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_integration.Type"
+                "documentIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
-                "success": {
+                "documentTypeCode": {
+                    "type": "string"
+                },
+                "documentTypeId": {
+                    "type": "string"
+                },
+                "documentTypeName": {
+                    "type": "string"
+                },
+                "satisfied": {
                     "type": "boolean"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentUIPolicy": {
+            "type": "object",
+            "properties": {
+                "allowMoveRemovals": {
+                    "type": "boolean"
+                },
+                "checkForDuplicateBols": {
+                    "type": "boolean"
+                },
+                "checkHazmatSegregation": {
+                    "type": "boolean"
+                },
+                "maxShipmentWeightLimit": {
+                    "type": "integer"
                 }
             }
         },
@@ -28429,101 +29298,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyPermissionInput"
                     }
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.UpdateSamsaraConfigRequest": {
-            "type": "object",
-            "properties": {
-                "baseUrl": {
-                    "type": "string"
-                },
-                "enabled": {
-                    "type": "boolean"
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDrift": {
-            "type": "object",
-            "properties": {
-                "detectedAt": {
-                    "type": "integer"
-                },
-                "driftType": {
-                    "type": "string"
-                },
-                "localExternalId": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "remoteDriverId": {
-                    "type": "string"
-                },
-                "workerId": {
-                    "type": "string"
-                },
-                "workerName": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDriftResponse": {
-            "type": "object",
-            "properties": {
-                "drifts": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncDrift"
-                    }
-                },
-                "lastCalculatedAt": {
-                    "type": "integer"
-                },
-                "mappingMismatch": {
-                    "type": "integer"
-                },
-                "missingMapping": {
-                    "type": "integer"
-                },
-                "missingRemoteDriver": {
-                    "type": "integer"
-                },
-                "remoteDeactivated": {
-                    "type": "integer"
-                },
-                "totalDrifts": {
-                    "type": "integer"
-                },
-                "workersWithDrift": {
-                    "type": "integer"
-                }
-            }
-        },
-        "github_com_emoss08_trenova_internal_core_ports_services.WorkerSyncReadinessResponse": {
-            "type": "object",
-            "properties": {
-                "activeWorkers": {
-                    "type": "integer"
-                },
-                "allActiveWorkersSynced": {
-                    "type": "boolean"
-                },
-                "lastCalculatedAt": {
-                    "type": "integer"
-                },
-                "syncedActiveWorkers": {
-                    "type": "integer"
-                },
-                "totalWorkers": {
-                    "type": "integer"
-                },
-                "unsyncedActiveWorkers": {
-                    "type": "integer"
                 }
             }
         },
@@ -28853,6 +29627,26 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_audit.Entry"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_pkg_pagination.Response-array_github_com_emoss08_trenova_internal_core_domain_billingqueue_BillingQueueItem": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "next": {
+                    "type": "string"
+                },
+                "previous": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillingQueueItem"
                     }
                 }
             }
@@ -29594,6 +30388,90 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handlers_billingqueuehandler.assignRequest": {
+            "type": "object",
+            "required": [
+                "billerId"
+            ],
+            "properties": {
+                "billerId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_billingqueuehandler.filterPresetRequest": {
+            "type": "object",
+            "required": [
+                "filters",
+                "name"
+            ],
+            "properties": {
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "isDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_billingqueuehandler.transferRequest": {
+            "type": "object",
+            "required": [
+                "shipmentId"
+            ],
+            "properties": {
+                "billType": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.BillType"
+                },
+                "shipmentId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_billingqueuehandler.updateChargesRequest": {
+            "type": "object",
+            "properties": {
+                "additionalCharges": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.AdditionalCharge"
+                    }
+                },
+                "baseRate": {
+                    "type": "string"
+                },
+                "formulaTemplateId": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_api_handlers_billingqueuehandler.updateStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "cancelReason": {
+                    "type": "string"
+                },
+                "exceptionNotes": {
+                    "type": "string"
+                },
+                "exceptionReasonCode": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.ExceptionReasonCode"
+                },
+                "reviewNotes": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_billingqueue.Status"
+                }
+            }
+        },
         "internal_api_handlers_documenthandler.bulkDeleteRequest": {
             "type": "object",
             "required": [
@@ -29816,6 +30694,14 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api_handlers_userhandler.ProfilePictureURLResponse": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_api_handlers_userhandler.ReplaceOrganizationMembershipsRequest": {
             "type": "object",
             "properties": {
@@ -29858,12 +30744,6 @@ const docTemplate = `{
         "internal_api_handlers_userhandler.UpdateMySettingsRequest": {
             "type": "object",
             "properties": {
-                "profilePicUrl": {
-                    "type": "string"
-                },
-                "thumbnailUrl": {
-                    "type": "string"
-                },
                 "timeFormat": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_pkg_domaintypes.TimeFormat"
                 },

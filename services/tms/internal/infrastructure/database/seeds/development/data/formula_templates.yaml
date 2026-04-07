@@ -1,56 +1,56 @@
 templates:
   - name: Flat Rate
-    description: Charges a flat rate regardless of shipment characteristics. Uses the freight charge amount entered on the shipment.
+    description: Charges a flat rate regardless of shipment characteristics. Uses the base rate entered on the shipment.
     type: freight_charge
-    expression: freightChargeAmount
+    expression: baseRate
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per Mile
-    description: Charges based on total distance traveled. Multiplies the rate per mile by total shipment distance.
+    description: Charges based on total distance traveled. Multiplies the base rate per mile by total shipment distance.
     type: freight_charge
-    expression: freightChargeAmount * totalDistance
+    expression: baseRate * totalDistance
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per Stop
-    description: Charges based on the number of stops. Multiplies the rate per stop by total number of stops.
+    description: Charges based on the number of stops. Multiplies the base rate per stop by total number of stops.
     type: freight_charge
-    expression: freightChargeAmount * totalStops
+    expression: baseRate * totalStops
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per Pound
-    description: Charges based on total shipment weight. Multiplies the rate per pound by total weight.
+    description: Charges based on total shipment weight. Multiplies the base rate per pound by total weight.
     type: freight_charge
-    expression: freightChargeAmount * totalWeight
+    expression: baseRate * totalWeight
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per Pallet
-    description: Charges based on number of pallets/pieces. Multiplies the rate per pallet by total pieces.
+    description: Charges based on number of pallets/pieces. Multiplies the base rate per pallet by total pieces.
     type: freight_charge
-    expression: freightChargeAmount * totalPieces
+    expression: baseRate * totalPieces
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per Linear Foot
-    description: Charges based on linear feet occupied. Multiplies the rate per linear foot by total linear feet calculated from commodities.
+    description: Charges based on linear feet occupied. Multiplies the base rate per linear foot by total linear feet calculated from commodities.
     type: freight_charge
-    expression: freightChargeAmount * totalLinearFeet
+    expression: baseRate * totalLinearFeet
     status: active
     schema_id: shipment
     variables: []
 
   - name: Per CWT (Hundredweight)
-    description: Charges based on hundredweight (CWT). Multiplies the rate per CWT by weight divided by 100, rounded up.
+    description: Charges based on hundredweight (CWT). Multiplies the base rate per CWT by weight divided by 100, rounded up.
     type: freight_charge
-    expression: freightChargeAmount * ceil(totalWeight / 100)
+    expression: baseRate * ceil(totalWeight / 100)
     status: active
     schema_id: shipment
     variables: []
@@ -66,7 +66,7 @@ templates:
   - name: Per Mile with Minimum
     description: Per mile rate with a minimum charge floor. Ensures the charge is at least the minimum regardless of distance.
     type: freight_charge
-    expression: max(minimumCharge, freightChargeAmount * totalDistance)
+    expression: max(minimumCharge, baseRate * totalDistance)
     status: active
     schema_id: shipment
     variables:
@@ -79,7 +79,7 @@ templates:
   - name: Per Mile with Fuel Surcharge
     description: Per mile rate with a percentage-based fuel surcharge applied on top.
     type: freight_charge
-    expression: round((freightChargeAmount * totalDistance) * (1 + fuelSurchargePercent / 100), 2)
+    expression: round((baseRate * totalDistance) * (1 + fuelSurchargePercent / 100), 2)
     status: active
     schema_id: shipment
     variables:

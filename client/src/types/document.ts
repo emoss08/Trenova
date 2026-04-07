@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { documentTypeSchema } from "./document-type";
 
 export const documentStatusSchema = z.enum([
   "Draft",
@@ -86,6 +87,7 @@ export const documentSchema = z.object({
   hasExtractedText: z.boolean(),
   shipmentDraftStatus: documentShipmentDraftStatusSchema,
   documentTypeId: z.string().nullable().optional(),
+  documentType: documentTypeSchema.nullable().optional(),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),

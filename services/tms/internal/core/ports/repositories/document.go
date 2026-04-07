@@ -26,9 +26,10 @@ type GetDocumentByStoragePathRequest struct {
 }
 
 type GetDocumentsByResourceRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
-	ResourceID   string                `json:"resourceId"`
-	ResourceType string                `json:"resourceType"`
+	TenantInfo          pagination.TenantInfo `json:"tenantInfo"`
+	ResourceID          string                `json:"resourceId"`
+	ResourceType        string                `json:"resourceType"`
+	IncludeDocumentType bool                  `json:"includeDocumentType"`
 }
 
 type DeleteDocumentRequest struct {
@@ -55,19 +56,19 @@ type UpdateDocumentIntelligenceRequest struct {
 }
 
 type ListDocumentVersionsRequest struct {
-	LineageID   pulid.ID              `json:"lineageId"`
-	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	LineageID  pulid.ID              `json:"lineageId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type PromoteDocumentVersionRequest struct {
-	LineageID        pulid.ID              `json:"lineageId"`
-	CurrentDocumentID pulid.ID             `json:"currentDocumentId"`
-	TenantInfo       pagination.TenantInfo `json:"tenantInfo"`
+	LineageID         pulid.ID              `json:"lineageId"`
+	CurrentDocumentID pulid.ID              `json:"currentDocumentId"`
+	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type DeleteDocumentLineageRequest struct {
-	LineageIDs  []pulid.ID            `json:"lineageIds"`
-	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+	LineageIDs []pulid.ID            `json:"lineageIds"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type MoveDocumentLineageRequest struct {

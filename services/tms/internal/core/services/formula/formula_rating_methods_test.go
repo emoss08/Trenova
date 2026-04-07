@@ -22,6 +22,7 @@ type RatingMethodShipment struct {
 	ProNumber           string
 	Weight              *int64
 	Pieces              *int64
+	BaseRate            *decimal.NullDecimal
 	FreightChargeAmount *decimal.NullDecimal
 	OtherChargeAmount   *decimal.NullDecimal
 	TotalChargeAmount   *decimal.NullDecimal
@@ -78,6 +79,7 @@ func createRatingMethodShipment() *RatingMethodShipment {
 	distance1 := 300.0
 	distance2 := 150.0
 
+	baseRate := decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
 	freightCharge := decimal.NewNullDecimal(decimal.NewFromFloat(1500.00))
 	otherCharge := decimal.NewNullDecimal(decimal.NewFromFloat(250.00))
 	totalCharge := decimal.NewNullDecimal(decimal.NewFromFloat(1750.00))
@@ -87,6 +89,7 @@ func createRatingMethodShipment() *RatingMethodShipment {
 		ProNumber:           "PRO-RATING-001",
 		Weight:              &weight,
 		Pieces:              &pieces,
+		BaseRate:            &baseRate,
 		FreightChargeAmount: &freightCharge,
 		OtherChargeAmount:   &otherCharge,
 		TotalChargeAmount:   &totalCharge,
@@ -139,7 +142,7 @@ func TestRatingMethod_FlatRate(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Flat Rate",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount`,
+		Expression:          `baseRate`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
@@ -163,16 +166,16 @@ func TestRatingMethod_PerMile(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per Mile",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * totalDistance`,
+		Expression:          `baseRate * totalDistance`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
 	distance := 450.0
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERMILE",
-		ProNumber:           "PRO-PERMILE-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERMILE",
+		ProNumber: "PRO-PERMILE-001",
+		BaseRate:  &freightRate,
 		Moves: []*RatingMethodMove{
 			{ID: "SM_001", Distance: &distance, Stops: []*RatingMethodStop{}},
 		},
@@ -199,16 +202,16 @@ func TestRatingMethod_PerStop(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per Stop",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * totalStops`,
+		Expression:          `baseRate * totalStops`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(125.00))
 	distance := 100.0
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERSTOP",
-		ProNumber:           "PRO-PERSTOP-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERSTOP",
+		ProNumber: "PRO-PERSTOP-001",
+		BaseRate:  &freightRate,
 		Moves: []*RatingMethodMove{
 			{
 				ID: "SM_001", Distance: &distance,
@@ -242,17 +245,17 @@ func TestRatingMethod_PerPound(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per Pound",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * totalWeight`,
+		Expression:          `baseRate * totalWeight`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(0.08))
 	weight := int64(25000)
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERPOUND",
-		ProNumber:           "PRO-PERPOUND-001",
-		Weight:              &weight,
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERPOUND",
+		ProNumber: "PRO-PERPOUND-001",
+		Weight:    &weight,
+		BaseRate:  &freightRate,
 		Moves:               []*RatingMethodMove{},
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
@@ -277,17 +280,17 @@ func TestRatingMethod_PerPallet(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per Pallet",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * totalPieces`,
+		Expression:          `baseRate * totalPieces`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(85.00))
 	pieces := int64(12)
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERPALLET",
-		ProNumber:           "PRO-PERPALLET-001",
-		Pieces:              &pieces,
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERPALLET",
+		ProNumber: "PRO-PERPALLET-001",
+		Pieces:    &pieces,
+		BaseRate:  &freightRate,
 		Moves:               []*RatingMethodMove{},
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
@@ -312,15 +315,15 @@ func TestRatingMethod_PerLinearFoot(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per Linear Foot",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * totalLinearFeet`,
+		Expression:          `baseRate * totalLinearFeet`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(35.00))
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERLINEARFOOT",
-		ProNumber:           "PRO-PERLINEARFOOT-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERLINEARFOOT",
+		ProNumber: "PRO-PERLINEARFOOT-001",
+		BaseRate:  &freightRate,
 		Moves:               []*RatingMethodMove{},
 		Commodities: []*RatingMethodShipmentCommodity{
 			{
@@ -391,17 +394,17 @@ func TestRatingMethod_PerCWT(t *testing.T) {
 		ID:                  pulid.MustNew("FT"),
 		Name:                "Per CWT (Hundredweight)",
 		SchemaID:            "shipment",
-		Expression:          `freightChargeAmount * ceil(totalWeight / 100)`,
+		Expression:          `baseRate * ceil(totalWeight / 100)`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{},
 	}
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(15.00))
 	weight := int64(25000)
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_PERCWT",
-		ProNumber:           "PRO-PERCWT-001",
-		Weight:              &weight,
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_PERCWT",
+		ProNumber: "PRO-PERCWT-001",
+		Weight:    &weight,
+		BaseRate:  &freightRate,
 		Moves:               []*RatingMethodMove{},
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
@@ -426,7 +429,7 @@ func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
 		ID:         pulid.MustNew("FT"),
 		Name:       "Per Mile with Minimum",
 		SchemaID:   "shipment",
-		Expression: `max(minimumCharge, freightChargeAmount * totalDistance)`,
+		Expression: `max(minimumCharge, baseRate * totalDistance)`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
 			{
 				Name:         "minimumCharge",
@@ -439,9 +442,9 @@ func TestRatingMethod_PerMileWithMinimum(t *testing.T) {
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(2.50))
 	distance := 50.0
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_SHORT",
-		ProNumber:           "PRO-SHORT-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_SHORT",
+		ProNumber: "PRO-SHORT-001",
+		BaseRate:  &freightRate,
 		Moves: []*RatingMethodMove{
 			{
 				ID:       "SM_001",
@@ -473,7 +476,7 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 		ID:         pulid.MustNew("FT"),
 		Name:       "Rating Unit Multiplier",
 		SchemaID:   "shipment",
-		Expression: `ratingUnit * freightChargeAmount`,
+		Expression: `ratingUnit * baseRate`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
 			{Name: "ratingUnit", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1.0},
 		},
@@ -481,9 +484,9 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(150.00))
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_RATINGUNIT",
-		ProNumber:           "PRO-RATINGUNIT-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_RATINGUNIT",
+		ProNumber: "PRO-RATINGUNIT-001",
+		BaseRate:  &freightRate,
 		Moves:               []*RatingMethodMove{},
 		Commodities:         []*RatingMethodShipmentCommodity{},
 	}
@@ -514,7 +517,7 @@ func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
 			round(
 				max(
 					minimumCharge,
-					freightChargeAmount * totalDistance
+					baseRate * totalDistance
 				) * (1 + fuelSurchargePercent / 100) +
 				(totalStops > 2 ? (totalStops - 2) * additionalStopFee : 0),
 				2
@@ -543,9 +546,9 @@ func TestRatingMethod_CombinedRateWithAccessorials(t *testing.T) {
 	distance1 := 300.0
 	distance2 := 150.0
 	shipment := &RatingMethodShipment{
-		ID:                  "SP_COMBINED",
-		ProNumber:           "PRO-COMBINED-001",
-		FreightChargeAmount: &freightRate,
+		ID:        "SP_COMBINED",
+		ProNumber: "PRO-COMBINED-001",
+		BaseRate:  &freightRate,
 		Moves: []*RatingMethodMove{
 			{
 				ID: "SM_001", Distance: &distance1,

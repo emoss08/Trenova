@@ -162,6 +162,13 @@ func (r *repository) GetByResourceID(
 				Where(cols.ResourceType.Eq(), req.ResourceType).
 				Where(cols.IsCurrentVersion.Eq(), true)
 		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			if req.IncludeDocumentType {
+				return sq.Relation(buncolgen.DocumentRelations.DocumentType)
+			}
+
+			return sq
+		}).
 		Order(cols.CreatedAt.OrderDesc()).
 		Scan(ctx)
 	if err != nil {

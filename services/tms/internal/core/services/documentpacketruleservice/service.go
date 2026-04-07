@@ -40,6 +40,13 @@ func New(p Params) *Service {
 	}
 }
 
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListDocumentPacketRulesRequest,
+) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
+	return s.repo.List(ctx, req)
+}
+
 func (s *Service) ListByResourceType(
 	ctx context.Context,
 	resourceType string,

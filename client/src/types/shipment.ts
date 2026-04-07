@@ -217,6 +217,16 @@ export type ShipmentCommodity = z.infer<typeof shipmentCommoditySchema>;
 export const shipmentCommodityCreateSchema = shipmentCommodityBaseSchema;
 export type ShipmentCommodityCreateInput = z.infer<typeof shipmentCommodityCreateSchema>;
 
+export const ratingDetailSchema = z.object({
+  formulaTemplateId: z.string(),
+  formulaTemplateName: z.string(),
+  expression: z.string(),
+  resolvedVariables: z.record(z.string(), z.any()),
+  result: z.number(),
+  ratedAt: z.number(),
+});
+export type RatingDetail = z.infer<typeof ratingDetailSchema>;
+
 const shipmentBaseSchema = z.object({
   sourceDocumentId: z.string().optional(),
   serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
@@ -235,6 +245,7 @@ const shipmentBaseSchema = z.object({
   cancelReason: optionalStringSchema,
   otherChargeAmount: decimalStringSchema.default(0),
   freightChargeAmount: decimalStringSchema.default(0),
+  baseRate: decimalStringSchema.default(0),
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
@@ -243,7 +254,12 @@ const shipmentBaseSchema = z.object({
   actualDeliveryDate: nullableIntegerSchema,
   actualShipDate: nullableIntegerSchema,
   canceledAt: nullableIntegerSchema,
+  billingTransferStatus: nullableStringSchema,
+  transferredToBillingAt: nullableIntegerSchema,
+  markedReadyToBillAt: nullableIntegerSchema,
+  billedAt: nullableIntegerSchema,
   ratingUnit: z.number().int().positive().default(1),
+  ratingDetail: ratingDetailSchema.nullable().optional(),
 });
 
 export const shipmentSchema = z.object({
@@ -319,7 +335,7 @@ export const transferOwnershipSchema = z.object({
 export type TransferOwnershipPayload = z.infer<typeof transferOwnershipSchema>;
 
 export const shipmentTotalsResponseSchema = z.object({
-  baseCharge: decimalStringSchema,
+  freightChargeAmount: decimalStringSchema,
   otherChargeAmount: decimalStringSchema,
   totalChargeAmount: decimalStringSchema,
 });

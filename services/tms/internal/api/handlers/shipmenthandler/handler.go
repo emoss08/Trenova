@@ -103,6 +103,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.checkHazmatSegregation,
 	)
 	api.POST(
+		"/loading-optimization/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.calculateLoadingOptimization,
+	)
+	api.POST(
 		"/previous-rates/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getPreviousRates,
@@ -555,6 +560,29 @@ func (h *Handler) checkHazmatSegregation(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"valid": true})
+}
+
+func (h *Handler) calculateLoadingOptimization(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(repositories.LoadingOptimizationRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+
+	result, err := h.service.CalculateLoadingOptimization(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) getPreviousRates(c *gin.Context) {

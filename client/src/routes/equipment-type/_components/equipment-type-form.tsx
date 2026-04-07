@@ -1,5 +1,6 @@
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
+import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
@@ -60,6 +61,15 @@ export function EquipTypeForm() {
           name="color"
           label="Color"
           description="The color of the equipment type"
+        />
+      </FormControl>
+      <FormControl>
+        <NumberField
+          control={control}
+          name="interiorLength"
+          label="Interior Length (ft)"
+          placeholder="53"
+          description="Interior length of the trailer in feet"
         />
       </FormControl>
     </FormGroup>

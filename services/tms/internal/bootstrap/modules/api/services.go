@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
@@ -137,6 +138,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documenttypeservice.New,
 	holdreasonservice.New,
 	billingcontrolservice.New,
+	billingqueueservice.New,
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,
 	documentcontrolservice.New,

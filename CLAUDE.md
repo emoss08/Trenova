@@ -148,18 +148,33 @@ Supports nested paths (`user.address.street`) and array indices (`items[0].name`
 
 ## Code Style
 
+### General Principles
+- **Production-grade, fully featured code**: This is an enterprise application. Every feature must be implemented completely — no stubs, no "v1" shortcuts, no "can be improved later" placeholders. If a feature needs error handling, edge cases, validation, proper UX states, or integration with existing systems, implement all of it in the first pass. Do not simplify or reduce scope unless explicitly told to.
+- **DRY**: Do not repeat yourself — extract shared logic rather than duplicating code
+- **SOLID**: Follow SOLID principles strictly (single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion)
+- **Performance**: Write the most efficient and performant code possible — avoid unnecessary allocations, prefer stack over heap, minimize copies, use appropriate data structures
+- **Utility functions**: Place reusable utility functions in the `shared/` package (e.g., `shared/stringutils`, `shared/sliceutils`, `shared/intutils`). Do NOT scatter utility/helper functions in domain or service files. If a utility package doesn't exist for the category, create one in `shared/`
+
 ### Go
+- Follow the [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md) as the baseline for all Go code
 - Do not add comments to code
 - Use Bun ORM for database operations
 - Use Ozzo validation for struct validation
-- Follow hexagonal architecture - keep domain logic in `core/`, adapters in `infrastructure/`
+- Follow hexagonal architecture — keep domain logic in `core/`, adapters in `infrastructure/`
 - Use `sonic` for JSON — `encoding/json` is forbidden by lint
 - Format with `goimports` and `golines`
 - Use `t.Context()` instead of `context.Background()` in tests (Go 1.25+)
+- When a function signature exceeds ~3-4 parameters, group them into a named struct type (e.g., `type CreateShipmentParams struct { ... }`)
+- Prefer value receivers unless the method mutates state or the struct is large
+- Avoid `interface{}` / `any` when a concrete or generic type is possible
+- Use `errors.New` / `fmt.Errorf` with `%w` — never discard errors silently
+- Preallocate slices/maps when the size is known (`make([]T, 0, n)`)
 
 ### TypeScript/React
 - Format with OxFmt (`client/.oxfmtrc.json`): double quotes, semicolons, trailing commas, 100 char width
 - Lint with OxLint (`client/.oxlintrc.json`): strict React hooks, TanStack Query exhaustive deps, no console.log
+- Prefer named exports over default exports
+- Extract repeated logic into custom hooks or shared utilities
 
 ## Bun ORM
 

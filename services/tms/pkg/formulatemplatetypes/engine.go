@@ -27,6 +27,9 @@ type CalculateRequest struct {
 }
 
 type CalculateResponse struct {
-	Amount    decimal.Decimal
-	Variables map[string]any
+	Amount              decimal.Decimal
+	Variables           map[string]any
+	FormulaTemplateID   string
+	FormulaTemplateName string
+	Expression          string
 }

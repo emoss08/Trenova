@@ -1,6 +1,7 @@
 import {
   DocumentTypeMultiSelectField,
   GLAccountAutocompleteField,
+  UserAutocompleteField,
 } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -28,6 +29,7 @@ import {
   MailCheckIcon,
   SettingsIcon,
   StickyNoteIcon,
+  UserCheckIcon,
   TruckIcon,
 } from "lucide-react";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -547,6 +549,22 @@ export function CustomerBillingProfileForm() {
             />
           </FormControl>
         </div>
+      </FormGroup>
+      <Separator />
+      <SectionHeader
+        icon={UserCheckIcon}
+        title="Default Biller"
+        description="Assign a default biller for this customer. New billing queue items will be auto-assigned to this user."
+      />
+      <FormGroup cols={1}>
+        <FormControl>
+          <UserAutocompleteField
+            control={control}
+            name="billingProfile.defaultBillerId"
+            label="Default Biller"
+            description="When shipments for this customer are transferred to the billing queue, they will be automatically assigned to this biller."
+          />
+        </FormControl>
       </FormGroup>
       <Separator />
       <SectionHeader

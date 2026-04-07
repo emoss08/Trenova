@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "shipment_controls"(
     "auto_cancel_shipments" boolean NOT NULL DEFAULT FALSE,
     "auto_cancel_shipments_threshold" "auto_cancel_shipments_threshold" NOT NULL DEFAULT 30,
     "track_customer_rejections" boolean NOT NULL DEFAULT FALSE,
-    "check_for_duplicate_bols" boolean NOT NULL DEFAULT FALSE,
+    "check_for_duplicate_bols" boolean NOT NULL DEFAULT TRUE,
     "allow_move_removals" boolean NOT NULL DEFAULT FALSE,
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -57,7 +57,7 @@ ALTER TABLE shipment_controls
 
 --bun:split
 ALTER TABLE shipment_controls
-    ADD COLUMN IF NOT EXISTS check_hazmat_segregation boolean NOT NULL DEFAULT FALSE;
+    ADD COLUMN IF NOT EXISTS check_hazmat_segregation boolean NOT NULL DEFAULT TRUE;
 
 -- Add comment
 COMMENT ON COLUMN shipment_controls.check_hazmat_segregation IS 'Controls whether hazardous material segregation validation is performed';

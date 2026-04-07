@@ -7,6 +7,7 @@ import type {
   RevenueRecognition,
   ThresholdAction,
 } from "@/types/accounting-control";
+import type { BillingQueueStatus } from "@/types/billing-queue";
 import type { PaymentTerm, TransferSchedule } from "@/types/billing-control";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
@@ -37,7 +38,7 @@ import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-se
 import type { EquipmentStatus, Status } from "@/types/helpers";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
-import type { DataScope, FieldSensitivity, Operation } from "@/types/role";
+import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
   MoveStatus,
   ShipmentStatus,
@@ -90,6 +91,32 @@ export const shipmentStatusChoices = [
   { label: "Invoiced", value: "Invoiced", color: "#166534" },
   { label: "Canceled", value: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<ShipmentStatus>>;
+
+export const billTypeChoices = [
+  { label: "Invoice", value: "Invoice", color: "#3b82f6" },
+  { label: "Credit Memo", value: "CreditMemo", color: "#f59e0b" },
+  { label: "Debit Memo", value: "DebitMemo", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
+
+export const billingQueueStatusChoices = [
+  { label: "Ready for Review", value: "ReadyForReview", color: "#3b82f6" },
+  { label: "In Review", value: "InReview", color: "#0891b2" },
+  { label: "Approved", value: "Approved", color: "#16a34a" },
+  { label: "On Hold", value: "OnHold", color: "#f59e0b" },
+  { label: "Sent Back to Ops", value: "SentBackToOps", color: "#f97316" },
+  { label: "Exception", value: "Exception", color: "#dc2626" },
+  { label: "Canceled", value: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<BillingQueueStatus>>;
+
+export const billingTransferStatusChoices = [
+  { label: "Ready for Review", value: "ReadyForReview", color: "#3b82f6" },
+  { label: "In Review", value: "InReview", color: "#0891b2" },
+  { label: "Approved", value: "Approved", color: "#16a34a" },
+  { label: "On Hold", value: "OnHold", color: "#f59e0b" },
+  { label: "Sent Back to Ops", value: "SentBackToOps", color: "#f97316" },
+  { label: "Exception", value: "Exception", color: "#dc2626" },
+  { label: "Canceled", value: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<string>>;
 
 export const moveStatusChoices = [
   { label: "New", value: "New", color: "#3b82f6" },
@@ -146,6 +173,13 @@ export const fieldSensitivityChoices = [
     variant: "inactive",
   },
 ] satisfies ReadonlyArray<GenericSelectOption<FieldSensitivity>>;
+
+export const coreResponsibilityChoices = [
+  { value: "Billing", label: "Billing", color: "#0ea5e9" },
+  { value: "Operations", label: "Operations", color: "#16a34a" },
+  { value: "Finance", label: "Finance", color: "#a855f7" },
+  { value: "Leadership", label: "Leadership", color: "#f59e0b" },
+] satisfies ReadonlyArray<GenericSelectOption<CoreResponsibility>>;
 
 export const dataScopeChoices = [
   { value: "own", label: "Own Data Only" },

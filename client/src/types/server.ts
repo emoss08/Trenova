@@ -53,7 +53,10 @@ export type BaseEndpoint =
   | "/distance-overrides/"
   | "/document-packet-rules/"
   | "/audit-entries/"
-  | "/tca/subscriptions/";
+  | "/tca/subscriptions/"
+  | "/billing-queue/"
+  | "/billing-queue/stats/"
+  | "/billing-queue/filter-presets/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

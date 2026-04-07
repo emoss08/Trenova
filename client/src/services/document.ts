@@ -142,13 +142,17 @@ export class DocumentService {
     resourceType: string,
     resourceId: string,
     query?: string,
+    params?: Record<string, string>,
   ): Promise<Document[]> {
-    const search = query?.trim()
-      ? `?query=${encodeURIComponent(query.trim())}`
-      : "";
-    const response = await api.get<Document[]>(
-      `/documents/resource/${resourceType}/${resourceId}/${search}`,
-    );
+    const searchParams = new URLSearchParams(params);
+    if (query?.trim()) {
+      searchParams.set("query", query.trim());
+    }
+    const qs = searchParams.toString();
+    const endpoint = qs
+      ? `/documents/resource/${resourceType}/${resourceId}/?${qs}`
+      : `/documents/resource/${resourceType}/${resourceId}/`;
+    const response = await api.get<Document[]>(endpoint);
     return safeParse(z.array(documentSchema), response, "Document");
   }
 

@@ -31,7 +31,7 @@ type PacketItemSummary struct {
 
 type PacketSummary struct {
 	ResourceID      string              `json:"resourceId"`
-	ResourceType    ResourceType        `json:"resourceType"`
+	ResourceType    string              `json:"resourceType"`
 	Status          PacketStatus        `json:"status"`
 	TotalRules      int                 `json:"totalRules"`
 	SatisfiedRules  int                 `json:"satisfiedRules"`
@@ -51,22 +51,20 @@ var (
 type DocumentPacketRule struct {
 	bun.BaseModel `bun:"table:document_packet_rules,alias:dpr" json:"-"`
 
-	ID                    pulid.ID     `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID        pulid.ID     `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID        pulid.ID     `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	ResourceType          ResourceType `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
-	DocumentTypeID        pulid.ID     `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull"`
-	Required              bool         `json:"required"              bun:"required,type:BOOLEAN,notnull,default:false"`
-	AllowMultiple         bool         `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull,default:false"`
-	DisplayOrder          int          `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull,default:0"`
-	ExpirationRequired    bool         `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull,default:false"`
-	ExpirationWarningDays int          `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30"`
-	Version               int64        `json:"version"               bun:"version,type:BIGINT"`
-	CreatedAt             int64        `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt             int64        `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID `json:"id"                    bun:"id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID        pulid.ID `json:"organizationId"        bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	ResourceType          string   `json:"resourceType"          bun:"resource_type,type:VARCHAR(100),notnull"`
+	DocumentTypeID        pulid.ID `json:"documentTypeId"        bun:"document_type_id,type:VARCHAR(100),notnull"`
+	Required              bool     `json:"required"              bun:"required,type:BOOLEAN,notnull,default:false"`
+	AllowMultiple         bool     `json:"allowMultiple"         bun:"allow_multiple,type:BOOLEAN,notnull,default:false"`
+	DisplayOrder          int      `json:"displayOrder"          bun:"display_order,type:INTEGER,notnull,default:0"`
+	ExpirationRequired    bool     `json:"expirationRequired"    bun:"expiration_required,type:BOOLEAN,notnull,default:false"`
+	ExpirationWarningDays int      `json:"expirationWarningDays" bun:"expiration_warning_days,type:INTEGER,notnull,default:30"`
+	Version               int64    `json:"version"               bun:"version,type:BIGINT"`
+	CreatedAt             int64    `json:"createdAt"             bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt             int64    `json:"updatedAt"             bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
-
-type Rule = DocumentPacketRule
 
 func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
@@ -74,7 +72,7 @@ func (r *DocumentPacketRule) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(
 			&r.ResourceType,
 			validation.Required.Error("Resource type is required"),
-			validation.In(ResourceTypeShipment, ResourceTypeTrailer, ResourceTypeTractor, ResourceTypeWorker).
+			validation.In("Shipment", "Trailer", "Tractor", "Worker").
 				Error("Resource type must be valid"),
 		),
 		validation.Field(&r.DocumentTypeID, validation.Required.Error("Document type is required")),

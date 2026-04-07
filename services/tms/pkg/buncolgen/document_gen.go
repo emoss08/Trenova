@@ -228,9 +228,11 @@ var DocumentInsertableColumns = []string{
 var DocumentRelations = struct {
 	BusinessUnit string
 	Organization string
+	DocumentType string
 }{
 	BusinessUnit: "BusinessUnit",
 	Organization: "Organization",
+	DocumentType: "DocumentType",
 }
 
 // DocumentScopeTenant restricts a query to a single tenant by adding:

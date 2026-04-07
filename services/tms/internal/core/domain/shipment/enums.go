@@ -15,6 +15,19 @@ const (
 	StatusCanceled           = Status("Canceled")
 )
 
+type BillingTransferStatus string
+
+const (
+	BillingTransferNone         = BillingTransferStatus("")
+	BillingTransferReadyForReview = BillingTransferStatus("ReadyForReview")
+	BillingTransferInReview     = BillingTransferStatus("InReview")
+	BillingTransferOnHold       = BillingTransferStatus("OnHold")
+	BillingTransferException    = BillingTransferStatus("Exception")
+	BillingTransferSentBackToOps = BillingTransferStatus("SentBackToOps")
+	BillingTransferApproved     = BillingTransferStatus("Approved")
+	BillingTransferCanceled     = BillingTransferStatus("Canceled")
+)
+
 type RatingMethod string
 
 const (

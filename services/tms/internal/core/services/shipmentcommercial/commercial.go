@@ -45,7 +45,7 @@ func (c *Calculator) Recalculate(
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 ) error {
-	baseCharge, otherChargeAmount, err := c.calculateCommercialTotals(
+	baseCharge, otherChargeAmount, ratingDetail, err := c.calculateCommercialTotals(
 		ctx,
 		entity,
 		control,
@@ -59,6 +59,7 @@ func (c *Calculator) Recalculate(
 	entity.FreightChargeAmount = decimal.NewNullDecimal(baseCharge)
 	entity.OtherChargeAmount = decimal.NewNullDecimal(otherChargeAmount)
 	entity.TotalChargeAmount = decimal.NewNullDecimal(baseCharge.Add(otherChargeAmount))
+	entity.RatingDetail = ratingDetail
 
 	return nil
 }
@@ -69,7 +70,7 @@ func (c *Calculator) CalculateTotals(
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
-	baseCharge, otherChargeAmount, err := c.calculateCommercialTotals(
+	baseCharge, otherChargeAmount, _, err := c.calculateCommercialTotals(
 		ctx,
 		entity,
 		control,
@@ -81,7 +82,7 @@ func (c *Calculator) CalculateTotals(
 	}
 
 	return &repositories.ShipmentTotalsResponse{
-		BaseCharge:        baseCharge,
+		FreightChargeAmount: baseCharge,
 		OtherChargeAmount: otherChargeAmount,
 		TotalChargeAmount: baseCharge.Add(otherChargeAmount),
 	}, nil
@@ -109,19 +110,19 @@ func (c *Calculator) calculateCommercialTotals(
 	control *tenant.ShipmentControl,
 	userID pulid.ID,
 	syncDetention bool,
-) (decimal.Decimal, decimal.Decimal, error) {
+) (decimal.Decimal, decimal.Decimal, *shipment.RatingDetail, error) {
 	if syncDetention {
 		if err := c.syncDetentionCharge(ctx, entity, control); err != nil {
-			return decimal.Zero, decimal.Zero, err
+			return decimal.Zero, decimal.Zero, nil, err
 		}
 	}
 
-	baseCharge, err := c.calculateBaseCharge(ctx, entity, userID)
+	baseCharge, ratingDetail, err := c.calculateBaseCharge(ctx, entity, userID)
 	if err != nil {
-		return decimal.Zero, decimal.Zero, err
+		return decimal.Zero, decimal.Zero, nil, err
 	}
 
-	return baseCharge, CalculateAdditionalCharges(entity.AdditionalCharges, baseCharge), nil
+	return baseCharge, CalculateAdditionalCharges(entity.AdditionalCharges, baseCharge), ratingDetail, nil
 }
 
 func calculateAdditionalCharge(
@@ -148,7 +149,7 @@ func (c *Calculator) calculateBaseCharge(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	userID pulid.ID,
-) (decimal.Decimal, error) {
+) (decimal.Decimal, *shipment.RatingDetail, error) {
 	resp, err := c.formula.Calculate(ctx, &formulatemplatetypes.CalculateRequest{
 		TemplateID: entity.FormulaTemplateID,
 		Entity:     entity,
@@ -159,10 +160,20 @@ func (c *Calculator) calculateBaseCharge(
 		},
 	})
 	if err != nil {
-		return decimal.Zero, err
+		return decimal.Zero, nil, err
 	}
 
-	return resp.Amount, nil
+	result, _ := resp.Amount.Float64()
+	detail := &shipment.RatingDetail{
+		FormulaTemplateID:   resp.FormulaTemplateID,
+		FormulaTemplateName: resp.FormulaTemplateName,
+		Expression:          resp.Expression,
+		ResolvedVariables:   resp.Variables,
+		Result:              result,
+		RatedAt:             c.now(),
+	}
+
+	return resp.Amount, detail, nil
 }
 
 func (c *Calculator) syncDetentionCharge(

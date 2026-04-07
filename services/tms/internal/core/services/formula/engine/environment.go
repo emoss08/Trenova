@@ -104,6 +104,7 @@ func (b *EnvironmentBuilder) buildFromEntity(entity any) (map[string]any, error)
 		"totalWeight",
 		"totalPieces",
 		"totalLinearFeet",
+		"baseRate",
 		"freightChargeAmount",
 		"otherChargeAmount",
 		"currentTotalCharge",

@@ -102,6 +102,10 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *repositories.CheckHazmatSegregationRequest,
 	) error
+	CalculateLoadingOptimization(
+		ctx context.Context,
+		req *repositories.LoadingOptimizationRequest,
+	) (*repositories.LoadingOptimizationResult, error)
 	GetDelayedShipments(
 		ctx context.Context,
 		req *repositories.GetDelayedShipmentsRequest,

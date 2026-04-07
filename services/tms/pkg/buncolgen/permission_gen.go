@@ -162,6 +162,7 @@ var RoleColumns = struct {
 	OrganizationID      Column // "organization_id" → qualified: "r.organization_id"
 	Name                Column // "name" → qualified: "r.name"
 	Description         Column // "description" → qualified: "r.description"
+	CoreResponsibility  Column // "core_responsibility" → qualified: "r.core_responsibility"
 	ParentRoleIDs       Column // "parent_role_ids" → qualified: "r.parent_role_ids"
 	MaxSensitivity      Column // "max_sensitivity" → qualified: "r.max_sensitivity"
 	IsSystem            Column // "is_system" → qualified: "r.is_system"
@@ -176,6 +177,7 @@ var RoleColumns = struct {
 	OrganizationID:      NewColumn("organization_id", "r"),
 	Name:                NewColumn("name", "r"),
 	Description:         NewColumn("description", "r"),
+	CoreResponsibility:  NewColumn("core_responsibility", "r"),
 	ParentRoleIDs:       NewColumn("parent_role_ids", "r"),
 	MaxSensitivity:      NewColumn("max_sensitivity", "r"),
 	IsSystem:            NewColumn("is_system", "r"),
@@ -196,6 +198,7 @@ var RoleFieldMap = map[string]string{
 	"organizationId":      "organization_id",
 	"name":                "name",
 	"description":         "description",
+	"coreResponsibility":  "core_responsibility",
 	"parentRoleIds":       "parent_role_ids",
 	"maxSensitivity":      "max_sensitivity",
 	"isSystem":            "is_system",
@@ -214,6 +217,7 @@ var RoleInsertableColumns = []string{
 	"organization_id",
 	"name",
 	"description",
+	"core_responsibility",
 	"parent_role_ids",
 	"max_sensitivity",
 	"is_system",
@@ -290,6 +294,7 @@ var RoleFilter = struct {
 	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
 	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	CoreResponsibility  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coreResponsibility" → DB: "core_responsibility"
 	ParentRoleIDs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentRoleIds" → DB: "parent_role_ids"
 	MaxSensitivity      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxSensitivity" → DB: "max_sensitivity"
 	IsSystem            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
@@ -313,6 +318,9 @@ var RoleFilter = struct {
 	},
 	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("description", op, value)
+	},
+	CoreResponsibility: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("coreResponsibility", op, value)
 	},
 	ParentRoleIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("parentRoleIds", op, value)

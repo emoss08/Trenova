@@ -83,7 +83,7 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromInt(250).Equal(resp.BaseCharge))
+	assert.True(t, decimal.NewFromInt(250).Equal(resp.FreightChargeAmount))
 	assert.True(t, decimal.NewFromInt(10).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(260).Equal(resp.TotalChargeAmount))
 }
@@ -196,7 +196,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromInt(30).Equal(resp.BaseCharge))
+	assert.True(t, decimal.NewFromInt(30).Equal(resp.FreightChargeAmount))
 	assert.True(t, decimal.NewFromInt(13).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromInt(43).Equal(resp.TotalChargeAmount))
 }
@@ -254,7 +254,7 @@ func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChar
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.RequireFromString("9302.44").Equal(resp.BaseCharge))
+	assert.True(t, decimal.RequireFromString("9302.44").Equal(resp.FreightChargeAmount))
 	assert.True(t, decimal.NewFromInt(200).Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.RequireFromString("9502.44").Equal(resp.TotalChargeAmount))
 }
@@ -370,7 +370,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromFloat(1814.5).Equal(resp.BaseCharge))
+	assert.True(t, decimal.NewFromFloat(1814.5).Equal(resp.FreightChargeAmount))
 	assert.True(t, decimal.Zero.Equal(resp.OtherChargeAmount))
 	assert.True(t, decimal.NewFromFloat(1814.5).Equal(resp.TotalChargeAmount))
 }
@@ -460,7 +460,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.True(t, decimal.NewFromFloat(34).Equal(resp.BaseCharge))
+	assert.True(t, decimal.NewFromFloat(34).Equal(resp.FreightChargeAmount))
 }
 
 func newTestFormulaService(

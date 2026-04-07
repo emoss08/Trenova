@@ -2,6 +2,11 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import { createLimitOffsetResponse } from "@/types/server";
 import {
+  loadingOptimizationResultSchema,
+  type LoadingOptimizationRequest,
+  type LoadingOptimizationResult,
+} from "@/types/loading-optimization";
+import {
   duplicateShipmentResponseSchema,
   previousRatesResponseSchema,
   shipmentCreateSchema,
@@ -119,6 +124,14 @@ export class ShipmentService {
   public async getUIPolicy() {
     const response = await api.get<ShipmentUIPolicy>("/shipments/ui-policy/");
     return safeParse(shipmentUIPolicySchema, response, "Shipment UI Policy");
+  }
+
+  public async calculateLoadingOptimization(req: LoadingOptimizationRequest) {
+    const response = await api.post<LoadingOptimizationResult>(
+      "/shipments/loading-optimization/",
+      req,
+    );
+    return safeParse(loadingOptimizationResultSchema, response, "Loading Optimization");
   }
 
   public async getBillingReadiness(shipmentId: Shipment["id"]) {

@@ -165,7 +165,6 @@ async function fetchOptionsByIds(
   });
 
   const results = await Promise.all(promises);
-  console.log("fetchOptionsByIds results:", results);
   return results.filter((result) => result !== null);
 }
 
@@ -298,7 +297,14 @@ export function MultiSelectAutocomplete<T>({
 
       await resolveInitialOptions
         .then((fetchedOptions) => {
-          setSelectedOptions(fetchedOptions);
+          const seen = new Set<string>();
+          const deduped = fetchedOptions.filter((opt) => {
+            const key = getOptionValue(opt as T).toString();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setSelectedOptions(deduped);
         })
         .catch((err) => {
           dispatchAsyncState({
@@ -396,7 +402,12 @@ export function MultiSelectAutocomplete<T>({
         ? selectedOptions.filter(
             (opt) => getOptionValue(opt).toString() !== currentValue,
           )
-        : [...selectedOptions, optionToToggle];
+        : [
+            ...selectedOptions.filter(
+              (opt) => getOptionValue(opt).toString() !== currentValue,
+            ),
+            optionToToggle,
+          ];
 
       setSelectedOptions(newSelectedOptions);
 

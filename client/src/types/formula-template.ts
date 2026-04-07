@@ -234,7 +234,8 @@ export const SHIPMENT_VARIABLES: SchemaVariable[] = [
   { name: "hasHazmat", type: "Boolean", description: "Whether shipment contains hazmat", category: "computed" },
   { name: "requiresTemperatureControl", type: "Boolean", description: "Temperature controlled shipment", category: "computed" },
   { name: "temperatureDifferential", type: "Number", description: "Temperature range differential", category: "computed" },
-  { name: "freightChargeAmount", type: "Number", description: "Current freight charge amount", category: "computed" },
+  { name: "baseRate", type: "Number", description: "Base rate per unit for freight charge calculation", category: "computed" },
+  { name: "freightChargeAmount", type: "Number", description: "Calculated freight charge amount", category: "computed" },
   { name: "otherChargeAmount", type: "Number", description: "Sum of other charges", category: "computed" },
   { name: "currentTotalCharge", type: "Number", description: "Current total charge", category: "computed" },
 ];

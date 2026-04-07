@@ -538,6 +538,20 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceBillingQueue.String(),
+		DisplayName: "Billing Queue",
+		Description: "Billing queue review and approval",
+		Category:    "Billing",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View billing queue items"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Transfer shipments to billing queue"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Update billing queue item status"},
+			{Operation: OpAssign, DisplayName: "Assign", Description: "Assign billers to queue items"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceAccessorialCharge.String(),
 		DisplayName:        "Accessorial Charge",
 		Description:        "Accessorial charge definitions",

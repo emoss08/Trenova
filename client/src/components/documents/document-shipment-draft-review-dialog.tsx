@@ -168,6 +168,7 @@ function createDefaultShipmentValues(draft: DocumentShipmentDraft | null): Shipm
     consolidationGroupId: undefined,
     otherChargeAmount: 0,
     freightChargeAmount: rate,
+    baseRate: rate,
     totalChargeAmount: rate,
     pieces: pieces ?? undefined,
     weight: weight ?? undefined,

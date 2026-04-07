@@ -41,13 +41,15 @@ type Params struct {
 	UserRepo        repositories.UserRepository
 	ControlRepo     repositories.ShipmentControlRepository
 	ContinuityRepo  repositories.EquipmentContinuityRepository
-	CommodityRepo   repositories.CommodityRepository
-	HazmatRuleRepo  repositories.HazmatSegregationRuleRepository
+	CommodityRepo       repositories.CommodityRepository
+	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
+	EquipmentTypeRepo   repositories.EquipmentTypeRepository
 	AccessorialRepo repositories.AccessorialChargeRepository
 	CustomerRepo    repositories.CustomerRepository
 	DocumentRepo    repositories.DocumentRepository
-	BillingRepo     repositories.BillingControlRepository
-	Permissions     services.PermissionEngine
+	BillingRepo         repositories.BillingControlRepository
+	BillingQueueService services.BillingQueueService `optional:"true"`
+	Permissions         services.PermissionEngine
 	Validator       *Validator
 	AuditService    services.AuditService
 	Realtime        services.RealtimeService
@@ -64,13 +66,15 @@ type service struct {
 	userRepo        repositories.UserRepository
 	controlRepo     repositories.ShipmentControlRepository
 	continuityRepo  repositories.EquipmentContinuityRepository
-	commodityRepo   repositories.CommodityRepository
-	hazmatRuleRepo  repositories.HazmatSegregationRuleRepository
+	commodityRepo       repositories.CommodityRepository
+	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
+	equipmentTypeRepo   repositories.EquipmentTypeRepository
 	accessorialRepo repositories.AccessorialChargeRepository
 	customerRepo    repositories.CustomerRepository
 	documentRepo    repositories.DocumentRepository
-	billingRepo     repositories.BillingControlRepository
-	permissions     services.PermissionEngine
+	billingRepo         repositories.BillingControlRepository
+	billingQueueService services.BillingQueueService
+	permissions         services.PermissionEngine
 	validator       *Validator
 	auditService    services.AuditService
 	realtime        services.RealtimeService
@@ -89,13 +93,15 @@ func New(p Params) services.ShipmentService {
 		userRepo:        p.UserRepo,
 		controlRepo:     p.ControlRepo,
 		continuityRepo:  p.ContinuityRepo,
-		commodityRepo:   p.CommodityRepo,
-		hazmatRuleRepo:  p.HazmatRuleRepo,
+		commodityRepo:       p.CommodityRepo,
+		hazmatRuleRepo:      p.HazmatRuleRepo,
+		equipmentTypeRepo:   p.EquipmentTypeRepo,
 		accessorialRepo: p.AccessorialRepo,
 		customerRepo:    p.CustomerRepo,
 		documentRepo:    p.DocumentRepo,
-		billingRepo:     p.BillingRepo,
-		permissions:     p.Permissions,
+		billingRepo:         p.BillingRepo,
+		billingQueueService: p.BillingQueueService,
+		permissions:         p.Permissions,
 		validator:       p.Validator,
 		auditService:    p.AuditService,
 		realtime:        p.Realtime,
@@ -267,6 +273,14 @@ func (s *service) Update(
 	if err != nil {
 		s.l.Error("failed to get original shipment", zap.Error(err))
 		return nil, err
+	}
+
+	if multiErr := validateShipmentNotLockedForBilling(original); multiErr != nil {
+		log.Warn("shipment update blocked — locked for billing",
+			zap.String("shipmentId", original.ID.String()),
+			zap.String("billingTransferStatus", string(original.BillingTransferStatus)),
+		)
+		return nil, multiErr
 	}
 
 	control, err := s.getShipmentControl(ctx, pagination.TenantInfo{

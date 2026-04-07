@@ -5,6 +5,7 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -97,6 +99,8 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 
 	previousEntity := *entity
 	entity.Status = shipment.StatusReadyToInvoice
+	now := timeutils.NowUnix()
+	entity.MarkedReadyToBillAt = &now
 
 	s.l.Info("auto-marking shipment ready to invoice",
 		zap.String("shipmentId", shipmentID.String()),
@@ -137,6 +141,14 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 	); err != nil {
 		s.l.Warn("failed to publish shipment invalidation after auto-mark", zap.Error(err))
 	}
+
+	s.autoTransferToBillingQueue(ctx, updatedEntity, tenantInfo, &services.RequestActor{
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+	})
 
 	return updatedEntity, nil
 }
@@ -390,4 +402,26 @@ func buildDocumentRequirements(
 	})
 
 	return requirements
+}
+
+func (s *service) autoTransferToBillingQueue(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+	actor *services.RequestActor,
+) {
+	if s.billingQueueService == nil {
+		return
+	}
+
+	if _, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
+		ShipmentID: entity.ID,
+		BillType:   billingqueue.BillTypeInvoice,
+		TenantInfo: tenantInfo,
+	}, actor); err != nil {
+		s.l.Warn("failed to auto-transfer shipment to billing queue",
+			zap.String("shipmentId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 }

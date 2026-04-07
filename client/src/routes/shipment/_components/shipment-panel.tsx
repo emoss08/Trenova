@@ -1,6 +1,12 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@/types/data-table";
 import {
@@ -12,7 +18,13 @@ import {
 } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { FileTextIcon, HistoryIcon, MessageSquareIcon } from "lucide-react";
+import {
+  ContainerIcon,
+  FileTextIcon,
+  HistoryIcon,
+  MessageSquareIcon,
+} from "lucide-react";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { lazy, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentForm } from "./shipment-form";
@@ -58,6 +70,7 @@ const defaultValues: ShipmentCreateInput = {
   consolidationGroupId: undefined,
   otherChargeAmount: 0,
   freightChargeAmount: 0,
+  baseRate: 0,
   totalChargeAmount: 0,
   pieces: undefined,
   weight: undefined,
@@ -99,7 +112,12 @@ const defaultValues: ShipmentCreateInput = {
   ],
 };
 
-export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
+export function ShipmentPanel({
+  open,
+  onOpenChange,
+  mode,
+  row,
+}: DataTablePanelProps<Shipment>) {
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),
     defaultValues,
@@ -158,6 +176,11 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     [row?.id, commentCount],
   );
 
+  const [, setLoadPlannerOpen] = useQueryState(
+    "loadPlanner",
+    parseAsBoolean.withDefault(false),
+  );
+
   if (mode === "edit") {
     return (
       <TabbedFormEditPanel
@@ -172,6 +195,23 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         formComponent={<ShipmentForm />}
         tabs={extraTabs}
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
+        headerActions={
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={() => setLoadPlannerOpen(true)}
+                />
+              }
+            >
+              <ContainerIcon className="size-4" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Load Planner</TooltipContent>
+          </Tooltip>
+        }
         useDock
       />
     );

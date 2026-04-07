@@ -490,6 +490,10 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-001", BOL: "BOL-2026-0001",
 			Pieces: new(int64(24)), Weight: new(int64(42000)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(3200.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3200.00),
 				Valid:   true,
@@ -506,6 +510,10 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-002", BOL: "BOL-2026-0002",
 			Pieces: new(int64(8)), Weight: new(int64(12000)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(1850.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(1850.00),
 				Valid:   true,
@@ -526,6 +534,10 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-003", BOL: "BOL-2026-0003",
 			Pieces: new(int64(30)), Weight: new(int64(44000)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(4500.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4500.00),
 				Valid:   true,
@@ -547,6 +559,10 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-004", BOL: "BOL-2026-0004",
 			Pieces: new(int64(20)), Weight: new(int64(38000)),
 			TemperatureMin: new(int16(34)), TemperatureMax: new(int16(38)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(4100.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4100.00),
 				Valid:   true,
@@ -564,6 +580,10 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-005", BOL: "BOL-2026-0005",
 			Pieces: new(int64(26)), Weight: new(int64(40000)),
 			ActualShipDate: new(now - 5*day), ActualDeliveryDate: new(now - 3*day),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(2800.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(2800.00),
 				Valid:   true,
@@ -584,6 +604,10 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: perMileTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-006", BOL: "BOL-2026-0006",
 			Pieces: new(int64(40)), Weight: new(int64(43000)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(6200.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(6200.00),
 				Valid:   true,
@@ -604,6 +628,10 @@ func (s *ShipmentSeed) createShipments(
 			FormulaTemplateID: flatRateTemplate.ID, Status: shipment.StatusNew,
 			ProNumber: "SEED-SHP-007", BOL: "BOL-2026-0007",
 			Pieces: new(int64(10)), Weight: new(int64(22000)),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(3800.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3800.00),
 				Valid:   true,
@@ -625,6 +653,10 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-008", BOL: "BOL-2026-0008",
 			Pieces: new(int64(14)), Weight: new(int64(18000)),
 			ActualShipDate: new(now - 1*day),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(2400.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(2400.00),
 				Valid:   true,
@@ -642,6 +674,10 @@ func (s *ShipmentSeed) createShipments(
 			ProNumber: "SEED-SHP-009", BOL: "BOL-2026-0009",
 			Pieces: new(int64(32)), Weight: new(int64(44000)),
 			ActualShipDate: new(now - 7*day), ActualDeliveryDate: new(now - 4*day),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(3500.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(3500.00),
 				Valid:   true,
@@ -664,6 +700,10 @@ func (s *ShipmentSeed) createShipments(
 			Pieces: new(int64(18)), Weight: new(int64(36000)),
 			TemperatureMin: new(int16(0)), TemperatureMax: new(int16(10)),
 			ActualShipDate: new(now - 2*day),
+			BaseRate: decimal.NullDecimal{
+				Decimal: decimal.NewFromFloat(4800.00),
+				Valid:   true,
+			},
 			FreightChargeAmount: decimal.NullDecimal{
 				Decimal: decimal.NewFromFloat(4800.00),
 				Valid:   true,

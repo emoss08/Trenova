@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -139,6 +140,7 @@ type RouterParams struct {
 	HoldReasonHandler            *holdreasonhandler.Handler
 	IntegrationHandler           *integrationhandler.Handler
 	BillingControlHandler        *billingcontrolhandler.Handler
+	BillingQueueHandler          *billingqueuehandler.Handler
 	DataEntryControlHandler      *dataentrycontrolhandler.Handler
 	DispatchControlHandler       *dispatchcontrolhandler.Handler
 	DocumentControlHandler       *documentcontrolhandler.Handler
@@ -210,6 +212,7 @@ type Router struct {
 	holdReasonHandler            *holdreasonhandler.Handler
 	integrationHandler           *integrationhandler.Handler
 	billingControlHandler        *billingcontrolhandler.Handler
+	billingQueueHandler          *billingqueuehandler.Handler
 	dataEntryControlHandler      *dataentrycontrolhandler.Handler
 	dispatchControlHandler       *dispatchcontrolhandler.Handler
 	documentControlHandler       *documentcontrolhandler.Handler
@@ -283,6 +286,7 @@ func NewRouter(p RouterParams) *Router {
 		holdReasonHandler:            p.HoldReasonHandler,
 		integrationHandler:           p.IntegrationHandler,
 		billingControlHandler:        p.BillingControlHandler,
+		billingQueueHandler:          p.BillingQueueHandler,
 		dataEntryControlHandler:      p.DataEntryControlHandler,
 		dispatchControlHandler:       p.DispatchControlHandler,
 		documentControlHandler:       p.DocumentControlHandler,
@@ -402,6 +406,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
+	r.billingQueueHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)

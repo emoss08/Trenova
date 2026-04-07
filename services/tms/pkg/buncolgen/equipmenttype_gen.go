@@ -57,6 +57,7 @@ var EquipmentTypeColumns = struct {
 	Description    Column // "description" → qualified: "et.description"
 	Class          Column // "class" → qualified: "et.class"
 	Color          Column // "color" → qualified: "et.color"
+	InteriorLength Column // "interior_length" → qualified: "et.interior_length"
 	SearchVector   Column // "search_vector" → qualified: "et.search_vector"
 	Rank           Column // "rank" → qualified: "et.rank"
 	Version        Column // "version" → qualified: "et.version"
@@ -71,6 +72,7 @@ var EquipmentTypeColumns = struct {
 	Description:    NewColumn("description", "et"),
 	Class:          NewColumn("class", "et"),
 	Color:          NewColumn("color", "et"),
+	InteriorLength: NewColumn("interior_length", "et"),
 	SearchVector:   NewColumn("search_vector", "et"),
 	Rank:           NewColumn("rank", "et"),
 	Version:        NewColumn("version", "et"),
@@ -91,6 +93,7 @@ var EquipmentTypeFieldMap = map[string]string{
 	"description":    "description",
 	"class":          "class",
 	"color":          "color",
+	"interiorLength": "interior_length",
 	"version":        "version",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
@@ -107,6 +110,7 @@ var EquipmentTypeInsertableColumns = []string{
 	"description",
 	"class",
 	"color",
+	"interior_length",
 	"version",
 	"created_at",
 	"updated_at",
@@ -183,6 +187,7 @@ var EquipmentTypeFilter = struct {
 	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	Class          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "class" → DB: "class"
 	Color          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "color" → DB: "color"
+	InteriorLength func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "interiorLength" → DB: "interior_length"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -210,6 +215,9 @@ var EquipmentTypeFilter = struct {
 	},
 	Color: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("color", op, value)
+	},
+	InteriorLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("interiorLength", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

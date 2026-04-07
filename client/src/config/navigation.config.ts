@@ -177,6 +177,12 @@ const billingModule: NavModule = {
   basePath: "/billing",
   navigation: [
     {
+      id: "billing-queue",
+      label: "Billing Queue",
+      path: "/billing/queue",
+      resource: Resource.BillingQueue,
+    },
+    {
       id: "invoices",
       label: "Invoices",
       path: "/billing/invoices",

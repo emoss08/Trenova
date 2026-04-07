@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -117,6 +118,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documenttypehandler.New,
 	holdreasonhandler.New,
 	billingcontrolhandler.New,
+	billingqueuehandler.New,
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,

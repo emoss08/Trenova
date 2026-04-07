@@ -1,14 +1,5 @@
 package documentpacketrule
 
-type ResourceType string
-
-const (
-	ResourceTypeShipment = ResourceType("Shipment")
-	ResourceTypeTrailer  = ResourceType("Trailer")
-	ResourceTypeTractor  = ResourceType("Tractor")
-	ResourceTypeWorker   = ResourceType("Worker")
-)
-
 type ItemStatus string
 
 const (

@@ -16,22 +16,32 @@ var (
 	_ domaintypes.PostgresSearchable = (*Role)(nil)
 )
 
+type CoreResponsibility string
+
+const (
+	CoreResponsibilityBilling    = CoreResponsibility("Billing")
+	CoreResponsibilityOperations = CoreResponsibility("Operations")
+	CoreResponsibilityFinance    = CoreResponsibility("Finance")
+	CoreResponsibilityLeadership = CoreResponsibility("Leadership")
+)
+
 type Role struct {
 	bun.BaseModel `bun:"table:roles,alias:r" json:"-"`
 
-	ID                  pulid.ID         `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID      pulid.ID         `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100)"`
-	OrganizationID      pulid.ID         `json:"organizationId"      bun:"organization_id,type:VARCHAR(100)"`
-	Name                string           `json:"name"                bun:"name,type:VARCHAR(255),notnull"`
-	Description         string           `json:"description"         bun:"description,type:TEXT"`
-	ParentRoleIDs       []pulid.ID       `json:"parentRoleIds"       bun:"parent_role_ids,type:TEXT[],array"`
-	MaxSensitivity      FieldSensitivity `json:"maxSensitivity"      bun:"max_sensitivity,type:VARCHAR(20),notnull,default:'internal'"`
-	IsSystem            bool             `json:"isSystem"            bun:"is_system,default:false"`
-	IsOrgAdmin          bool             `json:"isOrgAdmin"          bun:"is_org_admin,default:false"`
-	IsBusinessUnitAdmin bool             `json:"isBusinessUnitAdmin" bun:"is_business_unit_admin,default:false"`
-	CreatedBy           pulid.ID         `json:"createdBy"           bun:"created_by,type:VARCHAR(100)"`
-	CreatedAt           int64            `json:"createdAt"           bun:"created_at,notnull"`
-	UpdatedAt           int64            `json:"updatedAt"           bun:"updated_at,notnull"`
+	ID                  pulid.ID           `json:"id"                  bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID      pulid.ID           `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100)"`
+	OrganizationID      pulid.ID           `json:"organizationId"      bun:"organization_id,type:VARCHAR(100)"`
+	Name                string             `json:"name"                bun:"name,type:VARCHAR(255),notnull"`
+	Description         string             `json:"description"         bun:"description,type:TEXT"`
+	CoreResponsibility  CoreResponsibility `json:"coreResponsibility"  bun:"core_responsibility,type:VARCHAR(50),nullzero"`
+	ParentRoleIDs       []pulid.ID         `json:"parentRoleIds"       bun:"parent_role_ids,type:TEXT[],array"`
+	MaxSensitivity      FieldSensitivity   `json:"maxSensitivity"      bun:"max_sensitivity,type:VARCHAR(20),notnull,default:'internal'"`
+	IsSystem            bool               `json:"isSystem"            bun:"is_system,default:false"`
+	IsOrgAdmin          bool               `json:"isOrgAdmin"          bun:"is_org_admin,default:false"`
+	IsBusinessUnitAdmin bool               `json:"isBusinessUnitAdmin" bun:"is_business_unit_admin,default:false"`
+	CreatedBy           pulid.ID           `json:"createdBy"           bun:"created_by,type:VARCHAR(100)"`
+	CreatedAt           int64              `json:"createdAt"           bun:"created_at,notnull"`
+	UpdatedAt           int64              `json:"updatedAt"           bun:"updated_at,notnull"`
 
 	Permissions []*ResourcePermission `json:"permissions,omitempty" bun:"rel:has-many,join:id=role_id"`
 }

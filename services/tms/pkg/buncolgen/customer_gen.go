@@ -388,6 +388,7 @@ var CustomerBillingProfileColumns = struct {
 	RequirePONumber                      Column // "require_po_number" → qualified: "cbp.require_po_number"
 	RequireBOLNumber                     Column // "require_bol_number" → qualified: "cbp.require_bol_number"
 	RequireDeliveryNumber                Column // "require_delivery_number" → qualified: "cbp.require_delivery_number"
+	DefaultBillerID                      Column // "default_biller_id" → qualified: "cbp.default_biller_id"
 	BillingNotes                         Column // "billing_notes" → qualified: "cbp.billing_notes"
 	Version                              Column // "version" → qualified: "cbp.version"
 	CreatedAt                            Column // "created_at" → qualified: "cbp.created_at"
@@ -437,6 +438,7 @@ var CustomerBillingProfileColumns = struct {
 	RequirePONumber:                      NewColumn("require_po_number", "cbp"),
 	RequireBOLNumber:                     NewColumn("require_bol_number", "cbp"),
 	RequireDeliveryNumber:                NewColumn("require_delivery_number", "cbp"),
+	DefaultBillerID:                      NewColumn("default_biller_id", "cbp"),
 	BillingNotes:                         NewColumn("billing_notes", "cbp"),
 	Version:                              NewColumn("version", "cbp"),
 	CreatedAt:                            NewColumn("created_at", "cbp"),
@@ -492,6 +494,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"requirePONumber":                      "require_po_number",
 	"requireBOLNumber":                     "require_bol_number",
 	"requireDeliveryNumber":                "require_delivery_number",
+	"defaultBillerId":                      "default_biller_id",
 	"billingNotes":                         "billing_notes",
 	"version":                              "version",
 	"createdAt":                            "created_at",
@@ -545,6 +548,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"require_po_number",
 	"require_bol_number",
 	"require_delivery_number",
+	"default_biller_id",
 	"billing_notes",
 	"version",
 	"created_at",
@@ -559,11 +563,13 @@ var CustomerBillingProfileInsertableColumns = []string{
 var CustomerBillingProfileRelations = struct {
 	BusinessUnit   string
 	Organization   string
+	DefaultBiller  string
 	RevenueAccount string
 	ARAccount      string
 }{
 	BusinessUnit:   "BusinessUnit",
 	Organization:   "Organization",
+	DefaultBiller:  "DefaultBiller",
 	RevenueAccount: "RevenueAccount",
 	ARAccount:      "ARAccount",
 }
@@ -662,6 +668,7 @@ var CustomerBillingProfileFilter = struct {
 	RequirePONumber                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePONumber" → DB: "require_po_number"
 	RequireBOLNumber                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireBOLNumber" → DB: "require_bol_number"
 	RequireDeliveryNumber                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireDeliveryNumber" → DB: "require_delivery_number"
+	DefaultBillerID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultBillerId" → DB: "default_biller_id"
 	BillingNotes                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
 	Version                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -798,6 +805,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	RequireDeliveryNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("requireDeliveryNumber", op, value)
+	},
+	DefaultBillerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultBillerId", op, value)
 	},
 	BillingNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("billingNotes", op, value)

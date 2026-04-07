@@ -12,7 +12,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
 import { cn, findDuplicateIds, pluralize, truncateText } from "@/lib/utils";
 import { ApiRequestError } from "@/lib/api";
@@ -53,7 +58,8 @@ function CommodityDialog({
   checkHazmatSegregation?: boolean;
   update: (index: number, value: any) => void;
 }) {
-  const { control, setValue, getValues, setError, clearErrors } = useFormContext<Shipment>();
+  const { control, setValue, getValues, setError, clearErrors } =
+    useFormContext<Shipment>();
   const [saving, setSaving] = useState(false);
 
   function handleCommoditySelected(option: Commodity | null) {
@@ -64,12 +70,17 @@ function CommodityDialog({
     const values = getValues(`commodities.${index}`);
     const commodities = getValues("commodities") ?? [];
     const nextWeight = typeof values.weight === "number" ? values.weight : 0;
-    const totalWeightExcludingCurrent = commodities.reduce((sum, commodity, commodityIndex) => {
-      if (commodityIndex === index) {
-        return sum;
-      }
-      return sum + (typeof commodity?.weight === "number" ? commodity.weight : 0);
-    }, 0);
+    const totalWeightExcludingCurrent = commodities.reduce(
+      (sum, commodity, commodityIndex) => {
+        if (commodityIndex === index) {
+          return sum;
+        }
+        return (
+          sum + (typeof commodity?.weight === "number" ? commodity.weight : 0)
+        );
+      },
+      0,
+    );
 
     if (
       typeof maxShipmentWeightLimit === "number" &&
@@ -92,7 +103,9 @@ function CommodityDialog({
       if (allCommodityIds.length >= 2) {
         setSaving(true);
         try {
-          await apiService.shipmentService.checkHazmatSegregation(allCommodityIds);
+          await apiService.shipmentService.checkHazmatSegregation(
+            allCommodityIds,
+          );
           for (let i = 0; i < commodities.length; i++) {
             clearErrors(`commodities.${i}.commodityId`);
           }
@@ -127,7 +140,9 @@ function CommodityDialog({
     >
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Commodity" : "Add Commodity"}</DialogTitle>
+          <DialogTitle>
+            {isEditing ? "Edit Commodity" : "Add Commodity"}
+          </DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Update the commodity details"
@@ -162,7 +177,12 @@ function CommodityDialog({
           </FormControl>
         </FormGroup>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={saving}
+          >
             Cancel
           </Button>
           <Button type="button" onClick={handleSave} disabled={saving}>
@@ -193,7 +213,10 @@ export default function CommoditiesSection() {
   const [isEditing, setIsEditing] = useState(false);
   const commodities = useWatch({ control, name: "commodities" }) ?? [];
 
-  const duplicateCommodityIds = findDuplicateIds(commodities, (c) => c?.commodityId);
+  const duplicateCommodityIds = findDuplicateIds(
+    commodities,
+    (c) => c?.commodityId,
+  );
 
   const totalPieces = commodities.reduce(
     (sum, c) => sum + (typeof c.pieces === "number" ? c.pieces : 0),
@@ -244,7 +267,12 @@ export default function CommoditiesSection() {
         className="border-t border-border pt-4"
         action={
           fields.length > 0 && (
-            <Button type="button" variant="outline" size="xxs" onClick={handleAdd}>
+            <Button
+              type="button"
+              variant="outline"
+              size="xxs"
+              onClick={handleAdd}
+            >
               <PlusIcon className="size-3" />
               Add Commodity
             </Button>
@@ -268,12 +296,17 @@ export default function CommoditiesSection() {
                 const stackable = commodityObj?.stackable;
                 const fragile = commodityObj?.fragile;
                 const isDuplicate =
-                  !!item?.commodityId && duplicateCommodityIds.has(item.commodityId);
+                  !!item?.commodityId &&
+                  duplicateCommodityIds.has(item.commodityId);
 
                 const commodityErrors = errors.commodities?.[index];
-                const hasErrors = !!(commodityErrors && Object.keys(commodityErrors).length > 0);
+                const hasErrors = !!(
+                  commodityErrors && Object.keys(commodityErrors).length > 0
+                );
                 const errorMessages = hasErrors
-                  ? Object.entries(commodityErrors as Record<string, { message?: string }>)
+                  ? Object.entries(
+                      commodityErrors as Record<string, { message?: string }>,
+                    )
                       .filter(([key]) => key !== "ref" && key !== "root")
                       .map(([, err]) => err?.message ?? "Invalid")
                   : [];
@@ -283,8 +316,11 @@ export default function CommoditiesSection() {
                     key={field.fieldId}
                     className={cn(
                       "grid grid-cols-10 items-center gap-2 px-4 py-2",
-                      hasErrors && "bg-destructive/10 ring-1 ring-destructive ring-inset",
-                      !hasErrors && isDuplicate && "bg-warning/20 ring-1 ring-warning ring-inset",
+                      hasErrors &&
+                        "bg-destructive/10 ring-1 ring-destructive ring-inset",
+                      !hasErrors &&
+                        isDuplicate &&
+                        "bg-warning/20 ring-1 ring-warning ring-inset",
                     )}
                   >
                     <div className="col-span-4 flex items-center gap-1.5">
@@ -293,7 +329,9 @@ export default function CommoditiesSection() {
                         baseUrl="/shipment-management/configuration-files/commodities"
                         panelOpen
                       >
-                        <span className="text-xs font-medium">{truncateText(displayName, 15)}</span>
+                        <span className="text-xs font-medium">
+                          {truncateText(displayName, 15)}
+                        </span>
                       </EntityRedirectLink>
                       <div className="flex items-center gap-1">
                         {hasHazmat && (
@@ -394,18 +432,22 @@ export default function CommoditiesSection() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                {typeof shipmentUIPolicy?.maxShipmentWeightLimit === "number" && (
+                {typeof shipmentUIPolicy?.maxShipmentWeightLimit ===
+                  "number" && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger
                         render={
                           <span className="cursor-help text-xs text-muted-foreground">
-                            / {shipmentUIPolicy.maxShipmentWeightLimit.toLocaleString()} lbs
+                            /{" "}
+                            {shipmentUIPolicy.maxShipmentWeightLimit.toLocaleString()}{" "}
+                            lbs
                           </span>
                         }
                       />
                       <TooltipContent side="top" sideOffset={10}>
-                        Maximum shipment weight limit configured by organization.
+                        Maximum shipment weight limit configured by
+                        organization.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>

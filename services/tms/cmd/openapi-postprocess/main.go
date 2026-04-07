@@ -59,6 +59,7 @@ var tagCatalog = map[string]tagDescriptor{
 	"Hazardous Materials":      {Name: "Hazardous Materials", DisplayName: "Hazardous Materials", Group: "Master Data"},
 	"Hazmat Segregation Rules": {Name: "Hazmat Segregation Rules", DisplayName: "Hazmat Segregation Rules", Group: "Master Data"},
 	"Accounting Controls":      {Name: "Accounting Controls", DisplayName: "Accounting Controls", Group: "Controls & Configuration"},
+	"Billing Queue":            {Name: "Billing Queue", DisplayName: "Billing Queue", Group: "Operations"},
 	"Billing Controls":         {Name: "Billing Controls", DisplayName: "Billing Controls", Group: "Controls & Configuration"},
 	"Dispatch Controls":        {Name: "Dispatch Controls", DisplayName: "Dispatch Controls", Group: "Controls & Configuration"},
 	"Shipment Controls":        {Name: "Shipment Controls", DisplayName: "Shipment Controls", Group: "Controls & Configuration"},

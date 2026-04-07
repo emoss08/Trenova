@@ -352,9 +352,9 @@ func (r *GetPreviousRatesRequest) Validate() *errortypes.MultiError {
 }
 
 type ShipmentTotalsResponse struct {
-	BaseCharge        decimal.Decimal `json:"baseCharge"`
-	OtherChargeAmount decimal.Decimal `json:"otherChargeAmount"`
-	TotalChargeAmount decimal.Decimal `json:"totalChargeAmount"`
+	FreightChargeAmount decimal.Decimal `json:"freightChargeAmount"`
+	OtherChargeAmount   decimal.Decimal `json:"otherChargeAmount"`
+	TotalChargeAmount   decimal.Decimal `json:"totalChargeAmount"`
 }
 
 type ShipmentDuplicateWorkflowResponse struct {

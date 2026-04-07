@@ -473,73 +473,85 @@ var ShipmentTable = TableInfo{
 //	q.Where(ShipmentColumns.ID.Eq(), id)           // WHERE sp.id = ?
 //	q.Order(ShipmentColumns.CreatedAt.OrderDesc())  // ORDER BY sp.created_at DESC
 var ShipmentColumns = struct {
-	ID                   Column // "id" → qualified: "sp.id"
-	BusinessUnitID       Column // "business_unit_id" → qualified: "sp.business_unit_id"
-	OrganizationID       Column // "organization_id" → qualified: "sp.organization_id"
-	ServiceTypeID        Column // "service_type_id" → qualified: "sp.service_type_id"
-	ShipmentTypeID       Column // "shipment_type_id" → qualified: "sp.shipment_type_id"
-	CustomerID           Column // "customer_id" → qualified: "sp.customer_id"
-	TractorTypeID        Column // "tractor_type_id" → qualified: "sp.tractor_type_id"
-	TrailerTypeID        Column // "trailer_type_id" → qualified: "sp.trailer_type_id"
-	OwnerID              Column // "owner_id" → qualified: "sp.owner_id"
-	EnteredByID          Column // "entered_by_id" → qualified: "sp.entered_by_id"
-	CanceledByID         Column // "canceled_by_id" → qualified: "sp.canceled_by_id"
-	FormulaTemplateID    Column // "formula_template_id" → qualified: "sp.formula_template_id"
-	ConsolidationGroupID Column // "consolidation_group_id" → qualified: "sp.consolidation_group_id"
-	Status               Column // "status" → qualified: "sp.status"
-	ProNumber            Column // "pro_number" → qualified: "sp.pro_number"
-	BOL                  Column // "bol" → qualified: "sp.bol"
-	CancelReason         Column // "cancel_reason" → qualified: "sp.cancel_reason"
-	OtherChargeAmount    Column // "other_charge_amount" → qualified: "sp.other_charge_amount"
-	FreightChargeAmount  Column // "freight_charge_amount" → qualified: "sp.freight_charge_amount"
-	TotalChargeAmount    Column // "total_charge_amount" → qualified: "sp.total_charge_amount"
-	Pieces               Column // "pieces" → qualified: "sp.pieces"
-	Weight               Column // "weight" → qualified: "sp.weight"
-	TemperatureMin       Column // "temperature_min" → qualified: "sp.temperature_min"
-	TemperatureMax       Column // "temperature_max" → qualified: "sp.temperature_max"
-	ActualDeliveryDate   Column // "actual_delivery_date" → qualified: "sp.actual_delivery_date"
-	ActualShipDate       Column // "actual_ship_date" → qualified: "sp.actual_ship_date"
-	CanceledAt           Column // "canceled_at" → qualified: "sp.canceled_at"
-	RatingUnit           Column // "rating_unit" → qualified: "sp.rating_unit"
-	SearchVector         Column // "search_vector" → qualified: "sp.search_vector"
-	Rank                 Column // "rank" → qualified: "sp.rank"
-	Version              Column // "version" → qualified: "sp.version"
-	CreatedAt            Column // "created_at" → qualified: "sp.created_at"
-	UpdatedAt            Column // "updated_at" → qualified: "sp.updated_at"
+	ID                     Column // "id" → qualified: "sp.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "sp.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "sp.organization_id"
+	ServiceTypeID          Column // "service_type_id" → qualified: "sp.service_type_id"
+	ShipmentTypeID         Column // "shipment_type_id" → qualified: "sp.shipment_type_id"
+	CustomerID             Column // "customer_id" → qualified: "sp.customer_id"
+	TractorTypeID          Column // "tractor_type_id" → qualified: "sp.tractor_type_id"
+	TrailerTypeID          Column // "trailer_type_id" → qualified: "sp.trailer_type_id"
+	OwnerID                Column // "owner_id" → qualified: "sp.owner_id"
+	EnteredByID            Column // "entered_by_id" → qualified: "sp.entered_by_id"
+	CanceledByID           Column // "canceled_by_id" → qualified: "sp.canceled_by_id"
+	FormulaTemplateID      Column // "formula_template_id" → qualified: "sp.formula_template_id"
+	ConsolidationGroupID   Column // "consolidation_group_id" → qualified: "sp.consolidation_group_id"
+	Status                 Column // "status" → qualified: "sp.status"
+	ProNumber              Column // "pro_number" → qualified: "sp.pro_number"
+	BOL                    Column // "bol" → qualified: "sp.bol"
+	CancelReason           Column // "cancel_reason" → qualified: "sp.cancel_reason"
+	OtherChargeAmount      Column // "other_charge_amount" → qualified: "sp.other_charge_amount"
+	FreightChargeAmount    Column // "freight_charge_amount" → qualified: "sp.freight_charge_amount"
+	BaseRate               Column // "base_rate" → qualified: "sp.base_rate"
+	TotalChargeAmount      Column // "total_charge_amount" → qualified: "sp.total_charge_amount"
+	Pieces                 Column // "pieces" → qualified: "sp.pieces"
+	Weight                 Column // "weight" → qualified: "sp.weight"
+	TemperatureMin         Column // "temperature_min" → qualified: "sp.temperature_min"
+	TemperatureMax         Column // "temperature_max" → qualified: "sp.temperature_max"
+	ActualDeliveryDate     Column // "actual_delivery_date" → qualified: "sp.actual_delivery_date"
+	ActualShipDate         Column // "actual_ship_date" → qualified: "sp.actual_ship_date"
+	CanceledAt             Column // "canceled_at" → qualified: "sp.canceled_at"
+	BillingTransferStatus  Column // "billing_transfer_status" → qualified: "sp.billing_transfer_status"
+	TransferredToBillingAt Column // "transferred_to_billing_at" → qualified: "sp.transferred_to_billing_at"
+	MarkedReadyToBillAt    Column // "marked_ready_to_bill_at" → qualified: "sp.marked_ready_to_bill_at"
+	BilledAt               Column // "billed_at" → qualified: "sp.billed_at"
+	RatingUnit             Column // "rating_unit" → qualified: "sp.rating_unit"
+	RatingDetail           Column // "rating_detail" → qualified: "sp.rating_detail"
+	SearchVector           Column // "search_vector" → qualified: "sp.search_vector"
+	Rank                   Column // "rank" → qualified: "sp.rank"
+	Version                Column // "version" → qualified: "sp.version"
+	CreatedAt              Column // "created_at" → qualified: "sp.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "sp.updated_at"
 }{
-	ID:                   NewColumn("id", "sp"),
-	BusinessUnitID:       NewColumn("business_unit_id", "sp"),
-	OrganizationID:       NewColumn("organization_id", "sp"),
-	ServiceTypeID:        NewColumn("service_type_id", "sp"),
-	ShipmentTypeID:       NewColumn("shipment_type_id", "sp"),
-	CustomerID:           NewColumn("customer_id", "sp"),
-	TractorTypeID:        NewColumn("tractor_type_id", "sp"),
-	TrailerTypeID:        NewColumn("trailer_type_id", "sp"),
-	OwnerID:              NewColumn("owner_id", "sp"),
-	EnteredByID:          NewColumn("entered_by_id", "sp"),
-	CanceledByID:         NewColumn("canceled_by_id", "sp"),
-	FormulaTemplateID:    NewColumn("formula_template_id", "sp"),
-	ConsolidationGroupID: NewColumn("consolidation_group_id", "sp"),
-	Status:               NewColumn("status", "sp"),
-	ProNumber:            NewColumn("pro_number", "sp"),
-	BOL:                  NewColumn("bol", "sp"),
-	CancelReason:         NewColumn("cancel_reason", "sp"),
-	OtherChargeAmount:    NewColumn("other_charge_amount", "sp"),
-	FreightChargeAmount:  NewColumn("freight_charge_amount", "sp"),
-	TotalChargeAmount:    NewColumn("total_charge_amount", "sp"),
-	Pieces:               NewColumn("pieces", "sp"),
-	Weight:               NewColumn("weight", "sp"),
-	TemperatureMin:       NewColumn("temperature_min", "sp"),
-	TemperatureMax:       NewColumn("temperature_max", "sp"),
-	ActualDeliveryDate:   NewColumn("actual_delivery_date", "sp"),
-	ActualShipDate:       NewColumn("actual_ship_date", "sp"),
-	CanceledAt:           NewColumn("canceled_at", "sp"),
-	RatingUnit:           NewColumn("rating_unit", "sp"),
-	SearchVector:         NewColumn("search_vector", "sp"),
-	Rank:                 NewColumn("rank", "sp"),
-	Version:              NewColumn("version", "sp"),
-	CreatedAt:            NewColumn("created_at", "sp"),
-	UpdatedAt:            NewColumn("updated_at", "sp"),
+	ID:                     NewColumn("id", "sp"),
+	BusinessUnitID:         NewColumn("business_unit_id", "sp"),
+	OrganizationID:         NewColumn("organization_id", "sp"),
+	ServiceTypeID:          NewColumn("service_type_id", "sp"),
+	ShipmentTypeID:         NewColumn("shipment_type_id", "sp"),
+	CustomerID:             NewColumn("customer_id", "sp"),
+	TractorTypeID:          NewColumn("tractor_type_id", "sp"),
+	TrailerTypeID:          NewColumn("trailer_type_id", "sp"),
+	OwnerID:                NewColumn("owner_id", "sp"),
+	EnteredByID:            NewColumn("entered_by_id", "sp"),
+	CanceledByID:           NewColumn("canceled_by_id", "sp"),
+	FormulaTemplateID:      NewColumn("formula_template_id", "sp"),
+	ConsolidationGroupID:   NewColumn("consolidation_group_id", "sp"),
+	Status:                 NewColumn("status", "sp"),
+	ProNumber:              NewColumn("pro_number", "sp"),
+	BOL:                    NewColumn("bol", "sp"),
+	CancelReason:           NewColumn("cancel_reason", "sp"),
+	OtherChargeAmount:      NewColumn("other_charge_amount", "sp"),
+	FreightChargeAmount:    NewColumn("freight_charge_amount", "sp"),
+	BaseRate:               NewColumn("base_rate", "sp"),
+	TotalChargeAmount:      NewColumn("total_charge_amount", "sp"),
+	Pieces:                 NewColumn("pieces", "sp"),
+	Weight:                 NewColumn("weight", "sp"),
+	TemperatureMin:         NewColumn("temperature_min", "sp"),
+	TemperatureMax:         NewColumn("temperature_max", "sp"),
+	ActualDeliveryDate:     NewColumn("actual_delivery_date", "sp"),
+	ActualShipDate:         NewColumn("actual_ship_date", "sp"),
+	CanceledAt:             NewColumn("canceled_at", "sp"),
+	BillingTransferStatus:  NewColumn("billing_transfer_status", "sp"),
+	TransferredToBillingAt: NewColumn("transferred_to_billing_at", "sp"),
+	MarkedReadyToBillAt:    NewColumn("marked_ready_to_bill_at", "sp"),
+	BilledAt:               NewColumn("billed_at", "sp"),
+	RatingUnit:             NewColumn("rating_unit", "sp"),
+	RatingDetail:           NewColumn("rating_detail", "sp"),
+	SearchVector:           NewColumn("search_vector", "sp"),
+	Rank:                   NewColumn("rank", "sp"),
+	Version:                NewColumn("version", "sp"),
+	CreatedAt:              NewColumn("created_at", "sp"),
+	UpdatedAt:              NewColumn("updated_at", "sp"),
 }
 
 // ShipmentFieldMap maps JSON API field names to database column names.
@@ -547,37 +559,43 @@ var ShipmentColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Shipment.GetStaticFieldMap().
 var ShipmentFieldMap = map[string]string{
-	"id":                   "id",
-	"businessUnitId":       "business_unit_id",
-	"organizationId":       "organization_id",
-	"serviceTypeId":        "service_type_id",
-	"shipmentTypeId":       "shipment_type_id",
-	"customerId":           "customer_id",
-	"tractorTypeId":        "tractor_type_id",
-	"trailerTypeId":        "trailer_type_id",
-	"ownerId":              "owner_id",
-	"enteredById":          "entered_by_id",
-	"canceledById":         "canceled_by_id",
-	"formulaTemplateId":    "formula_template_id",
-	"consolidationGroupId": "consolidation_group_id",
-	"status":               "status",
-	"proNumber":            "pro_number",
-	"bol":                  "bol",
-	"cancelReason":         "cancel_reason",
-	"otherChargeAmount":    "other_charge_amount",
-	"freightChargeAmount":  "freight_charge_amount",
-	"totalChargeAmount":    "total_charge_amount",
-	"pieces":               "pieces",
-	"weight":               "weight",
-	"temperatureMin":       "temperature_min",
-	"temperatureMax":       "temperature_max",
-	"actualDeliveryDate":   "actual_delivery_date",
-	"actualShipDate":       "actual_ship_date",
-	"canceledAt":           "canceled_at",
-	"ratingUnit":           "rating_unit",
-	"version":              "version",
-	"createdAt":            "created_at",
-	"updatedAt":            "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"serviceTypeId":          "service_type_id",
+	"shipmentTypeId":         "shipment_type_id",
+	"customerId":             "customer_id",
+	"tractorTypeId":          "tractor_type_id",
+	"trailerTypeId":          "trailer_type_id",
+	"ownerId":                "owner_id",
+	"enteredById":            "entered_by_id",
+	"canceledById":           "canceled_by_id",
+	"formulaTemplateId":      "formula_template_id",
+	"consolidationGroupId":   "consolidation_group_id",
+	"status":                 "status",
+	"proNumber":              "pro_number",
+	"bol":                    "bol",
+	"cancelReason":           "cancel_reason",
+	"otherChargeAmount":      "other_charge_amount",
+	"freightChargeAmount":    "freight_charge_amount",
+	"baseRate":               "base_rate",
+	"totalChargeAmount":      "total_charge_amount",
+	"pieces":                 "pieces",
+	"weight":                 "weight",
+	"temperatureMin":         "temperature_min",
+	"temperatureMax":         "temperature_max",
+	"actualDeliveryDate":     "actual_delivery_date",
+	"actualShipDate":         "actual_ship_date",
+	"canceledAt":             "canceled_at",
+	"billingTransferStatus":  "billing_transfer_status",
+	"transferredToBillingAt": "transferred_to_billing_at",
+	"markedReadyToBillAt":    "marked_ready_to_bill_at",
+	"billedAt":               "billed_at",
+	"ratingUnit":             "rating_unit",
+	"ratingDetail":           "rating_detail",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // ShipmentInsertableColumns lists column names suitable for INSERT statements on the "shipments" table.
@@ -602,6 +620,7 @@ var ShipmentInsertableColumns = []string{
 	"cancel_reason",
 	"other_charge_amount",
 	"freight_charge_amount",
+	"base_rate",
 	"total_charge_amount",
 	"pieces",
 	"weight",
@@ -610,7 +629,12 @@ var ShipmentInsertableColumns = []string{
 	"actual_delivery_date",
 	"actual_ship_date",
 	"canceled_at",
+	"billing_transfer_status",
+	"transferred_to_billing_at",
+	"marked_ready_to_bill_at",
+	"billed_at",
 	"rating_unit",
+	"rating_detail",
 	"version",
 	"created_at",
 	"updated_at",
@@ -705,37 +729,43 @@ func ShipmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	ShipmentFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ShipmentFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ServiceTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeId" → DB: "service_type_id"
-	ShipmentTypeID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeId" → DB: "shipment_type_id"
-	CustomerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	TractorTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tractorTypeId" → DB: "tractor_type_id"
-	TrailerTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trailerTypeId" → DB: "trailer_type_id"
-	OwnerID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
-	EnteredByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enteredById" → DB: "entered_by_id"
-	CanceledByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledById" → DB: "canceled_by_id"
-	FormulaTemplateID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
-	ConsolidationGroupID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupId" → DB: "consolidation_group_id"
-	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	ProNumber            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
-	BOL                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bol" → DB: "bol"
-	CancelReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
-	OtherChargeAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherChargeAmount" → DB: "other_charge_amount"
-	FreightChargeAmount  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightChargeAmount" → DB: "freight_charge_amount"
-	TotalChargeAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalChargeAmount" → DB: "total_charge_amount"
-	Pieces               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pieces" → DB: "pieces"
-	Weight               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "weight" → DB: "weight"
-	TemperatureMin       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temperatureMin" → DB: "temperature_min"
-	TemperatureMax       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temperatureMax" → DB: "temperature_max"
-	ActualDeliveryDate   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actualDeliveryDate" → DB: "actual_delivery_date"
-	ActualShipDate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actualShipDate" → DB: "actual_ship_date"
-	CanceledAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
-	RatingUnit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingUnit" → DB: "rating_unit"
-	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ServiceTypeID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceTypeId" → DB: "service_type_id"
+	ShipmentTypeID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentTypeId" → DB: "shipment_type_id"
+	CustomerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	TractorTypeID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tractorTypeId" → DB: "tractor_type_id"
+	TrailerTypeID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trailerTypeId" → DB: "trailer_type_id"
+	OwnerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	EnteredByID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enteredById" → DB: "entered_by_id"
+	CanceledByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledById" → DB: "canceled_by_id"
+	FormulaTemplateID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
+	ConsolidationGroupID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupId" → DB: "consolidation_group_id"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ProNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
+	BOL                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bol" → DB: "bol"
+	CancelReason           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	OtherChargeAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherChargeAmount" → DB: "other_charge_amount"
+	FreightChargeAmount    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "freightChargeAmount" → DB: "freight_charge_amount"
+	BaseRate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baseRate" → DB: "base_rate"
+	TotalChargeAmount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalChargeAmount" → DB: "total_charge_amount"
+	Pieces                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pieces" → DB: "pieces"
+	Weight                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "weight" → DB: "weight"
+	TemperatureMin         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temperatureMin" → DB: "temperature_min"
+	TemperatureMax         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temperatureMax" → DB: "temperature_max"
+	ActualDeliveryDate     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actualDeliveryDate" → DB: "actual_delivery_date"
+	ActualShipDate         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "actualShipDate" → DB: "actual_ship_date"
+	CanceledAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
+	BillingTransferStatus  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingTransferStatus" → DB: "billing_transfer_status"
+	TransferredToBillingAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transferredToBillingAt" → DB: "transferred_to_billing_at"
+	MarkedReadyToBillAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "markedReadyToBillAt" → DB: "marked_ready_to_bill_at"
+	BilledAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billedAt" → DB: "billed_at"
+	RatingUnit             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingUnit" → DB: "rating_unit"
+	RatingDetail           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ratingDetail" → DB: "rating_detail"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -794,6 +824,9 @@ var ShipmentFilter = struct {
 	FreightChargeAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("freightChargeAmount", op, value)
 	},
+	BaseRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baseRate", op, value)
+	},
 	TotalChargeAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("totalChargeAmount", op, value)
 	},
@@ -818,8 +851,23 @@ var ShipmentFilter = struct {
 	CanceledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("canceledAt", op, value)
 	},
+	BillingTransferStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billingTransferStatus", op, value)
+	},
+	TransferredToBillingAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transferredToBillingAt", op, value)
+	},
+	MarkedReadyToBillAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("markedReadyToBillAt", op, value)
+	},
+	BilledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billedAt", op, value)
+	},
 	RatingUnit: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ratingUnit", op, value)
+	},
+	RatingDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ratingDetail", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

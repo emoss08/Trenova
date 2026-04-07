@@ -190,6 +190,74 @@ func (_c *MockShipmentService_CalculateTotals_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// CalculateLoadingOptimization provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) CalculateLoadingOptimization(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CalculateLoadingOptimization")
+	}
+
+	var r0 *repositories.LoadingOptimizationResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) *repositories.LoadingOptimizationResult); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.LoadingOptimizationResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.LoadingOptimizationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_CalculateLoadingOptimization_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CalculateLoadingOptimization'
+type MockShipmentService_CalculateLoadingOptimization_Call struct {
+	*mock.Call
+}
+
+// CalculateLoadingOptimization is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.LoadingOptimizationRequest
+func (_e *MockShipmentService_Expecter) CalculateLoadingOptimization(ctx interface{}, req interface{}) *MockShipmentService_CalculateLoadingOptimization_Call {
+	return &MockShipmentService_CalculateLoadingOptimization_Call{Call: _e.mock.On("CalculateLoadingOptimization", ctx, req)}
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Run(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest)) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.LoadingOptimizationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.LoadingOptimizationRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Return(result *repositories.LoadingOptimizationResult, err error) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) RunAndReturn(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Cancel provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest, actor *services.RequestActor) (*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req, actor)

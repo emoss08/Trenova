@@ -134,6 +134,19 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/queue",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BillingQueue),
+            ),
+            async lazy() {
+              const { BillingQueuePage } = await import(
+                "@/routes/billing-queue/page"
+              );
+              return { Component: BillingQueuePage };
+            },
+          },
+          {
             path: "/billing/invoices",
             loader: combineLoaders(
               protectedLoader,

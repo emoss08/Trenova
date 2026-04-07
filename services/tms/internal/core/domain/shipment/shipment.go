@@ -21,6 +21,15 @@ import (
 	"github.com/uptrace/bun"
 )
 
+type RatingDetail struct {
+	FormulaTemplateID   string         `json:"formulaTemplateId"`
+	FormulaTemplateName string         `json:"formulaTemplateName"`
+	Expression          string         `json:"expression"`
+	ResolvedVariables   map[string]any `json:"resolvedVariables"`
+	Result              float64        `json:"result"`
+	RatedAt             int64          `json:"ratedAt"`
+}
+
 type Shipment struct {
 	bun.BaseModel `json:"-" bun:"table:shipments,alias:sp"`
 
@@ -43,6 +52,7 @@ type Shipment struct {
 	CancelReason         string              `json:"cancelReason"         bun:"cancel_reason,type:VARCHAR(100),nullzero"`
 	OtherChargeAmount    decimal.NullDecimal `json:"otherChargeAmount"    bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	FreightChargeAmount  decimal.NullDecimal `json:"freightChargeAmount"  bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	BaseRate             decimal.NullDecimal `json:"baseRate"             bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
 	TotalChargeAmount    decimal.NullDecimal `json:"totalChargeAmount"    bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
 	Pieces               *int64              `json:"pieces"               bun:"pieces,type:INTEGER,nullzero"`
 	Weight               *int64              `json:"weight"               bun:"weight,type:INTEGER,nullzero"`
@@ -51,7 +61,12 @@ type Shipment struct {
 	ActualDeliveryDate   *int64              `json:"actualDeliveryDate"   bun:"actual_delivery_date,type:BIGINT,nullzero"`
 	ActualShipDate       *int64              `json:"actualShipDate"       bun:"actual_ship_date,type:BIGINT,nullzero"`
 	CanceledAt           *int64              `json:"canceledAt"           bun:"canceled_at,type:BIGINT,nullzero"`
+	BillingTransferStatus BillingTransferStatus `json:"billingTransferStatus" bun:"billing_transfer_status,type:VARCHAR(50),nullzero"`
+	TransferredToBillingAt *int64             `json:"transferredToBillingAt" bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
+	MarkedReadyToBillAt    *int64             `json:"markedReadyToBillAt"    bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
+	BilledAt               *int64             `json:"billedAt"               bun:"billed_at,type:BIGINT,nullzero"`
 	RatingUnit           int64               `json:"ratingUnit"           bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	RatingDetail         *RatingDetail       `json:"ratingDetail"         bun:"rating_detail,type:JSONB,nullzero"`
 	SourceDocumentID     string              `json:"sourceDocumentId,omitempty" bun:"-"`
 	SearchVector         string              `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank                 string              `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`

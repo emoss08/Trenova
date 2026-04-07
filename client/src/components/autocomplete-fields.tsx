@@ -86,6 +86,20 @@ export function UserAutocompleteField<T extends FieldValues>({
   );
 }
 
+export function UserMultiSelectAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<User, T>) {
+  return (
+    <MultiSelectAutocompleteField<User, T>
+      link="/users/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name || ""}
+      renderOption={(option) => option.name || ""}
+      {...props}
+    />
+  );
+}
+
 export function UsStateAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<UsState, T>) {

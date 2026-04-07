@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldrepository"
@@ -48,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
@@ -85,6 +87,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	formulatemplateversionrepository.New,
 	tableconfigurationrepository.New,
 	pagefavoriterepository.New,
+	billingqueuefilterpresetrepository.New,
 	equipmentmanufacturerrepository.New,
 	equipmenttyperepository.New,
 	equipmentcontinuityrepository.New,
@@ -146,6 +149,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	holdreasonrepository.New,
 	integrationrepository.New,
 	billingcontrolrepository.New,
+	billingqueuerepository.New,
 	distanceoverriderepository.New,
 	tcasubscriptionrepository.New,
 	tcaallowlistrepository.New,

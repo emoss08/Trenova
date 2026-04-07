@@ -8,7 +8,7 @@ import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { MapPinOffIcon, SettingsIcon, TriangleAlertIcon } from "lucide-react";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { GeofenceCircle } from "./geofence-circle";
 import { MapFilterBar, type MapFilters } from "./map-filter-bar";
 import { MOCK_TRACTORS } from "./mock-data";
@@ -113,6 +113,7 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
 
 function MapErrorFallback({ error }: { error: Error }) {
   const isConfigError = error.message === GOOGLE_MAPS_ERROR_MESSAGE;
+  const navigate = useNavigate();
 
   return (
     <div className="relative h-[400px] w-full overflow-hidden rounded-lg border border-border">
@@ -142,7 +143,7 @@ function MapErrorFallback({ error }: { error: Error }) {
             </p>
           </div>
           {isConfigError && (
-            <Button variant="outline" size="sm" render={<Link to="/admin/integrations" />}>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
               <SettingsIcon className="size-3.5" />
               Configure Integration
             </Button>

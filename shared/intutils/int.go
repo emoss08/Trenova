@@ -71,6 +71,23 @@ func ClonePointer[T Numeric](value *T) *T {
 	return &cloned
 }
 
+func FormatWithCommas(n int64) string {
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return s
+	}
+
+	result := make([]byte, 0, len(s)+(len(s)-1)/3)
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result = append(result, ',')
+		}
+		result = append(result, byte(c))
+	}
+
+	return string(result)
+}
+
 func IntValue(v any) int {
 	switch value := v.(type) {
 	case int:

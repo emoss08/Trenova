@@ -150,18 +150,28 @@ export function DocumentsTab({ resourceId, resourceType, disabled = false }: Doc
     queryKey: shipmentDetailsQuery.queryKey,
     queryFn: shipmentDetailsQuery.queryFn,
     enabled: isShipment && !!resourceId,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (!status || status === "Invoiced" || status === "ReadyToInvoice") return false;
+      return 10_000;
+    },
   });
 
   const { data: billingReadiness } = useQuery({
     queryKey: billingReadinessQuery.queryKey,
     queryFn: billingReadinessQuery.queryFn,
     enabled: isShipment && !!resourceId,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.canMarkReadyToInvoice && data.missingRequirements.length === 0) return false;
+      return 10_000;
+    },
   });
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery),
+      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery, { includeDocumentType: "true" }),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;

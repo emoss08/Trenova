@@ -28,6 +28,7 @@ type TestShipmentDomain struct {
 	TemperatureMin      *int16
 	TemperatureMax      *int16
 	RatingUnit          int64
+	BaseRate            *decimal.Decimal
 	FreightChargeAmount *decimal.Decimal
 	OtherChargeAmount   *decimal.Decimal
 	TotalChargeAmount   *decimal.Decimal

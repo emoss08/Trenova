@@ -1,5 +1,6 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { BillingQueueStatus } from "@/types/billing-queue";
 import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
 import type { PTOStatus, PTOType } from "@/types/worker";
 import type { VariantProps } from "class-variance-authority";
@@ -15,6 +16,12 @@ export type BadgeAttrProps = {
 
 type StatusBadgeProps = {
   status: string;
+  className?: string;
+};
+
+export type PlainBadgeAttrProps = {
+  text: string;
+  description?: string;
   className?: string;
 };
 
@@ -242,5 +249,99 @@ export function ShipmentStatusBadge({
     <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
       {statusAttributes[status].text}
     </Badge>
+  );
+}
+
+export function BillingQueueStatusBadge({
+  status,
+  className,
+}: {
+  status?: BillingQueueStatus;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<BillingQueueStatus, BadgeAttrProps> = {
+    ReadyForReview: {
+      variant: "info",
+      text: "Ready for Review",
+    },
+    InReview: {
+      variant: "purple",
+      text: "In Review",
+    },
+    Approved: {
+      variant: "active",
+      text: "Approved",
+    },
+    OnHold: {
+      variant: "warning",
+      text: "On Hold",
+    },
+    SentBackToOps: {
+      variant: "orange",
+      text: "Sent Back to Ops",
+    },
+    Exception: {
+      variant: "inactive",
+      text: "Exception",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueStatus }) {
+  const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
+    ReadyForReview: {
+      className: "bg-purple-600",
+      text: "Ready for Review",
+      description: "Invoice has been generated and is ready for review by the assigned biller.",
+    },
+    InReview: {
+      className: "bg-indigo-600",
+      text: "In Review",
+      description: "Invoice is being reviewed by the assigned biller.",
+    },
+    Approved: {
+      className: "bg-green-600",
+      text: "Approved",
+      description: "Invoice has been approved by the assigned biller.",
+    },
+    OnHold: {
+      className: "bg-yellow-600",
+      text: "On Hold",
+      description: "Invoice is on hold and will be reviewed by the assigned biller when ready.",
+    },
+    SentBackToOps: {
+      className: "bg-orange-600",
+      text: "Sent Back to Ops",
+      description: "Invoice has been sent back to operations for additional review.",
+    },
+    Exception: {
+      className: "bg-amber-600",
+      text: "Exception",
+      description:
+        "Invoice has an exception and will be reviewed by the assigned biller when ready.",
+    },
+    Canceled: {
+      className: "bg-red-600",
+      text: "Canceled",
+      description: "Invoice has been canceled and will not be reviewed by the assigned biller.",
+    },
+  };
+
+  return (
+    <div className="flex items-center gap-x-1">
+      <div className={cn("size-2 rounded-full", statusAttributes[status].className)} />
+      <p className="text-xs font-medium">{statusAttributes[status].text}</p>
+    </div>
   );
 }

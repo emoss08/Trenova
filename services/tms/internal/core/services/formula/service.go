@@ -72,8 +72,11 @@ func (s *Service) Calculate(
 	}
 
 	return &formulatemplatetypes.CalculateResponse{
-		Amount:    result.Value,
-		Variables: result.Variables,
+		Amount:              result.Value,
+		Variables:           result.Variables,
+		FormulaTemplateID:   template.ID.String(),
+		FormulaTemplateName: template.Name,
+		Expression:          template.Expression,
 	}, nil
 }
 

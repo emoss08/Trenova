@@ -108,8 +108,18 @@
                 "transform": "int16ToFloat64"
             }
         },
+        "baseRate": {
+            "description": "Base rate per unit for freight charge calculation",
+            "type": "number",
+            "minimum": 0,
+            "x-source": {
+                "field": "base_rate",
+                "path": "BaseRate",
+                "transform": "decimalToFloat64"
+            }
+        },
         "freightChargeAmount": {
-            "description": "Base freight charge amount in USD",
+            "description": "Calculated freight charge amount in USD",
             "type": "number",
             "minimum": 0,
             "x-source": {
@@ -355,6 +365,7 @@
     "required": [
         "proNumber",
         "status",
+        "baseRate",
         "freightChargeAmount",
         "otherChargeAmount",
         "ratingUnit",
