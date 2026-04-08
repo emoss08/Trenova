@@ -1,6 +1,10 @@
 package shipmentimportchat
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/bytedance/sonic"
+)
 
 type HistoryAction struct {
 	Type     string         `json:"type"`
@@ -53,7 +57,7 @@ func DecodeTurnPayload(turn *Turn) TurnPayload {
 }
 
 func encodeJSON(value any, fallback json.RawMessage) json.RawMessage {
-	data, err := json.Marshal(value)
+	data, err := sonic.Marshal(value)
 	if err != nil {
 		return fallback
 	}

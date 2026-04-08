@@ -19,8 +19,7 @@ import (
 func NewMockDocumentUploadSessionRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockDocumentUploadSessionRepository {
+}) *MockDocumentUploadSessionRepository {
 	mock := &MockDocumentUploadSessionRepository{}
 	mock.Mock.Test(t)
 
@@ -226,8 +225,8 @@ func (_c *MockDocumentUploadSessionRepository_Create_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Create_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Create_Call {
-	_c.Call.Return(session, err)
+func (_c *MockDocumentUploadSessionRepository_Create_Call) Return(documentUploadSession *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Create_Call {
+	_c.Call.Return(documentUploadSession, err)
 	return _c
 }
 
@@ -294,8 +293,8 @@ func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_GetByID_Call {
-	_c.Call.Return(session, err)
+func (_c *MockDocumentUploadSessionRepository_GetByID_Call) Return(documentUploadSession *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_GetByID_Call {
+	_c.Call.Return(documentUploadSession, err)
 	return _c
 }
 
@@ -362,8 +361,8 @@ func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListActive_Call {
-	_c.Call.Return(sessions, err)
+func (_c *MockDocumentUploadSessionRepository_ListActive_Call) Return(documentUploadSessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListActive_Call {
+	_c.Call.Return(documentUploadSessions, err)
 	return _c
 }
 
@@ -442,8 +441,8 @@ func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Run(ru
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
-	_c.Call.Return(sessions, err)
+func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Return(documentUploadSessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+	_c.Call.Return(documentUploadSessions, err)
 	return _c
 }
 
@@ -510,8 +509,8 @@ func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Return(sessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListRelated_Call {
-	_c.Call.Return(sessions, err)
+func (_c *MockDocumentUploadSessionRepository_ListRelated_Call) Return(documentUploadSessions []*documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_ListRelated_Call {
+	_c.Call.Return(documentUploadSessions, err)
 	return _c
 }
 
@@ -578,8 +577,8 @@ func (_c *MockDocumentUploadSessionRepository_Update_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_Update_Call) Return(session *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Update_Call {
-	_c.Call.Return(session, err)
+func (_c *MockDocumentUploadSessionRepository_Update_Call) Return(documentUploadSession *documentupload.DocumentUploadSession, err error) *MockDocumentUploadSessionRepository_Update_Call {
+	_c.Call.Return(documentUploadSession, err)
 	return _c
 }
 

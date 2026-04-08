@@ -10,9 +10,11 @@ import {
 
 export function BillingQueueKPIStrip({
   statusFilter,
+  includePosted,
   onFilterChange,
 }: {
   statusFilter: string | null;
+  includePosted: boolean;
   onFilterChange: (status: string | null) => void;
 }) {
   const { data: stats } = useQuery(queries.billingQueue.stats());
@@ -40,17 +42,21 @@ export function BillingQueueKPIStrip({
       <KPICard
         label="Exceptions"
         value={String(
-          (stats?.onHold ?? 0) + (stats?.exception ?? 0) + (stats?.sentBackToOps ?? 0),
+          (stats?.onHold ?? 0) +
+            (stats?.exception ?? 0) +
+            (stats?.sentBackToOps ?? 0),
         )}
         icon={AlertTriangleIcon}
         detail="Needs attention"
         onClick={() => toggle("Exception")}
       />
       <KPICard
-        label="Approved"
+        label={includePosted ? "Approved Drafts" : "Approved"}
         value={String(stats?.approved ?? 0)}
         icon={CheckCircleIcon}
-        detail="Ready for invoicing"
+        detail={
+          includePosted ? "Approved but not posted" : "Ready for invoicing"
+        }
         onClick={() => toggle("Approved")}
       />
     </div>

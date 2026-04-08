@@ -7,9 +7,12 @@ import (
 	"encoding/json" //nolint:depguard // external API payloads
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -76,6 +79,7 @@ type Service struct {
 	locationCategoryRepo repositories.LocationCategoryRepository
 }
 
+//nolint:gocritic // dependencies injection params
 func New(p Params) serviceports.ShipmentImportAssistantService {
 	return &Service{
 		logger:               p.Logger.Named("service.shipment-import-assistant"),
@@ -161,14 +165,17 @@ SUGGEST_QUICK_ACTIONS:
   - type="action": Triggers an app action. Use action="create_shipment" for the final step.
 - Suggestions must be DIRECT ANSWERS to the question you just asked.`
 
+//nolint:funlen // this is a tool builder function
 func buildTools() []responses.ToolUnionParam {
 	return []responses.ToolUnionParam{
 		{OfFunction: &responses.FunctionToolParam{
 			Name:        "accept_field",
 			Description: openai.String("Accept an extracted field value as correct"),
 			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"field_key": map[string]any{"type": "string"}},
+				"type": "object",
+				"properties": map[string]any{
+					"field_key": map[string]any{"type": "string"},
+				},
 				"required":             []string{"field_key"},
 				"additionalProperties": false,
 			},
@@ -196,12 +203,22 @@ func buildTools() []responses.ToolUnionParam {
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "set_required_field",
-			Description: openai.String("Set a required shipment field by entity ID after confirming with the user"),
+			Name: "set_required_field",
+			Description: openai.String(
+				"Set a required shipment field by entity ID after confirming with the user",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"field_key": map[string]any{"type": "string", "enum": []string{"customerId", "serviceTypeId", "shipmentTypeId", "formulaTemplateId"}},
+					"field_key": map[string]any{
+						"type": "string",
+						"enum": []string{
+							"customerId",
+							"serviceTypeId",
+							"shipmentTypeId",
+							"formulaTemplateId",
+						},
+					},
 					"entity_id": map[string]any{"type": "string"},
 					"label":     map[string]any{"type": "string"},
 				},
@@ -240,39 +257,63 @@ func buildTools() []responses.ToolUnionParam {
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "set_stop_location",
-			Description: openai.String("Set a stop's location by matching to an existing location in the system"),
+			Name: "set_stop_location",
+			Description: openai.String(
+				"Set a stop's location by matching to an existing location in the system",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"stop_index":  map[string]any{"type": "integer", "description": "0-based index of the stop"},
-					"location_id": map[string]any{"type": "string", "description": "ID of the location to assign"},
+					"stop_index": map[string]any{
+						"type":        "integer",
+						"description": "0-based index of the stop",
+					},
+					"location_id": map[string]any{
+						"type":        "string",
+						"description": "ID of the location to assign",
+					},
 				},
 				"required":             []string{"stop_index", "location_id"},
 				"additionalProperties": false,
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "set_stop_schedule",
-			Description: openai.String("Set a stop's scheduled pickup/delivery window. Provide ISO 8601 datetime strings."),
+			Name: "set_stop_schedule",
+			Description: openai.String(
+				"Set a stop's scheduled pickup/delivery window. Provide ISO 8601 datetime strings.",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"stop_index":   map[string]any{"type": "integer", "description": "0-based index of the stop"},
-					"window_start": map[string]any{"type": "string", "description": "Start time as ISO 8601 (e.g. 2025-03-15T08:00:00Z)"},
-					"window_end":   map[string]any{"type": "string", "description": "End time as ISO 8601 (optional)"},
+					"stop_index": map[string]any{
+						"type":        "integer",
+						"description": "0-based index of the stop",
+					},
+					"window_start": map[string]any{
+						"type":        "string",
+						"description": "Start time as ISO 8601 (e.g. 2025-03-15T08:00:00Z)",
+					},
+					"window_end": map[string]any{
+						"type":        "string",
+						"description": "End time as ISO 8601 (optional)",
+					},
 				},
 				"required":             []string{"stop_index", "window_start"},
 				"additionalProperties": false,
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "set_shipment_field",
-			Description: openai.String("Set a top-level shipment field like bol, weight, pieces, freightChargeAmount"),
+			Name: "set_shipment_field",
+			Description: openai.String(
+				"Set a top-level shipment field like bol, weight, pieces, freightChargeAmount",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"field": map[string]any{"type": "string", "description": "Field name (bol, weight, pieces, freightChargeAmount, proNumber)"},
+					"field": map[string]any{
+						"type":        "string",
+						"description": "Field name (bol, weight, pieces, freightChargeAmount, proNumber)",
+					},
 					"value": map[string]any{"type": "string", "description": "Value to set"},
 				},
 				"required":             []string{"field", "value"},
@@ -280,18 +321,24 @@ func buildTools() []responses.ToolUnionParam {
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "get_customer_requirements",
-			Description: openai.String("Check if a customer requires BOL for invoicing. Call this after setting the customer."),
+			Name: "get_customer_requirements",
+			Description: openai.String(
+				"Check if a customer requires BOL for invoicing. Call this after setting the customer.",
+			),
 			Parameters: map[string]any{
-				"type":                 "object",
-				"properties":           map[string]any{"customer_id": map[string]any{"type": "string"}},
+				"type": "object",
+				"properties": map[string]any{
+					"customer_id": map[string]any{"type": "string"},
+				},
 				"required":             []string{"customer_id"},
 				"additionalProperties": false,
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "get_shipment_control",
-			Description: openai.String("Get the organization's shipment control settings (weight limits, BOL checking, etc.)"),
+			Name: "get_shipment_control",
+			Description: openai.String(
+				"Get the organization's shipment control settings (weight limits, BOL checking, etc.)",
+			),
 			Parameters: map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{},
@@ -319,24 +366,43 @@ func buildTools() []responses.ToolUnionParam {
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "add_location",
-			Description: openai.String("Create a new location in the system from extracted address data. Use this when no matching location exists. The location will be created and its ID returned so you can assign it to a stop."),
+			Name: "add_location",
+			Description: openai.String(
+				"Create a new location in the system from extracted address data. Use this when no matching location exists. The location will be created and its ID returned so you can assign it to a stop.",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
-					"name":          map[string]any{"type": "string", "description": "Location name (e.g. company/facility name)"},
-					"address_line1": map[string]any{"type": "string", "description": "Street address"},
-					"city":          map[string]any{"type": "string", "description": "City name"},
-					"state_abbrev":  map[string]any{"type": "string", "description": "Two-letter US state abbreviation (e.g. CA, TX, NY)"},
-					"postal_code":   map[string]any{"type": "string", "description": "ZIP code"},
+					"name": map[string]any{
+						"type":        "string",
+						"description": "Location name (e.g. company/facility name)",
+					},
+					"address_line1": map[string]any{
+						"type":        "string",
+						"description": "Street address",
+					},
+					"city": map[string]any{"type": "string", "description": "City name"},
+					"state_abbrev": map[string]any{
+						"type":        "string",
+						"description": "Two-letter US state abbreviation (e.g. CA, TX, NY)",
+					},
+					"postal_code": map[string]any{"type": "string", "description": "ZIP code"},
 				},
-				"required":             []string{"name", "address_line1", "city", "state_abbrev", "postal_code"},
+				"required": []string{
+					"name",
+					"address_line1",
+					"city",
+					"state_abbrev",
+					"postal_code",
+				},
 				"additionalProperties": false,
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "create_shipment",
-			Description: openai.String("Create the shipment. Only call this when ALL required fields and stop locations are set. This triggers the actual shipment creation."),
+			Name: "create_shipment",
+			Description: openai.String(
+				"Create the shipment. Only call this when ALL required fields and stop locations are set. This triggers the actual shipment creation.",
+			),
 			Parameters: map[string]any{
 				"type":                 "object",
 				"properties":           map[string]any{},
@@ -344,8 +410,10 @@ func buildTools() []responses.ToolUnionParam {
 			},
 		}},
 		{OfFunction: &responses.FunctionToolParam{
-			Name:        "suggest_quick_actions",
-			Description: openai.String("Provide 2-3 action buttons. Call at the end of every response. type='prompt' for confirmations, type='input' when user needs to type a value, type='action' for triggering app actions like creating the shipment."),
+			Name: "suggest_quick_actions",
+			Description: openai.String(
+				"Provide 2-3 action buttons. Call at the end of every response. type='prompt' for confirmations, type='input' when user needs to type a value, type='action' for triggering app actions like creating the shipment.",
+			),
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -354,12 +422,31 @@ func buildTools() []responses.ToolUnionParam {
 						"items": map[string]any{
 							"type": "object",
 							"properties": map[string]any{
-								"label":       map[string]any{"type": "string", "description": "Button label"},
-								"prompt":      map[string]any{"type": "string", "description": "For type=prompt: message to send. For type=input: prefix before user's typed value (e.g. 'Search for customer ')"},
-								"type":        map[string]any{"type": "string", "enum": []string{"prompt", "input", "action", "date"}, "description": "prompt = sends message. input = shows text field. action = triggers app action. date = shows a date+time picker."},
-								"action":      map[string]any{"type": "string", "description": "For type=action: the action ID (e.g. 'create_shipment')"},
-								"placeholder": map[string]any{"type": "string", "description": "For type=input: placeholder text in the input field"},
-								"submitLabel": map[string]any{"type": "string", "description": "For type=input: submit button label. Use 'Confirm' for values, 'Search' for queries. Default: 'Search'"},
+								"label": map[string]any{
+									"type":        "string",
+									"description": "Button label",
+								},
+								"prompt": map[string]any{
+									"type":        "string",
+									"description": "For type=prompt: message to send. For type=input: prefix before user's typed value (e.g. 'Search for customer ')",
+								},
+								"type": map[string]any{
+									"type":        "string",
+									"enum":        []string{"prompt", "input", "action", "date"},
+									"description": "prompt = sends message. input = shows text field. action = triggers app action. date = shows a date+time picker.",
+								},
+								"action": map[string]any{
+									"type":        "string",
+									"description": "For type=action: the action ID (e.g. 'create_shipment')",
+								},
+								"placeholder": map[string]any{
+									"type":        "string",
+									"description": "For type=input: placeholder text in the input field",
+								},
+								"submitLabel": map[string]any{
+									"type":        "string",
+									"description": "For type=input: submit button label. Use 'Confirm' for values, 'Search' for queries. Default: 'Search'",
+								},
 							},
 							"required":             []string{"label", "prompt", "type"},
 							"additionalProperties": false,
@@ -394,7 +481,10 @@ func (s *Service) buildConversationContextMap(
 		"defaultOptions":  s.buildDefaultOptions(ctx, req.TenantInfo),
 	}
 
-	control, controlErr := s.shipmentControlRepo.Get(ctx, repositories.GetShipmentControlRequest{TenantInfo: req.TenantInfo})
+	control, controlErr := s.shipmentControlRepo.Get(
+		ctx,
+		repositories.GetShipmentControlRequest{TenantInfo: req.TenantInfo},
+	)
 	if controlErr == nil && control != nil {
 		contextMap["shipmentControl"] = map[string]any{
 			"maxShipmentWeightLimit": control.MaxShipmentWeightLimit,
@@ -407,8 +497,11 @@ func (s *Service) buildConversationContextMap(
 				"customerId":        "REQUIRED",
 				"shipmentTypeId":    "REQUIRED",
 				"formulaTemplateId": "REQUIRED",
-				"weight":            fmt.Sprintf("optional, max %d lbs", control.MaxShipmentWeightLimit),
-				"bol":               "required if customer billing profile requireBOLNumber=true",
+				"weight": fmt.Sprintf(
+					"optional, max %d lbs",
+					control.MaxShipmentWeightLimit,
+				),
+				"bol": "required if customer billing profile requireBOLNumber=true",
 			},
 			"moves": map[string]any{
 				"minMoveCount":    1,
@@ -429,8 +522,11 @@ func (s *Service) buildConversationContextMap(
 	return contextMap
 }
 
-func (s *Service) buildConversationContext(ctx context.Context, req *serviceports.ShipmentImportChatRequest) []byte {
-	data, _ := json.Marshal(s.buildConversationContextMap(ctx, req))
+func (s *Service) buildConversationContext(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+) []byte {
+	data, _ := sonic.Marshal(s.buildConversationContextMap(ctx, req))
 	return data
 }
 
@@ -442,12 +538,14 @@ func (s *Service) buildDefaultOptions(
 	shipmentTypes := make([]map[string]string, 0)
 	formulaTemplates := make([]map[string]string, 0)
 
-	if result, err := s.serviceRepo.SelectOptions(ctx, &repositories.ServiceTypeSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{
-			TenantInfo: tenantInfo,
-			Pagination: pagination.Info{Limit: 6},
-		},
-	}); err == nil {
+	if result, err := s.serviceRepo.SelectOptions(
+		ctx,
+		&repositories.ServiceTypeSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 6},
+			},
+		}); err == nil {
 		for _, item := range result.Items {
 			serviceTypes = append(serviceTypes, map[string]string{
 				"id":    item.ID.String(),
@@ -458,12 +556,14 @@ func (s *Service) buildDefaultOptions(
 		}
 	}
 
-	if result, err := s.shipmentTypeRepo.SelectOptions(ctx, &repositories.ShipmentTypeSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{
-			TenantInfo: tenantInfo,
-			Pagination: pagination.Info{Limit: 6},
-		},
-	}); err == nil {
+	if result, err := s.shipmentTypeRepo.SelectOptions(
+		ctx,
+		&repositories.ShipmentTypeSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 6},
+			},
+		}); err == nil {
 		for _, item := range result.Items {
 			shipmentTypes = append(shipmentTypes, map[string]string{
 				"id":    item.ID.String(),
@@ -474,12 +574,14 @@ func (s *Service) buildDefaultOptions(
 		}
 	}
 
-	if result, err := s.formulaTemplateRepo.SelectOptions(ctx, &repositories.FormulaTemplateSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{
-			TenantInfo: tenantInfo,
-			Pagination: pagination.Info{Limit: 6},
-		},
-	}); err == nil {
+	if result, err := s.formulaTemplateRepo.SelectOptions(
+		ctx,
+		&repositories.FormulaTemplateSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 6},
+			},
+		}); err == nil {
 		for _, item := range result.Items {
 			formulaTemplates = append(formulaTemplates, map[string]string{
 				"id":   item.ID.String(),
@@ -503,12 +605,16 @@ func (s *Service) buildConversationInput(
 		{OfMessage: &responses.EasyInputMessageParam{
 			Role: "system",
 			Content: responses.EasyInputMessageContentUnionParam{
-				OfString: openai.String(systemPrompt + "\n\nCurrent state:\n" + string(contextJSON)),
+				OfString: openai.String(
+					systemPrompt + "\n\nCurrent state:\n" + string(contextJSON),
+				),
 			},
 		}},
 		{OfMessage: &responses.EasyInputMessageParam{
-			Role:    "user",
-			Content: responses.EasyInputMessageContentUnionParam{OfString: openai.String(req.UserMessage)},
+			Role: "user",
+			Content: responses.EasyInputMessageContentUnionParam{
+				OfString: openai.String(req.UserMessage),
+			},
 		}},
 	}
 
@@ -521,14 +627,21 @@ func (s *Service) ensureConversation(
 ) (*shipmentimportchat.Conversation, error) {
 	documentID, err := pulid.Parse(req.DocumentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Invalid document ID",
+		)
 	}
 
-	conversation, err := s.chatRepo.GetConversationByDocument(ctx, repositories.GetShipmentImportConversationRequest{
-		DocumentID: documentID,
-		TenantInfo: req.TenantInfo,
-		Status:     shipmentimportchat.ConversationStatusActive,
-	})
+	conversation, err := s.chatRepo.GetConversationByDocument(
+		ctx,
+		repositories.GetShipmentImportConversationRequest{
+			DocumentID: documentID,
+			TenantInfo: req.TenantInfo,
+			Status:     shipmentimportchat.ConversationStatusActive,
+		},
+	)
 	if err == nil {
 		if req.ConversationID == "" && conversation.ExternalConversationID != "" {
 			req.ConversationID = conversation.ExternalConversationID
@@ -551,17 +664,16 @@ func (s *Service) ensureConversation(
 }
 
 func friendlyStreamError(err error) string {
-	var apiErr *openai.Error
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*openai.Error](err); ok {
 		switch apiErr.StatusCode {
-		case 429:
+		case http.StatusTooManyRequests:
 			return "The AI provider is temporarily rate-limited. Please wait a few seconds and try again."
-		case 401, 403:
+		case http.StatusUnauthorized, http.StatusForbidden:
 			return "AI authentication failed. Please check the API key configuration."
-		case 400:
+		case http.StatusBadRequest:
 			return "The AI request was invalid. Try starting a new conversation."
 		default:
-			if apiErr.StatusCode >= 500 {
+			if apiErr.StatusCode >= http.StatusInternalServerError {
 				return "The AI provider is experiencing issues. Please try again shortly."
 			}
 		}
@@ -747,7 +859,7 @@ func (s *Service) persistConversationTurn(
 			AssistantMessage:       assistantMessage,
 			RequestConversationID:  req.ConversationID,
 			ResponseConversationID: responseConversationID,
-			Model:                  string(openai.ChatModelGPT5_4),
+			Model:                  openai.ChatModelGPT5_4,
 			ResultStatus:           resultStatus,
 			ErrorMessage:           errorMessage,
 			ContextJSON:            encodedPayload.ContextJSON,
@@ -761,7 +873,11 @@ func (s *Service) persistConversationTurn(
 	}
 
 	if s.chatCacheRepo != nil {
-		if cacheErr := s.chatCacheRepo.DeleteHistory(ctx, conversation.DocumentID, req.TenantInfo); cacheErr != nil {
+		if cacheErr := s.chatCacheRepo.DeleteHistory(
+			ctx,
+			conversation.DocumentID,
+			req.TenantInfo,
+		); cacheErr != nil {
 			s.logger.Warn("failed to invalidate shipment import chat cache", zap.Error(cacheErr))
 		}
 	}
@@ -787,14 +903,20 @@ func (s *Service) getHistorySnapshot(
 			return snapshot, nil
 		}
 		if err != nil {
-			s.logger.Warn("failed to read shipment import chat cache; rebuilding from postgres", zap.Error(err))
+			s.logger.Warn(
+				"failed to read shipment import chat cache; rebuilding from postgres",
+				zap.Error(err),
+			)
 		}
 	}
 
-	conversation, err := s.chatRepo.GetConversationByDocument(ctx, repositories.GetShipmentImportConversationRequest{
-		DocumentID: documentID,
-		TenantInfo: tenantInfo,
-	})
+	conversation, err := s.chatRepo.GetConversationByDocument(
+		ctx,
+		repositories.GetShipmentImportConversationRequest{
+			DocumentID: documentID,
+			TenantInfo: tenantInfo,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return &shipmentimportchat.HistorySnapshot{
@@ -895,10 +1017,20 @@ func (s *Service) updateConversationStatus(
 ) error {
 	id, err := pulid.Parse(documentID)
 	if err != nil {
-		return errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID")
+		return errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Invalid document ID",
+		)
 	}
 
-	if err = s.chatRepo.UpdateActiveConversationStatusByDocument(ctx, id, tenantInfo, status, reason); err != nil {
+	if err = s.chatRepo.UpdateActiveConversationStatusByDocument(
+		ctx,
+		id,
+		tenantInfo,
+		status,
+		reason,
+	); err != nil {
 		return err
 	}
 
@@ -911,7 +1043,10 @@ func (s *Service) updateConversationStatus(
 	return nil
 }
 
-func (s *Service) Chat(ctx context.Context, req *serviceports.ShipmentImportChatRequest) (*serviceports.ShipmentImportChatResponse, error) {
+func (s *Service) Chat(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+) (*serviceports.ShipmentImportChatResponse, error) {
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
 		return nil, err
@@ -919,13 +1054,31 @@ func (s *Service) Chat(ctx context.Context, req *serviceports.ShipmentImportChat
 
 	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeOpenAI)
 	if err != nil {
-		s.recordFailedTurn(ctx, req, conversation, req.ConversationID, "", nil, nil, "OpenAI integration is not configured")
+		s.recordFailedTurn(
+			ctx,
+			req,
+			conversation,
+			req.ConversationID,
+			"",
+			nil,
+			nil,
+			"OpenAI integration is not configured",
+		)
 		return nil, errortypes.NewBusinessError("OpenAI integration is not configured")
 	}
 
 	apiKey := runtimeCfg.Config["apiKey"]
 	if apiKey == "" {
-		s.recordFailedTurn(ctx, req, conversation, req.ConversationID, "", nil, nil, "OpenAI API key is missing")
+		s.recordFailedTurn(
+			ctx,
+			req,
+			conversation,
+			req.ConversationID,
+			"",
+			nil,
+			nil,
+			"OpenAI API key is missing",
+		)
 		return nil, errortypes.NewBusinessError("OpenAI API key is missing")
 	}
 
@@ -958,77 +1111,30 @@ func (s *Service) Chat(ctx context.Context, req *serviceports.ShipmentImportChat
 		if respErr != nil {
 			userMsg := friendlyStreamError(respErr)
 			s.logger.Error("OpenAI API error", zap.Error(respErr))
-			s.recordFailedTurn(ctx, req, conversation, conversationID, finalText, toolCallLog, actions, userMsg)
+			s.recordFailedTurn(
+				ctx,
+				req,
+				conversation,
+				conversationID,
+				finalText,
+				toolCallLog,
+				actions,
+				userMsg,
+			)
 			return nil, errortypes.NewBusinessError(userMsg)
 		}
 
 		conversationID = resp.ID
 
-		var toolOutputs []responses.ResponseInputItemUnionParam
-		hasToolCalls := false
-
-		for _, item := range resp.Output {
-			switch item.Type {
-			case "message":
-				for _, content := range item.Content {
-					if content.Type == "output_text" {
-						finalText = content.Text
-					}
-				}
-			case "function_call":
-				hasToolCalls = true
-				fc := item.AsFunctionCall()
-
-				if fc.Name == "suggest_quick_actions" {
-					// Parse suggestions — don't record as visible tool call
-					var sugArgs struct {
-						Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
-					}
-					if err := json.Unmarshal([]byte(fc.Arguments), &sugArgs); err == nil {
-						suggestions = sugArgs.Suggestions
-					}
-					toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-						OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-							CallID: fc.CallID,
-							Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-								OfString: openai.String(`{"ok":true}`),
-							},
-						},
-					})
-					continue
-				}
-
-				result, toolActions := s.executeToolCall(ctx, req.TenantInfo, fc.Name, fc.Arguments)
-				actions = append(actions, toolActions...)
-
-				// Record tool call for display
-				status := "completed"
-				if len(result) > 0 && result[0] == '{' {
-					var check map[string]any
-					if json.Unmarshal([]byte(result), &check) == nil {
-						if _, hasErr := check["error"]; hasErr {
-							status = "error"
-						}
-					}
-				}
-				toolCallLog = append(toolCallLog, serviceports.ShipmentImportToolCallRecord{
-					Name:   fc.Name,
-					CallID: fc.CallID,
-					Status: status,
-					Input:  fc.Arguments,
-					Output: result,
-				})
-
-				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
-					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-						CallID: fc.CallID,
-						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
-							OfString: openai.String(result),
-						},
-					},
-				})
-			}
-		}
+		toolOutputs, hasToolCalls := s.collectToolOutputsFromResponse(
+			ctx,
+			req.TenantInfo,
+			resp,
+			&finalText,
+			&suggestions,
+			&actions,
+			&toolCallLog,
+		)
 
 		if !hasToolCalls {
 			break
@@ -1069,104 +1175,362 @@ func (s *Service) Chat(ctx context.Context, req *serviceports.ShipmentImportChat
 	}, nil
 }
 
-func (s *Service) executeToolCall(ctx context.Context, tenantInfo pagination.TenantInfo, name, arguments string) (string, []serviceports.ShipmentImportAction) {
+func (s *Service) collectToolOutputsFromResponse(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	resp *responses.Response,
+	finalText *string,
+	suggestions *[]serviceports.ShipmentImportSuggestion,
+	actions *[]serviceports.ShipmentImportAction,
+	toolCallLog *[]serviceports.ShipmentImportToolCallRecord,
+) ([]responses.ResponseInputItemUnionParam, bool) {
+	var (
+		toolOutputs  []responses.ResponseInputItemUnionParam
+		hasToolCalls bool
+	)
+
+	for i := range resp.Output {
+		item := &resp.Output[i]
+		switch item.Type {
+		case "message":
+			for j := range item.Content {
+				content := &item.Content[j]
+				if content.Type == "output_text" {
+					*finalText = content.Text
+				}
+			}
+
+		case "function_call":
+			hasToolCalls = true
+			fc := item.AsFunctionCall()
+
+			if fc.Name == "suggest_quick_actions" {
+				var sugArgs struct {
+					Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
+				}
+				if err := sonic.Unmarshal([]byte(fc.Arguments), &sugArgs); err == nil {
+					*suggestions = sugArgs.Suggestions
+				}
+
+				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
+					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
+						CallID: fc.CallID,
+						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+							OfString: openai.String(`{"ok":true}`),
+						},
+					},
+				})
+				continue
+			}
+
+			result, toolActions := s.executeToolCall(ctx, tenantInfo, fc.Name, fc.Arguments)
+			*actions = append(*actions, toolActions...)
+
+			*toolCallLog = append(*toolCallLog, serviceports.ShipmentImportToolCallRecord{
+				Name:   fc.Name,
+				CallID: fc.CallID,
+				Status: toolCallStatusFromResult(result),
+				Input:  fc.Arguments,
+				Output: result,
+			})
+
+			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
+				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
+					CallID: fc.CallID,
+					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+						OfString: openai.String(result),
+					},
+				},
+			})
+		}
+	}
+
+	return toolOutputs, hasToolCalls
+}
+
+func toolCallStatusFromResult(result string) string {
+	if result == "" || result[0] != '{' {
+		return "completed"
+	}
+
+	var check map[string]any
+	if json.Unmarshal([]byte(result), &check) != nil {
+		return "completed"
+	}
+	if _, hasErr := check["error"]; hasErr {
+		return "error"
+	}
+	return "completed"
+}
+
+func (s *Service) executeToolCall(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	name, arguments string,
+) (string, []serviceports.ShipmentImportAction) {
 	var args map[string]any
 	if err := json.Unmarshal([]byte(arguments), &args); err != nil {
 		return `{"error":"invalid arguments"}`, nil
 	}
 
-	str := func(key string) string { v, _ := args[key].(string); return v }
+	h, ok := shipmentImportToolCallHandlers[name]
+	if !ok {
+		return `{"error":"unknown tool"}`, nil
+	}
+	return h(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: args})
+}
 
-	switch name {
-	case "accept_field":
-		key := str("field_key")
-		return fmt.Sprintf(`{"accepted":"%s"}`, key), []serviceports.ShipmentImportAction{{Type: "accept_field", FieldKey: key}}
+type shipmentImportToolCallArgs struct {
+	m map[string]any
+}
 
-	case "accept_all_confident":
-		return `{"accepted":"all_confident"}`, []serviceports.ShipmentImportAction{{Type: "accept_all_confident"}}
+func (a shipmentImportToolCallArgs) Str(key string) string {
+	v, _ := a.m[key].(string)
+	return v
+}
 
-	case "set_field_value":
-		key, value := str("field_key"), str("value")
-		return fmt.Sprintf(`{"set":"%s","value":"%s"}`, key, value), []serviceports.ShipmentImportAction{{Type: "set_field", FieldKey: key, Value: value}}
+func (a shipmentImportToolCallArgs) IntFromFloat64(key string) (int, bool) {
+	v, ok := a.m[key].(float64)
+	if !ok {
+		return 0, false
+	}
+	return int(v), true
+}
 
-	case "set_required_field":
-		key, entityID, label := str("field_key"), str("entity_id"), str("label")
-		return fmt.Sprintf(`{"set_required":"%s","entity_id":"%s"}`, key, entityID), []serviceports.ShipmentImportAction{
-			{Type: "set_required_field", FieldKey: key, Value: entityID, Metadata: map[string]any{"label": label}},
+type shipmentImportToolCallHandler func(
+	s *Service,
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	args shipmentImportToolCallArgs,
+) (string, []serviceports.ShipmentImportAction)
+
+var shipmentImportToolCallHandlers = map[string]shipmentImportToolCallHandler{
+	"accept_field": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		key := args.Str("field_key")
+		return fmt.Sprintf(
+				`{"accepted":"%q"}`,
+				key,
+			), []serviceports.ShipmentImportAction{
+				{Type: "accept_field", FieldKey: key},
+			}
+	},
+
+	"accept_all_confident": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		_ shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return `{"accepted":"all_confident"}`, []serviceports.ShipmentImportAction{
+			{Type: "accept_all_confident"},
 		}
+	},
 
-	case "search_customers":
-		return s.searchCustomers(ctx, tenantInfo, str("query")), nil
-	case "search_locations":
-		return s.searchLocations(ctx, tenantInfo, str("query")), nil
-	case "search_service_types":
-		return s.searchServiceTypes(ctx, tenantInfo, str("query")), nil
-	case "search_shipment_types":
-		return s.searchShipmentTypes(ctx, tenantInfo, str("query")), nil
-	case "search_formula_templates":
-		return s.searchFormulaTemplates(ctx, tenantInfo, str("query")), nil
+	"set_field_value": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		key, value := args.Str("field_key"), args.Str("value")
+		return fmt.Sprintf(
+				`{"set":"%q","value":"%q"}`,
+				key,
+				value,
+			), []serviceports.ShipmentImportAction{
+				{Type: "set_field", FieldKey: key, Value: value},
+			}
+	},
 
-	case "set_stop_location":
-		idx := int(args["stop_index"].(float64))
-		locID := str("location_id")
-		return fmt.Sprintf(`{"set_stop_location":true,"stop_index":%d,"location_id":"%s"}`, idx, locID),
-			[]serviceports.ShipmentImportAction{{Type: "set_stop_location", FieldKey: fmt.Sprintf("%d", idx), Value: locID}}
+	"set_required_field": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		key, entityID, label := args.Str("field_key"), args.Str("entity_id"), args.Str("label")
+		return fmt.Sprintf(
+				`{"set_required":"%q","entity_id":"%q"}`,
+				key,
+				entityID,
+			), []serviceports.ShipmentImportAction{
+				{
+					Type:     "set_required_field",
+					FieldKey: key,
+					Value:    entityID,
+					Metadata: map[string]any{"label": label},
+				},
+			}
+	},
 
-	case "set_stop_schedule":
-		idx := int(args["stop_index"].(float64))
-		start := str("window_start")
-		end := str("window_end")
+	"search_customers": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.searchCustomers(ctx, tenantInfo, args.Str("query")), nil
+	},
+	"search_locations": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.searchLocations(ctx, tenantInfo, args.Str("query")), nil
+	},
+	"search_service_types": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.searchServiceTypes(ctx, tenantInfo, args.Str("query")), nil
+	},
+	"search_shipment_types": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.searchShipmentTypes(ctx, tenantInfo, args.Str("query")), nil
+	},
+	"search_formula_templates": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.searchFormulaTemplates(ctx, tenantInfo, args.Str("query")), nil
+	},
 
-		// Parse ISO 8601 to Unix timestamps
-		var unixStart, unixEnd int64
-		if t, parseErr := time.Parse(time.RFC3339, start); parseErr == nil {
-			unixStart = t.Unix()
-		} else if t, parseErr := time.Parse("2006-01-02T15:04:05", start); parseErr == nil {
-			unixStart = t.Unix()
-		} else if t, parseErr := time.Parse("2006-01-02", start); parseErr == nil {
-			unixStart = t.Unix()
-		}
+	"set_stop_location": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		idx, _ := args.IntFromFloat64("stop_index")
+		locID := args.Str("location_id")
+		return fmt.Sprintf(
+				`{"set_stop_location":true,"stop_index":%d,"location_id":"%q"}`,
+				idx,
+				locID,
+			),
+			[]serviceports.ShipmentImportAction{
+				{Type: "set_stop_location", FieldKey: strconv.Itoa(idx), Value: locID},
+			}
+	},
 
+	"set_stop_schedule": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		idx, _ := args.IntFromFloat64("stop_index")
+		start := args.Str("window_start")
+		end := args.Str("window_end")
+
+		unixStart := parseShipmentImportAssistantTimeToUnix(start)
+
+		metadata := map[string]any{"window_start_iso": start}
+		var unixEnd int64
 		if end != "" {
-			if t, parseErr := time.Parse(time.RFC3339, end); parseErr == nil {
-				unixEnd = t.Unix()
-			} else if t, parseErr := time.Parse("2006-01-02T15:04:05", end); parseErr == nil {
-				unixEnd = t.Unix()
+			unixEnd = parseShipmentImportAssistantTimeToUnix(end)
+			if unixEnd > 0 {
+				metadata["window_end"] = strconv.Itoa(int(unixEnd))
+				metadata["window_end_iso"] = end
 			}
 		}
 
-		metadata := map[string]any{"window_start_iso": start}
-		if unixEnd > 0 {
-			metadata["window_end"] = fmt.Sprintf("%d", unixEnd)
-			metadata["window_end_iso"] = end
-		}
-
-		result := fmt.Sprintf(`{"set_stop_schedule":true,"stop_index":%d,"unix_start":%d,"unix_end":%d}`, idx, unixStart, unixEnd)
+		result := fmt.Sprintf(
+			`{"set_stop_schedule":true,"stop_index":%d,"unix_start":%d,"unix_end":%d}`,
+			idx,
+			unixStart,
+			unixEnd,
+		)
 		return result, []serviceports.ShipmentImportAction{
-			{Type: "set_stop_schedule", FieldKey: fmt.Sprintf("%d", idx), Value: fmt.Sprintf("%d", unixStart), Metadata: metadata},
+			{
+				Type:     "set_stop_schedule",
+				FieldKey: strconv.Itoa(idx),
+				Value:    strconv.FormatInt(unixStart, 10),
+				Metadata: metadata,
+			},
 		}
+	},
 
-	case "set_shipment_field":
-		field := str("field")
-		value := str("value")
-		return fmt.Sprintf(`{"set_shipment_field":true,"field":"%s","value":"%s"}`, field, value),
-			[]serviceports.ShipmentImportAction{{Type: "set_shipment_field", FieldKey: field, Value: value}}
+	"set_shipment_field": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		field := args.Str("field")
+		value := args.Str("value")
+		return fmt.Sprintf(`{"set_shipment_field":true,"field":"%q","value":"%q"}`, field, value),
+			[]serviceports.ShipmentImportAction{
+				{Type: "set_shipment_field", FieldKey: field, Value: value},
+			}
+	},
 
-	case "get_customer_requirements":
-		return s.getCustomerRequirements(ctx, tenantInfo, str("customer_id")), nil
+	"get_customer_requirements": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.getCustomerRequirements(ctx, tenantInfo, args.Str("customer_id")), nil
+	},
 
-	case "get_shipment_control":
+	"get_shipment_control": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		_ shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
 		return s.getShipmentControl(ctx, tenantInfo), nil
+	},
 
-	case "add_location":
-		return s.addLocation(ctx, tenantInfo, args), nil
+	"add_location": func(
+		s *Service,
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		args shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return s.addLocation(ctx, tenantInfo, args.m), nil
+	},
 
-	case "create_shipment":
-		return `{"create_shipment":true}`, []serviceports.ShipmentImportAction{{Type: "create_shipment"}}
+	"create_shipment": func(
+		_ *Service,
+		_ context.Context,
+		_ pagination.TenantInfo,
+		_ shipmentImportToolCallArgs,
+	) (string, []serviceports.ShipmentImportAction) {
+		return `{"create_shipment":true}`, []serviceports.ShipmentImportAction{
+			{Type: "create_shipment"},
+		}
+	},
+}
 
-	default:
-		return `{"error":"unknown tool"}`, nil
+func parseShipmentImportAssistantTimeToUnix(s string) int64 {
+	layouts := [...]string{
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02",
 	}
+	for i := range layouts {
+		t, err := time.Parse(layouts[i], s)
+		if err == nil {
+			return t.Unix()
+		}
+	}
+	return 0
 }
 
 type entityMatch struct {
@@ -1174,7 +1538,12 @@ type entityMatch struct {
 	Name string `json:"name"`
 }
 
-func (s *Service) queryCustomers(ctx context.Context, tenantInfo pagination.TenantInfo, query string, limit int) ([]entityMatch, int, error) {
+func (s *Service) queryCustomers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+	limit int,
+) ([]entityMatch, int, error) {
 	result, err := s.customerRepo.SelectOptions(ctx, &repositories.CustomerSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{
 			TenantInfo: tenantInfo,
@@ -1194,7 +1563,11 @@ func (s *Service) queryCustomers(ctx context.Context, tenantInfo pagination.Tena
 	return matches, result.Total, nil
 }
 
-func (s *Service) searchCustomers(ctx context.Context, tenantInfo pagination.TenantInfo, query string) string {
+func (s *Service) searchCustomers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+) string {
 	matches, total, err := s.queryCustomers(ctx, tenantInfo, query, 5)
 	if err != nil {
 		return `{"error":"search failed"}`
@@ -1232,9 +1605,18 @@ type locationMatch struct {
 	PostalCode   string `json:"postalCode,omitempty"`
 }
 
-func (s *Service) queryLocations(ctx context.Context, tenantInfo pagination.TenantInfo, query string, limit int) ([]locationMatch, int, error) {
+func (s *Service) queryLocations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+	limit int,
+) ([]locationMatch, int, error) {
 	result, err := s.locationRepo.SelectOptions(ctx, &repositories.LocationSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{TenantInfo: tenantInfo, Pagination: pagination.Info{Limit: limit}, Query: query},
+		SelectQueryRequest: &pagination.SelectQueryRequest{
+			TenantInfo: tenantInfo,
+			Pagination: pagination.Info{Limit: limit},
+			Query:      query,
+		},
 	})
 	if err != nil {
 		return nil, 0, err
@@ -1254,7 +1636,11 @@ func (s *Service) queryLocations(ctx context.Context, tenantInfo pagination.Tena
 	return matches, result.Total, nil
 }
 
-func (s *Service) searchLocations(ctx context.Context, tenantInfo pagination.TenantInfo, query string) string {
+func (s *Service) searchLocations(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+) string {
 	matches, total, err := s.queryLocations(ctx, tenantInfo, query, 5)
 	if err != nil {
 		return `{"error":"search failed"}`
@@ -1282,9 +1668,17 @@ func (s *Service) searchLocations(ctx context.Context, tenantInfo pagination.Ten
 	return string(data)
 }
 
-func (s *Service) searchServiceTypes(ctx context.Context, tenantInfo pagination.TenantInfo, query string) string {
+func (s *Service) searchServiceTypes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+) string {
 	result, err := s.serviceRepo.SelectOptions(ctx, &repositories.ServiceTypeSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{TenantInfo: tenantInfo, Pagination: pagination.Info{Limit: 5}, Query: query},
+		SelectQueryRequest: &pagination.SelectQueryRequest{
+			TenantInfo: tenantInfo,
+			Pagination: pagination.Info{Limit: 5},
+			Query:      query,
+		},
 	})
 	if err != nil {
 		return `{"error":"search failed"}`
@@ -1303,26 +1697,51 @@ func (s *Service) searchServiceTypes(ctx context.Context, tenantInfo pagination.
 	return string(data)
 }
 
-func (s *Service) searchShipmentTypes(ctx context.Context, tenantInfo pagination.TenantInfo, query string) string {
-	result, err := s.shipmentTypeRepo.SelectOptions(ctx, &repositories.ShipmentTypeSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{TenantInfo: tenantInfo, Pagination: pagination.Info{Limit: 5}, Query: query},
-	})
+func (s *Service) searchShipmentTypes(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+) string {
+	result, err := s.shipmentTypeRepo.SelectOptions(
+		ctx,
+		&repositories.ShipmentTypeSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 5},
+				Query:      query,
+			},
+		},
+	)
 	if err != nil {
 		return `{"error":"search failed"}`
 	}
 
 	matches := make([]entityMatch, 0, len(result.Items))
 	for _, st := range result.Items {
-		matches = append(matches, entityMatch{ID: st.ID.String(), Name: st.Code + " — " + st.Description})
+		matches = append(
+			matches,
+			entityMatch{ID: st.ID.String(), Name: st.Code + " — " + st.Description},
+		)
 	}
 	data, _ := json.Marshal(map[string]any{"shipmentTypes": matches, "total": result.Total})
 	return string(data)
 }
 
-func (s *Service) searchFormulaTemplates(ctx context.Context, tenantInfo pagination.TenantInfo, query string) string {
-	result, err := s.formulaTemplateRepo.SelectOptions(ctx, &repositories.FormulaTemplateSelectOptionsRequest{
-		SelectQueryRequest: &pagination.SelectQueryRequest{TenantInfo: tenantInfo, Pagination: pagination.Info{Limit: 5}, Query: query},
-	})
+func (s *Service) searchFormulaTemplates(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	query string,
+) string {
+	result, err := s.formulaTemplateRepo.SelectOptions(
+		ctx,
+		&repositories.FormulaTemplateSelectOptionsRequest{
+			SelectQueryRequest: &pagination.SelectQueryRequest{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 5},
+				Query:      query,
+			},
+		},
+	)
 	if err != nil {
 		return `{"error":"search failed"}`
 	}
@@ -1335,7 +1754,11 @@ func (s *Service) searchFormulaTemplates(ctx context.Context, tenantInfo paginat
 	return string(data)
 }
 
-func (s *Service) addLocation(ctx context.Context, tenantInfo pagination.TenantInfo, args map[string]any) string {
+func (s *Service) addLocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	args map[string]any,
+) string {
 	str := func(key string) string { v, _ := args[key].(string); return v }
 
 	name := str("name")
@@ -1409,7 +1832,11 @@ func (s *Service) addLocation(ctx context.Context, tenantInfo pagination.TenantI
 	return string(data)
 }
 
-func (s *Service) getCustomerRequirements(ctx context.Context, tenantInfo pagination.TenantInfo, customerID string) string {
+func (s *Service) getCustomerRequirements(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID string,
+) string {
 	id, parseErr := pulid.Parse(customerID)
 	if parseErr != nil {
 		return `{"error":"invalid customer ID"}`
@@ -1441,7 +1868,10 @@ func (s *Service) getCustomerRequirements(ctx context.Context, tenantInfo pagina
 }
 
 func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.TenantInfo) string {
-	control, err := s.shipmentControlRepo.Get(ctx, repositories.GetShipmentControlRequest{TenantInfo: tenantInfo})
+	control, err := s.shipmentControlRepo.Get(
+		ctx,
+		repositories.GetShipmentControlRequest{TenantInfo: tenantInfo},
+	)
 	if err != nil {
 		return `{"error":"could not fetch shipment control"}`
 	}
@@ -1455,7 +1885,11 @@ func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.
 	return string(data)
 }
 
-func (s *Service) logAICall(ctx context.Context, req *serviceports.ShipmentImportChatRequest, response string) {
+func (s *Service) logAICall(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+	response string,
+) {
 	promptHash := sha256.Sum256([]byte(req.UserMessage))
 	responseHash := sha256.Sum256([]byte(response))
 
@@ -1473,12 +1907,20 @@ func (s *Service) logAICall(ctx context.Context, req *serviceports.ShipmentImpor
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		UserID:         req.TenantInfo.UserID,
-		Prompt:         fmt.Sprintf("sha256=%s preview=%s", hex.EncodeToString(promptHash[:]), promptPreview),
-		Response:       fmt.Sprintf("sha256=%s preview=%s", hex.EncodeToString(responseHash[:]), responsePreview),
-		Model:          ailog.ModelGPT5Mini,
-		Operation:      ailog.OperationShipmentImportChat,
-		Object:         req.DocumentID,
-		Timestamp:      timeutils.NowUnix(),
+		Prompt: fmt.Sprintf(
+			"sha256=%s preview=%s",
+			hex.EncodeToString(promptHash[:]),
+			promptPreview,
+		),
+		Response: fmt.Sprintf(
+			"sha256=%s preview=%s",
+			hex.EncodeToString(responseHash[:]),
+			responsePreview,
+		),
+		Model:     ailog.ModelGPT5Mini,
+		Operation: ailog.OperationShipmentImportChat,
+		Object:    req.DocumentID,
+		Timestamp: timeutils.NowUnix(),
 	}
 
 	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
@@ -1486,7 +1928,11 @@ func (s *Service) logAICall(ctx context.Context, req *serviceports.ShipmentImpor
 	}
 }
 
-func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImportChatRequest, emit func(serviceports.StreamEvent)) error {
+func (s *Service) ChatStream(
+	ctx context.Context,
+	req *serviceports.ShipmentImportChatRequest,
+	emit func(serviceports.StreamEvent),
+) error {
 	conversation, err := s.ensureConversation(ctx, req)
 	if err != nil {
 		return err
@@ -1494,13 +1940,31 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 
 	runtimeCfg, err := s.integration.GetRuntimeConfig(ctx, req.TenantInfo, integration.TypeOpenAI)
 	if err != nil {
-		s.recordFailedTurn(ctx, req, conversation, req.ConversationID, "", nil, nil, "OpenAI integration is not configured")
+		s.recordFailedTurn(
+			ctx,
+			req,
+			conversation,
+			req.ConversationID,
+			"",
+			nil,
+			nil,
+			"OpenAI integration is not configured",
+		)
 		return errortypes.NewBusinessError("OpenAI integration is not configured")
 	}
 
 	apiKey := runtimeCfg.Config["apiKey"]
 	if apiKey == "" {
-		s.recordFailedTurn(ctx, req, conversation, req.ConversationID, "", nil, nil, "OpenAI API key is missing")
+		s.recordFailedTurn(
+			ctx,
+			req,
+			conversation,
+			req.ConversationID,
+			"",
+			nil,
+			nil,
+			"OpenAI API key is missing",
+		)
 		return errortypes.NewBusinessError("OpenAI API key is missing")
 	}
 
@@ -1550,7 +2014,12 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 			case "response.output_text.delta":
 				delta := event.AsResponseOutputTextDelta()
 				fullText += delta.Delta
-				emit(serviceports.StreamEvent{Event: "text_delta", Data: map[string]string{"delta": delta.Delta}})
+				emit(
+					serviceports.StreamEvent{
+						Event: "text_delta",
+						Data:  map[string]string{"delta": delta.Delta},
+					},
+				)
 
 			case "response.output_item.done":
 				item := event.AsResponseOutputItemDone()
@@ -1572,8 +2041,23 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 			streamErr := stream.Err()
 			s.logger.Error("stream error", zap.Error(streamErr))
 			userMsg := friendlyStreamError(streamErr)
-			s.recordFailedTurn(ctx, req, conversation, conversationID, fullText, toolCallLog, allActions, userMsg)
-			emit(serviceports.StreamEvent{Event: "error", Data: map[string]string{"message": userMsg}})
+			s.recordFailedTurn(
+				ctx,
+				req,
+				conversation,
+				conversationID,
+				fullText,
+				toolCallLog,
+				allActions,
+				userMsg,
+			)
+			emit(
+				serviceports.StreamEvent{
+					Event: "error",
+					Data:  map[string]string{"message": userMsg},
+				},
+			)
+
 			return nil
 		}
 
@@ -1590,27 +2074,34 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 				var sugArgs struct {
 					Suggestions []serviceports.ShipmentImportSuggestion `json:"suggestions"`
 				}
-				if err := json.Unmarshal([]byte(pc.args), &sugArgs); err == nil {
+				if err = sonic.Unmarshal([]byte(pc.args), &sugArgs); err == nil {
 					latestSuggestions = sugArgs.Suggestions
 				}
 				toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 					OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 						CallID: pc.callID,
-						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{OfString: openai.String(`{"ok":true}`)},
+						Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+							OfString: openai.String(`{"ok":true}`),
+						},
 					},
 				})
 				continue
 			}
 
 			// Emit tool start
-			emit(serviceports.StreamEvent{Event: "tool_call_start", Data: map[string]string{"name": pc.name, "callId": pc.callID}})
+			emit(
+				serviceports.StreamEvent{
+					Event: "tool_call_start",
+					Data:  map[string]string{"name": pc.name, "callId": pc.callID},
+				},
+			)
 
 			// Execute the tool
 			result, toolActions := s.executeToolCall(ctx, req.TenantInfo, pc.name, pc.args)
 			allActions = append(allActions, toolActions...)
 
 			status := "completed"
-			if len(result) > 0 {
+			if result != "" {
 				var check map[string]any
 				if json.Unmarshal([]byte(result), &check) == nil {
 					if _, hasErr := check["error"]; hasErr {
@@ -1638,7 +2129,9 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 			toolOutputs = append(toolOutputs, responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
 					CallID: pc.callID,
-					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{OfString: openai.String(result)},
+					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+						OfString: openai.String(result),
+					},
 				},
 			})
 		}
@@ -1655,7 +2148,12 @@ func (s *Service) ChatStream(ctx context.Context, req *serviceports.ShipmentImpo
 	// Emit suggestions only at the very end (so they match the final question, not intermediate steps)
 	latestSuggestions = normalizeSuggestions(latestSuggestions)
 	if len(latestSuggestions) > 0 {
-		emit(serviceports.StreamEvent{Event: "suggestions", Data: map[string]any{"suggestions": latestSuggestions}})
+		emit(
+			serviceports.StreamEvent{
+				Event: "suggestions",
+				Data:  map[string]any{"suggestions": latestSuggestions},
+			},
+		)
 	}
 
 	emit(serviceports.StreamEvent{Event: "done", Data: map[string]any{
@@ -1689,7 +2187,11 @@ func (s *Service) GetHistory(
 ) (*serviceports.ShipmentImportChatHistoryResponse, error) {
 	id, err := pulid.Parse(documentID)
 	if err != nil {
-		return nil, errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID")
+		return nil, errortypes.NewValidationError(
+			"documentId",
+			errortypes.ErrInvalid,
+			"Invalid document ID",
+		)
 	}
 
 	snapshot, err := s.getHistorySnapshot(ctx, id, tenantInfo)

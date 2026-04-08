@@ -56,7 +56,8 @@ export type BaseEndpoint =
   | "/tca/subscriptions/"
   | "/billing-queue/"
   | "/billing-queue/stats/"
-  | "/billing-queue/filter-presets/";
+  | "/billing-queue/filter-presets/"
+  | "/billing/invoices/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

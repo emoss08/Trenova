@@ -42,22 +42,6 @@ export const billingControlSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
 
-  invoiceNumberPrefix: z
-    .string()
-    .min(3, {
-      message: "Invoice number prefix must be between 3 and 10 characters",
-    })
-    .max(10, {
-      message: "Invoice number prefix must be between 3 and 10 characters",
-    }),
-  creditMemoNumberPrefix: z
-    .string()
-    .min(3, {
-      message: "Credit memo number prefix must be between 3 and 10 characters",
-    })
-    .max(10, {
-      message: "Credit memo number prefix must be between 3 and 10 characters",
-    }),
   invoiceTerms: z.string().optional().default(""),
   invoiceFooter: z.string().optional().default(""),
 

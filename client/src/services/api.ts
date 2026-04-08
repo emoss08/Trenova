@@ -31,6 +31,7 @@ import { HazardousMaterialService } from "./hazardous-material";
 import { HazmatSegregationRuleService } from "./hazmat-segregation-rule";
 import { HoldReasonService } from "./hold-reason";
 import { IntegrationService } from "./integration";
+import { InvoiceService } from "./invoice";
 import { LocationService } from "./location";
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
@@ -86,6 +87,7 @@ class APIService {
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
   public billingQueueService: BillingQueueService;
+  public invoiceService: InvoiceService;
   public dataEntryControlService: DataEntryControlService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
@@ -138,6 +140,7 @@ class APIService {
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
     this.billingQueueService = new BillingQueueService();
+    this.invoiceService = new InvoiceService();
     this.dataEntryControlService = new DataEntryControlService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();

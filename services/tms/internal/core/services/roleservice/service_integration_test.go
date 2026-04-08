@@ -5,9 +5,11 @@ package roleservice
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -308,8 +310,8 @@ func (p *integrationPermCacheRepo) Set(
 	perms *repositories.CachedPermissions,
 	ttl time.Duration,
 ) error {
-	key := "perms:" + userID.String() + ":" + orgID.String()
-	data, err := json.Marshal(perms)
+	key := fmt.Sprintf("perms:%s:%s", userID.String(), orgID.String())
+	data, err := sonic.Marshal(perms)
 	if err != nil {
 		return err
 	}
@@ -317,7 +319,7 @@ func (p *integrationPermCacheRepo) Set(
 }
 
 func (p *integrationPermCacheRepo) Delete(ctx context.Context, userID, orgID pulid.ID) error {
-	key := "perms:" + userID.String() + ":" + orgID.String()
+	key := fmt.Sprintf("perms:%s:%s", userID.String(), orgID.String())
 	return p.client.Del(ctx, key).Err()
 }
 
@@ -342,7 +344,7 @@ func (p *integrationPermCacheRepo) InvalidateOrganization(
 	ctx context.Context,
 	orgID pulid.ID,
 ) error {
-	pattern := "perms:*:" + orgID.String()
+	pattern := fmt.Sprintf("perms:*:%s", orgID.String())
 	keys, err := p.client.Keys(ctx, pattern).Result()
 	if err != nil {
 		return err

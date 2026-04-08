@@ -106,6 +106,12 @@ export default function BillingQueueDetailPane({
         </div>
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span>{customerName}</span>
+          {item.number && (
+            <>
+              <Separator orientation="vertical" className="h-3" />
+              <span className="font-mono">{item.number}</span>
+            </>
+          )}
           {shipment?.bol && (
             <>
               <Separator orientation="vertical" className="h-3" />

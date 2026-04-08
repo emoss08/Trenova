@@ -20,8 +20,7 @@ import (
 func NewMockDocumentContentService(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockDocumentContentService {
+}) *MockDocumentContentService {
 	mock := &MockDocumentContentService{}
 	mock.Mock.Test(t)
 
@@ -244,8 +243,8 @@ func (_c *MockDocumentContentService_GetShipmentDraft_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockDocumentContentService_GetShipmentDraft_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentContentService_GetShipmentDraft_Call {
-	_c.Call.Return(draft, err)
+func (_c *MockDocumentContentService_GetShipmentDraft_Call) Return(documentShipmentDraft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentContentService_GetShipmentDraft_Call {
+	_c.Call.Return(documentShipmentDraft, err)
 	return _c
 }
 

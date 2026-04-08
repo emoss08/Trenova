@@ -1,9 +1,10 @@
 package documenthandler
 
 import (
-	"encoding/json" //nolint:depguard // SSE event encoding
+	//nolint:depguard // SSE event encoding
 	"net/http"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
@@ -1207,14 +1208,14 @@ func (h *Handler) importAssistantChatStream(c *gin.Context) {
 	}
 
 	emit := func(event serviceports.StreamEvent) {
-		data, _ := json.Marshal(event.Data)
+		data, _ := sonic.Marshal(event.Data)
 		_, _ = c.Writer.WriteString("event: " + event.Event + "\n")
 		_, _ = c.Writer.WriteString("data: " + string(data) + "\n\n")
 		flusher.Flush()
 	}
 
 	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
-		errData, _ := json.Marshal(map[string]string{"message": err.Error()})
+		errData, _ := sonic.Marshal(map[string]string{"message": err.Error()})
 		_, _ = c.Writer.WriteString("event: error\n")
 		_, _ = c.Writer.WriteString("data: " + string(errData) + "\n\n")
 		flusher.Flush()

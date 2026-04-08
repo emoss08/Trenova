@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
@@ -49,6 +50,7 @@ func Options() fx.Option {
 		temporaljobs.Module,
 		schedule.Module,
 		auditjobs.Module,
+		billingjobs.Module,
 		documentintelligencejobs.Module,
 		documentuploadjobs.Module,
 		thumbnailjobs.Module,

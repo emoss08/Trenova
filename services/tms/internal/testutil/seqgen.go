@@ -70,6 +70,26 @@ func (g TestSequenceGenerator) GenerateInvoiceNumber(
 	return g.SingleValue, nil
 }
 
+func (g TestSequenceGenerator) GenerateCreditMemoNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}
+
+func (g TestSequenceGenerator) GenerateDebitMemoNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}
+
 func (g TestSequenceGenerator) GenerateWorkOrderNumber(
 	_ context.Context,
 	_ pulid.ID,

@@ -481,7 +481,7 @@ function FilterRow({
           <SelectTrigger className="w-18">
             <SelectValue>{getConnectorLabel(filter.connector)}</SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="w-auto">
             <SelectGroup>
               {Object.entries(CONNECTOR_LABELS).map(([value, label]) => (
                 <SelectItem key={value} value={value}>
@@ -497,7 +497,7 @@ function FilterRow({
         <SelectTrigger className="w-28">
           <SelectValue>{filter.label}</SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="w-auto">
           <SelectGroup>
             {columns.map((col) => (
               <SelectItem key={col.id} value={col.id}>
@@ -574,7 +574,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
                 : "Select Values"}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="w-auto">
             <SelectGroup>
               {filterOptions.map((option) => (
                 <SelectItem key={String(option.value)} value={option.value as string}>
@@ -592,7 +592,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
         <SelectTrigger className="w-full">
           <SelectValue>{selectedValue}</SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="w-auto">
           <SelectGroup>
             {filterOptions.map((option) => (
               <SelectItem key={String(option.value)} value={option.value as string}>

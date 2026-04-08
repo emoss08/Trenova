@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -116,6 +117,228 @@ func (_c *MockShipmentService_AutoCancelShipments_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// AutoMarkReadyToInvoiceIfEligible provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) AutoMarkReadyToInvoiceIfEligible(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) (*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AutoMarkReadyToInvoiceIfEligible")
+	}
+
+	var r0 *shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) (*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) *shipment.Shipment); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AutoMarkReadyToInvoiceIfEligible'
+type MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call struct {
+	*mock.Call
+}
+
+// AutoMarkReadyToInvoiceIfEligible is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shipmentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+//   - userID pulid.ID
+func (_e *MockShipmentService_Expecter) AutoMarkReadyToInvoiceIfEligible(ctx interface{}, shipmentID interface{}, tenantInfo interface{}, userID interface{}) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
+	return &MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call{Call: _e.mock.On("AutoMarkReadyToInvoiceIfEligible", ctx, shipmentID, tenantInfo, userID)}
+}
+
+func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID)) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		var arg3 pulid.ID
+		if args[3] != nil {
+			arg3 = args[3].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) Return(shipment1 *shipment.Shipment, err error) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
+	_c.Call.Return(shipment1, err)
+	return _c
+}
+
+func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) (*shipment.Shipment, error)) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BulkTransferToBilling provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) BulkTransferToBilling(ctx context.Context, req *services.BulkTransferShipmentToBillingRequest, actor *services.RequestActor) (*services.BulkTransferToBillingResponse, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkTransferToBilling")
+	}
+
+	var r0 *services.BulkTransferToBillingResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.BulkTransferShipmentToBillingRequest, *services.RequestActor) (*services.BulkTransferToBillingResponse, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.BulkTransferShipmentToBillingRequest, *services.RequestActor) *services.BulkTransferToBillingResponse); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.BulkTransferToBillingResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.BulkTransferShipmentToBillingRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_BulkTransferToBilling_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkTransferToBilling'
+type MockShipmentService_BulkTransferToBilling_Call struct {
+	*mock.Call
+}
+
+// BulkTransferToBilling is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.BulkTransferShipmentToBillingRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) BulkTransferToBilling(ctx interface{}, req interface{}, actor interface{}) *MockShipmentService_BulkTransferToBilling_Call {
+	return &MockShipmentService_BulkTransferToBilling_Call{Call: _e.mock.On("BulkTransferToBilling", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_BulkTransferToBilling_Call) Run(run func(ctx context.Context, req *services.BulkTransferShipmentToBillingRequest, actor *services.RequestActor)) *MockShipmentService_BulkTransferToBilling_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.BulkTransferShipmentToBillingRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.BulkTransferShipmentToBillingRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_BulkTransferToBilling_Call) Return(bulkTransferToBillingResponse *services.BulkTransferToBillingResponse, err error) *MockShipmentService_BulkTransferToBilling_Call {
+	_c.Call.Return(bulkTransferToBillingResponse, err)
+	return _c
+}
+
+func (_c *MockShipmentService_BulkTransferToBilling_Call) RunAndReturn(run func(ctx context.Context, req *services.BulkTransferShipmentToBillingRequest, actor *services.RequestActor) (*services.BulkTransferToBillingResponse, error)) *MockShipmentService_BulkTransferToBilling_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CalculateLoadingOptimization provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) CalculateLoadingOptimization(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CalculateLoadingOptimization")
+	}
+
+	var r0 *repositories.LoadingOptimizationResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) *repositories.LoadingOptimizationResult); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.LoadingOptimizationResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.LoadingOptimizationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_CalculateLoadingOptimization_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CalculateLoadingOptimization'
+type MockShipmentService_CalculateLoadingOptimization_Call struct {
+	*mock.Call
+}
+
+// CalculateLoadingOptimization is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.LoadingOptimizationRequest
+func (_e *MockShipmentService_Expecter) CalculateLoadingOptimization(ctx interface{}, req interface{}) *MockShipmentService_CalculateLoadingOptimization_Call {
+	return &MockShipmentService_CalculateLoadingOptimization_Call{Call: _e.mock.On("CalculateLoadingOptimization", ctx, req)}
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Run(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest)) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.LoadingOptimizationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.LoadingOptimizationRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Return(loadingOptimizationResult *repositories.LoadingOptimizationResult, err error) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Return(loadingOptimizationResult, err)
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateLoadingOptimization_Call) RunAndReturn(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)) *MockShipmentService_CalculateLoadingOptimization_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CalculateTotals provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) CalculateTotals(ctx context.Context, entity *shipment.Shipment, userID pulid.ID) (*repositories.ShipmentTotalsResponse, error) {
 	ret := _mock.Called(ctx, entity, userID)
@@ -186,74 +409,6 @@ func (_c *MockShipmentService_CalculateTotals_Call) Return(shipmentTotalsRespons
 }
 
 func (_c *MockShipmentService_CalculateTotals_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment, userID pulid.ID) (*repositories.ShipmentTotalsResponse, error)) *MockShipmentService_CalculateTotals_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CalculateLoadingOptimization provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) CalculateLoadingOptimization(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CalculateLoadingOptimization")
-	}
-
-	var r0 *repositories.LoadingOptimizationResult
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.LoadingOptimizationRequest) *repositories.LoadingOptimizationResult); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*repositories.LoadingOptimizationResult)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.LoadingOptimizationRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentService_CalculateLoadingOptimization_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CalculateLoadingOptimization'
-type MockShipmentService_CalculateLoadingOptimization_Call struct {
-	*mock.Call
-}
-
-// CalculateLoadingOptimization is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.LoadingOptimizationRequest
-func (_e *MockShipmentService_Expecter) CalculateLoadingOptimization(ctx interface{}, req interface{}) *MockShipmentService_CalculateLoadingOptimization_Call {
-	return &MockShipmentService_CalculateLoadingOptimization_Call{Call: _e.mock.On("CalculateLoadingOptimization", ctx, req)}
-}
-
-func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Run(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest)) *MockShipmentService_CalculateLoadingOptimization_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.LoadingOptimizationRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.LoadingOptimizationRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentService_CalculateLoadingOptimization_Call) Return(result *repositories.LoadingOptimizationResult, err error) *MockShipmentService_CalculateLoadingOptimization_Call {
-	_c.Call.Return(result, err)
-	return _c
-}
-
-func (_c *MockShipmentService_CalculateLoadingOptimization_Call) RunAndReturn(run func(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error)) *MockShipmentService_CalculateLoadingOptimization_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -798,6 +953,80 @@ func (_c *MockShipmentService_GetAutoCancelableShipments_Call) RunAndReturn(run 
 	return _c
 }
 
+// GetBillingReadiness provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) GetBillingReadiness(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentBillingReadiness, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBillingReadiness")
+	}
+
+	var r0 *services.ShipmentBillingReadiness
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.ShipmentBillingReadiness, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.ShipmentBillingReadiness); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentBillingReadiness)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_GetBillingReadiness_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBillingReadiness'
+type MockShipmentService_GetBillingReadiness_Call struct {
+	*mock.Call
+}
+
+// GetBillingReadiness is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shipmentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockShipmentService_Expecter) GetBillingReadiness(ctx interface{}, shipmentID interface{}, tenantInfo interface{}) *MockShipmentService_GetBillingReadiness_Call {
+	return &MockShipmentService_GetBillingReadiness_Call{Call: _e.mock.On("GetBillingReadiness", ctx, shipmentID, tenantInfo)}
+}
+
+func (_c *MockShipmentService_GetBillingReadiness_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockShipmentService_GetBillingReadiness_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_GetBillingReadiness_Call) Return(shipmentBillingReadiness *services.ShipmentBillingReadiness, err error) *MockShipmentService_GetBillingReadiness_Call {
+	_c.Call.Return(shipmentBillingReadiness, err)
+	return _c
+}
+
+func (_c *MockShipmentService_GetBillingReadiness_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentBillingReadiness, error)) *MockShipmentService_GetBillingReadiness_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetDelayedShipments provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) GetDelayedShipments(ctx context.Context, req *repositories.GetDelayedShipmentsRequest) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)
@@ -1002,151 +1231,6 @@ func (_c *MockShipmentService_GetUIPolicy_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
-// GetBillingReadiness provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) GetBillingReadiness(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentBillingReadiness, error) {
-	ret := _mock.Called(ctx, shipmentID, tenantInfo)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetBillingReadiness")
-	}
-
-	var r0 *services.ShipmentBillingReadiness
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.ShipmentBillingReadiness, error)); ok {
-		return returnFunc(ctx, shipmentID, tenantInfo)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.ShipmentBillingReadiness); ok {
-		r0 = returnFunc(ctx, shipmentID, tenantInfo)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*services.ShipmentBillingReadiness)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
-		r1 = returnFunc(ctx, shipmentID, tenantInfo)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentService_GetBillingReadiness_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBillingReadiness'
-type MockShipmentService_GetBillingReadiness_Call struct {
-	*mock.Call
-}
-
-// GetBillingReadiness is a helper method to define mock.On call
-//   - ctx context.Context
-//   - shipmentID pulid.ID
-//   - tenantInfo pagination.TenantInfo
-func (_e *MockShipmentService_Expecter) GetBillingReadiness(ctx interface{}, shipmentID interface{}, tenantInfo interface{}) *MockShipmentService_GetBillingReadiness_Call {
-	return &MockShipmentService_GetBillingReadiness_Call{Call: _e.mock.On("GetBillingReadiness", ctx, shipmentID, tenantInfo)}
-}
-
-func (_c *MockShipmentService_GetBillingReadiness_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockShipmentService_GetBillingReadiness_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 pulid.ID
-		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
-		}
-		var arg2 pagination.TenantInfo
-		if args[2] != nil {
-			arg2 = args[2].(pagination.TenantInfo)
-		}
-		run(arg0, arg1, arg2)
-	})
-	return _c
-}
-
-func (_c *MockShipmentService_GetBillingReadiness_Call) Return(readiness *services.ShipmentBillingReadiness, err error) *MockShipmentService_GetBillingReadiness_Call {
-	_c.Call.Return(readiness, err)
-	return _c
-}
-
-func (_c *MockShipmentService_GetBillingReadiness_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.ShipmentBillingReadiness, error)) *MockShipmentService_GetBillingReadiness_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AutoMarkReadyToInvoiceIfEligible provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) AutoMarkReadyToInvoiceIfEligible(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) (*shipment.Shipment, error) {
-	ret := _mock.Called(ctx, shipmentID, tenantInfo, userID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AutoMarkReadyToInvoiceIfEligible")
-	}
-
-	var r0 *shipment.Shipment
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) (*shipment.Shipment, error)); ok {
-		return returnFunc(ctx, shipmentID, tenantInfo, userID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) *shipment.Shipment); ok {
-		r0 = returnFunc(ctx, shipmentID, tenantInfo, userID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*shipment.Shipment)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, shipmentID, tenantInfo, userID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AutoMarkReadyToInvoiceIfEligible'
-type MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call struct {
-	*mock.Call
-}
-
-// AutoMarkReadyToInvoiceIfEligible is a helper method to define mock.On call
-//   - ctx context.Context
-//   - shipmentID pulid.ID
-//   - tenantInfo pagination.TenantInfo
-//   - userID pulid.ID
-func (_e *MockShipmentService_Expecter) AutoMarkReadyToInvoiceIfEligible(ctx interface{}, shipmentID interface{}, tenantInfo interface{}, userID interface{}) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
-	return &MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call{Call: _e.mock.On("AutoMarkReadyToInvoiceIfEligible", ctx, shipmentID, tenantInfo, userID)}
-}
-
-func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID)) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 pulid.ID
-		if args[1] != nil {
-			arg1 = args[1].(pulid.ID)
-		}
-		var arg2 pagination.TenantInfo
-		if args[2] != nil {
-			arg2 = args[2].(pagination.TenantInfo)
-		}
-		var arg3 pulid.ID
-		if args[3] != nil {
-			arg3 = args[3].(pulid.ID)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) Return(shp *shipment.Shipment, err error) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
-	_c.Call.Return(shp, err)
-	return _c
-}
-
-func (_c *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) (*shipment.Shipment, error)) *MockShipmentService_AutoMarkReadyToInvoiceIfEligible_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // List provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) List(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
 	ret := _mock.Called(ctx, req)
@@ -1285,6 +1369,80 @@ func (_c *MockShipmentService_TransferOwnership_Call) Return(shipment1 *shipment
 }
 
 func (_c *MockShipmentService_TransferOwnership_Call) RunAndReturn(run func(ctx context.Context, req *repositories.TransferOwnershipRequest, actor *services.RequestActor) (*shipment.Shipment, error)) *MockShipmentService_TransferOwnership_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TransferToBilling provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) TransferToBilling(ctx context.Context, req *services.TransferShipmentToBillingRequest, actor *services.RequestActor) (*billingqueue.BillingQueueItem, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TransferToBilling")
+	}
+
+	var r0 *billingqueue.BillingQueueItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.TransferShipmentToBillingRequest, *services.RequestActor) (*billingqueue.BillingQueueItem, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.TransferShipmentToBillingRequest, *services.RequestActor) *billingqueue.BillingQueueItem); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*billingqueue.BillingQueueItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.TransferShipmentToBillingRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_TransferToBilling_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransferToBilling'
+type MockShipmentService_TransferToBilling_Call struct {
+	*mock.Call
+}
+
+// TransferToBilling is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.TransferShipmentToBillingRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) TransferToBilling(ctx interface{}, req interface{}, actor interface{}) *MockShipmentService_TransferToBilling_Call {
+	return &MockShipmentService_TransferToBilling_Call{Call: _e.mock.On("TransferToBilling", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_TransferToBilling_Call) Run(run func(ctx context.Context, req *services.TransferShipmentToBillingRequest, actor *services.RequestActor)) *MockShipmentService_TransferToBilling_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.TransferShipmentToBillingRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.TransferShipmentToBillingRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_TransferToBilling_Call) Return(billingQueueItem *billingqueue.BillingQueueItem, err error) *MockShipmentService_TransferToBilling_Call {
+	_c.Call.Return(billingQueueItem, err)
+	return _c
+}
+
+func (_c *MockShipmentService_TransferToBilling_Call) RunAndReturn(run func(ctx context.Context, req *services.TransferShipmentToBillingRequest, actor *services.RequestActor) (*billingqueue.BillingQueueItem, error)) *MockShipmentService_TransferToBilling_Call {
 	_c.Call.Return(run)
 	return _c
 }

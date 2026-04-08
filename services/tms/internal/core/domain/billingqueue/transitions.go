@@ -13,6 +13,10 @@ var statusTransitions = map[Status]map[Status]struct{}{
 		StatusOnHold:        {},
 		StatusCanceled:      {},
 	},
+	StatusApproved: {
+		StatusInReview: {},
+		StatusPosted:   {},
+	},
 	StatusOnHold: {
 		StatusReadyForReview: {},
 		StatusInReview:       {},
@@ -27,9 +31,7 @@ var statusTransitions = map[Status]map[Status]struct{}{
 		StatusInReview:       {},
 		StatusCanceled:       {},
 	},
-	StatusApproved: {
-		StatusInReview: {},
-	},
+	StatusPosted:   {},
 	StatusCanceled: {},
 }
 

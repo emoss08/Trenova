@@ -471,8 +471,6 @@ var BillingControlColumns = struct {
 	ID                            Column // "id" → qualified: "bc.id"
 	BusinessUnitID                Column // "business_unit_id" → qualified: "bc.business_unit_id"
 	OrganizationID                Column // "organization_id" → qualified: "bc.organization_id"
-	InvoiceNumberPrefix           Column // "invoice_number_prefix" → qualified: "bc.invoice_number_prefix"
-	CreditMemoNumberPrefix        Column // "credit_memo_number_prefix" → qualified: "bc.credit_memo_number_prefix"
 	InvoiceTerms                  Column // "invoice_terms" → qualified: "bc.invoice_terms"
 	InvoiceFooter                 Column // "invoice_footer" → qualified: "bc.invoice_footer"
 	TransferSchedule              Column // "transfer_schedule" → qualified: "bc.transfer_schedule"
@@ -500,8 +498,6 @@ var BillingControlColumns = struct {
 	ID:                            NewColumn("id", "bc"),
 	BusinessUnitID:                NewColumn("business_unit_id", "bc"),
 	OrganizationID:                NewColumn("organization_id", "bc"),
-	InvoiceNumberPrefix:           NewColumn("invoice_number_prefix", "bc"),
-	CreditMemoNumberPrefix:        NewColumn("credit_memo_number_prefix", "bc"),
 	InvoiceTerms:                  NewColumn("invoice_terms", "bc"),
 	InvoiceFooter:                 NewColumn("invoice_footer", "bc"),
 	TransferSchedule:              NewColumn("transfer_schedule", "bc"),
@@ -535,8 +531,6 @@ var BillingControlFieldMap = map[string]string{
 	"id":                            "id",
 	"businessUnitId":                "business_unit_id",
 	"organizationId":                "organization_id",
-	"invoiceNumberPrefix":           "invoice_number_prefix",
-	"creditMemoNumberPrefix":        "credit_memo_number_prefix",
 	"invoiceTerms":                  "invoice_terms",
 	"invoiceFooter":                 "invoice_footer",
 	"transferSchedule":              "transfer_schedule",
@@ -568,8 +562,6 @@ var BillingControlInsertableColumns = []string{
 	"id",
 	"business_unit_id",
 	"organization_id",
-	"invoice_number_prefix",
-	"credit_memo_number_prefix",
 	"invoice_terms",
 	"invoice_footer",
 	"transfer_schedule",
@@ -661,8 +653,6 @@ var BillingControlFilter = struct {
 	ID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
 	BusinessUnitID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	OrganizationID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	InvoiceNumberPrefix           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumberPrefix" → DB: "invoice_number_prefix"
-	CreditMemoNumberPrefix        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditMemoNumberPrefix" → DB: "credit_memo_number_prefix"
 	InvoiceTerms                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceTerms" → DB: "invoice_terms"
 	InvoiceFooter                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceFooter" → DB: "invoice_footer"
 	TransferSchedule              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transferSchedule" → DB: "transfer_schedule"
@@ -695,12 +685,6 @@ var BillingControlFilter = struct {
 	},
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("organizationId", op, value)
-	},
-	InvoiceNumberPrefix: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("invoiceNumberPrefix", op, value)
-	},
-	CreditMemoNumberPrefix: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("creditMemoNumberPrefix", op, value)
 	},
 	InvoiceTerms: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceTerms", op, value)

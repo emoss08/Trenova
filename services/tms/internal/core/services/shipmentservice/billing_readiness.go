@@ -142,7 +142,7 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 		s.l.Warn("failed to publish shipment invalidation after auto-mark", zap.Error(err))
 	}
 
-	s.autoTransferToBillingQueue(ctx, updatedEntity, tenantInfo, &services.RequestActor{
+	s.autoTransferToBillingQueue(ctx, updatedEntity, &services.RequestActor{
 		PrincipalType:  services.PrincipalTypeUser,
 		PrincipalID:    userID,
 		UserID:         userID,
@@ -404,20 +404,110 @@ func buildDocumentRequirements(
 	return requirements
 }
 
+func (s *service) TransferToBilling(
+	ctx context.Context,
+	req *services.TransferShipmentToBillingRequest,
+	actor *services.RequestActor,
+) (*billingqueue.BillingQueueItem, error) {
+	if s.billingQueueService == nil {
+		return nil, errortypes.NewConflictError("Billing queue service is unavailable")
+	}
+
+	log := s.l.With(
+		zap.String("operation", "TransferToBilling"),
+		zap.String("shipmentID", req.ShipmentID.String()),
+	)
+
+	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID: req.ShipmentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: actor.OrganizationID,
+			BuID:  actor.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		log.Error("failed to get shipment for billing transfer", zap.Error(err))
+		return nil, err
+	}
+
+	if entity.BillingTransferStatus != shipment.BillingTransferNone &&
+		entity.BillingTransferStatus != shipment.BillingTransferSentBackToOps {
+		return nil, errortypes.NewValidationError(
+			"billingTransferStatus",
+			errortypes.ErrInvalidOperation,
+			"Shipment has already been transferred to billing",
+		)
+	}
+
+	billType := req.BillType
+	if billType == "" {
+		billType = billingqueue.BillTypeInvoice
+	}
+
+	item, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
+		ShipmentID: req.ShipmentID,
+		BillType:   billType,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: actor.OrganizationID,
+			BuID:  actor.BusinessUnitID,
+		},
+	}, actor)
+	if err != nil {
+		log.Error("failed to transfer shipment to billing", zap.Error(err))
+		return nil, err
+	}
+
+	return item, nil
+}
+
+func (s *service) BulkTransferToBilling(
+	ctx context.Context,
+	req *services.BulkTransferShipmentToBillingRequest,
+	actor *services.RequestActor,
+) (*services.BulkTransferToBillingResponse, error) {
+	if len(req.ShipmentIDs) == 0 {
+		return &services.BulkTransferToBillingResponse{}, nil
+	}
+
+	results := make([]services.BulkTransferToBillingResult, 0, len(req.ShipmentIDs))
+	successCount := 0
+
+	for _, shipmentID := range req.ShipmentIDs {
+		item, err := s.TransferToBilling(ctx, &services.TransferShipmentToBillingRequest{
+			ShipmentID: shipmentID,
+			BillType:   req.BillType,
+		}, actor)
+
+		result := services.BulkTransferToBillingResult{
+			ShipmentID: shipmentID,
+		}
+		if err != nil {
+			result.Error = err.Error()
+		} else {
+			result.Success = true
+			result.Item = item
+			successCount++
+		}
+
+		results = append(results, result)
+	}
+
+	return &services.BulkTransferToBillingResponse{
+		Results:      results,
+		TotalCount:   len(req.ShipmentIDs),
+		SuccessCount: successCount,
+		ErrorCount:   len(req.ShipmentIDs) - successCount,
+	}, nil
+}
+
 func (s *service) autoTransferToBillingQueue(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	tenantInfo pagination.TenantInfo,
 	actor *services.RequestActor,
 ) {
-	if s.billingQueueService == nil {
-		return
-	}
-
-	if _, err := s.billingQueueService.TransferToBilling(ctx, &services.TransferToBillingRequest{
+	if _, err := s.TransferToBilling(ctx, &services.TransferShipmentToBillingRequest{
 		ShipmentID: entity.ID,
 		BillType:   billingqueue.BillTypeInvoice,
-		TenantInfo: tenantInfo,
 	}, actor); err != nil {
 		s.l.Warn("failed to auto-transfer shipment to billing queue",
 			zap.String("shipmentId", entity.ID.String()),

@@ -30,6 +30,7 @@ type BillingQueueItem struct {
 	BusinessUnitID      pulid.ID             `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	ShipmentID          pulid.ID             `json:"shipmentId"          bun:"shipment_id,type:VARCHAR(100),notnull"`
 	AssignedBillerID    *pulid.ID            `json:"assignedBillerId"    bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
+	Number              string               `json:"number"              bun:"number,type:VARCHAR(100),nullzero"`
 	Status              Status               `json:"status"              bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
 	BillType            BillType             `json:"billType"            bun:"bill_type,type:billing_type,notnull,default:'Invoice'"`
 	ExceptionReasonCode *ExceptionReasonCode `json:"exceptionReasonCode" bun:"exception_reason_code,type:VARCHAR(50),nullzero"`
@@ -68,52 +69,6 @@ func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
-
-	b.validateStatusConstraints(multiErr)
-}
-
-func (b *BillingQueueItem) validateStatusConstraints(multiErr *errortypes.MultiError) {
-	switch b.Status {
-	case StatusInReview:
-		if b.AssignedBillerID == nil || b.AssignedBillerID.IsNil() {
-			multiErr.Add(
-				"assignedBillerId",
-				errortypes.ErrRequired,
-				"Assigned biller is required when status is InReview",
-			)
-		}
-	case StatusSentBackToOps, StatusException:
-		if b.ExceptionReasonCode == nil {
-			multiErr.Add(
-				"exceptionReasonCode",
-				errortypes.ErrRequired,
-				"Exception reason code is required",
-			)
-		} else if !b.ExceptionReasonCode.IsValid() {
-			multiErr.Add("exceptionReasonCode", errortypes.ErrInvalid, "Invalid exception reason code")
-		}
-
-		notesRequired := b.Status == StatusException ||
-			(b.ExceptionReasonCode != nil && *b.ExceptionReasonCode == ExceptionOther)
-		if notesRequired && b.ExceptionNotes == "" {
-			multiErr.Add("exceptionNotes", errortypes.ErrRequired, "Exception notes are required")
-		}
-	case StatusCanceled:
-		if b.CanceledByID == nil || b.CanceledByID.IsNil() {
-			multiErr.Add(
-				"canceledById",
-				errortypes.ErrRequired,
-				"Canceled by is required when status is Canceled",
-			)
-		}
-		if b.CancelReason == "" {
-			multiErr.Add(
-				"cancelReason",
-				errortypes.ErrRequired,
-				"Cancel reason is required when status is Canceled",
-			)
 		}
 	}
 }

@@ -15,6 +15,7 @@ import {
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
   shipmentUpdateSchema,
+  type BulkTransferToBillingResponse,
   type DuplicateShipmentRequest,
   type DuplicateShipmentResponse,
   type GetPreviousRatesRequest,
@@ -132,6 +133,21 @@ export class ShipmentService {
       req,
     );
     return safeParse(loadingOptimizationResultSchema, response, "Loading Optimization");
+  }
+
+  public async transferToBilling(shipmentId: string, billType?: string) {
+    const response = await api.post(`/shipments/${shipmentId}/transfer-to-billing/`, {
+      billType: billType ?? "Invoice",
+    });
+    return response;
+  }
+
+  public async bulkTransferToBilling(shipmentIds: string[], billType?: string) {
+    const response = await api.post<BulkTransferToBillingResponse>(
+      "/shipments/bulk-transfer-to-billing/",
+      { shipmentIds, billType: billType ?? "Invoice" },
+    );
+    return response;
   }
 
   public async getBillingReadiness(shipmentId: Shipment["id"]) {

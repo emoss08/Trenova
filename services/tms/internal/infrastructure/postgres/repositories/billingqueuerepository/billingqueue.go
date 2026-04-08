@@ -40,12 +40,18 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListBillingQueueItemsRequest,
 ) *bun.SelectQuery {
+	bqi := buncolgen.BillingQueueItemColumns
+
 	q = querybuilder.ApplyFilters(
 		q,
 		buncolgen.BillingQueueItemTable.Alias,
 		req.Filter,
 		(*billingqueue.BillingQueueItem)(nil),
 	)
+
+	if !req.IncludePosted {
+		q = q.Where(bqi.Status.Ne(), billingqueue.StatusPosted)
+	}
 
 	q = q.Relation(buncolgen.BillingQueueItemRelations.Shipment).
 		Relation(buncolgen.Rel(buncolgen.BillingQueueItemRelations.Shipment, buncolgen.ShipmentRelations.Customer)).
@@ -153,8 +159,12 @@ func (r *repository) Update(
 		return nil, fmt.Errorf("update billing queue item: %w", err)
 	}
 
-	if err := dberror.CheckRowsAffected(result, "Billing queue item", entity.ID.String()); err != nil {
-		return nil, err
+	if rowsErr := dberror.CheckRowsAffected(
+		result,
+		"Billing queue item",
+		entity.ID.String(),
+	); rowsErr != nil {
+		return nil, rowsErr
 	}
 
 	return r.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{

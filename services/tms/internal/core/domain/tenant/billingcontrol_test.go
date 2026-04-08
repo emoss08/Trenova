@@ -15,8 +15,6 @@ func newValidBillingControl() *BillingControl {
 		ID:                        pulid.MustNew("bc_"),
 		BusinessUnitID:            pulid.MustNew("bu_"),
 		OrganizationID:            pulid.MustNew("org_"),
-		InvoiceNumberPrefix:       "INV-",
-		CreditMemoNumberPrefix:    "CM-",
 		PaymentTerm:               PaymentTermNet30,
 		BillingExceptionHandling:  BillingExceptionQueue,
 		TransferSchedule:          TransferScheduleContinuous,
@@ -37,36 +35,6 @@ func TestBillingControl_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid entity passes", func(_ *BillingControl) {}, false},
-		{
-			"missing invoice prefix fails",
-			func(bc *BillingControl) { bc.InvoiceNumberPrefix = "" },
-			true,
-		},
-		{
-			"invoice prefix too short fails",
-			func(bc *BillingControl) { bc.InvoiceNumberPrefix = "AB" },
-			true,
-		},
-		{
-			"invoice prefix too long fails",
-			func(bc *BillingControl) { bc.InvoiceNumberPrefix = "ABCDEFGHIJK" },
-			true,
-		},
-		{
-			"invoice prefix with special chars fails",
-			func(bc *BillingControl) { bc.InvoiceNumberPrefix = "INV@#" },
-			true,
-		},
-		{
-			"missing credit memo prefix fails",
-			func(bc *BillingControl) { bc.CreditMemoNumberPrefix = "" },
-			true,
-		},
-		{
-			"credit memo prefix too short fails",
-			func(bc *BillingControl) { bc.CreditMemoNumberPrefix = "C" },
-			true,
-		},
 		{"missing payment term fails", func(bc *BillingControl) { bc.PaymentTerm = "" }, true},
 		{
 			"invalid payment term fails",
@@ -139,7 +107,7 @@ func TestBillingControl_BeforeAppendModel(t *testing.T) {
 	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
 		t.Parallel()
 		bc := &BillingControl{}
-		err := bc.BeforeAppendModel(nil, (*bun.InsertQuery)(nil))
+		err := bc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
 		require.NoError(t, err)
 		assert.False(t, bc.ID.IsNil())
 		assert.NotZero(t, bc.CreatedAt)
@@ -149,7 +117,7 @@ func TestBillingControl_BeforeAppendModel(t *testing.T) {
 		t.Parallel()
 		existingID := pulid.MustNew("bc_")
 		bc := &BillingControl{ID: existingID}
-		err := bc.BeforeAppendModel(nil, (*bun.InsertQuery)(nil))
+		err := bc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
 		require.NoError(t, err)
 		assert.Equal(t, existingID, bc.ID)
 	})
@@ -157,7 +125,7 @@ func TestBillingControl_BeforeAppendModel(t *testing.T) {
 	t.Run("update sets UpdatedAt", func(t *testing.T) {
 		t.Parallel()
 		bc := &BillingControl{}
-		err := bc.BeforeAppendModel(nil, (*bun.UpdateQuery)(nil))
+		err := bc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
 		require.NoError(t, err)
 		assert.NotZero(t, bc.UpdatedAt)
 	})

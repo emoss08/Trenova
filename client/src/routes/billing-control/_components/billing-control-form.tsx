@@ -1,5 +1,4 @@
 import { BetaTag } from "@/components/beta-tag";
-import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -83,28 +82,6 @@ function InvoiceSettingsForm() {
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={2}>
-          <FormControl>
-            <InputField
-              control={control}
-              name="invoiceNumberPrefix"
-              rules={{ required: true }}
-              maxLength={10}
-              label="Invoice Number Prefix"
-              placeholder="Enter the prefix for the invoice number"
-              description="Establishes the standardized identifier that precedes the sequential number in all invoices."
-            />
-          </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="creditMemoNumberPrefix"
-              rules={{ required: true }}
-              maxLength={10}
-              label="Credit Memo Number Prefix"
-              placeholder="Enter the prefix for the credit memo number"
-              description="Defines the standardized identifier that precedes the sequential number in all credit memos."
-            />
-          </FormControl>
           <FormControl>
             <SwitchField
               control={control}

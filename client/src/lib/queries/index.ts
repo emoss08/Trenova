@@ -12,6 +12,7 @@ import { dispatchControl } from "./dispatch-control";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { integration } from "./integration";
+import { invoice } from "./invoice";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { sequenceConfig } from "./sequence-config";
@@ -38,6 +39,7 @@ export const queries = mergeQueryKeys(
   worker,
   organization,
   integration,
+  invoice,
   customer,
   shipment,
   formulaTemplate,

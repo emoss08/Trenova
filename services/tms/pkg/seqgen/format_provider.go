@@ -105,6 +105,24 @@ func defaultFormat(sequenceType tenant.SequenceType) (*tenant.SequenceFormat, er
 			IncludeMonth:   true,
 			SequenceDigits: 6,
 		}, nil
+	case tenant.SequenceTypeCreditMemo:
+		return &tenant.SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "CM",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
+	case tenant.SequenceTypeDebitMemo:
+		return &tenant.SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "DM",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case tenant.SequenceTypeWorkOrder:
 		return &tenant.SequenceFormat{
 			Type:           sequenceType,

@@ -18,8 +18,7 @@ import (
 func NewMockDocumentShipmentDraftRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockDocumentShipmentDraftRepository {
+}) *MockDocumentShipmentDraftRepository {
 	mock := &MockDocumentShipmentDraftRepository{}
 	mock.Mock.Test(t)
 
@@ -105,8 +104,8 @@ func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Run(run func
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
-	_c.Call.Return(draft, err)
+func (_c *MockDocumentShipmentDraftRepository_GetByDocumentID_Call) Return(documentShipmentDraft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_GetByDocumentID_Call {
+	_c.Call.Return(documentShipmentDraft, err)
 	return _c
 }
 
@@ -173,8 +172,8 @@ func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Return(draft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_Upsert_Call {
-	_c.Call.Return(draft, err)
+func (_c *MockDocumentShipmentDraftRepository_Upsert_Call) Return(documentShipmentDraft *documentshipmentdraft.DocumentShipmentDraft, err error) *MockDocumentShipmentDraftRepository_Upsert_Call {
+	_c.Call.Return(documentShipmentDraft, err)
 	return _c
 }
 

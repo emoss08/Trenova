@@ -1,3 +1,4 @@
+import { BillingRecordCard } from "@/components/billing/billing-record-card";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -8,7 +9,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { billingQueueStatusChoices } from "@/lib/choices";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import type { BillingQueueItem, BillingQueueStatus } from "@/types/billing-queue";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, PauseIcon, UserPlusIcon, XIcon } from "lucide-react";
@@ -41,45 +42,33 @@ export function BillingQueueItemCard({
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <button
-          type="button"
-          onClick={onClick}
-          className={cn(
-            "flex w-full items-stretch gap-2 rounded-md border p-2.5 text-left transition-colors",
-            "hover:bg-accent/50",
-            isSelected ? "border-border bg-muted" : "border-border",
-          )}
-        >
-          <div
-            className="w-[3px] shrink-0 rounded-full"
-            style={{ backgroundColor: STATUS_COLORS[item.status] }}
-          />
-          <div className="flex flex-1 min-w-0 flex-col gap-0.5">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold truncate">{proNumber}</span>
-              {totalCharges != null && (
-                <span className="text-xs font-medium tabular-nums shrink-0">
-                  {formatCurrency(Number(totalCharges))}
-                </span>
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground truncate">
-              {customerName || "No customer"}
-            </span>
+        <BillingRecordCard
+          accentColor={STATUS_COLORS[item.status]}
+          title={proNumber}
+          auxiliary={
+            item.number ? (
+              <span className="font-mono text-[10px] text-muted-foreground">{item.number}</span>
+            ) : null
+          }
+          amount={totalCharges != null ? formatCurrency(Number(totalCharges)) : undefined}
+          subtitle={customerName || "No customer"}
+          meta={
             <Tooltip>
               <TooltipTrigger
                 render={
-                  <div className="flex items-center gap-1 w-fit">
+                  <div className="flex w-fit items-center gap-1">
                     <span className="text-[11px] text-muted-foreground/70">{age}</span>
                   </div>
                 }
-              ></TooltipTrigger>
+              />
               <TooltipContent side="left" sideOffset={10}>
                 {generateDateTimeStringFromUnixTimestamp(item.createdAt)}
               </TooltipContent>
             </Tooltip>
-          </div>
-        </button>
+          }
+          isSelected={isSelected}
+          onClick={onClick}
+        />
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem onClick={onAssignBiller} disabled={isTerminal}>

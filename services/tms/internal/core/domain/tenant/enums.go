@@ -6,6 +6,8 @@ const (
 	SequenceTypeProNumber     = SequenceType("pro_number")
 	SequenceTypeConsolidation = SequenceType("consolidation")
 	SequenceTypeInvoice       = SequenceType("invoice")
+	SequenceTypeCreditMemo    = SequenceType("credit_memo")
+	SequenceTypeDebitMemo     = SequenceType("debit_memo")
 	SequenceTypeWorkOrder     = SequenceType("work_order")
 )
 

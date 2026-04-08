@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
@@ -27,6 +28,8 @@ func RegisterEntities() []any {
 		&ailog.Log{},
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},
+		&invoice.Invoice{},
+		&invoice.Line{},
 		&tenant.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},

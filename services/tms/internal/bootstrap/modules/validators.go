@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
@@ -27,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
@@ -128,6 +130,7 @@ var ValidatorModule = fx.Module("validators",
 		locationservice.NewValidator,
 		documenttypeservice.NewValidator,
 		holdreasonservice.NewValidator,
+		invoiceservice.NewValidator,
 		billingcontrolservice.NewValidator,
 		dataentrycontrolservice.NewValidator,
 		dispatchcontrolservice.NewValidator,
@@ -135,6 +138,7 @@ var ValidatorModule = fx.Module("validators",
 		documentcontrolservice.NewValidator,
 		documentparsingruleservice.NewValidator,
 		documentpacketruleservice.NewValidator,
+		billingqueueservice.NewValidator,
 	),
 	fx.Options(
 		ValidationFrameworkModule,

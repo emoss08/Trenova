@@ -106,6 +106,74 @@ func (_c *MockAIDocumentService_ExtractRateConfirmation_Call) RunAndReturn(run f
 	return _c
 }
 
+// PollRateConfirmationBackgroundExtraction provides a mock function for the type MockAIDocumentService
+func (_mock *MockAIDocumentService) PollRateConfirmationBackgroundExtraction(ctx context.Context, req *services.AIBackgroundExtractPollRequest) (*services.AIBackgroundExtractPollResult, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PollRateConfirmationBackgroundExtraction")
+	}
+
+	var r0 *services.AIBackgroundExtractPollResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AIBackgroundExtractPollRequest) (*services.AIBackgroundExtractPollResult, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AIBackgroundExtractPollRequest) *services.AIBackgroundExtractPollResult); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.AIBackgroundExtractPollResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.AIBackgroundExtractPollRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PollRateConfirmationBackgroundExtraction'
+type MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call struct {
+	*mock.Call
+}
+
+// PollRateConfirmationBackgroundExtraction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.AIBackgroundExtractPollRequest
+func (_e *MockAIDocumentService_Expecter) PollRateConfirmationBackgroundExtraction(ctx interface{}, req interface{}) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
+	return &MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call{Call: _e.mock.On("PollRateConfirmationBackgroundExtraction", ctx, req)}
+}
+
+func (_c *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call) Run(run func(ctx context.Context, req *services.AIBackgroundExtractPollRequest)) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.AIBackgroundExtractPollRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.AIBackgroundExtractPollRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call) Return(aIBackgroundExtractPollResult *services.AIBackgroundExtractPollResult, err error) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
+	_c.Call.Return(aIBackgroundExtractPollResult, err)
+	return _c
+}
+
+func (_c *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call) RunAndReturn(run func(ctx context.Context, req *services.AIBackgroundExtractPollRequest) (*services.AIBackgroundExtractPollResult, error)) *MockAIDocumentService_PollRateConfirmationBackgroundExtraction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RouteDocument provides a mock function for the type MockAIDocumentService
 func (_mock *MockAIDocumentService) RouteDocument(ctx context.Context, req *services.AIRouteRequest) (*services.AIRouteResult, error) {
 	ret := _mock.Called(ctx, req)
@@ -170,6 +238,74 @@ func (_c *MockAIDocumentService_RouteDocument_Call) Return(aIRouteResult *servic
 }
 
 func (_c *MockAIDocumentService_RouteDocument_Call) RunAndReturn(run func(ctx context.Context, req *services.AIRouteRequest) (*services.AIRouteResult, error)) *MockAIDocumentService_RouteDocument_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SubmitRateConfirmationBackgroundExtraction provides a mock function for the type MockAIDocumentService
+func (_mock *MockAIDocumentService) SubmitRateConfirmationBackgroundExtraction(ctx context.Context, req *services.AIExtractRequest) (*services.AIBackgroundExtractSubmission, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SubmitRateConfirmationBackgroundExtraction")
+	}
+
+	var r0 *services.AIBackgroundExtractSubmission
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AIExtractRequest) (*services.AIBackgroundExtractSubmission, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.AIExtractRequest) *services.AIBackgroundExtractSubmission); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.AIBackgroundExtractSubmission)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.AIExtractRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SubmitRateConfirmationBackgroundExtraction'
+type MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call struct {
+	*mock.Call
+}
+
+// SubmitRateConfirmationBackgroundExtraction is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.AIExtractRequest
+func (_e *MockAIDocumentService_Expecter) SubmitRateConfirmationBackgroundExtraction(ctx interface{}, req interface{}) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
+	return &MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call{Call: _e.mock.On("SubmitRateConfirmationBackgroundExtraction", ctx, req)}
+}
+
+func (_c *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call) Run(run func(ctx context.Context, req *services.AIExtractRequest)) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.AIExtractRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.AIExtractRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call) Return(aIBackgroundExtractSubmission *services.AIBackgroundExtractSubmission, err error) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
+	_c.Call.Return(aIBackgroundExtractSubmission, err)
+	return _c
+}
+
+func (_c *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call) RunAndReturn(run func(ctx context.Context, req *services.AIExtractRequest) (*services.AIBackgroundExtractSubmission, error)) *MockAIDocumentService_SubmitRateConfirmationBackgroundExtraction_Call {
 	_c.Call.Return(run)
 	return _c
 }

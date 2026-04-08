@@ -1,4 +1,4 @@
-import { createParser, parseAsString } from "nuqs";
+import { createParser, parseAsBoolean, parseAsString } from "nuqs";
 
 const parseAsStringArray = createParser<string[]>({
   parse: (value) => {
@@ -21,5 +21,6 @@ export const queueSearchParamsParser = {
   query: parseAsString.withDefault(""),
   billType: parseAsString,
   billers: parseAsStringArray,
+  includePosted: parseAsBoolean.withDefault(false),
   preset: parseAsString,
 };

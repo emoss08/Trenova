@@ -380,3 +380,16 @@ export type GetPreviousRatesRequest = {
   customerId?: string;
   excludeShipmentId?: string;
 };
+
+export type BulkTransferToBillingResult = {
+  shipmentId: string;
+  success: boolean;
+  error?: string;
+};
+
+export type BulkTransferToBillingResponse = {
+  results: BulkTransferToBillingResult[];
+  totalCount: number;
+  successCount: number;
+  errorCount: number;
+};

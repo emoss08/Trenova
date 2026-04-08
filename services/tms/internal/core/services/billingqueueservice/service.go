@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -13,10 +14,12 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,42 +28,55 @@ type Params struct {
 	fx.In
 
 	Logger       *zap.Logger
+	DB           ports.DBConnection
 	Repo         repositories.BillingQueueRepository
 	ShipmentRepo repositories.ShipmentRepository
 	ControlRepo  repositories.ShipmentControlRepository
 	CommentRepo  repositories.ShipmentCommentRepository
 	CustomerRepo repositories.CustomerRepository
 	UserRepo     repositories.UserRepository
+	InvoiceSvc   services.InvoiceService
 	Commercial   *shipmentcommercial.Calculator
+	Generator    seqgen.Generator
 	AuditService services.AuditService
 	Realtime     services.RealtimeService
+	Validator    *Validator
 }
 
 type service struct {
 	l            *zap.Logger
+	db           ports.DBConnection
 	repo         repositories.BillingQueueRepository
 	shipmentRepo repositories.ShipmentRepository
 	controlRepo  repositories.ShipmentControlRepository
 	commentRepo  repositories.ShipmentCommentRepository
 	customerRepo repositories.CustomerRepository
 	userRepo     repositories.UserRepository
+	invoiceSvc   services.InvoiceService
 	commercial   *shipmentcommercial.Calculator
+	generator    seqgen.Generator
 	auditService services.AuditService
 	realtime     services.RealtimeService
+	validator    *Validator
 }
 
+//nolint:gocritic // dependency injection
 func New(p Params) services.BillingQueueService {
 	return &service{
 		l:            p.Logger.Named("service.billing-queue"),
+		db:           p.DB,
 		repo:         p.Repo,
 		shipmentRepo: p.ShipmentRepo,
 		controlRepo:  p.ControlRepo,
 		commentRepo:  p.CommentRepo,
 		customerRepo: p.CustomerRepo,
 		userRepo:     p.UserRepo,
+		invoiceSvc:   p.InvoiceSvc,
 		commercial:   p.Commercial,
+		generator:    p.Generator,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
+		validator:    p.Validator,
 	}
 }
 
@@ -68,14 +84,6 @@ func (s *service) List(
 	ctx context.Context,
 	req *repositories.ListBillingQueueItemsRequest,
 ) (*pagination.ListResult[*billingqueue.BillingQueueItem], error) {
-	if req == nil || req.Filter == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Billing queue list request is required",
-		)
-	}
-
 	return s.repo.List(ctx, req)
 }
 
@@ -83,56 +91,59 @@ func (s *service) GetByID(
 	ctx context.Context,
 	req *repositories.GetBillingQueueItemByIDRequest,
 ) (*billingqueue.BillingQueueItem, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Get billing queue item request is required",
-		)
-	}
-
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
 	item, err := s.repo.GetByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	if req.ExpandShipmentDetails {
-		fullShipment, shipErr := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-			ID:         item.ShipmentID,
-			TenantInfo: req.TenantInfo,
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		})
-		if shipErr != nil {
-			s.l.Warn("failed to expand shipment details for billing queue item",
-				zap.String("billingQueueItemId", item.ID.String()),
-				zap.String("shipmentId", item.ShipmentID.String()),
-				zap.Error(shipErr),
-			)
-		} else {
-			item.Shipment = fullShipment
+	if !req.ExpandShipmentDetails {
+		return item, nil
+	}
 
-			if fullShipment.CustomerID != "" {
-				cust, custErr := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-					ID:         fullShipment.CustomerID,
-					TenantInfo: req.TenantInfo,
-					CustomerFilterOptions: repositories.CustomerFilterOptions{
-						IncludeBillingProfile: true,
-					},
-				})
-				if custErr == nil {
-					item.Shipment.Customer = cust
-				}
-			}
-		}
+	if err = s.expandShipmentDetails(ctx, item, req.TenantInfo); err != nil {
+		s.l.Warn("failed to expand shipment details for billing queue item",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.String("shipmentId", item.ShipmentID.String()),
+			zap.Error(err),
+		)
 	}
 
 	return item, nil
+}
+
+func (s *service) expandShipmentDetails(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) error {
+	fullShipment, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         item.ShipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	item.Shipment = fullShipment
+	if fullShipment.CustomerID.IsNil() {
+		return nil
+	}
+
+	cust, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+		ID:         fullShipment.CustomerID,
+		TenantInfo: tenantInfo,
+		CustomerFilterOptions: repositories.CustomerFilterOptions{
+			IncludeBillingProfile: true,
+		},
+	})
+	if err == nil {
+		item.Shipment.Customer = cust
+	}
+
+	return nil
 }
 
 func (s *service) GetStats(
@@ -161,6 +172,7 @@ func (s *service) GetStats(
 		ReadyForReview: counts[billingqueue.StatusReadyForReview],
 		InReview:       counts[billingqueue.StatusInReview],
 		Approved:       counts[billingqueue.StatusApproved],
+		Posted:         counts[billingqueue.StatusPosted],
 		OnHold:         counts[billingqueue.StatusOnHold],
 		Exception:      counts[billingqueue.StatusException],
 		SentBackToOps:  counts[billingqueue.StatusSentBackToOps],
@@ -211,17 +223,26 @@ func (s *service) TransferToBilling(
 		)
 	}
 
+	number, err := s.generateBillingNumber(
+		ctx,
+		req.BillType,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	entity := &billingqueue.BillingQueueItem{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		ShipmentID:     req.ShipmentID,
 		Status:         billingqueue.StatusReadyForReview,
 		BillType:       req.BillType,
+		Number:         number,
 	}
 
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
+	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
 	}
 
@@ -233,7 +254,7 @@ func (s *service) TransferToBilling(
 	now := timeutils.NowUnix()
 	shp.BillingTransferStatus = shipment.BillingTransferReadyForReview
 	shp.TransferredToBillingAt = &now
-	if _, err := s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
+	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		s.l.Warn("failed to update shipment billing tracking fields",
 			zap.String("shipmentId", shp.ID.String()),
 			zap.Error(err),
@@ -243,10 +264,38 @@ func (s *service) TransferToBilling(
 	s.autoAssignDefaultBiller(ctx, created, shp.CustomerID, req.TenantInfo, actor)
 
 	auditActor := actor.AuditActor()
-	s.logAction(created, auditActor, permission.OpCreate, nil, created, "Shipment transferred to billing queue")
+	s.logAction(
+		created,
+		auditActor,
+		permission.OpCreate,
+		nil,
+		created,
+		"Shipment transferred to billing queue",
+	)
 	s.publishInvalidation(ctx, created, auditActor, "created", created)
 
 	return created, nil
+}
+
+func (s *service) generateBillingNumber(
+	ctx context.Context,
+	billType billingqueue.BillType,
+	orgID, buID pulid.ID,
+) (string, error) {
+	switch billType {
+	case billingqueue.BillTypeInvoice:
+		return s.generator.GenerateInvoiceNumber(ctx, orgID, buID, "", "")
+	case billingqueue.BillTypeCreditMemo:
+		return s.generator.GenerateCreditMemoNumber(ctx, orgID, buID, "", "")
+	case billingqueue.BillTypeDebitMemo:
+		return s.generator.GenerateDebitMemoNumber(ctx, orgID, buID, "", "")
+	default:
+		return "", errortypes.NewValidationError(
+			"billType",
+			errortypes.ErrInvalid,
+			"Unsupported bill type for number generation",
+		)
+	}
 }
 
 func (s *service) autoAssignDefaultBiller(
@@ -263,7 +312,8 @@ func (s *service) autoAssignDefaultBiller(
 			IncludeBillingProfile: true,
 		},
 	})
-	if err != nil || cust.BillingProfile == nil || cust.BillingProfile.DefaultBillerID == nil || cust.BillingProfile.DefaultBillerID.IsNil() {
+	if err != nil || cust.BillingProfile == nil || cust.BillingProfile.DefaultBillerID == nil ||
+		cust.BillingProfile.DefaultBillerID.IsNil() {
 		return
 	}
 
@@ -273,7 +323,7 @@ func (s *service) autoAssignDefaultBiller(
 		zap.String("defaultBillerId", cust.BillingProfile.DefaultBillerID.String()),
 	)
 
-	if _, err := s.AssignBiller(ctx, &services.AssignBillerRequest{
+	if _, err = s.AssignBiller(ctx, &services.AssignBillerRequest{
 		ItemID:     item.ID,
 		BillerID:   *cust.BillingProfile.DefaultBillerID,
 		TenantInfo: tenantInfo,
@@ -348,7 +398,14 @@ func (s *service) AssignBiller(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logAction(updated, auditActor, permission.OpAssign, &previous, updated, "Biller assigned to billing queue item")
+	s.logAction(
+		updated,
+		auditActor,
+		permission.OpAssign,
+		&previous,
+		updated,
+		"Biller assigned to billing queue item",
+	)
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 
 	return updated, nil
@@ -359,42 +416,61 @@ func (s *service) UpdateStatus(
 	req *services.UpdateBillingQueueStatusRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Update status request is required",
-		)
-	}
+	var (
+		updated      *billingqueue.BillingQueueItem
+		previous     *billingqueue.BillingQueueItem
+		createResult *services.CreateInvoiceFromBillingQueueResult
+	)
 
-	entity, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, getErr := s.repo.GetByID(txCtx, &repositories.GetBillingQueueItemByIDRequest{
+			ItemID:     req.ItemID,
+			TenantInfo: req.TenantInfo,
+		})
+		if getErr != nil {
+			return getErr
+		}
+
+		if !billingqueue.IsAllowedTransition(entity.Status, req.NewStatus) {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalidOperation,
+				"Cannot transition from "+string(entity.Status)+" to "+string(req.NewStatus),
+			)
+		}
+
+		prev := *entity
+		previous = &prev
+		entity.Status = req.NewStatus
+
+		s.applyStatusFields(entity, req, actor)
+
+		if multiErr := s.validator.ValidateUpdate(txCtx, entity); multiErr != nil {
+			return multiErr
+		}
+
+		updatedEntity, updateErr := s.repo.Update(txCtx, entity)
+		if updateErr != nil {
+			return updateErr
+		}
+		updated = updatedEntity
+
+		if req.NewStatus == billingqueue.StatusApproved && s.invoiceSvc != nil {
+			createResult, updateErr = s.invoiceSvc.CreateFromApprovedBillingQueueItem(
+				txCtx,
+				&services.CreateInvoiceFromBillingQueueRequest{
+					BillingQueueItemID: updated.ID,
+					TenantInfo:         req.TenantInfo,
+				},
+				actor,
+			)
+			if updateErr != nil {
+				return updateErr
+			}
+		}
+
+		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	if !billingqueue.IsAllowedTransition(entity.Status, req.NewStatus) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Cannot transition from "+string(entity.Status)+" to "+string(req.NewStatus),
-		)
-	}
-
-	previous := *entity
-	entity.Status = req.NewStatus
-
-	s.applyStatusFields(entity, req, actor)
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	updated, err := s.repo.Update(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -405,8 +481,25 @@ func (s *service) UpdateStatus(
 		s.createOpsComment(ctx, updated, actor)
 	}
 
+	if createResult != nil && createResult.AutoPost && createResult.Invoice != nil {
+		if err = s.invoiceSvc.EnqueueAutoPost(ctx, createResult.Invoice, actor); err != nil {
+			s.l.Warn("failed to enqueue invoice auto-post workflow",
+				zap.String("billingQueueItemId", updated.ID.String()),
+				zap.String("invoiceId", createResult.Invoice.ID.String()),
+				zap.Error(err),
+			)
+		}
+	}
+
 	auditActor := actor.AuditActor()
-	s.logAction(updated, auditActor, permission.OpUpdate, &previous, updated, "Billing queue item status updated to "+string(req.NewStatus))
+	s.logAction(
+		updated,
+		auditActor,
+		permission.OpUpdate,
+		previous,
+		updated,
+		"Billing queue item status updated to "+string(req.NewStatus),
+	)
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 
 	return updated, nil
@@ -435,13 +528,36 @@ func (s *service) syncShipmentBillingStatus(
 		return
 	}
 
-	shp.BillingTransferStatus = shipment.BillingTransferStatus(newStatus)
+	shp.BillingTransferStatus = shipmentBillingTransferStatus(newStatus)
 
-	if _, err := s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
+	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		s.l.Warn("failed to sync shipment billing transfer status",
 			zap.String("shipmentId", shp.ID.String()),
 			zap.Error(err),
 		)
+	}
+}
+
+func shipmentBillingTransferStatus(status billingqueue.Status) shipment.BillingTransferStatus {
+	switch status {
+	case billingqueue.StatusReadyForReview:
+		return shipment.BillingTransferReadyForReview
+	case billingqueue.StatusInReview:
+		return shipment.BillingTransferInReview
+	case billingqueue.StatusApproved:
+		return shipment.BillingTransferApproved
+	case billingqueue.StatusPosted:
+		return shipment.BillingTransferApproved
+	case billingqueue.StatusOnHold:
+		return shipment.BillingTransferOnHold
+	case billingqueue.StatusException:
+		return shipment.BillingTransferException
+	case billingqueue.StatusSentBackToOps:
+		return shipment.BillingTransferSentBackToOps
+	case billingqueue.StatusCanceled:
+		return shipment.BillingTransferCanceled
+	default:
+		return shipment.BillingTransferNone
 	}
 }
 
@@ -521,7 +637,7 @@ func (s *service) UpdateCharges(
 		control, _ := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
 			TenantInfo: req.TenantInfo,
 		})
-		if err := s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
+		if err = s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"formulaTemplateId",
 				errortypes.ErrInvalid,
@@ -534,7 +650,7 @@ func (s *service) UpdateCharges(
 		control, _ := s.controlRepo.Get(ctx, repositories.GetShipmentControlRequest{
 			TenantInfo: req.TenantInfo,
 		})
-		if err := s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
+		if err = s.commercial.Recalculate(ctx, shp, control, actor.UserID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"baseRate",
 				errortypes.ErrInvalid,
@@ -552,12 +668,19 @@ func (s *service) UpdateCharges(
 	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
 
-	if _, err := s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
+	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		return nil, err
 	}
 
 	auditActor := actor.AuditActor()
-	s.logAction(item, auditActor, permission.OpUpdate, nil, nil, "Charges updated from billing queue")
+	s.logAction(
+		item,
+		auditActor,
+		permission.OpUpdate,
+		nil,
+		nil,
+		"Charges updated from billing queue",
+	)
 	s.publishInvalidation(ctx, item, auditActor, "updated", item)
 
 	return s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
@@ -584,6 +707,8 @@ func (s *service) applyStatusFields(
 		if req.ReviewNotes != "" {
 			entity.ReviewNotes = req.ReviewNotes
 		}
+	case billingqueue.StatusPosted:
+		entity.ReviewCompletedAt = &now
 	case billingqueue.StatusSentBackToOps, billingqueue.StatusException:
 		entity.ExceptionReasonCode = req.ExceptionReasonCode
 		entity.ExceptionNotes = req.ExceptionNotes
@@ -631,9 +756,9 @@ func (s *service) logAction(
 	opts := []services.LogOption{
 		auditservice.WithComment(comment),
 		auditservice.WithMetadata(map[string]any{
-			"shipmentId":      entity.ShipmentID.String(),
-			"billingQueueId":  entity.ID.String(),
-			"status":          string(entity.Status),
+			"shipmentId":     entity.ShipmentID.String(),
+			"billingQueueId": entity.ID.String(),
+			"status":         string(entity.Status),
 		}),
 	}
 	if previous != nil && current != nil {

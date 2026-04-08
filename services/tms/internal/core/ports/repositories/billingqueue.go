@@ -2,23 +2,21 @@ package repositories
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type ListBillingQueueItemsRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Filter        *pagination.QueryOptions `json:"filter"`
+	IncludePosted bool                     `json:"includePosted"`
 }
 
 type GetBillingQueueItemByIDRequest struct {
-	TenantInfo             pagination.TenantInfo `json:"-"`
-	ItemID                 pulid.ID              `json:"itemId"`
-	ExpandShipmentDetails  bool                  `json:"expandShipmentDetails"`
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	ItemID                pulid.ID              `json:"itemId"`
+	ExpandShipmentDetails bool                  `json:"expandShipmentDetails"`
 }
 
 type GetBillingQueueStatsRequest struct {
@@ -52,26 +50,4 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		req *GetBillingQueueStatsRequest,
 	) (map[billingqueue.Status]int, error)
-}
-
-func (r *GetBillingQueueItemByIDRequest) Validate() *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-
-	err := validation.ValidateStruct(
-		r,
-		validation.Field(&r.ItemID, validation.Required.Error("Item ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
-	)
-	if err != nil {
-		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
-			errortypes.FromOzzoErrors(validationErrs, multiErr)
-		}
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
 }

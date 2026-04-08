@@ -78,6 +78,34 @@ func (g *generator) GenerateInvoiceNumber(
 	})
 }
 
+func (g *generator) GenerateCreditMemoNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeCreditMemo,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
+func (g *generator) GenerateDebitMemoNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeDebitMemo,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
 func (g *generator) GenerateWorkOrderNumber(
 	ctx context.Context,
 	orgID, buID pulid.ID,

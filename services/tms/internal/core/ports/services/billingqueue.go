@@ -37,6 +37,7 @@ type BillingQueueStats struct {
 	ReadyForReview int `json:"readyForReview"`
 	InReview       int `json:"inReview"`
 	Approved       int `json:"approved"`
+	Posted         int `json:"posted"`
 	OnHold         int `json:"onHold"`
 	Exception      int `json:"exception"`
 	SentBackToOps  int `json:"sentBackToOps"`
@@ -45,11 +46,11 @@ type BillingQueueStats struct {
 }
 
 type UpdateChargesRequest struct {
-	ItemID              pulid.ID
+	ItemID            pulid.ID
 	FormulaTemplateID *pulid.ID
 	BaseRate          *decimal.Decimal
 	AdditionalCharges []*shipment.AdditionalCharge
-	TenantInfo          pagination.TenantInfo
+	TenantInfo        pagination.TenantInfo
 }
 
 type BillingQueueService interface {

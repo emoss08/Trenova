@@ -1,7 +1,7 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
-import type { FieldValues } from "react-hook-form";
 import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,7 +26,8 @@ import type { User } from "@/types/user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FilterIcon, InboxIcon, SaveIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { useCallback, useDeferredValue, useEffect, useState } from "react";
+import { useDeferredValue, useEffect, useState } from "react";
+import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
 import { queueSearchParamsParser } from "../use-billing-queue-state";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
@@ -35,6 +36,7 @@ import { BillingQueueItemCard } from "./billing-queue-item-card";
 import { BillingQueueSavePresetDialog } from "./billing-queue-save-preset-dialog";
 
 const billingQueueListSchema = createLimitOffsetResponse(billingQueueItemSchema);
+const EMPTY_ITEMS: BillingQueueItem[] = [];
 
 function PresetSelector({
   selectedPresetId,
@@ -52,9 +54,7 @@ function PresetSelector({
         onChange={(val) => onSelect(val ?? "none")}
         getOptionValue={(preset) => preset.id}
         getDisplayValue={(preset) => preset.name}
-        renderOption={(preset) => (
-          <span className="text-xs">{preset.name}</span>
-        )}
+        renderOption={(preset) => <span className="text-xs">{preset.name}</span>}
         placeholder="Select preset..."
         clearable
         triggerClassName="h-7 text-xs"
@@ -71,7 +71,14 @@ export function BillingQueueSidebar({
   onSelectItem: (id: string) => void;
 }) {
   const [searchParams, setSearchParams] = useQueryStates(queueSearchParamsParser);
-  const { status: statusFilter, query: search, billType: billTypeFilter, billers: billerFilter, preset: selectedPresetId } = searchParams;
+  const {
+    status: statusFilter,
+    query: search,
+    billType: billTypeFilter,
+    billers: billerFilter,
+    includePosted,
+    preset: selectedPresetId,
+  } = searchParams;
   const deferredSearch = useDeferredValue(search);
 
   const [assignItemId, setAssignItemId] = useState<string | null>(null);
@@ -80,7 +87,10 @@ export function BillingQueueSidebar({
   const queryClient = useQueryClient();
 
   const activeFilterCount =
-    (statusFilter ? 1 : 0) + (billerFilter.length > 0 ? 1 : 0) + (billTypeFilter ? 1 : 0);
+    (statusFilter ? 1 : 0) +
+    (billerFilter.length > 0 ? 1 : 0) +
+    (billTypeFilter ? 1 : 0) +
+    (includePosted ? 1 : 0);
   const hasActiveFilters = activeFilterCount > 0 || !!search;
 
   const { data: presetsData } = useQuery({
@@ -92,7 +102,9 @@ export function BillingQueueSidebar({
   const { mutate: deletePreset } = useMutation({
     mutationFn: (id: string) => apiService.billingQueueService.deleteFilterPreset(id),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-filter-presets"] });
+      void queryClient.invalidateQueries({
+        queryKey: ["billing-queue-filter-presets"],
+      });
       void setSearchParams({ preset: null });
       toast.success("Filter preset deleted");
     },
@@ -103,52 +115,74 @@ export function BillingQueueSidebar({
 
   const presets: BillingQueueFilterPreset[] = presetsData ?? [];
 
-  const applyPreset = useCallback(
-    (preset: BillingQueueFilterPreset) => {
-      const f = preset.filters;
-      void setSearchParams({
-        status: (f.status as string) ?? null,
-        billers: Array.isArray(f.assignedBillerIds) ? f.assignedBillerIds : [],
-        billType: (f.billType as string) ?? null,
-        query: (f.search as string) ?? "",
-        preset: preset.id,
-      });
-    },
-    [setSearchParams],
-  );
+  const applyPreset = (preset: BillingQueueFilterPreset) => {
+    const f = preset.filters;
+    void setSearchParams({
+      status: (f.status as string) ?? null,
+      billers: Array.isArray(f.assignedBillerIds) ? f.assignedBillerIds : [],
+      billType: (f.billType as string) ?? null,
+      query: (f.search as string) ?? "",
+      includePosted: f.includePosted === true,
+      preset: preset.id,
+    });
+  };
 
-  const handlePresetChange = useCallback(
-    (value: string | null) => {
-      if (!value || value === "none") {
-        void setSearchParams({ preset: null });
-        return;
-      }
-      const preset = presets.find((p) => p.id === value);
-      if (preset) {
-        applyPreset(preset);
-      }
-    },
-    [presets, applyPreset, setSearchParams],
-  );
+  const handlePresetChange = (value: string | null) => {
+    if (!value || value === "none") {
+      void setSearchParams({ preset: null });
+      return;
+    }
+    const preset = presets.find((p) => p.id === value);
+    if (preset) {
+      applyPreset(preset);
+    }
+  };
 
   const { data, isLoading } = useQuery({
-    queryKey: ["billing-queue-list", statusFilter, billerFilter, billTypeFilter, deferredSearch],
+    queryKey: [
+      "billing-queue-list",
+      statusFilter,
+      billerFilter.join(","),
+      billerFilter[0],
+      billTypeFilter,
+      deferredSearch,
+      includePosted,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: "100" });
-      const filters: Array<{ field: string; operator: string; value: string | string[] }> = [];
+      const filters: Array<{
+        field: string;
+        operator: string;
+        value: string | string[];
+      }> = [];
       if (statusFilter) {
         filters.push({ field: "status", operator: "eq", value: statusFilter });
       }
       if (billerFilter.length === 1) {
-        filters.push({ field: "assignedBillerId", operator: "eq", value: billerFilter[0] });
+        filters.push({
+          field: "assignedBillerId",
+          operator: "eq",
+          value: billerFilter[0],
+        });
       } else if (billerFilter.length > 1) {
-        filters.push({ field: "assignedBillerId", operator: "in", value: billerFilter });
+        filters.push({
+          field: "assignedBillerId",
+          operator: "in",
+          value: billerFilter,
+        });
       }
       if (billTypeFilter) {
-        filters.push({ field: "billType", operator: "eq", value: billTypeFilter });
+        filters.push({
+          field: "billType",
+          operator: "eq",
+          value: billTypeFilter,
+        });
       }
       if (deferredSearch.trim()) {
         params.set("query", deferredSearch.trim());
+      }
+      if (includePosted) {
+        params.set("includePosted", "true");
       }
       if (filters.length > 0) {
         params.set("fieldFilters", JSON.stringify(filters));
@@ -160,7 +194,9 @@ export function BillingQueueSidebar({
 
   const { mutate: updateStatus } = useMutation({
     mutationFn: ({ itemId, status }: { itemId: string; status: string }) =>
-      apiService.billingQueueService.updateStatus(itemId, { status: status as any }),
+      apiService.billingQueueService.updateStatus(itemId, {
+        status: status as any,
+      }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
@@ -170,34 +206,33 @@ export function BillingQueueSidebar({
     },
   });
 
-  const items = data?.results ?? [];
-
-  const navigateItems = useCallback(
-    (direction: "next" | "prev") => {
-      if (items.length === 0) return;
-      if (!selectedItemId) {
-        onSelectItem(items[0].id);
-        return;
-      }
-      const currentIndex = items.findIndex((i) => i.id === selectedItemId);
-      const nextIndex =
-        direction === "next"
-          ? Math.min(currentIndex + 1, items.length - 1)
-          : Math.max(currentIndex - 1, 0);
-      onSelectItem(items[nextIndex].id);
-    },
-    [items, selectedItemId, onSelectItem],
-  );
+  const items = data?.results ?? EMPTY_ITEMS;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === "j") navigateItems("next");
-      if (e.key === "k") navigateItems("prev");
+      if (items.length === 0) return;
+
+      if (!selectedItemId) {
+        if (e.key === "j" || e.key === "k") {
+          onSelectItem(items[0].id);
+        }
+        return;
+      }
+
+      const currentIndex = items.findIndex((i) => i.id === selectedItemId);
+      const nextIndex =
+        e.key === "j"
+          ? Math.min(currentIndex + 1, items.length - 1)
+          : Math.max(currentIndex - 1, 0);
+
+      if (e.key === "j" || e.key === "k") {
+        onSelectItem(items[nextIndex].id);
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [navigateItems]);
+  }, [items, onSelectItem, selectedItemId]);
 
   const clearFilters = () => {
     void setSearchParams({
@@ -205,6 +240,7 @@ export function BillingQueueSidebar({
       billers: [],
       billType: null,
       query: "",
+      includePosted: false,
       preset: null,
     });
   };
@@ -214,6 +250,7 @@ export function BillingQueueSidebar({
     assignedBillerIds: billerFilter.length > 0 ? billerFilter : null,
     billType: billTypeFilter,
     search: search || null,
+    includePosted: includePosted ? "true" : null,
   };
 
   return (
@@ -242,7 +279,7 @@ export function BillingQueueSidebar({
               }
             />
           </div>
-          <PopoverContent sideOffset={4} className="w-[400px] p-3">
+          <PopoverContent sideOffset={4} className="w-[400px] p-3 dark">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">Filters</span>
@@ -260,9 +297,11 @@ export function BillingQueueSidebar({
                     <Select
                       value={statusFilter ?? "all"}
                       items={billingQueueStatusChoices}
-                      onValueChange={(v) => void setSearchParams({ status: v === "all" ? null : v })}
+                      onValueChange={(v) =>
+                        void setSearchParams({ status: v === "all" ? null : v })
+                      }
                     >
-                      <SelectTrigger className="h-7 text-xs w-[150px]">
+                      <SelectTrigger className="h-7 w-[150px] text-xs">
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
@@ -280,9 +319,13 @@ export function BillingQueueSidebar({
                     <Select
                       value={billTypeFilter ?? "all"}
                       items={billTypeChoices}
-                      onValueChange={(v) => void setSearchParams({ billType: v === "all" ? null : v })}
+                      onValueChange={(v) =>
+                        void setSearchParams({
+                          billType: v === "all" ? null : v,
+                        })
+                      }
                     >
-                      <SelectTrigger className="h-7 text-xs w-[150px]">
+                      <SelectTrigger className="h-7 w-[150px] text-xs">
                         <SelectValue placeholder="All bill types" />
                       </SelectTrigger>
                       <SelectContent>
@@ -318,6 +361,20 @@ export function BillingQueueSidebar({
                     maxCount={2}
                   />
                 </div>
+                <label className="flex items-start gap-2 rounded-md border px-2 py-2">
+                  <Checkbox
+                    checked={includePosted}
+                    onCheckedChange={(checked) =>
+                      void setSearchParams({ includePosted: checked === true })
+                    }
+                  />
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-medium">Include posted items</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Show historical queue records that already produced a posted invoice.
+                    </p>
+                  </div>
+                </label>
               </div>
 
               <div className="flex items-center gap-1 border-t pt-2">

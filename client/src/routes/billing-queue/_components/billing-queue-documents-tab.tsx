@@ -2,7 +2,11 @@ import { DocumentTypeAutocompleteField } from "@/components/autocomplete-fields"
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -43,21 +47,33 @@ export function BillingQueueDocumentsTab({
   selectedDocumentId,
   onDocumentSelect,
   isEditable,
+  context = "billing-queue",
 }: {
   shipmentId: string;
   selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
   isEditable?: boolean;
+  context?: "billing-queue" | "invoice";
 }) {
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [replacingLineageId, setReplacingLineageId] = useState<string | null>(null);
+  const [replacingLineageId, setReplacingLineageId] = useState<string | null>(
+    null,
+  );
   const queryClient = useQueryClient();
   const docTypeForm = useForm<{ documentTypeId: string }>({
     defaultValues: { documentTypeId: "" },
   });
-  const selectedDocTypeId = useWatch({ control: docTypeForm.control, name: "documentTypeId" });
+  const selectedDocTypeId = useWatch({
+    control: docTypeForm.control,
+    name: "documentTypeId",
+  });
 
-  const queryKey = ["documents", "shipment", shipmentId, "includeDocumentType"] as const;
+  const queryKey = [
+    "documents",
+    "shipment",
+    shipmentId,
+    "includeDocumentType",
+  ] as const;
 
   const billingReadinessQuery = queries.shipment.billingReadiness(shipmentId);
   const { data: billingReadiness } = useQuery({
@@ -68,9 +84,14 @@ export function BillingQueueDocumentsTab({
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource("shipment", shipmentId, undefined, {
-        includeDocumentType: "true",
-      }),
+      apiService.documentService.getByResource(
+        "shipment",
+        shipmentId,
+        undefined,
+        {
+          includeDocumentType: "true",
+        },
+      ),
     enabled: !!shipmentId,
   });
 
@@ -87,11 +108,14 @@ export function BillingQueueDocumentsTab({
 
   const invalidateAll = () => {
     void queryClient.invalidateQueries({ queryKey });
-    void queryClient.invalidateQueries({ queryKey: billingReadinessQuery.queryKey });
+    void queryClient.invalidateQueries({
+      queryKey: billingReadinessQuery.queryKey,
+    });
   };
 
   const { mutate: deleteDocument } = useMutation({
-    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) =>
+      apiService.documentService.delete(documentId),
     onSuccess: () => {
       invalidateAll();
       toast.success("Document deleted");
@@ -116,25 +140,42 @@ export function BillingQueueDocumentsTab({
     onSuccess: () => {
       docTypeForm.setValue("documentTypeId", "");
       setReplacingLineageId(null);
-      void queryClient.invalidateQueries({ queryKey: billingReadinessQuery.queryKey });
+      void queryClient.invalidateQueries({
+        queryKey: billingReadinessQuery.queryKey,
+      });
     },
   });
 
-  const handleUploadForRequirement = (requirement: ShipmentBillingRequirement) => {
+  const handleUploadForRequirement = (
+    requirement: ShipmentBillingRequirement,
+  ) => {
     docTypeForm.setValue("documentTypeId", requirement.documentTypeId);
     setUploadOpen(true);
   };
+
+  const requirementTitle =
+    context === "invoice" ? "Supporting Requirements" : "Required Documents";
+  const loadingLabel =
+    context === "invoice"
+      ? "Loading supporting documents..."
+      : "Loading documents...";
+  const emptyLabel =
+    context === "invoice"
+      ? "No supporting documents attached"
+      : "No documents attached";
 
   return (
     <div className="flex h-full flex-col">
       {billingReadiness && billingReadiness.requirements.length > 0 && (
         <div className="shrink-0 border-b px-3 py-2">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Required Documents
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+              {requirementTitle}
             </span>
             <span className="text-[11px] text-muted-foreground tabular-nums">
-              {billingReadiness.requirements.length - billingReadiness.missingRequirements.length}/{billingReadiness.requirements.length}
+              {billingReadiness.requirements.length -
+                billingReadiness.missingRequirements.length}
+              /{billingReadiness.requirements.length}
             </span>
           </div>
           <div className="flex flex-col gap-1">
@@ -143,13 +184,18 @@ export function BillingQueueDocumentsTab({
                 key={req.documentTypeId}
                 className="flex items-center justify-between gap-2 text-xs"
               >
-                <div className="flex items-center gap-1.5 min-w-0">
+                <div className="flex min-w-0 items-center gap-1.5">
                   {req.satisfied ? (
                     <CheckCircle2Icon className="size-3.5 shrink-0 text-green-500" />
                   ) : (
                     <CircleDashedIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   )}
-                  <span className={cn("truncate", req.satisfied ? "text-muted-foreground" : "font-medium")}>
+                  <span
+                    className={cn(
+                      "truncate",
+                      req.satisfied ? "text-muted-foreground" : "font-medium",
+                    )}
+                  >
                     {req.documentTypeName}
                   </span>
                 </div>
@@ -168,7 +214,7 @@ export function BillingQueueDocumentsTab({
         </div>
       )}
       {isEditable && (
-        <div className="flex items-center gap-2 shrink-0 border-b p-2">
+        <div className="flex shrink-0 items-center gap-2 border-b p-2">
           <div className="flex-1">
             <DocumentTypeAutocompleteField
               control={docTypeForm.control}
@@ -177,7 +223,11 @@ export function BillingQueueDocumentsTab({
               clearable
             />
           </div>
-          <Button size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setUploadOpen(true)}
+          >
             <UploadIcon className="size-3.5" />
             Upload
           </Button>
@@ -186,12 +236,12 @@ export function BillingQueueDocumentsTab({
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-          Loading documents...
+          {loadingLabel}
         </div>
       ) : documents.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
           <FileIcon className="size-8" />
-          <p className="text-sm">No documents attached</p>
+          <p className="text-sm">{emptyLabel}</p>
         </div>
       ) : (
         <ScrollArea className="flex-1">
@@ -204,15 +254,16 @@ export function BillingQueueDocumentsTab({
                 <div
                   key={doc.id}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-left transition-colors group cursor-pointer",
+                    "group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
                     "hover:bg-accent/50",
-                    isSelected && "bg-accent border border-primary/20",
+                    isSelected && "border border-primary/20 bg-accent",
                   )}
                   onClick={() => onDocumentSelect(doc.id, doc.originalName)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") onDocumentSelect(doc.id, doc.originalName);
+                    if (e.key === "Enter")
+                      onDocumentSelect(doc.id, doc.originalName);
                   }}
                 >
                   <Icon className="size-4 shrink-0 text-muted-foreground" />
@@ -222,9 +273,12 @@ export function BillingQueueDocumentsTab({
                       <span>{formatSize(doc.fileSize)}</span>
                       <span>&middot;</span>
                       <span>
-                        {formatDistanceToNowStrict(fromUnixTime(doc.createdAt), {
-                          addSuffix: true,
-                        })}
+                        {formatDistanceToNowStrict(
+                          fromUnixTime(doc.createdAt),
+                          {
+                            addSuffix: true,
+                          },
+                        )}
                       </span>
                       {doc.documentType && (
                         <>
@@ -235,7 +289,7 @@ export function BillingQueueDocumentsTab({
                     </div>
                   </div>
                   {isEditable && (
-                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <Tooltip>
                         <TooltipTrigger
                           render={

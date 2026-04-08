@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/notificationhandler"
@@ -139,6 +140,7 @@ type RouterParams struct {
 	DocumentTypeHandler          *documenttypehandler.Handler
 	HoldReasonHandler            *holdreasonhandler.Handler
 	IntegrationHandler           *integrationhandler.Handler
+	InvoiceHandler               *invoicehandler.Handler
 	BillingControlHandler        *billingcontrolhandler.Handler
 	BillingQueueHandler          *billingqueuehandler.Handler
 	DataEntryControlHandler      *dataentrycontrolhandler.Handler
@@ -211,6 +213,7 @@ type Router struct {
 	documentTypeHandler          *documenttypehandler.Handler
 	holdReasonHandler            *holdreasonhandler.Handler
 	integrationHandler           *integrationhandler.Handler
+	invoiceHandler               *invoicehandler.Handler
 	billingControlHandler        *billingcontrolhandler.Handler
 	billingQueueHandler          *billingqueuehandler.Handler
 	dataEntryControlHandler      *dataentrycontrolhandler.Handler
@@ -285,6 +288,7 @@ func NewRouter(p RouterParams) *Router {
 		documentTypeHandler:          p.DocumentTypeHandler,
 		holdReasonHandler:            p.HoldReasonHandler,
 		integrationHandler:           p.IntegrationHandler,
+		invoiceHandler:               p.InvoiceHandler,
 		billingControlHandler:        p.BillingControlHandler,
 		billingQueueHandler:          p.BillingQueueHandler,
 		dataEntryControlHandler:      p.DataEntryControlHandler,
@@ -405,6 +409,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentTypeHandler.RegisterRoutes(protected)
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
+	r.invoiceHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
 	r.billingQueueHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)

@@ -3,7 +3,6 @@ package tenant
 import (
 	"context"
 	"errors"
-	"regexp"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -24,8 +23,6 @@ type BillingControl struct {
 	ID                            pulid.ID          `json:"id"                            bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID                pulid.ID          `json:"businessUnitId"                bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID                pulid.ID          `json:"organizationId"                bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	InvoiceNumberPrefix           string            `json:"invoiceNumberPrefix"           bun:"invoice_number_prefix,type:VARCHAR(10),notnull,default:'INV-'"`
-	CreditMemoNumberPrefix        string            `json:"creditMemoNumberPrefix"        bun:"credit_memo_number_prefix,type:VARCHAR(10),notnull,default:'CM-'"`
 	InvoiceTerms                  string            `json:"invoiceTerms"                  bun:"invoice_terms,type:TEXT"`
 	InvoiceFooter                 string            `json:"invoiceFooter"                 bun:"invoice_footer,type:TEXT"`
 	TransferSchedule              TransferSchedule  `json:"transferSchedule"              bun:"transfer_schedule,type:transfer_schedule_enum,notnull,default:'Continuous'"`
@@ -57,22 +54,6 @@ type BillingControl struct {
 
 func (bc *BillingControl) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(bc,
-		validation.Field(
-			&bc.InvoiceNumberPrefix,
-			validation.Required.Error("Invoice number prefix is required"),
-			validation.Length(3, 10).
-				Error("Invoice number prefix must be between 3 and 10 characters"),
-			validation.Match(regexp.MustCompile(`^[a-zA-Z0-9-]+$`)).
-				Error("Invoice number prefix must be alphanumeric and can only contain hyphens"),
-		),
-		validation.Field(
-			&bc.CreditMemoNumberPrefix,
-			validation.Required.Error("Credit memo number prefix is required"),
-			validation.Length(3, 10).
-				Error("Credit memo number prefix must be between 3 and 10 characters"),
-			validation.Match(regexp.MustCompile(`^[a-zA-Z0-9-]+$`)).
-				Error("Credit memo number prefix must be alphanumeric and can only contain hyphens"),
-		),
 		validation.Field(&bc.PaymentTerm,
 			validation.Required.Error("Payment term is required"),
 			validation.In(

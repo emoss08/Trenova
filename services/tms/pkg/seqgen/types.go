@@ -69,6 +69,16 @@ type Generator interface {
 		orgID, buID pulid.ID,
 		locationCode, businessUnitCode string,
 	) (string, error)
+	GenerateCreditMemoNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
+	GenerateDebitMemoNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
 	GenerateWorkOrderNumber(
 		ctx context.Context,
 		orgID, buID pulid.ID,

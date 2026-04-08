@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,6 +46,30 @@ type ShipmentBillingReadiness struct {
 	ValidationFailures           []ShipmentBillingValidation    `json:"validationFailures"`
 	CanMarkReadyToInvoice        bool                           `json:"canMarkReadyToInvoice"`
 	ShouldAutoMarkReadyToInvoice bool                           `json:"shouldAutoMarkReadyToInvoice"`
+}
+
+type TransferShipmentToBillingRequest struct {
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	BillType   billingqueue.BillType `json:"billType"`
+}
+
+type BulkTransferShipmentToBillingRequest struct {
+	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+	BillType    billingqueue.BillType `json:"billType"`
+}
+
+type BulkTransferToBillingResult struct {
+	ShipmentID pulid.ID                       `json:"shipmentId"`
+	Success    bool                           `json:"success"`
+	Item       *billingqueue.BillingQueueItem `json:"item,omitempty"`
+	Error      string                         `json:"error,omitempty"`
+}
+
+type BulkTransferToBillingResponse struct {
+	Results      []BulkTransferToBillingResult `json:"results"`
+	TotalCount   int                           `json:"totalCount"`
+	SuccessCount int                           `json:"successCount"`
+	ErrorCount   int                           `json:"errorCount"`
 }
 
 type ShipmentService interface {
@@ -139,4 +164,14 @@ type ShipmentService interface {
 		tenantInfo pagination.TenantInfo,
 		userID pulid.ID,
 	) (*shipment.Shipment, error)
+	TransferToBilling(
+		ctx context.Context,
+		req *TransferShipmentToBillingRequest,
+		actor *RequestActor,
+	) (*billingqueue.BillingQueueItem, error)
+	BulkTransferToBilling(
+		ctx context.Context,
+		req *BulkTransferShipmentToBillingRequest,
+		actor *RequestActor,
+	) (*BulkTransferToBillingResponse, error)
 }

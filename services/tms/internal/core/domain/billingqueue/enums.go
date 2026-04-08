@@ -6,6 +6,7 @@ const (
 	StatusReadyForReview = Status("ReadyForReview")
 	StatusInReview       = Status("InReview")
 	StatusApproved       = Status("Approved")
+	StatusPosted         = Status("Posted")
 	StatusOnHold         = Status("OnHold")
 	StatusSentBackToOps  = Status("SentBackToOps")
 	StatusException      = Status("Exception")
@@ -23,16 +24,16 @@ const (
 type ExceptionReasonCode string
 
 const (
-	ExceptionMissingDocumentation    = ExceptionReasonCode("MissingDocumentation")
-	ExceptionIncorrectRates          = ExceptionReasonCode("IncorrectRates")
-	ExceptionWeightDiscrepancy       = ExceptionReasonCode("WeightDiscrepancy")
-	ExceptionAccessorialDispute      = ExceptionReasonCode("AccessorialDispute")
-	ExceptionDuplicateCharge         = ExceptionReasonCode("DuplicateCharge")
-	ExceptionMissingReferenceNumber  = ExceptionReasonCode("MissingReferenceNumber")
+	ExceptionMissingDocumentation     = ExceptionReasonCode("MissingDocumentation")
+	ExceptionIncorrectRates           = ExceptionReasonCode("IncorrectRates")
+	ExceptionWeightDiscrepancy        = ExceptionReasonCode("WeightDiscrepancy")
+	ExceptionAccessorialDispute       = ExceptionReasonCode("AccessorialDispute")
+	ExceptionDuplicateCharge          = ExceptionReasonCode("DuplicateCharge")
+	ExceptionMissingReferenceNumber   = ExceptionReasonCode("MissingReferenceNumber")
 	ExceptionCustomerInformationError = ExceptionReasonCode("CustomerInformationError")
-	ExceptionServiceFailure          = ExceptionReasonCode("ServiceFailure")
-	ExceptionRateNotOnFile           = ExceptionReasonCode("RateNotOnFile")
-	ExceptionOther                   = ExceptionReasonCode("Other")
+	ExceptionServiceFailure           = ExceptionReasonCode("ServiceFailure")
+	ExceptionRateNotOnFile            = ExceptionReasonCode("RateNotOnFile")
+	ExceptionOther                    = ExceptionReasonCode("Other")
 )
 
 func (c ExceptionReasonCode) IsValid() bool {

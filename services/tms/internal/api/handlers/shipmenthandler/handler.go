@@ -197,6 +197,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
 		h.transferOwnership,
 	)
+	api.POST(
+		"/:shipmentID/transfer-to-billing/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
+		h.transferToBilling,
+	)
+	api.POST(
+		"/bulk-transfer-to-billing/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
+		h.bulkTransferToBilling,
+	)
 	api.PUT(
 		"/:shipmentID/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
@@ -871,4 +881,57 @@ func (h *Handler) transferOwnership(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) transferToBilling(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := &services.TransferShipmentToBillingRequest{
+		ShipmentID: shipmentID,
+	}
+	if err = c.ShouldBindJSON(req); err != nil && !errors.Is(err, io.EOF) {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.ShipmentID = shipmentID
+
+	actor := actorutil.FromAuthContext(authCtx)
+	item, err := h.service.TransferToBilling(c.Request.Context(), req, actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, item)
+}
+
+func (h *Handler) bulkTransferToBilling(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(services.BulkTransferShipmentToBillingRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if len(req.ShipmentIDs) == 0 {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("shipmentIds", errortypes.ErrRequired, "At least one shipment ID is required")
+		h.eh.HandleError(c, multiErr)
+		return
+	}
+
+	actor := actorutil.FromAuthContext(authCtx)
+	response, err := h.service.BulkTransferToBilling(c.Request.Context(), req, actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }

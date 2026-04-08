@@ -54,6 +54,7 @@ var BillingQueueItemColumns = struct {
 	BusinessUnitID      Column // "business_unit_id" → qualified: "bqi.business_unit_id"
 	ShipmentID          Column // "shipment_id" → qualified: "bqi.shipment_id"
 	AssignedBillerID    Column // "assigned_biller_id" → qualified: "bqi.assigned_biller_id"
+	Number              Column // "number" → qualified: "bqi.number"
 	Status              Column // "status" → qualified: "bqi.status"
 	BillType            Column // "bill_type" → qualified: "bqi.bill_type"
 	ExceptionReasonCode Column // "exception_reason_code" → qualified: "bqi.exception_reason_code"
@@ -73,6 +74,7 @@ var BillingQueueItemColumns = struct {
 	BusinessUnitID:      NewColumn("business_unit_id", "bqi"),
 	ShipmentID:          NewColumn("shipment_id", "bqi"),
 	AssignedBillerID:    NewColumn("assigned_biller_id", "bqi"),
+	Number:              NewColumn("number", "bqi"),
 	Status:              NewColumn("status", "bqi"),
 	BillType:            NewColumn("bill_type", "bqi"),
 	ExceptionReasonCode: NewColumn("exception_reason_code", "bqi"),
@@ -98,6 +100,7 @@ var BillingQueueItemFieldMap = map[string]string{
 	"businessUnitId":      "business_unit_id",
 	"shipmentId":          "shipment_id",
 	"assignedBillerId":    "assigned_biller_id",
+	"number":              "number",
 	"status":              "status",
 	"billType":            "bill_type",
 	"exceptionReasonCode": "exception_reason_code",
@@ -121,6 +124,7 @@ var BillingQueueItemInsertableColumns = []string{
 	"business_unit_id",
 	"shipment_id",
 	"assigned_biller_id",
+	"number",
 	"status",
 	"bill_type",
 	"exception_reason_code",
@@ -206,6 +210,7 @@ var BillingQueueItemFilter = struct {
 	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	ShipmentID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
 	AssignedBillerID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assignedBillerId" → DB: "assigned_biller_id"
+	Number              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
 	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	BillType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
 	ExceptionReasonCode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionReasonCode" → DB: "exception_reason_code"
@@ -234,6 +239,9 @@ var BillingQueueItemFilter = struct {
 	},
 	AssignedBillerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("assignedBillerId", op, value)
+	},
+	Number: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("number", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

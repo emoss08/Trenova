@@ -1,6 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { apiService } from "@/services/api";
-import type { AddRecordAction, RowAction } from "@/types/data-table";
+import type { AddRecordAction, DockAction, RowAction } from "@/types/data-table";
 import { Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,6 +9,7 @@ import {
   ArrowRightLeftIcon,
   BanIcon,
   CopyIcon,
+  SendIcon,
   UndoIcon,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -41,6 +42,45 @@ export default function ShipmentTable() {
       toast.error("Failed to uncancel shipment");
     },
   });
+
+  const { mutate: transferToBillingMutation } = useMutation({
+    mutationFn: (shipmentId: string) => apiService.shipmentService.transferToBilling(shipmentId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      toast.success("Transferred to billing", {
+        description: "The shipment has been added to the billing queue.",
+      });
+    },
+    onError: () => {
+      toast.error("Failed to transfer shipment to billing");
+    },
+  });
+
+  const handleTransferToBilling = useCallback(
+    (row: Row<Shipment>) => transferToBillingMutation(row.original.id || ""),
+    [transferToBillingMutation],
+  );
+
+  const handleBulkTransferToBilling = useCallback(
+    async (rows: Shipment[]) => {
+      const shipmentIds = rows.map((r) => r.id).filter(Boolean) as string[];
+      const response = await apiService.shipmentService.bulkTransferToBilling(shipmentIds);
+
+      if (response.errorCount > 0 && response.successCount > 0) {
+        toast.warning(
+          `Transferred ${response.successCount} of ${response.totalCount} shipments`,
+          { description: `${response.errorCount} shipment(s) failed to transfer.` },
+        );
+      } else if (response.errorCount > 0) {
+        toast.error("Failed to transfer shipments to billing");
+      } else {
+        toast.success(`Transferred ${response.successCount} shipment(s) to billing`);
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["shipment-list"], refetchType: "all" });
+    },
+    [queryClient],
+  );
 
   const handleDuplicate = useCallback(
     (row: Row<Shipment>) => setDuplicateShipmentId(row.original.id || ""),
@@ -94,8 +134,20 @@ export default function ShipmentTable() {
         onClick: handleTransferOwnership,
         hidden: (row) => row.original.status === "Canceled",
       },
+      {
+        id: "transfer-to-billing",
+        label: "Transfer to Billing",
+        icon: SendIcon,
+        onClick: handleTransferToBilling,
+        hidden: (row) => {
+          const s = row.original;
+          if (s.status !== "ReadyToInvoice") return true;
+          const bts = s.billingTransferStatus;
+          return !!bts && bts !== "SentBackToOps";
+        },
+      },
     ],
-    [handleDuplicate, handleCancel, handleUncancel, handleTransferOwnership],
+    [handleDuplicate, handleCancel, handleUncancel, handleTransferOwnership, handleTransferToBilling],
   );
 
   const addRecordActions = useMemo<AddRecordAction[]>(
@@ -108,6 +160,20 @@ export default function ShipmentTable() {
       },
     ],
     [navigate],
+  );
+
+  const dockActions = useMemo<DockAction<Shipment>[]>(
+    () => [
+      {
+        id: "transfer-to-billing",
+        label: "Transfer to Billing",
+        loadingLabel: "Transferring...",
+        icon: SendIcon,
+        onClick: handleBulkTransferToBilling,
+        clearSelectionOnSuccess: true,
+      },
+    ],
+    [handleBulkTransferToBilling],
   );
 
   const handleDuplicateOpenChange = useCallback((open: boolean) => {
@@ -134,6 +200,8 @@ export default function ShipmentTable() {
         TablePanel={ShipmentPanel}
         addRecordActions={addRecordActions}
         contextMenuActions={contextMenuActions}
+        dockActions={dockActions}
+        enableRowSelection
         extraSearchParams={{
           expandShipmentDetails: true,
         }}

@@ -166,7 +166,8 @@ func (h *Handler) list(c *gin.Context) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListBillingQueueItemsRequest{
-					Filter: req,
+					Filter:        req,
+					IncludePosted: helpers.QueryBool(c, "includePosted"),
 				},
 			)
 		},
