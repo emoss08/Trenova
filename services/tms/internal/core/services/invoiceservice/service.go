@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -40,6 +42,9 @@ type Params struct {
 	ShipmentRepo     repositories.ShipmentRepository
 	CustomerRepo     repositories.CustomerRepository
 	BillingRepo      repositories.BillingControlRepository
+	AccountingRepo   repositories.AccountingControlRepository
+	AdjustmentRepo   repositories.InvoiceAdjustmentRepository
+	NotificationRepo repositories.NotificationRepository
 	Validator        *Validator
 	AuditService     servicesports.AuditService
 	Realtime         servicesports.RealtimeService
@@ -54,6 +59,9 @@ type Service struct {
 	shipmentRepo     repositories.ShipmentRepository
 	customerRepo     repositories.CustomerRepository
 	billingRepo      repositories.BillingControlRepository
+	accountingRepo   repositories.AccountingControlRepository
+	adjustmentRepo   repositories.InvoiceAdjustmentRepository
+	notificationRepo repositories.NotificationRepository
 	validator        *Validator
 	auditService     servicesports.AuditService
 	realtime         servicesports.RealtimeService
@@ -88,6 +96,9 @@ func New(p Params) servicesports.InvoiceService {
 		shipmentRepo:     p.ShipmentRepo,
 		customerRepo:     p.CustomerRepo,
 		billingRepo:      p.BillingRepo,
+		accountingRepo:   p.AccountingRepo,
+		adjustmentRepo:   p.AdjustmentRepo,
+		notificationRepo: p.NotificationRepo,
 		validator:        p.Validator,
 		auditService:     p.AuditService,
 		realtime:         p.Realtime,
@@ -158,6 +169,10 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
+	if item.IsAdjustmentOrigin {
+		s.syncAdjustmentLineage(ctx, created, item)
+	}
+
 	autoPost := s.shouldAutoPost(ctx, created.OrganizationID, dependencies.Customer)
 	auditActor := actor.AuditActor()
 	s.logAction(
@@ -174,6 +189,48 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		Invoice:  created,
 		AutoPost: autoPost,
 	}, nil
+}
+
+func (s *Service) syncAdjustmentLineage(
+	ctx context.Context,
+	created *invoice.Invoice,
+	item *billingqueue.BillingQueueItem,
+) {
+	if created == nil || item == nil {
+		return
+	}
+	if item.SourceInvoiceID != nil && item.SourceInvoiceID.IsNotNil() {
+		sourceInvoice, err := s.repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+			ID: *item.SourceInvoiceID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: item.OrganizationID,
+				BuID:  item.BusinessUnitID,
+			},
+		})
+		if err == nil && sourceInvoice != nil {
+			sourceInvoice.SupersededByInvoiceID = created.ID
+			sourceInvoice.CorrectionGroupID = created.CorrectionGroupID
+			if _, err = s.repo.Update(ctx, sourceInvoice); err != nil {
+				s.l.Warn("failed to update source invoice supersession linkage", zap.Error(err))
+			}
+		}
+	}
+
+	if s.adjustmentRepo != nil && item.CorrectionGroupID != nil && item.CorrectionGroupID.IsNotNil() {
+		group, err := s.adjustmentRepo.GetCorrectionGroup(ctx, repositories.GetCorrectionGroupRequest{
+			ID: *item.CorrectionGroupID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: item.OrganizationID,
+				BuID:  item.BusinessUnitID,
+			},
+		})
+		if err == nil && group != nil {
+			group.CurrentInvoiceID = created.ID
+			if _, err = s.adjustmentRepo.UpdateCorrectionGroup(ctx, group); err != nil {
+				s.l.Warn("failed to update correction group current invoice", zap.Error(err))
+			}
+		}
+	}
 }
 
 func (s *Service) Post(
@@ -216,6 +273,11 @@ func (s *Service) Post(
 
 		previous := *entity
 		now := timeutils.NowUnix()
+
+		if multiErr := s.validator.ValidatePost(txCtx, entity, req.TenantInfo, now); multiErr != nil {
+			return multiErr
+		}
+
 		entity.Status = invoice.StatusPosted
 		entity.PostedAt = &now
 
@@ -253,6 +315,7 @@ func (s *Service) Post(
 		s.publishInvalidation(txCtx, updated, auditActor, "updated", updated)
 		s.logBillingQueuePosted(queueUpdate, auditActor)
 		s.publishBillingQueueInvalidation(txCtx, queueUpdate, auditActor)
+		s.notifyReconciliationWarning(txCtx, updated, shp)
 
 		return nil
 	})
@@ -261,6 +324,55 @@ func (s *Service) Post(
 	}
 
 	return posted, nil
+}
+
+func (s *Service) notifyReconciliationWarning(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	shp *shipment.Shipment,
+) {
+	if s.accountingRepo == nil || s.notificationRepo == nil || entity == nil || shp == nil {
+		return
+	}
+
+	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil || control == nil {
+		return
+	}
+
+	if control.ReconciliationMode != tenant.ReconciliationModeWarnOnly ||
+		!control.NotifyOnReconciliationException {
+		return
+	}
+
+	expectedTotal := signedAmount(entity.BillType, shp.TotalChargeAmount.Decimal)
+	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()
+	if !discrepancy.GreaterThan(control.ReconciliationToleranceAmount) {
+		return
+	}
+
+	if _, err = s.notificationRepo.Create(ctx, &notification.Notification{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: &entity.BusinessUnitID,
+		EventType:      "invoice_reconciliation_warning",
+		Priority:       notification.PriorityMedium,
+		Channel:        notification.ChannelGlobal,
+		Title:          "Invoice posted with reconciliation warning",
+		Message:        "A posted invoice exceeded the organization reconciliation tolerance and requires follow-up.",
+		Data: map[string]any{
+			"invoiceTotal":      entity.TotalAmount.String(),
+			"expectedTotal":     expectedTotal.String(),
+			"toleranceAmount":   control.ReconciliationToleranceAmount.String(),
+			"discrepancyAmount": discrepancy.String(),
+		},
+		RelatedEntities: map[string]any{
+			"invoiceId":  entity.ID.String(),
+			"shipmentId": entity.ShipmentID.String(),
+		},
+		Source: "invoiceservice.Post",
+	}); err != nil {
+		s.l.Warn("failed to create reconciliation warning notification", zap.Error(err))
+	}
 }
 
 func (s *Service) markBillingQueueItemPosted(
@@ -441,6 +553,12 @@ func (s *Service) buildInvoiceEntity(
 	cus *customer.Customer,
 	control *tenant.BillingControl,
 ) *invoice.Invoice {
+	if item.IsAdjustmentOrigin {
+		if entity := s.buildAdjustmentOriginInvoiceEntity(item, shp, cus, control); entity != nil {
+			return entity
+		}
+	}
+
 	invoiceDate := timeutils.NowUnix()
 	paymentTerm := resolvePaymentTerm(cus, control)
 	if paymentTerm == "" {
@@ -472,6 +590,9 @@ func (s *Service) buildInvoiceEntity(
 		SubtotalAmount:     signedAmount(item.BillType, shp.FreightChargeAmount.Decimal),
 		OtherAmount:        signedAmount(item.BillType, shp.OtherChargeAmount.Decimal),
 		TotalAmount:        signedAmount(item.BillType, shp.TotalChargeAmount.Decimal),
+		AppliedAmount:      decimal.Zero,
+		SettlementStatus:   invoice.SettlementStatusUnpaid,
+		DisputeStatus:      invoice.DisputeStatusNone,
 		Lines:              buildInvoiceLines(item.BillType, shp),
 	}
 
@@ -481,6 +602,110 @@ func (s *Service) buildInvoiceEntity(
 	}
 
 	return entity
+}
+
+type adjustmentInvoiceContext struct {
+	ReplacementLines     []*invoice.Line `json:"replacementLines"`
+	SubtotalAmount       decimal.Decimal `json:"subtotalAmount"`
+	OtherAmount          decimal.Decimal `json:"otherAmount"`
+	TotalAmount          decimal.Decimal `json:"totalAmount"`
+	AccountingDate       int64           `json:"accountingDate"`
+	SourceInvoiceID      pulid.ID        `json:"sourceInvoiceId"`
+	CorrectionGroupID    pulid.ID        `json:"correctionGroupId"`
+	SourceAdjustmentID   pulid.ID        `json:"sourceAdjustmentId"`
+}
+
+func (s *Service) buildAdjustmentOriginInvoiceEntity(
+	item *billingqueue.BillingQueueItem,
+	shp *shipment.Shipment,
+	cus *customer.Customer,
+	control *tenant.BillingControl,
+) *invoice.Invoice {
+	if len(item.AdjustmentContext) == 0 {
+		return nil
+	}
+
+	raw, err := sonic.Marshal(item.AdjustmentContext)
+	if err != nil {
+		return nil
+	}
+
+	var ctx adjustmentInvoiceContext
+	if err = sonic.Unmarshal(raw, &ctx); err != nil {
+		return nil
+	}
+
+	invoiceDate := ctx.AccountingDate
+	if invoiceDate == 0 {
+		invoiceDate = timeutils.NowUnix()
+	}
+	paymentTerm := resolvePaymentTerm(cus, control)
+	if paymentTerm == "" {
+		paymentTerm = invoice.PaymentTermNet30
+	}
+	lines := ctx.ReplacementLines
+	if len(lines) == 0 {
+		lines = buildInvoiceLines(item.BillType, shp)
+	}
+
+	entity := &invoice.Invoice{
+		OrganizationID:            item.OrganizationID,
+		BusinessUnitID:            item.BusinessUnitID,
+		BillingQueueItemID:        item.ID,
+		ShipmentID:                shp.ID,
+		CustomerID:                cus.ID,
+		Number:                    item.Number,
+		BillType:                  item.BillType,
+		Status:                    invoice.StatusDraft,
+		PaymentTerm:               paymentTerm,
+		CurrencyCode:              billingCurrencyFromCustomer(cus),
+		InvoiceDate:               invoiceDate,
+		DueDate:                   invoice.DueDateFromPaymentTerm(invoiceDate, paymentTerm),
+		ShipmentProNumber:         shp.ProNumber,
+		ShipmentBOL:               shp.BOL,
+		ServiceDate:               serviceDateFromShipment(shp),
+		BillToName:                cus.Name,
+		BillToCode:                cus.Code,
+		BillToAddressLine1:        cus.AddressLine1,
+		BillToAddressLine2:        cus.AddressLine2,
+		BillToCity:                cus.City,
+		BillToPostalCode:          cus.PostalCode,
+		SubtotalAmount:            ctx.SubtotalAmount,
+		OtherAmount:               ctx.OtherAmount,
+		TotalAmount:               ctx.TotalAmount,
+		AppliedAmount:             decimal.Zero,
+		SettlementStatus:          invoice.SettlementStatusUnpaid,
+		DisputeStatus:             invoice.DisputeStatusNone,
+		CorrectionGroupID:         ctx.CorrectionGroupID,
+		SupersedesInvoiceID:       ctx.SourceInvoiceID,
+		SourceInvoiceAdjustmentID: ctx.SourceAdjustmentID,
+		Lines:                     lines,
+	}
+	if ctx.SubtotalAmount.IsZero() && ctx.OtherAmount.IsZero() {
+		entity.SubtotalAmount = sumLinesByType(lines, invoice.LineTypeFreight)
+		entity.OtherAmount = sumLinesByType(lines, invoice.LineTypeAccessorial)
+	}
+	if ctx.TotalAmount.IsZero() {
+		entity.TotalAmount = sumLinesByType(lines, "")
+	}
+	if cus.State != nil {
+		entity.BillToState = cus.State.Abbreviation
+		entity.BillToCountry = cus.State.CountryName
+	}
+	return entity
+}
+
+func sumLinesByType(lines []*invoice.Line, lineType invoice.LineType) decimal.Decimal {
+	total := decimal.Zero
+	for _, line := range lines {
+		if line == nil {
+			continue
+		}
+		if lineType == "" || line.Type == lineType {
+			total = total.Add(line.Amount)
+		}
+	}
+	return total
 }
 
 func buildInvoiceLines(
@@ -557,7 +782,7 @@ func paymentTermFromBillingControl(control *tenant.BillingControl) invoice.Payme
 		return ""
 	}
 
-	return invoice.PaymentTerm(control.PaymentTerm)
+	return invoice.PaymentTerm(control.DefaultPaymentTerm)
 }
 
 func resolvePaymentTerm(
@@ -597,8 +822,8 @@ func (s *Service) shouldAutoPost(
 	cus *customer.Customer,
 ) bool {
 	control, err := s.billingRepo.GetByOrgID(ctx, orgID)
-	if err == nil && control != nil && control.AutoBill {
-		return true
+	if err == nil && control != nil {
+		return resolveEffectiveAutoPost(control, cus)
 	}
 
 	return s.resolveAutoPost(cus)
@@ -606,6 +831,25 @@ func (s *Service) shouldAutoPost(
 
 func (s *Service) resolveAutoPost(cus *customer.Customer) bool {
 	return cus != nil && cus.BillingProfile != nil && cus.BillingProfile.AutoBill
+}
+
+func resolveEffectiveAutoPost(
+	control *tenant.BillingControl,
+	cus *customer.Customer,
+) bool {
+	if control == nil {
+		return false
+	}
+
+	if control.InvoicePostingMode != tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
+		return false
+	}
+
+	if cus == nil || cus.BillingProfile == nil {
+		return true
+	}
+
+	return cus.BillingProfile.AutoBill
 }
 
 func (s *Service) logAction(

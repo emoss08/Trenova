@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type ListInvoicesRequest struct {
@@ -22,6 +23,14 @@ type GetInvoiceByBillingQueueItemIDRequest struct {
 	TenantInfo         pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type CountPostedInvoiceReconciliationDiscrepanciesRequest struct {
+	OrgID           pulid.ID        `json:"orgId"`
+	BuID            pulid.ID        `json:"buId"`
+	PeriodStartDate int64           `json:"periodStartDate"`
+	PeriodEndDate   int64           `json:"periodEndDate"`
+	ToleranceAmount decimal.Decimal `json:"toleranceAmount"`
+}
+
 type InvoiceRepository interface {
 	List(
 		ctx context.Context,
@@ -35,6 +44,10 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		req GetInvoiceByBillingQueueItemIDRequest,
 	) (*invoice.Invoice, error)
+	CountPostedReconciliationDiscrepancies(
+		ctx context.Context,
+		req CountPostedInvoiceReconciliationDiscrepanciesRequest,
+	) (int, error)
 	Create(
 		ctx context.Context,
 		entity *invoice.Invoice,

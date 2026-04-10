@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 
 type BillingRecordCardProps = {
-  accentColor: string;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   amount?: React.ReactNode;
@@ -12,7 +11,6 @@ type BillingRecordCardProps = {
 };
 
 export function BillingRecordCard({
-  accentColor,
   title,
   subtitle,
   amount,
@@ -26,25 +24,26 @@ export function BillingRecordCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-stretch gap-2 rounded-md border p-2.5 text-left transition-colors",
-        "hover:bg-accent/50",
-        isSelected ? "border-border bg-muted" : "border-border",
+        "flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-colors",
+        "hover:bg-muted/40",
+        isSelected
+          ? "border-border bg-muted shadow-sm"
+          : "border-border/60",
       )}
     >
-      <div className="w-[3px] shrink-0 rounded-full" style={{ backgroundColor: accentColor }} />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <div className="truncate text-sm font-semibold">{title}</div>
-            {auxiliary ? <div className="shrink-0">{auxiliary}</div> : null}
-          </div>
-          {amount ? (
-            <div className="shrink-0 text-xs font-medium tabular-nums">{amount}</div>
-          ) : null}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-sm font-semibold">{title}</span>
+          {auxiliary ? <span className="shrink-0">{auxiliary}</span> : null}
         </div>
-        {subtitle ? <div className="truncate text-xs text-muted-foreground">{subtitle}</div> : null}
-        {meta ? <div>{meta}</div> : null}
+        {amount ? (
+          <span className="shrink-0 text-sm font-semibold tabular-nums">{amount}</span>
+        ) : null}
       </div>
+      {subtitle ? (
+        <span className="truncate text-xs text-muted-foreground">{subtitle}</span>
+      ) : null}
+      {meta ? <div className="mt-0.5">{meta}</div> : null}
     </button>
   );
 }

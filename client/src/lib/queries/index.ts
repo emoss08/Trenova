@@ -13,6 +13,8 @@ import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { integration } from "./integration";
 import { invoice } from "./invoice";
+import { invoiceAdjustment } from "./invoice-adjustment";
+import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { sequenceConfig } from "./sequence-config";
@@ -40,6 +42,8 @@ export const queries = mergeQueryKeys(
   organization,
   integration,
   invoice,
+  invoiceAdjustment,
+  invoiceAdjustmentControl,
   customer,
   shipment,
   formulaTemplate,

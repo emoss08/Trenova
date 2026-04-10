@@ -1,4 +1,5 @@
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
+import { PlainBillingQueueStatusBadge } from "@/components/status-badge";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -7,16 +8,11 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { billingQueueStatusChoices } from "@/lib/choices";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { formatCurrency } from "@/lib/utils";
-import type { BillingQueueItem, BillingQueueStatus } from "@/types/billing-queue";
+import type { BillingQueueItem } from "@/types/billing-queue";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, PauseIcon, UserPlusIcon, XIcon } from "lucide-react";
-
-const STATUS_COLORS: Record<BillingQueueStatus, string> = Object.fromEntries(
-  billingQueueStatusChoices.map((c) => [c.value, c.color]),
-) as Record<BillingQueueStatus, string>;
 
 export function BillingQueueItemCard({
   item,
@@ -43,7 +39,6 @@ export function BillingQueueItemCard({
     <ContextMenu>
       <ContextMenuTrigger>
         <BillingRecordCard
-          accentColor={STATUS_COLORS[item.status]}
           title={proNumber}
           auxiliary={
             item.number ? (
@@ -53,18 +48,26 @@ export function BillingQueueItemCard({
           amount={totalCharges != null ? formatCurrency(Number(totalCharges)) : undefined}
           subtitle={customerName || "No customer"}
           meta={
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <div className="flex w-fit items-center gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <PlainBillingQueueStatusBadge status={item.status} />
+                {item.isAdjustmentOrigin ? (
+                  <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                    Rebill
+                  </span>
+                ) : null}
+              </div>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
                     <span className="text-[11px] text-muted-foreground/70">{age}</span>
-                  </div>
-                }
-              />
-              <TooltipContent side="left" sideOffset={10}>
-                {generateDateTimeStringFromUnixTimestamp(item.createdAt)}
-              </TooltipContent>
-            </Tooltip>
+                  }
+                />
+                <TooltipContent side="left" sideOffset={10}>
+                  {generateDateTimeStringFromUnixTimestamp(item.createdAt)}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           }
           isSelected={isSelected}
           onClick={onClick}

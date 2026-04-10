@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/seedhelpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -139,6 +140,22 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return fmt.Errorf("create billing control: %w", err)
 			}
 			if err := sc.TrackCreated(ctx, "billing_controls", billingControl.ID, s.Name()); err != nil {
+				return err
+			}
+
+			invoiceAdjustmentControl := &tenant.InvoiceAdjustmentControl{
+				ID:                                  pulid.MustNew("iac_"),
+				OrganizationID:                      org.ID,
+				BusinessUnitID:                      bu.ID,
+				StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
+				WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
+				CreatedAt:                           now,
+				UpdatedAt:                           now,
+			}
+			if _, err := tx.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
+				return fmt.Errorf("create invoice adjustment control: %w", err)
+			}
+			if err := sc.TrackCreated(ctx, "invoice_adjustment_controls", invoiceAdjustmentControl.ID, s.Name()); err != nil {
 				return err
 			}
 

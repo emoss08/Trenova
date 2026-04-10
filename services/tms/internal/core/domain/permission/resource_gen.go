@@ -60,13 +60,14 @@ const (
 	ResourceHazardousMaterial Resource = "hazardous_material"
 
 	// Accounting
-	ResourceAccountingControl    Resource = "accounting_control"
-	ResourceBillingControl       Resource = "billing_control"
-	ResourceAccountType          Resource = "account_type"
-	ResourceGeneralLedgerAccount Resource = "general_ledger_account"
-	ResourceDivisionCode         Resource = "division_code"
-	ResourceFiscalYear           Resource = "fiscal_year"
-	ResourceFiscalPeriod         Resource = "fiscal_period"
+	ResourceAccountingControl        Resource = "accounting_control"
+	ResourceBillingControl           Resource = "billing_control"
+	ResourceInvoiceAdjustmentControl Resource = "invoice_adjustment_control"
+	ResourceAccountType              Resource = "account_type"
+	ResourceGeneralLedgerAccount     Resource = "general_ledger_account"
+	ResourceDivisionCode             Resource = "division_code"
+	ResourceFiscalYear               Resource = "fiscal_year"
+	ResourceFiscalPeriod             Resource = "fiscal_period"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

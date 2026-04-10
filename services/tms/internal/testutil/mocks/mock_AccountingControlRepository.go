@@ -107,12 +107,12 @@ func (_c *MockAccountingControlRepository_GetByOrgID_Call) RunAndReturn(run func
 	return _c
 }
 
-// ListWithAutoClosePeriods provides a mock function for the type MockAccountingControlRepository
-func (_mock *MockAccountingControlRepository) ListWithAutoClosePeriods(ctx context.Context) ([]*tenant.AccountingControl, error) {
+// ListWithScheduledPeriodClose provides a mock function for the type MockAccountingControlRepository
+func (_mock *MockAccountingControlRepository) ListWithScheduledPeriodClose(ctx context.Context) ([]*tenant.AccountingControl, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListWithAutoClosePeriods")
+		panic("no return value specified for ListWithScheduledPeriodClose")
 	}
 
 	var r0 []*tenant.AccountingControl
@@ -135,18 +135,18 @@ func (_mock *MockAccountingControlRepository) ListWithAutoClosePeriods(ctx conte
 	return r0, r1
 }
 
-// MockAccountingControlRepository_ListWithAutoClosePeriods_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWithAutoClosePeriods'
-type MockAccountingControlRepository_ListWithAutoClosePeriods_Call struct {
+// MockAccountingControlRepository_ListWithScheduledPeriodClose_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWithScheduledPeriodClose'
+type MockAccountingControlRepository_ListWithScheduledPeriodClose_Call struct {
 	*mock.Call
 }
 
-// ListWithAutoClosePeriods is a helper method to define mock.On call
+// ListWithScheduledPeriodClose is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockAccountingControlRepository_Expecter) ListWithAutoClosePeriods(ctx interface{}) *MockAccountingControlRepository_ListWithAutoClosePeriods_Call {
-	return &MockAccountingControlRepository_ListWithAutoClosePeriods_Call{Call: _e.mock.On("ListWithAutoClosePeriods", ctx)}
+func (_e *MockAccountingControlRepository_Expecter) ListWithScheduledPeriodClose(ctx interface{}) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
+	return &MockAccountingControlRepository_ListWithScheduledPeriodClose_Call{Call: _e.mock.On("ListWithScheduledPeriodClose", ctx)}
 }
 
-func (_c *MockAccountingControlRepository_ListWithAutoClosePeriods_Call) Run(run func(ctx context.Context)) *MockAccountingControlRepository_ListWithAutoClosePeriods_Call {
+func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) Run(run func(ctx context.Context)) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -159,12 +159,12 @@ func (_c *MockAccountingControlRepository_ListWithAutoClosePeriods_Call) Run(run
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListWithAutoClosePeriods_Call) Return(accountingControls []*tenant.AccountingControl, err error) *MockAccountingControlRepository_ListWithAutoClosePeriods_Call {
+func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) Return(accountingControls []*tenant.AccountingControl, err error) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	_c.Call.Return(accountingControls, err)
 	return _c
 }
 
-func (_c *MockAccountingControlRepository_ListWithAutoClosePeriods_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.AccountingControl, error)) *MockAccountingControlRepository_ListWithAutoClosePeriods_Call {
+func (_c *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call) RunAndReturn(run func(ctx context.Context) ([]*tenant.AccountingControl, error)) *MockAccountingControlRepository_ListWithScheduledPeriodClose_Call {
 	_c.Call.Return(run)
 	return _c
 }

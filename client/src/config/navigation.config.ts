@@ -189,6 +189,24 @@ const billingModule: NavModule = {
       resource: Resource.Invoice,
     },
     {
+      id: "pending-approvals",
+      label: "Pending Approvals",
+      path: "/billing/pending-approvals",
+      resource: Resource.Invoice,
+    },
+    {
+      id: "reconciliation-exceptions",
+      label: "Reconciliation Exceptions",
+      path: "/billing/reconciliation-exceptions",
+      resource: Resource.Invoice,
+    },
+    {
+      id: "adjustment-batches",
+      label: "Batch Monitor",
+      path: "/billing/adjustment-batches",
+      resource: Resource.Invoice,
+    },
+    {
       id: "billing-config-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -594,6 +612,14 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
     adminOnly: true,
     resource: Resource.BillingControl,
+  },
+  {
+    href: "/admin/invoice-adjustment-controls/",
+    title: "Invoice Adjustment Controls",
+    group: "Organization",
+    adminOnly: true,
+    resource: Resource.InvoiceAdjustmentControl,
+    requiredOperation: Operation.Read,
   },
   {
     href: "/admin/data-entry-controls/",

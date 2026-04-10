@@ -31,8 +31,12 @@ export const shipmentStatusSchema = z.enum([
 export type ShipmentStatus = z.infer<typeof shipmentStatusSchema>;
 
 export const shipmentBillingReadinessPolicySchema = z.object({
-  enforceCustomerBillingReq: z.boolean(),
-  autoMarkReadyToBill: z.boolean(),
+  shipmentBillingRequirementEnforcement: z.string(),
+  rateValidationEnforcement: z.string(),
+  billingExceptionDisposition: z.string(),
+  notifyOnBillingExceptions: z.boolean(),
+  readyToBillAssignmentMode: z.string(),
+  billingQueueTransferMode: z.string(),
 });
 
 export const shipmentBillingValidationSchema = z.object({
@@ -59,6 +63,7 @@ export const shipmentBillingReadinessSchema = z.object({
   validationFailures: z.array(shipmentBillingValidationSchema),
   canMarkReadyToInvoice: z.boolean(),
   shouldAutoMarkReadyToInvoice: z.boolean(),
+  shouldAutoTransferToBilling: z.boolean(),
 });
 
 export type ShipmentBillingReadiness = z.infer<typeof shipmentBillingReadinessSchema>;

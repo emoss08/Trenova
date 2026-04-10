@@ -27,8 +27,7 @@ type BaseNumberFieldProps = {
   step?: number;
 };
 
-export type NumberFieldProps<T extends FieldValues> = BaseNumberFieldProps &
-  FormControlProps<T>;
+export type NumberFieldProps<T extends FieldValues> = BaseNumberFieldProps & FormControlProps<T>;
 
 export function NumberField<T extends FieldValues>({
   name,
@@ -61,8 +60,7 @@ export function NumberField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
-        const currentValue =
-          typeof field.value === "number" ? field.value : 0;
+        const currentValue = typeof field.value === "number" ? field.value : 0;
 
         return (
           <FieldWrapper
@@ -72,7 +70,7 @@ export function NumberField<T extends FieldValues>({
             error={fieldState.error?.message}
             className={className}
           >
-            <div className="relative w-full">
+            <div className="relative overflow-hidden">
               <NumericFormat
                 value={field.value ?? ""}
                 onValueChange={(values) => {
@@ -106,8 +104,7 @@ export function NumberField<T extends FieldValues>({
                   "read-only:cursor-default read-only:text-muted-foreground",
                   "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",
                   "transition-[border-color,box-shadow] duration-200 ease-in-out",
-                  props.readOnly &&
-                    "pointer-events-none cursor-not-allowed opacity-60",
+                  props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                   fieldState.invalid &&
                     "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
                   sideText ? "pr-16" : "pr-12",
@@ -125,7 +122,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Increment"
-                    className="inline-flex w-7 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex w-7 h-8 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue + step;
@@ -138,7 +135,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Decrement"
-                    className="inline-flex w-7 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex w-7 h-8 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue - step;

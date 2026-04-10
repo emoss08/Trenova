@@ -58,6 +58,14 @@ type Invoice struct {
 	SubtotalAmount     decimal.Decimal       `json:"subtotalAmount"     bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"`
 	OtherAmount        decimal.Decimal       `json:"otherAmount"        bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"`
 	TotalAmount        decimal.Decimal       `json:"totalAmount"        bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	AppliedAmount      decimal.Decimal       `json:"appliedAmount"      bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"`
+	SettlementStatus   SettlementStatus      `json:"settlementStatus"   bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"`
+	DisputeStatus      DisputeStatus         `json:"disputeStatus"      bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"`
+	CorrectionGroupID  pulid.ID              `json:"correctionGroupId"  bun:"correction_group_id,type:VARCHAR(100),nullzero"`
+	SupersedesInvoiceID pulid.ID             `json:"supersedesInvoiceId" bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"`
+	SupersededByInvoiceID pulid.ID           `json:"supersededByInvoiceId" bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
+	SourceInvoiceAdjustmentID pulid.ID       `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
+	IsAdjustmentArtifact bool                `json:"isAdjustmentArtifact" bun:"is_adjustment_artifact,type:BOOLEAN,notnull,default:false"`
 	Version            int64                 `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt          int64                 `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt          int64                 `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -142,6 +150,24 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(3, 3).Error("Currency code must be a 3-character ISO code"),
 		),
 		validation.Field(&i.InvoiceDate, validation.Required.Error("Invoice date is required")),
+		validation.Field(&i.SettlementStatus,
+			validation.By(func(value any) error {
+				status, _ := value.(SettlementStatus)
+				if !status.IsValid() {
+					return errors.New("invalid settlement status")
+				}
+				return nil
+			}),
+		),
+		validation.Field(&i.DisputeStatus,
+			validation.By(func(value any) error {
+				status, _ := value.(DisputeStatus)
+				if !status.IsValid() {
+					return errors.New("invalid dispute status")
+				}
+				return nil
+			}),
+		),
 		validation.Field(&i.BillToName,
 			validation.Required.Error("Bill-to name is required"),
 			validation.Length(1, 255).Error("Bill-to name must be between 1 and 255 characters"),
@@ -165,6 +191,10 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 		multiErr.Add("totalAmount", errortypes.ErrInvalid, "Invoice total must be zero or positive")
 	}
 
+	if i.AppliedAmount.IsNegative() {
+		multiErr.Add("appliedAmount", errortypes.ErrInvalid, "Applied amount must not be negative")
+	}
+
 	if len(i.Lines) == 0 {
 		multiErr.Add("lines", errortypes.ErrRequired, "At least one invoice line is required")
 	}
@@ -181,6 +211,19 @@ func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 
 		line.Validate(multiErr, idx)
 	}
+}
+
+func (i *Invoice) OpenBalanceAmount() decimal.Decimal {
+	if i.BillType == billingqueue.BillTypeCreditMemo {
+		return decimal.Zero
+	}
+
+	openBalance := i.TotalAmount.Sub(i.AppliedAmount)
+	if openBalance.IsNegative() {
+		return decimal.Zero
+	}
+
+	return openBalance
 }
 
 func (l *Line) Validate(multiErr *errortypes.MultiError, idx int) {

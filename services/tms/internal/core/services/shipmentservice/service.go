@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
@@ -34,80 +35,96 @@ type shipmentTenantResource interface {
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	Repo            repositories.ShipmentRepository
-	CacheRepo       repositories.ShipmentCacheRepository
-	AssignmentRepo  repositories.AssignmentRepository
-	UserRepo        repositories.UserRepository
-	ControlRepo     repositories.ShipmentControlRepository
-	ContinuityRepo  repositories.EquipmentContinuityRepository
+	Logger              *zap.Logger
+	Repo                repositories.ShipmentRepository
+	CacheRepo           repositories.ShipmentCacheRepository
+	AssignmentRepo      repositories.AssignmentRepository
+	UserRepo            repositories.UserRepository
+	ControlRepo         repositories.ShipmentControlRepository
+	ContinuityRepo      repositories.EquipmentContinuityRepository
 	CommodityRepo       repositories.CommodityRepository
 	HazmatRuleRepo      repositories.HazmatSegregationRuleRepository
 	EquipmentTypeRepo   repositories.EquipmentTypeRepository
-	AccessorialRepo repositories.AccessorialChargeRepository
-	CustomerRepo    repositories.CustomerRepository
-	DocumentRepo    repositories.DocumentRepository
+	AccessorialRepo     repositories.AccessorialChargeRepository
+	CustomerRepo        repositories.CustomerRepository
+	DocumentRepo        repositories.DocumentRepository
 	BillingRepo         repositories.BillingControlRepository
+	NotificationRepo    repositories.NotificationRepository
 	BillingQueueService services.BillingQueueService `optional:"true"`
 	Permissions         services.PermissionEngine
-	Validator       *Validator
-	AuditService    services.AuditService
-	Realtime        services.RealtimeService
-	WorkflowStarter services.WorkflowStarter
-	Coordinator     *shipmentstate.Coordinator
-	Commercial      *shipmentcommercial.Calculator
+	Validator           *Validator
+	AuditService        services.AuditService
+	Realtime            services.RealtimeService
+	WorkflowStarter     services.WorkflowStarter
+	Coordinator         *shipmentstate.Coordinator
+	Commercial          *shipmentcommercial.Calculator
 }
 
 type service struct {
-	l               *zap.Logger
-	repo            repositories.ShipmentRepository
-	cacheRepo       repositories.ShipmentCacheRepository
-	assignmentRepo  repositories.AssignmentRepository
-	userRepo        repositories.UserRepository
-	controlRepo     repositories.ShipmentControlRepository
-	continuityRepo  repositories.EquipmentContinuityRepository
+	l                   *zap.Logger
+	repo                repositories.ShipmentRepository
+	cacheRepo           repositories.ShipmentCacheRepository
+	assignmentRepo      repositories.AssignmentRepository
+	userRepo            repositories.UserRepository
+	controlRepo         repositories.ShipmentControlRepository
+	continuityRepo      repositories.EquipmentContinuityRepository
 	commodityRepo       repositories.CommodityRepository
 	hazmatRuleRepo      repositories.HazmatSegregationRuleRepository
 	equipmentTypeRepo   repositories.EquipmentTypeRepository
-	accessorialRepo repositories.AccessorialChargeRepository
-	customerRepo    repositories.CustomerRepository
-	documentRepo    repositories.DocumentRepository
+	accessorialRepo     repositories.AccessorialChargeRepository
+	customerRepo        repositories.CustomerRepository
+	documentRepo        repositories.DocumentRepository
 	billingRepo         repositories.BillingControlRepository
+	notificationRepo    repositories.NotificationRepository
 	billingQueueService services.BillingQueueService
 	permissions         services.PermissionEngine
-	validator       *Validator
-	auditService    services.AuditService
-	realtime        services.RealtimeService
-	workflowStarter services.WorkflowStarter
-	coordinator     *shipmentstate.Coordinator
-	commercial      *shipmentcommercial.Calculator
+	validator           *Validator
+	auditService        services.AuditService
+	realtime            services.RealtimeService
+	workflowStarter     services.WorkflowStarter
+	coordinator         *shipmentstate.Coordinator
+	commercial          *shipmentcommercial.Calculator
 }
 
 //nolint:gocritic // service constructor
 func New(p Params) services.ShipmentService {
 	return &service{
-		l:               p.Logger.Named("service.shipment"),
-		repo:            p.Repo,
-		cacheRepo:       p.CacheRepo,
-		assignmentRepo:  p.AssignmentRepo,
-		userRepo:        p.UserRepo,
-		controlRepo:     p.ControlRepo,
-		continuityRepo:  p.ContinuityRepo,
+		l:                   p.Logger.Named("service.shipment"),
+		repo:                p.Repo,
+		cacheRepo:           p.CacheRepo,
+		assignmentRepo:      p.AssignmentRepo,
+		userRepo:            p.UserRepo,
+		controlRepo:         p.ControlRepo,
+		continuityRepo:      p.ContinuityRepo,
 		commodityRepo:       p.CommodityRepo,
 		hazmatRuleRepo:      p.HazmatRuleRepo,
 		equipmentTypeRepo:   p.EquipmentTypeRepo,
-		accessorialRepo: p.AccessorialRepo,
-		customerRepo:    p.CustomerRepo,
-		documentRepo:    p.DocumentRepo,
+		accessorialRepo:     p.AccessorialRepo,
+		customerRepo:        p.CustomerRepo,
+		documentRepo:        p.DocumentRepo,
 		billingRepo:         p.BillingRepo,
+		notificationRepo:    p.NotificationRepo,
 		billingQueueService: p.BillingQueueService,
 		permissions:         p.Permissions,
-		validator:       p.Validator,
-		auditService:    p.AuditService,
-		realtime:        p.Realtime,
-		workflowStarter: p.WorkflowStarter,
-		coordinator:     p.Coordinator,
-		commercial:      p.Commercial,
+		validator:           p.Validator,
+		auditService:        p.AuditService,
+		realtime:            p.Realtime,
+		workflowStarter:     p.WorkflowStarter,
+		coordinator:         p.Coordinator,
+		commercial:          p.Commercial,
+	}
+}
+
+func (s *service) createNotification(
+	ctx context.Context,
+	entity *notification.Notification,
+) {
+	if s.notificationRepo == nil || entity == nil {
+		return
+	}
+
+	if _, err := s.notificationRepo.Create(ctx, entity); err != nil {
+		s.l.Warn("failed to create notification", zap.Error(err))
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -18,8 +19,12 @@ type ShipmentUIPolicy struct {
 }
 
 type ShipmentBillingReadinessPolicy struct {
-	EnforceCustomerBillingReq bool `json:"enforceCustomerBillingReq"`
-	AutoMarkReadyToBill       bool `json:"autoMarkReadyToBill"`
+	ShipmentBillingRequirementEnforcement tenant.EnforcementLevel            `json:"shipmentBillingRequirementEnforcement"`
+	RateValidationEnforcement             tenant.EnforcementLevel            `json:"rateValidationEnforcement"`
+	BillingExceptionDisposition           tenant.BillingExceptionDisposition `json:"billingExceptionDisposition"`
+	NotifyOnBillingExceptions             bool                               `json:"notifyOnBillingExceptions"`
+	ReadyToBillAssignmentMode             tenant.ReadyToBillAssignmentMode   `json:"readyToBillAssignmentMode"`
+	BillingQueueTransferMode              tenant.BillingQueueTransferMode    `json:"billingQueueTransferMode"`
 }
 
 type ShipmentBillingValidation struct {
@@ -46,6 +51,7 @@ type ShipmentBillingReadiness struct {
 	ValidationFailures           []ShipmentBillingValidation    `json:"validationFailures"`
 	CanMarkReadyToInvoice        bool                           `json:"canMarkReadyToInvoice"`
 	ShouldAutoMarkReadyToInvoice bool                           `json:"shouldAutoMarkReadyToInvoice"`
+	ShouldAutoTransferToBilling  bool                           `json:"shouldAutoTransferToBilling"`
 }
 
 type TransferShipmentToBillingRequest struct {

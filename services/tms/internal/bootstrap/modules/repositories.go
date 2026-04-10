@@ -45,6 +45,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
@@ -149,6 +151,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documenttyperepository.New,
 	holdreasonrepository.New,
 	integrationrepository.New,
+	invoiceadjustmentcontrolrepository.New,
+	invoiceadjustmentrepository.New,
 	invoicerepository.New,
 	billingcontrolrepository.New,
 	billingqueuerepository.New,

@@ -26,6 +26,7 @@ import (
 
 type mockDocRepo struct {
 	ListFn                             func(ctx context.Context, req *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error)
+	SelectOptionsFn                    func(ctx context.Context, req *repositories.DocumentSelectOptionsRequest) (*pagination.ListResult[*document.Document], error)
 	GetByIDFn                          func(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error)
 	GetByStoragePathFn                 func(ctx context.Context, req repositories.GetDocumentByStoragePathRequest) (*document.Document, error)
 	GetByIDsFn                         func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error)
@@ -48,6 +49,16 @@ func (m *mockDocRepo) List(
 	req *repositories.ListDocumentsRequest,
 ) (*pagination.ListResult[*document.Document], error) {
 	return m.ListFn(ctx, req)
+}
+
+func (m *mockDocRepo) SelectOptions(
+	ctx context.Context,
+	req *repositories.DocumentSelectOptionsRequest,
+) (*pagination.ListResult[*document.Document], error) {
+	if m.SelectOptionsFn == nil {
+		return nil, nil
+	}
+	return m.SelectOptionsFn(ctx, req)
 }
 
 func (m *mockDocRepo) GetByID(

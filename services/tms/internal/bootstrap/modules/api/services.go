@@ -42,6 +42,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -74,6 +76,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/pkg/seqgen"
 
 	"go.uber.org/fx"
 )
@@ -138,6 +141,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	locationservice.New,
 	documenttypeservice.New,
 	holdreasonservice.New,
+	invoiceadjustmentcontrolservice.New,
+	fx.Annotate(
+		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },
+	),
+	invoiceadjustmentservice.New,
 	invoiceservice.New,
 	billingcontrolservice.New,
 	billingqueueservice.New,

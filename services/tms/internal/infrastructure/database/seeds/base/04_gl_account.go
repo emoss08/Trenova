@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/glaccount"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/seedhelpers"
@@ -83,6 +84,9 @@ func (s *GLAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 			if err != nil {
 				return fmt.Errorf("create default COA: %w", err)
 			}
+			if err = s.applyAccountingDefaults(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
+				return fmt.Errorf("apply accounting control defaults: %w", err)
+			}
 
 			seedhelpers.LogSuccess(
 				"Created GL account fixtures",
@@ -93,6 +97,51 @@ func (s *GLAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 			return nil
 		},
 	)
+}
+
+func (s *GLAccountSeed) applyAccountingDefaults(
+	ctx context.Context,
+	tx bun.Tx,
+	orgID, buID pulid.ID,
+) error {
+	type accountRow struct {
+		ID   pulid.ID `bun:"id"`
+		Code string   `bun:"account_code"`
+	}
+
+	rows := make([]accountRow, 0, 2)
+	if err := tx.NewSelect().
+		Model((*glaccount.GLAccount)(nil)).
+		Column("id", "account_code").
+		Where("organization_id = ?", orgID).
+		Where("business_unit_id = ?", buID).
+		Where("account_code IN (?)", bun.In([]string{"1110", "6940"})).
+		Scan(ctx, &rows); err != nil {
+		return err
+	}
+
+	var arAccountID pulid.ID
+	var writeOffAccountID pulid.ID
+	for i := range rows {
+		switch rows[i].Code {
+		case "1110":
+			arAccountID = rows[i].ID
+		case "6940":
+			writeOffAccountID = rows[i].ID
+		}
+	}
+	if arAccountID.IsNil() || writeOffAccountID.IsNil() {
+		return fmt.Errorf("required accounting default accounts were not created")
+	}
+
+	_, err := tx.NewUpdate().
+		Model((*tenant.AccountingControl)(nil)).
+		Set("default_ar_account_id = ?", arAccountID).
+		Set("default_write_off_account_id = ?", writeOffAccountID).
+		Where("organization_id = ?", orgID).
+		Where("business_unit_id = ?", buID).
+		Exec(ctx)
+	return err
 }
 
 func (s *GLAccountSeed) createDefaultAccountTypes(

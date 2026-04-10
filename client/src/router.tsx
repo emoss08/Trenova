@@ -123,6 +123,34 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/pending-approvals",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceApprovalPage } = await import("@/routes/invoice-approval/page");
+              return { Component: InvoiceApprovalPage };
+            },
+          },
+          {
+            path: "/billing/reconciliation-exceptions",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceReconciliationPage } = await import(
+                "@/routes/invoice-reconciliation/page"
+              );
+              return { Component: InvoiceReconciliationPage };
+            },
+          },
+          {
+            path: "/billing/adjustment-batches",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
+            async lazy() {
+              const { InvoiceAdjustmentBatchPage } = await import(
+                "@/routes/invoice-adjustment-batch/page"
+              );
+              return { Component: InvoiceAdjustmentBatchPage };
+            },
+          },
+          {
             path: "/billing/configuration-files/charge-types",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ChargeType)),
             async lazy() {
@@ -299,6 +327,15 @@ const routes: RouteObject[] = [
                   const { AccountingControlPage } =
                     await import("@/routes/accounting-control/page");
                   return { Component: AccountingControlPage };
+                },
+              },
+              {
+                path: "invoice-adjustment-controls",
+                loader: createPermissionLoader(Resource.InvoiceAdjustmentControl, Operation.Read),
+                async lazy() {
+                  const { InvoiceAdjustmentControlPage } =
+                    await import("@/routes/invoice-adjustment-control/page");
+                  return { Component: InvoiceAdjustmentControlPage };
                 },
               },
               {

@@ -1,4 +1,3 @@
-import { BetaTag } from "@/components/beta-tag";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -7,7 +6,17 @@ import { FormSaveDock } from "@/components/form-save-dock";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { paymentTermChoices, transferScheduleChoices } from "@/lib/choices";
+import {
+  billingExceptionDispositionChoices,
+  billingQueueTransferModeChoices,
+  enforcementLevelChoices,
+  invoiceDraftCreationModeChoices,
+  invoicePostingModeChoices,
+  paymentTermChoices,
+  rateVarianceAutoResolutionModeChoices,
+  readyToBillAssignmentModeChoices,
+  transferScheduleChoices,
+} from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { BillingControl } from "@/types/billing-control";
@@ -54,11 +63,9 @@ export default function BillingControlForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-4 pb-14">
-          <InvoiceSettingsForm />
-          <BillingValidationSettings />
-          <TransferSettingsForm />
-          <BillingAutomationForm />
-          <ConsolidationSettingsForm />
+          <InvoiceDefaultsCard />
+          <AutomationCard />
+          <ExceptionPolicyCard />
           <FormSaveDock saveButtonContent="Save Changes" />
         </div>
       </Form>
@@ -66,18 +73,16 @@ export default function BillingControlForm() {
   );
 }
 
-function InvoiceSettingsForm() {
+function InvoiceDefaultsCard() {
   const { control } = useFormContext<BillingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Document Configuration</CardTitle>
+        <CardTitle>Invoice Defaults</CardTitle>
         <CardDescription>
-          Define how invoices are formatted, what information they contain, and how they are
-          presented to customers. These settings determine the professional appearance and content
-          of your billing documents, ensuring clarity and consistency while facilitating prompt
-          payment processing and maintaining compliance with financial documentation standards.
+          Set the organization-level invoice defaults used when customer-specific billing profile
+          settings are not present.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -85,45 +90,47 @@ function InvoiceSettingsForm() {
           <FormControl>
             <SwitchField
               control={control}
-              name="showInvoiceDueDate"
-              label="Show Invoice Due Date"
-              description="When enabled, the payment due date is prominently displayed on all invoices."
+              name="showDueDateOnInvoice"
+              label="Show Due Date On Invoice"
+              description="Displays the payment due date on customer-facing invoices."
+              position="left"
             />
           </FormControl>
           <FormControl>
             <SwitchField
               control={control}
-              name="showAmountDue"
-              label="Show Amount Due"
-              description="When enabled, the total amount due is prominently displayed on all invoices."
+              name="showBalanceDueOnInvoice"
+              label="Show Balance Due On Invoice"
+              description="Displays the outstanding balance due on customer-facing invoices."
+              position="left"
             />
           </FormControl>
           <FormControl cols="full">
             <SelectField
               control={control}
-              rules={{ required: true }}
-              name="paymentTerm"
-              label="Default Payment Terms"
-              description="Establishes the standard timeframe for customer payment that applies when no specific terms have been negotiated."
+              name="defaultPaymentTerm"
+              label="Default Payment Term"
+              description="Fallback payment term used when a customer billing profile does not define one."
               options={paymentTermChoices}
+              rules={{ required: true }}
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
-              name="invoiceTerms"
-              label="Invoice Terms & Conditions"
-              placeholder="Invoice Terms & Conditions"
-              description="Establishes the legally binding payment conditions, grace periods, penalties for late payment, and other contractual stipulations that appear on all invoices."
+              name="defaultInvoiceTerms"
+              label="Default Invoice Terms"
+              placeholder="Payment, billing, and remittance terms"
+              description="Default invoice terms text applied when customer-specific terms are not present."
             />
           </FormControl>
           <FormControl cols="full">
             <TextareaField
               control={control}
-              name="invoiceFooter"
-              label="Invoice Footer"
-              placeholder="Invoice Footer"
-              description="Defines supplementary information displayed at the bottom of all invoices, including company contact details, payment methods, electronic remittance instructions, and legal notices."
+              name="defaultInvoiceFooter"
+              label="Default Invoice Footer"
+              placeholder="Footer content displayed on invoices"
+              description="Default footer text shown on invoices when no customer-specific footer is configured."
             />
           </FormControl>
         </FormGroup>
@@ -132,137 +139,105 @@ function InvoiceSettingsForm() {
   );
 }
 
-function TransferSettingsForm() {
+function AutomationCard() {
   const { control } = useFormContext<BillingControl>();
-  const autoTransfer = useWatch({ control, name: "autoTransfer" });
-  const enforceCustomerBillingReq = useWatch({ control, name: "enforceCustomerBillingReq" });
-  const autoMarkReadyToBill = useWatch({ control, name: "autoMarkReadyToBill" });
+  const transferMode = useWatch({ control, name: "billingQueueTransferMode" });
+  const draftCreationMode = useWatch({ control, name: "invoiceDraftCreationMode" });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          Operational-to-Financial Transfer Gateway <BetaTag />
-        </CardTitle>
+        <CardTitle>Automation Policy</CardTitle>
         <CardDescription>
-          Define the criteria that govern when completed shipments transition from operational
-          status to financial processing. This critical gateway bridges your operational and
-          accounting systems, ensuring that only properly documented and validated shipments enter
-          your revenue cycle. Effective transfer controls accelerate revenue recognition while
-          maintaining billing accuracy and compliance with customer-specific requirements.
+          Control how shipments move into billing, when invoice drafts are created, and whether
+          posted invoices remain manual-review only or may auto-post when no blocking issues exist.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl>
-            <SwitchField
+          <FormControl className="max-w-[420px]">
+            <SelectField
               control={control}
-              name="autoMarkReadyToBill"
-              label="Automate Ready-to-Bill Designation"
-              description="When enabled, shipments that satisfy all transfer criteria are automatically flagged as 'Ready to Bill' without requiring manual verification."
-              position="left"
-              recommended={enforceCustomerBillingReq && autoMarkReadyToBill === false}
-              warning={{
-                show: autoMarkReadyToBill === false && enforceCustomerBillingReq,
-                message:
-                  "Due to the enforcement of customer billing requirements, shipments will not be automatically marked as ready to bill if they do not satisfy all transfer criteria.",
-              }}
+              name="readyToBillAssignmentMode"
+              label="Ready-To-Bill Assignment Mode"
+              description="Controls whether eligible shipments are marked ready to bill automatically or only by user action."
+              options={readyToBillAssignmentModeChoices}
+              rules={{ required: true }}
             />
           </FormControl>
-          <FormControl>
-            <SwitchField
+          <FormControl className="max-w-[420px]">
+            <SelectField
               control={control}
-              name="autoTransfer"
-              label="Enable Automatic Transfers"
-              description="When enabled, shipments that satisfy all transfer criteria are automatically transferred to the billing system without requiring manual verification."
-              position="left"
-              recommended={enforceCustomerBillingReq && autoTransfer === false}
-              warning={{
-                show: autoTransfer === false && enforceCustomerBillingReq,
-                message:
-                  "Due to the enforcement of customer billing requirements, shipments will not be automatically transferred to the billing system if they do not satisfy all transfer criteria.",
-              }}
+              name="billingQueueTransferMode"
+              label="Billing Queue Transfer Mode"
+              description="Controls whether ready-to-bill shipments enter the billing queue automatically or only by user action."
+              options={billingQueueTransferModeChoices}
+              rules={{ required: true }}
             />
           </FormControl>
-          {autoTransfer && (
+          {transferMode === "AutomaticWhenReady" && (
             <>
-              <FormControl className="pl-10">
-                <NumberField
-                  control={control}
-                  rules={{ required: autoTransfer }}
-                  name="transferBatchSize"
-                  label="Transfer Batch Size"
-                  placeholder="Enter maximum number of shipments per batch"
-                  description="Defines the maximum number of shipments processed in a single transfer operation, optimizing system performance by balancing transfer efficiency with resource utilization while preventing processing bottlenecks during high-volume periods."
-                />
-              </FormControl>
-              <FormControl className="pl-10">
+              <FormControl className="max-w-[420px]">
                 <SelectField
                   control={control}
-                  rules={{ required: autoTransfer }}
-                  name="transferSchedule"
-                  label="Transfer Schedule"
-                  description="Establishes when automated transfers from operations to billing occur, balancing timely revenue recognition with operational efficiency and system resource optimization."
+                  name="billingQueueTransferSchedule"
+                  label="Billing Queue Transfer Schedule"
+                  description="Defines how frequently the automatic billing queue transfer job runs."
                   options={transferScheduleChoices}
+                  rules={{ required: true }}
+                />
+              </FormControl>
+              <FormControl className="max-w-[420px]">
+                <NumberField
+                  control={control}
+                  name="billingQueueTransferBatchSize"
+                  label="Billing Queue Transfer Batch Size"
+                  description="Maximum number of ready items processed in a single automatic transfer batch."
+                  rules={{ required: true }}
                 />
               </FormControl>
             </>
           )}
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function BillingAutomationForm() {
-  const { control } = useFormContext<BillingControl>();
-  const autoBill = useWatch({ control, name: "autoBill" });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          Invoice Generation Automation <BetaTag />
-        </CardTitle>
-        <CardDescription>
-          Configure the intelligent automation system that determines when shipments are converted
-          into customer invoices without manual intervention. This autonomous billing framework
-          minimizes human touchpoints in the revenue cycle, reduces days-to-invoice metrics, and
-          ensures consistent application of billing practices across your organization.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
+          <FormControl className="max-w-[420px]">
+            <SelectField
               control={control}
-              name="autoBill"
-              label="Enable Autonomous Invoice Generation"
-              description="When enabled, the system will automatically convert qualified shipments into finalized invoices without manual review when predefined criteria are met."
-              position="left"
+              name="invoiceDraftCreationMode"
+              label="Invoice Draft Creation Mode"
+              description="Controls whether invoice drafts are created only by users or automatically when items are transferred."
+              options={invoiceDraftCreationModeChoices}
+              rules={{ required: true }}
             />
           </FormControl>
-          {autoBill && (
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="invoicePostingMode"
+              label="Invoice Posting Mode"
+              description="Controls whether invoice posting always requires manual review or may auto-post when no blocking issues remain."
+              options={invoicePostingModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          {draftCreationMode === "AutomaticWhenTransferred" && (
             <>
-              <FormControl className="pl-10">
+              <FormControl className="max-w-[420px]">
+                <NumberField
+                  control={control}
+                  name="autoInvoiceBatchSize"
+                  label="Auto Invoice Batch Size"
+                  description="Maximum number of invoice drafts created in a single automatic batch."
+                  rules={{ required: true }}
+                />
+              </FormControl>
+              <FormControl>
                 <SwitchField
                   control={control}
-                  name="sendAutoBillNotifications"
-                  label="Send Automated Billing Notifications"
-                  description="When enabled, the system automatically notifies relevant stakeholders when invoices are generated through the automated billing process."
+                  name="notifyOnAutoInvoiceCreation"
+                  label="Notify On Auto Invoice Creation"
+                  description="Sends notifications when invoice drafts are created automatically."
                   position="left"
                 />
               </FormControl>
-              <FormControl className="pl-10">
-                <NumberField
-                  control={control}
-                  name="autoBillBatchSize"
-                  rules={{ required: autoBill }}
-                  label="Automated Billing Batch Size"
-                  placeholder="Enter maximum invoices per batch"
-                  description="Establishes the maximum number of invoices generated in a single automated billing run, optimizing system performance by balancing processing efficiency with resource utilization and preventing system slowdowns during high-volume periods."
-                />
-              </FormControl>
             </>
           )}
         </FormGroup>
@@ -271,108 +246,89 @@ function BillingAutomationForm() {
   );
 }
 
-function BillingValidationSettings() {
+function ExceptionPolicyCard() {
   const { control } = useFormContext<BillingControl>();
-  const enforceCustomerBillingReq = useWatch({ control, name: "enforceCustomerBillingReq" });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pre-Billing Validation Framework</CardTitle>
-        <CardDescription>
-          Configure the comprehensive validation checks that shipments must pass before entering the
-          invoicing process. These validation controls prevent billing errors, ensure compliance
-          with customer-specific requirements, and verify rate accuracy before invoices are
-          generated. A robust validation framework minimizes billing disputes, accelerates payment
-          collection, and maintains strong customer relationships by ensuring billing accuracy and
-          contractual compliance.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="enforceCustomerBillingReq"
-              label="Enforce Customer-Specific Billing Requirements"
-              description="When enabled, the system verifies that all customer-mandated documentation, reference numbers, and special handling instructions are fulfilled before allowing shipment transfer to billing."
-              position="left"
-              warning={{
-                show: enforceCustomerBillingReq === false,
-                message:
-                  "We recommend enabling this to ensure that all customer-mandated documentation, reference numbers, and special handling instructions are fulfilled before allowing shipment transfer to billing.",
-              }}
-            />
-          </FormControl>
-          <FormControl>
-            <SwitchField
-              control={control}
-              name="validateCustomerRates"
-              label="Validate Contractual Rate Compliance"
-              description="When enabled, the system compares all applied charges against authorized customer rate agreements before allowing transfer to billing."
-              position="left"
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ConsolidationSettingsForm() {
-  const { control } = useFormContext<BillingControl>();
-  const allowInvoiceConsolidation = useWatch({
+  const shipmentRequirementEnforcement = useWatch({
     control,
-    name: "allowInvoiceConsolidation",
+    name: "shipmentBillingRequirementEnforcement",
+  });
+  const rateValidationEnforcement = useWatch({
+    control,
+    name: "rateValidationEnforcement",
   });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invoice Consolidation & Grouping Strategy</CardTitle>
+        <CardTitle>Exception Policy</CardTitle>
         <CardDescription>
-          Define how multiple shipments and services are combined into unified invoices for your
-          customers. Effective consolidation strategies reduce billing administrative costs,
-          minimize the volume of payment transactions, and provide customers with comprehensive
-          invoices that align with their accounting preferences and payment processing capabilities.
+          Define how shipment billing requirement failures and rate-variance validations affect
+          billing progression, review routing, and blocking behavior.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="shipmentBillingRequirementEnforcement"
+              label="Shipment Billing Requirement Enforcement"
+              description="Defines how missing shipment billing requirements affect readiness and billing progression."
+              options={enforcementLevelChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="rateValidationEnforcement"
+              label="Rate Validation Enforcement"
+              description="Defines how rate-variance validation results affect invoice workflow progression."
+              options={enforcementLevelChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          {(shipmentRequirementEnforcement === "RequireReview" ||
+            rateValidationEnforcement === "RequireReview") && (
+            <FormControl className="max-w-[420px]">
+                <SelectField
+                  control={control}
+                  name="billingExceptionDisposition"
+                  label="Billing Exception Disposition"
+                  description="Determines whether review-required billing exceptions stay with billing or are returned to operations."
+                  options={billingExceptionDispositionChoices}
+                  rules={{ required: true }}
+                />
+              </FormControl>
+          )}
+          <FormControl>
             <SwitchField
               control={control}
-              name="allowInvoiceConsolidation"
-              label="Allow Invoice Consolidation"
-              description="Allow combining multiple shipments into a single invoice."
+              name="notifyOnBillingExceptions"
+              label="Notify On Billing Exceptions"
+              description="Sends notifications when billing exceptions are recorded."
               position="left"
             />
           </FormControl>
-          {allowInvoiceConsolidation && (
-            <div className="flex flex-col pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <NumberField
-                  control={control}
-                  name="consolidationPeriodDays"
-                  label="Consolidation Period"
-                  description="Number of days to consolidate shipments into a single invoice."
-                  placeholder="7"
-                  sideText="days"
-                  rules={{ required: allowInvoiceConsolidation }}
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em]">
-                <SwitchField
-                  className="px-0!"
-                  control={control}
-                  name="groupConsolidatedInvoices"
-                  label="Group Line Items"
-                  description="Group line items by service type in consolidated invoices."
-                  position="left"
-                />
-              </FormControl>
-            </div>
-          )}
+          <FormControl className="max-w-[420px]">
+            <NumberField
+              control={control}
+              name="rateVarianceTolerancePercent"
+              label="Rate Variance Tolerance Percent"
+              description="Tolerance percentage used when evaluating whether a rate variance can bypass review."
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="rateVarianceAutoResolutionMode"
+              label="Rate Variance Auto Resolution Mode"
+              description="Controls whether review is skipped for rate variances that are within the configured tolerance."
+              options={rateVarianceAutoResolutionModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
         </FormGroup>
       </CardContent>
     </Card>

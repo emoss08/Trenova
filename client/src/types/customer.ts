@@ -47,6 +47,15 @@ export type ConsolidationGroupBy = z.infer<typeof consolidationGroupBySchema>;
 export const invoiceNumberFormatSchema = z.enum(["Default", "CustomPrefix", "POBased"]);
 export type InvoiceNumberFormat = z.infer<typeof invoiceNumberFormatSchema>;
 
+export const invoiceAdjustmentSupportingDocumentPolicySchema = z.enum([
+  "Inherit",
+  "Required",
+  "Optional",
+]);
+export type InvoiceAdjustmentSupportingDocumentPolicy = z.infer<
+  typeof invoiceAdjustmentSupportingDocumentPolicySchema
+>;
+
 export const customerBillingProfileSchema = z.object({
   id: z.string().optional(),
   version: z.number().int().min(0).optional(),
@@ -95,6 +104,8 @@ export const customerBillingProfileSchema = z.object({
   requirePONumber: z.boolean().default(false),
   requireBOLNumber: z.boolean().default(false),
   requireDeliveryNumber: z.boolean().default(false),
+  invoiceAdjustmentSupportingDocumentPolicy:
+    invoiceAdjustmentSupportingDocumentPolicySchema.default("Inherit"),
   defaultBillerId: nullableStringSchema,
   billingNotes: z.string().default(""),
   documentTypes: z.array(z.any()).nullish(),

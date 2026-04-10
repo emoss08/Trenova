@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -25,25 +26,34 @@ var (
 type BillingQueueItem struct {
 	bun.BaseModel `bun:"table:billing_queue_items,alias:bqi" json:"-"`
 
-	ID                  pulid.ID             `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID             `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID             `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID          pulid.ID             `json:"shipmentId"          bun:"shipment_id,type:VARCHAR(100),notnull"`
-	AssignedBillerID    *pulid.ID            `json:"assignedBillerId"    bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
-	Number              string               `json:"number"              bun:"number,type:VARCHAR(100),nullzero"`
-	Status              Status               `json:"status"              bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
-	BillType            BillType             `json:"billType"            bun:"bill_type,type:billing_type,notnull,default:'Invoice'"`
-	ExceptionReasonCode *ExceptionReasonCode `json:"exceptionReasonCode" bun:"exception_reason_code,type:VARCHAR(50),nullzero"`
-	ReviewNotes         string               `json:"reviewNotes"         bun:"review_notes,type:TEXT,nullzero"`
-	ExceptionNotes      string               `json:"exceptionNotes"      bun:"exception_notes,type:TEXT,nullzero"`
-	ReviewStartedAt     *int64               `json:"reviewStartedAt"     bun:"review_started_at,type:BIGINT,nullzero"`
-	ReviewCompletedAt   *int64               `json:"reviewCompletedAt"   bun:"review_completed_at,type:BIGINT,nullzero"`
-	CanceledByID        *pulid.ID            `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CanceledAt          *int64               `json:"canceledAt"          bun:"canceled_at,type:BIGINT,nullzero"`
-	CancelReason        string               `json:"cancelReason"        bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	Version             int64                `json:"version"             bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt           int64                `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64                `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                        pulid.ID             `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID            pulid.ID             `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID            pulid.ID             `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	ShipmentID                pulid.ID             `json:"shipmentId"          bun:"shipment_id,type:VARCHAR(100),notnull"`
+	AssignedBillerID          *pulid.ID            `json:"assignedBillerId"    bun:"assigned_biller_id,type:VARCHAR(100),nullzero"`
+	Number                    string               `json:"number"              bun:"number,type:VARCHAR(100),nullzero"`
+	Status                    Status               `json:"status"              bun:"status,type:billing_queue_status,notnull,default:'ReadyForReview'"`
+	BillType                  BillType             `json:"billType"            bun:"bill_type,type:billing_type,notnull,default:'Invoice'"`
+	ExceptionReasonCode       *ExceptionReasonCode `json:"exceptionReasonCode" bun:"exception_reason_code,type:VARCHAR(50),nullzero"`
+	ReviewNotes               string               `json:"reviewNotes"         bun:"review_notes,type:TEXT,nullzero"`
+	ExceptionNotes            string               `json:"exceptionNotes"      bun:"exception_notes,type:TEXT,nullzero"`
+	ReviewStartedAt           *int64               `json:"reviewStartedAt"     bun:"review_started_at,type:BIGINT,nullzero"`
+	ReviewCompletedAt         *int64               `json:"reviewCompletedAt"   bun:"review_completed_at,type:BIGINT,nullzero"`
+	CanceledByID              *pulid.ID            `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	CanceledAt                *int64               `json:"canceledAt"          bun:"canceled_at,type:BIGINT,nullzero"`
+	CancelReason              string               `json:"cancelReason"        bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	IsAdjustmentOrigin        bool                 `json:"isAdjustmentOrigin"  bun:"is_adjustment_origin,type:BOOLEAN,notnull,default:false"`
+	SourceInvoiceID           *pulid.ID            `json:"sourceInvoiceId"     bun:"source_invoice_id,type:VARCHAR(100),nullzero"`
+	SourceInvoiceAdjustmentID *pulid.ID            `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
+	SourceCreditMemoInvoiceID *pulid.ID            `json:"sourceCreditMemoInvoiceId" bun:"source_credit_memo_invoice_id,type:VARCHAR(100),nullzero"`
+	CorrectionGroupID         *pulid.ID            `json:"correctionGroupId"   bun:"correction_group_id,type:VARCHAR(100),nullzero"`
+	RebillStrategy            string               `json:"rebillStrategy"      bun:"rebill_strategy,type:VARCHAR(50),nullzero"`
+	RequiresReplacementReview bool                 `json:"requiresReplacementReview" bun:"requires_replacement_review,type:BOOLEAN,notnull,default:false"`
+	RerateVariancePercent     decimal.Decimal      `json:"rerateVariancePercent" bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
+	AdjustmentContext         map[string]any       `json:"adjustmentContext"   bun:"adjustment_context,type:JSONB,notnull,default:'{}'::jsonb"`
+	Version                   int64                `json:"version"             bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt                 int64                `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                 int64                `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Shipment       *shipment.Shipment `json:"shipment,omitempty"       bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	AssignedBiller *tenant.User       `json:"assignedBiller,omitempty" bun:"rel:belongs-to,join:assigned_biller_id=id"`

@@ -5,7 +5,7 @@ import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
 
 type MutationErrorOptions<T extends FieldValues> = {
-  error: ApiRequestError;
+  error: unknown;
   setFormError?: UseFormSetError<T>;
   resourceName?: string;
 };
@@ -15,6 +15,20 @@ export function handleMutationError<T extends FieldValues>({
   setFormError,
   resourceName,
 }: MutationErrorOptions<T>): void {
+  if (!(error instanceof ApiRequestError)) {
+    if (resourceName) {
+      console.error(`Error handling ${resourceName}:`, error);
+    }
+
+    const description =
+      error instanceof Error ? error.message : "An unexpected error occurred";
+
+    toast.error("Error", {
+      description,
+    });
+    return;
+  }
+
   if (error.isVersionMismatchError()) {
     toast.error("Version mismatch", {
       description:
@@ -94,12 +108,12 @@ type UseApiMutationOptions<
   setFormError?: UseFormSetError<TFormValues>;
   resourceName?: string;
   onError?: (
-    error: ApiRequestError,
+    error: unknown,
     variables: TVariables,
     context: TContext | undefined,
   ) => unknown;
 } & Omit<
-  UseMutationOptions<TData, ApiRequestError, TVariables, TContext>,
+  UseMutationOptions<TData, unknown, TVariables, TContext>,
   "onError"
 >;
 
@@ -114,9 +128,9 @@ export function useApiMutation<
   onError,
   ...options
 }: UseApiMutationOptions<TData, TVariables, TContext, TFormValues>) {
-  return useMutation<TData, ApiRequestError, TVariables, TContext>({
+  return useMutation<TData, unknown, TVariables, TContext>({
     ...options,
-    onError: (error: ApiRequestError, variables, context) => {
+    onError: (error: unknown, variables, context) => {
       handleMutationError<TFormValues>({
         error,
         setFormError,

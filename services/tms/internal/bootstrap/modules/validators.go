@@ -28,6 +28,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -130,6 +132,8 @@ var ValidatorModule = fx.Module("validators",
 		locationservice.NewValidator,
 		documenttypeservice.NewValidator,
 		holdreasonservice.NewValidator,
+		invoiceadjustmentcontrolservice.NewValidator,
+		invoiceadjustmentservice.NewValidator,
 		invoiceservice.NewValidator,
 		billingcontrolservice.NewValidator,
 		dataentrycontrolservice.NewValidator,

@@ -5,13 +5,18 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -33,7 +38,7 @@ func TestResolvePaymentTerm(t *testing.T) {
 				},
 			},
 			control: &tenant.BillingControl{
-				PaymentTerm: tenant.PaymentTermNet60,
+				DefaultPaymentTerm: tenant.PaymentTermNet60,
 			},
 			expected: "Net15",
 		},
@@ -43,7 +48,7 @@ func TestResolvePaymentTerm(t *testing.T) {
 				BillingProfile: &customer.CustomerBillingProfile{},
 			},
 			control: &tenant.BillingControl{
-				PaymentTerm: tenant.PaymentTermNet45,
+				DefaultPaymentTerm: tenant.PaymentTermNet45,
 			},
 			expected: "Net45",
 		},
@@ -104,7 +109,7 @@ func TestBuildInvoiceEntityUsesTenantFallbackAndSignsCreditMemoAmounts(t *testin
 		},
 	}
 	control := &tenant.BillingControl{
-		PaymentTerm: tenant.PaymentTermNet45,
+		DefaultPaymentTerm: tenant.PaymentTermNet45,
 	}
 
 	svc := &Service{l: zap.NewNop()}
@@ -130,32 +135,12 @@ func TestShouldAutoPost(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 
-	t.Run("tenant auto bill wins", func(t *testing.T) {
+	t.Run("organization auto posting requires both org automation and customer opt-in", func(t *testing.T) {
 		t.Parallel()
 
 		billingRepo := mocks.NewMockBillingControlRepository(t)
 		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
-			AutoBill: true,
-		}, nil)
-
-		svc := &Service{
-			l:           zap.NewNop(),
-			billingRepo: billingRepo,
-		}
-
-		autoPost := svc.shouldAutoPost(t.Context(), orgID, &customer.Customer{
-			BillingProfile: &customer.CustomerBillingProfile{AutoBill: false},
-		})
-
-		assert.True(t, autoPost)
-	})
-
-	t.Run("customer auto bill applies when tenant is off", func(t *testing.T) {
-		t.Parallel()
-
-		billingRepo := mocks.NewMockBillingControlRepository(t)
-		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
-			AutoBill: false,
+			InvoicePostingMode: tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
 		}, nil)
 
 		svc := &Service{
@@ -168,6 +153,26 @@ func TestShouldAutoPost(t *testing.T) {
 		})
 
 		assert.True(t, autoPost)
+	})
+
+	t.Run("customer auto bill cannot loosen organization manual review policy", func(t *testing.T) {
+		t.Parallel()
+
+		billingRepo := mocks.NewMockBillingControlRepository(t)
+		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
+			InvoicePostingMode: tenant.InvoicePostingModeManualReviewRequired,
+		}, nil)
+
+		svc := &Service{
+			l:           zap.NewNop(),
+			billingRepo: billingRepo,
+		}
+
+		autoPost := svc.shouldAutoPost(t.Context(), orgID, &customer.Customer{
+			BillingProfile: &customer.CustomerBillingProfile{AutoBill: true},
+		})
+
+		assert.False(t, autoPost)
 	})
 
 	t.Run("customer fallback still works on tenant not found", func(t *testing.T) {
@@ -190,6 +195,63 @@ func TestShouldAutoPost(t *testing.T) {
 	})
 }
 
+func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	inv := &invoice.Invoice{
+		ID:             pulid.MustNew("inv_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		ShipmentID:     pulid.MustNew("shp_"),
+		BillType:       billingqueue.BillTypeInvoice,
+		TotalAmount:    decimal.NewFromInt(100),
+	}
+
+	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
+		LockedPeriodPostingPolicy: tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe,
+		ReconciliationMode:        tenant.ReconciliationModeDisabled,
+	}, nil)
+
+	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{
+			OrgID: orgID,
+			BuID:  buID,
+			Date:  1_700_000_000,
+		}).
+		Return(&fiscalperiod.FiscalPeriod{Status: fiscalperiod.StatusLocked}, nil)
+
+	validator := &Validator{
+		l:                zap.NewNop(),
+		accountingRepo:   accountingRepo,
+		fiscalPeriodRepo: fiscalPeriodRepo,
+	}
+
+	multiErr := validator.ValidatePost(t.Context(), inv, pagination.TenantInfo{
+		OrgID: orgID,
+		BuID:  buID,
+	}, 1_700_000_000)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "postedAt")
+}
+
 func int64Ptr(v int64) *int64 {
 	return &v
+}
+
+func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field string) {
+	t.Helper()
+
+	require.NotNil(t, multiErr)
+	for _, err := range multiErr.Errors {
+		if err.Field == field {
+			return
+		}
+	}
+
+	t.Fatalf("expected validation error for field %q, got %#v", field, multiErr.Errors)
 }

@@ -16,6 +16,7 @@ import {
   creditStatusChoices,
   currencyChoices,
   customerPaymentTermChoices,
+  invoiceAdjustmentSupportingDocumentPolicyChoices,
   invoiceMethodChoices,
   invoiceNumberFormatChoices,
 } from "@/lib/choices";
@@ -443,6 +444,15 @@ export function CustomerBillingProfileForm() {
         description="Enforce documentation and validation rules before shipments can be billed"
       />
       <FormGroup cols={1}>
+        <FormControl className="min-h-[3em]">
+          <SelectField
+            control={control}
+            name="billingProfile.invoiceAdjustmentSupportingDocumentPolicy"
+            label="Invoice Adjustment Supporting Documents"
+            description="Controls whether supporting documents are required for this customer's invoice adjustments. 'Inherit Organization Default' uses the organization invoice-adjustment policy."
+            options={invoiceAdjustmentSupportingDocumentPolicyChoices}
+          />
+        </FormControl>
         <FormControl className="min-h-[3em]">
           <SwitchField
             control={control}

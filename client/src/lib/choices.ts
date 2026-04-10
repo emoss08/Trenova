@@ -1,14 +1,33 @@
 import type { AccessorialChargeMethod, RateUnit } from "@/types/accessorial-charge";
 import type { AccountCategory } from "@/types/account-type";
 import type {
-  AccountingMethod,
-  ExpenseRecognition,
-  JournalEntryCriteria,
-  RevenueRecognition,
-  ThresholdAction,
+  AccountingBasis,
+  ClosedPeriodPostingPolicy,
+  CurrencyMode,
+  ExchangeRateDatePolicy,
+  ExchangeRateOverridePolicy,
+  ExpenseRecognitionPolicy,
+  JournalPostingMode,
+  JournalReversalPolicy,
+  JournalSourceEvent,
+  LockedPeriodPostingPolicy,
+  ManualJournalEntryPolicy,
+  PeriodCloseMode,
+  ReconciliationMode,
+  RevenueRecognitionPolicy,
 } from "@/types/accounting-control";
 import type { BillingQueueStatus } from "@/types/billing-queue";
-import type { PaymentTerm, TransferSchedule } from "@/types/billing-control";
+import type {
+  BillingExceptionDisposition,
+  BillingQueueTransferMode,
+  EnforcementLevel,
+  InvoiceDraftCreationMode,
+  InvoicePostingMode,
+  PaymentTerm,
+  RateVarianceAutoResolutionMode,
+  ReadyToBillAssignmentMode,
+  TransferSchedule,
+} from "@/types/billing-control";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -16,6 +35,7 @@ import type {
   ConsolidationGroupBy,
   CreditStatus,
   CustomerPaymentTerm,
+  InvoiceAdjustmentSupportingDocumentPolicy,
   InvoiceMethod,
   InvoiceNumberFormat,
 } from "@/types/customer";
@@ -37,6 +57,19 @@ import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
 import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
 import type { EquipmentStatus, Status } from "@/types/helpers";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
+import type {
+  AdjustmentAccountingDatePolicy,
+  AdjustmentAttachmentPolicy,
+  AdjustmentEligibilityPolicy,
+  ApprovalPolicy,
+  ClosedPeriodAdjustmentPolicy,
+  CustomerCreditBalancePolicy,
+  OverCreditPolicy,
+  ReplacementInvoiceReviewPolicy,
+  RequirementPolicy,
+  SupersededInvoiceVisibilityPolicy,
+  WriteOffApprovalPolicy,
+} from "@/types/invoice-adjustment-control";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
@@ -426,51 +459,89 @@ export const accountCategoryChoices = [
   { value: "Expense", label: "Expense", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<AccountCategory>>;
 
-export const accountingMethodChoices = [
+export const accountingBasisChoices = [
   {
     value: "Accrual",
     label: "Accrual",
-    description: "Record revenue when earned and expenses when incurred (GAAP compliant)",
+    description: "Recognize revenue and expense from non-cash posting events",
   },
   {
     value: "Cash",
     label: "Cash",
-    description: "Record revenue when payment is received and expenses when paid",
+    description: "Recognize revenue and expense only from cash settlement events",
   },
-  {
-    value: "Hybrid",
-    label: "Hybrid",
-    description: "Revenue on accrual basis, expenses on cash basis (IRS guidelines)",
-  },
-] satisfies ReadonlyArray<GenericSelectOption<AccountingMethod>>;
+] satisfies ReadonlyArray<GenericSelectOption<AccountingBasis>>;
 
-export const journalEntryCriteriaChoices = [
+export const journalPostingModeChoices = [
+  { value: "Manual", label: "Manual" },
+  { value: "Automatic", label: "Automatic" },
+] satisfies ReadonlyArray<GenericSelectOption<JournalPostingMode>>;
+
+export const journalSourceEventChoices = [
   { value: "InvoicePosted", label: "Invoice Posted" },
-  { value: "BillPosted", label: "Bill Posted" },
-  { value: "PaymentReceived", label: "Payment Received" },
-  { value: "PaymentMade", label: "Payment Made" },
-  { value: "DeliveryComplete", label: "Delivery Complete" },
-  { value: "ShipmentDispatched", label: "Shipment Dispatched" },
-] satisfies ReadonlyArray<GenericSelectOption<JournalEntryCriteria>>;
+  { value: "CreditMemoPosted", label: "Credit Memo Posted" },
+  { value: "DebitMemoPosted", label: "Debit Memo Posted" },
+  { value: "CustomerPaymentPosted", label: "Customer Payment Posted" },
+  { value: "VendorBillPosted", label: "Vendor Bill Posted" },
+  { value: "VendorPaymentPosted", label: "Vendor Payment Posted" },
+] satisfies ReadonlyArray<GenericSelectOption<JournalSourceEvent>>;
 
-export const reconciliationThresholdActionChoices = [
-  { value: "Warn", label: "Warn", color: "#f59e0b" },
-  { value: "Block", label: "Block", color: "#dc2626" },
-  { value: "Notify", label: "Notify", color: "#3b82f6" },
-] satisfies ReadonlyArray<GenericSelectOption<ThresholdAction>>;
+export const manualJournalEntryPolicyChoices = [
+  { value: "AllowAll", label: "Allow All" },
+  { value: "AdjustmentOnly", label: "Adjustment Only" },
+  { value: "Disallow", label: "Disallow" },
+] satisfies ReadonlyArray<GenericSelectOption<ManualJournalEntryPolicy>>;
 
-export const revenueRecognitionMethodChoices = [
-  { value: "OnDelivery", label: "On Delivery" },
-  { value: "OnBilling", label: "On Billing" },
-  { value: "OnPayment", label: "On Payment" },
-  { value: "OnPickup", label: "On Pickup" },
-] satisfies ReadonlyArray<GenericSelectOption<RevenueRecognition>>;
+export const journalReversalPolicyChoices = [
+  { value: "Disallow", label: "Disallow" },
+  { value: "NextOpenPeriod", label: "Next Open Period" },
+] satisfies ReadonlyArray<GenericSelectOption<JournalReversalPolicy>>;
 
-export const expenseRecognitionMethodChoices = [
-  { value: "OnIncurrence", label: "On Incurrence" },
-  { value: "OnAccrual", label: "On Accrual" },
-  { value: "OnPayment", label: "On Payment" },
-] satisfies ReadonlyArray<GenericSelectOption<ExpenseRecognition>>;
+export const revenueRecognitionPolicyChoices = [
+  { value: "OnInvoicePost", label: "On Invoice Post" },
+  { value: "OnCashReceipt", label: "On Cash Receipt" },
+] satisfies ReadonlyArray<GenericSelectOption<RevenueRecognitionPolicy>>;
+
+export const expenseRecognitionPolicyChoices = [
+  { value: "OnVendorBillPost", label: "On Vendor Bill Post" },
+  { value: "OnCashDisbursement", label: "On Cash Disbursement" },
+] satisfies ReadonlyArray<GenericSelectOption<ExpenseRecognitionPolicy>>;
+
+export const periodCloseModeChoices = [
+  { value: "ManualOnly", label: "Manual Only" },
+  { value: "SystemScheduled", label: "System Scheduled" },
+] satisfies ReadonlyArray<GenericSelectOption<PeriodCloseMode>>;
+
+export const lockedPeriodPostingPolicyChoices = [
+  { value: "BlockSubledgerAllowManualJe", label: "Block Subledger, Allow Manual JE" },
+] satisfies ReadonlyArray<GenericSelectOption<LockedPeriodPostingPolicy>>;
+
+export const closedPeriodPostingPolicyChoices = [
+  { value: "RequireReopen", label: "Require Reopen" },
+  { value: "PostToNextOpen", label: "Post To Next Open" },
+] satisfies ReadonlyArray<GenericSelectOption<ClosedPeriodPostingPolicy>>;
+
+export const reconciliationModeChoices = [
+  { value: "Disabled", label: "Disabled", color: "#6b7280" },
+  { value: "WarnOnly", label: "Warn Only", color: "#f59e0b" },
+  { value: "BlockPosting", label: "Block Posting", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<ReconciliationMode>>;
+
+export const currencyModeChoices = [
+  { value: "SingleCurrency", label: "Single Currency" },
+  { value: "MultiCurrency", label: "Multi Currency" },
+] satisfies ReadonlyArray<GenericSelectOption<CurrencyMode>>;
+
+export const exchangeRateDatePolicyChoices = [
+  { value: "DocumentDate", label: "Document Date" },
+  { value: "AccountingDate", label: "Accounting Date" },
+] satisfies ReadonlyArray<GenericSelectOption<ExchangeRateDatePolicy>>;
+
+export const exchangeRateOverridePolicyChoices = [
+  { value: "Allow", label: "Allow" },
+  { value: "RequireApproval", label: "Require Approval" },
+  { value: "Disallow", label: "Disallow" },
+] satisfies ReadonlyArray<GenericSelectOption<ExchangeRateOverridePolicy>>;
 
 export const packingGroupChoices = [
   { value: "I", label: "I - High Danger", color: "#dc2626" },
@@ -577,7 +648,51 @@ export const transferScheduleChoices = [
   { value: "Weekly", label: "Weekly", color: "#f59e0b" },
 ] satisfies ReadonlyArray<GenericSelectOption<TransferSchedule>>;
 
+export const readyToBillAssignmentModeChoices = [
+  { value: "ManualOnly", label: "Manual Only" },
+  { value: "AutomaticWhenEligible", label: "Automatic When Eligible" },
+] satisfies ReadonlyArray<GenericSelectOption<ReadyToBillAssignmentMode>>;
+
+export const billingQueueTransferModeChoices = [
+  { value: "ManualOnly", label: "Manual Only" },
+  { value: "AutomaticWhenReady", label: "Automatic When Ready" },
+] satisfies ReadonlyArray<GenericSelectOption<BillingQueueTransferMode>>;
+
+export const invoiceDraftCreationModeChoices = [
+  { value: "ManualOnly", label: "Manual Only" },
+  { value: "AutomaticWhenTransferred", label: "Automatic When Transferred" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceDraftCreationMode>>;
+
+export const invoicePostingModeChoices = [
+  { value: "ManualReviewRequired", label: "Manual Review Required" },
+  {
+    value: "AutomaticWhenNoBlockingExceptions",
+    label: "Automatic When No Blocking Exceptions",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<InvoicePostingMode>>;
+
+export const enforcementLevelChoices = [
+  { value: "Ignore", label: "Ignore", color: "#6b7280" },
+  { value: "Warn", label: "Warn", color: "#f59e0b" },
+  { value: "RequireReview", label: "Require Review", color: "#3b82f6" },
+  { value: "Block", label: "Block", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<EnforcementLevel>>;
+
+export const billingExceptionDispositionChoices = [
+  { value: "RouteToBillingReview", label: "Route To Billing Review" },
+  { value: "ReturnToOperations", label: "Return To Operations" },
+] satisfies ReadonlyArray<GenericSelectOption<BillingExceptionDisposition>>;
+
+export const rateVarianceAutoResolutionModeChoices = [
+  { value: "Disabled", label: "Disabled" },
+  {
+    value: "BypassReviewWithinTolerance",
+    label: "Bypass Review Within Tolerance",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<RateVarianceAutoResolutionMode>>;
+
 export const paymentTermChoices = [
+  { value: "Net10", label: "Net 10", color: "#0ea5e9" },
   { value: "DueOnReceipt", label: "Due on Receipt", color: "#15803d" },
   { value: "Net15", label: "Net 15", color: "#3b82f6" },
   { value: "Net30", label: "Net 30", color: "#7e22ce" },
@@ -585,6 +700,98 @@ export const paymentTermChoices = [
   { value: "Net60", label: "Net 60", color: "#ef4444" },
   { value: "Net90", label: "Net 90", color: "#6b7280" },
 ] satisfies ReadonlyArray<GenericSelectOption<PaymentTerm>>;
+
+export const adjustmentEligibilityPolicyChoices = [
+  { value: "Disallow", label: "Disallow", color: "#dc2626" },
+  { value: "AllowWithApproval", label: "Allow With Approval", color: "#3b82f6" },
+  { value: "AllowWithoutApproval", label: "Allow Without Approval", color: "#f59e0b" },
+] satisfies ReadonlyArray<GenericSelectOption<AdjustmentEligibilityPolicy>>;
+
+export const adjustmentAccountingDatePolicyChoices = [
+  {
+    value: "UseOriginalIfOpenElseNextOpen",
+    label: "Use Original If Open Else Next Open",
+  },
+  { value: "AlwaysNextOpen", label: "Always Next Open" },
+] satisfies ReadonlyArray<GenericSelectOption<AdjustmentAccountingDatePolicy>>;
+
+export const closedPeriodAdjustmentPolicyChoices = [
+  { value: "Disallow", label: "Disallow", color: "#dc2626" },
+  { value: "RequireReopen", label: "Require Reopen", color: "#f59e0b" },
+  {
+    value: "PostInNextOpenPeriodWithApproval",
+    label: "Post In Next Open Period With Approval",
+    color: "#3b82f6",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<ClosedPeriodAdjustmentPolicy>>;
+
+export const requirementPolicyChoices = [
+  { value: "Optional", label: "Optional", color: "#6b7280" },
+  { value: "Required", label: "Required", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<RequirementPolicy>>;
+
+export const adjustmentAttachmentPolicyChoices = [
+  { value: "Optional", label: "Optional", color: "#6b7280" },
+  {
+    value: "RequiredForCreditOrWriteOff",
+    label: "Required For Credit Or Write-Off",
+    color: "#f59e0b",
+  },
+  { value: "RequiredForAll", label: "Required For All", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<AdjustmentAttachmentPolicy>>;
+
+export const invoiceAdjustmentSupportingDocumentPolicyChoices = [
+  { value: "Inherit", label: "Inherit Organization Default", color: "#3b82f6" },
+  { value: "Required", label: "Required", color: "#dc2626" },
+  { value: "Optional", label: "Optional", color: "#6b7280" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceAdjustmentSupportingDocumentPolicy>>;
+
+export const approvalPolicyChoices = [
+  { value: "None", label: "None", color: "#6b7280" },
+  { value: "Always", label: "Always", color: "#dc2626" },
+  { value: "AmountThreshold", label: "Amount Threshold", color: "#3b82f6" },
+] satisfies ReadonlyArray<GenericSelectOption<ApprovalPolicy>>;
+
+export const writeOffApprovalPolicyChoices = [
+  { value: "Disallow", label: "Disallow", color: "#dc2626" },
+  { value: "AlwaysRequireApproval", label: "Always Require Approval", color: "#3b82f6" },
+  {
+    value: "RequireApprovalAboveThreshold",
+    label: "Require Approval Above Threshold",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<WriteOffApprovalPolicy>>;
+
+export const replacementInvoiceReviewPolicyChoices = [
+  { value: "NoAdditionalReview", label: "No Additional Review", color: "#6b7280" },
+  {
+    value: "RequireReviewWhenEconomicTermsChange",
+    label: "Require Review When Economic Terms Change",
+    color: "#3b82f6",
+  },
+  { value: "AlwaysRequireReview", label: "Always Require Review", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<ReplacementInvoiceReviewPolicy>>;
+
+export const customerCreditBalancePolicyChoices = [
+  { value: "Disallow", label: "Disallow", color: "#dc2626" },
+  { value: "AllowUnappliedCredit", label: "Allow Unapplied Credit", color: "#3b82f6" },
+] satisfies ReadonlyArray<GenericSelectOption<CustomerCreditBalancePolicy>>;
+
+export const overCreditPolicyChoices = [
+  { value: "Block", label: "Block", color: "#dc2626" },
+  { value: "AllowWithApproval", label: "Allow With Approval", color: "#3b82f6" },
+] satisfies ReadonlyArray<GenericSelectOption<OverCreditPolicy>>;
+
+export const supersededInvoiceVisibilityPolicyChoices = [
+  {
+    value: "ShowCurrentOnlyExternally",
+    label: "Show Current Only Externally",
+  },
+  {
+    value: "ShowCurrentAndSupersededExternally",
+    label: "Show Current And Superseded Externally",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<SupersededInvoiceVisibilityPolicy>>;
 
 export const serviceIncidentTypeChoices = [
   { value: "Never", label: "Never", color: "#15803d" },

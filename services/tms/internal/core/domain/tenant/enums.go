@@ -11,219 +11,240 @@ const (
 	SequenceTypeWorkOrder     = SequenceType("work_order")
 )
 
-type AccountingMethodType string
+type AccountingBasisType string
 
 const (
-	AccountingMethodAccrual = AccountingMethodType("Accrual")
-	AccountingMethodCash    = AccountingMethodType("Cash")
-	AccountingMethodHybrid  = AccountingMethodType("Hybrid")
+	AccountingBasisAccrual = AccountingBasisType("Accrual")
+	AccountingBasisCash    = AccountingBasisType("Cash")
 )
 
-func (a AccountingMethodType) String() string {
+func (a AccountingBasisType) String() string {
 	return string(a)
 }
 
-func (a AccountingMethodType) IsValid() bool {
+func (a AccountingBasisType) IsValid() bool {
 	switch a {
-	case AccountingMethodAccrual, AccountingMethodCash, AccountingMethodHybrid:
+	case AccountingBasisAccrual, AccountingBasisCash:
 		return true
 	}
 	return false
 }
 
-func (a AccountingMethodType) GetDescription() string {
+func (a AccountingBasisType) GetDescription() string {
 	switch a {
-	case AccountingMethodAccrual:
-		return "Record revenue when earned and expenses when incurred, regardless of when cash is exchanged (GAAP/ASC 606 compliant)"
-	case AccountingMethodCash:
-		return "Record revenue when payment is received and expenses when payment is made (not GAAP compliant)"
-	case AccountingMethodHybrid:
-		return "Record revenue on an accrual basis with expenses on a cash basis, commonly used for tax reporting under IRS guidelines"
+	case AccountingBasisAccrual:
+		return "Recognize revenue and expense from non-cash posting events"
+	case AccountingBasisCash:
+		return "Recognize revenue and expense only from cash settlement events"
 	default:
-		return "Unknown accounting method"
+		return "Unknown accounting basis"
 	}
 }
 
-// ValidRevenueRecognitionMethods returns the set of revenue recognition methods
-// that are permitted under this accounting method.
-func (a AccountingMethodType) ValidRevenueRecognitionMethods() []RevenueRecognitionType {
+func (a AccountingBasisType) ValidRevenueRecognitionPolicies() []RevenueRecognitionPolicyType {
 	switch a {
-	case AccountingMethodCash:
-		return []RevenueRecognitionType{RevenueRecognitionOnPayment}
-	case AccountingMethodAccrual, AccountingMethodHybrid:
-		return []RevenueRecognitionType{
-			RevenueRecognitionOnDelivery,
-			RevenueRecognitionOnBilling,
-			RevenueRecognitionOnPickup,
+	case AccountingBasisCash:
+		return []RevenueRecognitionPolicyType{RevenueRecognitionOnCashReceipt}
+	case AccountingBasisAccrual:
+		return []RevenueRecognitionPolicyType{
+			RevenueRecognitionOnInvoicePost,
 		}
 	default:
 		return nil
 	}
 }
 
-// ValidExpenseRecognitionMethods returns the set of expense recognition methods
-// that are permitted under this accounting method.
-func (a AccountingMethodType) ValidExpenseRecognitionMethods() []ExpenseRecognitionType {
+func (a AccountingBasisType) ValidExpenseRecognitionPolicies() []ExpenseRecognitionPolicyType {
 	switch a {
-	case AccountingMethodCash, AccountingMethodHybrid:
-		return []ExpenseRecognitionType{ExpenseRecognitionOnPayment}
-	case AccountingMethodAccrual:
-		return []ExpenseRecognitionType{
-			ExpenseRecognitionOnIncurrence,
-			ExpenseRecognitionOnAccrual,
+	case AccountingBasisCash:
+		return []ExpenseRecognitionPolicyType{ExpenseRecognitionOnCashDisbursement}
+	case AccountingBasisAccrual:
+		return []ExpenseRecognitionPolicyType{
+			ExpenseRecognitionOnVendorBillPost,
 		}
 	default:
 		return nil
 	}
 }
 
-type RevenueRecognitionType string
+type RevenueRecognitionPolicyType string
 
 const (
-	RevenueRecognitionOnDelivery = RevenueRecognitionType("OnDelivery")
-	RevenueRecognitionOnBilling  = RevenueRecognitionType("OnBilling")
-	RevenueRecognitionOnPayment  = RevenueRecognitionType("OnPayment")
-	RevenueRecognitionOnPickup   = RevenueRecognitionType("OnPickup")
+	RevenueRecognitionOnInvoicePost = RevenueRecognitionPolicyType("OnInvoicePost")
+	RevenueRecognitionOnCashReceipt = RevenueRecognitionPolicyType("OnCashReceipt")
 )
 
-func (r RevenueRecognitionType) String() string {
+func (r RevenueRecognitionPolicyType) String() string {
 	return string(r)
 }
 
-func (r RevenueRecognitionType) IsValid() bool {
+func (r RevenueRecognitionPolicyType) IsValid() bool {
 	switch r {
-	case RevenueRecognitionOnDelivery, RevenueRecognitionOnBilling,
-		RevenueRecognitionOnPayment, RevenueRecognitionOnPickup:
+	case RevenueRecognitionOnInvoicePost, RevenueRecognitionOnCashReceipt:
 		return true
 	}
 	return false
 }
 
-func (r RevenueRecognitionType) GetDescription() string {
+func (r RevenueRecognitionPolicyType) GetDescription() string {
 	switch r {
-	case RevenueRecognitionOnDelivery:
-		return "Recognize revenue when goods are delivered (ASC 606 point-in-time)"
-	case RevenueRecognitionOnBilling:
-		return "Recognize revenue when invoice is created"
-	case RevenueRecognitionOnPayment:
-		return "Recognize revenue when payment is received (cash basis)"
-	case RevenueRecognitionOnPickup:
-		return "Recognize revenue when goods are picked up by the carrier"
+	case RevenueRecognitionOnInvoicePost:
+		return "Recognize revenue when a customer invoice is posted"
+	case RevenueRecognitionOnCashReceipt:
+		return "Recognize revenue when a customer payment is posted"
 	default:
 		return "Unknown method"
 	}
 }
 
-type ExpenseRecognitionType string
+type ExpenseRecognitionPolicyType string
 
 const (
-	ExpenseRecognitionOnIncurrence = ExpenseRecognitionType("OnIncurrence")
-	ExpenseRecognitionOnPayment    = ExpenseRecognitionType("OnPayment")
-	ExpenseRecognitionOnAccrual    = ExpenseRecognitionType("OnAccrual")
+	ExpenseRecognitionOnVendorBillPost   = ExpenseRecognitionPolicyType("OnVendorBillPost")
+	ExpenseRecognitionOnCashDisbursement = ExpenseRecognitionPolicyType("OnCashDisbursement")
 )
 
-func (e ExpenseRecognitionType) String() string {
+func (e ExpenseRecognitionPolicyType) String() string {
 	return string(e)
 }
 
-func (e ExpenseRecognitionType) IsValid() bool {
+func (e ExpenseRecognitionPolicyType) IsValid() bool {
 	switch e {
-	case ExpenseRecognitionOnIncurrence, ExpenseRecognitionOnPayment,
-		ExpenseRecognitionOnAccrual:
+	case ExpenseRecognitionOnVendorBillPost, ExpenseRecognitionOnCashDisbursement:
 		return true
 	}
 	return false
 }
 
-func (e ExpenseRecognitionType) GetDescription() string {
+func (e ExpenseRecognitionPolicyType) GetDescription() string {
 	switch e {
-	case ExpenseRecognitionOnIncurrence:
-		return "Recognize expense when service is performed or goods received (accrual basis)"
-	case ExpenseRecognitionOnPayment:
-		return "Recognize expense when payment is made (cash basis)"
-	case ExpenseRecognitionOnAccrual:
-		return "Recognize expense when vendor bill is received and accepted (accrual basis)"
+	case ExpenseRecognitionOnVendorBillPost:
+		return "Recognize expense when a vendor bill is posted"
+	case ExpenseRecognitionOnCashDisbursement:
+		return "Recognize expense when a vendor payment is posted"
 	default:
 		return "Unknown method"
 	}
 }
 
-type JournalEntryCriteriaType string
+type JournalPostingModeType string
 
 const (
-	JournalEntryCriteriaInvoicePosted      = JournalEntryCriteriaType("InvoicePosted")
-	JournalEntryCriteriaBillPosted         = JournalEntryCriteriaType("BillPosted")
-	JournalEntryCriteriaPaymentReceived    = JournalEntryCriteriaType("PaymentReceived")
-	JournalEntryCriteriaPaymentMade        = JournalEntryCriteriaType("PaymentMade")
-	JournalEntryCriteriaDeliveryComplete   = JournalEntryCriteriaType("DeliveryComplete")
-	JournalEntryCriteriaShipmentDispatched = JournalEntryCriteriaType("ShipmentDispatched")
+	JournalPostingModeManual    = JournalPostingModeType("Manual")
+	JournalPostingModeAutomatic = JournalPostingModeType("Automatic")
 )
 
-func (j JournalEntryCriteriaType) String() string {
+type JournalSourceEventType string
+
+const (
+	JournalSourceEventInvoicePosted         = JournalSourceEventType("InvoicePosted")
+	JournalSourceEventCreditMemoPosted      = JournalSourceEventType("CreditMemoPosted")
+	JournalSourceEventDebitMemoPosted       = JournalSourceEventType("DebitMemoPosted")
+	JournalSourceEventCustomerPaymentPosted = JournalSourceEventType("CustomerPaymentPosted")
+	JournalSourceEventVendorBillPosted      = JournalSourceEventType("VendorBillPosted")
+	JournalSourceEventVendorPaymentPosted   = JournalSourceEventType("VendorPaymentPosted")
+)
+
+func (j JournalSourceEventType) String() string {
 	return string(j)
 }
 
-func (j JournalEntryCriteriaType) IsValid() bool {
+func (j JournalSourceEventType) IsValid() bool {
 	switch j {
-	case JournalEntryCriteriaInvoicePosted, JournalEntryCriteriaBillPosted,
-		JournalEntryCriteriaPaymentReceived, JournalEntryCriteriaPaymentMade,
-		JournalEntryCriteriaDeliveryComplete, JournalEntryCriteriaShipmentDispatched:
+	case JournalSourceEventInvoicePosted,
+		JournalSourceEventCreditMemoPosted,
+		JournalSourceEventDebitMemoPosted,
+		JournalSourceEventCustomerPaymentPosted,
+		JournalSourceEventVendorBillPosted,
+		JournalSourceEventVendorPaymentPosted:
 		return true
 	}
 	return false
 }
 
-func (j JournalEntryCriteriaType) GetDescription() string {
+func (j JournalSourceEventType) GetDescription() string {
 	switch j {
-	case JournalEntryCriteriaInvoicePosted:
-		return "Create journal entry when customer invoice is posted"
-	case JournalEntryCriteriaBillPosted:
-		return "Create journal entry when vendor bill is posted"
-	case JournalEntryCriteriaPaymentReceived:
-		return "Create journal entry when customer payment is received"
-	case JournalEntryCriteriaPaymentMade:
-		return "Create journal entry when vendor payment is made"
-	case JournalEntryCriteriaDeliveryComplete:
-		return "Create journal entry when delivery is complete"
-	case JournalEntryCriteriaShipmentDispatched:
-		return "Create journal entry when shipment is dispatched"
+	case JournalSourceEventInvoicePosted:
+		return "Trigger on posted customer invoice"
+	case JournalSourceEventCreditMemoPosted:
+		return "Trigger on posted customer credit memo"
+	case JournalSourceEventDebitMemoPosted:
+		return "Trigger on posted customer debit memo"
+	case JournalSourceEventCustomerPaymentPosted:
+		return "Trigger on posted customer payment"
+	case JournalSourceEventVendorBillPosted:
+		return "Trigger on posted vendor bill"
+	case JournalSourceEventVendorPaymentPosted:
+		return "Trigger on posted vendor payment"
 	default:
-		return "Unknown criteria"
+		return "Unknown journal source event"
 	}
 }
 
-type ThresholdActionType string
+type ManualJournalEntryPolicy string
 
 const (
-	ThresholdActionWarn   = ThresholdActionType("Warn")
-	ThresholdActionBlock  = ThresholdActionType("Block")
-	ThresholdActionNotify = ThresholdActionType("Notify")
+	ManualJournalEntryPolicyAllowAll       = ManualJournalEntryPolicy("AllowAll")
+	ManualJournalEntryPolicyAdjustmentOnly = ManualJournalEntryPolicy("AdjustmentOnly")
+	ManualJournalEntryPolicyDisallow       = ManualJournalEntryPolicy("Disallow")
 )
 
-func (t ThresholdActionType) String() string {
-	return string(t)
-}
+type JournalReversalPolicyType string
 
-func (t ThresholdActionType) IsValid() bool {
-	switch t {
-	case ThresholdActionWarn, ThresholdActionBlock, ThresholdActionNotify:
-		return true
-	}
-	return false
-}
+const (
+	JournalReversalPolicyDisallow       = JournalReversalPolicyType("Disallow")
+	JournalReversalPolicyNextOpenPeriod = JournalReversalPolicyType("NextOpenPeriod")
+)
 
-func (t ThresholdActionType) GetDescription() string {
-	switch t {
-	case ThresholdActionWarn:
-		return "Display warning when threshold is exceeded"
-	case ThresholdActionBlock:
-		return "Block operations when threshold is exceeded"
-	case ThresholdActionNotify:
-		return "Send notifications when threshold is exceeded"
-	default:
-		return "Unknown action"
-	}
-}
+type PeriodCloseModeType string
+
+const (
+	PeriodCloseModeManualOnly      = PeriodCloseModeType("ManualOnly")
+	PeriodCloseModeSystemScheduled = PeriodCloseModeType("SystemScheduled")
+)
+
+type LockedPeriodPostingPolicy string
+
+const (
+	LockedPeriodPostingPolicyBlockSubledgerAllowManualJe = LockedPeriodPostingPolicy("BlockSubledgerAllowManualJe")
+)
+
+type ClosedPeriodPostingPolicy string
+
+const (
+	ClosedPeriodPostingPolicyRequireReopen  = ClosedPeriodPostingPolicy("RequireReopen")
+	ClosedPeriodPostingPolicyPostToNextOpen = ClosedPeriodPostingPolicy("PostToNextOpen")
+)
+
+type ReconciliationModeType string
+
+const (
+	ReconciliationModeDisabled     = ReconciliationModeType("Disabled")
+	ReconciliationModeWarnOnly     = ReconciliationModeType("WarnOnly")
+	ReconciliationModeBlockPosting = ReconciliationModeType("BlockPosting")
+)
+
+type CurrencyModeType string
+
+const (
+	CurrencyModeSingleCurrency = CurrencyModeType("SingleCurrency")
+	CurrencyModeMultiCurrency  = CurrencyModeType("MultiCurrency")
+)
+
+type ExchangeRateDatePolicy string
+
+const (
+	ExchangeRateDatePolicyDocumentDate   = ExchangeRateDatePolicy("DocumentDate")
+	ExchangeRateDatePolicyAccountingDate = ExchangeRateDatePolicy("AccountingDate")
+)
+
+type ExchangeRateOverrideType string
+
+const (
+	ExchangeRateOverrideAllow           = ExchangeRateOverrideType("Allow")
+	ExchangeRateOverrideRequireApproval = ExchangeRateOverrideType("RequireApproval")
+	ExchangeRateOverrideDisallow        = ExchangeRateOverrideType("Disallow")
+)
 
 type TransferSchedule string
 
@@ -234,22 +255,148 @@ const (
 	TransferScheduleWeekly     = TransferSchedule("Weekly")
 )
 
-type ExceptionHandling string
+type EnforcementLevel string
 
 const (
-	BillingExceptionQueue       = ExceptionHandling("Queue")
-	BillingExceptionNotify      = ExceptionHandling("Notify")
-	BillingExceptionAutoResolve = ExceptionHandling("AutoResolve")
-	BillingExceptionReject      = ExceptionHandling("Reject")
+	EnforcementLevelIgnore        = EnforcementLevel("Ignore")
+	EnforcementLevelWarn          = EnforcementLevel("Warn")
+	EnforcementLevelRequireReview = EnforcementLevel("RequireReview")
+	EnforcementLevelBlock         = EnforcementLevel("Block")
+)
+
+type BillingExceptionDisposition string
+
+const (
+	BillingExceptionDispositionRouteToBillingReview = BillingExceptionDisposition("RouteToBillingReview")
+	BillingExceptionDispositionReturnToOperations   = BillingExceptionDisposition("ReturnToOperations")
+)
+
+type ReadyToBillAssignmentMode string
+
+const (
+	ReadyToBillAssignmentModeManualOnly            = ReadyToBillAssignmentMode("ManualOnly")
+	ReadyToBillAssignmentModeAutomaticWhenEligible = ReadyToBillAssignmentMode("AutomaticWhenEligible")
+)
+
+type BillingQueueTransferMode string
+
+const (
+	BillingQueueTransferModeManualOnly         = BillingQueueTransferMode("ManualOnly")
+	BillingQueueTransferModeAutomaticWhenReady = BillingQueueTransferMode("AutomaticWhenReady")
+)
+
+type InvoiceDraftCreationMode string
+
+const (
+	InvoiceDraftCreationModeManualOnly               = InvoiceDraftCreationMode("ManualOnly")
+	InvoiceDraftCreationModeAutomaticWhenTransferred = InvoiceDraftCreationMode("AutomaticWhenTransferred")
+)
+
+type InvoicePostingMode string
+
+const (
+	InvoicePostingModeManualReviewRequired              = InvoicePostingMode("ManualReviewRequired")
+	InvoicePostingModeAutomaticWhenNoBlockingExceptions = InvoicePostingMode("AutomaticWhenNoBlockingExceptions")
+)
+
+type RateVarianceAutoResolutionMode string
+
+const (
+	RateVarianceAutoResolutionModeDisabled                    = RateVarianceAutoResolutionMode("Disabled")
+	RateVarianceAutoResolutionModeBypassReviewWithinTolerance = RateVarianceAutoResolutionMode("BypassReviewWithinTolerance")
 )
 
 type PaymentTerm string
 
 const (
+	PaymentTermNet10        = PaymentTerm("Net10")
 	PaymentTermNet15        = PaymentTerm("Net15")
 	PaymentTermNet30        = PaymentTerm("Net30")
 	PaymentTermNet45        = PaymentTerm("Net45")
 	PaymentTermNet60        = PaymentTerm("Net60")
 	PaymentTermNet90        = PaymentTerm("Net90")
 	PaymentTermDueOnReceipt = PaymentTerm("DueOnReceipt")
+)
+
+type AdjustmentEligibilityPolicy string
+
+const (
+	AdjustmentEligibilityDisallow             = AdjustmentEligibilityPolicy("Disallow")
+	AdjustmentEligibilityAllowWithApproval    = AdjustmentEligibilityPolicy("AllowWithApproval")
+	AdjustmentEligibilityAllowWithoutApproval = AdjustmentEligibilityPolicy("AllowWithoutApproval")
+)
+
+type AdjustmentAccountingDatePolicy string
+
+const (
+	AdjustmentAccountingDateUseOriginalIfOpenElseNextOpen = AdjustmentAccountingDatePolicy("UseOriginalIfOpenElseNextOpen")
+	AdjustmentAccountingDateAlwaysNextOpen                = AdjustmentAccountingDatePolicy("AlwaysNextOpen")
+)
+
+type ClosedPeriodAdjustmentPolicy string
+
+const (
+	ClosedPeriodAdjustmentPolicyDisallow                         = ClosedPeriodAdjustmentPolicy("Disallow")
+	ClosedPeriodAdjustmentPolicyRequireReopen                    = ClosedPeriodAdjustmentPolicy("RequireReopen")
+	ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval = ClosedPeriodAdjustmentPolicy("PostInNextOpenPeriodWithApproval")
+)
+
+type RequirementPolicy string
+
+const (
+	RequirementPolicyOptional = RequirementPolicy("Optional")
+	RequirementPolicyRequired = RequirementPolicy("Required")
+)
+
+type AdjustmentAttachmentPolicy string
+
+const (
+	AdjustmentAttachmentPolicyOptional                    = AdjustmentAttachmentPolicy("Optional")
+	AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff = AdjustmentAttachmentPolicy("RequiredForCreditOrWriteOff")
+	AdjustmentAttachmentPolicyRequiredForAll              = AdjustmentAttachmentPolicy("RequiredForAll")
+)
+
+type ApprovalPolicy string
+
+const (
+	ApprovalPolicyNone            = ApprovalPolicy("None")
+	ApprovalPolicyAlways          = ApprovalPolicy("Always")
+	ApprovalPolicyAmountThreshold = ApprovalPolicy("AmountThreshold")
+)
+
+type WriteOffApprovalPolicy string
+
+const (
+	WriteOffApprovalPolicyDisallow                      = WriteOffApprovalPolicy("Disallow")
+	WriteOffApprovalPolicyAlwaysRequireApproval         = WriteOffApprovalPolicy("AlwaysRequireApproval")
+	WriteOffApprovalPolicyRequireApprovalAboveThreshold = WriteOffApprovalPolicy("RequireApprovalAboveThreshold")
+)
+
+type ReplacementInvoiceReviewPolicy string
+
+const (
+	ReplacementInvoiceReviewPolicyNoAdditionalReview                   = ReplacementInvoiceReviewPolicy("NoAdditionalReview")
+	ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange = ReplacementInvoiceReviewPolicy("RequireReviewWhenEconomicTermsChange")
+	ReplacementInvoiceReviewPolicyAlwaysRequireReview                  = ReplacementInvoiceReviewPolicy("AlwaysRequireReview")
+)
+
+type CustomerCreditBalancePolicy string
+
+const (
+	CustomerCreditBalancePolicyDisallow             = CustomerCreditBalancePolicy("Disallow")
+	CustomerCreditBalancePolicyAllowUnappliedCredit = CustomerCreditBalancePolicy("AllowUnappliedCredit")
+)
+
+type OverCreditPolicy string
+
+const (
+	OverCreditPolicyBlock             = OverCreditPolicy("Block")
+	OverCreditPolicyAllowWithApproval = OverCreditPolicy("AllowWithApproval")
+)
+
+type SupersededInvoiceVisibilityPolicy string
+
+const (
+	SupersededInvoiceVisibilityPolicyShowCurrentOnlyExternally          = SupersededInvoiceVisibilityPolicy("ShowCurrentOnlyExternally")
+	SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally = SupersededInvoiceVisibilityPolicy("ShowCurrentAndSupersededExternally")
 )

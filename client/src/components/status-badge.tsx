@@ -5,13 +5,7 @@ import type { InvoiceStatus } from "@/types/invoice";
 import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
 import type { PTOStatus, PTOType } from "@/types/worker";
 import type { VariantProps } from "class-variance-authority";
-import {
-  CheckCheckIcon,
-  CheckIcon,
-  ClockIcon,
-  LockIcon,
-  XIcon,
-} from "lucide-react";
+import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
 import type React from "react";
 
 export type BadgeAttrProps = {
@@ -197,8 +191,7 @@ export function ShipmentStatusBadge({
     ["New"]: {
       variant: "purple",
       text: "New",
-      description:
-        "Shipment has been created and is pending initial assignment.",
+      description: "Shipment has been created and is pending initial assignment.",
     },
     [shipmentStatusSchema.enum.PartiallyAssigned]: {
       variant: "indigo",
@@ -209,8 +202,7 @@ export function ShipmentStatusBadge({
     [shipmentStatusSchema.enum.PartiallyCompleted]: {
       variant: "indigo",
       text: "Partially Completed",
-      description:
-        "Some moves within this shipment have been completed, but not all.",
+      description: "Some moves within this shipment have been completed, but not all.",
     },
     [shipmentStatusSchema.enum.Assigned]: {
       variant: "warning",
@@ -239,8 +231,7 @@ export function ShipmentStatusBadge({
     [shipmentStatusSchema.enum.Invoiced]: {
       variant: "teal",
       text: "Invoiced",
-      description:
-        "Invoice has been generated and posted for completed transportation services.",
+      description: "Invoice has been generated and posted for completed transportation services.",
     },
     [shipmentStatusSchema.enum.ReadyToInvoice]: {
       variant: "pink",
@@ -251,16 +242,12 @@ export function ShipmentStatusBadge({
     [shipmentStatusSchema.enum.Canceled]: {
       variant: "inactive",
       text: "Canceled",
-      description:
-        "Shipment has been terminated and will not be completed as originally planned.",
+      description: "Shipment has been terminated and will not be completed as originally planned.",
     },
   };
 
   return (
-    <Badge
-      variant={statusAttributes[status].variant}
-      className={cn(className, "max-h-6")}
-    >
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -311,78 +298,64 @@ export function BillingQueueStatusBadge({
   };
 
   return (
-    <Badge
-      variant={statusAttributes[status].variant}
-      className={cn(className, "max-h-6")}
-    >
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
       {statusAttributes[status].text}
     </Badge>
   );
 }
-export function PlainBillingQueueStatusBadge({
-  status,
-}: {
-  status: BillingQueueStatus;
-}) {
+export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueStatus }) {
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
-      className: "bg-purple-600",
+      className:
+        "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
       text: "Ready for Review",
-      description:
-        "Invoice has been generated and is ready for review by the assigned biller.",
     },
     InReview: {
-      className: "bg-indigo-600",
+      className:
+        "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
       text: "In Review",
-      description: "Invoice is being reviewed by the assigned biller.",
     },
     Approved: {
-      className: "bg-green-600",
+      className:
+        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Approved",
-      description: "Invoice has been approved by the assigned biller.",
     },
     Posted: {
-      className: "bg-teal-600",
+      className:
+        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Posted",
-      description:
-        "Invoice has been posted and this billing queue item is now historical.",
     },
     OnHold: {
-      className: "bg-yellow-600",
+      className:
+        "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       text: "On Hold",
-      description:
-        "Invoice is on hold and will be reviewed by the assigned biller when ready.",
     },
     SentBackToOps: {
-      className: "bg-orange-600",
+      className:
+        "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
       text: "Sent Back to Ops",
-      description:
-        "Invoice has been sent back to operations for additional review.",
     },
     Exception: {
-      className: "bg-amber-600",
+      className:
+        "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
       text: "Exception",
-      description:
-        "Invoice has an exception and will be reviewed by the assigned biller when ready.",
     },
     Canceled: {
-      className: "bg-red-600",
+      className:
+        "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
       text: "Canceled",
-      description:
-        "Invoice has been canceled and will not be reviewed by the assigned biller.",
     },
   };
 
   return (
-    <div className="flex items-center gap-x-1">
-      <div
-        className={cn(
-          "size-2 rounded-full",
-          statusAttributes[status].className,
-        )}
-      />
-      <p className="text-xs font-medium">{statusAttributes[status].text}</p>
-    </div>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        statusAttributes[status].className,
+      )}
+    >
+      {statusAttributes[status].text}
+    </span>
   );
 }
 
@@ -407,10 +380,7 @@ export function InvoiceStatusBadge({
   };
 
   return (
-    <Badge
-      variant={statusAttributes[status].variant}
-      className={cn(className, "max-h-6")}
-    >
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -419,26 +389,25 @@ export function InvoiceStatusBadge({
 export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   const statusAttributes: Record<InvoiceStatus, PlainBadgeAttrProps> = {
     Draft: {
-      className: "bg-slate-500",
+      className:
+        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
       text: "Draft",
-      description: "Invoice exists but has not been posted yet.",
     },
     Posted: {
-      className: "bg-green-600",
+      className:
+        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Posted",
-      description: "Invoice has been posted and the shipment has been billed.",
     },
   };
 
   return (
-    <div className="flex items-center gap-x-1">
-      <div
-        className={cn(
-          "size-2 rounded-full",
-          statusAttributes[status].className,
-        )}
-      />
-      <p className="text-xs font-medium">{statusAttributes[status].text}</p>
-    </div>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        statusAttributes[status].className,
+      )}
+    >
+      {statusAttributes[status].text}
+    </span>
   );
 }

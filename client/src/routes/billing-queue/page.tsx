@@ -1,5 +1,12 @@
 import { BillingWorkspaceLayout } from "@/components/billing/billing-workspace-layout";
 import { LazyComponent } from "@/components/error-boundary";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -77,38 +84,64 @@ export function BillingQueuePage() {
   );
 
   return (
-    <BillingWorkspaceLayout
-      pageHeaderProps={{
-        title: "Billing Queue",
-        description: "Review and approve shipments before invoicing",
-      }}
-      toolbar={
-        <BillingQueueKPIStrip
-          statusFilter={statusFilter}
-          includePosted={includePosted}
-          onFilterChange={setStatusFilter}
-        />
-      }
-      sidebar={
-        <BillingQueueSidebar selectedItemId={selectedItemId} onSelectItem={handleSelectItem} />
-      }
-      detail={
-        <LazyComponent>
-          <BillingQueueDetailPane
-            selectedItemId={selectedItemId}
-            onDocumentSelect={handleDocumentSelect}
-            onAutoAdvance={handleAutoAdvance}
+    <>
+      <BillingWorkspaceLayout
+        pageHeaderProps={{
+          title: "Billing Queue",
+          description: "Review and approve shipments before invoicing",
+        }}
+        toolbar={
+          <BillingQueueKPIStrip
+            statusFilter={statusFilter}
+            includePosted={includePosted}
+            onFilterChange={setStatusFilter}
           />
-        </LazyComponent>
-      }
-      preview={
-        <LazyComponent>
-          <BillingQueueDocumentPreview
-            documentId={selectedDocumentId}
-            fileName={selectedDocumentName}
-          />
-        </LazyComponent>
-      }
-    />
+        }
+        sidebar={
+          <BillingQueueSidebar selectedItemId={selectedItemId} onSelectItem={handleSelectItem} />
+        }
+        detail={
+          <LazyComponent>
+            <BillingQueueDetailPane
+              selectedItemId={selectedItemId}
+              onDocumentSelect={handleDocumentSelect}
+              onAutoAdvance={handleAutoAdvance}
+            />
+          </LazyComponent>
+        }
+      />
+
+      <Sheet
+        open={Boolean(selectedDocumentId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedDocumentId(null);
+            setSelectedDocumentName(null);
+          }
+        }}
+      >
+        <SheetContent
+          side="right"
+          className="w-[min(92vw,1100px)] p-0 sm:max-w-none"
+        >
+          <SheetHeader className="border-b border-border pr-12">
+            <SheetTitle>
+              {selectedDocumentName || "Document Preview"}
+            </SheetTitle>
+            <SheetDescription>
+              Review the supporting shipment document attached to this billing queue item.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="h-[calc(100%-73px)]">
+            <LazyComponent>
+              <BillingQueueDocumentPreview
+                documentId={selectedDocumentId}
+                fileName={selectedDocumentName}
+              />
+            </LazyComponent>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

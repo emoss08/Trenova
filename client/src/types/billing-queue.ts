@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { nullableStringSchema, optionalStringSchema } from "./helpers";
+import { decimalStringSchema, nullableStringSchema, optionalStringSchema } from "./helpers";
 import { shipmentSchema } from "./shipment";
 import { userSchema } from "./user";
 
@@ -49,6 +49,15 @@ export const billingQueueItemSchema = z.object({
   canceledById: nullableStringSchema,
   canceledAt: z.number().nullable().optional(),
   cancelReason: optionalStringSchema,
+  isAdjustmentOrigin: z.boolean().default(false),
+  sourceInvoiceId: nullableStringSchema,
+  sourceInvoiceAdjustmentId: nullableStringSchema,
+  sourceCreditMemoInvoiceId: nullableStringSchema,
+  correctionGroupId: nullableStringSchema,
+  rebillStrategy: nullableStringSchema,
+  requiresReplacementReview: z.boolean().default(false),
+  rerateVariancePercent: decimalStringSchema.nullish().default(0),
+  adjustmentContext: z.record(z.string(), z.unknown()).default({}),
   version: z.number(),
   createdAt: z.number(),
   updatedAt: z.number(),

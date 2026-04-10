@@ -44,9 +44,9 @@ func (a *Activities) GetAutoCloseTenantsActivity(
 	ctx context.Context,
 ) (*GetAutoCloseTenantsResult, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Fetching tenants with auto-close periods enabled")
+	logger.Info("Fetching tenants with scheduled period close enabled")
 
-	controls, err := a.acRepo.ListWithAutoClosePeriods(ctx)
+	controls, err := a.acRepo.ListWithScheduledPeriodClose(ctx)
 	if err != nil {
 		logger.Error("Failed to list accounting controls", "error", err)
 		return nil, temporaltype.NewRetryableError("Failed to list accounting controls", err).
@@ -61,7 +61,7 @@ func (a *Activities) GetAutoCloseTenantsActivity(
 		})
 	}
 
-	logger.Info("Found tenants with auto-close enabled", "count", len(tenants))
+	logger.Info("Found tenants with scheduled period close enabled", "count", len(tenants))
 
 	return &GetAutoCloseTenantsResult{Tenants: tenants}, nil
 }

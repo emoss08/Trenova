@@ -1,4 +1,5 @@
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
+import { PlainInvoiceStatusBadge } from "@/components/status-badge";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -7,14 +8,15 @@ import {
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { formatCurrency } from "@/lib/utils";
-import type { Invoice, InvoiceStatus } from "@/types/invoice";
+import { cn, formatCurrency } from "@/lib/utils";
+import type { Invoice } from "@/types/invoice";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react";
 
-const STATUS_COLORS: Record<InvoiceStatus, string> = {
-  Draft: "#64748b",
-  Posted: "#16a34a",
+const SETTLEMENT_STYLES: Record<string, string> = {
+  Paid: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+  PartiallyPaid: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  Unpaid: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
 };
 
 export function InvoiceItemCard({
@@ -36,7 +38,6 @@ export function InvoiceItemCard({
     <ContextMenu>
       <ContextMenuTrigger>
         <BillingRecordCard
-          accentColor={STATUS_COLORS[invoice.status]}
           title={invoice.number}
           auxiliary={
             <span className="font-mono text-[10px] text-muted-foreground">{invoice.billType}</span>
@@ -44,18 +45,31 @@ export function InvoiceItemCard({
           amount={formatCurrency(totalAmount, invoice.currencyCode)}
           subtitle={customerName || "Unknown bill-to"}
           meta={
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <div className="flex w-fit items-center gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <PlainInvoiceStatusBadge status={invoice.status} />
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                    SETTLEMENT_STYLES[invoice.settlementStatus] ?? SETTLEMENT_STYLES.Unpaid,
+                  )}
+                >
+                  {invoice.settlementStatus === "PartiallyPaid"
+                    ? "Partial"
+                    : invoice.settlementStatus}
+                </span>
+              </div>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
                     <span className="text-[11px] text-muted-foreground/70">{age}</span>
-                  </div>
-                }
-              />
-              <TooltipContent side="left" sideOffset={10}>
-                {generateDateTimeStringFromUnixTimestamp(invoice.createdAt)}
-              </TooltipContent>
-            </Tooltip>
+                  }
+                />
+                <TooltipContent side="left" sideOffset={10}>
+                  {generateDateTimeStringFromUnixTimestamp(invoice.createdAt)}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           }
           isSelected={isSelected}
           onClick={onClick}

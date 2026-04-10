@@ -104,6 +104,7 @@ export const Resource = {
   HazmatSegregationRule: "hazmat_segregation_rule",
   AccountingControl: "accounting_control",
   BillingControl: "billing_control",
+  InvoiceAdjustmentControl: "invoice_adjustment_control",
   AccountType: "account_type",
   GeneralLedgerAccount: "general_ledger_account",
   DivisionCode: "division_code",

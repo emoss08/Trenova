@@ -16,6 +16,21 @@ const (
 
 type PaymentTerm string
 
+type SettlementStatus string
+
+const (
+	SettlementStatusUnpaid        = SettlementStatus("Unpaid")
+	SettlementStatusPartiallyPaid = SettlementStatus("PartiallyPaid")
+	SettlementStatusPaid          = SettlementStatus("Paid")
+)
+
+type DisputeStatus string
+
+const (
+	DisputeStatusNone     = DisputeStatus("None")
+	DisputeStatusDisputed = DisputeStatus("Disputed")
+)
+
 const (
 	PaymentTermNet10        = PaymentTerm("Net10")
 	PaymentTermNet15        = PaymentTerm("Net15")
@@ -53,6 +68,24 @@ func (t PaymentTerm) IsValid() bool {
 		PaymentTermNet60,
 		PaymentTermNet90,
 		PaymentTermDueOnReceipt:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s SettlementStatus) IsValid() bool {
+	switch s {
+	case SettlementStatusUnpaid, SettlementStatusPartiallyPaid, SettlementStatusPaid:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s DisputeStatus) IsValid() bool {
+	switch s {
+	case DisputeStatusNone, DisputeStatusDisputed:
 		return true
 	default:
 		return false

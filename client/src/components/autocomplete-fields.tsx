@@ -3,6 +3,7 @@ import type { AccessorialCharge } from "@/types/accessorial-charge";
 import type { AccountType } from "@/types/account-type";
 import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
+import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import type { EquipmentType } from "@/types/equipment-type";
@@ -51,7 +52,15 @@ type BaseMultiSelectAutocompleteFieldProps<
   description?: string;
   clearable?: boolean;
   placeholder?: string;
+  extraSearchParams?: Record<string, string>;
 };
+
+function getDocumentLabel(option: Document) {
+  const documentTypeLabel = option.documentType?.name?.trim();
+  const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
+
+  return documentTypeLabel ? `${fileName} · ${documentTypeLabel}` : fileName;
+}
 
 export function RoleAutocompleteField<T extends FieldValues>({
   ...props
@@ -470,6 +479,31 @@ export function DocumentTypeMultiSelectField<T extends FieldValues>({
       getOptionLabel={(option) => option.name || ""}
       renderOption={(option) => (
         <ColorOptionValue color={option.color ?? undefined} value={option.code} />
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<Document, T>) {
+  return (
+    <MultiSelectAutocompleteField<Document, T>
+      link="/documents/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => getDocumentLabel(option)}
+      getOptionLabel={(option) => getDocumentLabel(option)}
+      renderBadge={(option) => (
+        <span className="truncate max-w-56">{getDocumentLabel(option)}</span>
+      )}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.originalName || option.fileName}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.documentType?.name || option.resourceType}
+          </span>
+        </div>
       )}
       {...props}
     />

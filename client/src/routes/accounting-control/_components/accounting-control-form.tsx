@@ -9,29 +9,41 @@ import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
-  accountingMethodChoices,
+  accountingBasisChoices,
+  closedPeriodPostingPolicyChoices,
   currencyChoices,
-  expenseRecognitionMethodChoices,
-  journalEntryCriteriaChoices,
-  reconciliationThresholdActionChoices,
-  revenueRecognitionMethodChoices,
+  currencyModeChoices,
+  exchangeRateDatePolicyChoices,
+  exchangeRateOverridePolicyChoices,
+  expenseRecognitionPolicyChoices,
+  journalPostingModeChoices,
+  journalReversalPolicyChoices,
+  journalSourceEventChoices,
+  lockedPeriodPostingPolicyChoices,
+  manualJournalEntryPolicyChoices,
+  periodCloseModeChoices,
+  reconciliationModeChoices,
+  revenueRecognitionPolicyChoices,
 } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import type { AccountingControl, JournalEntryCriteria } from "@/types/accounting-control";
+import type {
+  AccountingControl,
+  JournalSourceEvent,
+} from "@/types/accounting-control";
 import { accountingControlSchema } from "@/types/accounting-control";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
+import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
 
 export default function AccountingControlForm() {
   const { data } = useSuspenseQuery({
     ...queries.accountingControl.get(),
   });
 
-  const form = useForm({
-    resolver: zodResolver(accountingControlSchema),
+  const form = useForm<AccountingControl>({
+    resolver: zodResolver(accountingControlSchema) as Resolver<AccountingControl>,
     defaultValues: data,
   });
 
@@ -57,44 +69,59 @@ export default function AccountingControlForm() {
   return (
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
-        <AccountingControlFormInner>
-          <AccountingMethodForm />
-          <JournalEntrySettingsForm />
-          <PeriodManagementForm />
-          <ReconciliationSettingsForm />
-          <RecognitionSettingsForm />
-          <TaxSettingsForm />
-          <MultiCurrencyForm />
-          <AuditComplianceForm />
+        <div className="flex flex-col gap-4 pb-14">
+          <RecognitionPolicyCard />
+          <JournalPolicyCard />
+          <PeriodAndReconciliationCard />
+          <CurrencyAndAccountsCard />
           <FormSaveDock saveButtonContent="Save Changes" />
-        </AccountingControlFormInner>
+        </div>
       </Form>
     </FormProvider>
   );
 }
 
-function AccountingMethodForm() {
+function RecognitionPolicyCard() {
   const { control } = useFormContext<AccountingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Accounting Method</CardTitle>
+        <CardTitle>Recognition Policy</CardTitle>
         <CardDescription>
-          Select the primary accounting method used by your organization. This determines which
-          revenue and expense recognition options are available and constrains downstream settings
-          to ensure compliance with the selected methodology.
+          Define the organization accounting basis and the revenue and expense recognition policies
+          that must remain compatible with that basis.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em] max-w-[400px]">
+          <FormControl className="max-w-[420px]">
             <SelectField
               control={control}
-              name="accountingMethod"
-              label="Accounting Method"
-              description="Primary accounting methodology for your organization."
-              options={accountingMethodChoices}
+              name="accountingBasis"
+              label="Accounting Basis"
+              description="Sets the organization’s primary accounting basis and constrains the valid recognition policies."
+              options={accountingBasisChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="revenueRecognitionPolicy"
+              label="Revenue Recognition Policy"
+              description="Defines the event that recognizes revenue for organization-controlled accounting entries."
+              options={revenueRecognitionPolicyChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="expenseRecognitionPolicy"
+              label="Expense Recognition Policy"
+              description="Defines the event that recognizes expense for organization-controlled accounting entries."
+              options={expenseRecognitionPolicyChoices}
               rules={{ required: true }}
             />
           </FormControl>
@@ -104,43 +131,17 @@ function AccountingMethodForm() {
   );
 }
 
-function JournalEntrySettingsForm() {
-  const { control, setValue, getValues } = useFormContext<AccountingControl>();
-  const autoCreateJournalEntries = useWatch({
-    control,
-    name: "autoCreateJournalEntries",
-  });
+function JournalPolicyCard() {
+  const { control, getValues, setValue } = useFormContext<AccountingControl>();
+  const journalPostingMode = useWatch({ control, name: "journalPostingMode" });
+  const currencyMode = useWatch({ control, name: "currencyMode" });
+  const autoPostSourceEvents = useWatch({ control, name: "autoPostSourceEvents" }) ?? [];
 
-  const restrictManualJournalEntries = useWatch({
-    control,
-    name: "restrictManualJournalEntries",
-  });
-
-  const requireJournalEntryApproval = useWatch({
-    control,
-    name: "requireJournalEntryApproval",
-  });
-
-  const journalEntryCriteria = useWatch({
-    control,
-    name: "journalEntryCriteria",
-  });
-
-  const showRestrictedWarning = autoCreateJournalEntries && restrictManualJournalEntries;
-  const showApprovalRecommendation = autoCreateJournalEntries && !requireJournalEntryApproval;
-
-  const handleCriteriaToggle = useCallback(
-    (value: JournalEntryCriteria, checked: boolean) => {
-      const current = getValues("journalEntryCriteria") ?? [];
-      if (checked) {
-        setValue("journalEntryCriteria", [...current, value], { shouldDirty: true });
-      } else {
-        setValue(
-          "journalEntryCriteria",
-          current.filter((v) => v !== value),
-          { shouldDirty: true },
-        );
-      }
+  const toggleEvent = useCallback(
+    (value: JournalSourceEvent, checked: boolean) => {
+      const current = getValues("autoPostSourceEvents") ?? [];
+      const next = checked ? [...current, value] : current.filter((item) => item !== value);
+      setValue("autoPostSourceEvents", next, { shouldDirty: true });
     },
     [getValues, setValue],
   );
@@ -148,551 +149,338 @@ function JournalEntrySettingsForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Journal Entry Settings</CardTitle>
+        <CardTitle>Journal Policy</CardTitle>
         <CardDescription>
-          Configure automation rules, default accounts, and approval workflows for journal entry
-          creation and management. Define when entries should be automatically generated, establish
-          default GL accounts for revenue and expense transactions, and implement controls for
-          manual entry restrictions, approval requirements, and reversal capabilities.
+          Configure automatic journal creation, manual journal policy, and the chart-of-account
+          defaults required for accounting automation.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="autoCreateJournalEntries"
-              label="Auto-Create Journal Entries"
-              description="Automatically generate journal entries when transactions are processed."
-              position="left"
-            />
-          </FormControl>
-          {autoCreateJournalEntries && (
-            <div className="flex flex-col pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <div className="flex flex-col gap-2">
-                  <Label className="text-sm font-medium">Creation Criteria</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Select when journal entries should be automatically created.
-                  </p>
-                  <FormGroup cols={2} className="mb-2">
-                    {journalEntryCriteriaChoices.map((option) => {
-                      const isChecked = journalEntryCriteria?.includes(
-                        option.value as JournalEntryCriteria,
-                      );
-
-                      return (
-                        <label
-                          key={option.value}
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={(checked) =>
-                              handleCriteriaToggle(option.value as JournalEntryCriteria, !!checked)
-                            }
-                          />
-                          <span className="text-sm">{option.label}</span>
-                        </label>
-                      );
-                    })}
-                  </FormGroup>
-                </div>
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: autoCreateJournalEntries }}
-                  name="defaultRevenueAccountId"
-                  label="Default Revenue Account"
-                  placeholder="Select Default Revenue Account"
-                  clearable
-                  description="Primary account for posting revenue transactions."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: autoCreateJournalEntries }}
-                  name="defaultExpenseAccountId"
-                  label="Default Expense Account"
-                  placeholder="Select Default Expense Account"
-                  clearable
-                  description="Primary account for posting expense transactions."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: autoCreateJournalEntries }}
-                  name="defaultArAccountId"
-                  label="Default AR Account"
-                  placeholder="Select Default AR Account"
-                  clearable
-                  description="Primary account for posting accounts receivable transactions."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: autoCreateJournalEntries }}
-                  name="defaultApAccountId"
-                  label="Default AP Account"
-                  placeholder="Select Default AP Account"
-                  clearable
-                  description="Primary account for posting accounts payable transactions."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  name="defaultCostOfServiceAccountId"
-                  label="Default Cost of Service Account"
-                  placeholder="Select Default Cost of Service Account"
-                  clearable
-                  description="Primary account for posting cost of service transactions."
-                />
-              </FormControl>
-            </div>
-          )}
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="restrictManualJournalEntries"
-              label="Restrict Manual Entries"
-              description="Prevent users from creating journal entries manually outside of automated workflows."
-              position="left"
-              warning={{
-                show: showRestrictedWarning,
-                message:
-                  "This configuration is only recommended for highly regulated environments with strict compliance requirements.",
-              }}
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="requireJournalEntryApproval"
-              label="Require Entry Approval"
-              description="Journal entries must be approved before posting to the general ledger."
-              position="left"
-              recommended={showApprovalRecommendation && !showRestrictedWarning}
-              tooltip={
-                <div className="space-y-1">
-                  <p className="text-[13px] font-medium">Enable Approval</p>
-                  <p className="text-xs text-background/80">
-                    Consider enabling journal entry approval for better control over auto-generated
-                    entries. This adds an additional review step before entries are posted to the
-                    general ledger.
-                  </p>
-                </div>
-              }
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableJournalEntryReversal"
-              label="Enable Entry Reversals"
-              description="Allow posted journal entries to be reversed with an offsetting entry."
-              position="left"
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function PeriodManagementForm() {
-  const { control } = useFormContext<AccountingControl>();
-  const autoClosePeriods = useWatch({
-    control,
-    name: "autoClosePeriods",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Period Management</CardTitle>
-        <CardDescription>
-          Control accounting period closures, posting restrictions, and end-of-period approval
-          requirements. Manage whether transactions can be posted to closed periods, enforce
-          approval workflows for period-end closing procedures, and enable automated period closure
-          on a scheduled basis to maintain fiscal period integrity.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="allowPostingToClosedPeriods"
-              label="Allow Posting to Closed Periods"
-              description="Permit transactions to be posted to periods that have been closed."
-              position="left"
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="requirePeriodEndApproval"
-              label="Require Period-End Approval"
-              description="Period close operations must be reviewed and approved before finalizing."
-              position="left"
-            />
-          </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="autoClosePeriods"
-              label="Auto-Close Periods"
-              description="Automatically close accounting periods on a scheduled basis."
-              position="left"
-            />
-          </FormControl>
-          {autoClosePeriods && (
-            <div className="pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: autoClosePeriods }}
-                  name="defaultRetainedEarningsAccountId"
-                  label="Default Retained Earnings Account"
-                  placeholder="Select Default Retained Earnings Account"
-                  clearable
-                  description="Account for posting retained earnings when periods are automatically closed."
-                />
-              </FormControl>
-            </div>
-          )}
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ReconciliationSettingsForm() {
-  const { control } = useFormContext<AccountingControl>();
-  const enableReconciliation = useWatch({
-    control,
-    name: "enableReconciliation",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Reconciliation Settings</CardTitle>
-        <CardDescription>
-          Define variance thresholds, automated actions, and notification preferences for account
-          reconciliation processes. Establish acceptable variance limits, determine system responses
-          when thresholds are exceeded, configure whether period closures should be blocked by
-          pending reconciliations, and enable alerting for discrepancy detection.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="enableReconciliation"
-              label="Enable Reconciliation"
-              description="Activate automated reconciliation workflows for transaction matching and variance detection."
-              position="left"
-            />
-          </FormControl>
-          {enableReconciliation && (
-            <div className="flex flex-col pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <NumberField
-                  control={control}
-                  rules={{ required: enableReconciliation }}
-                  name="reconciliationThreshold"
-                  label="Variance Threshold"
-                  description="Maximum acceptable variance percentage before triggering an action."
-                  placeholder="Enter variance threshold"
-                  sideText="%"
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <SelectField
-                  control={control}
-                  options={reconciliationThresholdActionChoices}
-                  rules={{ required: enableReconciliation }}
-                  name="reconciliationThresholdAction"
-                  label="Threshold Action"
-                  description="Action to take when variance exceeds the defined threshold."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <SwitchField
-                  className="px-0!"
-                  control={control}
-                  name="haltOnPendingReconciliation"
-                  label="Halt on Pending Reconciliation"
-                  description="Block period close until all reconciliation items are resolved."
-                  position="left"
-                  rules={{ required: true }}
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <SwitchField
-                  className="px-0!"
-                  control={control}
-                  name="enableReconciliationNotifications"
-                  label="Enable Notifications"
-                  description="Send alerts when reconciliation discrepancies are detected."
-                  position="left"
-                  rules={{ required: true }}
-                />
-              </FormControl>
-            </div>
-          )}
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function RecognitionSettingsForm() {
-  const { control } = useFormContext<AccountingControl>();
-  const deferRevenueUntilPaid = useWatch({
-    control,
-    name: "deferRevenueUntilPaid",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Revenue & Expense Recognition</CardTitle>
-        <CardDescription>
-          Configure recognition methods and timing preferences for revenue and expense transactions
-          in accordance with accounting standards. Select between accrual and cash-basis accounting
-          methods, determine whether revenue should be deferred until payment receipt, and specify
-          how expenses are recorded relative to when they are incurred versus paid.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
+          <FormControl className="max-w-[420px]">
             <SelectField
               control={control}
-              name="revenueRecognitionMethod"
-              label="Revenue Recognition Method"
-              description="Accounting method used to recognize revenue (e.g., accrual, cash basis)."
-              options={revenueRecognitionMethodChoices}
+              name="journalPostingMode"
+              label="Journal Posting Mode"
+              description="Controls whether journals are created only by explicit user action or automatically from configured source events."
+              options={journalPostingModeChoices}
               rules={{ required: true }}
             />
           </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
-              control={control}
-              name="deferRevenueUntilPaid"
-              label="Defer Revenue Until Paid"
-              description="Recognize revenue only when payment is received, not when invoiced."
-              position="left"
-              className="px-0!"
-              rules={{ required: true }}
-            />
-          </FormControl>
-          {deferRevenueUntilPaid && (
-            <div className="pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: deferRevenueUntilPaid }}
-                  name="defaultDeferredRevenueAccountId"
-                  label="Default Deferred Revenue Account"
-                  placeholder="Select Default Deferred Revenue Account"
-                  clearable
-                  description="Account for posting deferred revenue until payment is received."
-                />
-              </FormControl>
-            </div>
+          {journalPostingMode === "Automatic" && (
+            <FormControl className="max-w-[720px]">
+              <div className="flex flex-col gap-3">
+                <Label className="text-sm font-medium">Auto-Post Source Events</Label>
+                <p className="text-sm text-muted-foreground">
+                  Select the posted business events that are allowed to generate journal entries automatically.
+                </p>
+                <FormGroup cols={2}>
+                  {journalSourceEventChoices.map((option) => {
+                    const checked = autoPostSourceEvents.includes(option.value);
+
+                    return (
+                      <label
+                        key={option.value}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onCheckedChange={(nextChecked) =>
+                            toggleEvent(option.value, Boolean(nextChecked))
+                          }
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </FormGroup>
+              </div>
+            </FormControl>
           )}
-          <FormControl className="min-h-[3em]">
+          <FormControl className="max-w-[420px]">
             <SelectField
               control={control}
-              name="expenseRecognitionMethod"
-              label="Expense Recognition Method"
-              description="Accounting method used to recognize expenses (e.g., accrual, cash basis)."
-              options={expenseRecognitionMethodChoices}
+              name="manualJournalEntryPolicy"
+              label="Manual Journal Entry Policy"
+              description="Defines whether users may create manual journals broadly, only for adjustments, or not at all."
+              options={manualJournalEntryPolicyChoices}
               rules={{ required: true }}
             />
           </FormControl>
-          <FormControl className="min-h-[3em]">
+          <FormControl>
             <SwitchField
               control={control}
-              name="accrueExpenses"
-              label="Accrue Expenses"
-              description="Record expenses when incurred rather than when paid."
+              name="requireManualJeApproval"
+              label="Require Manual JE Approval"
+              description="Requires approval before an allowed manual journal entry can be finalized."
               position="left"
-              className="px-0!"
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="journalReversalPolicy"
+              label="Journal Reversal Policy"
+              description="Defines whether posted journals can be reversed through workflow and, if allowed, where the reversal is booked."
+              options={journalReversalPolicyChoices}
               rules={{ required: true }}
             />
           </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultRevenueAccountId"
+              label="Default Revenue Account"
+              placeholder="Select revenue account"
+              description="Default GL account used when automatic journal posting creates revenue entries."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultExpenseAccountId"
+              label="Default Expense Account"
+              placeholder="Select expense account"
+              description="Default GL account used when automatic journal posting creates expense entries."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultArAccountId"
+              label="Default AR Account"
+              placeholder="Select AR account"
+              description="Default accounts receivable account for invoice-related journal posting."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultApAccountId"
+              label="Default AP Account"
+              placeholder="Select AP account"
+              description="Default accounts payable account for vendor-bill-related journal posting."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultTaxLiabilityAccountId"
+              label="Default Tax Liability Account"
+              placeholder="Select tax liability account"
+              description="Default liability account used when tax amounts are posted from accounting flows."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultWriteOffAccountId"
+              label="Default Write-Off Account"
+              placeholder="Select write-off account"
+              description="Default account used when approved write-offs are booked through adjustment workflows."
+              clearable
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <GLAccountAutocompleteField
+              control={control}
+              name="defaultRetainedEarningsAccountId"
+              label="Default Retained Earnings Account"
+              placeholder="Select retained earnings account"
+              description="Default retained earnings account used by closing and equity-related accounting processes."
+              clearable
+            />
+          </FormControl>
+          {currencyMode === "MultiCurrency" && (
+            <>
+              <FormControl className="max-w-[420px]">
+                <GLAccountAutocompleteField
+                  control={control}
+                  name="realizedFxGainAccountId"
+                  label="Realized FX Gain Account"
+                  placeholder="Select FX gain account"
+                  description="Default account for realized foreign exchange gains in multi-currency accounting."
+                  clearable
+                />
+              </FormControl>
+              <FormControl className="max-w-[420px]">
+                <GLAccountAutocompleteField
+                  control={control}
+                  name="realizedFxLossAccountId"
+                  label="Realized FX Loss Account"
+                  placeholder="Select FX loss account"
+                  description="Default account for realized foreign exchange losses in multi-currency accounting."
+                  clearable
+                />
+              </FormControl>
+            </>
+          )}
         </FormGroup>
       </CardContent>
     </Card>
   );
 }
 
-function TaxSettingsForm() {
+function PeriodAndReconciliationCard() {
   const { control } = useFormContext<AccountingControl>();
-  const enableAutomaticTaxCalculation = useWatch({
-    control,
-    name: "enableAutomaticTaxCalculation",
-  });
+  const reconciliationMode = useWatch({ control, name: "reconciliationMode" });
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tax Settings</CardTitle>
+        <CardTitle>Period And Reconciliation</CardTitle>
         <CardDescription>
-          Configure automatic tax calculation and default GL account assignment for tax-related
-          transactions. Enable automated tax computation on applicable transactions and designate
-          the primary general ledger account for posting tax liabilities, credits, and related
-          entries.
+          Define period-close automation, posting restrictions for locked and closed periods, and
+          how reconciliation exceptions affect posting and close.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="periodCloseMode"
+              label="Period Close Mode"
+              description="Controls whether accounting periods are closed manually or by a scheduled system job."
+              options={periodCloseModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
             <SwitchField
               control={control}
-              name="enableAutomaticTaxCalculation"
-              label="Enable Automatic Tax Calculation"
-              description="Automatically calculate and apply applicable taxes to transactions."
+              name="requirePeriodCloseApproval"
+              label="Require Period Close Approval"
+              description="Requires an approval step before a manually closed period can be finalized."
               position="left"
             />
           </FormControl>
-          {enableAutomaticTaxCalculation && (
-            <FormControl className="pl-10">
-              <GLAccountAutocompleteField
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="lockedPeriodPostingPolicy"
+              label="Locked Period Posting Policy"
+              description="Defines how the system handles posting attempts into a locked accounting period."
+              options={lockedPeriodPostingPolicyChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="closedPeriodPostingPolicy"
+              label="Closed Period Posting Policy"
+              description="Defines whether posting to a closed period requires reopening or is redirected to the next open period."
+              options={closedPeriodPostingPolicyChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="reconciliationMode"
+              label="Reconciliation Mode"
+              description="Controls whether reconciliation discrepancies are ignored, logged as warnings, or block posting."
+              options={reconciliationModeChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          {reconciliationMode !== "Disabled" && (
+            <FormControl className="max-w-[420px]">
+              <NumberField
                 control={control}
-                rules={{ required: enableAutomaticTaxCalculation }}
-                name="defaultTaxAccountId"
-                label="Default Tax Account"
-                placeholder="Select Default Tax Account"
-                clearable
-                description="Primary account for posting tax liabilities and credits."
+                name="reconciliationToleranceAmount"
+                label="Reconciliation Tolerance Amount"
+                description="Maximum allowed discrepancy amount before the configured reconciliation response applies."
+                rules={{ required: true }}
               />
             </FormControl>
           )}
-        </FormGroup>
-      </CardContent>
-    </Card>
-  );
-}
-
-function MultiCurrencyForm() {
-  const { control } = useFormContext<AccountingControl>();
-  const enableMultiCurrency = useWatch({
-    control,
-    name: "enableMultiCurrency",
-  });
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Multi-Currency</CardTitle>
-        <CardDescription>
-          Configure multi-currency support for handling transactions in foreign currencies. Enable
-          currency conversion, set the default currency, and designate GL accounts for recording
-          currency exchange gains and losses.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
+          <FormControl>
             <SwitchField
               control={control}
-              name="enableMultiCurrency"
-              label="Enable Multi-Currency"
-              description="Allow transactions to be processed in multiple currencies."
+              name="requireReconciliationToClose"
+              label="Require Reconciliation To Close"
+              description="Prevents period close while unresolved reconciliation discrepancies remain open."
               position="left"
             />
           </FormControl>
-          {enableMultiCurrency && (
-            <div className="flex flex-col pl-10">
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <SelectField
-                  control={control}
-                  name="defaultCurrencyCode"
-                  label="Default Currency"
-                  description="Primary currency for your organization."
-                  options={currencyChoices}
-                  rules={{ required: true }}
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: enableMultiCurrency }}
-                  name="currencyGainAccountId"
-                  label="Currency Gain Account"
-                  placeholder="Select Currency Gain Account"
-                  clearable
-                  description="Account for posting unrealized and realized currency exchange gains."
-                />
-              </FormControl>
-              <FormControl className="min-h-[3em] max-w-[400px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  rules={{ required: enableMultiCurrency }}
-                  name="currencyLossAccountId"
-                  label="Currency Loss Account"
-                  placeholder="Select Currency Loss Account"
-                  clearable
-                  description="Account for posting unrealized and realized currency exchange losses."
-                />
-              </FormControl>
-            </div>
-          )}
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="notifyOnReconciliationException"
+              label="Notify On Reconciliation Exception"
+              description="Sends notifications when a reconciliation discrepancy is recorded."
+              position="left"
+            />
+          </FormControl>
         </FormGroup>
       </CardContent>
     </Card>
   );
 }
 
-function AuditComplianceForm() {
+function CurrencyAndAccountsCard() {
   const { control } = useFormContext<AccountingControl>();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Audit & Compliance</CardTitle>
+        <CardTitle>Currency Policy</CardTitle>
         <CardDescription>
-          Configure audit trail and compliance settings for accounting operations. Control document
-          attachment requirements and data retention policies for deleted entries.
+          Configure functional currency, exchange-rate date selection, and override handling for
+          single-currency or multi-currency accounting.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
         <FormGroup cols={1}>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
+          <FormControl className="max-w-[420px]">
+            <SelectField
               control={control}
-              name="requireDocumentAttachment"
-              label="Require Document Attachment"
-              description="Require supporting documentation to be attached to journal entries before posting."
-              position="left"
+              name="currencyMode"
+              label="Currency Mode"
+              description="Determines whether the organization operates in a single functional currency or supports foreign-currency transactions."
+              options={currencyModeChoices}
+              rules={{ required: true }}
             />
           </FormControl>
-          <FormControl className="min-h-[3em]">
-            <SwitchField
+          <FormControl className="max-w-[420px]">
+            <SelectField
               control={control}
-              name="retainDeletedEntries"
-              label="Retain Deleted Entries"
-              description="Preserve soft-deleted journal entries for audit trail purposes instead of permanent removal."
-              position="left"
+              name="functionalCurrencyCode"
+              label="Functional Currency"
+              description="Base currency used for organization accounting and financial reporting."
+              options={currencyChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="exchangeRateDatePolicy"
+              label="Exchange Rate Date Policy"
+              description="Determines which date is used to select the exchange rate for multi-currency accounting."
+              options={exchangeRateDatePolicyChoices}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl className="max-w-[420px]">
+            <SelectField
+              control={control}
+              name="exchangeRateOverridePolicy"
+              label="Exchange Rate Override Policy"
+              description="Controls whether users may override exchange rates and whether those overrides require approval."
+              options={exchangeRateOverridePolicyChoices}
+              rules={{ required: true }}
             />
           </FormControl>
         </FormGroup>
       </CardContent>
     </Card>
   );
-}
-
-function AccountingControlFormInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col gap-4 pb-14">{children}</div>;
 }

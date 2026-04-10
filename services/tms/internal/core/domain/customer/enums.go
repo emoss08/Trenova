@@ -71,3 +71,11 @@ const (
 	InvoiceMethodSummary           = InvoiceMethod("Summary")
 	InvoiceMethodSummaryWithDetail = InvoiceMethod("SummaryWithDetail")
 )
+
+type InvoiceAdjustmentSupportingDocumentPolicy string
+
+const (
+	InvoiceAdjustmentSupportingDocumentPolicyInherit  = InvoiceAdjustmentSupportingDocumentPolicy("Inherit")
+	InvoiceAdjustmentSupportingDocumentPolicyRequired = InvoiceAdjustmentSupportingDocumentPolicy("Required")
+	InvoiceAdjustmentSupportingDocumentPolicyOptional = InvoiceAdjustmentSupportingDocumentPolicy("Optional")
+)

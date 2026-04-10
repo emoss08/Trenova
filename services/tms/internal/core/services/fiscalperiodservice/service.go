@@ -224,6 +224,9 @@ func (s *Service) Close(
 		if multiErr := s.validateClose(ctx, existing); multiErr != nil {
 			return nil, multiErr
 		}
+		if multiErr := s.validator.ValidateClose(ctx, existing); multiErr != nil {
+			return nil, multiErr
+		}
 
 		req.ClosedByID = userID
 		req.ClosedAt = timeutils.NowUnix()
@@ -283,6 +286,9 @@ func (s *Service) Close(
 			}
 
 			if multiErr := s.validateCloseWithPeriods(existing, periods); multiErr != nil {
+				return multiErr
+			}
+			if multiErr := s.validator.ValidateClose(txCtx, existing); multiErr != nil {
 				return multiErr
 			}
 

@@ -52,21 +52,18 @@ func (r *repository) GetByOrgID(
 	return entity, nil
 }
 
-func (r *repository) ListWithAutoClosePeriods(
+func (r *repository) ListWithScheduledPeriodClose(
 	ctx context.Context,
 ) ([]*accountingcontrol.AccountingControl, error) {
-	log := r.l.With(
-		zap.String("operation", "ListWithAutoClosePeriods"),
-	)
+	log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 
 	entities := make([]*accountingcontrol.AccountingControl, 0)
-	err := r.db.DB().
+	if err := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Where("ac.auto_close_periods = ?", true).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to list accounting controls with auto close", zap.Error(err))
+		Where("ac.period_close_mode = ?", accountingcontrol.PeriodCloseModeSystemScheduled).
+		Scan(ctx); err != nil {
+		log.Error("failed to list accounting controls with scheduled period close", zap.Error(err))
 		return nil, err
 	}
 

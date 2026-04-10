@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -120,6 +121,33 @@ func (r *repository) GetByBillingQueueItemID(
 	})
 }
 
+func (r *repository) CountPostedReconciliationDiscrepancies(
+	ctx context.Context,
+	req repositories.CountPostedInvoiceReconciliationDiscrepanciesRequest,
+) (int, error) {
+	return r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*invoice.Invoice)(nil)).
+		Join("JOIN shipments AS shp ON shp.id = inv.shipment_id AND shp.organization_id = inv.organization_id AND shp.business_unit_id = inv.business_unit_id").
+		Where("inv.organization_id = ?", req.OrgID).
+		Where("inv.business_unit_id = ?", req.BuID).
+		Where("inv.status = ?", invoice.StatusPosted).
+		Where("inv.posted_at IS NOT NULL").
+		Where("inv.posted_at >= ?", req.PeriodStartDate).
+		Where("inv.posted_at <= ?", req.PeriodEndDate).
+		Where(
+			`ABS(
+				inv.total_amount - CASE
+					WHEN inv.bill_type = ? THEN COALESCE(shp.total_charge_amount, 0) * -1
+					ELSE COALESCE(shp.total_charge_amount, 0)
+				END
+			) > ?`,
+			billingqueue.BillTypeCreditMemo,
+			req.ToleranceAmount,
+		).
+		Count(ctx)
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -170,6 +198,14 @@ func (r *repository) Update(
 		Set("status = ?", entity.Status).
 		Set("posted_at = ?", entity.PostedAt).
 		Set("due_date = ?", entity.DueDate).
+		Set("applied_amount = ?", entity.AppliedAmount).
+		Set("settlement_status = ?", entity.SettlementStatus).
+		Set("dispute_status = ?", entity.DisputeStatus).
+		Set("correction_group_id = ?", entity.CorrectionGroupID).
+		Set("supersedes_invoice_id = ?", entity.SupersedesInvoiceID).
+		Set("superseded_by_invoice_id = ?", entity.SupersededByInvoiceID).
+		Set("source_invoice_adjustment_id = ?", entity.SourceInvoiceAdjustmentID).
+		Set("is_adjustment_artifact = ?", entity.IsAdjustmentArtifact).
 		Set("version = version + 1").
 		Exec(ctx)
 	if err != nil {

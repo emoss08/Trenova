@@ -15,6 +15,12 @@ type ListDocumentsRequest struct {
 	Status       string                   `json:"status"`
 }
 
+type DocumentSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	ResourceID         string                         `json:"resourceId"`
+	ResourceType       string                         `json:"resourceType"`
+}
+
 type GetDocumentByIDRequest struct {
 	ID         pulid.ID              `json:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -87,6 +93,10 @@ type DocumentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListDocumentsRequest,
+	) (*pagination.ListResult[*document.Document], error)
+	SelectOptions(
+		ctx context.Context,
+		req *DocumentSelectOptionsRequest,
 	) (*pagination.ListResult[*document.Document], error)
 	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
 	GetByStoragePath(ctx context.Context, req GetDocumentByStoragePathRequest) (*document.Document, error)

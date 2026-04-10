@@ -159,6 +159,13 @@ func (s *Service) List(
 	return s.repo.List(ctx, req)
 }
 
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.DocumentSelectOptionsRequest,
+) (*pagination.ListResult[*document.Document], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetDocumentByIDRequest,

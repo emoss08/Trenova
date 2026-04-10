@@ -1,12 +1,12 @@
-import { KPICard } from "@/routes/shipment/_components/analytics/kpi-card";
+import { cn } from "@/lib/utils";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangleIcon,
-  CheckCircleIcon,
-  EyeIcon,
-  InboxIcon,
-} from "lucide-react";
+
+type StatMetric = {
+  key: string;
+  label: string;
+  value: number;
+};
 
 export function BillingQueueKPIStrip({
   statusFilter,
@@ -23,42 +23,52 @@ export function BillingQueueKPIStrip({
     onFilterChange(statusFilter === status ? null : status);
   };
 
+  const metrics: StatMetric[] = [
+    {
+      key: "ReadyForReview",
+      label: "Pending",
+      value: stats?.readyForReview ?? 0,
+    },
+    {
+      key: "InReview",
+      label: "In Review",
+      value: stats?.inReview ?? 0,
+    },
+    {
+      key: "Exception",
+      label: "Exceptions",
+      value:
+        (stats?.onHold ?? 0) +
+        (stats?.exception ?? 0) +
+        (stats?.sentBackToOps ?? 0),
+    },
+    {
+      key: "Approved",
+      label: includePosted ? "Approved Drafts" : "Approved",
+      value: stats?.approved ?? 0,
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-4 gap-3 px-4 pt-3">
-      <KPICard
-        label="Pending Review"
-        value={String(stats?.readyForReview ?? 0)}
-        icon={InboxIcon}
-        detail="Awaiting biller pickup"
-        onClick={() => toggle("ReadyForReview")}
-      />
-      <KPICard
-        label="In Review"
-        value={String(stats?.inReview ?? 0)}
-        icon={EyeIcon}
-        detail="Currently being reviewed"
-        onClick={() => toggle("InReview")}
-      />
-      <KPICard
-        label="Exceptions"
-        value={String(
-          (stats?.onHold ?? 0) +
-            (stats?.exception ?? 0) +
-            (stats?.sentBackToOps ?? 0),
-        )}
-        icon={AlertTriangleIcon}
-        detail="Needs attention"
-        onClick={() => toggle("Exception")}
-      />
-      <KPICard
-        label={includePosted ? "Approved Drafts" : "Approved"}
-        value={String(stats?.approved ?? 0)}
-        icon={CheckCircleIcon}
-        detail={
-          includePosted ? "Approved but not posted" : "Ready for invoicing"
-        }
-        onClick={() => toggle("Approved")}
-      />
+    <div className="mx-4 mt-3">
+      <div className="flex items-center rounded-lg border bg-card">
+        {metrics.map((metric, index) => (
+          <button
+            key={metric.key}
+            type="button"
+            onClick={() => toggle(metric.key)}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 text-left transition-colors",
+              "hover:bg-muted/50",
+              index > 0 && "border-l",
+              statusFilter === metric.key && "bg-muted",
+            )}
+          >
+            <span className="text-xs text-muted-foreground">{metric.label}</span>
+            <span className="text-sm font-semibold tabular-nums">{metric.value}</span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -363,6 +363,7 @@ func (r *repository) saveBillingProfile(
 		Set("require_po_number = EXCLUDED.require_po_number").
 		Set("require_bol_number = EXCLUDED.require_bol_number").
 		Set("require_delivery_number = EXCLUDED.require_delivery_number").
+		Set("invoice_adjustment_supporting_document_policy = EXCLUDED.invoice_adjustment_supporting_document_policy").
 		Set("billing_notes = EXCLUDED.billing_notes").
 		Set("version = cbp.version + 1").
 		Set("updated_at = EXCLUDED.updated_at").

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -12,17 +13,22 @@ import (
 
 func newValidBillingControl() *BillingControl {
 	return &BillingControl{
-		ID:                        pulid.MustNew("bc_"),
-		BusinessUnitID:            pulid.MustNew("bu_"),
-		OrganizationID:            pulid.MustNew("org_"),
-		PaymentTerm:               PaymentTermNet30,
-		BillingExceptionHandling:  BillingExceptionQueue,
-		TransferSchedule:          TransferScheduleContinuous,
-		AutoTransfer:              true,
-		TransferBatchSize:         100,
-		RateDiscrepancyThreshold:  5.00,
-		AllowInvoiceConsolidation: true,
-		ConsolidationPeriodDays:   7,
+		ID:                                    pulid.MustNew("bc_"),
+		BusinessUnitID:                        pulid.MustNew("bu_"),
+		OrganizationID:                        pulid.MustNew("org_"),
+		DefaultPaymentTerm:                    PaymentTermNet30,
+		ShowDueDateOnInvoice:                  true,
+		ShowBalanceDueOnInvoice:               true,
+		ReadyToBillAssignmentMode:             ReadyToBillAssignmentModeManualOnly,
+		BillingQueueTransferMode:              BillingQueueTransferModeManualOnly,
+		InvoiceDraftCreationMode:              InvoiceDraftCreationModeManualOnly,
+		InvoicePostingMode:                    InvoicePostingModeManualReviewRequired,
+		ShipmentBillingRequirementEnforcement: EnforcementLevelBlock,
+		RateValidationEnforcement:             EnforcementLevelRequireReview,
+		BillingExceptionDisposition:           BillingExceptionDispositionRouteToBillingReview,
+		NotifyOnBillingExceptions:             true,
+		RateVarianceTolerancePercent:          decimal.Zero,
+		RateVarianceAutoResolutionMode:        RateVarianceAutoResolutionModeDisabled,
 	}
 }
 
@@ -35,54 +41,10 @@ func TestBillingControl_Validate(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid entity passes", func(_ *BillingControl) {}, false},
-		{"missing payment term fails", func(bc *BillingControl) { bc.PaymentTerm = "" }, true},
-		{
-			"invalid payment term fails",
-			func(bc *BillingControl) { bc.PaymentTerm = "Invalid" },
-			true,
-		},
-		{
-			"Net15 payment term passes",
-			func(bc *BillingControl) { bc.PaymentTerm = PaymentTermNet15 },
-			false,
-		},
-		{
-			"DueOnReceipt payment term passes",
-			func(bc *BillingControl) { bc.PaymentTerm = PaymentTermDueOnReceipt },
-			false,
-		},
-		{
-			"missing exception handling fails",
-			func(bc *BillingControl) { bc.BillingExceptionHandling = "" },
-			true,
-		},
-		{
-			"invalid exception handling fails",
-			func(bc *BillingControl) { bc.BillingExceptionHandling = "Bad" },
-			true,
-		},
-		{
-			"Notify exception handling passes",
-			func(bc *BillingControl) { bc.BillingExceptionHandling = BillingExceptionNotify },
-			false,
-		},
-		{
-			"zero rate threshold fails",
-			func(bc *BillingControl) { bc.RateDiscrepancyThreshold = 0 },
-			true,
-		},
-		{"auto transfer requires batch size", func(bc *BillingControl) {
-			bc.AutoTransfer = true
-			bc.TransferBatchSize = 0
-		}, true},
-		{"invalid transfer schedule fails", func(bc *BillingControl) {
-			bc.AutoTransfer = true
-			bc.TransferSchedule = "Invalid"
-		}, true},
-		{"consolidation requires period days", func(bc *BillingControl) {
-			bc.AllowInvoiceConsolidation = true
-			bc.ConsolidationPeriodDays = 0
-		}, true},
+		{"missing payment term fails", func(bc *BillingControl) { bc.DefaultPaymentTerm = "" }, true},
+		{"missing ready to bill assignment mode fails", func(bc *BillingControl) { bc.ReadyToBillAssignmentMode = "" }, true},
+		{"missing billing queue transfer mode fails", func(bc *BillingControl) { bc.BillingQueueTransferMode = "" }, true},
+		{"missing invoice posting mode fails", func(bc *BillingControl) { bc.InvoicePostingMode = "" }, true},
 	}
 
 	for _, tt := range tests {
@@ -131,22 +93,14 @@ func TestBillingControl_BeforeAppendModel(t *testing.T) {
 	})
 }
 
-func TestBillingControl_GetTableName(t *testing.T) {
+func TestBillingControl_Getters(t *testing.T) {
 	t.Parallel()
-	bc := &BillingControl{}
-	assert.Equal(t, "billing_controls", bc.GetTableName())
-}
 
-func TestBillingControl_GetID(t *testing.T) {
-	t.Parallel()
 	id := pulid.MustNew("bc_")
-	bc := &BillingControl{ID: id}
-	assert.Equal(t, id, bc.GetID())
-}
-
-func TestBillingControl_GetOrganizationID(t *testing.T) {
-	t.Parallel()
 	orgID := pulid.MustNew("org_")
-	bc := &BillingControl{OrganizationID: orgID}
+	bc := &BillingControl{ID: id, OrganizationID: orgID}
+
+	assert.Equal(t, "billing_controls", bc.GetTableName())
+	assert.Equal(t, id, bc.GetID())
 	assert.Equal(t, orgID, bc.GetOrganizationID())
 }

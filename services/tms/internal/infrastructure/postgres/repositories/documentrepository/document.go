@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -90,6 +91,51 @@ func (r *repository) List(
 		Items: entities,
 		Total: total,
 	}, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.DocumentSelectOptionsRequest,
+) (*pagination.ListResult[*document.Document], error) {
+	return dbhelper.SelectOptions[*document.Document](
+		ctx,
+		r.db.DB(),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			Columns: []string{
+				"id",
+				"file_name",
+				"original_name",
+				"status",
+				"resource_id",
+				"resource_type",
+				"document_type_id",
+				"created_at",
+			},
+			OrgColumn: "doc.organization_id",
+			BuColumn:  "doc.business_unit_id",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				cols := buncolgen.DocumentColumns
+				q = q.Where(cols.IsCurrentVersion.Eq(), true).
+					Where(cols.Status.NotEq(), document.StatusArchived)
+				if req.ResourceID != "" {
+					q = q.Where(cols.ResourceID.Eq(), req.ResourceID)
+				}
+				if req.ResourceType != "" {
+					q = q.Where(cols.ResourceType.Eq(), req.ResourceType)
+				}
+
+				return q.Relation(buncolgen.DocumentRelations.DocumentType).
+					Order(cols.CreatedAt.OrderDesc())
+			},
+			EntityName: "Document",
+			SearchColumns: []string{
+				"doc.original_name",
+				"doc.file_name",
+				"doc.description",
+			},
+		},
+	)
 }
 
 func (r *repository) GetByID(

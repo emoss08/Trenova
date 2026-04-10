@@ -5,25 +5,18 @@ import {
   versionSchema,
 } from "./helpers";
 
+const decimalNumberSchema = z.coerce.number().finite();
+
 export const transferScheduleSchema = z.enum([
   "Continuous",
   "Hourly",
   "Daily",
   "Weekly",
 ]);
-
 export type TransferSchedule = z.infer<typeof transferScheduleSchema>;
 
-export const exceptionHandlingSchema = z.enum([
-  "Queue",
-  "Notify",
-  "AutoResolve",
-  "Reject",
-]);
-
-export type ExceptionHandling = z.infer<typeof exceptionHandlingSchema>;
-
 export const paymentTermSchema = z.enum([
+  "Net10",
   "Net15",
   "Net30",
   "Net45",
@@ -31,8 +24,51 @@ export const paymentTermSchema = z.enum([
   "Net90",
   "DueOnReceipt",
 ]);
-
 export type PaymentTerm = z.infer<typeof paymentTermSchema>;
+
+export const enforcementLevelSchema = z.enum([
+  "Ignore",
+  "Warn",
+  "RequireReview",
+  "Block",
+]);
+export type EnforcementLevel = z.infer<typeof enforcementLevelSchema>;
+
+export const billingExceptionDispositionSchema = z.enum([
+  "RouteToBillingReview",
+  "ReturnToOperations",
+]);
+export type BillingExceptionDisposition = z.infer<typeof billingExceptionDispositionSchema>;
+
+export const readyToBillAssignmentModeSchema = z.enum([
+  "ManualOnly",
+  "AutomaticWhenEligible",
+]);
+export type ReadyToBillAssignmentMode = z.infer<typeof readyToBillAssignmentModeSchema>;
+
+export const billingQueueTransferModeSchema = z.enum([
+  "ManualOnly",
+  "AutomaticWhenReady",
+]);
+export type BillingQueueTransferMode = z.infer<typeof billingQueueTransferModeSchema>;
+
+export const invoiceDraftCreationModeSchema = z.enum([
+  "ManualOnly",
+  "AutomaticWhenTransferred",
+]);
+export type InvoiceDraftCreationMode = z.infer<typeof invoiceDraftCreationModeSchema>;
+
+export const invoicePostingModeSchema = z.enum([
+  "ManualReviewRequired",
+  "AutomaticWhenNoBlockingExceptions",
+]);
+export type InvoicePostingMode = z.infer<typeof invoicePostingModeSchema>;
+
+export const rateVarianceAutoResolutionModeSchema = z.enum([
+  "Disabled",
+  "BypassReviewWithinTolerance",
+]);
+export type RateVarianceAutoResolutionMode = z.infer<typeof rateVarianceAutoResolutionModeSchema>;
 
 export const billingControlSchema = z.object({
   id: optionalStringSchema,
@@ -42,40 +78,29 @@ export const billingControlSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
 
-  invoiceTerms: z.string().optional().default(""),
-  invoiceFooter: z.string().optional().default(""),
+  defaultPaymentTerm: paymentTermSchema,
+  defaultInvoiceTerms: z.string().optional().default(""),
+  defaultInvoiceFooter: z.string().optional().default(""),
+  showDueDateOnInvoice: z.boolean(),
+  showBalanceDueOnInvoice: z.boolean(),
 
-  transferSchedule: transferScheduleSchema,
-  billingExceptionHandling: exceptionHandlingSchema,
-  paymentTerm: paymentTermSchema,
+  readyToBillAssignmentMode: readyToBillAssignmentModeSchema,
+  billingQueueTransferMode: billingQueueTransferModeSchema,
+  billingQueueTransferSchedule: transferScheduleSchema.nullish(),
+  billingQueueTransferBatchSize: z.coerce.number().int().nullish(),
 
-  showInvoiceDueDate: z.boolean(),
-  showAmountDue: z.boolean(),
-  autoTransfer: z.boolean(),
-  autoMarkReadyToBill: z.boolean(),
-  enforceCustomerBillingReq: z.boolean(),
-  validateCustomerRates: z.boolean(),
-  autoBill: z.boolean(),
-  autoResolveMinorDiscrepancies: z.boolean(),
-  allowInvoiceConsolidation: z.boolean(),
-  groupConsolidatedInvoices: z.boolean(),
-  sendAutoBillNotifications: z.boolean(),
+  invoiceDraftCreationMode: invoiceDraftCreationModeSchema,
+  invoicePostingMode: invoicePostingModeSchema,
+  autoInvoiceBatchSize: z.coerce.number().int().nullish(),
+  notifyOnAutoInvoiceCreation: z.boolean(),
 
-  transferBatchSize: z
-    .number()
-    .int()
-    .min(1, { message: "Transfer batch size must be greater than 0" }),
-  autoBillBatchSize: z
-    .number()
-    .int()
-    .min(1, { message: "Auto bill batch size must be greater than 0" }),
-  consolidationPeriodDays: z
-    .number()
-    .int()
-    .min(1, { message: "Consolidation period days must be greater than 0" }),
-  rateDiscrepancyThreshold: z
-    .number()
-    .min(0, { message: "Rate discrepancy threshold must be at least 0" }),
+  shipmentBillingRequirementEnforcement: enforcementLevelSchema,
+  rateValidationEnforcement: enforcementLevelSchema,
+  billingExceptionDisposition: billingExceptionDispositionSchema,
+  notifyOnBillingExceptions: z.boolean(),
+
+  rateVarianceTolerancePercent: decimalNumberSchema,
+  rateVarianceAutoResolutionMode: rateVarianceAutoResolutionModeSchema,
 });
 
 export type BillingControl = z.infer<typeof billingControlSchema>;

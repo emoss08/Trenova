@@ -143,7 +143,10 @@ export function isAbsoluteUrl(value?: string | null) {
   return Boolean(value) && (value!.startsWith("http://") || value!.startsWith("https://"));
 }
 
-export function findDuplicateIds<T>(items: T[], getId: (item: T) => string | undefined): Set<string> {
+export function findDuplicateIds<T>(
+  items: T[],
+  getId: (item: T) => string | undefined,
+): Set<string> {
   const seen = new Set<string>();
   const dupes = new Set<string>();
   for (const item of items) {

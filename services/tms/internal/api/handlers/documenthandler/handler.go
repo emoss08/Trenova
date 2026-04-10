@@ -110,6 +110,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.list,
 	)
+	selectOptions := api.Group("/select-options")
+	selectOptions.GET("/", h.selectOptions)
+	selectOptions.GET("/:documentID", h.getOption)
 	api.GET(
 		"/:documentID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -242,6 +245,90 @@ func (h *Handler) list(c *gin.Context) {
 					ResourceID:   helpers.QueryString(c, "resourceId", ""),
 					ResourceType: helpers.QueryString(c, "resourceType", ""),
 					Status:       helpers.QueryString(c, "status", ""),
+				},
+			)
+		},
+	)
+}
+
+// @Summary Get a document option
+// @ID getDocumentOption
+// @Tags Documents
+// @Produce json
+// @Param documentID path string true "Document ID"
+// @Param resourceId query string false "Filter by resource ID"
+// @Param resourceType query string false "Filter by resource type"
+// @Success 200 {object} document.Document
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 404 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/select-options/{documentID} [get]
+func (h *Handler) getOption(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		repositories.GetDocumentByIDRequest{
+			ID: documentID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	resourceID := c.Query("resourceId")
+	resourceType := c.Query("resourceType")
+	if (resourceID != "" && entity.ResourceID != resourceID) ||
+		(resourceType != "" && entity.ResourceType != resourceType) {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("document not found"))
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
+}
+
+// @Summary List document options
+// @ID listDocumentOptions
+// @Tags Documents
+// @Produce json
+// @Param query query string false "Search query"
+// @Param limit query int false "Page size" minimum(1) maximum(100)
+// @Param offset query int false "Page offset" minimum(0)
+// @Param resourceId query string false "Filter by resource ID"
+// @Param resourceType query string false "Filter by resource type"
+// @Success 200 {object} pagination.Response[[]document.Document]
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/select-options/ [get]
+func (h *Handler) selectOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*document.Document], error) {
+			return h.service.SelectOptions(
+				c.Request.Context(),
+				&repositories.DocumentSelectOptionsRequest{
+					SelectQueryRequest: req,
+					ResourceID:         c.Query("resourceId"),
+					ResourceType:       c.Query("resourceType"),
 				},
 			)
 		},
