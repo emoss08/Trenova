@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplateversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glaccountrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glbalancerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
@@ -48,7 +49,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalreversalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalsourcerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
@@ -97,6 +101,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	equipmenttyperepository.New,
 	equipmentcontinuityrepository.New,
 	fleetcoderepository.New,
+	glbalancerepository.New,
 	tractorrepository.New,
 	trailerrepository.New,
 	workerrepository.New,
@@ -156,7 +161,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	invoiceadjustmentcontrolrepository.New,
 	invoiceadjustmentrepository.New,
 	invoicerepository.New,
+	journalentryrepository.New,
 	journalpostingrepository.New,
+	journalreversalrepository.New,
+	journalsourcerepository.New,
 	manualjournalrepository.New,
 	billingcontrolrepository.New,
 	billingqueuerepository.New,

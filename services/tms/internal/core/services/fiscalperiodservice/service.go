@@ -787,12 +787,12 @@ func (s *Service) validateReopenWithPeriods(
 func (s *Service) validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	if entity.Status != fiscalperiod.StatusClosed {
+	if entity.Status != fiscalperiod.StatusOpen {
 		multiErr.Add(
 			"status",
 			errortypes.ErrInvalid,
 			fmt.Sprintf(
-				"Only Closed fiscal periods can be locked. Current status: %s",
+				"Only Open fiscal periods can be locked. Current status: %s",
 				entity.Status,
 			),
 		)

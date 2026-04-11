@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/core/services/glaccountservice"
+	"github.com/emoss08/trenova/internal/core/services/glbalanceservice"
 	"github.com/emoss08/trenova/internal/core/services/globalsearchservice"
 	"github.com/emoss08/trenova/internal/core/services/googlemapsservice"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
@@ -45,6 +46,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
+	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
@@ -136,6 +139,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	accountingcontrolservice.New,
 	accounttypeservice.New,
 	glaccountservice.New,
+	glbalanceservice.New,
 	fiscalyearservice.New,
 	fiscalperiodservice.New,
 	locationcategoryservice.New,
@@ -148,6 +152,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	invoiceadjustmentservice.New,
 	invoiceservice.New,
+	journalentryservice.New,
+	journalreversalservice.New,
 	manualjournalservice.New,
 	billingcontrolservice.New,
 	billingqueueservice.New,

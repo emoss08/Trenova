@@ -757,6 +757,32 @@ func (r *Registry) registerAccountingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJournalReversal.String(),
+		DisplayName: "Journal Reversal",
+		Description: "Journal reversal workflow and posting",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View journal reversals"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create journal reversal requests"},
+			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve journal reversals"},
+			{Operation: OpReject, DisplayName: "Reject", Description: "Reject journal reversals"},
+			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel journal reversals"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceJournalEntry.String(),
+		DisplayName: "Journal Entry",
+		Description: "Journal entry details and source drill-down",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View journal entry details and accounting sources"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerComplianceResources() {

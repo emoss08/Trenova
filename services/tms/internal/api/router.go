@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glaccounthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/googlemapshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterialhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
@@ -43,6 +44,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoicehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/journalreversalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/manualjournalhandler"
@@ -136,6 +139,7 @@ type RouterParams struct {
 	AccountTypeHandler              *accounttypehandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
 	GLAccountHandler                *glaccounthandler.Handler
+	GLBalanceHandler                *glbalancehandler.Handler
 	FiscalYearHandler               *fiscalyearhandler.Handler
 	FiscalPeriodHandler             *fiscalperiodhandler.Handler
 	LocationCategoryHandler         *locationcategoryhandler.Handler
@@ -145,6 +149,8 @@ type RouterParams struct {
 	IntegrationHandler              *integrationhandler.Handler
 	InvoiceHandler                  *invoicehandler.Handler
 	InvoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
+	JournalEntryHandler             *journalentryhandler.Handler
+	JournalReversalHandler          *journalreversalhandler.Handler
 	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
@@ -212,6 +218,7 @@ type Router struct {
 	accountTypeHandler              *accounttypehandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
 	glAccountHandler                *glaccounthandler.Handler
+	glBalanceHandler                *glbalancehandler.Handler
 	fiscalYearHandler               *fiscalyearhandler.Handler
 	fiscalPeriodHandler             *fiscalperiodhandler.Handler
 	locationCategoryHandler         *locationcategoryhandler.Handler
@@ -221,6 +228,8 @@ type Router struct {
 	integrationHandler              *integrationhandler.Handler
 	invoiceHandler                  *invoicehandler.Handler
 	invoiceAdjustmentHandler        *invoiceadjustmenthandler.Handler
+	journalEntryHandler             *journalentryhandler.Handler
+	journalReversalHandler          *journalreversalhandler.Handler
 	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
@@ -290,6 +299,7 @@ func NewRouter(p RouterParams) *Router {
 		accountTypeHandler:              p.AccountTypeHandler,
 		assignmentHandler:               p.AssignmentHandler,
 		glAccountHandler:                p.GLAccountHandler,
+		glBalanceHandler:                p.GLBalanceHandler,
 		fiscalYearHandler:               p.FiscalYearHandler,
 		fiscalPeriodHandler:             p.FiscalPeriodHandler,
 		locationCategoryHandler:         p.LocationCategoryHandler,
@@ -299,6 +309,8 @@ func NewRouter(p RouterParams) *Router {
 		integrationHandler:              p.IntegrationHandler,
 		invoiceHandler:                  p.InvoiceHandler,
 		invoiceAdjustmentHandler:        p.InvoiceAdjustmentHandler,
+		journalEntryHandler:             p.JournalEntryHandler,
+		journalReversalHandler:          p.JournalReversalHandler,
 		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
@@ -414,6 +426,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
 	r.glAccountHandler.RegisterRoutes(protected)
+	r.glBalanceHandler.RegisterRoutes(protected)
 	r.fiscalYearHandler.RegisterRoutes(protected)
 	r.fiscalPeriodHandler.RegisterRoutes(protected)
 	r.locationCategoryHandler.RegisterRoutes(protected)
@@ -423,6 +436,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.integrationHandler.RegisterRoutes(protected)
 	r.invoiceHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentHandler.RegisterRoutes(protected)
+	r.journalEntryHandler.RegisterRoutes(protected)
+	r.journalReversalHandler.RegisterRoutes(protected)
 	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)

@@ -1,6 +1,7 @@
 package invoiceservice
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -242,6 +244,116 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 
 	require.NotNil(t, multiErr)
 	assertErrorField(t, multiErr, "postedAt")
+}
+
+func TestInvoicePostingSourceEvent(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, tenant.JournalSourceEventInvoicePosted, invoicePostingSourceEvent(billingqueue.BillTypeInvoice))
+	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted, invoicePostingSourceEvent(billingqueue.BillTypeCreditMemo))
+	assert.Equal(t, tenant.JournalSourceEventDebitMemoPosted, invoicePostingSourceEvent(billingqueue.BillTypeDebitMemo))
+}
+
+func TestInvoicePostingWorkflow(t *testing.T) {
+	t.Parallel()
+
+	userID := pulid.MustNew("usr_")
+	now := int64(1_700_000_000)
+
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(&tenant.AccountingControl{
+		JournalPostingMode:      tenant.JournalPostingModeAutomatic,
+		RequireManualJEApproval: true,
+	}, userID, now)
+	assert.Equal(t, "Posted", entryStatus)
+	assert.Equal(t, "Posted", batchStatus)
+	require.NotNil(t, postedAt)
+	assert.Equal(t, now, *postedAt)
+	assert.Equal(t, userID, postedByID)
+	assert.False(t, requiresApproval)
+	assert.True(t, isApproved)
+	assert.Equal(t, userID, approvedByID)
+	require.NotNil(t, approvedAt)
+
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt = invoicePostingWorkflow(&tenant.AccountingControl{
+		JournalPostingMode:      tenant.JournalPostingModeManual,
+		RequireManualJEApproval: true,
+	}, userID, now)
+	assert.Equal(t, "Pending", entryStatus)
+	assert.Equal(t, "Pending", batchStatus)
+	assert.Nil(t, postedAt)
+	assert.True(t, postedByID.IsNil())
+	assert.True(t, requiresApproval)
+	assert.False(t, isApproved)
+	assert.True(t, approvedByID.IsNil())
+	assert.Nil(t, approvedAt)
+}
+
+func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	fyID := pulid.MustNew("fy_")
+	periodID := pulid.MustNew("fp_")
+	now := int64(1_700_000_000)
+	revenueAccountID := pulid.MustNew("gla_")
+	arAccountID := pulid.MustNew("gla_")
+
+	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
+		JournalPostingMode:      tenant.JournalPostingModeAutomatic,
+		AutoPostSourceEvents:    []tenant.JournalSourceEventType{tenant.JournalSourceEventCreditMemoPosted},
+		DefaultRevenueAccountID: revenueAccountID,
+		DefaultARAccountID:      arAccountID,
+	}, nil)
+
+	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
+	fiscalPeriodRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).Return(&fiscalperiod.FiscalPeriod{
+		ID:           periodID,
+		FiscalYearID: fyID,
+		Status:       fiscalperiod.StatusOpen,
+	}, nil)
+
+	journalRepo := &fakeInvoiceJournalPostingRepository{}
+	svc := &Service{
+		l:                 zap.NewNop(),
+		accountingRepo:    accountingRepo,
+		journalRepo:       journalRepo,
+		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:         &Validator{fiscalPeriodRepo: fiscalPeriodRepo},
+	}
+
+	err := svc.createInvoiceJournalPosting(t.Context(), &invoice.Invoice{
+		ID:               pulid.MustNew("inv_"),
+		OrganizationID:   orgID,
+		BusinessUnitID:   buID,
+		CustomerID:       pulid.MustNew("cus_"),
+		Number:           "CM-1001",
+		BillType:         billingqueue.BillTypeCreditMemo,
+		TotalAmountMinor: -13500,
+		PostedAt:         &now,
+	}, testutil.NewSessionActor(userID, orgID, buID))
+
+	require.NoError(t, err)
+	require.NotNil(t, journalRepo.last)
+	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted.String(), journalRepo.last.SourceEventType)
+	require.Len(t, journalRepo.last.Lines, 2)
+	assert.Equal(t, revenueAccountID, journalRepo.last.Lines[0].GLAccountID)
+	assert.Equal(t, int64(13500), journalRepo.last.Lines[0].DebitAmount)
+	assert.Equal(t, arAccountID, journalRepo.last.Lines[1].GLAccountID)
+	assert.Equal(t, int64(13500), journalRepo.last.Lines[1].CreditAmount)
+}
+
+type fakeInvoiceJournalPostingRepository struct {
+	last *repositories.CreateJournalPostingParams
+}
+
+func (f *fakeInvoiceJournalPostingRepository) CreatePosting(_ context.Context, params repositories.CreateJournalPostingParams) error {
+	copyParams := params
+	copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+	f.last = &copyParams
+	return nil
 }
 
 func int64Ptr(v int64) *int64 {

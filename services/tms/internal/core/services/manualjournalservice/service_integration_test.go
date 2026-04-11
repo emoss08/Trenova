@@ -170,4 +170,24 @@ func TestManualJournalPostingPersistsBatchEntryAndLines(t *testing.T) {
 	lineCount, err := db.NewSelect().Table("journal_entry_lines").Where("journal_entry_id = ?", entry.ID).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 2, lineCount)
+
+	var source struct {
+		SourceObjectType string `bun:"source_object_type"`
+		SourceEventType  string `bun:"source_event_type"`
+		Status           string `bun:"status"`
+	}
+	require.NoError(t, db.NewSelect().Table("journal_sources").Column("source_object_type", "source_event_type", "status").Where("source_object_id = ?", draft.ID.String()).Limit(1).Scan(ctx, &source))
+	assert.Equal(t, "ManualJournalRequest", source.SourceObjectType)
+	assert.Equal(t, "ManualJournalPosted", source.SourceEventType)
+	assert.Equal(t, "Posted", source.Status)
+
+	var balance struct {
+		PeriodDebitMinor  int64 `bun:"period_debit_minor"`
+		PeriodCreditMinor int64 `bun:"period_credit_minor"`
+		NetChangeMinor    int64 `bun:"net_change_minor"`
+	}
+	require.NoError(t, db.NewSelect().Table("gl_account_balances_by_period").Column("period_debit_minor", "period_credit_minor", "net_change_minor").Where("gl_account_id = ?", accounts[0].ID).Where("fiscal_period_id = ?", period.ID).Limit(1).Scan(ctx, &balance))
+	assert.Equal(t, int64(2500), balance.PeriodDebitMinor)
+	assert.Equal(t, int64(0), balance.PeriodCreditMinor)
+	assert.Equal(t, int64(2500), balance.NetChangeMinor)
 }

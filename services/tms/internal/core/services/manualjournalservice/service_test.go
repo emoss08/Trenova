@@ -228,6 +228,7 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	assert.Equal(t, "ManualJournalRequest", journalRepo.last.ReferenceType)
 	assert.Equal(t, periodID, journalRepo.last.FiscalPeriodID)
 	assert.Equal(t, request.AccountingDate, journalRepo.last.AccountingDate)
+	assert.False(t, journalRepo.last.RequiresApproval)
 	require.Len(t, journalRepo.last.Lines, 2)
 	assert.Equal(t, int64(1000), journalRepo.last.Lines[0].DebitAmount)
 	assert.Equal(t, int64(1000), journalRepo.last.Lines[1].CreditAmount)

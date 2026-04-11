@@ -69,6 +69,8 @@ const (
 	ResourceFiscalYear               Resource = "fiscal_year"
 	ResourceFiscalPeriod             Resource = "fiscal_period"
 	ResourceManualJournal            Resource = "manual_journal"
+	ResourceJournalReversal          Resource = "journal_reversal"
+	ResourceJournalEntry             Resource = "journal_entry"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

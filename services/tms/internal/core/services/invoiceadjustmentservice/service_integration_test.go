@@ -373,6 +373,32 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Equal(t, int64(8000), lines[0].DebitAmount)
 		assert.Equal(t, h.lookupGLAccount(t, "1110"), lines[1].GLAccountID)
 		assert.Equal(t, int64(8000), lines[1].CreditAmount)
+
+		var source struct {
+			SourceEventType string `bun:"source_event_type"`
+			Status          string `bun:"status"`
+		}
+		require.NoError(t, h.db.NewSelect().
+			Table("journal_sources").
+			Column("source_event_type", "status").
+			Where("source_object_id = ?", approved.ID.String()).
+			Limit(1).
+			Scan(h.ctx, &source))
+		assert.Equal(t, "InvoiceWriteOffCreated", source.SourceEventType)
+		assert.Equal(t, "Posted", source.Status)
+
+		var balance struct {
+			PeriodDebitMinor  int64 `bun:"period_debit_minor"`
+			PeriodCreditMinor int64 `bun:"period_credit_minor"`
+		}
+		require.NoError(t, h.db.NewSelect().
+			Table("gl_account_balances_by_period").
+			Column("period_debit_minor", "period_credit_minor").
+			Where("gl_account_id = ?", h.lookupGLAccount(t, "6940")).
+			Limit(1).
+			Scan(h.ctx, &balance))
+		assert.Equal(t, int64(8000), balance.PeriodDebitMinor)
+		assert.Equal(t, int64(0), balance.PeriodCreditMinor)
 	})
 
 	t.Run("approve revalidates against current state", func(t *testing.T) {
