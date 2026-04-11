@@ -601,18 +601,20 @@ func (s *Service) buildInvoiceEntity(
 		entity.BillToCountry = cus.State.CountryName
 	}
 
+	entity.SyncMinorAmounts()
+
 	return entity
 }
 
 type adjustmentInvoiceContext struct {
-	ReplacementLines     []*invoice.Line `json:"replacementLines"`
-	SubtotalAmount       decimal.Decimal `json:"subtotalAmount"`
-	OtherAmount          decimal.Decimal `json:"otherAmount"`
-	TotalAmount          decimal.Decimal `json:"totalAmount"`
-	AccountingDate       int64           `json:"accountingDate"`
-	SourceInvoiceID      pulid.ID        `json:"sourceInvoiceId"`
-	CorrectionGroupID    pulid.ID        `json:"correctionGroupId"`
-	SourceAdjustmentID   pulid.ID        `json:"sourceAdjustmentId"`
+	ReplacementLines   []*invoice.Line `json:"replacementLines"`
+	SubtotalAmount     decimal.Decimal `json:"subtotalAmount"`
+	OtherAmount        decimal.Decimal `json:"otherAmount"`
+	TotalAmount        decimal.Decimal `json:"totalAmount"`
+	AccountingDate     int64           `json:"accountingDate"`
+	SourceInvoiceID    pulid.ID        `json:"sourceInvoiceId"`
+	CorrectionGroupID  pulid.ID        `json:"correctionGroupId"`
+	SourceAdjustmentID pulid.ID        `json:"sourceAdjustmentId"`
 }
 
 func (s *Service) buildAdjustmentOriginInvoiceEntity(
@@ -692,6 +694,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		entity.BillToState = cus.State.Abbreviation
 		entity.BillToCountry = cus.State.CountryName
 	}
+	entity.SyncMinorAmounts()
 	return entity
 }
 

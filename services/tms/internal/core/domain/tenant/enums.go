@@ -3,12 +3,15 @@ package tenant
 type SequenceType string
 
 const (
-	SequenceTypeProNumber     = SequenceType("pro_number")
-	SequenceTypeConsolidation = SequenceType("consolidation")
-	SequenceTypeInvoice       = SequenceType("invoice")
-	SequenceTypeCreditMemo    = SequenceType("credit_memo")
-	SequenceTypeDebitMemo     = SequenceType("debit_memo")
-	SequenceTypeWorkOrder     = SequenceType("work_order")
+	SequenceTypeProNumber            = SequenceType("pro_number")
+	SequenceTypeConsolidation        = SequenceType("consolidation")
+	SequenceTypeInvoice              = SequenceType("invoice")
+	SequenceTypeCreditMemo           = SequenceType("credit_memo")
+	SequenceTypeDebitMemo            = SequenceType("debit_memo")
+	SequenceTypeWorkOrder            = SequenceType("work_order")
+	SequenceTypeJournalBatch         = SequenceType("journal_batch")
+	SequenceTypeJournalEntry         = SequenceType("journal_entry")
+	SequenceTypeManualJournalRequest = SequenceType("manual_journal_request")
 )
 
 type AccountingBasisType string

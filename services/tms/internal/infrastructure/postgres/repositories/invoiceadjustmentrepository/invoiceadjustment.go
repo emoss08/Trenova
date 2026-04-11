@@ -248,12 +248,21 @@ func (r *repository) CreateAdjustmentArtifacts(
 	params repositories.CreateAdjustmentArtifactsParams,
 ) error {
 	if params.Adjustment != nil {
+		params.Adjustment.SyncMinorAmounts()
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(params.Adjustment).Exec(ctx); err != nil {
 			return fmt.Errorf("create adjustment: %w", err)
 		}
 	}
 
 	if len(params.Lines) > 0 {
+		for _, line := range params.Lines {
+			if line == nil {
+				continue
+			}
+
+			line.SyncMinorAmounts()
+		}
+
 		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&params.Lines).Exec(ctx); err != nil {
 			return fmt.Errorf("create adjustment lines: %w", err)
 		}
@@ -284,6 +293,8 @@ func (r *repository) UpdateAdjustment(
 	ctx context.Context,
 	adjustment *invoiceadjustment.Adjustment,
 ) (*invoiceadjustment.Adjustment, error) {
+	adjustment.SyncMinorAmounts()
+
 	res, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(adjustment).
@@ -304,8 +315,11 @@ func (r *repository) UpdateAdjustment(
 		Set("policy_reason = ?", adjustment.PolicyReason).
 		Set("accounting_date = ?", adjustment.AccountingDate).
 		Set("credit_total_amount = ?", adjustment.CreditTotalAmount).
+		Set("credit_total_amount_minor = ?", adjustment.CreditTotalAmountMinor).
 		Set("rebill_total_amount = ?", adjustment.RebillTotalAmount).
+		Set("rebill_total_amount_minor = ?", adjustment.RebillTotalAmountMinor).
 		Set("net_delta_amount = ?", adjustment.NetDeltaAmount).
+		Set("net_delta_amount_minor = ?", adjustment.NetDeltaAmountMinor).
 		Set("rerate_variance_percent = ?", adjustment.RerateVariancePercent).
 		Set("would_create_unapplied_credit = ?", adjustment.WouldCreateUnappliedCredit).
 		Set("requires_reconciliation_exception = ?", adjustment.RequiresReconciliationException).
@@ -398,6 +412,14 @@ func (r *repository) ReplaceAdjustmentLines(
 
 	if len(req.Lines) == 0 {
 		return nil
+	}
+
+	for _, line := range req.Lines {
+		if line == nil {
+			continue
+		}
+
+		line.SyncMinorAmounts()
 	}
 
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(&req.Lines).Exec(ctx); err != nil {

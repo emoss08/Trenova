@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -51,6 +52,7 @@ type Params struct {
 	BillingCtrlRepo    repositories.BillingControlRepository
 	AdjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
 	AccountingRepo     repositories.AccountingControlRepository
+	JournalRepo        repositories.JournalPostingRepository
 	FiscalPeriodRepo   repositories.FiscalPeriodRepository
 	DocumentRepo       repositories.DocumentRepository
 	Validator          *Validator
@@ -58,6 +60,7 @@ type Params struct {
 	WorkflowStarter    servicesports.WorkflowStarter
 	Commercial         *shipmentcommercial.Calculator
 	Generator          servicesports.InvoiceAdjustGenerator
+	SequenceGenerator  seqgen.Generator
 }
 
 type Service struct {
@@ -72,6 +75,7 @@ type Service struct {
 	billingCtrlRepo    repositories.BillingControlRepository
 	adjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
 	accountingRepo     repositories.AccountingControlRepository
+	journalRepo        repositories.JournalPostingRepository
 	fiscalPeriodRepo   repositories.FiscalPeriodRepository
 	documentRepo       repositories.DocumentRepository
 	validator          *Validator
@@ -79,6 +83,7 @@ type Service struct {
 	workflowStarter    servicesports.WorkflowStarter
 	commercial         *shipmentcommercial.Calculator
 	generator          servicesports.InvoiceAdjustGenerator
+	sequenceGenerator  seqgen.Generator
 }
 
 type previewComputation struct {
@@ -111,6 +116,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService {
 		billingCtrlRepo:    p.BillingCtrlRepo,
 		adjustmentCtrlRepo: p.AdjustmentCtrlRepo,
 		accountingRepo:     p.AccountingRepo,
+		journalRepo:        p.JournalRepo,
 		fiscalPeriodRepo:   p.FiscalPeriodRepo,
 		documentRepo:       p.DocumentRepo,
 		validator:          p.Validator,
@@ -118,6 +124,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService {
 		workflowStarter:    p.WorkflowStarter,
 		commercial:         p.Commercial,
 		generator:          p.Generator,
+		sequenceGenerator:  p.SequenceGenerator,
 	}
 }
 

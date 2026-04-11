@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { formatUnixDate, formatUnixDateTime } from "@/lib/date";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Invoice } from "@/types/invoice";
@@ -28,7 +29,7 @@ export function InvoiceOverviewTab({
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-5 p-4">
+      <div className="flex flex-col gap-5 px-4 py-2">
         <InvoiceAdjustmentRuntimeSection
           invoice={invoice}
           correctionSummary={correctionSummary}
@@ -269,14 +270,4 @@ function LifecycleStep({
       </div>
     </div>
   );
-}
-
-function formatUnixDate(value: number | null | undefined) {
-  if (!value) return "N/A";
-  return new Date(value * 1000).toLocaleDateString();
-}
-
-function formatUnixDateTime(value: number | null | undefined) {
-  if (!value) return "N/A";
-  return new Date(value * 1000).toLocaleString();
 }

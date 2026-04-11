@@ -46,7 +46,7 @@ func (p *formatProvider) GetFormat(
 		Scan(ctx)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return defaultFormat(sequenceType)
+			return tenant.DefaultSequenceFormat(sequenceType)
 		}
 		return nil, fmt.Errorf("find sequence config: %w", err)
 	}
@@ -72,67 +72,4 @@ func (p *formatProvider) GetFormat(
 	}
 
 	return format, nil
-}
-
-func defaultFormat(sequenceType tenant.SequenceType) (*tenant.SequenceFormat, error) {
-	switch sequenceType {
-	case tenant.SequenceTypeProNumber:
-		return &tenant.SequenceFormat{
-			Type:                sequenceType,
-			Prefix:              "S",
-			IncludeYear:         true,
-			YearDigits:          2,
-			IncludeMonth:        true,
-			SequenceDigits:      4,
-			IncludeRandomDigits: true,
-			RandomDigitsCount:   6,
-		}, nil
-	case tenant.SequenceTypeConsolidation:
-		return &tenant.SequenceFormat{
-			Type:           sequenceType,
-			Prefix:         "C",
-			IncludeYear:    true,
-			YearDigits:     2,
-			IncludeMonth:   true,
-			SequenceDigits: 5,
-		}, nil
-	case tenant.SequenceTypeInvoice:
-		return &tenant.SequenceFormat{
-			Type:           sequenceType,
-			Prefix:         "INV",
-			IncludeYear:    true,
-			YearDigits:     2,
-			IncludeMonth:   true,
-			SequenceDigits: 6,
-		}, nil
-	case tenant.SequenceTypeCreditMemo:
-		return &tenant.SequenceFormat{
-			Type:           sequenceType,
-			Prefix:         "CM",
-			IncludeYear:    true,
-			YearDigits:     2,
-			IncludeMonth:   true,
-			SequenceDigits: 6,
-		}, nil
-	case tenant.SequenceTypeDebitMemo:
-		return &tenant.SequenceFormat{
-			Type:           sequenceType,
-			Prefix:         "DM",
-			IncludeYear:    true,
-			YearDigits:     2,
-			IncludeMonth:   true,
-			SequenceDigits: 6,
-		}, nil
-	case tenant.SequenceTypeWorkOrder:
-		return &tenant.SequenceFormat{
-			Type:           sequenceType,
-			Prefix:         "WO",
-			IncludeYear:    true,
-			YearDigits:     2,
-			IncludeMonth:   true,
-			SequenceDigits: 6,
-		}, nil
-	default:
-		return nil, ErrInvalidSequenceType
-	}
 }

@@ -20,6 +20,7 @@ import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import {
+  sequenceTypes,
   sequenceConfigDocumentSchema,
   type SequenceConfig,
   type SequenceConfigDocument,
@@ -35,6 +36,9 @@ const sequenceTitles: Record<SequenceType, string> = {
   consolidation: "Consolidation Number",
   invoice: "Invoice Number",
   work_order: "Work Order Number",
+  journal_batch: "Journal Batch Number",
+  journal_entry: "Journal Entry Number",
+  manual_journal_request: "Manual Journal Request Number",
 };
 
 const sequenceDescriptions: Record<SequenceType, string> = {
@@ -42,9 +46,13 @@ const sequenceDescriptions: Record<SequenceType, string> = {
   consolidation: "Controls consolidation number generation for grouped shipment operations.",
   invoice: "Controls invoice identifier generation for billing documents.",
   work_order: "Controls work order identifier generation for operational workflows.",
+  journal_batch: "Controls journal batch numbering for accounting posting groups.",
+  journal_entry: "Controls journal entry numbering for posted ledger entries.",
+  manual_journal_request:
+    "Controls manual journal request numbering before approval and posting.",
 };
 
-const sequenceOrder: SequenceType[] = ["pro_number", "consolidation", "invoice", "work_order"];
+const sequenceOrder: SequenceType[] = [...sequenceTypes];
 
 type SequenceColorConfig = {
   badge: BadgeVariant;
@@ -82,6 +90,27 @@ const sequenceColors: Record<SequenceType, SequenceColorConfig> = {
     previewBg: "bg-orange-600/5",
     previewText: "text-orange-600 dark:text-orange-400",
     previewBorder: "border-orange-600/20",
+  },
+  journal_batch: {
+    badge: "secondary",
+    accentBorder: "border-l-slate-500",
+    previewBg: "bg-slate-600/5",
+    previewText: "text-slate-600 dark:text-slate-300",
+    previewBorder: "border-slate-600/20",
+  },
+  journal_entry: {
+    badge: "indigo",
+    accentBorder: "border-l-indigo-500",
+    previewBg: "bg-indigo-600/5",
+    previewText: "text-indigo-600 dark:text-indigo-400",
+    previewBorder: "border-indigo-600/20",
+  },
+  manual_journal_request: {
+    badge: "warning",
+    accentBorder: "border-l-yellow-500",
+    previewBg: "bg-yellow-600/5",
+    previewText: "text-yellow-700 dark:text-yellow-400",
+    previewBorder: "border-yellow-600/20",
   },
 };
 
@@ -141,7 +170,7 @@ export default function SequenceConfigForm() {
       <Form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-5 pb-14">
           <Tabs defaultValue={sequenceOrder[0]} className="gap-4">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
               {sequenceOrder.map((type) => {
                 const colors = sequenceColors[type];
                 return (

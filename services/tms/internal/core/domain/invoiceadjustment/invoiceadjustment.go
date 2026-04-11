@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -135,8 +136,11 @@ type Adjustment struct {
 	IdempotencyKey                   string                                             `json:"idempotencyKey"     bun:"idempotency_key,type:VARCHAR(200),notnull"`
 	AccountingDate                   int64                                              `json:"accountingDate"     bun:"accounting_date,type:BIGINT,notnull"`
 	CreditTotalAmount                decimal.Decimal                                    `json:"creditTotalAmount"  bun:"credit_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	CreditTotalAmountMinor           int64                                              `json:"creditTotalAmountMinor" bun:"credit_total_amount_minor,type:BIGINT,notnull,default:0"`
 	RebillTotalAmount                decimal.Decimal                                    `json:"rebillTotalAmount"  bun:"rebill_total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	RebillTotalAmountMinor           int64                                              `json:"rebillTotalAmountMinor" bun:"rebill_total_amount_minor,type:BIGINT,notnull,default:0"`
 	NetDeltaAmount                   decimal.Decimal                                    `json:"netDeltaAmount"     bun:"net_delta_amount,type:NUMERIC(19,4),notnull,default:0"`
+	NetDeltaAmountMinor              int64                                              `json:"netDeltaAmountMinor" bun:"net_delta_amount_minor,type:BIGINT,notnull,default:0"`
 	RerateVariancePercent            decimal.Decimal                                    `json:"rerateVariancePercent" bun:"rerate_variance_percent,type:NUMERIC(9,6),notnull,default:0"`
 	WouldCreateUnappliedCredit       bool                                               `json:"wouldCreateUnappliedCredit" bun:"would_create_unapplied_credit,type:BOOLEAN,notnull,default:false"`
 	RequiresReconciliationException  bool                                               `json:"requiresReconciliationException" bun:"requires_reconciliation_exception,type:BOOLEAN,notnull,default:false"`
@@ -209,9 +213,11 @@ type AdjustmentLine struct {
 	Description             string          `json:"description"        bun:"description,type:TEXT,notnull"`
 	CreditQuantity          decimal.Decimal `json:"creditQuantity"     bun:"credit_quantity,type:NUMERIC(19,4),notnull,default:0"`
 	CreditAmount            decimal.Decimal `json:"creditAmount"       bun:"credit_amount,type:NUMERIC(19,4),notnull,default:0"`
+	CreditAmountMinor       int64           `json:"creditAmountMinor"  bun:"credit_amount_minor,type:BIGINT,notnull,default:0"`
 	RemainingEligibleAmount decimal.Decimal `json:"remainingEligibleAmount" bun:"remaining_eligible_amount,type:NUMERIC(19,4),notnull,default:0"`
 	RebillQuantity          decimal.Decimal `json:"rebillQuantity"     bun:"rebill_quantity,type:NUMERIC(19,4),notnull,default:0"`
 	RebillAmount            decimal.Decimal `json:"rebillAmount"       bun:"rebill_amount,type:NUMERIC(19,4),notnull,default:0"`
+	RebillAmountMinor       int64           `json:"rebillAmountMinor"  bun:"rebill_amount_minor,type:BIGINT,notnull,default:0"`
 	ReplacementPayload      map[string]any  `json:"replacementPayload" bun:"replacement_payload,type:JSONB,notnull,default:'{}'::jsonb"`
 	CreatedAt               int64           `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64           `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -431,6 +437,25 @@ func (a *Adjustment) Validate(multiErr *errortypes.MultiError) {
 	if len(a.Lines) == 0 {
 		multiErr.Add("lines", errortypes.ErrRequired, "At least one adjustment line is required")
 	}
+}
+
+func (a *Adjustment) SyncMinorAmounts() {
+	a.CreditTotalAmountMinor = money.MinorUnits(a.CreditTotalAmount)
+	a.RebillTotalAmountMinor = money.MinorUnits(a.RebillTotalAmount)
+	a.NetDeltaAmountMinor = money.MinorUnits(a.NetDeltaAmount)
+
+	for _, line := range a.Lines {
+		if line == nil {
+			continue
+		}
+
+		line.SyncMinorAmounts()
+	}
+}
+
+func (l *AdjustmentLine) SyncMinorAmounts() {
+	l.CreditAmountMinor = money.MinorUnits(l.CreditAmount)
+	l.RebillAmountMinor = money.MinorUnits(l.RebillAmount)
 }
 
 func (a *Adjustment) GetID() pulid.ID {

@@ -16,7 +16,7 @@ import type {
   ReconciliationMode,
   RevenueRecognitionPolicy,
 } from "@/types/accounting-control";
-import type { BillingQueueStatus } from "@/types/billing-queue";
+import type { BillingQueueStatus, ExceptionReasonCode } from "@/types/billing-queue";
 import type {
   BillingExceptionDisposition,
   BillingQueueTransferMode,
@@ -46,6 +46,7 @@ import type {
   ServiceIncidentType,
 } from "@/types/dispatch-control";
 import type { ResourceType } from "@/types/document-packet-rule";
+import type { InvoiceStatus } from "@/types/invoice";
 import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
 import type { EquipmentClass } from "@/types/equipment-type";
@@ -922,3 +923,21 @@ export const documentKindChoices = [
   { value: "ProofOfDelivery", label: "Proof of Delivery" },
   { value: "Invoice", label: "Invoice" },
 ] satisfies ReadonlyArray<GenericSelectOption<DocumentKind>>;
+
+export const invoiceStatusChoices = [
+  { value: "Draft", label: "Draft" },
+  { value: "Posted", label: "Posted" },
+] satisfies ReadonlyArray<GenericSelectOption<InvoiceStatus>>;
+
+export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
+  MissingDocumentation: "Missing Documentation",
+  IncorrectRates: "Incorrect Rates",
+  WeightDiscrepancy: "Weight Discrepancy",
+  AccessorialDispute: "Accessorial Dispute",
+  DuplicateCharge: "Duplicate Charge",
+  MissingReferenceNumber: "Missing Reference Number",
+  CustomerInformationError: "Customer Information Error",
+  ServiceFailure: "Service Failure",
+  RateNotOnFile: "Rate Not On File",
+  Other: "Other",
+};

@@ -3,6 +3,8 @@ package sequenceconfigservice
 import (
 	"context"
 	"slices"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -32,19 +34,20 @@ func (v *Validator) ValidateUpdate(
 		multiErr.Add("businessUnitId", errortypes.ErrRequired, "Business unit ID is required")
 	}
 
-	if len(doc.Configs) != 4 {
+	requiredTypes := tenant.RequiredSequenceTypes()
+	if len(doc.Configs) != len(requiredTypes) {
 		multiErr.Add(
 			"configs",
 			errortypes.ErrInvalid,
-			"Exactly four sequence configurations are required",
+			"Exactly "+strconv.Itoa(len(requiredTypes))+" sequence configurations are required",
 		)
 	}
 
-	requiredTypes := map[tenant.SequenceType]bool{
-		tenant.SequenceTypeProNumber:     false,
-		tenant.SequenceTypeConsolidation: false,
-		tenant.SequenceTypeInvoice:       false,
-		tenant.SequenceTypeWorkOrder:     false,
+	requiredTypeSet := make(map[tenant.SequenceType]struct{}, len(requiredTypes))
+	seenTypes := make(map[tenant.SequenceType]bool, len(requiredTypes))
+	for _, sequenceType := range requiredTypes {
+		requiredTypeSet[sequenceType] = struct{}{}
+		seenTypes[sequenceType] = false
 	}
 
 	for i, cfg := range doc.Configs {
@@ -54,12 +57,12 @@ func (v *Validator) ValidateUpdate(
 			continue
 		}
 
-		if _, ok := requiredTypes[cfg.SequenceType]; !ok {
+		if _, ok := requiredTypeSet[cfg.SequenceType]; !ok {
 			cfgErr.Add("sequenceType", errortypes.ErrInvalid, "Invalid sequence type")
-		} else if requiredTypes[cfg.SequenceType] {
+		} else if seenTypes[cfg.SequenceType] {
 			cfgErr.Add("sequenceType", errortypes.ErrDuplicate, "Sequence type can only appear once")
 		} else {
-			requiredTypes[cfg.SequenceType] = true
+			seenTypes[cfg.SequenceType] = true
 		}
 
 		if strings.TrimSpace(cfg.Prefix) == "" {
@@ -114,8 +117,12 @@ func (v *Validator) ValidateUpdate(
 		}
 	}
 
-	for requiredType, seen := range requiredTypes {
-		if !seen {
+	sort.Slice(requiredTypes, func(i, j int) bool {
+		return tenant.SequenceTypeSortOrder(requiredTypes[i]) < tenant.SequenceTypeSortOrder(requiredTypes[j])
+	})
+
+	for _, requiredType := range requiredTypes {
+		if !seenTypes[requiredType] {
 			multiErr.Add(
 				"configs",
 				errortypes.ErrRequired,

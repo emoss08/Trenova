@@ -5,12 +5,17 @@ import {
   versionSchema,
 } from "./helpers";
 
-export const sequenceTypeSchema = z.enum([
+export const sequenceTypes = [
   "pro_number",
   "consolidation",
   "invoice",
   "work_order",
-]);
+  "journal_batch",
+  "journal_entry",
+  "manual_journal_request",
+] as const;
+
+export const sequenceTypeSchema = z.enum(sequenceTypes);
 
 export const sequenceConfigSchema = z
   .object({
@@ -69,7 +74,7 @@ export const sequenceConfigDocumentSchema = z.object({
   businessUnitId: optionalStringSchema,
   configs: z
     .array(sequenceConfigSchema)
-    .length(4, "Exactly four sequence configurations are required"),
+    .length(sequenceTypes.length, `Exactly ${sequenceTypes.length} sequence configurations are required`),
 });
 
 export type SequenceType = z.infer<typeof sequenceTypeSchema>;

@@ -9,24 +9,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TextShimmer } from "@/components/ui/text-shimmer";
-import { billTypeChoices } from "@/lib/choices";
+import { usePostInvoice } from "@/hooks/use-post-invoice";
+import { billTypeChoices, invoiceStatusChoices } from "@/lib/choices";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
-import type { InvoiceStatus } from "@/types/invoice";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useEffect, useDeferredValue, useMemo, useRef } from "react";
-import { toast } from "sonner";
 import { invoiceSearchParamsParser } from "../use-invoice-state";
 import { InvoiceItemCard } from "./invoice-item-card";
 
 const PAGE_SIZE = 20;
-
-const invoiceStatusChoices: Array<{ label: string; value: InvoiceStatus }> = [
-  { label: "Draft", value: "Draft" },
-  { label: "Posted", value: "Posted" },
-];
 
 export function InvoiceSidebar({
   selectedInvoiceId,
@@ -38,22 +32,8 @@ export function InvoiceSidebar({
   const [searchParams, setSearchParams] = useQueryStates(invoiceSearchParamsParser);
   const { status, query, billType } = searchParams;
   const deferredSearch = useDeferredValue(query);
-  const queryClient = useQueryClient();
   const observerTarget = useRef<HTMLDivElement>(null);
-
-  const { mutate: postInvoice } = useMutation({
-    mutationFn: (invoiceId: string) => apiService.invoiceService.post(invoiceId),
-    onSuccess: (updated) => {
-      void queryClient.invalidateQueries({ queryKey: ["invoice"] });
-      void queryClient.invalidateQueries({ queryKey: ["invoice-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-      toast.success(`${updated.number} posted`);
-    },
-    onError: () => {
-      toast.error("Failed to post invoice");
-    },
-  });
+  const { mutate: postInvoice } = usePostInvoice();
 
   const queryKey = useMemo(
     () => ["invoice-list", status, billType, deferredSearch],

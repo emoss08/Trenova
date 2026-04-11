@@ -6,6 +6,7 @@ import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { formatUnixDate } from "@/lib/date";
 import { formatCurrency, upperFirst } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Invoice } from "@/types/invoice";
@@ -87,7 +88,7 @@ export function InvoiceAdjustmentRuntimeSection({
         </div>
       ) : null}
       {correctionSummary ? (
-        <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-5 xl:grid-cols-2">
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Invoice Lineage</p>
             <ScrollArea className="h-[260px]">
@@ -145,7 +146,7 @@ export function InvoiceAdjustmentRuntimeSection({
                         </p>
                       </div>
                       <p className="shrink-0 text-2xs text-muted-foreground">
-                        {new Date(adjustment.createdAt * 1000).toLocaleDateString()}
+                        {formatUnixDate(adjustment.createdAt)}
                       </p>
                     </div>
                     {adjustment.status === "ExecutionFailed" ? (

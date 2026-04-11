@@ -3,6 +3,7 @@ package sequenceconfigrepository
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -44,21 +45,24 @@ func (r *repository) GetByTenant(
 		return nil, err
 	}
 
-	configs := make([]*tenant.SequenceConfig, 0, 4)
+	configs := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
+	requiredTypes := tenant.RequiredSequenceTypes()
 	if err := r.db.DBForContext(ctx).NewSelect().
 		Model(&configs).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
-		OrderExpr(`CASE sequence_type
-			WHEN 'pro_number' THEN 1
-			WHEN 'consolidation' THEN 2
-			WHEN 'invoice' THEN 3
-			WHEN 'work_order' THEN 4
-			ELSE 5
-		END`).
+		Where("sequence_type IN (?)", bun.List(requiredTypes)).
 		Scan(ctx); err != nil {
 		return nil, err
 	}
+
+	sort.Slice(configs, func(i, j int) bool {
+		return tenant.SequenceTypeSortOrder(
+			configs[i].SequenceType,
+		) < tenant.SequenceTypeSortOrder(
+			configs[j].SequenceType,
+		)
+	})
 
 	return &tenant.SequenceConfigDocument{
 		OrganizationID: req.TenantInfo.OrgID,
@@ -136,11 +140,14 @@ func (r *repository) UpdateByTenant(
 
 func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) error {
 	now := timeutils.NowUnix()
-	defaults := []*tenant.SequenceConfig{
-		defaultConfig(orgID, buID, tenant.SequenceTypeProNumber),
-		defaultConfig(orgID, buID, tenant.SequenceTypeConsolidation),
-		defaultConfig(orgID, buID, tenant.SequenceTypeInvoice),
-		defaultConfig(orgID, buID, tenant.SequenceTypeWorkOrder),
+	defaults := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
+	for _, sequenceType := range tenant.RequiredSequenceTypes() {
+		cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType)
+		if cfg == nil {
+			continue
+		}
+
+		defaults = append(defaults, cfg)
 	}
 
 	for _, cfg := range defaults {
@@ -156,39 +163,4 @@ func (r *repository) ensureDefaults(ctx context.Context, orgID, buID pulid.ID) e
 	}
 
 	return nil
-}
-
-func defaultConfig(orgID, buID pulid.ID, sequenceType tenant.SequenceType) *tenant.SequenceConfig {
-	cfg := &tenant.SequenceConfig{
-		ID:             pulid.MustNew("sqcfg_"),
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		SequenceType:   sequenceType,
-		IncludeYear:    true,
-		YearDigits:     2,
-		IncludeMonth:   true,
-		SequenceDigits: 6,
-		Version:        0,
-		SeparatorChar:  "",
-		CustomFormat:   "",
-	}
-
-	switch sequenceType {
-	case tenant.SequenceTypeProNumber:
-		cfg.Prefix = "S"
-		cfg.SequenceDigits = 4
-		cfg.IncludeRandomDigits = true
-		cfg.RandomDigitsCount = 6
-	case tenant.SequenceTypeConsolidation:
-		cfg.Prefix = "C"
-		cfg.SequenceDigits = 5
-	case tenant.SequenceTypeInvoice:
-		cfg.Prefix = "INV"
-		cfg.SequenceDigits = 6
-	case tenant.SequenceTypeWorkOrder:
-		cfg.Prefix = "WO"
-		cfg.SequenceDigits = 6
-	}
-
-	return cfg
 }

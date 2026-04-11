@@ -99,3 +99,33 @@ func (g TestSequenceGenerator) GenerateWorkOrderNumber(
 ) (string, error) {
 	return g.SingleValue, nil
 }
+
+func (g TestSequenceGenerator) GenerateJournalBatchNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}
+
+func (g TestSequenceGenerator) GenerateJournalEntryNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}
+
+func (g TestSequenceGenerator) GenerateManualJournalRequestNumber(
+	_ context.Context,
+	_ pulid.ID,
+	_ pulid.ID,
+	_ string,
+	_ string,
+) (string, error) {
+	return g.SingleValue, nil
+}

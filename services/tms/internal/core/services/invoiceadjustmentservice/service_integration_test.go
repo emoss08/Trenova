@@ -34,9 +34,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
+	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -808,6 +810,7 @@ func newIntegrationHarness(t *testing.T, ctx context.Context, db *bun.DB, starte
 		BillingCtrlRepo:    billingCtrlRepo,
 		AdjustmentCtrlRepo: adjustmentCtrlRepo,
 		AccountingRepo:     accountingRepo,
+		JournalRepo:        journalpostingrepository.New(journalpostingrepository.Params{DB: conn, Logger: logger}),
 		FiscalPeriodRepo:   fiscalPeriodRepo,
 		DocumentRepo:       documentRepo,
 		Validator:          NewValidator(ValidatorParams{}),
@@ -817,7 +820,8 @@ func newIntegrationHarness(t *testing.T, ctx context.Context, db *bun.DB, starte
 			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
-		Generator: &fakeGenerator{},
+		Generator:         &fakeGenerator{},
+		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
 	})
 
 	return h
@@ -840,6 +844,7 @@ func (h *integrationHarness) buildService(starter servicesports.WorkflowStarter,
 		BillingCtrlRepo:    billingcontrolrepository.New(billingcontrolrepository.Params{DB: h.conn, Logger: zap.NewNop()}),
 		AdjustmentCtrlRepo: h.adjustmentCtrlRepo,
 		AccountingRepo:     h.accountingRepo,
+		JournalRepo:        journalpostingrepository.New(journalpostingrepository.Params{DB: h.conn, Logger: zap.NewNop()}),
 		FiscalPeriodRepo:   fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: h.conn, Logger: zap.NewNop()}),
 		DocumentRepo:       documentrepository.New(documentrepository.Params{DB: h.conn, Logger: zap.NewNop()}),
 		Validator:          NewValidator(ValidatorParams{}),
@@ -849,7 +854,8 @@ func (h *integrationHarness) buildService(starter servicesports.WorkflowStarter,
 			Formula:         &fakeFormulaCalculator{amount: formulaAmount},
 			AccessorialRepo: fakeAccessorialRepo{},
 		}),
-		Generator: &fakeGenerator{},
+		Generator:         &fakeGenerator{},
+		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
 	})
 }
 

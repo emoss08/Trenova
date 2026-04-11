@@ -1,7 +1,7 @@
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BillingQueueStatus } from "@/types/billing-queue";
-import type { InvoiceStatus } from "@/types/invoice";
+import type { InvoiceStatus, SettlementStatus } from "@/types/invoice";
 import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
 import type { PTOStatus, PTOType } from "@/types/worker";
 import type { VariantProps } from "class-variance-authority";
@@ -383,6 +383,34 @@ export function InvoiceStatusBadge({
     <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
       {statusAttributes[status].text}
     </Badge>
+  );
+}
+
+export function PlainSettlementStatusBadge({ status }: { status: SettlementStatus }) {
+  const statusAttributes: Record<SettlementStatus, PlainBadgeAttrProps> = {
+    Paid: {
+      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      text: "Paid",
+    },
+    PartiallyPaid: {
+      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      text: "Partial",
+    },
+    Unpaid: {
+      className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      text: "Unpaid",
+    },
+  };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+        statusAttributes[status].className,
+      )}
+    >
+      {statusAttributes[status].text}
+    </span>
   );
 }
 

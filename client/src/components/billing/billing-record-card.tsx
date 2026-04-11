@@ -26,9 +26,7 @@ export function BillingRecordCard({
       className={cn(
         "flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-colors",
         "hover:bg-muted/40",
-        isSelected
-          ? "border-border bg-muted shadow-sm"
-          : "border-border/60",
+        isSelected ? "border-border bg-muted" : "border-border/60",
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -40,9 +38,7 @@ export function BillingRecordCard({
           <span className="shrink-0 text-sm font-semibold tabular-nums">{amount}</span>
         ) : null}
       </div>
-      {subtitle ? (
-        <span className="truncate text-xs text-muted-foreground">{subtitle}</span>
-      ) : null}
+      {subtitle ? <span className="truncate text-xs text-muted-foreground">{subtitle}</span> : null}
       {meta ? <div className="mt-0.5">{meta}</div> : null}
     </button>
   );

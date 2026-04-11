@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { exceptionReasonLabels } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
@@ -31,18 +32,6 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 
-const EXCEPTION_REASON_LABELS: Record<ExceptionReasonCode, string> = {
-  MissingDocumentation: "Missing Documentation",
-  IncorrectRates: "Incorrect Rates",
-  WeightDiscrepancy: "Weight Discrepancy",
-  AccessorialDispute: "Accessorial Dispute",
-  DuplicateCharge: "Duplicate Charge",
-  MissingReferenceNumber: "Missing Reference Number",
-  CustomerInformationError: "Customer Information Error",
-  ServiceFailure: "Service Failure",
-  RateNotOnFile: "Rate Not On File",
-  Other: "Other",
-};
 
 export function BillingQueueActionBar({
   item,
@@ -300,7 +289,7 @@ function ExceptionPopover({
             value={reasonCode}
             onValueChange={(v) => setReasonCode(v as ExceptionReasonCode)}
             items={exceptionReasonCodeSchema.options.map((code) => ({
-              label: EXCEPTION_REASON_LABELS[code],
+              label: exceptionReasonLabels[code],
               value: code,
             }))}
           >
@@ -310,7 +299,7 @@ function ExceptionPopover({
             <SelectContent>
               {exceptionReasonCodeSchema.options.map((code) => (
                 <SelectItem key={code} value={code}>
-                  {EXCEPTION_REASON_LABELS[code]}
+                  {exceptionReasonLabels[code]}
                 </SelectItem>
               ))}
             </SelectContent>

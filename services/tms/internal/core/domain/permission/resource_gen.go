@@ -68,6 +68,7 @@ const (
 	ResourceDivisionCode             Resource = "division_code"
 	ResourceFiscalYear               Resource = "fiscal_year"
 	ResourceFiscalPeriod             Resource = "fiscal_period"
+	ResourceManualJournal            Resource = "manual_journal"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

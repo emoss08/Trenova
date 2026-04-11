@@ -1,25 +1,19 @@
 import AuditTab from "@/components/audit-tab";
 import { EmptyState } from "@/components/empty-state";
-import { PlainInvoiceStatusBadge } from "@/components/status-badge";
+import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@/components/status-badge";
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePostInvoice } from "@/hooks/use-post-invoice";
+import { formatUnixDate } from "@/lib/date";
 import { queries } from "@/lib/queries";
-import { cn, formatCurrency } from "@/lib/utils";
-import { apiService } from "@/services/api";
+import { formatCurrency } from "@/lib/utils";
 import type { InvoiceLineType } from "@/types/invoice";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckIcon,
-  FileTextIcon,
-  PackageCheckIcon,
-  ReceiptTextIcon,
-  SendIcon,
-} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckIcon, FileTextIcon, PackageCheckIcon, ReceiptTextIcon, SendIcon } from "lucide-react";
 import { lazy, useMemo } from "react";
-import { toast } from "sonner";
 import { BillingQueueDocumentsTab } from "../../billing-queue/_components/billing-queue-documents-tab";
 import { InvoiceAdjustmentPanel } from "./invoice-adjustment-panel";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
@@ -39,8 +33,6 @@ export default function InvoiceDetailPane({
   selectedDocumentId: string | null;
   onDocumentSelect: (docId: string, fileName: string) => void;
 }) {
-  const queryClient = useQueryClient();
-
   const { data: invoice, isLoading } = useQuery({
     ...queries.invoice.get(selectedInvoiceId ?? ""),
     enabled: !!selectedInvoiceId,
@@ -65,19 +57,7 @@ export default function InvoiceDetailPane({
     enabled: Boolean(latestAdjustment?.id),
   });
 
-  const { mutate: postInvoice, isPending: isPosting } = useMutation({
-    mutationFn: (invoiceId: string) => apiService.invoiceService.post(invoiceId),
-    onSuccess: (updated) => {
-      void queryClient.invalidateQueries({ queryKey: ["invoice"] });
-      void queryClient.invalidateQueries({ queryKey: ["invoice-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["billingQueue"] });
-      void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
-      toast.success(`${updated.number} posted`);
-    },
-    onError: () => {
-      toast.error("Failed to post invoice");
-    },
-  });
+  const { mutate: postInvoice, isPending: isPosting } = usePostInvoice();
 
   if (!selectedInvoiceId) {
     return (
@@ -110,27 +90,14 @@ export default function InvoiceDetailPane({
   const isCurrentVersion =
     !invoice.correctionGroupId ||
     lineageQuery.data?.correctionGroup.currentInvoiceId === invoice.id;
-  const settlementPillClass: string = {
-    Paid: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-    PartiallyPaid: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-    Unpaid: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-  }[invoice.settlementStatus];
-
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 space-y-4 border-b px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold">{invoice.number}</h2>
             <PlainInvoiceStatusBadge status={invoice.status} />
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                settlementPillClass,
-              )}
-            >
-              {invoice.settlementStatus === "PartiallyPaid" ? "Partial" : invoice.settlementStatus}
-            </span>
+            <PlainSettlementStatusBadge status={invoice.settlementStatus} />
           </div>
           <div className="flex items-center gap-2">
             {invoice.status === "Posted" ? (
@@ -159,16 +126,11 @@ export default function InvoiceDetailPane({
           <MetadataCell label="Invoice Date" value={formatUnixDate(invoice.invoiceDate)} />
           <MetadataCell label="Due Date" value={formatUnixDate(invoice.dueDate)} />
           <MetadataCell label="Payment Terms" value={invoice.paymentTerm} />
-          <MetadataCell
-            label="Bill Type"
-            value={invoice.billType}
-          />
+          <MetadataCell label="Bill Type" value={invoice.billType} />
           {invoice.shipmentProNumber ? (
             <MetadataCell label="PRO Number" value={invoice.shipmentProNumber} />
           ) : null}
-          {invoice.shipmentBol ? (
-            <MetadataCell label="BOL" value={invoice.shipmentBol} />
-          ) : null}
+          {invoice.shipmentBol ? <MetadataCell label="BOL" value={invoice.shipmentBol} /> : null}
         </div>
       </div>
 
@@ -213,10 +175,7 @@ export default function InvoiceDetailPane({
                   </thead>
                   <tbody>
                     {invoice.lines.map((line) => (
-                      <tr
-                        key={line.id}
-                        className="border-t transition-colors hover:bg-muted/50"
-                      >
+                      <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
                         <td className="px-4 py-3 font-mono text-xs">{line.lineNumber}</td>
                         <td className="px-4 py-3">{line.description}</td>
                         <td className="px-4 py-3">
@@ -236,7 +195,10 @@ export default function InvoiceDetailPane({
                   </tbody>
                   <tfoot className="border-t bg-muted/30">
                     <tr>
-                      <td colSpan={5} className="px-4 py-2.5 text-right text-sm text-muted-foreground">
+                      <td
+                        colSpan={5}
+                        className="px-4 py-2.5 text-right text-sm text-muted-foreground"
+                      >
                         Subtotal
                       </td>
                       <td className="px-4 py-2.5 text-right text-sm tabular-nums">
@@ -244,7 +206,10 @@ export default function InvoiceDetailPane({
                       </td>
                     </tr>
                     <tr>
-                      <td colSpan={5} className="px-4 py-2.5 text-right text-sm text-muted-foreground">
+                      <td
+                        colSpan={5}
+                        className="px-4 py-2.5 text-right text-sm text-muted-foreground"
+                      >
                         Other Charges
                       </td>
                       <td className="px-4 py-2.5 text-right text-sm tabular-nums">
@@ -310,8 +275,3 @@ const LINE_TYPE_VARIANTS: Record<InvoiceLineType, BadgeVariant> = {
   Freight: "info",
   Accessorial: "purple",
 };
-
-function formatUnixDate(value: number | null | undefined) {
-  if (!value) return "N/A";
-  return new Date(value * 1000).toLocaleDateString();
-}

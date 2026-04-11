@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
+	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -30,45 +31,49 @@ var (
 type Invoice struct {
 	bun.BaseModel `bun:"table:invoices,alias:inv" json:"-"`
 
-	ID                 pulid.ID              `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID              `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID              `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	BillingQueueItemID pulid.ID              `json:"billingQueueItemId" bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
-	ShipmentID         pulid.ID              `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),notnull"`
-	CustomerID         pulid.ID              `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
-	Number             string                `json:"number"             bun:"number,type:VARCHAR(100),notnull"`
-	BillType           billingqueue.BillType `json:"billType"           bun:"bill_type,type:VARCHAR(50),notnull"`
-	Status             Status                `json:"status"             bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
-	PaymentTerm        PaymentTerm           `json:"paymentTerm"        bun:"payment_term,type:VARCHAR(50),notnull"`
-	CurrencyCode       string                `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	InvoiceDate        int64                 `json:"invoiceDate"        bun:"invoice_date,type:BIGINT,notnull"`
-	DueDate            *int64                `json:"dueDate"            bun:"due_date,type:BIGINT,nullzero"`
-	PostedAt           *int64                `json:"postedAt"           bun:"posted_at,type:BIGINT,nullzero"`
-	ShipmentProNumber  string                `json:"shipmentProNumber"  bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
-	ShipmentBOL        string                `json:"shipmentBol"        bun:"shipment_bol,type:VARCHAR(100),nullzero"`
-	ServiceDate        *int64                `json:"serviceDate"        bun:"service_date,type:BIGINT,nullzero"`
-	BillToName         string                `json:"billToName"         bun:"bill_to_name,type:VARCHAR(255),notnull"`
-	BillToCode         string                `json:"billToCode"         bun:"bill_to_code,type:VARCHAR(50),nullzero"`
-	BillToAddressLine1 string                `json:"billToAddressLine1" bun:"bill_to_address_line_1,type:VARCHAR(255),nullzero"`
-	BillToAddressLine2 string                `json:"billToAddressLine2" bun:"bill_to_address_line_2,type:VARCHAR(255),nullzero"`
-	BillToCity         string                `json:"billToCity"         bun:"bill_to_city,type:VARCHAR(100),nullzero"`
-	BillToState        string                `json:"billToState"        bun:"bill_to_state,type:VARCHAR(100),nullzero"`
-	BillToPostalCode   string                `json:"billToPostalCode"   bun:"bill_to_postal_code,type:VARCHAR(20),nullzero"`
-	BillToCountry      string                `json:"billToCountry"      bun:"bill_to_country,type:VARCHAR(100),nullzero"`
-	SubtotalAmount     decimal.Decimal       `json:"subtotalAmount"     bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"`
-	OtherAmount        decimal.Decimal       `json:"otherAmount"        bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalAmount        decimal.Decimal       `json:"totalAmount"        bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	AppliedAmount      decimal.Decimal       `json:"appliedAmount"      bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"`
-	SettlementStatus   SettlementStatus      `json:"settlementStatus"   bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"`
-	DisputeStatus      DisputeStatus         `json:"disputeStatus"      bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"`
-	CorrectionGroupID  pulid.ID              `json:"correctionGroupId"  bun:"correction_group_id,type:VARCHAR(100),nullzero"`
-	SupersedesInvoiceID pulid.ID             `json:"supersedesInvoiceId" bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"`
-	SupersededByInvoiceID pulid.ID           `json:"supersededByInvoiceId" bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
-	SourceInvoiceAdjustmentID pulid.ID       `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
-	IsAdjustmentArtifact bool                `json:"isAdjustmentArtifact" bun:"is_adjustment_artifact,type:BOOLEAN,notnull,default:false"`
-	Version            int64                 `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64                 `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64                 `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                        pulid.ID              `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID            pulid.ID              `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID            pulid.ID              `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	BillingQueueItemID        pulid.ID              `json:"billingQueueItemId" bun:"billing_queue_item_id,type:VARCHAR(100),notnull"`
+	ShipmentID                pulid.ID              `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),notnull"`
+	CustomerID                pulid.ID              `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
+	Number                    string                `json:"number"             bun:"number,type:VARCHAR(100),notnull"`
+	BillType                  billingqueue.BillType `json:"billType"           bun:"bill_type,type:VARCHAR(50),notnull"`
+	Status                    Status                `json:"status"             bun:"status,type:VARCHAR(50),notnull,default:'Draft'"`
+	PaymentTerm               PaymentTerm           `json:"paymentTerm"        bun:"payment_term,type:VARCHAR(50),notnull"`
+	CurrencyCode              string                `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	InvoiceDate               int64                 `json:"invoiceDate"        bun:"invoice_date,type:BIGINT,notnull"`
+	DueDate                   *int64                `json:"dueDate"            bun:"due_date,type:BIGINT,nullzero"`
+	PostedAt                  *int64                `json:"postedAt"           bun:"posted_at,type:BIGINT,nullzero"`
+	ShipmentProNumber         string                `json:"shipmentProNumber"  bun:"shipment_pro_number,type:VARCHAR(100),nullzero"`
+	ShipmentBOL               string                `json:"shipmentBol"        bun:"shipment_bol,type:VARCHAR(100),nullzero"`
+	ServiceDate               *int64                `json:"serviceDate"        bun:"service_date,type:BIGINT,nullzero"`
+	BillToName                string                `json:"billToName"         bun:"bill_to_name,type:VARCHAR(255),notnull"`
+	BillToCode                string                `json:"billToCode"         bun:"bill_to_code,type:VARCHAR(50),nullzero"`
+	BillToAddressLine1        string                `json:"billToAddressLine1" bun:"bill_to_address_line_1,type:VARCHAR(255),nullzero"`
+	BillToAddressLine2        string                `json:"billToAddressLine2" bun:"bill_to_address_line_2,type:VARCHAR(255),nullzero"`
+	BillToCity                string                `json:"billToCity"         bun:"bill_to_city,type:VARCHAR(100),nullzero"`
+	BillToState               string                `json:"billToState"        bun:"bill_to_state,type:VARCHAR(100),nullzero"`
+	BillToPostalCode          string                `json:"billToPostalCode"   bun:"bill_to_postal_code,type:VARCHAR(20),nullzero"`
+	BillToCountry             string                `json:"billToCountry"      bun:"bill_to_country,type:VARCHAR(100),nullzero"`
+	SubtotalAmount            decimal.Decimal       `json:"subtotalAmount"     bun:"subtotal_amount,type:NUMERIC(19,4),notnull,default:0"`
+	SubtotalAmountMinor       int64                 `json:"subtotalAmountMinor" bun:"subtotal_amount_minor,type:BIGINT,notnull,default:0"`
+	OtherAmount               decimal.Decimal       `json:"otherAmount"        bun:"other_amount,type:NUMERIC(19,4),notnull,default:0"`
+	OtherAmountMinor          int64                 `json:"otherAmountMinor"   bun:"other_amount_minor,type:BIGINT,notnull,default:0"`
+	TotalAmount               decimal.Decimal       `json:"totalAmount"        bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
+	TotalAmountMinor          int64                 `json:"totalAmountMinor"   bun:"total_amount_minor,type:BIGINT,notnull,default:0"`
+	AppliedAmount             decimal.Decimal       `json:"appliedAmount"      bun:"applied_amount,type:NUMERIC(19,4),notnull,default:0"`
+	AppliedAmountMinor        int64                 `json:"appliedAmountMinor" bun:"applied_amount_minor,type:BIGINT,notnull,default:0"`
+	SettlementStatus          SettlementStatus      `json:"settlementStatus"   bun:"settlement_status,type:VARCHAR(50),notnull,default:'Unpaid'"`
+	DisputeStatus             DisputeStatus         `json:"disputeStatus"      bun:"dispute_status,type:VARCHAR(50),notnull,default:'None'"`
+	CorrectionGroupID         pulid.ID              `json:"correctionGroupId"  bun:"correction_group_id,type:VARCHAR(100),nullzero"`
+	SupersedesInvoiceID       pulid.ID              `json:"supersedesInvoiceId" bun:"supersedes_invoice_id,type:VARCHAR(100),nullzero"`
+	SupersededByInvoiceID     pulid.ID              `json:"supersededByInvoiceId" bun:"superseded_by_invoice_id,type:VARCHAR(100),nullzero"`
+	SourceInvoiceAdjustmentID pulid.ID              `json:"sourceInvoiceAdjustmentId" bun:"source_invoice_adjustment_id,type:VARCHAR(100),nullzero"`
+	IsAdjustmentArtifact      bool                  `json:"isAdjustmentArtifact" bun:"is_adjustment_artifact,type:BOOLEAN,notnull,default:false"`
+	Version                   int64                 `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt                 int64                 `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                 int64                 `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BillingQueueItem *billingqueue.BillingQueueItem `json:"billingQueueItem,omitempty" bun:"rel:belongs-to,join:billing_queue_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 	Shipment         *shipment.Shipment             `json:"shipment,omitempty"         bun:"rel:belongs-to,join:shipment_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
@@ -89,6 +94,7 @@ type Line struct {
 	Quantity       decimal.Decimal `json:"quantity"       bun:"quantity,type:NUMERIC(19,4),notnull,default:0"`
 	UnitPrice      decimal.Decimal `json:"unitPrice"      bun:"unit_price,type:NUMERIC(19,4),notnull,default:0"`
 	Amount         decimal.Decimal `json:"amount"         bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
+	AmountMinor    int64           `json:"amountMinor"    bun:"amount_minor,type:BIGINT,notnull,default:0"`
 	Version        int64           `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -224,6 +230,25 @@ func (i *Invoice) OpenBalanceAmount() decimal.Decimal {
 	}
 
 	return openBalance
+}
+
+func (i *Invoice) SyncMinorAmounts() {
+	i.SubtotalAmountMinor = money.MinorUnits(i.SubtotalAmount)
+	i.OtherAmountMinor = money.MinorUnits(i.OtherAmount)
+	i.TotalAmountMinor = money.MinorUnits(i.TotalAmount)
+	i.AppliedAmountMinor = money.MinorUnits(i.AppliedAmount)
+
+	for _, line := range i.Lines {
+		if line == nil {
+			continue
+		}
+
+		line.SyncMinorAmount()
+	}
+}
+
+func (l *Line) SyncMinorAmount() {
+	l.AmountMinor = money.MinorUnits(l.Amount)
 }
 
 func (l *Line) Validate(multiErr *errortypes.MultiError, idx int) {

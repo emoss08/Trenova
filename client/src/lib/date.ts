@@ -420,6 +420,16 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
+export function formatUnixDate(value: number | null | undefined): string {
+  if (!value) return "N/A";
+  return new Date(value * 1000).toLocaleDateString();
+}
+
+export function formatUnixDateTime(value: number | null | undefined): string {
+  if (!value) return "N/A";
+  return new Date(value * 1000).toLocaleString();
+}
+
 export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
   return [
     {

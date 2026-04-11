@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
+	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
@@ -147,6 +148,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	invoiceadjustmentservice.New,
 	invoiceservice.New,
+	manualjournalservice.New,
 	billingcontrolservice.New,
 	billingqueueservice.New,
 	dataentrycontrolservice.New,

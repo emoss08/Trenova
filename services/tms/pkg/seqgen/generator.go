@@ -120,6 +120,48 @@ func (g *generator) GenerateWorkOrderNumber(
 	})
 }
 
+func (g *generator) GenerateJournalBatchNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeJournalBatch,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
+func (g *generator) GenerateJournalEntryNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeJournalEntry,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
+func (g *generator) GenerateManualJournalRequestNumber(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	locationCode, businessUnitCode string,
+) (string, error) {
+	return g.Generate(ctx, &GenerateRequest{
+		Type:             tenant.SequenceTypeManualJournalRequest,
+		OrgID:            orgID,
+		BuID:             buID,
+		LocationCode:     locationCode,
+		BusinessUnitCode: businessUnitCode,
+	})
+}
+
 func (g *generator) Generate(ctx context.Context, req *GenerateRequest) (string, error) {
 	if req == nil {
 		return "", ErrSequenceRequestRequired

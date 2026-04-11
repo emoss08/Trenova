@@ -1,5 +1,5 @@
 import { BillingRecordCard } from "@/components/billing/billing-record-card";
-import { PlainInvoiceStatusBadge } from "@/components/status-badge";
+import { PlainInvoiceStatusBadge, PlainSettlementStatusBadge } from "@/components/status-badge";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -8,16 +8,10 @@ import {
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import type { Invoice } from "@/types/invoice";
 import { formatDistanceToNowStrict, fromUnixTime } from "date-fns";
 import { ExternalLinkIcon, FileTextIcon, SendIcon } from "lucide-react";
-
-const SETTLEMENT_STYLES: Record<string, string> = {
-  Paid: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
-  PartiallyPaid: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
-  Unpaid: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
-};
 
 export function InvoiceItemCard({
   invoice,
@@ -48,16 +42,7 @@ export function InvoiceItemCard({
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 <PlainInvoiceStatusBadge status={invoice.status} />
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                    SETTLEMENT_STYLES[invoice.settlementStatus] ?? SETTLEMENT_STYLES.Unpaid,
-                  )}
-                >
-                  {invoice.settlementStatus === "PartiallyPaid"
-                    ? "Partial"
-                    : invoice.settlementStatus}
-                </span>
+                <PlainSettlementStatusBadge status={invoice.settlementStatus} />
               </div>
               <Tooltip>
                 <TooltipTrigger

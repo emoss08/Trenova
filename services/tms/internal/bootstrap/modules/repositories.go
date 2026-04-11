@@ -48,9 +48,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/manualjournalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
@@ -154,6 +156,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	invoiceadjustmentcontrolrepository.New,
 	invoiceadjustmentrepository.New,
 	invoicerepository.New,
+	journalpostingrepository.New,
+	manualjournalrepository.New,
 	billingcontrolrepository.New,
 	billingqueuerepository.New,
 	distanceoverriderepository.New,

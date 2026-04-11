@@ -740,6 +740,23 @@ func (r *Registry) registerAccountingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceManualJournal.String(),
+		DisplayName: "Manual Journal",
+		Description: "Manual journal request workflow and approvals",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View manual journals"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create manual journal drafts"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Edit manual journal drafts"},
+			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve manual journals"},
+			{Operation: OpReject, DisplayName: "Reject", Description: "Reject manual journals"},
+			{Operation: OpSubmit, DisplayName: "Submit", Description: "Submit manual journals for approval"},
+			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel manual journals"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerComplianceResources() {

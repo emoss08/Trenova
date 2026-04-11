@@ -84,4 +84,19 @@ type Generator interface {
 		orgID, buID pulid.ID,
 		locationCode, businessUnitCode string,
 	) (string, error)
+	GenerateJournalBatchNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
+	GenerateJournalEntryNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
+	GenerateManualJournalRequestNumber(
+		ctx context.Context,
+		orgID, buID pulid.ID,
+		locationCode, businessUnitCode string,
+	) (string, error)
 }

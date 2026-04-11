@@ -152,6 +152,8 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *invoice.Invoice,
 ) (*invoice.Invoice, error) {
+	entity.SyncMinorAmounts()
+
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if _, err := r.db.DBForContext(txCtx).NewInsert().Model(entity).Exec(txCtx); err != nil {
 			return fmt.Errorf("insert invoice: %w", err)
@@ -188,6 +190,8 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *invoice.Invoice,
 ) (*invoice.Invoice, error) {
+	entity.SyncMinorAmounts()
+
 	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
@@ -199,6 +203,7 @@ func (r *repository) Update(
 		Set("posted_at = ?", entity.PostedAt).
 		Set("due_date = ?", entity.DueDate).
 		Set("applied_amount = ?", entity.AppliedAmount).
+		Set("applied_amount_minor = ?", entity.AppliedAmountMinor).
 		Set("settlement_status = ?", entity.SettlementStatus).
 		Set("dispute_status = ?", entity.DisputeStatus).
 		Set("correction_group_id = ?", entity.CorrectionGroupID).

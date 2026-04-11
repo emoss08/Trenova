@@ -4,10 +4,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { exceptionReasonLabels } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { getDestinationLocation, getOriginLocation } from "@/lib/shipment-utils";
 import { formatCurrency } from "@/lib/utils";
 import ShipmentCommentsTab from "@/routes/shipment/_components/shipment-comments";
+import type { ExceptionReasonCode } from "@/types/billing-queue";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
@@ -22,19 +24,6 @@ import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
-
-const EXCEPTION_REASON_LABELS: Record<string, string> = {
-  MissingDocumentation: "Missing Documentation",
-  IncorrectRates: "Incorrect Rates",
-  WeightDiscrepancy: "Weight Discrepancy",
-  AccessorialDispute: "Accessorial Dispute",
-  DuplicateCharge: "Duplicate Charge",
-  MissingReferenceNumber: "Missing Reference Number",
-  CustomerInformationError: "Customer Information Error",
-  ServiceFailure: "Service Failure",
-  RateNotOnFile: "Rate Not On File",
-  Other: "Other",
-};
 
 export default function BillingQueueDetailPane({
   selectedItemId,
@@ -91,7 +80,7 @@ export default function BillingQueueDetailPane({
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 space-y-3 border-b px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Link
               to={`/shipment-management/shipments?item=${item.shipmentId}`}
@@ -146,7 +135,8 @@ export default function BillingQueueDetailPane({
           <Alert variant="destructive">
             <AlertTriangleIcon className="size-4" />
             <AlertTitle>
-              {EXCEPTION_REASON_LABELS[item.exceptionReasonCode] ?? item.exceptionReasonCode}
+              {exceptionReasonLabels[item.exceptionReasonCode as ExceptionReasonCode] ??
+                item.exceptionReasonCode}
             </AlertTitle>
             {item.exceptionNotes && <AlertDescription>{item.exceptionNotes}</AlertDescription>}
           </Alert>
@@ -313,7 +303,9 @@ function AdjustmentOriginBanner({
             {requiresReplacementReview ? (
               <span className="text-muted-foreground">
                 Replacement review{" "}
-                <span className="font-medium text-foreground">Required before invoice creation</span>
+                <span className="font-medium text-foreground">
+                  Required before invoice creation
+                </span>
               </span>
             ) : null}
           </div>

@@ -28,6 +28,9 @@ export const invoiceLineSchema = z.object({
 });
 export type InvoiceLine = z.infer<typeof invoiceLineSchema>;
 
+export const settlementStatusSchema = z.enum(["Unpaid", "PartiallyPaid", "Paid"]);
+export type SettlementStatus = z.infer<typeof settlementStatusSchema>;
+
 export const invoiceSchema = z.object({
   ...tenantInfoSchema.shape,
   id: z.string(),
@@ -57,7 +60,7 @@ export const invoiceSchema = z.object({
   otherAmount: decimalStringSchema,
   totalAmount: decimalStringSchema,
   appliedAmount: decimalStringSchema,
-  settlementStatus: z.enum(["Unpaid", "PartiallyPaid", "Paid"]),
+  settlementStatus: settlementStatusSchema,
   disputeStatus: z.enum(["None", "Disputed"]),
   correctionGroupId: nullableStringSchema,
   supersedesInvoiceId: nullableStringSchema,
