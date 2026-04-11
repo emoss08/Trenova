@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -21,6 +22,7 @@ type ActivitiesParams struct {
 	AccountingControlRepo repositories.AccountingControlRepository
 	FiscalYearRepo        repositories.FiscalYearRepository
 	FiscalPeriodRepo      repositories.FiscalPeriodRepository
+	FiscalPeriodService   *fiscalperiodservice.Service
 	UserRepo              repositories.UserRepository
 }
 
@@ -28,6 +30,7 @@ type Activities struct {
 	acRepo   repositories.AccountingControlRepository
 	fyRepo   repositories.FiscalYearRepository
 	fpRepo   repositories.FiscalPeriodRepository
+	fpSvc    *fiscalperiodservice.Service
 	userRepo repositories.UserRepository
 }
 
@@ -36,6 +39,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		acRepo:   p.AccountingControlRepo,
 		fyRepo:   p.FiscalYearRepo,
 		fpRepo:   p.FiscalPeriodRepo,
+		fpSvc:    p.FiscalPeriodService,
 		userRepo: p.UserRepo,
 	}
 }
@@ -105,15 +109,13 @@ func (a *Activities) CloseExpiredPeriodsActivity(
 	}
 
 	for _, period := range periods {
-		_, closeErr := a.fpRepo.Close(ctx, repositories.CloseFiscalPeriodRequest{
+		_, closeErr := a.fpSvc.Close(ctx, repositories.CloseFiscalPeriodRequest{
 			ID: period.ID,
 			TenantInfo: pagination.TenantInfo{
 				OrgID: payload.OrganizationID,
 				BuID:  payload.BusinessUnitID,
 			},
-			ClosedByID: systemUser.ID,
-			ClosedAt:   now,
-		})
+		}, systemUser.ID)
 
 		if closeErr != nil {
 			logger.Error("Failed to close period",

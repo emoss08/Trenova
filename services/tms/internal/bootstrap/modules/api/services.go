@@ -5,15 +5,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
+	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/commodityservice"
+	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
 	"github.com/emoss08/trenova/internal/core/services/customerservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
@@ -134,9 +138,12 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	commodityservice.New,
+	customerpaymentservice.New,
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	accountingcontrolservice.New,
+	accountingcontrolpolicyservice.New,
+	accountsreceivableservice.New,
 	accounttypeservice.New,
 	glaccountservice.New,
 	glbalanceservice.New,
@@ -156,6 +163,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	journalreversalservice.New,
 	manualjournalservice.New,
 	billingcontrolservice.New,
+	billingcontrolpolicyservice.New,
 	billingqueueservice.New,
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,

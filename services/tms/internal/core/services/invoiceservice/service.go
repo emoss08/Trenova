@@ -16,7 +16,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,6 +54,8 @@ type Params struct {
 	Realtime          servicesports.RealtimeService
 	WorkflowStarter   servicesports.WorkflowStarter
 	SequenceGenerator seqgen.Generator
+	AccountingPolicy  *accountingcontrolpolicyservice.Service
+	BillingPolicy     *billingcontrolpolicyservice.Service
 }
 
 type Service struct {
@@ -71,6 +75,8 @@ type Service struct {
 	realtime          servicesports.RealtimeService
 	workflowStarter   servicesports.WorkflowStarter
 	sequenceGenerator seqgen.Generator
+	accountingPolicy  *accountingcontrolpolicyservice.Service
+	billingPolicy     *billingcontrolpolicyservice.Service
 }
 
 type existingInvoiceLookupResult struct {
@@ -110,6 +116,8 @@ func New(p Params) servicesports.InvoiceService {
 		realtime:          p.Realtime,
 		workflowStarter:   p.WorkflowStarter,
 		sequenceGenerator: p.SequenceGenerator,
+		accountingPolicy:  p.AccountingPolicy,
+		billingPolicy:     p.BillingPolicy,
 	}
 }
 
@@ -261,6 +269,19 @@ func (s *Service) Post(
 		})
 		if getErr != nil {
 			return getErr
+		}
+
+		if s.billingRepo != nil {
+			control, controlErr := s.billingRepo.GetByOrgID(txCtx, entity.OrganizationID)
+			if controlErr != nil {
+				if req.TriggeredBy == billingcontrolpolicyservice.AutoPostInvoiceTrigger {
+					return controlErr
+				}
+			} else {
+				if policyErr := s.billingPolicyService().ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
+					return policyErr
+				}
+			}
 		}
 
 		auditActor := actor.AuditActor()
@@ -837,7 +858,7 @@ func (s *Service) shouldAutoPost(
 ) bool {
 	control, err := s.billingRepo.GetByOrgID(ctx, orgID)
 	if err == nil && control != nil {
-		return resolveEffectiveAutoPost(control, cus)
+		return s.billingPolicyService().CanAutoPostInvoice(control, cus)
 	}
 
 	return s.resolveAutoPost(cus)
@@ -864,6 +885,20 @@ func resolveEffectiveAutoPost(
 	}
 
 	return cus.BillingProfile.AutoBill
+}
+
+func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Service {
+	if s.accountingPolicy != nil {
+		return s.accountingPolicy
+	}
+	return accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()})
+}
+
+func (s *Service) billingPolicyService() *billingcontrolpolicyservice.Service {
+	if s.billingPolicy != nil {
+		return s.billingPolicy
+	}
+	return billingcontrolpolicyservice.New(billingcontrolpolicyservice.Params{Logger: zap.NewNop()})
 }
 
 func (s *Service) logAction(

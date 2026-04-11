@@ -31,7 +31,8 @@ func (s *Service) createInvoiceJournalPosting(
 		}
 		return err
 	}
-	if !shouldAutoPostInvoiceSource(accountingControl, invoicePostingSourceEvent(entity.BillType)) {
+	event := invoicePostingSourceEvent(entity.BillType)
+	if !s.accountingPolicyService().CanCreateInvoiceLedgerEntry(accountingControl, event) {
 		return nil
 	}
 
@@ -115,7 +116,7 @@ func (s *Service) createInvoiceJournalPosting(
 		EntryType:            "Standard",
 		EntryStatus:          entryStatus,
 		ReferenceNumber:      entity.Number,
-		ReferenceType:        invoicePostingSourceEvent(entity.BillType).String(),
+		ReferenceType:        event.String(),
 		ReferenceID:          entity.ID.String(),
 		EntryDescription:     fmt.Sprintf("Invoice posted for %s", entity.Number),
 		TotalDebit:           amount,
@@ -129,7 +130,7 @@ func (s *Service) createInvoiceJournalPosting(
 		SourceID:             sourceID,
 		SourceObjectType:     "Invoice",
 		SourceObjectID:       entity.ID.String(),
-		SourceEventType:      invoicePostingSourceEvent(entity.BillType).String(),
+		SourceEventType:      event.String(),
 		SourceStatus:         entryStatus,
 		SourceDocumentNumber: entity.Number,
 		SourceIdempotencyKey: "invoice-posted:" + entity.ID.String(),
@@ -229,9 +230,6 @@ func invoicePostingWorkflow(
 func shouldAutoPostInvoiceSource(control *tenant.AccountingControl, event tenant.JournalSourceEventType) bool {
 	if control == nil {
 		return false
-	}
-	if control.JournalPostingMode == tenant.JournalPostingModeManual {
-		return true
 	}
 	return slices.Contains(control.AutoPostSourceEvents, event)
 }

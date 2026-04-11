@@ -51,6 +51,8 @@ type AccountingControl struct {
 	ExchangeRateOverridePolicy ExchangeRateOverrideType `json:"exchangeRateOverridePolicy" bun:"exchange_rate_override_policy,type:exchange_rate_override_policy_enum,notnull,default:'RequireApproval'"`
 
 	DefaultRevenueAccountID          pulid.ID `json:"defaultRevenueAccountId"          bun:"default_revenue_account_id,type:VARCHAR(100),nullzero"`
+	DefaultCashAccountID             pulid.ID `json:"defaultCashAccountId"             bun:"default_cash_account_id,type:VARCHAR(100),nullzero"`
+	DefaultUnappliedCashAccountID    pulid.ID `json:"defaultUnappliedCashAccountId"    bun:"default_unapplied_cash_account_id,type:VARCHAR(100),nullzero"`
 	DefaultExpenseAccountID          pulid.ID `json:"defaultExpenseAccountId"          bun:"default_expense_account_id,type:VARCHAR(100),nullzero"`
 	DefaultARAccountID               pulid.ID `json:"defaultArAccountId"               bun:"default_ar_account_id,type:VARCHAR(100),nullzero"`
 	DefaultAPAccountID               pulid.ID `json:"defaultApAccountId"               bun:"default_ap_account_id,type:VARCHAR(100),nullzero"`

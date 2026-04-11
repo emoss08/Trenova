@@ -61,6 +61,7 @@ const (
 
 	// Accounting
 	ResourceAccountingControl        Resource = "accounting_control"
+	ResourceAccountsReceivable       Resource = "accounts_receivable"
 	ResourceBillingControl           Resource = "billing_control"
 	ResourceInvoiceAdjustmentControl Resource = "invoice_adjustment_control"
 	ResourceAccountType              Resource = "account_type"
@@ -71,6 +72,7 @@ const (
 	ResourceManualJournal            Resource = "manual_journal"
 	ResourceJournalReversal          Resource = "journal_reversal"
 	ResourceJournalEntry             Resource = "journal_entry"
+	ResourceCustomerPayment          Resource = "customer_payment"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

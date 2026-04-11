@@ -46,8 +46,16 @@ type sourceRecord struct {
 }
 
 func (r *repository) GetByObject(ctx context.Context, req repositories.GetJournalSourceByObjectRequest) (*journalsource.Source, error) {
+	return r.getByObjectQuery(ctx, req, "")
+}
+
+func (r *repository) GetByObjectAndEvent(ctx context.Context, req repositories.GetJournalSourceByObjectRequest, sourceEventType string) (*journalsource.Source, error) {
+	return r.getByObjectQuery(ctx, req, sourceEventType)
+}
+
+func (r *repository) getByObjectQuery(ctx context.Context, req repositories.GetJournalSourceByObjectRequest, sourceEventType string) (*journalsource.Source, error) {
 	rec := new(sourceRecord)
-	err := r.db.DBForContext(ctx).
+	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(rec).
 		Where("js.organization_id = ?", req.TenantInfo.OrgID).
@@ -55,8 +63,11 @@ func (r *repository) GetByObject(ctx context.Context, req repositories.GetJourna
 		Where("js.source_object_type = ?", req.SourceObjectType).
 		Where("js.source_object_id = ?", req.SourceObjectID).
 		Order("js.created_at DESC").
-		Limit(1).
-		Scan(ctx)
+		Limit(1)
+	if sourceEventType != "" {
+		query = query.Where("js.source_event_type = ?", sourceEventType)
+	}
+	err := query.Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "JournalSource")
 	}

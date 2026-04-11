@@ -33,6 +33,10 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/trial-balance")
 	api.GET("/:fiscalPeriodID/", h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead), h.listByPeriod)
+
+	statements := rg.Group("/accounting/statements")
+	statements.GET("/income-statement/:fiscalPeriodID/", h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead), h.incomeStatement)
+	statements.GET("/balance-sheet/:fiscalPeriodID/", h.pm.RequirePermission(permission.ResourceGeneralLedgerAccount.String(), permission.OpRead), h.balanceSheet)
 }
 
 func (h *Handler) listByPeriod(c *gin.Context) {
@@ -48,4 +52,34 @@ func (h *Handler) listByPeriod(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, balances)
+}
+
+func (h *Handler) incomeStatement(c *gin.Context) {
+	auth := authctx.GetAuthContext(c)
+	periodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	statement, err := h.service.GetIncomeStatement(c.Request.Context(), pagination.TenantInfo{OrgID: auth.OrganizationID, BuID: auth.BusinessUnitID, UserID: auth.UserID}, periodID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, statement)
+}
+
+func (h *Handler) balanceSheet(c *gin.Context) {
+	auth := authctx.GetAuthContext(c)
+	periodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	statement, err := h.service.GetBalanceSheet(c.Request.Context(), pagination.TenantInfo{OrgID: auth.OrganizationID, BuID: auth.BusinessUnitID, UserID: auth.UserID}, periodID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, statement)
 }

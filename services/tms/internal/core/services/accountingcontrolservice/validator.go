@@ -65,6 +65,12 @@ func addGLAccountReferenceChecks(
 		WithOptionalReferenceCheck("defaultRevenueAccountId", "gl_accounts", "Default revenue account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultRevenueAccountID
 		}).
+		WithOptionalReferenceCheck("defaultCashAccountId", "gl_accounts", "Default cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultCashAccountID
+		}).
+		WithOptionalReferenceCheck("defaultUnappliedCashAccountId", "gl_accounts", "Default unapplied cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+			return ac.DefaultUnappliedCashAccountID
+		}).
 		WithOptionalReferenceCheck("defaultExpenseAccountId", "gl_accounts", "Default expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultExpenseAccountID
 		}).
@@ -157,7 +163,11 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 			requiredEvents := make([]accountingcontrol.JournalSourceEventType, 0, 2)
 			switch entity.RevenueRecognitionPolicy {
 			case accountingcontrol.RevenueRecognitionOnInvoicePost:
-				requiredEvents = append(requiredEvents, accountingcontrol.JournalSourceEventInvoicePosted)
+				requiredEvents = append(requiredEvents,
+					accountingcontrol.JournalSourceEventInvoicePosted,
+					accountingcontrol.JournalSourceEventCreditMemoPosted,
+					accountingcontrol.JournalSourceEventDebitMemoPosted,
+				)
 			case accountingcontrol.RevenueRecognitionOnCashReceipt:
 				requiredEvents = append(requiredEvents, accountingcontrol.JournalSourceEventCustomerPaymentPosted)
 			}
@@ -174,7 +184,23 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 				}
 			}
 
+			if entity.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
+				for _, blockedEvent := range []accountingcontrol.JournalSourceEventType{
+					accountingcontrol.JournalSourceEventInvoicePosted,
+					accountingcontrol.JournalSourceEventCreditMemoPosted,
+					accountingcontrol.JournalSourceEventDebitMemoPosted,
+				} {
+					if slices.Contains(entity.AutoPostSourceEvents, blockedEvent) {
+						multiErr.Add("autoPostSourceEvents", errortypes.ErrInvalidOperation, fmt.Sprintf("Auto-post source events must not include %s when revenue recognition is OnCashReceipt", blockedEvent))
+					}
+				}
+			}
+
 			requireGLAccount(multiErr, entity.DefaultRevenueAccountID, "defaultRevenueAccountId", "Default revenue account is required when journal posting mode is Automatic")
+			if slices.Contains(entity.AutoPostSourceEvents, accountingcontrol.JournalSourceEventCustomerPaymentPosted) || entity.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
+				requireGLAccount(multiErr, entity.DefaultCashAccountID, "defaultCashAccountId", "Default cash account is required when customer payment posting is enabled")
+				requireGLAccount(multiErr, entity.DefaultUnappliedCashAccountID, "defaultUnappliedCashAccountId", "Default unapplied cash account is required when customer payment posting is enabled")
+			}
 			requireGLAccount(multiErr, entity.DefaultExpenseAccountID, "defaultExpenseAccountId", "Default expense account is required when journal posting mode is Automatic")
 			requireGLAccount(multiErr, entity.DefaultARAccountID, "defaultArAccountId", "Default AR account is required when journal posting mode is Automatic")
 			requireGLAccount(multiErr, entity.DefaultAPAccountID, "defaultApAccountId", "Default AP account is required when journal posting mode is Automatic")

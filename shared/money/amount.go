@@ -31,6 +31,10 @@ func MinorUnits(value decimal.Decimal) int64 {
 	return value.RoundBank(2).Shift(2).IntPart()
 }
 
+func DecimalFromMinor(minor int64) decimal.Decimal {
+	return decimal.NewFromInt(minor).Shift(-2)
+}
+
 func normalizeCurrencyCode(currencyCode string) string {
 	code := strings.ToUpper(strings.TrimSpace(currencyCode))
 	if code == "" {

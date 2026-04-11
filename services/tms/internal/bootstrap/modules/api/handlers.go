@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
@@ -103,6 +104,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documentpacketrulehandler.New,
 	accessorialchargehandler.New,
 	assignmenthandler.New,
+	accountsreceivablehandler.New,
 	versionhandler.New,
 	servicetypehandler.New,
 	sequenceconfighandler.New,

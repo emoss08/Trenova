@@ -46,6 +46,92 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	assert.True(t, result.ApprovedByID.IsNil())
 }
 
+func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	entryID := pulid.MustNew("je_")
+	entryRepo := &fakeJournalEntryRepository{entry: postedEntry(entryID, orgID, buID)}
+	reversalRepo := &fakeJournalReversalRepository{}
+	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyDisallow}, nil)
+
+	svc := &Service{journalEntryRepo: entryRepo, journalReversalRepo: reversalRepo, accountingRepo: accountingRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
+	result, err := svc.Create(t.Context(), &serviceports.CreateJournalReversalRequest{OriginalJournalEntryID: entryID, RequestedAccountingDate: 1_700_000_000, ReasonCode: "ERR", ReasonText: "reverse", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "disabled")
+}
+
+func TestListAndGetJournalReversal(t *testing.T) {
+	t.Parallel()
+
+	entity := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), Status: journalreversal.StatusRequested}
+	repo := &fakeJournalReversalRepository{entity: entity}
+	svc := &Service{journalReversalRepo: repo}
+
+	list, err := svc.List(t.Context(), &repositories.ListJournalReversalsRequest{Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}}})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 1)
+
+	got, err := svc.Get(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: entity.ID, TenantInfo: pagination.TenantInfo{}})
+	require.NoError(t, err)
+	assert.Equal(t, entity.ID, got.ID)
+}
+
+func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+
+	base := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusRequested}
+
+	approveRepo := &fakeJournalReversalRepository{entity: base}
+	svcApprove := &Service{journalReversalRepo: approveRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
+	approved, err := svcApprove.Approve(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: base.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	require.NoError(t, err)
+	assert.Equal(t, journalreversal.StatusApproved, approved.Status)
+	assert.Equal(t, userID, approved.ApprovedByID)
+
+	rejectRepo := &fakeJournalReversalRepository{entity: &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusRequested}}
+	svcReject := &Service{journalReversalRepo: rejectRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
+	rejected, err := svcReject.Reject(t.Context(), &serviceports.RejectJournalReversalRequest{ReversalID: rejectRepo.entity.ID, Reason: "bad", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	require.NoError(t, err)
+	assert.Equal(t, journalreversal.StatusRejected, rejected.Status)
+	assert.Equal(t, "bad", rejected.RejectionReason)
+
+	cancelRepo := &fakeJournalReversalRepository{entity: &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusApproved}}
+	svcCancel := &Service{journalReversalRepo: cancelRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
+	cancelled, err := svcCancel.Cancel(t.Context(), &serviceports.CancelJournalReversalRequest{ReversalID: cancelRepo.entity.ID, Reason: "stop", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	require.NoError(t, err)
+	assert.Equal(t, journalreversal.StatusCancelled, cancelled.Status)
+	assert.Equal(t, "stop", cancelled.CancelReason)
+}
+
+func TestPostBlocksAlreadyReversedEntry(t *testing.T) {
+	t.Parallel()
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	entryID := pulid.MustNew("je_")
+	original := postedEntry(entryID, orgID, buID)
+	original.ReversedByID = pulid.MustNew("je_")
+	reversal := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, OriginalJournalEntryID: entryID, Status: journalreversal.StatusApproved, RequestedAccountingDate: 1_700_000_000, ResolvedFiscalYearID: pulid.MustNew("fy_"), ResolvedFiscalPeriodID: pulid.MustNew("fp_"), ReasonCode: "ERR", ReasonText: "reverse me", RequestedByID: userID}
+
+	svc := &Service{db: fakeReversalDB{}, journalEntryRepo: &fakeJournalEntryRepository{entry: original}, journalReversalRepo: &fakeJournalReversalRepository{entity: reversal}, journalPostingRepo: &fakeReversalPostingRepository{}, sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, auditService: &mocks.NoopAuditService{}}
+	result, err := svc.Post(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: reversal.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+
+	require.Nil(t, result)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already been reversed")
+}
+
 func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 	t.Parallel()
 

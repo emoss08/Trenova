@@ -102,7 +102,7 @@ func TestValidateUpdate_SkipsOptionalReferenceChecksForZeroValueIDs(t *testing.T
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
 	require.Nil(t, multiErr)
-	assert.Len(t, checker.requests, 4)
+	assert.Len(t, checker.requests, 6)
 }
 
 func TestValidateUpdate_UsesGLAccountsTableForAccountReferences(t *testing.T) {
@@ -119,7 +119,7 @@ func TestValidateUpdate_UsesGLAccountsTableForAccountReferences(t *testing.T) {
 	multiErr := v.ValidateUpdate(t.Context(), entity)
 
 	assert.Nil(t, multiErr)
-	require.Len(t, checker.requests, 9)
+	require.Len(t, checker.requests, 11)
 	for _, req := range checker.requests {
 		assert.Equal(t, "gl_accounts", req.TableName)
 		assert.Equal(t, entity.OrganizationID, req.OrganizationID)
@@ -139,6 +139,82 @@ func TestValidateUpdate_RejectsZeroReconciliationToleranceWhenEnabled(t *testing
 
 	require.NotNil(t, multiErr)
 	assertErrorField(t, multiErr, "reconciliationToleranceAmount")
+}
+
+func TestValidateUpdate_RequiresCreditAndDebitMemoEventsForInvoicePostingRecognition(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.AutoPostSourceEvents = []tenant.JournalSourceEventType{
+		tenant.JournalSourceEventInvoicePosted,
+		tenant.JournalSourceEventVendorBillPosted,
+	}
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "autoPostSourceEvents")
+}
+
+func TestValidateUpdate_RejectsInvoiceEventsForCashReceiptRecognition(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.RevenueRecognitionPolicy = tenant.RevenueRecognitionOnCashReceipt
+	entity.AutoPostSourceEvents = []tenant.JournalSourceEventType{
+		tenant.JournalSourceEventCustomerPaymentPosted,
+		tenant.JournalSourceEventInvoicePosted,
+		tenant.JournalSourceEventVendorBillPosted,
+	}
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "autoPostSourceEvents")
+}
+
+func TestValidateUpdate_RejectsScheduledCloseWithApproval(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.PeriodCloseMode = tenant.PeriodCloseModeSystemScheduled
+	entity.RequirePeriodCloseApproval = true
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "requirePeriodCloseApproval")
+}
+
+func TestValidateUpdate_RequiresCashAccountForCustomerPaymentPosting(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.DefaultCashAccountID = pulid.Nil
+	entity.AutoPostSourceEvents = append(entity.AutoPostSourceEvents, tenant.JournalSourceEventCustomerPaymentPosted)
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "defaultCashAccountId")
+}
+
+func TestValidateUpdate_RequiresUnappliedCashAccountForCustomerPaymentPosting(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.DefaultUnappliedCashAccountID = pulid.Nil
+	entity.AutoPostSourceEvents = append(entity.AutoPostSourceEvents, tenant.JournalSourceEventCustomerPaymentPosted)
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "defaultUnappliedCashAccountId")
 }
 
 func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field string) {

@@ -140,12 +140,13 @@ const (
 type JournalSourceEventType string
 
 const (
-	JournalSourceEventInvoicePosted         = JournalSourceEventType("InvoicePosted")
-	JournalSourceEventCreditMemoPosted      = JournalSourceEventType("CreditMemoPosted")
-	JournalSourceEventDebitMemoPosted       = JournalSourceEventType("DebitMemoPosted")
-	JournalSourceEventCustomerPaymentPosted = JournalSourceEventType("CustomerPaymentPosted")
-	JournalSourceEventVendorBillPosted      = JournalSourceEventType("VendorBillPosted")
-	JournalSourceEventVendorPaymentPosted   = JournalSourceEventType("VendorPaymentPosted")
+	JournalSourceEventInvoicePosted           = JournalSourceEventType("InvoicePosted")
+	JournalSourceEventCreditMemoPosted        = JournalSourceEventType("CreditMemoPosted")
+	JournalSourceEventDebitMemoPosted         = JournalSourceEventType("DebitMemoPosted")
+	JournalSourceEventCustomerPaymentPosted   = JournalSourceEventType("CustomerPaymentPosted")
+	JournalSourceEventCustomerPaymentReversed = JournalSourceEventType("CustomerPaymentReversed")
+	JournalSourceEventVendorBillPosted        = JournalSourceEventType("VendorBillPosted")
+	JournalSourceEventVendorPaymentPosted     = JournalSourceEventType("VendorPaymentPosted")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -158,6 +159,7 @@ func (j JournalSourceEventType) IsValid() bool {
 		JournalSourceEventCreditMemoPosted,
 		JournalSourceEventDebitMemoPosted,
 		JournalSourceEventCustomerPaymentPosted,
+		JournalSourceEventCustomerPaymentReversed,
 		JournalSourceEventVendorBillPosted,
 		JournalSourceEventVendorPaymentPosted:
 		return true
@@ -175,6 +177,8 @@ func (j JournalSourceEventType) GetDescription() string {
 		return "Trigger on posted customer debit memo"
 	case JournalSourceEventCustomerPaymentPosted:
 		return "Trigger on posted customer payment"
+	case JournalSourceEventCustomerPaymentReversed:
+		return "Trigger on reversed customer payment"
 	case JournalSourceEventVendorBillPosted:
 		return "Trigger on posted vendor bill"
 	case JournalSourceEventVendorPaymentPosted:

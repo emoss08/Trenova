@@ -247,6 +247,52 @@ func (i *Invoice) SyncMinorAmounts() {
 	}
 }
 
+func (i *Invoice) OpenBalanceMinor() int64 {
+	if i.BillType == billingqueue.BillTypeCreditMemo {
+		return 0
+	}
+	openBalance := i.TotalAmountMinor - i.AppliedAmountMinor
+	if openBalance < 0 {
+		return 0
+	}
+	return openBalance
+}
+
+func (i *Invoice) ApplyPaymentMinor(amountMinor int64) {
+	if amountMinor <= 0 {
+		return
+	}
+	i.AppliedAmountMinor += amountMinor
+	i.AppliedAmount = money.DecimalFromMinor(i.AppliedAmountMinor)
+	switch {
+	case i.AppliedAmountMinor <= 0:
+		i.SettlementStatus = SettlementStatusUnpaid
+	case i.AppliedAmountMinor >= i.TotalAmountMinor:
+		i.SettlementStatus = SettlementStatusPaid
+	default:
+		i.SettlementStatus = SettlementStatusPartiallyPaid
+	}
+}
+
+func (i *Invoice) RemovePaymentMinor(amountMinor int64) {
+	if amountMinor <= 0 {
+		return
+	}
+	i.AppliedAmountMinor -= amountMinor
+	if i.AppliedAmountMinor < 0 {
+		i.AppliedAmountMinor = 0
+	}
+	i.AppliedAmount = money.DecimalFromMinor(i.AppliedAmountMinor)
+	switch {
+	case i.AppliedAmountMinor <= 0:
+		i.SettlementStatus = SettlementStatusUnpaid
+	case i.AppliedAmountMinor >= i.TotalAmountMinor:
+		i.SettlementStatus = SettlementStatusPaid
+	default:
+		i.SettlementStatus = SettlementStatusPartiallyPaid
+	}
+}
+
 func (l *Line) SyncMinorAmount() {
 	l.AmountMinor = money.MinorUnits(l.Amount)
 }

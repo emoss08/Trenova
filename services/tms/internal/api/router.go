@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/analyticshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
@@ -136,6 +137,7 @@ type RouterParams struct {
 	CustomerHandler                 *customerhandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
+	AccountsReceivableHandler       *accountsreceivablehandler.Handler
 	AccountTypeHandler              *accounttypehandler.Handler
 	AssignmentHandler               *assignmenthandler.Handler
 	GLAccountHandler                *glaccounthandler.Handler
@@ -215,6 +217,7 @@ type Router struct {
 	customerHandler                 *customerhandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
+	accountsReceivableHandler       *accountsreceivablehandler.Handler
 	accountTypeHandler              *accounttypehandler.Handler
 	assignmentHandler               *assignmenthandler.Handler
 	glAccountHandler                *glaccounthandler.Handler
@@ -296,6 +299,7 @@ func NewRouter(p RouterParams) *Router {
 		customerHandler:                 p.CustomerHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
+		accountsReceivableHandler:       p.AccountsReceivableHandler,
 		accountTypeHandler:              p.AccountTypeHandler,
 		assignmentHandler:               p.AssignmentHandler,
 		glAccountHandler:                p.GLAccountHandler,
@@ -423,6 +427,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customerHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
+	r.accountsReceivableHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.assignmentHandler.RegisterRoutes(protected)
 	r.glAccountHandler.RegisterRoutes(protected)

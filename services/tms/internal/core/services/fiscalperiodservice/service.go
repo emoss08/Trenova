@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -31,6 +32,7 @@ type Params struct {
 	Repo         repositories.FiscalPeriodRepository
 	Validator    *Validator
 	AuditService services.AuditService
+	Policy       *accountingcontrolpolicyservice.Service
 }
 
 type Service struct {
@@ -39,6 +41,7 @@ type Service struct {
 	repo         repositories.FiscalPeriodRepository
 	validator    *Validator
 	auditService services.AuditService
+	policy       *accountingcontrolpolicyservice.Service
 }
 
 const fiscalPeriodLockTimeout = 250 * time.Millisecond
@@ -50,6 +53,7 @@ func New(p Params) *Service {
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
+		policy:       p.Policy,
 	}
 }
 
@@ -224,6 +228,9 @@ func (s *Service) Close(
 		if multiErr := s.validateClose(ctx, existing); multiErr != nil {
 			return nil, multiErr
 		}
+		if err = s.validateCloseControl(ctx, existing); err != nil {
+			return nil, err
+		}
 		if multiErr := s.validator.ValidateClose(ctx, existing); multiErr != nil {
 			return nil, multiErr
 		}
@@ -287,6 +294,9 @@ func (s *Service) Close(
 
 			if multiErr := s.validateCloseWithPeriods(existing, periods); multiErr != nil {
 				return multiErr
+			}
+			if txErr = s.validateCloseControl(txCtx, existing); txErr != nil {
+				return txErr
 			}
 			if multiErr := s.validator.ValidateClose(txCtx, existing); multiErr != nil {
 				return multiErr
@@ -719,6 +729,29 @@ func (s *Service) validateCloseWithPeriods(
 	}
 
 	return nil
+}
+
+func (s *Service) validateCloseControl(ctx context.Context, entity *fiscalperiod.FiscalPeriod) error {
+	if s.validator == nil || s.validator.accountingRepo == nil {
+		return nil
+	}
+
+	control, err := s.validator.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil
+		}
+		return err
+	}
+
+	return s.accountingPolicyService().ValidateManualPeriodClose(control)
+}
+
+func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Service {
+	if s.policy != nil {
+		return s.policy
+	}
+	return accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()})
 }
 
 func (s *Service) validateReopen(

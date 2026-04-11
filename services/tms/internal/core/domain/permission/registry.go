@@ -783,6 +783,29 @@ func (r *Registry) registerAccountingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceCustomerPayment.String(),
+		DisplayName: "Customer Payment",
+		Description: "Customer payment posting and applications",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View customer payments"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Post customer payments"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAccountsReceivable.String(),
+		DisplayName: "Accounts Receivable",
+		Description: "AR ledger and aging reporting",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View AR ledger and aging"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerComplianceResources() {

@@ -62,6 +62,7 @@ func (r *repository) ListWithScheduledPeriodClose(
 		NewSelect().
 		Model(&entities).
 		Where("ac.period_close_mode = ?", accountingcontrol.PeriodCloseModeSystemScheduled).
+		Where("ac.require_period_close_approval = FALSE").
 		Scan(ctx); err != nil {
 		log.Error("failed to list accounting controls with scheduled period close", zap.Error(err))
 		return nil, err

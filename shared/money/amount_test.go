@@ -38,3 +38,10 @@ func TestFromDecimalDefaultsCurrencyCode(t *testing.T) {
 	assert.Equal(t, DefaultCurrencyCode, amount.CurrencyCode)
 	assert.Equal(t, int64(1025), amount.Minor)
 }
+
+func TestDecimalFromMinor(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, decimal.RequireFromString("10.25").Equal(DecimalFromMinor(1025)))
+	assert.True(t, decimal.RequireFromString("-3.50").Equal(DecimalFromMinor(-350)))
+}

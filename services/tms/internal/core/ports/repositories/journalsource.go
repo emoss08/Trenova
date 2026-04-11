@@ -15,4 +15,5 @@ type GetJournalSourceByObjectRequest struct {
 
 type JournalSourceRepository interface {
 	GetByObject(ctx context.Context, req GetJournalSourceByObjectRequest) (*journalsource.Source, error)
+	GetByObjectAndEvent(ctx context.Context, req GetJournalSourceByObjectRequest, sourceEventType string) (*journalsource.Source, error)
 }

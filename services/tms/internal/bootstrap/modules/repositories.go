@@ -3,6 +3,7 @@ package modules
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountsreceivablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldvaluerepository"
@@ -146,8 +148,10 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	hazmatsegregationrulerepository.New,
 	dothazmatreferencerepository.New,
 	commodityrepository.New,
+	customerpaymentrepository.New,
 	customerrepository.New,
 	accountingcontrolrepository.New,
+	accountsreceivablerepository.New,
 	accounttyperepository.New,
 	apikeyrepository.New,
 	glaccountrepository.New,
