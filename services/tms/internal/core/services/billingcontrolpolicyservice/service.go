@@ -23,7 +23,8 @@ func New(p Params) *Service {
 }
 
 func (s *Service) CanAutoCreateInvoiceDraft(control *tenant.BillingControl) bool {
-	return control != nil && control.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
+	return control != nil &&
+		control.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeAutomaticWhenTransferred
 }
 
 func (s *Service) CanAutoPostInvoice(control *tenant.BillingControl, cus *customer.Customer) bool {
@@ -60,7 +61,9 @@ func (s *Service) ValidateInvoicePosting(control *tenant.BillingControl, trigger
 	}
 
 	if !s.CanAutoCreateInvoiceDraft(control) {
-		return errortypes.NewBusinessError("Invoice auto-posting requires automatic invoice draft creation mode")
+		return errortypes.NewBusinessError(
+			"Invoice auto-posting requires automatic invoice draft creation mode",
+		)
 	}
 
 	return nil

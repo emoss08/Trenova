@@ -162,6 +162,30 @@ func TestClamp(t *testing.T) {
 	})
 }
 
+func TestAbsDiff(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		a        int64
+		b        int64
+		expected int64
+	}{
+		{"same values", 10, 10, 0},
+		{"first greater", 15, 10, 5},
+		{"second greater", 10, 15, 5},
+		{"negative values", -10, -3, 7},
+		{"mixed signs", -10, 5, 15},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.expected, intutils.AbsDiff(tt.a, tt.b))
+		})
+	}
+}
+
 func TestSafeShiftAmount(t *testing.T) {
 	t.Parallel()
 

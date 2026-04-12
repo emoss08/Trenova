@@ -26,15 +26,37 @@ type FindMatchingTCASubscriptionsRequest struct {
 }
 
 type TCASubscriptionRepository interface {
-	Create(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)
-	Update(ctx context.Context, entity *tablechangealert.TCASubscription) (*tablechangealert.TCASubscription, error)
-	GetByID(ctx context.Context, req GetTCASubscriptionByIDRequest) (*tablechangealert.TCASubscription, error)
-	List(ctx context.Context, req *ListTCASubscriptionsRequest) (*pagination.ListResult[*tablechangealert.TCASubscription], error)
+	Create(
+		ctx context.Context,
+		entity *tablechangealert.TCASubscription,
+	) (*tablechangealert.TCASubscription, error)
+	Update(
+		ctx context.Context,
+		entity *tablechangealert.TCASubscription,
+	) (*tablechangealert.TCASubscription, error)
+	GetByID(
+		ctx context.Context,
+		req GetTCASubscriptionByIDRequest,
+	) (*tablechangealert.TCASubscription, error)
+	List(
+		ctx context.Context,
+		req *ListTCASubscriptionsRequest,
+	) (*pagination.ListResult[*tablechangealert.TCASubscription], error)
 	Delete(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) error
-	FindMatchingSubscriptions(ctx context.Context, req FindMatchingTCASubscriptionsRequest) ([]*tablechangealert.TCASubscription, error)
+	FindMatchingSubscriptions(
+		ctx context.Context,
+		req FindMatchingTCASubscriptionsRequest,
+	) ([]*tablechangealert.TCASubscription, error)
 }
 
 type TCAAllowlistRepository interface {
-	List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*tablechangealert.TCAAllowlistedTable, error)
-	IsTableAllowed(ctx context.Context, tableName string, tenantInfo pagination.TenantInfo) (bool, error)
+	List(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*tablechangealert.TCAAllowlistedTable, error)
+	IsTableAllowed(
+		ctx context.Context,
+		tableName string,
+		tenantInfo pagination.TenantInfo,
+	) (bool, error)
 }

@@ -42,8 +42,14 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -69,8 +75,14 @@ func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -98,8 +110,14 @@ func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.OwnerID, validation.Required.Error("Owner ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -126,8 +144,14 @@ func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.BOL, validation.Required.Error("BOL is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -212,8 +236,14 @@ func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
 
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -237,8 +267,14 @@ func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
 
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -262,8 +298,14 @@ func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
 
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -287,8 +329,14 @@ func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
 
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {

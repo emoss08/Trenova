@@ -14,5 +14,8 @@ type ListTrialBalanceByPeriodRequest struct {
 }
 
 type GLBalanceRepository interface {
-	ListTrialBalanceByPeriod(ctx context.Context, req ListTrialBalanceByPeriodRequest) ([]*glbalance.PeriodAccountBalance, error)
+	ListTrialBalanceByPeriod(
+		ctx context.Context,
+		req ListTrialBalanceByPeriodRequest,
+	) ([]*glbalance.PeriodAccountBalance, error)
 }

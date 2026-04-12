@@ -47,6 +47,52 @@ func (r *repository) GetByID(ctx context.Context, req repositories.GetCustomerPa
 	return entity, nil
 }
 
+func (r *repository) FindMatchCandidates(ctx context.Context, req repositories.FindCustomerPaymentMatchCandidatesRequest) ([]*customerpayment.Payment, error) {
+	items := make([]*customerpayment.Payment, 0)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&items).
+		Where("cp.organization_id = ?", req.TenantInfo.OrgID).
+		Where("cp.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("cp.status = ?", customerpayment.StatusPosted).
+		Where("cp.reference_number = ?", req.ReferenceNumber).
+		Where("cp.amount_minor = ?", req.AmountMinor).
+		Where("NOT EXISTS (SELECT 1 FROM bank_receipts br WHERE br.organization_id = cp.organization_id AND br.business_unit_id = cp.business_unit_id AND br.matched_customer_payment_id = cp.id AND br.status = 'Matched')").
+		Order("cp.created_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("find customer payment match candidates: %w", err)
+	}
+	return items, nil
+}
+
+func (r *repository) FindSuggestedMatchCandidates(ctx context.Context, req repositories.FindCustomerPaymentMatchCandidatesRequest) ([]*customerpayment.Payment, error) {
+	items := make([]*customerpayment.Payment, 0)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&items).
+		Where("cp.organization_id = ?", req.TenantInfo.OrgID).
+		Where("cp.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("cp.status = ?", customerpayment.StatusPosted).
+		Where("NOT EXISTS (SELECT 1 FROM bank_receipts br WHERE br.organization_id = cp.organization_id AND br.business_unit_id = cp.business_unit_id AND br.matched_customer_payment_id = cp.id AND br.status = 'Matched')")
+	if req.ReferenceNumber != "" {
+		query = query.Where("cp.reference_number = ? OR cp.reference_number ILIKE ?", req.ReferenceNumber, "%"+req.ReferenceNumber+"%")
+	}
+	if req.AmountMinor > 0 {
+		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("cp.amount_minor = ?", req.AmountMinor).WhereOr("ABS(cp.amount_minor - ?) <= 100", req.AmountMinor)
+		})
+	}
+	if req.ReceiptDate > 0 {
+		query = query.Where("ABS(cp.payment_date - ?) <= 604800", req.ReceiptDate)
+	}
+	err := query.Order("cp.created_at DESC").Limit(10).Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("find suggested customer payment matches: %w", err)
+	}
+	return items, nil
+}
+
 func (r *repository) Create(ctx context.Context, entity *customerpayment.Payment) (*customerpayment.Payment, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("cpay_")

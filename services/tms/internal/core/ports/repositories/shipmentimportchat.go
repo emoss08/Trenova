@@ -20,11 +20,26 @@ type ListShipmentImportTurnsRequest struct {
 }
 
 type ShipmentImportChatRepository interface {
-	GetConversationByDocument(ctx context.Context, req GetShipmentImportConversationRequest) (*shipmentimportchat.Conversation, error)
-	CreateConversation(ctx context.Context, entity *shipmentimportchat.Conversation) (*shipmentimportchat.Conversation, error)
-	UpdateConversation(ctx context.Context, entity *shipmentimportchat.Conversation) (*shipmentimportchat.Conversation, error)
-	AppendTurn(ctx context.Context, entity *shipmentimportchat.Turn) (*shipmentimportchat.Turn, error)
-	ListTurns(ctx context.Context, req ListShipmentImportTurnsRequest) ([]*shipmentimportchat.Turn, error)
+	GetConversationByDocument(
+		ctx context.Context,
+		req GetShipmentImportConversationRequest,
+	) (*shipmentimportchat.Conversation, error)
+	CreateConversation(
+		ctx context.Context,
+		entity *shipmentimportchat.Conversation,
+	) (*shipmentimportchat.Conversation, error)
+	UpdateConversation(
+		ctx context.Context,
+		entity *shipmentimportchat.Conversation,
+	) (*shipmentimportchat.Conversation, error)
+	AppendTurn(
+		ctx context.Context,
+		entity *shipmentimportchat.Turn,
+	) (*shipmentimportchat.Turn, error)
+	ListTurns(
+		ctx context.Context,
+		req ListShipmentImportTurnsRequest,
+	) ([]*shipmentimportchat.Turn, error)
 	UpdateActiveConversationStatusByDocument(
 		ctx context.Context,
 		documentID pulid.ID,
@@ -35,7 +50,15 @@ type ShipmentImportChatRepository interface {
 }
 
 type ShipmentImportChatCacheRepository interface {
-	GetHistory(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*shipmentimportchat.HistorySnapshot, error)
-	SetHistory(ctx context.Context, snapshot *shipmentimportchat.HistorySnapshot, tenantInfo pagination.TenantInfo) error
+	GetHistory(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*shipmentimportchat.HistorySnapshot, error)
+	SetHistory(
+		ctx context.Context,
+		snapshot *shipmentimportchat.HistorySnapshot,
+		tenantInfo pagination.TenantInfo,
+	) error
 	DeleteHistory(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) error
 }

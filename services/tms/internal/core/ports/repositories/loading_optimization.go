@@ -19,10 +19,10 @@ type StopInfo struct {
 }
 
 type LoadingOptimizationRequest struct {
-	TenantInfo      pagination.TenantInfo  `json:"-"`
+	TenantInfo      pagination.TenantInfo   `json:"-"`
 	Commodities     []LoadingCommodityInput `json:"commodities"`
-	EquipmentTypeID *pulid.ID              `json:"equipmentTypeId,omitempty"`
-	Stops           []StopInfo             `json:"stops,omitempty"`
+	EquipmentTypeID *pulid.ID               `json:"equipmentTypeId,omitempty"`
+	Stops           []StopInfo              `json:"stops,omitempty"`
 }
 
 func (r *LoadingOptimizationRequest) Validate() *errortypes.MultiError {
@@ -34,7 +34,8 @@ func (r *LoadingOptimizationRequest) Validate() *errortypes.MultiError {
 
 	for i, c := range r.Commodities {
 		if c.CommodityID.IsNil() {
-			multiErr.WithIndex("commodities", i).Add("commodityId", errortypes.ErrRequired, "Commodity ID is required")
+			multiErr.WithIndex("commodities", i).
+				Add("commodityId", errortypes.ErrRequired, "Commodity ID is required")
 		}
 	}
 
@@ -106,19 +107,19 @@ type StopDivider struct {
 }
 
 type LoadingOptimizationResult struct {
-	TrailerLengthFeet  float64                 `json:"trailerLengthFeet"`
-	TotalLinearFeet    float64                 `json:"totalLinearFeet"`
-	TotalWeight        int64                   `json:"totalWeight"`
-	MaxWeight          int64                   `json:"maxWeight"`
-	LinearFeetUtil     float64                 `json:"linearFeetUtil"`
-	WeightUtil         float64                 `json:"weightUtil"`
-	UtilizationScore   int                     `json:"utilizationScore"`
-	UtilizationGrade   string                  `json:"utilizationGrade"`
-	Placements         []CommodityPlacement    `json:"placements"`
-	HazmatZones        []HazmatZoneResult      `json:"hazmatZones"`
-	Warnings           []LoadingWarning        `json:"warnings"`
-	AxleWeights        []AxleWeight            `json:"axleWeights"`
-	Recommendations    []LoadingRecommendation `json:"recommendations"`
-	StopDividers       []StopDivider           `json:"stopDividers,omitempty"`
-	AIAnalysis         string                  `json:"aiAnalysis,omitempty"`
+	TrailerLengthFeet float64                 `json:"trailerLengthFeet"`
+	TotalLinearFeet   float64                 `json:"totalLinearFeet"`
+	TotalWeight       int64                   `json:"totalWeight"`
+	MaxWeight         int64                   `json:"maxWeight"`
+	LinearFeetUtil    float64                 `json:"linearFeetUtil"`
+	WeightUtil        float64                 `json:"weightUtil"`
+	UtilizationScore  int                     `json:"utilizationScore"`
+	UtilizationGrade  string                  `json:"utilizationGrade"`
+	Placements        []CommodityPlacement    `json:"placements"`
+	HazmatZones       []HazmatZoneResult      `json:"hazmatZones"`
+	Warnings          []LoadingWarning        `json:"warnings"`
+	AxleWeights       []AxleWeight            `json:"axleWeights"`
+	Recommendations   []LoadingRecommendation `json:"recommendations"`
+	StopDividers      []StopDivider           `json:"stopDividers,omitempty"`
+	AIAnalysis        string                  `json:"aiAnalysis,omitempty"`
 }

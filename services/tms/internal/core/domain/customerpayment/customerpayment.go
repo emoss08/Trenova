@@ -47,15 +47,16 @@ type Payment struct {
 type Application struct {
 	bun.BaseModel `bun:"table:customer_payment_applications,alias:cpa" json:"-"`
 
-	ID                 pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerPaymentID  pulid.ID `json:"customerPaymentId" bun:"customer_payment_id,type:VARCHAR(100),notnull"`
-	InvoiceID          pulid.ID `json:"invoiceId" bun:"invoice_id,type:VARCHAR(100),notnull"`
-	AppliedAmountMinor int64    `json:"appliedAmountMinor" bun:"applied_amount_minor,type:BIGINT,notnull"`
-	LineNumber         int      `json:"lineNumber" bun:"line_number,type:INTEGER,notnull"`
-	CreatedAt          int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID      pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	CustomerPaymentID   pulid.ID `json:"customerPaymentId" bun:"customer_payment_id,type:VARCHAR(100),notnull"`
+	InvoiceID           pulid.ID `json:"invoiceId" bun:"invoice_id,type:VARCHAR(100),notnull"`
+	AppliedAmountMinor  int64    `json:"appliedAmountMinor" bun:"applied_amount_minor,type:BIGINT,notnull"`
+	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" bun:"short_pay_amount_minor,type:BIGINT,notnull,default:0"`
+	LineNumber          int      `json:"lineNumber" bun:"line_number,type:INTEGER,notnull"`
+	CreatedAt           int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (p *Payment) Validate(multiErr *errortypes.MultiError) {
@@ -99,8 +100,14 @@ func (a *Application) Validate(multiErr *errortypes.MultiError) {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
-	if a.AppliedAmountMinor <= 0 {
-		multiErr.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount must be greater than zero")
+	if a.AppliedAmountMinor < 0 {
+		multiErr.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount cannot be negative")
+	}
+	if a.ShortPayAmountMinor < 0 {
+		multiErr.Add("shortPayAmountMinor", errortypes.ErrInvalid, "Short-pay amount cannot be negative")
+	}
+	if a.AppliedAmountMinor+a.ShortPayAmountMinor <= 0 {
+		multiErr.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount plus short-pay amount must be greater than zero")
 	}
 }
 

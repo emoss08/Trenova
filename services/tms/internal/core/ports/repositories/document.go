@@ -99,7 +99,10 @@ type DocumentRepository interface {
 		req *DocumentSelectOptionsRequest,
 	) (*pagination.ListResult[*document.Document], error)
 	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
-	GetByStoragePath(ctx context.Context, req GetDocumentByStoragePathRequest) (*document.Document, error)
+	GetByStoragePath(
+		ctx context.Context,
+		req GetDocumentByStoragePathRequest,
+	) (*document.Document, error)
 	GetByIDs(ctx context.Context, req BulkDeleteDocumentRequest) ([]*document.Document, error)
 	ListVersions(ctx context.Context, req ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResourceID(

@@ -40,6 +40,12 @@ func (s *Service) CanCreateInvoiceLedgerEntry(
 		tenant.JournalSourceEventCreditMemoPosted,
 		tenant.JournalSourceEventDebitMemoPosted:
 		return true
+	case tenant.JournalSourceEventCustomerPaymentPosted,
+		tenant.JournalSourceEventCustomerShortPayRecognized,
+		tenant.JournalSourceEventCustomerPaymentReversed,
+		tenant.JournalSourceEventVendorBillPosted,
+		tenant.JournalSourceEventVendorPaymentPosted:
+		return false
 	default:
 		return false
 	}

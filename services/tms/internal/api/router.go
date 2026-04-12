@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
@@ -102,6 +104,8 @@ type RouterParams struct {
 	OrganizationHandler             *organizationhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
+	BankReceiptHandler              *bankreceipthandler.Handler
+	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	AuditHandler                    *audithandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
 	TableConfigurationHandler       *tableconfigurationhandler.Handler
@@ -182,6 +186,8 @@ type Router struct {
 	organizationHandler             *organizationhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
+	bankReceiptHandler              *bankreceipthandler.Handler
+	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	auditHandler                    *audithandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
 	tableConfigurationHandler       *tableconfigurationhandler.Handler
@@ -264,6 +270,8 @@ func NewRouter(p RouterParams) *Router {
 		organizationHandler:             p.OrganizationHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
+		bankReceiptHandler:              p.BankReceiptHandler,
+		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		auditHandler:                    p.AuditHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
 		tableConfigurationHandler:       p.TableConfigurationHandler,
@@ -393,6 +401,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 
 	r.organizationHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
+	r.bankReceiptHandler.RegisterRoutes(protected)
+	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.auditHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
 	r.tableConfigurationHandler.RegisterRoutes(protected)

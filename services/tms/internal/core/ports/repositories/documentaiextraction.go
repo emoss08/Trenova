@@ -15,8 +15,21 @@ type GetDocumentAIExtractionRequest struct {
 }
 
 type DocumentAIExtractionRepository interface {
-	GetByDocumentExtractedAt(ctx context.Context, req GetDocumentAIExtractionRequest) (*documentaiextraction.Extraction, error)
-	SavePending(ctx context.Context, entity *documentaiextraction.Extraction) (*documentaiextraction.Extraction, error)
-	Update(ctx context.Context, entity *documentaiextraction.Extraction) (*documentaiextraction.Extraction, error)
-	ListPollable(ctx context.Context, olderThan int64, limit int) ([]*documentaiextraction.Extraction, error)
+	GetByDocumentExtractedAt(
+		ctx context.Context,
+		req GetDocumentAIExtractionRequest,
+	) (*documentaiextraction.Extraction, error)
+	SavePending(
+		ctx context.Context,
+		entity *documentaiextraction.Extraction,
+	) (*documentaiextraction.Extraction, error)
+	Update(
+		ctx context.Context,
+		entity *documentaiextraction.Extraction,
+	) (*documentaiextraction.Extraction, error)
+	ListPollable(
+		ctx context.Context,
+		olderThan int64,
+		limit int,
+	) ([]*documentaiextraction.Extraction, error)
 }

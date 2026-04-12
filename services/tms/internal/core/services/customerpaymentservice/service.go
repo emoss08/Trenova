@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -25,31 +26,33 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.CustomerPaymentRepository
-	InvoiceRepo    repositories.InvoiceRepository
-	AccountingRepo repositories.AccountingControlRepository
-	JournalRepo    repositories.JournalPostingRepository
-	Generator      seqgen.Generator
-	Validator      *Validator
-	AuditService   serviceports.AuditService
+	Logger             *zap.Logger
+	DB                 ports.DBConnection
+	Repo               repositories.CustomerPaymentRepository
+	InvoiceRepo        repositories.InvoiceRepository
+	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	AccountingRepo     repositories.AccountingControlRepository
+	JournalRepo        repositories.JournalPostingRepository
+	Generator          seqgen.Generator
+	Validator          *Validator
+	AuditService       serviceports.AuditService
 }
 
 type Service struct {
-	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.CustomerPaymentRepository
-	invoiceRepo    repositories.InvoiceRepository
-	accountingRepo repositories.AccountingControlRepository
-	journalRepo    repositories.JournalPostingRepository
-	generator      seqgen.Generator
-	validator      *Validator
-	auditService   serviceports.AuditService
+	l                  *zap.Logger
+	db                 ports.DBConnection
+	repo               repositories.CustomerPaymentRepository
+	invoiceRepo        repositories.InvoiceRepository
+	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	accountingRepo     repositories.AccountingControlRepository
+	journalRepo        repositories.JournalPostingRepository
+	generator          seqgen.Generator
+	validator          *Validator
+	auditService       serviceports.AuditService
 }
 
 func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.customer-payment"), db: p.DB, repo: p.Repo, invoiceRepo: p.InvoiceRepo, accountingRepo: p.AccountingRepo, journalRepo: p.JournalRepo, generator: p.Generator, validator: p.Validator, auditService: p.AuditService}
+	return &Service{l: p.Logger.Named("service.customer-payment"), db: p.DB, repo: p.Repo, invoiceRepo: p.InvoiceRepo, customerLedgerRepo: p.CustomerLedgerRepo, accountingRepo: p.AccountingRepo, journalRepo: p.JournalRepo, generator: p.Generator, validator: p.Validator, auditService: p.AuditService}
 }
 
 func (s *Service) Get(ctx context.Context, req *serviceports.GetCustomerPaymentRequest) (*customerpayment.Payment, error) {
@@ -111,7 +114,7 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 		}
 
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(entity.Applications[idx].AppliedAmountMinor)
+			inv.ApplyPaymentMinor(entity.Applications[idx].AppliedAmountMinor + entity.Applications[idx].ShortPayAmountMinor)
 			inv, txErr = s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr
@@ -133,10 +136,20 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 		lineNumber := int16(2)
 		for _, app := range created.Applications {
 			if app == nil || app.AppliedAmountMinor <= 0 {
-				continue
+				if app == nil || app.ShortPayAmountMinor <= 0 {
+					continue
+				}
 			}
-			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: appliedCreditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: entity.CustomerID})
-			lineNumber++
+			if app.AppliedAmountMinor > 0 {
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: appliedCreditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: entity.CustomerID})
+				lineNumber++
+			}
+			if app.ShortPayAmountMinor > 0 {
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultARAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.ShortPayAmountMinor, NetAmount: -app.ShortPayAmountMinor, CustomerID: entity.CustomerID})
+				lineNumber++
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultWriteOffAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: app.ShortPayAmountMinor, NetAmount: app.ShortPayAmountMinor, CustomerID: entity.CustomerID})
+				lineNumber++
+			}
 		}
 		if created.UnappliedAmountMinor > 0 {
 			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultUnappliedCashAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: created.UnappliedAmountMinor, NetAmount: -created.UnappliedAmountMinor, CustomerID: entity.CustomerID})
@@ -183,6 +196,26 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 			Lines:                lines,
 		}); txErr != nil {
 			return txErr
+		}
+		if s.customerLedgerRepo != nil {
+			ledgerEntries := make([]*customerledger.Entry, 0, len(created.Applications)*2)
+			line := 1
+			for _, app := range created.Applications {
+				if app == nil {
+					continue
+				}
+				if app.AppliedAmountMinor > 0 {
+					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: created.OrganizationID, BusinessUnitID: created.BusinessUnitID, CustomerID: created.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: created.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerPaymentPosted.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: created.ReferenceNumber, TransactionDate: created.AccountingDate, LineNumber: line, AmountMinor: -app.AppliedAmountMinor, CreatedByID: actor.UserID})
+					line++
+				}
+				if app.ShortPayAmountMinor > 0 {
+					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: created.OrganizationID, BusinessUnitID: created.BusinessUnitID, CustomerID: created.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: created.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerShortPayRecognized.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: created.ReferenceNumber, TransactionDate: created.AccountingDate, LineNumber: line, AmountMinor: -app.ShortPayAmountMinor, CreatedByID: actor.UserID})
+					line++
+				}
+			}
+			if txErr = s.customerLedgerRepo.AppendEntries(txCtx, ledgerEntries); txErr != nil {
+				return txErr
+			}
 		}
 
 		created.PostedBatchID = batchID
@@ -237,7 +270,7 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 		payment.Applications = append(payment.Applications, applications...)
 		payment.UpdatedByID = actor.UserID
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(applications[idx].AppliedAmountMinor)
+			inv.ApplyPaymentMinor(applications[idx].AppliedAmountMinor + applications[idx].ShortPayAmountMinor)
 			updatedInvoice, txErr := s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr
@@ -266,11 +299,39 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 				continue
 			}
 			totalApplied += app.AppliedAmountMinor
-			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: creditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: payment.CustomerID})
-			lineNumber++
+			if app.AppliedAmountMinor > 0 {
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: creditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: payment.CustomerID})
+				lineNumber++
+			}
+			if app.ShortPayAmountMinor > 0 {
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultARAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.ShortPayAmountMinor, NetAmount: -app.ShortPayAmountMinor, CustomerID: payment.CustomerID})
+				lineNumber++
+				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultWriteOffAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: app.ShortPayAmountMinor, NetAmount: app.ShortPayAmountMinor, CustomerID: payment.CustomerID})
+				lineNumber++
+			}
 		}
 		if txErr = s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{BatchID: pulid.MustNew("jb_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, BatchNumber: batchNumber, BatchType: "System", BatchStatus: batchStatus, BatchDescription: entryDescription, FiscalYearID: period.FiscalYearID, FiscalPeriodID: period.ID, AccountingDate: req.AccountingDate, PostedAt: postedAt, PostedByID: postedByID, CreatedByID: actor.UserID, UpdatedByID: actor.UserID, EntryID: pulid.MustNew("je_"), EntryNumber: entryNumber, EntryType: "Standard", EntryStatus: entryStatus, ReferenceNumber: payment.ReferenceNumber, ReferenceType: "CustomerPaymentApplied", ReferenceID: payment.ID.String(), EntryDescription: entryDescription, TotalDebit: totalApplied, TotalCredit: totalApplied, IsPosted: postedAt != nil, IsAutoGenerated: false, RequiresApproval: requiresApproval, IsApproved: isApproved, ApprovedByID: approvedByID, ApprovedAt: approvedAt, SourceID: pulid.MustNew("jsrc_"), SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: "CustomerPaymentApplied", SourceStatus: entryStatus, SourceDocumentNumber: payment.ReferenceNumber, SourceIdempotencyKey: "customer-payment-applied:" + payment.ID.String() + ":" + fmt.Sprint(payment.AppliedAmountMinor), Lines: lines}); txErr != nil {
 			return txErr
+		}
+		if s.customerLedgerRepo != nil {
+			ledgerEntries := make([]*customerledger.Entry, 0, len(applications)*2)
+			projectionLine := 1
+			for _, app := range applications {
+				if app == nil {
+					continue
+				}
+				if app.AppliedAmountMinor > 0 {
+					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, CustomerID: payment.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: "CustomerPaymentApplied", RelatedInvoiceID: app.InvoiceID, DocumentNumber: payment.ReferenceNumber, TransactionDate: req.AccountingDate, LineNumber: projectionLine, AmountMinor: -app.AppliedAmountMinor, CreatedByID: actor.UserID})
+					projectionLine++
+				}
+				if app.ShortPayAmountMinor > 0 {
+					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, CustomerID: payment.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerShortPayRecognized.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: payment.ReferenceNumber, TransactionDate: req.AccountingDate, LineNumber: projectionLine, AmountMinor: -app.ShortPayAmountMinor, CreatedByID: actor.UserID})
+					projectionLine++
+				}
+			}
+			if txErr = s.customerLedgerRepo.AppendEntries(txCtx, ledgerEntries); txErr != nil {
+				return txErr
+			}
 		}
 		return nil
 	})
@@ -350,6 +411,17 @@ func (s *Service) Reverse(ctx context.Context, req *serviceports.ReverseCustomer
 		if txErr := s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{BatchID: batchID, OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, BatchNumber: batchNumber, BatchType: "Reversal", BatchStatus: batchStatus, BatchDescription: entryDescription, FiscalYearID: period.FiscalYearID, FiscalPeriodID: period.ID, AccountingDate: req.AccountingDate, PostedAt: postedAt, PostedByID: postedByID, CreatedByID: actor.UserID, UpdatedByID: actor.UserID, EntryID: pulid.MustNew("je_"), EntryNumber: entryNumber, EntryType: "Reversal", EntryStatus: entryStatus, ReferenceNumber: payment.ReferenceNumber, ReferenceType: tenant.JournalSourceEventCustomerPaymentReversed.String(), ReferenceID: payment.ID.String(), EntryDescription: entryDescription, TotalDebit: payment.AmountMinor, TotalCredit: payment.AmountMinor, IsPosted: postedAt != nil, IsAutoGenerated: false, ReversalDate: postedAt, ReversalReason: req.Reason, RequiresApproval: requiresApproval, IsApproved: isApproved, ApprovedByID: approvedByID, ApprovedAt: approvedAt, SourceID: pulid.MustNew("jsrc_"), SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerPaymentReversed.String(), SourceStatus: entryStatus, SourceDocumentNumber: payment.ReferenceNumber, SourceIdempotencyKey: "customer-payment-reversed:" + payment.ID.String(), Lines: lines}); txErr != nil {
 			return txErr
 		}
+		if s.customerLedgerRepo != nil {
+			reverseAmount := payment.AppliedAmountMinor
+			for _, app := range payment.Applications {
+				if app != nil {
+					reverseAmount += app.ShortPayAmountMinor
+				}
+			}
+			if txErr := s.customerLedgerRepo.AppendEntries(txCtx, []*customerledger.Entry{{ID: pulid.MustNew("cledg_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, CustomerID: payment.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerPaymentReversed.String(), DocumentNumber: payment.ReferenceNumber, TransactionDate: req.AccountingDate, LineNumber: 1, AmountMinor: reverseAmount, CreatedByID: actor.UserID}}); txErr != nil {
+				return txErr
+			}
+		}
 
 		nowCopy := now
 		payment.Status = customerpayment.StatusReversed
@@ -383,6 +455,7 @@ func mapApplications(inputs []*serviceports.CustomerPaymentApplicationInput) []*
 			continue
 		}
 		apps = append(apps, &customerpayment.Application{LineNumber: idx + 1, InvoiceID: input.InvoiceID, AppliedAmountMinor: input.AppliedAmountMinor})
+		apps[len(apps)-1].ShortPayAmountMinor = input.ShortPayAmountMinor
 	}
 	return apps
 }

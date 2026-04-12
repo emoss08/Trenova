@@ -9,8 +9,16 @@ import (
 )
 
 type SSOConfigRepository interface {
-	GetByOrganizationID(ctx context.Context, organizationID pulid.ID, provider tenant.SSOProvider) (*tenant.SSOConfig, error)
-	GetEnabledByOrganizationID(ctx context.Context, organizationID pulid.ID, provider tenant.SSOProvider) (*tenant.SSOConfig, error)
+	GetByOrganizationID(
+		ctx context.Context,
+		organizationID pulid.ID,
+		provider tenant.SSOProvider,
+	) (*tenant.SSOConfig, error)
+	GetEnabledByOrganizationID(
+		ctx context.Context,
+		organizationID pulid.ID,
+		provider tenant.SSOProvider,
+	) (*tenant.SSOConfig, error)
 	Save(ctx context.Context, config *tenant.SSOConfig) (*tenant.SSOConfig, error)
 }
 

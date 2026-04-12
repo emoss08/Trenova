@@ -37,8 +37,14 @@ func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(
 			&r.Status,
 			validation.Required.Error("Status is required"),
@@ -75,9 +81,19 @@ func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.MoveIDs, validation.Required.Error("Move IDs are required"), validation.Length(1, 500)),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.MoveIDs,
+			validation.Required.Error("Move IDs are required"),
+			validation.Length(1, 500),
+		),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(
 			&r.Status,
 			validation.Required.Error("Status is required"),
@@ -124,9 +140,18 @@ func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
-		validation.Field(&r.NewDeliveryLocationID, validation.Required.Error("New delivery location ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.NewDeliveryLocationID,
+			validation.Required.Error("New delivery location ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(
 			&r.SplitPickupTimes.ScheduledWindowStart,
 			validation.Required.Error("Split pickup scheduled window start is required"),

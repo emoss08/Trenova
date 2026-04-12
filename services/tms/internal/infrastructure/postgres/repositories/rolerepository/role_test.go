@@ -290,6 +290,7 @@ func createTestSchema(t *testing.T, db *bun.DB, ctx testutil.TestContext) {
 			organization_id VARCHAR(100) REFERENCES organizations(id),
 			name VARCHAR(255) NOT NULL,
 			description TEXT,
+			core_responsibility VARCHAR(50),
 			parent_role_ids TEXT[],
 			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
 			is_system BOOLEAN DEFAULT FALSE,

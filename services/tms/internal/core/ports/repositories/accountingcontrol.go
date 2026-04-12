@@ -14,7 +14,9 @@ type GetAccountingControlRequest struct {
 
 type AccountingControlRepository interface {
 	GetByOrgID(ctx context.Context, orgID pulid.ID) (*accountingcontrol.AccountingControl, error)
-	ListWithScheduledPeriodClose(ctx context.Context) ([]*accountingcontrol.AccountingControl, error)
+	ListWithScheduledPeriodClose(
+		ctx context.Context,
+	) ([]*accountingcontrol.AccountingControl, error)
 	Update(
 		ctx context.Context,
 		ac *accountingcontrol.AccountingControl,

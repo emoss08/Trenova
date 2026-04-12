@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -96,7 +97,7 @@ func (s *Service) createInvoiceJournalPosting(
 		},
 	}
 
-	return s.journalRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
+	err = s.journalRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
 		BatchID:              batchID,
 		OrganizationID:       entity.OrganizationID,
 		BusinessUnitID:       entity.BusinessUnitID,
@@ -136,6 +137,32 @@ func (s *Service) createInvoiceJournalPosting(
 		SourceIdempotencyKey: "invoice-posted:" + entity.ID.String(),
 		Lines:                lines,
 	})
+	if err != nil {
+		return err
+	}
+	if s.customerLedgerRepo == nil {
+		return nil
+	}
+	ledgerAmount := entity.TotalAmountMinor
+	if entity.BillType == billingqueue.BillTypeCreditMemo {
+		ledgerAmount = -amount
+	} else if entity.BillType == billingqueue.BillTypeDebitMemo {
+		ledgerAmount = amount
+	}
+	return s.customerLedgerRepo.AppendEntries(ctx, []*customerledger.Entry{{
+		ID:               pulid.MustNew("cledg_"),
+		OrganizationID:   entity.OrganizationID,
+		BusinessUnitID:   entity.BusinessUnitID,
+		CustomerID:       entity.CustomerID,
+		SourceObjectType: "Invoice",
+		SourceObjectID:   entity.ID.String(),
+		SourceEventType:  event.String(),
+		DocumentNumber:   entity.Number,
+		TransactionDate:  postingDate,
+		LineNumber:       1,
+		AmountMinor:      ledgerAmount,
+		CreatedByID:      actor.UserID,
+	}})
 }
 
 func (s *Service) resolveInvoicePostingPeriod(

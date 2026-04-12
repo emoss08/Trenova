@@ -13,6 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
@@ -125,6 +127,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documentuploadservice.New,
 	accessorialchargeservice.New,
 	assignmentservice.New,
+	bankreceiptservice.New,
+	bankreceiptworkitemservice.New,
 	versionservice.New,
 	servicetypeservice.New,
 	sequenceconfigservice.New,

@@ -493,7 +493,7 @@ func (r *repository) PromoteVersion(
 	now := timeutils.NowUnix()
 
 	if _, err := db.NewUpdate().
-		Table(buncolgen.DocumentTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.DocumentTable.Name, buncolgen.DocumentTable.Alias)).
 		Set(cols.IsCurrentVersion.Set(), false).
 		Set(cols.UpdatedAt.Set(), now).
 		Set(cols.Version.Inc(1)).
@@ -507,7 +507,7 @@ func (r *repository) PromoteVersion(
 	}
 
 	result, err := db.NewUpdate().
-		Table(buncolgen.DocumentTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.DocumentTable.Name, buncolgen.DocumentTable.Alias)).
 		Set(cols.IsCurrentVersion.Set(), true).
 		Set(cols.UpdatedAt.Set(), now).
 		Set(cols.Version.Inc(1)).
@@ -544,7 +544,7 @@ func (r *repository) MoveLineageToResource(
 	}
 
 	result, err := db.NewUpdate().
-		Table(buncolgen.DocumentTable.Name).
+		TableExpr(fmt.Sprintf("%s AS %s", buncolgen.DocumentTable.Name, buncolgen.DocumentTable.Alias)).
 		Set(cols.ResourceID.Set(), req.ResourceID).
 		Set(cols.ResourceType.Set(), req.ResourceType).
 		Set(cols.UpdatedAt.Set(), now).

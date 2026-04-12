@@ -66,8 +66,14 @@ func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -89,8 +95,14 @@ func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
@@ -112,8 +124,14 @@ func (r *DeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&r.TenantInfo.OrgID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.TenantInfo.BuID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&r.TenantInfo.OrgID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.TenantInfo.BuID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 	)
 	if err != nil {
 		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {

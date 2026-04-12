@@ -9,8 +9,9 @@ import (
 )
 
 type CustomerPaymentApplicationInput struct {
-	InvoiceID          pulid.ID `json:"invoiceId"`
-	AppliedAmountMinor int64    `json:"appliedAmountMinor"`
+	InvoiceID           pulid.ID `json:"invoiceId"`
+	AppliedAmountMinor  int64    `json:"appliedAmountMinor"`
+	ShortPayAmountMinor int64    `json:"shortPayAmountMinor"`
 }
 
 type PostCustomerPaymentRequest struct {
@@ -47,7 +48,19 @@ type ApplyCustomerPaymentRequest struct {
 
 type CustomerPaymentService interface {
 	Get(ctx context.Context, req *GetCustomerPaymentRequest) (*customerpayment.Payment, error)
-	PostAndApply(ctx context.Context, req *PostCustomerPaymentRequest, actor *RequestActor) (*customerpayment.Payment, error)
-	ApplyUnapplied(ctx context.Context, req *ApplyCustomerPaymentRequest, actor *RequestActor) (*customerpayment.Payment, error)
-	Reverse(ctx context.Context, req *ReverseCustomerPaymentRequest, actor *RequestActor) (*customerpayment.Payment, error)
+	PostAndApply(
+		ctx context.Context,
+		req *PostCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*customerpayment.Payment, error)
+	ApplyUnapplied(
+		ctx context.Context,
+		req *ApplyCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*customerpayment.Payment, error)
+	Reverse(
+		ctx context.Context,
+		req *ReverseCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*customerpayment.Payment, error)
 }

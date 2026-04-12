@@ -18,10 +18,29 @@ type DocumentContentSearchRequest struct {
 }
 
 type DocumentContentRepository interface {
-	GetByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) (*documentcontent.Content, error)
-	ListPagesByDocumentID(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) ([]*documentcontent.Page, error)
-	ReplacePages(ctx context.Context, content *documentcontent.Content, pages []*documentcontent.Page) error
+	GetByDocumentID(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentcontent.Content, error)
+	ListPagesByDocumentID(
+		ctx context.Context,
+		documentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*documentcontent.Page, error)
+	ReplacePages(
+		ctx context.Context,
+		content *documentcontent.Content,
+		pages []*documentcontent.Page,
+	) error
 	Upsert(ctx context.Context, entity *documentcontent.Content) (*documentcontent.Content, error)
-	ListPendingExtraction(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)
-	SearchByResource(ctx context.Context, req *DocumentContentSearchRequest) ([]*document.Document, error)
+	ListPendingExtraction(
+		ctx context.Context,
+		olderThan int64,
+		limit int,
+	) ([]*document.Document, error)
+	SearchByResource(
+		ctx context.Context,
+		req *DocumentContentSearchRequest,
+	) ([]*document.Document, error)
 }

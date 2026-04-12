@@ -10,10 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuefilterpresetrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customfieldrepository"
@@ -130,6 +133,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documentuploadrepository.New,
 	accessorialchargerepository.New,
 	assignmentrepository.New,
+	bankreceiptrepository.New,
+	bankreceiptworkitemrepository.New,
 	servicetyperepository.New,
 	sequenceconfigrepository.New,
 	shipmentcontrolrepository.New,
@@ -149,6 +154,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	dothazmatreferencerepository.New,
 	commodityrepository.New,
 	customerpaymentrepository.New,
+	customerledgerrepository.New,
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountsreceivablerepository.New,

@@ -18,7 +18,10 @@ type GetManualJournalByIDRequest struct {
 }
 
 type ManualJournalRepository interface {
-	List(ctx context.Context, req *ListManualJournalRequest) (*pagination.ListResult[*manualjournal.Request], error)
+	List(
+		ctx context.Context,
+		req *ListManualJournalRequest,
+	) (*pagination.ListResult[*manualjournal.Request], error)
 	GetByID(ctx context.Context, req GetManualJournalByIDRequest) (*manualjournal.Request, error)
 	Create(ctx context.Context, entity *manualjournal.Request) (*manualjournal.Request, error)
 	Update(ctx context.Context, entity *manualjournal.Request) (*manualjournal.Request, error)

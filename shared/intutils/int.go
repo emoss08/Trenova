@@ -52,6 +52,13 @@ func Clamp[T ~int | ~int64](value, minVal, maxVal T) T {
 	return value
 }
 
+func AbsDiff(a, b int64) int64 {
+	if a > b {
+		return a - b
+	}
+	return b - a
+}
+
 func SafeShiftAmount(n, maxShift int) uint {
 	if n < 0 {
 		return 0

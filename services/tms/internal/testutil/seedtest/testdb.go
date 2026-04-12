@@ -238,20 +238,33 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 	require.NoError(t, db.PingContext(ctx), "failed to ping isolated test database")
 
 	cleanup := func() {
-		require.NoError(t, db.Close(), "failed to close isolated test database")
-		dropCtx, dropCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer dropCancel()
+		if err := db.Close(); err != nil {
+			require.NoError(t, err, "failed to close isolated test database")
+		}
 
-		_, _ = env.adminDB.ExecContext(
-			dropCtx,
-			"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ? AND pid <> pg_backend_pid()",
-			dbName,
-		)
-		_, dropErr := env.adminDB.ExecContext(
-			dropCtx,
-			fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName),
-		)
-		require.NoError(t, dropErr, "failed to drop isolated test database")
+		var dropErr error
+		for range 3 {
+			dropCtx, dropCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			_, _ = env.adminDB.ExecContext(
+				dropCtx,
+				fmt.Sprintf("DROP DATABASE IF EXISTS %s WITH (FORCE)", dbName),
+			)
+			dropCancel()
+
+			dropCtx, dropCancel = context.WithTimeout(context.Background(), 10*time.Second)
+			_, dropErr = env.adminDB.ExecContext(
+				dropCtx,
+				fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbName),
+			)
+			dropCancel()
+			if dropErr == nil {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		if dropErr != nil {
+			t.Logf("failed to drop isolated test database %s: %v", dbName, dropErr)
+		}
 		cancel()
 	}
 

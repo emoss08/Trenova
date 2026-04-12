@@ -18,8 +18,14 @@ type ListJournalReversalsRequest struct {
 }
 
 type JournalReversalRepository interface {
-	List(ctx context.Context, req *ListJournalReversalsRequest) (*pagination.ListResult[*journalreversal.Reversal], error)
-	GetByID(ctx context.Context, req GetJournalReversalByIDRequest) (*journalreversal.Reversal, error)
+	List(
+		ctx context.Context,
+		req *ListJournalReversalsRequest,
+	) (*pagination.ListResult[*journalreversal.Reversal], error)
+	GetByID(
+		ctx context.Context,
+		req GetJournalReversalByIDRequest,
+	) (*journalreversal.Reversal, error)
 	Create(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error)
 	Update(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error)
 }

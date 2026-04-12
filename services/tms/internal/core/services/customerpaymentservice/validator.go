@@ -58,6 +58,13 @@ func (v *Validator) ValidatePostAndApply(
 		entity.CurrencyCode = strings.ToUpper(entity.CurrencyCode)
 	}
 	if control != nil {
+		hasShortPay := false
+		for _, app := range entity.Applications {
+			if app != nil && app.ShortPayAmountMinor > 0 {
+				hasShortPay = true
+				break
+			}
+		}
 		if control.CurrencyMode == tenant.CurrencyModeSingleCurrency && !strings.EqualFold(entity.CurrencyCode, control.FunctionalCurrencyCode) {
 			me.Add("currencyCode", errortypes.ErrInvalid, "Customer payment currency must match the tenant functional currency")
 		}
@@ -66,6 +73,16 @@ func (v *Validator) ValidatePostAndApply(
 		}
 		if control.DefaultUnappliedCashAccountID.IsNil() {
 			me.Add("defaultUnappliedCashAccountId", errortypes.ErrRequired, "Default unapplied cash account is required for customer payment posting")
+		}
+		if hasShortPay && control.DefaultWriteOffAccountID.IsNil() {
+			me.Add("defaultWriteOffAccountId", errortypes.ErrRequired, "Default write-off account is required for customer short-pay recognition")
+		}
+		if control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+			for idx, app := range entity.Applications {
+				if app != nil && app.ShortPayAmountMinor > 0 {
+					me.WithIndex("applications", idx).Add("shortPayAmountMinor", errortypes.ErrInvalidOperation, "Short-pay recognition is not supported for cash-basis customer payments in this slice")
+				}
+			}
 		}
 	}
 	if me.HasErrors() {
@@ -88,8 +105,8 @@ func (v *Validator) ValidatePostAndApply(
 			continue
 		}
 		seenInvoices[key] = struct{}{}
-		inv, err := v.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: app.InvoiceID, TenantInfo: tenantInfo.TenantInfo})
-		if err != nil {
+		inv, getErr := v.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{ID: app.InvoiceID, TenantInfo: tenantInfo.TenantInfo})
+		if getErr != nil {
 			me.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrInvalid, "Invoice was not found")
 			continue
 		}
@@ -103,8 +120,9 @@ func (v *Validator) ValidatePostAndApply(
 			me.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrInvalidOperation, "Customer payments only support invoices and debit memos in this slice")
 		}
 		openBalanceMinor := inv.OpenBalanceMinor()
-		if app.AppliedAmountMinor > openBalanceMinor {
-			me.WithIndex("applications", idx).Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount exceeds invoice open balance by %d minor units", app.AppliedAmountMinor-openBalanceMinor))
+		settlementMinor := app.AppliedAmountMinor + app.ShortPayAmountMinor
+		if settlementMinor > openBalanceMinor {
+			me.WithIndex("applications", idx).Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount plus short pay exceeds invoice open balance by %d minor units", settlementMinor-openBalanceMinor))
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)
@@ -154,14 +172,31 @@ func (v *Validator) ValidateApplyUnapplied(
 		app.Validate(me.WithIndex("applications", idx))
 	}
 	if control != nil {
+		hasShortPay := false
+		for _, app := range applications {
+			if app != nil && app.ShortPayAmountMinor > 0 {
+				hasShortPay = true
+				break
+			}
+		}
 		if control.DefaultUnappliedCashAccountID.IsNil() {
 			me.Add("defaultUnappliedCashAccountId", errortypes.ErrRequired, "Default unapplied cash account is required for customer payment application")
+		}
+		if hasShortPay && control.DefaultWriteOffAccountID.IsNil() {
+			me.Add("defaultWriteOffAccountId", errortypes.ErrRequired, "Default write-off account is required for customer short-pay recognition")
 		}
 		if control.AccountingBasis == tenant.AccountingBasisAccrual && control.DefaultARAccountID.IsNil() {
 			me.Add("defaultArAccountId", errortypes.ErrRequired, "Default AR account is required for accrual customer payment application")
 		}
 		if (control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt) && control.DefaultRevenueAccountID.IsNil() {
 			me.Add("defaultRevenueAccountId", errortypes.ErrRequired, "Default revenue account is required for cash-basis customer payment application")
+		}
+		if control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+			for idx, app := range applications {
+				if app != nil && app.ShortPayAmountMinor > 0 {
+					me.WithIndex("applications", idx).Add("shortPayAmountMinor", errortypes.ErrInvalidOperation, "Short-pay recognition is not supported for cash-basis customer payments in this slice")
+				}
+			}
 		}
 	}
 	if me.HasErrors() {
@@ -202,8 +237,9 @@ func (v *Validator) ValidateApplyUnapplied(
 			me.WithIndex("applications", idx).Add("invoiceId", errortypes.ErrInvalidOperation, "Customer payments only support invoices and debit memos in this slice")
 		}
 		openBalanceMinor := inv.OpenBalanceMinor()
-		if app.AppliedAmountMinor > openBalanceMinor {
-			me.WithIndex("applications", idx).Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount exceeds invoice open balance by %d minor units", app.AppliedAmountMinor-openBalanceMinor))
+		settlementMinor := app.AppliedAmountMinor + app.ShortPayAmountMinor
+		if settlementMinor > openBalanceMinor {
+			me.WithIndex("applications", idx).Add("appliedAmountMinor", errortypes.ErrInvalid, fmt.Sprintf("Applied amount plus short pay exceeds invoice open balance by %d minor units", settlementMinor-openBalanceMinor))
 		}
 		totalApplied += app.AppliedAmountMinor
 		resolvedInvoices = append(resolvedInvoices, inv)

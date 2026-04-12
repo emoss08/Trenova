@@ -41,56 +41,13 @@ func New(p Params) repositories.AccountsReceivableRepository {
 func (r *repository) ListCustomerLedger(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error) {
 	entries := make([]*accountsreceivable.LedgerEntry, 0)
 	err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT customer_id, transaction_date, event_type, document_number, source_object_id, amount_minor
-		FROM (
-			SELECT inv.customer_id,
-				COALESCE(inv.posted_at, inv.invoice_date) AS transaction_date,
-				CASE WHEN inv.bill_type = 'DebitMemo' THEN 'DebitMemoPosted' ELSE 'InvoicePosted' END AS event_type,
-				inv.number AS document_number,
-				inv.id::text AS source_object_id,
-				inv.total_amount_minor AS amount_minor
-			FROM invoices inv
-			WHERE inv.organization_id = ?
-			  AND inv.business_unit_id = ?
-			  AND inv.customer_id = ?
-			  AND inv.status = 'Posted'
-			  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-
-			UNION ALL
-
-			SELECT cp.customer_id,
-				cp.accounting_date AS transaction_date,
-				'CustomerPaymentApplied' AS event_type,
-				cp.reference_number AS document_number,
-				cp.id::text AS source_object_id,
-				-cpa.applied_amount_minor AS amount_minor
-			FROM customer_payments cp
-			JOIN customer_payment_applications cpa
-			  ON cpa.customer_payment_id = cp.id
-			 AND cpa.organization_id = cp.organization_id
-			 AND cpa.business_unit_id = cp.business_unit_id
-			WHERE cp.organization_id = ?
-			  AND cp.business_unit_id = ?
-			  AND cp.customer_id = ?
-			  AND cp.status = 'Posted'
-
-			UNION ALL
-
-			SELECT cp.customer_id,
-				COALESCE(cp.reversed_at, cp.accounting_date) AS transaction_date,
-				'CustomerPaymentReversed' AS event_type,
-				cp.reference_number AS document_number,
-				cp.id::text AS source_object_id,
-				cp.applied_amount_minor AS amount_minor
-			FROM customer_payments cp
-			WHERE cp.organization_id = ?
-			  AND cp.business_unit_id = ?
-			  AND cp.customer_id = ?
-			  AND cp.status = 'Reversed'
-			  AND cp.applied_amount_minor > 0
-		) ledger
-		ORDER BY transaction_date ASC, event_type ASC
-	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &entries)
+		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_id, amount_minor
+		FROM customer_ledger_entries
+		WHERE organization_id = ?
+		  AND business_unit_id = ?
+		  AND customer_id = ?
+		ORDER BY transaction_date ASC, line_number ASC
+	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &entries)
 	if err != nil {
 		return nil, err
 	}

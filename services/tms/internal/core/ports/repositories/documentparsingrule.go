@@ -45,25 +45,68 @@ type PublishedDocumentParsingRuleVersion struct {
 }
 
 type DocumentParsingRuleRepository interface {
-	ListRuleSets(ctx context.Context, req ListDocumentParsingRuleSetsRequest) ([]*documentparsingrule.RuleSet, error)
-	GetRuleSet(ctx context.Context, req GetDocumentParsingRuleSetRequest) (*documentparsingrule.RuleSet, error)
-	CreateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error)
-	UpdateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet) (*documentparsingrule.RuleSet, error)
+	ListRuleSets(
+		ctx context.Context,
+		req ListDocumentParsingRuleSetsRequest,
+	) ([]*documentparsingrule.RuleSet, error)
+	GetRuleSet(
+		ctx context.Context,
+		req GetDocumentParsingRuleSetRequest,
+	) (*documentparsingrule.RuleSet, error)
+	CreateRuleSet(
+		ctx context.Context,
+		entity *documentparsingrule.RuleSet,
+	) (*documentparsingrule.RuleSet, error)
+	UpdateRuleSet(
+		ctx context.Context,
+		entity *documentparsingrule.RuleSet,
+	) (*documentparsingrule.RuleSet, error)
 	DeleteRuleSet(ctx context.Context, req GetDocumentParsingRuleSetRequest) error
 
-	ListVersions(ctx context.Context, req ListDocumentParsingRuleVersionsRequest) ([]*documentparsingrule.RuleVersion, error)
-	GetVersion(ctx context.Context, req GetDocumentParsingRuleVersionRequest) (*documentparsingrule.RuleVersion, error)
-	GetVersionWithRuleSet(ctx context.Context, req GetDocumentParsingRuleVersionRequest) (*documentparsingrule.RuleVersion, *documentparsingrule.RuleSet, error)
-	CreateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion) (*documentparsingrule.RuleVersion, error)
-	UpdateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion) (*documentparsingrule.RuleVersion, error)
+	ListVersions(
+		ctx context.Context,
+		req ListDocumentParsingRuleVersionsRequest,
+	) ([]*documentparsingrule.RuleVersion, error)
+	GetVersion(
+		ctx context.Context,
+		req GetDocumentParsingRuleVersionRequest,
+	) (*documentparsingrule.RuleVersion, error)
+	GetVersionWithRuleSet(
+		ctx context.Context,
+		req GetDocumentParsingRuleVersionRequest,
+	) (*documentparsingrule.RuleVersion, *documentparsingrule.RuleSet, error)
+	CreateVersion(
+		ctx context.Context,
+		entity *documentparsingrule.RuleVersion,
+	) (*documentparsingrule.RuleVersion, error)
+	UpdateVersion(
+		ctx context.Context,
+		entity *documentparsingrule.RuleVersion,
+	) (*documentparsingrule.RuleVersion, error)
 	ArchivePublishedVersions(ctx context.Context, ruleSetID, orgID, buID pulid.ID) error
 	SetPublishedVersion(ctx context.Context, ruleSetID, versionID, orgID, buID pulid.ID) error
 	NextVersionNumber(ctx context.Context, ruleSetID, orgID, buID pulid.ID) (int, error)
-	ListPublishedVersionsByDocumentKind(ctx context.Context, tenantInfo pagination.TenantInfo, documentKind string) ([]*PublishedDocumentParsingRuleVersion, error)
+	ListPublishedVersionsByDocumentKind(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		documentKind string,
+	) ([]*PublishedDocumentParsingRuleVersion, error)
 
-	ListFixtures(ctx context.Context, req ListDocumentParsingRuleFixturesRequest) ([]*documentparsingrule.Fixture, error)
-	GetFixture(ctx context.Context, req GetDocumentParsingRuleFixtureRequest) (*documentparsingrule.Fixture, error)
-	CreateFixture(ctx context.Context, entity *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error)
-	UpdateFixture(ctx context.Context, entity *documentparsingrule.Fixture) (*documentparsingrule.Fixture, error)
+	ListFixtures(
+		ctx context.Context,
+		req ListDocumentParsingRuleFixturesRequest,
+	) ([]*documentparsingrule.Fixture, error)
+	GetFixture(
+		ctx context.Context,
+		req GetDocumentParsingRuleFixtureRequest,
+	) (*documentparsingrule.Fixture, error)
+	CreateFixture(
+		ctx context.Context,
+		entity *documentparsingrule.Fixture,
+	) (*documentparsingrule.Fixture, error)
+	UpdateFixture(
+		ctx context.Context,
+		entity *documentparsingrule.Fixture,
+	) (*documentparsingrule.Fixture, error)
 	DeleteFixture(ctx context.Context, req GetDocumentParsingRuleFixtureRequest) error
 }

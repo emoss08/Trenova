@@ -38,45 +38,47 @@ import (
 type Params struct {
 	fx.In
 
-	Logger            *zap.Logger
-	DB                ports.DBConnection
-	Repo              repositories.InvoiceRepository
-	BillingQueueRepo  repositories.BillingQueueRepository
-	ShipmentRepo      repositories.ShipmentRepository
-	CustomerRepo      repositories.CustomerRepository
-	BillingRepo       repositories.BillingControlRepository
-	AccountingRepo    repositories.AccountingControlRepository
-	JournalRepo       repositories.JournalPostingRepository
-	AdjustmentRepo    repositories.InvoiceAdjustmentRepository
-	NotificationRepo  repositories.NotificationRepository
-	Validator         *Validator
-	AuditService      servicesports.AuditService
-	Realtime          servicesports.RealtimeService
-	WorkflowStarter   servicesports.WorkflowStarter
-	SequenceGenerator seqgen.Generator
-	AccountingPolicy  *accountingcontrolpolicyservice.Service
-	BillingPolicy     *billingcontrolpolicyservice.Service
+	Logger             *zap.Logger
+	DB                 ports.DBConnection
+	Repo               repositories.InvoiceRepository
+	BillingQueueRepo   repositories.BillingQueueRepository
+	ShipmentRepo       repositories.ShipmentRepository
+	CustomerRepo       repositories.CustomerRepository
+	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	BillingRepo        repositories.BillingControlRepository
+	AccountingRepo     repositories.AccountingControlRepository
+	JournalRepo        repositories.JournalPostingRepository
+	AdjustmentRepo     repositories.InvoiceAdjustmentRepository
+	NotificationRepo   repositories.NotificationRepository
+	Validator          *Validator
+	AuditService       servicesports.AuditService
+	Realtime           servicesports.RealtimeService
+	WorkflowStarter    servicesports.WorkflowStarter
+	SequenceGenerator  seqgen.Generator
+	AccountingPolicy   *accountingcontrolpolicyservice.Service
+	BillingPolicy      *billingcontrolpolicyservice.Service
 }
 
 type Service struct {
-	l                 *zap.Logger
-	db                ports.DBConnection
-	repo              repositories.InvoiceRepository
-	billingQueueRepo  repositories.BillingQueueRepository
-	shipmentRepo      repositories.ShipmentRepository
-	customerRepo      repositories.CustomerRepository
-	billingRepo       repositories.BillingControlRepository
-	accountingRepo    repositories.AccountingControlRepository
-	journalRepo       repositories.JournalPostingRepository
-	adjustmentRepo    repositories.InvoiceAdjustmentRepository
-	notificationRepo  repositories.NotificationRepository
-	validator         *Validator
-	auditService      servicesports.AuditService
-	realtime          servicesports.RealtimeService
-	workflowStarter   servicesports.WorkflowStarter
-	sequenceGenerator seqgen.Generator
-	accountingPolicy  *accountingcontrolpolicyservice.Service
-	billingPolicy     *billingcontrolpolicyservice.Service
+	l                  *zap.Logger
+	db                 ports.DBConnection
+	repo               repositories.InvoiceRepository
+	billingQueueRepo   repositories.BillingQueueRepository
+	shipmentRepo       repositories.ShipmentRepository
+	customerRepo       repositories.CustomerRepository
+	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
+	billingRepo        repositories.BillingControlRepository
+	accountingRepo     repositories.AccountingControlRepository
+	journalRepo        repositories.JournalPostingRepository
+	adjustmentRepo     repositories.InvoiceAdjustmentRepository
+	notificationRepo   repositories.NotificationRepository
+	validator          *Validator
+	auditService       servicesports.AuditService
+	realtime           servicesports.RealtimeService
+	workflowStarter    servicesports.WorkflowStarter
+	sequenceGenerator  seqgen.Generator
+	accountingPolicy   *accountingcontrolpolicyservice.Service
+	billingPolicy      *billingcontrolpolicyservice.Service
 }
 
 type existingInvoiceLookupResult struct {
@@ -100,24 +102,25 @@ var _ servicesports.InvoiceService = (*Service)(nil)
 //nolint:gocritic // dependency injection
 func New(p Params) servicesports.InvoiceService {
 	return &Service{
-		l:                 p.Logger.Named("service.invoice"),
-		db:                p.DB,
-		repo:              p.Repo,
-		billingQueueRepo:  p.BillingQueueRepo,
-		shipmentRepo:      p.ShipmentRepo,
-		customerRepo:      p.CustomerRepo,
-		billingRepo:       p.BillingRepo,
-		accountingRepo:    p.AccountingRepo,
-		journalRepo:       p.JournalRepo,
-		adjustmentRepo:    p.AdjustmentRepo,
-		notificationRepo:  p.NotificationRepo,
-		validator:         p.Validator,
-		auditService:      p.AuditService,
-		realtime:          p.Realtime,
-		workflowStarter:   p.WorkflowStarter,
-		sequenceGenerator: p.SequenceGenerator,
-		accountingPolicy:  p.AccountingPolicy,
-		billingPolicy:     p.BillingPolicy,
+		l:                  p.Logger.Named("service.invoice"),
+		db:                 p.DB,
+		repo:               p.Repo,
+		billingQueueRepo:   p.BillingQueueRepo,
+		shipmentRepo:       p.ShipmentRepo,
+		customerRepo:       p.CustomerRepo,
+		customerLedgerRepo: p.CustomerLedgerRepo,
+		billingRepo:        p.BillingRepo,
+		accountingRepo:     p.AccountingRepo,
+		journalRepo:        p.JournalRepo,
+		adjustmentRepo:     p.AdjustmentRepo,
+		notificationRepo:   p.NotificationRepo,
+		validator:          p.Validator,
+		auditService:       p.AuditService,
+		realtime:           p.Realtime,
+		workflowStarter:    p.WorkflowStarter,
+		sequenceGenerator:  p.SequenceGenerator,
+		accountingPolicy:   p.AccountingPolicy,
+		billingPolicy:      p.BillingPolicy,
 	}
 }
 

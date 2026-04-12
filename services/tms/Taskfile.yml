@@ -372,6 +372,14 @@ tasks:
     cmds:
       - "{{.CLI_PATH}} config show"
 
+  clean-caches:
+    desc: Clean all go caches
+    cmds:
+      - go clean -cache
+      - go clean -modcache
+      - go clean -testcache
+      - go clean -fuzzcache
+
   version:
     desc: Show version information
     cmds:

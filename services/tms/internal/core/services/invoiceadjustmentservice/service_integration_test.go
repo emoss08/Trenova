@@ -439,7 +439,7 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		}, h.actor())
 		require.NoError(t, approveErr)
 		assert.Equal(t, invoiceadjustment.StatusExecutionFailed, failed.Status)
-		assert.Contains(t, failed.ExecutionError, "remaining eligible scope")
+		assert.Contains(t, failed.ExecutionError, "remaining eligible amount")
 	})
 
 	t.Run("reject marks pending approval adjustments rejected", func(t *testing.T) {

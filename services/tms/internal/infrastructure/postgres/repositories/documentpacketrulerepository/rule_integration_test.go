@@ -48,10 +48,10 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	created, err := repo.Create(ctx, &documentpacketrule.Rule{
+	created, err := repo.Create(ctx, &documentpacketrule.DocumentPacketRule{
 		OrganizationID:        data.Organization.ID,
 		BusinessUnitID:        data.BusinessUnit.ID,
-		ResourceType:          documentpacketrule.ResourceTypeWorker,
+		ResourceType:          "Worker",
 		DocumentTypeID:        docType.ID,
 		Required:              true,
 		AllowMultiple:         false,
@@ -67,11 +67,11 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 		TenantInfo: tenantInfo,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, documentpacketrule.ResourceTypeWorker, byID.ResourceType)
+	assert.Equal(t, "Worker", byID.ResourceType)
 
 	listed, err := repo.ListByResourceType(ctx, &repositories.ListDocumentPacketRulesByResourceRequest{
 		TenantInfo:   tenantInfo,
-		ResourceType: string(documentpacketrule.ResourceTypeWorker),
+		ResourceType: "Worker",
 	})
 	require.NoError(t, err)
 	require.Len(t, listed, 1)
@@ -91,7 +91,7 @@ func TestDocumentPacketRuleRepositoryCRUD_Integration(t *testing.T) {
 			OrgID: pulid.MustNew("org_"),
 			BuID:  pulid.MustNew("bu_"),
 		},
-		ResourceType: string(documentpacketrule.ResourceTypeWorker),
+		ResourceType: "Worker",
 	})
 	require.NoError(t, err)
 	assert.Len(t, otherTenantListed, 0)

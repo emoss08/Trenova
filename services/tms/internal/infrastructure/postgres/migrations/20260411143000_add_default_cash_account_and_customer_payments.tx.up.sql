@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS customer_payment_applications(
     customer_payment_id VARCHAR(100) NOT NULL,
     invoice_id VARCHAR(100) NOT NULL,
     applied_amount_minor BIGINT NOT NULL,
+    short_pay_amount_minor BIGINT NOT NULL DEFAULT 0,
     line_number INTEGER NOT NULL,
     created_at BIGINT NOT NULL DEFAULT extract(epoch from current_timestamp)::bigint,
     updated_at BIGINT NOT NULL DEFAULT extract(epoch from current_timestamp)::bigint,

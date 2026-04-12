@@ -806,6 +806,31 @@ func (r *Registry) registerAccountingResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceBankReceipt.String(),
+		DisplayName: "Bank Receipt",
+		Description: "Imported bank receipts and payment matching",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipts"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Import bank receipts"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Match bank receipts to payments"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceBankReceiptWorkItem.String(),
+		DisplayName: "Bank Receipt Work Item",
+		Description: "Reconciliation exception queue for bank receipts",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipt work queue"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Assign and resolve bank receipt work items"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerComplianceResources() {

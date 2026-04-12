@@ -3,6 +3,7 @@ package documentservice
 import (
 	"context"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
@@ -19,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func documentIDs(docs []*document.Document) []pulid.ID {
@@ -206,11 +209,15 @@ func (s *Service) GetPacketSummary(
 	resourceType, resourceID string,
 	tenantInfo pagination.TenantInfo,
 ) (*documentpacketrule.PacketSummary, error) {
+	normalizedResourceType := cases.Title(language.English).String(
+		strings.TrimSpace(strings.ToLower(resourceType)),
+	)
+
 	rules, err := s.packetRuleRepo.ListByResourceType(
 		ctx,
 		&repositories.ListDocumentPacketRulesByResourceRequest{
 			TenantInfo:   tenantInfo,
-			ResourceType: resourceType,
+			ResourceType: normalizedResourceType,
 		},
 	)
 	if err != nil {

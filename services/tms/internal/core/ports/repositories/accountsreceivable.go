@@ -19,6 +19,12 @@ type ListARAgingRequest struct {
 }
 
 type AccountsReceivableRepository interface {
-	ListCustomerLedger(ctx context.Context, req ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error)
-	ListARAging(ctx context.Context, req ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error)
+	ListCustomerLedger(
+		ctx context.Context,
+		req ListCustomerLedgerRequest,
+	) ([]*accountsreceivable.LedgerEntry, error)
+	ListARAging(
+		ctx context.Context,
+		req ListARAgingRequest,
+	) ([]*accountsreceivable.CustomerAgingRow, error)
 }

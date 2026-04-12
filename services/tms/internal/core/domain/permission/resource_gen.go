@@ -73,6 +73,8 @@ const (
 	ResourceJournalReversal          Resource = "journal_reversal"
 	ResourceJournalEntry             Resource = "journal_entry"
 	ResourceCustomerPayment          Resource = "customer_payment"
+	ResourceBankReceipt              Resource = "bank_receipt"
+	ResourceBankReceiptWorkItem      Resource = "bank_receipt_work_item"
 
 	// Compliance
 	ResourceQualification          Resource = "qualification"

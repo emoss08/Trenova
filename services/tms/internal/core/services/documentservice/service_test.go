@@ -331,15 +331,15 @@ func createDocumentType(
 func createPacketRule(
 	t *testing.T,
 	h *serviceHarness,
-	resourceType documentpacketrule.ResourceType,
+	resourceType string,
 	docTypeID pulid.ID,
 	required bool,
 	expirationRequired bool,
 	expirationWarningDays int,
-) *documentpacketrule.Rule {
+) *documentpacketrule.DocumentPacketRule {
 	t.Helper()
 
-	rule, err := h.packetRuleRepo.Create(h.ctx, &documentpacketrule.Rule{
+	rule, err := h.packetRuleRepo.Create(h.ctx, &documentpacketrule.DocumentPacketRule{
 		OrganizationID:        h.tenantInfo.OrgID,
 		BusinessUnitID:        h.tenantInfo.BuID,
 		ResourceType:          resourceType,
@@ -614,7 +614,7 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	createPacketRule(
 		t,
 		h,
-		documentpacketrule.ResourceTypeTrailer,
+		"Trailer",
 		missingDocType.ID,
 		true,
 		false,
@@ -623,7 +623,7 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	createPacketRule(
 		t,
 		h,
-		documentpacketrule.ResourceTypeTrailer,
+		"Trailer",
 		needsReviewDocType.ID,
 		true,
 		true,
@@ -632,7 +632,7 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	createPacketRule(
 		t,
 		h,
-		documentpacketrule.ResourceTypeTrailer,
+		"Trailer",
 		expiredDocType.ID,
 		true,
 		true,
@@ -641,7 +641,7 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	createPacketRule(
 		t,
 		h,
-		documentpacketrule.ResourceTypeTrailer,
+		"Trailer",
 		expiringSoonDocType.ID,
 		true,
 		true,
@@ -650,7 +650,7 @@ func TestService_GetPacketSummary_Integration(t *testing.T) {
 	createPacketRule(
 		t,
 		h,
-		documentpacketrule.ResourceTypeTrailer,
+		"Trailer",
 		currentOnlyDocType.ID,
 		true,
 		false,

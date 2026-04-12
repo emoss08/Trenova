@@ -18,9 +18,19 @@ type MarkNotificationsReadRequest struct {
 }
 
 type NotificationRepository interface {
-	Create(ctx context.Context, entity *notification.Notification) (*notification.Notification, error)
-	List(ctx context.Context, req *ListNotificationsRequest) (*pagination.ListResult[*notification.Notification], error)
+	Create(
+		ctx context.Context,
+		entity *notification.Notification,
+	) (*notification.Notification, error)
+	List(
+		ctx context.Context,
+		req *ListNotificationsRequest,
+	) (*pagination.ListResult[*notification.Notification], error)
 	MarkAsRead(ctx context.Context, req MarkNotificationsReadRequest) error
 	MarkAllAsRead(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) error
-	CountUnread(ctx context.Context, userID pulid.ID, tenantInfo pagination.TenantInfo) (int64, error)
+	CountUnread(
+		ctx context.Context,
+		userID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (int64, error)
 }

@@ -356,7 +356,7 @@ func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
 		Expression: `
 			max(
 				minimumCharge,
-				(baseRate + (ratePerMile * totalDistance)) * (1 + fuelSurchargePercent / 100)
+				(startingRate + (ratePerMile * totalDistance)) * (1 + fuelSurchargePercent / 100)
 			)
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
@@ -365,7 +365,7 @@ func TestComplex_PerMileWithMinimumAndFuelSurcharge(t *testing.T) {
 				Type:         formulatypes.VariableValueTypeNumber,
 				DefaultValue: 250.0,
 			},
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 75.0},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 75.0},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 2.85},
 			{
 				Name:         "fuelSurchargePercent",
@@ -485,7 +485,7 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 				max(
 					minimumCharge,
 					clamp(
-						(baseRate + (ratePerMile * totalDistance) + (ratePerStop * totalStops)) *
+						(startingRate + (ratePerMile * totalDistance) + (ratePerStop * totalStops)) *
 						(1 + fuelSurcharge / 100) +
 						(hasHazmat ? hazmatFee : 0) +
 						(requiresTemperatureControl ? reeferSurcharge + (temperatureDifferential < 10 ? tightTempFee : 0) : 0),
@@ -507,7 +507,7 @@ func TestComplex_FullFreightBillCalculation(t *testing.T) {
 				Type:         formulatypes.VariableValueTypeNumber,
 				DefaultValue: 10000.00,
 			},
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 125.00},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 125.00},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 3.25},
 			{Name: "ratePerStop", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 45.00},
 			{Name: "fuelSurcharge", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 22.0},
@@ -552,12 +552,12 @@ func TestComplex_DistanceBasedTiers(t *testing.T) {
 		Name:     "Distance Based Tiers",
 		SchemaID: "shipment",
 		Expression: `
-			totalDistance <= 100 ? baseRate + (totalDistance * shortHaulRate) :
-			totalDistance <= 500 ? baseRate + 100 * shortHaulRate + (totalDistance - 100) * mediumHaulRate :
-			baseRate + 100 * shortHaulRate + 400 * mediumHaulRate + (totalDistance - 500) * longHaulRate
+			totalDistance <= 100 ? startingRate + (totalDistance * shortHaulRate) :
+			totalDistance <= 500 ? startingRate + 100 * shortHaulRate + (totalDistance - 100) * mediumHaulRate :
+			startingRate + 100 * shortHaulRate + 400 * mediumHaulRate + (totalDistance - 500) * longHaulRate
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
 			{Name: "shortHaulRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 4.50},
 			{
 				Name:         "mediumHaulRate",
@@ -681,16 +681,16 @@ func TestComplex_NestedConditionals(t *testing.T) {
 		Expression: `
 			hasHazmat ? (
 				requiresTemperatureControl ?
-					baseRate * hazmatReeferMultiplier :
-					baseRate * hazmatMultiplier
+					startingRate * hazmatReeferMultiplier :
+					startingRate * hazmatMultiplier
 			) : (
 				requiresTemperatureControl ?
-					baseRate * reeferMultiplier :
-					baseRate * standardMultiplier
+					startingRate * reeferMultiplier :
+					startingRate * standardMultiplier
 			)
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1000.00},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 1000.00},
 			{
 				Name:         "standardMultiplier",
 				Type:         formulatypes.VariableValueTypeNumber,
@@ -938,12 +938,12 @@ func TestComplex_NilShipmentFieldsGracefulHandling(t *testing.T) {
 		Name:     "Graceful Nil Handling",
 		SchemaID: "shipment",
 		Expression: `
-			baseRate + (ratePerMile * totalDistance) +
+			startingRate + (ratePerMile * totalDistance) +
 			(hasHazmat ? hazmatFee : 0) +
 			(requiresTemperatureControl ? tempFee : 0)
 		`,
 		VariableDefinitions: []*formulatypes.VariableDefinition{
-			{Name: "baseRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
+			{Name: "startingRate", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 100.00},
 			{Name: "ratePerMile", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 2.00},
 			{Name: "hazmatFee", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 150.00},
 			{Name: "tempFee", Type: formulatypes.VariableValueTypeNumber, DefaultValue: 200.00},

@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/customerpaymentservice"
@@ -21,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerledgerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/customerpaymentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
@@ -66,6 +69,7 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	logger := zap.NewNop()
 	repo := New(Params{DB: conn, Logger: logger})
 	paymentRepo := customerpaymentrepository.New(customerpaymentrepository.Params{DB: conn, Logger: logger})
+	ledgerProjectionRepo := customerledgerrepository.New(customerledgerrepository.Params{DB: conn, Logger: logger})
 	invoiceRepo := invoicerepository.New(invoicerepository.Params{DB: conn, Logger: logger})
 	accountingRepo := accountingcontrolrepository.New(accountingcontrolrepository.Params{DB: conn, Logger: logger})
 	fiscalYearRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: logger})
@@ -102,8 +106,9 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(ctx, &invoice.Invoice{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, BillingQueueItemID: queue.ID, ShipmentID: shp.ID, CustomerID: shp.CustomerID, Number: queue.Number, BillType: billingqueue.BillTypeInvoice, Status: invoice.StatusPosted, PostedAt: &postedAt, PaymentTerm: invoice.PaymentTermNet30, CurrencyCode: "USD", InvoiceDate: period.StartDate, DueDate: int64PtrAR(period.EndDate), ShipmentProNumber: shp.ProNumber, ShipmentBOL: shp.BOL, BillToName: "Test Customer", SubtotalAmount: decimal.NewFromInt(100), OtherAmount: decimal.Zero, TotalAmount: decimal.NewFromInt(100), AppliedAmount: decimal.Zero, SettlementStatus: invoice.SettlementStatusUnpaid, DisputeStatus: invoice.DisputeStatusNone, Lines: []*invoice.Line{{LineNumber: 1, Type: invoice.LineTypeFreight, Description: "Freight", Quantity: decimal.NewFromInt(1), UnitPrice: decimal.NewFromInt(100), Amount: decimal.NewFromInt(100)}}})
 	require.NoError(t, err)
+	require.NoError(t, ledgerProjectionRepo.AppendEntries(ctx, []*customerledger.Entry{{ID: pulid.MustNew("cledg_"), OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID, CustomerID: shp.CustomerID, SourceObjectType: "Invoice", SourceObjectID: inv.ID.String(), SourceEventType: tenant.JournalSourceEventInvoicePosted.String(), RelatedInvoiceID: inv.ID, DocumentNumber: inv.Number, TransactionDate: postedAt, LineNumber: 1, AmountMinor: inv.TotalAmountMinor, CreatedByID: user.ID}}))
 
-	paymentSvc := customerpaymentservice.New(customerpaymentservice.Params{Logger: logger, DB: conn, Repo: paymentRepo, InvoiceRepo: invoiceRepo, AccountingRepo: accountingRepo, JournalRepo: journalRepo, Generator: generator, Validator: customerpaymentservice.NewValidator(customerpaymentservice.ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo}), AuditService: &mocks.NoopAuditService{}})
+	paymentSvc := customerpaymentservice.New(customerpaymentservice.Params{Logger: logger, DB: conn, Repo: paymentRepo, InvoiceRepo: invoiceRepo, CustomerLedgerRepo: ledgerProjectionRepo, AccountingRepo: accountingRepo, JournalRepo: journalRepo, Generator: generator, Validator: customerpaymentservice.NewValidator(customerpaymentservice.ValidatorParams{InvoiceRepo: invoiceRepo, FiscalPeriodRepo: fiscalPeriodRepo}), AuditService: &mocks.NoopAuditService{}})
 	_, err = paymentSvc.PostAndApply(ctx, &serviceports.PostCustomerPaymentRequest{CustomerID: shp.CustomerID, PaymentDate: now.Unix(), AccountingDate: now.Unix(), AmountMinor: 15000, PaymentMethod: customerpayment.MethodACH, ReferenceNumber: "PAY-AR", CurrencyCode: "USD", Applications: []*serviceports.CustomerPaymentApplicationInput{{InvoiceID: inv.ID, AppliedAmountMinor: 10000}}, TenantInfo: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}}, testutil.NewSessionActor(user.ID, org.ID, org.BusinessUnitID))
 	require.NoError(t, err)
 

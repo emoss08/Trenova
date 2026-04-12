@@ -9,6 +9,9 @@ import (
 )
 
 type DocumentSearchProjectionRepository interface {
-	Upsert(ctx context.Context, entity *documentsearchprojection.Projection) (*documentsearchprojection.Projection, error)
+	Upsert(
+		ctx context.Context,
+		entity *documentsearchprojection.Projection,
+	) (*documentsearchprojection.Projection, error)
 	Delete(ctx context.Context, documentID pulid.ID, tenantInfo pagination.TenantInfo) error
 }
