@@ -1,15 +1,12 @@
-"use client";
-
 import { cn } from "@/lib/utils";
-import { isMotionComponent, m, type HTMLMotionProps } from "motion/react";
+import { isMotionComponent, m, type HTMLElements, type HTMLMotionProps } from "motion/react";
 import * as React from "react";
 
 type AnyProps = Record<string, unknown>;
 
-type DOMMotionProps = Omit<
-  HTMLMotionProps<keyof HTMLElementTagNameMap>,
-  "ref"
-> & { ref?: React.Ref<HTMLElement> };
+type DOMMotionProps = Omit<HTMLMotionProps<keyof HTMLElements>, "ref"> & {
+  ref?: React.Ref<HTMLElement>;
+};
 
 type WithAsChild<Base extends object> =
   | (Base & { asChild: true; children: React.ReactElement })
@@ -28,9 +25,7 @@ const motionIntrinsic = {
   p: m.p,
 } as const;
 
-function mergeRefs<T>(
-  ...refs: (React.Ref<T> | undefined)[]
-): React.RefCallback<T> {
+function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<T> {
   return (node) => {
     refs.forEach((ref) => {
       if (!ref) return;
@@ -47,10 +42,7 @@ function mergeProps(childProps: AnyProps, slotProps: DOMMotionProps): AnyProps {
   const merged: AnyProps = { ...childProps, ...slotProps };
 
   if (childProps.className || slotProps.className) {
-    merged.className = cn(
-      childProps.className as string,
-      slotProps.className as string,
-    );
+    merged.className = cn(childProps.className as string, slotProps.className as string);
   }
 
   if (childProps.style || slotProps.style) {
@@ -67,9 +59,7 @@ function Slot({ children, ref, ...props }: SlotProps) {
   if (!React.isValidElement(children)) return null;
 
   const isAlreadyMotion =
-    typeof children.type === "object" &&
-    children.type !== null &&
-    isMotionComponent(children.type);
+    typeof children.type === "object" && children.type !== null && isMotionComponent(children.type);
 
   const { ref: childRef, ...childProps } = children.props as AnyProps;
 
@@ -80,10 +70,7 @@ function Slot({ children, ref, ...props }: SlotProps) {
     return (
       <MotionBase
         {...mergedProps}
-        ref={mergeRefs(
-          childRef as React.Ref<HTMLElement>,
-          ref,
-        ) as React.Ref<any>}
+        ref={mergeRefs(childRef as React.Ref<HTMLElement>, ref) as React.Ref<any>}
       />
     );
   }
@@ -94,10 +81,7 @@ function Slot({ children, ref, ...props }: SlotProps) {
     return (
       <MotionBase
         {...mergedProps}
-        ref={mergeRefs(
-          childRef as React.Ref<HTMLElement>,
-          ref,
-        ) as React.Ref<any>}
+        ref={mergeRefs(childRef as React.Ref<HTMLElement>, ref) as React.Ref<any>}
       />
     );
   }
@@ -109,10 +93,4 @@ function Slot({ children, ref, ...props }: SlotProps) {
   );
 }
 
-export {
-  Slot,
-  type AnyProps,
-  type DOMMotionProps,
-  type SlotProps,
-  type WithAsChild,
-};
+export { Slot, type AnyProps, type DOMMotionProps, type SlotProps, type WithAsChild };

@@ -47,6 +47,7 @@ const ScrollArea = React.forwardRef<
       maskHeight = 30,
       maskClassName,
       viewportClassName,
+      style,
       ...props
     },
     ref,
@@ -60,6 +61,7 @@ const ScrollArea = React.forwardRef<
 
     const viewportRef = React.useRef<HTMLDivElement>(null);
     const isTouch = useTouchPrimary();
+    const touchStyle = typeof style === "function" ? undefined : style;
 
     const checkScrollability = React.useCallback(() => {
       const element = viewportRef.current;
@@ -112,6 +114,7 @@ const ScrollArea = React.forwardRef<
           <div
             ref={ref}
             {...props}
+            style={touchStyle}
             role="group"
             data-slot="scroll-area"
             aria-roledescription="scroll area"

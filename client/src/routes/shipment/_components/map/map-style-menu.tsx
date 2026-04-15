@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,10 +8,9 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { MapStyleId } from "@/types/shipment-map";
 import { LayersIcon, MapIcon, MountainIcon, SatelliteDishIcon } from "lucide-react";
-import type { MapStyleId } from "./use-map-ui-state";
 
 const MAP_STYLES: { value: MapStyleId; label: string; icon: React.ReactNode }[] = [
   { value: "roadmap", label: "Roadmap", icon: <MapIcon className="size-3.5" /> },
@@ -30,13 +30,7 @@ export function MapStyleMenu({
     <DropdownMenu>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" size="icon-sm" />
-              }
-            />
-          }
+          render={<DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />} />}
         >
           <MapIcon className="size-3.5" />
         </TooltipTrigger>
