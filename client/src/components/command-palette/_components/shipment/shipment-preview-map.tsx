@@ -1,4 +1,5 @@
-import { DEFAULT_ZOOM, MAP_ID, US_CENTER } from "@/lib/constants";
+import { useMapId } from "@/hooks/use-map-id";
+import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { cn, formatLocation } from "@/lib/utils";
 import type { ShipmentMove, Stop } from "@/types/shipment";
@@ -52,6 +53,8 @@ export function ShipmentRouteMap({
   const [pinnedIdx, setPinnedIdx] = useState<number | null>(null);
   const activeIdx = pinnedIdx ?? hoveredIdx;
 
+  const mapId = useMapId();
+
   if (!apiKeyData?.apiKey || !center || coordinates.length === 0) {
     return null;
   }
@@ -60,7 +63,7 @@ export function ShipmentRouteMap({
     <Container className={containerClassName}>
       <APIProvider apiKey={apiKeyData.apiKey}>
         <Map
-          mapId={MAP_ID}
+          mapId={mapId}
           defaultCenter={US_CENTER}
           defaultZoom={DEFAULT_ZOOM}
           gestureHandling="greedy"

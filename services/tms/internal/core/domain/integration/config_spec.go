@@ -76,4 +76,16 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 			},
 		},
 	},
+	TypeOpenWeatherMap: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Free tier includes 1,000 API calls/day for weather map tiles.",
+			},
+		},
+	},
 }

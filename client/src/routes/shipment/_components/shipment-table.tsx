@@ -5,13 +5,7 @@ import { Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
-import {
-  ArrowRightLeftIcon,
-  BanIcon,
-  CopyIcon,
-  SendIcon,
-  UndoIcon,
-} from "lucide-react";
+import { ArrowRightLeftIcon, BanIcon, CopyIcon, SendIcon, UndoIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -67,10 +61,9 @@ export default function ShipmentTable() {
       const response = await apiService.shipmentService.bulkTransferToBilling(shipmentIds);
 
       if (response.errorCount > 0 && response.successCount > 0) {
-        toast.warning(
-          `Transferred ${response.successCount} of ${response.totalCount} shipments`,
-          { description: `${response.errorCount} shipment(s) failed to transfer.` },
-        );
+        toast.warning(`Transferred ${response.successCount} of ${response.totalCount} shipments`, {
+          description: `${response.errorCount} shipment(s) failed to transfer.`,
+        });
       } else if (response.errorCount > 0) {
         toast.error("Failed to transfer shipments to billing");
       } else {
@@ -147,7 +140,13 @@ export default function ShipmentTable() {
         },
       },
     ],
-    [handleDuplicate, handleCancel, handleUncancel, handleTransferOwnership, handleTransferToBilling],
+    [
+      handleDuplicate,
+      handleCancel,
+      handleUncancel,
+      handleTransferOwnership,
+      handleTransferToBilling,
+    ],
   );
 
   const addRecordActions = useMemo<AddRecordAction[]>(

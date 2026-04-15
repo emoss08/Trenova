@@ -26,6 +26,7 @@
     "@reui": "https://reui.io/r/{name}.json",
     "@elements": "https://www.tryelements.dev/r/{name}.json",
     "@efferd": "https://efferd.com/r/{style}/{name}.json",
-    "@shadcn-space": "https://shadcnspace.com/r/{name}.json"
+    "@shadcn-space": "https://shadcnspace.com/r/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}"
   }
 }

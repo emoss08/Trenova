@@ -3,7 +3,9 @@ import {
   NestedEntityRefCell,
 } from "@/components/data-table/_components/entity-ref-link";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { LazyMapWithKey } from "@/components/lazy-map";
 import { BillingQueueStatusBadge, ShipmentStatusBadge } from "@/components/status-badge";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { billingTransferStatusChoices, shipmentStatusChoices } from "@/lib/choices";
 import {
   getDestinationLocation,
@@ -17,6 +19,7 @@ import type { Location } from "@/types/location";
 import type { Shipment } from "@/types/shipment";
 import type { User } from "@/types/user";
 import { type ColumnDef } from "@tanstack/react-table";
+import { Suspense } from "react";
 
 export function getColumns(): ColumnDef<Shipment>[] {
   return [
@@ -111,34 +114,61 @@ export function getColumns(): ColumnDef<Shipment>[] {
       minSize: 200,
       maxSize: 300,
       cell: ({ row }) => {
-        const { customer } = row.original;
+        const originLocation = getOriginLocation(row.original);
 
-        if (!customer) {
+        if (!originLocation) {
           return <p className="text-muted-foreground">-</p>;
         }
 
+        const position = {
+          lat: originLocation?.latitude ?? 0,
+          lng: originLocation?.longitude ?? 0,
+        };
+
         return (
-          <NestedEntityRefCell<Location, Shipment>
-            getValue={() => {
-              return getOriginLocation(row.original);
-            }}
-            row={row}
-            config={{
-              getEntity: (shipment) => {
-                return getOriginLocation(shipment);
-              },
-              basePath: "/dispatch/configurations/locations",
-              getId: (location) => location.id,
-              getDisplayText: (location: Location) => location.name,
-              getSecondaryInfo: (location) => {
-                return {
-                  entity: location,
-                  displayText: formatLocation(location),
-                  clickable: false,
-                };
-              },
-            }}
-          />
+          <HoverCard>
+            <HoverCardTrigger
+              delay={500}
+              render={
+                <div>
+                  <NestedEntityRefCell<Location, Shipment>
+                    getValue={() => {
+                      return originLocation;
+                    }}
+                    row={row}
+                    config={{
+                      getEntity: () => {
+                        return originLocation;
+                      },
+                      basePath: "/dispatch/locations",
+                      getId: (location) => location.id,
+                      getDisplayText: (location: Location) => location.name,
+                      getSecondaryInfo: (location) => {
+                        return {
+                          entity: location,
+                          displayText: formatLocation(location),
+                          clickable: false,
+                        };
+                      },
+                    }}
+                  />
+                </div>
+              }
+            />
+            <HoverCardContent>
+              <div className="h-32 w-full overflow-hidden rounded-md border border-border">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full w-full animate-pulse items-center justify-center bg-muted text-xs text-muted-foreground">
+                      Loading map...
+                    </div>
+                  }
+                >
+                  <LazyMapWithKey position={position} />
+                </Suspense>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         );
       },
       meta: {
@@ -194,34 +224,61 @@ export function getColumns(): ColumnDef<Shipment>[] {
       minSize: 200,
       maxSize: 300,
       cell: ({ row }) => {
-        const { customer } = row.original;
+        const destinationLocation = getDestinationLocation(row.original);
 
-        if (!customer) {
+        if (!destinationLocation) {
           return <p className="text-muted-foreground">-</p>;
         }
 
+        const position = {
+          lat: destinationLocation?.latitude ?? 0,
+          lng: destinationLocation?.longitude ?? 0,
+        };
+
         return (
-          <NestedEntityRefCell<Location, Shipment>
-            getValue={() => {
-              return getDestinationLocation(row.original);
-            }}
-            row={row}
-            config={{
-              getEntity: (shipment) => {
-                return getDestinationLocation(shipment);
-              },
-              basePath: "/dispatch/locations",
-              getId: (location) => location.id,
-              getDisplayText: (location: Location) => location.name,
-              getSecondaryInfo: (location) => {
-                return {
-                  entity: location,
-                  displayText: formatLocation(location),
-                  clickable: false,
-                };
-              },
-            }}
-          />
+          <HoverCard>
+            <HoverCardTrigger
+              delay={500}
+              render={
+                <div>
+                  <NestedEntityRefCell<Location, Shipment>
+                    getValue={() => {
+                      return getDestinationLocation(row.original);
+                    }}
+                    row={row}
+                    config={{
+                      getEntity: (shipment) => {
+                        return getDestinationLocation(shipment);
+                      },
+                      basePath: "/dispatch/locations",
+                      getId: (location) => location.id,
+                      getDisplayText: (location: Location) => location.name,
+                      getSecondaryInfo: (location) => {
+                        return {
+                          entity: location,
+                          displayText: formatLocation(location),
+                          clickable: false,
+                        };
+                      },
+                    }}
+                  />
+                </div>
+              }
+            />
+            <HoverCardContent>
+              <div className="h-32 w-full overflow-hidden rounded-md border border-border">
+                <Suspense
+                  fallback={
+                    <div className="flex h-full w-full animate-pulse items-center justify-center bg-muted text-xs text-muted-foreground">
+                      Loading map...
+                    </div>
+                  }
+                >
+                  <LazyMapWithKey position={position} />
+                </Suspense>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         );
       },
       meta: {

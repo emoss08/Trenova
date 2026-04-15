@@ -3,10 +3,11 @@ package integration
 type Type string
 
 const (
-	TypeGoogleMaps = Type("GoogleMaps")
-	TypeSamsara    = Type("Samsara")
-	TypeHERE       = Type("HERE")
-	TypeOpenAI     = Type("OpenAI")
+	TypeGoogleMaps     = Type("GoogleMaps")
+	TypeSamsara        = Type("Samsara")
+	TypeHERE           = Type("HERE")
+	TypeOpenAI         = Type("OpenAI")
+	TypeOpenWeatherMap = Type("OpenWeatherMap")
 	// TypePCMiler    Type = "PCMiler"
 	// TypeMotive     Type = "Motive"
 )
@@ -18,4 +19,5 @@ const (
 	CategoryFreightLogistics       = Category("FreightLogistics")
 	CategoryTelematics             = Category("Telematics")
 	CategoryArtificialIntelligence = Category("ArtificialIntelligence")
+	CategoryWeather                = Category("Weather")
 )

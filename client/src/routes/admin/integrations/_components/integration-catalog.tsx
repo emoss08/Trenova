@@ -22,6 +22,8 @@ import { searchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
+import { MagicCard } from "@/components/ui/magic-card";
+import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -55,6 +57,7 @@ export function IntegrationCatalogCard() {
   const [isSamsaraModalOpen, setIsSamsaraModalOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
+  const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -127,13 +130,16 @@ export function IntegrationCatalogCard() {
       case "OpenAI":
         setIsOpenAIModalOpen(true);
         break;
+      case "OpenWeatherMap":
+        setIsOpenWeatherMapModalOpen(true);
+        break;
       default:
         break;
     }
   };
 
   const hasModal = (type: string) =>
-    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI";
+    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI" || type === "OpenWeatherMap";
 
   return (
     <>
@@ -228,10 +234,16 @@ export function IntegrationCatalogCard() {
                     : item.logoLightUrl || item.logoDarkUrl || item.logoUrl;
 
                 return (
-                  <Card
+                  <MagicCard
                     key={item.type}
-                    className="group relative overflow-hidden border-border/80 bg-linear-to-b from-background to-muted/10 transition-all"
+                    mode="orb"
+                    gradientFrom={item.glowFrom ?? item.color}
+                    gradientTo={item.glowTo ?? item.color}
+                    glowFrom={item.glowFrom ?? item.color}
+                    glowTo={item.glowTo ?? item.color}
+                    className="rounded-xl"
                   >
+                    <Card className="group relative overflow-hidden border-none bg-transparent transition-all">
                     <CardHeader className="space-y-2 pb-3">
                       <div className="relative flex items-start justify-between gap-3">
                         <div className="space-y-1 pr-14">
@@ -287,6 +299,7 @@ export function IntegrationCatalogCard() {
                       </div>
                     </CardContent>
                   </Card>
+                  </MagicCard>
                 );
               })}
             </div>
@@ -296,6 +309,7 @@ export function IntegrationCatalogCard() {
       <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
       <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
       <OpenAIIntegrationModal open={isOpenAIModalOpen} onOpenChange={setIsOpenAIModalOpen} />
+      <OpenWeatherMapIntegrationModal open={isOpenWeatherMapModalOpen} onOpenChange={setIsOpenWeatherMapModalOpen} />
     </>
   );
 }
