@@ -75,6 +75,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpClose),
 		h.close,
 	)
+	api.GET(
+		"/:fiscalYearID/close-blockers/",
+		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpRead),
+		h.closeBlockers,
+	)
 	api.PUT(
 		"/:fiscalYearID/activate/",
 		h.pm.RequirePermission(permission.ResourceFiscalYear.String(), permission.OpActivate),
@@ -154,6 +159,32 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) closeBlockers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fiscalYearID, err := pulid.MustParse(c.Param("fiscalYearID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.GetCloseBlockers(
+		c.Request.Context(),
+		repositories.GetFiscalYearByIDRequest{
+			ID: fiscalYearID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // @Summary Create a fiscal year

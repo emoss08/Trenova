@@ -29,7 +29,7 @@ function Input({
       <InputPrimitive
         data-slot="input"
         className={cn(
-          "h-8 w-full min-w-0 rounded-md border border-input bg-muted px-2.5 py-1 text-base outline-none md:text-sm",
+          "h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-base outline-none md:text-sm",
           "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/30 focus-visible:outline-hidden",
           "aria-invalid:border-destructive aria-invalid:bg-destructive/20 aria-invalid:ring-destructive aria-invalid:focus:outline-hidden",
           "aria-invalid:placeholder:text-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-4 aria-invalid:focus-visible:ring-destructive/20",

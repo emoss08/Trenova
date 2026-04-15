@@ -10,12 +10,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
@@ -107,6 +109,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	accessorialchargehandler.New,
 	assignmenthandler.New,
 	accountsreceivablehandler.New,
+	bankreceiptbatchhandler.New,
 	bankreceipthandler.New,
 	bankreceiptworkitemhandler.New,
 	versionhandler.New,
@@ -121,6 +124,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dothazmatreferencehandler.New,
 	commodityhandler.New,
 	customerhandler.New,
+	customerpaymenthandler.New,
 	googlemapshandler.New,
 	accountingcontrolhandler.New,
 	accounttypehandler.New,

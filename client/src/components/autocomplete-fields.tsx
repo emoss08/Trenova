@@ -1,5 +1,8 @@
 import { formatLocation } from "@/lib/utils";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
+import type { BatchSourceOption } from "@/types/bank-receipt-batch";
+import type { FiscalPeriod } from "@/types/fiscal-period";
+import type { FiscalYear } from "@/types/fiscal-year";
 import type { AccountType } from "@/types/account-type";
 import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
@@ -560,6 +563,63 @@ export function CommodityAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
+    />
+  );
+}
+
+export function FiscalYearAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<FiscalYear, T>) {
+  return (
+    <AutocompleteField<FiscalYear, T>
+      link="/fiscal-years/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.year}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function FiscalPeriodAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<FiscalPeriod, T>) {
+  return (
+    <AutocompleteField<FiscalPeriod, T>
+      link="/fiscal-periods/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name || `Period ${option.periodNumber}`}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name || `Period ${option.periodNumber}`}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground capitalize">
+            {option.periodType}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function BatchSourceAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<BatchSourceOption, T>) {
+  return (
+    <AutocompleteField<BatchSourceOption, T>
+      link="/accounting/bank-receipt-batches/select-options/sources/"
+      preload
+      getOptionValue={(option) => option.value}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => option.label}
       {...props}
     />
   );

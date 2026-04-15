@@ -61,7 +61,7 @@ export function DataTableColumnHeader<TData, TValue>({
             <Button
               variant="ghost"
               size="sm"
-              className="-ml-3 h-8 data-open:bg-accent"
+              className="-ml-3 data-open:bg-accent"
             >
               <span className="uppercase">{title}</span>
               {showSortIndex && (

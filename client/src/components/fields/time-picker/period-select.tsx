@@ -56,7 +56,7 @@ export function TimePeriodSelect({
   };
 
   return (
-    <div className="flex h-8 items-center">
+    <div className="flex h-7 items-center">
       <Select
         value={period}
         onValueChange={(value) => handleValueChange(value as Period)}

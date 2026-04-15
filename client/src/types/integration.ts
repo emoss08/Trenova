@@ -56,6 +56,8 @@ export const integrationCatalogItemSchema = z.object({
   websiteUrl: z.string().optional(),
   links: z.array(integrationCatalogLinkSchema),
   color: z.string(),
+  glowFrom: z.string().optional(),
+  glowTo: z.string().optional(),
   featured: z.boolean(),
   sortOrder: z.number().int(),
   primaryActionLabel: z.string(),

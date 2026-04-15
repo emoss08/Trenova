@@ -13,6 +13,12 @@ type GetCustomerPaymentByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ListCustomerPaymentsRequest struct {
+	Filter     *pagination.QueryOptions `json:"filter"`
+	CustomerID pulid.ID                 `json:"customerId"`
+	Status     customerpayment.Status   `json:"status"`
+}
+
 type FindCustomerPaymentMatchCandidatesRequest struct {
 	TenantInfo      pagination.TenantInfo `json:"tenantInfo"`
 	ReferenceNumber string                `json:"referenceNumber"`
@@ -21,6 +27,10 @@ type FindCustomerPaymentMatchCandidatesRequest struct {
 }
 
 type CustomerPaymentRepository interface {
+	List(
+		ctx context.Context,
+		req *ListCustomerPaymentsRequest,
+	) (*pagination.ListResult[*customerpayment.Payment], error)
 	GetByID(
 		ctx context.Context,
 		req GetCustomerPaymentByIDRequest,

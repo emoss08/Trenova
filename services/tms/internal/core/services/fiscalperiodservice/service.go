@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/fiscalcloseblockers"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -69,6 +71,50 @@ func (s *Service) Get(
 	req repositories.GetFiscalPeriodByIDRequest,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetCloseBlockers(
+	ctx context.Context,
+	req repositories.GetFiscalPeriodByIDRequest,
+) (*fiscalclose.Result, error) {
+	entity, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	periods, err := s.repo.ListByFiscalYearID(
+		ctx,
+		repositories.ListByFiscalYearIDRequest{
+			FiscalYearID: entity.FiscalYearID,
+			OrgID:        entity.OrganizationID,
+			BuID:         entity.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	blockers := make([]*fiscalclose.Blocker, 0)
+	blockers = fiscalcloseblockers.AppendFromMultiError(
+		blockers,
+		s.validateCloseWithPeriods(entity, periods),
+		"period",
+	)
+	blockers = fiscalcloseblockers.AppendFromError(
+		blockers,
+		s.validateCloseControl(ctx, entity),
+		"accounting",
+		"period",
+	)
+	if s.validator != nil {
+		blockers = fiscalcloseblockers.AppendFromMultiError(
+			blockers,
+			s.validator.ValidateClose(ctx, entity),
+			"period",
+		)
+	}
+
+	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
 }
 
 func (s *Service) Create(
@@ -731,7 +777,10 @@ func (s *Service) validateCloseWithPeriods(
 	return nil
 }
 
-func (s *Service) validateCloseControl(ctx context.Context, entity *fiscalperiod.FiscalPeriod) error {
+func (s *Service) validateCloseControl(
+	ctx context.Context,
+	entity *fiscalperiod.FiscalPeriod,
+) error {
 	if s.validator == nil || s.validator.accountingRepo == nil {
 		return nil
 	}
@@ -751,7 +800,9 @@ func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Serv
 	if s.policy != nil {
 		return s.policy
 	}
-	return accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()})
+	return accountingcontrolpolicyservice.New(
+		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+	)
 }
 
 func (s *Service) validateReopen(

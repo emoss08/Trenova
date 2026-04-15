@@ -136,6 +136,7 @@ func (s *Service) Import(
 	entity := &bankreceipt.Receipt{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
+		ImportBatchID:   req.BatchID,
 		ReceiptDate:     req.ReceiptDate,
 		AmountMinor:     req.AmountMinor,
 		ReferenceNumber: strings.TrimSpace(req.ReferenceNumber),
@@ -157,7 +158,9 @@ func (s *Service) Import(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(created, nil, actor.UserID, permission.OpCreate, "Bank receipt imported")
+	if !req.SkipAudit {
+		s.logAudit(created, nil, actor.UserID, permission.OpCreate, "Bank receipt imported")
+	}
 	return created, nil
 }
 
@@ -231,13 +234,15 @@ func (s *Service) Match(
 			_, _ = s.workItemRepo.Update(ctx, item)
 		}
 	}
-	s.logAudit(
-		updated,
-		&original,
-		actor.UserID,
-		permission.OpUpdate,
-		"Bank receipt matched to customer payment",
-	)
+	if !req.SkipAudit {
+		s.logAudit(
+			updated,
+			&original,
+			actor.UserID,
+			permission.OpUpdate,
+			"Bank receipt matched to customer payment",
+		)
+	}
 	return updated, nil
 }
 
@@ -262,6 +267,7 @@ func (s *Service) applyReconciliationPolicy(
 			receipt,
 			actor,
 			"Bank receipt has no reference number for automatic matching",
+			!receipt.ImportBatchID.IsNil(),
 		)
 	}
 	candidates, err := s.paymentRepo.FindSuggestedMatchCandidates(
@@ -286,6 +292,7 @@ func (s *Service) applyReconciliationPolicy(
 			&serviceports.MatchBankReceiptRequest{
 				ReceiptID: receipt.ID,
 				PaymentID: suggestions[0].CustomerPaymentID,
+				SkipAudit: !receipt.ImportBatchID.IsNil(),
 				TenantInfo: pagination.TenantInfo{
 					OrgID: receipt.OrganizationID,
 					BuID:  receipt.BusinessUnitID,
@@ -299,6 +306,7 @@ func (s *Service) applyReconciliationPolicy(
 		receipt,
 		actor,
 		"No unique customer payment match found for bank receipt",
+		!receipt.ImportBatchID.IsNil(),
 	)
 }
 
@@ -307,6 +315,7 @@ func (s *Service) markException(
 	receipt *bankreceipt.Receipt,
 	actor *serviceports.RequestActor,
 	reason string,
+	skipAudit bool,
 ) (*bankreceipt.Receipt, error) {
 	original := *receipt
 	receipt.Status = bankreceipt.StatusException
@@ -338,13 +347,15 @@ func (s *Service) markException(
 			)
 		}
 	}
-	s.logAudit(
-		updated,
-		&original,
-		actor.UserID,
-		permission.OpUpdate,
-		"Bank receipt marked as reconciliation exception",
-	)
+	if !skipAudit {
+		s.logAudit(
+			updated,
+			&original,
+			actor.UserID,
+			permission.OpUpdate,
+			"Bank receipt marked as reconciliation exception",
+		)
+	}
 	if s.notificationRepo != nil && s.accountingRepo != nil {
 		control, controlErr := s.accountingRepo.GetByOrgID(ctx, receipt.OrganizationID)
 		if controlErr == nil && control.NotifyOnReconciliationException {

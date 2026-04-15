@@ -27,13 +27,42 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.journal-entry"), entryRepo: p.EntryRepo, sourceRepo: p.SourceRepo}
+	return &Service{
+		l:          p.Logger.Named("service.journal-entry"),
+		entryRepo:  p.EntryRepo,
+		sourceRepo: p.SourceRepo,
+	}
 }
 
-func (s *Service) GetEntry(ctx context.Context, tenantInfo pagination.TenantInfo, entryID pulid.ID) (*journalentry.Entry, error) {
-	return s.entryRepo.GetByID(ctx, repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo})
+func (s *Service) ListEntries(
+	ctx context.Context,
+	req *repositories.ListJournalEntriesRequest,
+) (*pagination.ListResult[*journalentry.Entry], error) {
+	return s.entryRepo.List(ctx, req)
 }
 
-func (s *Service) GetSourceByObject(ctx context.Context, tenantInfo pagination.TenantInfo, sourceObjectType, sourceObjectID string) (*journalsource.Source, error) {
-	return s.sourceRepo.GetByObject(ctx, repositories.GetJournalSourceByObjectRequest{TenantInfo: tenantInfo, SourceObjectType: sourceObjectType, SourceObjectID: sourceObjectID})
+func (s *Service) GetEntry(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entryID pulid.ID,
+) (*journalentry.Entry, error) {
+	return s.entryRepo.GetByID(
+		ctx,
+		repositories.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo},
+	)
+}
+
+func (s *Service) GetSourceByObject(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sourceObjectType, sourceObjectID string,
+) (*journalsource.Source, error) {
+	return s.sourceRepo.GetByObject(
+		ctx,
+		repositories.GetJournalSourceByObjectRequest{
+			TenantInfo:       tenantInfo,
+			SourceObjectType: sourceObjectType,
+			SourceObjectID:   sourceObjectID,
+		},
+	)
 }

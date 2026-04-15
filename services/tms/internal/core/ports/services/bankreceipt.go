@@ -13,12 +13,15 @@ type ImportBankReceiptRequest struct {
 	AmountMinor     int64                 `json:"amountMinor"`
 	ReferenceNumber string                `json:"referenceNumber"`
 	Memo            string                `json:"memo"`
+	BatchID         pulid.ID              `json:"batchId"`
+	SkipAudit       bool                  `json:"-"`
 	TenantInfo      pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type MatchBankReceiptRequest struct {
 	ReceiptID  pulid.ID              `json:"receiptId"`
 	PaymentID  pulid.ID              `json:"paymentId"`
+	SkipAudit  bool                  `json:"-"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 

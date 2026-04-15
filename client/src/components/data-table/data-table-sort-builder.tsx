@@ -166,7 +166,7 @@ export default function DataTableSortBuilder<TData>({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button variant="outline" size="sm" className="h-8">
+          <Button variant="outline" size="sm">
             <ArrowUpDownIcon className="size-3.5" />
             Sort
             {sortCount > 0 && (

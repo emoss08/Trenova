@@ -43,8 +43,8 @@ function SelectTrigger({
       className={cn(
         "border-input bg-muted data-[placeholder]:text-muted-foreground",
         "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40",
-        "x gap-1.5 rounded-lg border py-2 pr-2 pl-2.5 text-sm transition-colors aria-invalid:border-destructive dark:aria-invalid:border-destructive/50",
-        "select-none focus-visible:ring-[3px] aria-invalid:ring-[3px] data-[size=default]:h-8 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)]",
+        "x gap-1.5 rounded-lg border py-1 pr-2 pl-2 text-sm transition-colors aria-invalid:border-destructive dark:aria-invalid:border-destructive/50",
+        "select-none focus-visible:ring-[3px] aria-invalid:ring-[3px] data-[size=default]:h-7 data-[size=sm]:h-6 data-[size=sm]:rounded-[min(var(--radius-md),10px)]",
         "flex w-fit items-center justify-between whitespace-nowrap *:data-[slot=select-value]:flex *:data-[slot=select-value]:gap-1.5 [&_svg:not([class*='size-'])]:size-4",
         "outline-none disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -116,7 +116,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-0.5 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}

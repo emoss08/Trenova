@@ -29,7 +29,7 @@ export default function DataTableConfigManager({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button variant="outline" size="sm" className="h-8">
+          <Button variant="outline" size="sm">
             <BookmarkIcon className="size-4" />
             <span className="hidden pt-0.5 lg:inline">Views</span>
           </Button>
@@ -64,7 +64,7 @@ export default function DataTableConfigManager({
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 rounded-t-none border-t border-border"
+          className="rounded-t-none border-t border-border"
           onClick={onSaveConfig}
         >
           <PlusIcon className="size-4" />

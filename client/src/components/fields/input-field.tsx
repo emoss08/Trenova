@@ -63,7 +63,7 @@ export function InputFieldSkeleton() {
   return (
     <div className="flex flex-col gap-0.5">
       <Skeleton className="flex h-4 w-37.5 items-center" />
-      <Skeleton className="h-9 max-w-prose" />
+      <Skeleton className="h-7 max-w-prose" />
       <Skeleton className="h-4 max-w-md" />
     </div>
   );

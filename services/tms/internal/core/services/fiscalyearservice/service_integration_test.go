@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -117,6 +118,28 @@ func TestActivateReturnsConflictWhenCurrentFiscalYearIsLocked(t *testing.T) {
 		Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
+}
+
+func TestGetCloseBlockersReturnsOpenPeriodBlocker(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	conn := postgres.NewTestConnection(db)
+	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
+	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fyRepo, fiscalPeriodRepo: fpRepo, auditService: &mocks.NoopAuditService{}}
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	fy := mustCreateFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, Status: fiscalyear.StatusOpen, Year: 2026, Name: "FY 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(), IsCurrent: false})
+	_, err := fpRepo.Create(ctx, &fiscalperiod.FiscalPeriod{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, FiscalYearID: fy.ID, PeriodNumber: 1, PeriodType: fiscalperiod.PeriodTypeMonth, Status: fiscalperiod.StatusOpen, Name: "Period 1 - January 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.January, 31, 23, 59, 59, 0, time.UTC).Unix()})
+	require.NoError(t, err)
+
+	result, err := svc.GetCloseBlockers(ctx, repositories.GetFiscalYearByIDRequest{ID: fy.ID, TenantInfo: pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.CanClose)
+	require.NotEmpty(t, result.Blockers)
+	assert.Contains(t, result.Blockers[0].Message, "period(s) are still open")
 }
 
 func mustCreateFiscalYear(

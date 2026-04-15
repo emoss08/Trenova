@@ -176,6 +176,74 @@ func (_c *MockBankReceiptRepository_GetByID_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// GetSummary provides a mock function for the type MockBankReceiptRepository
+func (_mock *MockBankReceiptRepository) GetSummary(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSummary")
+	}
+
+	var r0 *bankreceipt.ReconciliationSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) *bankreceipt.ReconciliationSummary); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bankreceipt.ReconciliationSummary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetBankReceiptSummaryRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBankReceiptRepository_GetSummary_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSummary'
+type MockBankReceiptRepository_GetSummary_Call struct {
+	*mock.Call
+}
+
+// GetSummary is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetBankReceiptSummaryRequest
+func (_e *MockBankReceiptRepository_Expecter) GetSummary(ctx interface{}, req interface{}) *MockBankReceiptRepository_GetSummary_Call {
+	return &MockBankReceiptRepository_GetSummary_Call{Call: _e.mock.On("GetSummary", ctx, req)}
+}
+
+func (_c *MockBankReceiptRepository_GetSummary_Call) Run(run func(ctx context.Context, req repositories.GetBankReceiptSummaryRequest)) *MockBankReceiptRepository_GetSummary_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetBankReceiptSummaryRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetBankReceiptSummaryRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBankReceiptRepository_GetSummary_Call) Return(reconciliationSummary *bankreceipt.ReconciliationSummary, err error) *MockBankReceiptRepository_GetSummary_Call {
+	_c.Call.Return(reconciliationSummary, err)
+	return _c
+}
+
+func (_c *MockBankReceiptRepository_GetSummary_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error)) *MockBankReceiptRepository_GetSummary_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListExceptions provides a mock function for the type MockBankReceiptRepository
 func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.Receipt, error) {
 	ret := _mock.Called(ctx, tenantInfo)

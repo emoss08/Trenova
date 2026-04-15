@@ -39,7 +39,7 @@ export function CheckboxField<T extends FieldValues>({
       }) => (
         <div
           className={cn(
-            "relative flex w-full items-start gap-2 rounded-md p-3",
+            "relative flex w-full items-start gap-2 rounded-md p-2.5",
             outlined &&
               "border border-muted-foreground/20 bg-muted transition-[border-color,box-shadow] duration-200 ease-in-out has-data-[state=checked]:border-foreground has-data-[state=checked]:ring-4 has-data-[state=checked]:ring-foreground/20",
           )}

@@ -31,3 +31,45 @@ type AgingSummary struct {
 	Totals   AgingBucketTotals   `json:"totals"`
 	Rows     []*CustomerAgingRow `json:"rows"`
 }
+
+type OpenItem struct {
+	InvoiceID          pulid.ID `json:"invoiceId"`
+	CustomerID         pulid.ID `json:"customerId"`
+	CustomerName       string   `json:"customerName"`
+	InvoiceNumber      string   `json:"invoiceNumber"`
+	BillType           string   `json:"billType"`
+	InvoiceDate        int64    `json:"invoiceDate"`
+	DueDate            int64    `json:"dueDate"`
+	CurrencyCode       string   `json:"currencyCode"`
+	ShipmentProNumber  string   `json:"shipmentProNumber"`
+	ShipmentBOL        string   `json:"shipmentBOL"`
+	TotalAmountMinor   int64    `json:"totalAmountMinor"`
+	AppliedAmountMinor int64    `json:"appliedAmountMinor"`
+	OpenAmountMinor    int64    `json:"openAmountMinor"`
+	DaysPastDue        int      `json:"daysPastDue"`
+}
+
+type StatementTransaction struct {
+	TransactionDate     int64  `json:"transactionDate"`
+	EventType           string `json:"eventType"`
+	DocumentNumber      string `json:"documentNumber"`
+	SourceObjectID      string `json:"sourceObjectId"`
+	AmountMinor         int64  `json:"amountMinor"`
+	ChargeMinor         int64  `json:"chargeMinor"`
+	PaymentMinor        int64  `json:"paymentMinor"`
+	RunningBalanceMinor int64  `json:"runningBalanceMinor"`
+}
+
+type CustomerStatement struct {
+	CustomerID          pulid.ID                `json:"customerId"`
+	CustomerName        string                  `json:"customerName"`
+	StatementDate       int64                   `json:"statementDate"`
+	StartDate           int64                   `json:"startDate"`
+	OpeningBalanceMinor int64                   `json:"openingBalanceMinor"`
+	TotalChargesMinor   int64                   `json:"totalChargesMinor"`
+	TotalPaymentsMinor  int64                   `json:"totalPaymentsMinor"`
+	EndingBalanceMinor  int64                   `json:"endingBalanceMinor"`
+	Aging               AgingBucketTotals       `json:"aging"`
+	Transactions        []*StatementTransaction `json:"transactions"`
+	OpenItems           []*OpenItem             `json:"openItems"`
+}

@@ -13,6 +13,16 @@ type GetJournalEntryByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type ListJournalEntriesRequest struct {
+	Filter              *pagination.QueryOptions `json:"filter"`
+	FiscalYearID        pulid.ID                 `json:"fiscalYearId"`
+	FiscalPeriodID      pulid.ID                 `json:"fiscalPeriodId"`
+	ReferenceType       string                   `json:"referenceType"`
+	Status              string                   `json:"status"`
+	AccountingDateStart int64                    `json:"accountingDateStart"`
+	AccountingDateEnd   int64                    `json:"accountingDateEnd"`
+}
+
 type MarkJournalEntryReversedRequest struct {
 	OriginalEntryID pulid.ID `json:"originalEntryId"`
 	ReversalEntryID pulid.ID `json:"reversalEntryId"`
@@ -24,6 +34,7 @@ type MarkJournalEntryReversedRequest struct {
 }
 
 type JournalEntryRepository interface {
+	List(ctx context.Context, req *ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error)
 	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.Entry, error)
 	MarkReversed(ctx context.Context, req MarkJournalEntryReversedRequest) error
 }

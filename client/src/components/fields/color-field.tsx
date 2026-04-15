@@ -179,7 +179,7 @@ function ColorFieldInput<T extends FieldValues>({
         <Input
           id="custom"
           value={value || ""}
-          className="col-span-2 mt-4 h-7"
+          className="col-span-2 mt-4 h-6"
           placeholder="Enter a custom color (e.g. #000000)"
           onChange={(e) => onChange(e.target.value)}
         />

@@ -19,6 +19,15 @@ import { DocumentControlService } from "./document-control";
 import { DocumentOperationsService } from "./document-operations";
 import { DocumentPacketRuleService } from "./document-packet-rule";
 import { DocumentParsingRuleService } from "./document-parsing-rule";
+import { AccountingReportService } from "./accounting-report";
+import { ARService } from "./ar";
+import { BankReceiptService } from "./bank-receipt";
+import { BankReceiptBatchService } from "./bank-receipt-batch";
+import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
+import { CustomerPaymentService } from "./customer-payment";
+import { JournalEntryService } from "./journal-entry";
+import { JournalReversalService } from "./journal-reversal";
+import { ManualJournalService } from "./manual-journal";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
 import { FiscalPeriodService } from "./fiscal-period";
@@ -50,6 +59,7 @@ import { TableConfigurationService } from "./table-configuration";
 import { TractorService } from "./tractor";
 import { TrailerService } from "./trailer";
 import { UserService } from "./user";
+import { WeatherRadarService } from "./weather-radar";
 import { WorkerService } from "./worker";
 
 class APIService {
@@ -106,6 +116,16 @@ class APIService {
   public documentOperationsService: DocumentOperationsService;
   public documentPacketRuleService: DocumentPacketRuleService;
   public documentParsingRuleService: DocumentParsingRuleService;
+  public manualJournalService: ManualJournalService;
+  public journalReversalService: JournalReversalService;
+  public journalEntryService: JournalEntryService;
+  public accountingReportService: AccountingReportService;
+  public arService: ARService;
+  public customerPaymentService: CustomerPaymentService;
+  public bankReceiptService: BankReceiptService;
+  public bankReceiptBatchService: BankReceiptBatchService;
+  public bankReceiptWorkItemService: BankReceiptWorkItemService;
+  public weatherRadarService: WeatherRadarService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -161,6 +181,16 @@ class APIService {
     this.documentOperationsService = new DocumentOperationsService();
     this.documentPacketRuleService = new DocumentPacketRuleService();
     this.documentParsingRuleService = new DocumentParsingRuleService();
+    this.manualJournalService = new ManualJournalService();
+    this.journalReversalService = new JournalReversalService();
+    this.journalEntryService = new JournalEntryService();
+    this.accountingReportService = new AccountingReportService();
+    this.arService = new ARService();
+    this.customerPaymentService = new CustomerPaymentService();
+    this.bankReceiptService = new BankReceiptService();
+    this.bankReceiptBatchService = new BankReceiptBatchService();
+    this.bankReceiptWorkItemService = new BankReceiptWorkItemService();
+    this.weatherRadarService = new WeatherRadarService();
   }
 }
 

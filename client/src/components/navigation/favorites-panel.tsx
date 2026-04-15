@@ -27,18 +27,18 @@ export function FavoritesPanel({ collapsed, onToggleCollapse }: FavoritesPanelPr
   }
 
   return (
-    <div className="flex h-full w-[220px] flex-col border-r border-border bg-background transition-all duration-200">
+    <div className="flex h-full w-[200px] flex-col border-r border-border bg-background transition-all duration-200">
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-1.5">
-          <Star className="size-3.5 fill-amber-400 text-amber-400" />
-          <h2 className="text-sm font-semibold truncate">Favorites</h2>
+          <Star className="size-3 fill-amber-400 text-amber-400" />
+          <h2 className="text-base font-semibold truncate">Favorites</h2>
         </div>
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex size-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
-          <ChevronLeftIcon className="size-4" />
+          <ChevronLeftIcon className="size-3.5" />
         </button>
       </div>
 
@@ -46,9 +46,9 @@ export function FavoritesPanel({ collapsed, onToggleCollapse }: FavoritesPanelPr
         <div className="flex flex-col gap-0.5 px-2 pb-3">
           {isLoading ? (
             <>
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
-              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-6 w-full rounded-md" />
+              <Skeleton className="h-6 w-full rounded-md" />
+              <Skeleton className="h-6 w-full rounded-md" />
             </>
           ) : favorites && favorites.length > 0 ? (
             favorites.map((fav) => {
@@ -58,7 +58,7 @@ export function FavoritesPanel({ collapsed, onToggleCollapse }: FavoritesPanelPr
                   key={fav.id}
                   to={fav.pageUrl}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 h-7 text-[13px] transition-colors",
+                    "flex items-center gap-2 rounded-md px-2 h-6 text-base transition-colors",
                     active
                       ? "bg-accent text-accent-foreground font-medium"
                       : "text-foreground/70 hover:bg-muted hover:text-foreground",

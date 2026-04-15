@@ -63,7 +63,13 @@ export type BaseEndpoint =
   | "/billing/invoice-adjustments/approvals/"
   | "/billing/invoice-adjustments/reconciliation-exceptions/"
   | "/billing/invoice-adjustments/batches/"
-  | "/billing/invoice-adjustments/summary/";
+  | "/billing/invoice-adjustments/summary/"
+  | "/accounting/manual-journals/"
+  | "/accounting/journal-reversals/"
+  | "/accounting/bank-receipts/"
+  | "/accounting/bank-receipt-batches/"
+  | "/accounting/bank-receipt-batches/select-options/sources/"
+  | "/accounting/bank-receipt-work-items/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

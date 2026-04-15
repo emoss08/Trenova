@@ -42,7 +42,7 @@ export function DataTableViewOptions<TData>({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button variant="outline" size="sm" className="h-8">
+          <Button variant="outline" size="sm">
             <Columns3Icon className="size-4" />
             <span className="hidden pt-0.5 lg:inline">Columns</span>
           </Button>
@@ -50,7 +50,7 @@ export function DataTableViewOptions<TData>({
       />
       <PopoverContent className="dark w-48 p-0" align="end">
         <Command>
-          <CommandInput className="h-8" placeholder="Search columns..." />
+          <CommandInput className="h-7" placeholder="Search columns..." />
           <CommandList>
             <CommandEmpty>No columns found.</CommandEmpty>
             <CommandGroup>

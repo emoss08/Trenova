@@ -256,6 +256,31 @@ func TestCloseBlockedByPendingJournalSource(t *testing.T) {
 	assert.Contains(t, err.Error(), "accounting sources")
 }
 
+func TestGetCloseBlockersReturnsManualJournalBlocker(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	conn := postgres.NewTestConnection(db)
+	fyRepo := fiscalyearrepository.New(fiscalyearrepository.Params{DB: conn, Logger: zap.NewNop()})
+	fpRepo := fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: zap.NewNop()})
+	validator := &Validator{db: conn}
+	svc := &Service{l: zap.NewNop(), db: conn, repo: fpRepo, validator: validator, auditService: &mocks.NoopAuditService{}}
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	fy := mustCreateIntegrationFiscalYear(t, ctx, fyRepo, &fiscalyear.FiscalYear{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, Status: fiscalyear.StatusOpen, Year: 2026, Name: "FY 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.December, 31, 23, 59, 59, 0, time.UTC).Unix(), IsCurrent: true})
+	period := mustCreateFiscalPeriod(t, ctx, fpRepo, &fiscalperiod.FiscalPeriod{OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, FiscalYearID: fy.ID, PeriodNumber: 1, PeriodType: fiscalperiod.PeriodTypeMonth, Status: fiscalperiod.StatusOpen, Name: "Period 1 - January 2026", StartDate: time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), EndDate: time.Date(2026, time.January, 31, 23, 59, 59, 0, time.UTC).Unix()})
+
+	_, err := db.NewInsert().Model(&manualJournalRequestRecord{ID: pulid.MustNew("mjr_"), OrganizationID: data.Organization.ID, BusinessUnitID: data.BusinessUnit.ID, RequestNumber: "MJR-CL-2", Status: "Approved", Description: "Close blocker", AccountingDate: period.StartDate, RequestedFiscalYearID: fy.ID, RequestedFiscalPeriodID: period.ID, CurrencyCode: "USD", TotalDebitMinor: 100, TotalCreditMinor: 100, CreatedByID: data.User.ID}).Exec(ctx)
+	require.NoError(t, err)
+
+	result, err := svc.GetCloseBlockers(ctx, repositories.GetFiscalPeriodByIDRequest{ID: period.ID, TenantInfo: pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}})
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.False(t, result.CanClose)
+	require.NotEmpty(t, result.Blockers)
+	assert.Contains(t, result.Blockers[0].Message, "manual journal requests")
+}
+
 func TestLockSucceedsFromOpenStatus(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)

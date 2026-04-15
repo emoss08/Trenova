@@ -557,7 +557,7 @@ export function MultiSelectAutocomplete<T>({
               aria-expanded={open}
               aria-controls={listboxId}
               className={cn(
-                "h-8 w-full cursor-auto gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1.5 font-normal",
+                "h-auto min-h-7 w-full cursor-auto gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1 font-normal",
                 "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
                 "cursor-pointer justify-between hover:bg-muted-foreground/20 [&_svg]:size-3 [&_svg]:shrink-0",
                 "transition-all duration-200 ease-in-out",

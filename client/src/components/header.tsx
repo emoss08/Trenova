@@ -32,7 +32,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6",
+        "sticky top-0 z-50 flex h-10 shrink-0 items-center justify-between gap-2 border-b px-4 md:px-6",
         "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/50",
       )}
     >
@@ -98,7 +98,7 @@ function HistoryNavigation() {
                 disabled={!canGoBack}
                 aria-label="Go back"
               >
-                <ChevronLeft className="size-4" />
+                <ChevronLeft className="size-3.5" />
               </Button>
             }
           />
@@ -115,7 +115,7 @@ function HistoryNavigation() {
                 disabled={!canGoForward}
                 aria-label="Go forward"
               >
-                <ChevronRight className="size-4" />
+                <ChevronRight className="size-3.5" />
               </Button>
             }
           />
@@ -172,7 +172,7 @@ function NavActions() {
               >
                 <Star
                   className={cn(
-                    "size-4 transition-colors",
+                    "size-3.5 transition-colors",
                     isFavorited && "fill-amber-400 text-amber-400",
                   )}
                 />
@@ -199,7 +199,7 @@ function ModulePanelToggle() {
       onClick={toggleModulePanel}
       aria-label="Toggle navigation panel"
     >
-      <PanelLeftIcon className="size-4" />
+      <PanelLeftIcon className="size-3.5" />
     </Button>
   );
 }

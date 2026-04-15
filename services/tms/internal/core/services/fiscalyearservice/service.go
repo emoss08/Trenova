@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/fiscalcloseblockers"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -97,6 +99,23 @@ func (s *Service) Get(
 	req repositories.GetFiscalYearByIDRequest,
 ) (*fiscalyear.FiscalYear, error) {
 	return s.repo.GetByID(ctx, req)
+}
+
+func (s *Service) GetCloseBlockers(
+	ctx context.Context,
+	req repositories.GetFiscalYearByIDRequest,
+) (*fiscalclose.Result, error) {
+	entity, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	blockers := fiscalcloseblockers.AppendFromMultiError(
+		make([]*fiscalclose.Blocker, 0),
+		s.validateClose(ctx, entity),
+		"year",
+	)
+	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
 }
 
 func (s *Service) GetCurrentFiscalYear(

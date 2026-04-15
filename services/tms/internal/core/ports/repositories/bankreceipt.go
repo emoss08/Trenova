@@ -18,8 +18,14 @@ type GetBankReceiptSummaryRequest struct {
 	AsOfDate   int64                 `json:"asOfDate"`
 }
 
+type ListBankReceiptsByImportBatchRequest struct {
+	BatchID    pulid.ID              `json:"batchId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type BankReceiptRepository interface {
 	GetByID(ctx context.Context, req GetBankReceiptByIDRequest) (*bankreceipt.Receipt, error)
+	ListByImportBatchID(ctx context.Context, req ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error)
 	ListExceptions(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

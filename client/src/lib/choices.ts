@@ -1,5 +1,11 @@
 import type { AccessorialChargeMethod, RateUnit } from "@/types/accessorial-charge";
 import type { AccountCategory } from "@/types/account-type";
+import type { BankReceiptStatus } from "@/types/bank-receipt";
+import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
+import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
+import type { PaymentMethod } from "@/types/customer-payment";
+import type { JournalReversalStatus } from "@/types/journal-reversal";
+import type { ManualJournalStatus } from "@/types/manual-journal";
 import type {
   AccountingBasis,
   ClosedPeriodPostingPolicy,
@@ -941,3 +947,56 @@ export const exceptionReasonLabels: Record<ExceptionReasonCode, string> = {
   RateNotOnFile: "Rate Not On File",
   Other: "Other",
 };
+
+export const manualJournalStatusChoices = [
+  { label: "Draft", value: "Draft" },
+  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Approved", value: "Approved" },
+  { label: "Rejected", value: "Rejected" },
+  { label: "Cancelled", value: "Cancelled" },
+  { label: "Posted", value: "Posted" },
+] satisfies ReadonlyArray<GenericSelectOption<ManualJournalStatus>>;
+
+export const journalReversalStatusChoices = [
+  { label: "Requested", value: "Requested" },
+  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Approved", value: "Approved" },
+  { label: "Rejected", value: "Rejected" },
+  { label: "Cancelled", value: "Cancelled" },
+  { label: "Posted", value: "Posted" },
+] satisfies ReadonlyArray<GenericSelectOption<JournalReversalStatus>>;
+
+export const bankReceiptBatchStatusChoices = [
+  { label: "Processing", value: "Processing" },
+  { label: "Completed", value: "Completed" },
+] satisfies ReadonlyArray<GenericSelectOption<BankReceiptBatchStatus>>;
+
+export const bankReceiptStatusChoices = [
+  { label: "Imported", value: "Imported" },
+  { label: "Matched", value: "Matched" },
+  { label: "Exception", value: "Exception" },
+] satisfies ReadonlyArray<GenericSelectOption<BankReceiptStatus>>;
+
+export const workItemStatusChoices = [
+  { label: "Open", value: "Open" },
+  { label: "Assigned", value: "Assigned" },
+  { label: "In Review", value: "InReview" },
+  { label: "Resolved", value: "Resolved" },
+  { label: "Dismissed", value: "Dismissed" },
+] satisfies ReadonlyArray<GenericSelectOption<WorkItemStatus>>;
+
+export const paymentMethodChoices = [
+  { label: "ACH", value: "ACH" },
+  { label: "Check", value: "Check" },
+  { label: "Wire", value: "Wire" },
+  { label: "Card", value: "Card" },
+  { label: "Cash", value: "Cash" },
+  { label: "Other", value: "Other" },
+] satisfies ReadonlyArray<GenericSelectOption<PaymentMethod>>;
+
+export const resolutionTypeChoices = [
+  { label: "Matched to Payment", value: "MatchedToPayment" },
+  { label: "Marked False Positive", value: "MarkedFalsePositive" },
+  { label: "Requires External Follow-Up", value: "RequiresExternalFollowUp" },
+  { label: "Superseded", value: "Superseded" },
+] satisfies ReadonlyArray<GenericSelectOption<ResolutionType>>;

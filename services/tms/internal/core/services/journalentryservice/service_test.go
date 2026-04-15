@@ -70,3 +70,18 @@ func TestGetSourceByObjectDelegatesToRepository(t *testing.T) {
 	assert.Equal(t, "Invoice", actualReq.SourceObjectType)
 	assert.Equal(t, "inv_123", actualReq.SourceObjectID)
 }
+
+func TestListEntriesDelegatesToRepository(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockJournalEntryRepository(t)
+	req := &repositories.ListJournalEntriesRequest{Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}}}
+	expected := &pagination.ListResult[*journalentry.Entry]{Items: []*journalentry.Entry{{ID: pulid.MustNew("je_")}}, Total: 1}
+	repo.EXPECT().List(mock.Anything, req).Return(expected, nil).Once()
+	svc := &Service{entryRepo: repo}
+
+	result, err := svc.ListEntries(t.Context(), req)
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+}

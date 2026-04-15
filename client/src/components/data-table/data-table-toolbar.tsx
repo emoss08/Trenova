@@ -35,11 +35,11 @@ const DataTableConfigManager = lazy(
 );
 
 function ToolbarButtonSkeleton() {
-  return <Skeleton className="h-8 w-20" />;
+  return <Skeleton className="h-7 w-20" />;
 }
 
 function SearchSkeleton() {
-  return <Skeleton className="h-8 w-48" />;
+  return <Skeleton className="h-7 w-48" />;
 }
 
 type DataTableToolbarProps<TData> = {

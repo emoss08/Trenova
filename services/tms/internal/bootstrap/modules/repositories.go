@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditdlqrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptbatchrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/bankreceiptworkitemrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/billingcontrolrepository"
@@ -134,6 +135,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	accessorialchargerepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,
+	bankreceiptbatchrepository.New,
 	bankreceiptworkitemrepository.New,
 	servicetyperepository.New,
 	sequenceconfigrepository.New,

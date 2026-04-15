@@ -482,7 +482,11 @@ func (r *Registry) registerOperationsResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View shipment holds"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create shipment holds"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify and release shipment holds"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify and release shipment holds",
+			},
 		},
 		DefaultSensitivity: SensitivityInternal,
 	})
@@ -544,9 +548,21 @@ func (r *Registry) registerBillingResources() {
 		Category:    "Billing",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View billing queue items"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Transfer shipments to billing queue"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Update billing queue item status"},
-			{Operation: OpAssign, DisplayName: "Assign", Description: "Assign billers to queue items"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Transfer shipments to billing queue",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Update billing queue item status",
+			},
+			{
+				Operation:   OpAssign,
+				DisplayName: "Assign",
+				Description: "Assign billers to queue items",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -748,11 +764,19 @@ func (r *Registry) registerAccountingResources() {
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View manual journals"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Create manual journal drafts"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create manual journal drafts",
+			},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Edit manual journal drafts"},
 			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve manual journals"},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject manual journals"},
-			{Operation: OpSubmit, DisplayName: "Submit", Description: "Submit manual journals for approval"},
+			{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Submit manual journals for approval",
+			},
 			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel manual journals"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -765,8 +789,16 @@ func (r *Registry) registerAccountingResources() {
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View journal reversals"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Create journal reversal requests"},
-			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve journal reversals"},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create journal reversal requests",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve journal reversals",
+			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject journal reversals"},
 			{Operation: OpCancel, DisplayName: "Cancel", Description: "Cancel journal reversals"},
 		},
@@ -779,7 +811,11 @@ func (r *Registry) registerAccountingResources() {
 		Description: "Journal entry details and source drill-down",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View journal entry details and accounting sources"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View journal entry details and accounting sources",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -792,6 +828,11 @@ func (r *Registry) registerAccountingResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View customer payments"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Post customer payments"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Apply and reverse customer payments",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -815,7 +856,11 @@ func (r *Registry) registerAccountingResources() {
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipts"},
 			{Operation: OpCreate, DisplayName: "Create", Description: "Import bank receipts"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Match bank receipts to payments"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Match bank receipts to payments",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
@@ -827,7 +872,11 @@ func (r *Registry) registerAccountingResources() {
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
 			{Operation: OpRead, DisplayName: "Read", Description: "View bank receipt work queue"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Assign and resolve bank receipt work items"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Assign and resolve bank receipt work items",
+			},
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})

@@ -16,7 +16,7 @@ function Textarea({ className, isInvalid, ...props }: TextareaProps) {
     <TextareaAutosizeComponent
       data-slot="textarea"
       className={cn(
-        "flex w-full rounded-md border border-input bg-muted px-2 py-1 text-base",
+        "flex w-full rounded-md border border-input bg-muted px-2 py-0.5 text-base",
         "shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden",
         "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
         "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",

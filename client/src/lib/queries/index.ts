@@ -1,5 +1,13 @@
 import { mergeQueryKeys } from "@lukemorales/query-key-factory";
 import { accountingControl } from "./accounting-control";
+import { accountingReport } from "./accounting-report";
+import { ar } from "./ar";
+import { bankReceipt } from "./bank-receipt";
+import { bankReceiptBatch } from "./bank-receipt-batch";
+import { bankReceiptWorkItem } from "./bank-receipt-work-item";
+import { journalEntry } from "./journal-entry";
+import { journalReversal } from "./journal-reversal";
+import { manualJournal } from "./manual-journal";
 import { analytics } from "./analytics";
 import { audit } from "./audit";
 import { billingControl } from "./billing-control";
@@ -24,10 +32,19 @@ import { notification } from "./notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
 import { user, userOrganization } from "./user";
+import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
 
 export const queries = mergeQueryKeys(
   accountingControl,
+  accountingReport,
+  ar,
+  bankReceipt,
+  bankReceiptBatch,
+  bankReceiptWorkItem,
+  journalEntry,
+  journalReversal,
+  manualJournal,
   billingControl,
   billingQueue,
   dataEntryControl,
@@ -54,4 +71,5 @@ export const queries = mergeQueryKeys(
   audit,
   notification,
   tableChangeAlert,
+  weatherRadar,
 );

@@ -69,7 +69,7 @@ export function NumberInput({
         disabled={disabled}
         readOnly={readOnly}
         className={cn(
-          "flex h-8 w-full min-w-0 rounded-md border border-input bg-muted px-2.5 py-1 text-base outline-none md:text-sm",
+          "flex h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 text-base outline-none md:text-sm",
           "placeholder:text-muted-foreground",
           "focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/20 focus-visible:outline-hidden",
           "disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50",
@@ -80,17 +80,17 @@ export function NumberInput({
         {...props}
       />
 
-      <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0 h-7">
+      <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0 h-6">
         {sideText ? (
           <div className="pointer-events-none mr-2 text-xs text-muted-foreground select-none">
             {sideText}
           </div>
         ) : null}
-        <div className="absolute top-px right-px bottom-px flex h-7 flex-col items-stretch rounded-r-md border-l border-muted-foreground/20 bg-transparent">
+        <div className="absolute top-px right-px bottom-px flex h-6 flex-col items-stretch rounded-r-md border-l border-muted-foreground/20 bg-transparent">
           <button
             type="button"
             aria-label="Increment"
-            className="inline-flex w-7 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+            className="inline-flex w-6 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             disabled={disabled || readOnly}
             onClick={() => applyNumericValue(currentValue + step)}
           >
@@ -99,7 +99,7 @@ export function NumberInput({
           <button
             type="button"
             aria-label="Decrement"
-            className="inline-flex w-7 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+            className="inline-flex w-6 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
             disabled={disabled || readOnly}
             onClick={() => applyNumericValue(currentValue - step)}
           >

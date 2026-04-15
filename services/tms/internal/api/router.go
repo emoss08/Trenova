@@ -12,12 +12,14 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/assignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/audithandler"
 	"github.com/emoss08/trenova/internal/api/handlers/authhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptbatchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceipthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/bankreceiptworkitemhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
@@ -105,6 +107,7 @@ type RouterParams struct {
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
+	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	AuditHandler                    *audithandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
@@ -139,6 +142,7 @@ type RouterParams struct {
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
+	CustomerPaymentHandler          *customerpaymenthandler.Handler
 	GoogleMapsHandler               *googlemapshandler.Handler
 	AccountingControlHandler        *accountingcontrolhandler.Handler
 	AccountsReceivableHandler       *accountsreceivablehandler.Handler
@@ -187,6 +191,7 @@ type Router struct {
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
+	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	auditHandler                    *audithandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
@@ -221,6 +226,7 @@ type Router struct {
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	customerHandler                 *customerhandler.Handler
+	customerPaymentHandler          *customerpaymenthandler.Handler
 	googleMapsHandler               *googlemapshandler.Handler
 	accountingControlHandler        *accountingcontrolhandler.Handler
 	accountsReceivableHandler       *accountsreceivablehandler.Handler
@@ -271,6 +277,7 @@ func NewRouter(p RouterParams) *Router {
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
+		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		auditHandler:                    p.AuditHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
@@ -305,6 +312,7 @@ func NewRouter(p RouterParams) *Router {
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		commodityHandler:                p.CommodityHandler,
 		customerHandler:                 p.CustomerHandler,
+		customerPaymentHandler:          p.CustomerPaymentHandler,
 		googleMapsHandler:               p.GoogleMapsHandler,
 		accountingControlHandler:        p.AccountingControlHandler,
 		accountsReceivableHandler:       p.AccountsReceivableHandler,
@@ -401,6 +409,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 
 	r.organizationHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
+	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.auditHandler.RegisterRoutes(protected)
@@ -435,6 +444,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dotHazmatReferenceHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
+	r.customerPaymentHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.accountsReceivableHandler.RegisterRoutes(protected)

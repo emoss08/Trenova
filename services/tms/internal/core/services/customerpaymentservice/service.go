@@ -14,6 +14,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -52,19 +53,53 @@ type Service struct {
 }
 
 func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.customer-payment"), db: p.DB, repo: p.Repo, invoiceRepo: p.InvoiceRepo, customerLedgerRepo: p.CustomerLedgerRepo, accountingRepo: p.AccountingRepo, journalRepo: p.JournalRepo, generator: p.Generator, validator: p.Validator, auditService: p.AuditService}
+	return &Service{
+		l:                  p.Logger.Named("service.customer-payment"),
+		db:                 p.DB,
+		repo:               p.Repo,
+		invoiceRepo:        p.InvoiceRepo,
+		customerLedgerRepo: p.CustomerLedgerRepo,
+		accountingRepo:     p.AccountingRepo,
+		journalRepo:        p.JournalRepo,
+		generator:          p.Generator,
+		validator:          p.Validator,
+		auditService:       p.AuditService,
+	}
 }
 
-func (s *Service) Get(ctx context.Context, req *serviceports.GetCustomerPaymentRequest) (*customerpayment.Payment, error) {
-	return s.repo.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo})
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListCustomerPaymentsRequest,
+) (*pagination.ListResult[*customerpayment.Payment], error) {
+	return s.repo.List(ctx, req)
 }
 
-func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *serviceports.GetCustomerPaymentRequest,
+) (*customerpayment.Payment, error) {
+	return s.repo.GetByID(
+		ctx,
+		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
+	)
+}
+
+func (s *Service) PostAndApply(
+	ctx context.Context,
+	req *serviceports.PostCustomerPaymentRequest,
+	actor *serviceports.RequestActor,
+) (*customerpayment.Payment, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Customer payment posting requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Customer payment posting requires an authenticated user",
+		)
 	}
 	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
 	if err != nil {
@@ -88,22 +123,43 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 		Applications:    mapApplications(req.Applications),
 	}
 
-	invoices, period, me := s.validator.ValidatePostAndApply(ctx, entity, repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}, control)
+	invoices, period, me := s.validator.ValidatePostAndApply(
+		ctx,
+		entity,
+		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
+		control,
+	)
 	if me != nil {
 		return nil, me
 	}
 
-	batchNumber, err := s.generator.GenerateJournalBatchNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	batchNumber, err := s.generator.GenerateJournalBatchNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
-	entryNumber, err := s.generator.GenerateJournalEntryNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	entryNumber, err := s.generator.GenerateJournalEntryNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	now := timeutils.NowUnix()
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(control, actor.UserID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(
+		control,
+		actor.UserID,
+		now,
+	)
 	originalInvoices := cloneInvoices(invoices)
 	var created *customerpayment.Payment
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -114,7 +170,9 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 		}
 
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(entity.Applications[idx].AppliedAmountMinor + entity.Applications[idx].ShortPayAmountMinor)
+			inv.ApplyPaymentMinor(
+				entity.Applications[idx].AppliedAmountMinor + entity.Applications[idx].ShortPayAmountMinor,
+			)
 			inv, txErr = s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr
@@ -127,12 +185,24 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 		sourceID := pulid.MustNew("jsrc_")
 		entryDescription := fmt.Sprintf("Customer payment %s", created.ID.String())
 		appliedCreditAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == tenant.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			appliedCreditAccountID = control.DefaultRevenueAccountID
 			entryDescription = fmt.Sprintf("Customer cash receipt %s", created.ID.String())
 		}
 		lines := make([]repositories.JournalPostingLine, 0, 2+len(created.Applications))
-		lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultCashAccountID, LineNumber: 1, Description: entryDescription, DebitAmount: created.AmountMinor, NetAmount: created.AmountMinor, CustomerID: entity.CustomerID})
+		lines = append(
+			lines,
+			repositories.JournalPostingLine{
+				ID:          pulid.MustNew("jel_"),
+				GLAccountID: control.DefaultCashAccountID,
+				LineNumber:  1,
+				Description: entryDescription,
+				DebitAmount: created.AmountMinor,
+				NetAmount:   created.AmountMinor,
+				CustomerID:  entity.CustomerID,
+			},
+		)
 		lineNumber := int16(2)
 		for _, app := range created.Applications {
 			if app == nil || app.AppliedAmountMinor <= 0 {
@@ -141,18 +211,62 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 				}
 			}
 			if app.AppliedAmountMinor > 0 {
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: appliedCreditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: entity.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:           pulid.MustNew("jel_"),
+						GLAccountID:  appliedCreditAccountID,
+						LineNumber:   lineNumber,
+						Description:  entryDescription,
+						CreditAmount: app.AppliedAmountMinor,
+						NetAmount:    -app.AppliedAmountMinor,
+						CustomerID:   entity.CustomerID,
+					},
+				)
 				lineNumber++
 			}
 			if app.ShortPayAmountMinor > 0 {
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultARAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.ShortPayAmountMinor, NetAmount: -app.ShortPayAmountMinor, CustomerID: entity.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:           pulid.MustNew("jel_"),
+						GLAccountID:  control.DefaultARAccountID,
+						LineNumber:   lineNumber,
+						Description:  entryDescription,
+						CreditAmount: app.ShortPayAmountMinor,
+						NetAmount:    -app.ShortPayAmountMinor,
+						CustomerID:   entity.CustomerID,
+					},
+				)
 				lineNumber++
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultWriteOffAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: app.ShortPayAmountMinor, NetAmount: app.ShortPayAmountMinor, CustomerID: entity.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:          pulid.MustNew("jel_"),
+						GLAccountID: control.DefaultWriteOffAccountID,
+						LineNumber:  lineNumber,
+						Description: entryDescription,
+						DebitAmount: app.ShortPayAmountMinor,
+						NetAmount:   app.ShortPayAmountMinor,
+						CustomerID:  entity.CustomerID,
+					},
+				)
 				lineNumber++
 			}
 		}
 		if created.UnappliedAmountMinor > 0 {
-			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultUnappliedCashAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: created.UnappliedAmountMinor, NetAmount: -created.UnappliedAmountMinor, CustomerID: entity.CustomerID})
+			lines = append(
+				lines,
+				repositories.JournalPostingLine{
+					ID:           pulid.MustNew("jel_"),
+					GLAccountID:  control.DefaultUnappliedCashAccountID,
+					LineNumber:   lineNumber,
+					Description:  entryDescription,
+					CreditAmount: created.UnappliedAmountMinor,
+					NetAmount:    -created.UnappliedAmountMinor,
+					CustomerID:   entity.CustomerID,
+				},
+			)
 		}
 
 		if txErr = s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{
@@ -205,11 +319,45 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 					continue
 				}
 				if app.AppliedAmountMinor > 0 {
-					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: created.OrganizationID, BusinessUnitID: created.BusinessUnitID, CustomerID: created.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: created.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerPaymentPosted.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: created.ReferenceNumber, TransactionDate: created.AccountingDate, LineNumber: line, AmountMinor: -app.AppliedAmountMinor, CreatedByID: actor.UserID})
+					ledgerEntries = append(
+						ledgerEntries,
+						&customerledger.Entry{
+							ID:               pulid.MustNew("cledg_"),
+							OrganizationID:   created.OrganizationID,
+							BusinessUnitID:   created.BusinessUnitID,
+							CustomerID:       created.CustomerID,
+							SourceObjectType: "CustomerPayment",
+							SourceObjectID:   created.ID.String(),
+							SourceEventType:  tenant.JournalSourceEventCustomerPaymentPosted.String(),
+							RelatedInvoiceID: app.InvoiceID,
+							DocumentNumber:   created.ReferenceNumber,
+							TransactionDate:  created.AccountingDate,
+							LineNumber:       line,
+							AmountMinor:      -app.AppliedAmountMinor,
+							CreatedByID:      actor.UserID,
+						},
+					)
 					line++
 				}
 				if app.ShortPayAmountMinor > 0 {
-					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: created.OrganizationID, BusinessUnitID: created.BusinessUnitID, CustomerID: created.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: created.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerShortPayRecognized.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: created.ReferenceNumber, TransactionDate: created.AccountingDate, LineNumber: line, AmountMinor: -app.ShortPayAmountMinor, CreatedByID: actor.UserID})
+					ledgerEntries = append(
+						ledgerEntries,
+						&customerledger.Entry{
+							ID:               pulid.MustNew("cledg_"),
+							OrganizationID:   created.OrganizationID,
+							BusinessUnitID:   created.BusinessUnitID,
+							CustomerID:       created.CustomerID,
+							SourceObjectType: "CustomerPayment",
+							SourceObjectID:   created.ID.String(),
+							SourceEventType:  tenant.JournalSourceEventCustomerShortPayRecognized.String(),
+							RelatedInvoiceID: app.InvoiceID,
+							DocumentNumber:   created.ReferenceNumber,
+							TransactionDate:  created.AccountingDate,
+							LineNumber:       line,
+							AmountMinor:      -app.ShortPayAmountMinor,
+							CreatedByID:      actor.UserID,
+						},
+					)
 					line++
 				}
 			}
@@ -234,14 +382,27 @@ func (s *Service) PostAndApply(ctx context.Context, req *serviceports.PostCustom
 	return created, nil
 }
 
-func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+func (s *Service) ApplyUnapplied(
+	ctx context.Context,
+	req *serviceports.ApplyCustomerPaymentRequest,
+	actor *serviceports.RequestActor,
+) (*customerpayment.Payment, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Customer payment application requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Customer payment application requires an authenticated user",
+		)
 	}
-	payment, err := s.repo.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo})
+	payment, err := s.repo.GetByID(
+		ctx,
+		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -250,27 +411,52 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 		return nil, err
 	}
 	applications := mapApplications(req.Applications)
-	invoices, period, me := s.validator.ValidateApplyUnapplied(ctx, payment, req.AccountingDate, applications, repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo}, control)
+	invoices, period, me := s.validator.ValidateApplyUnapplied(
+		ctx,
+		payment,
+		req.AccountingDate,
+		applications,
+		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
+		control,
+	)
 	if me != nil {
 		return nil, me
 	}
-	entryNumber, err := s.generator.GenerateJournalEntryNumber(ctx, payment.OrganizationID, payment.BusinessUnitID, "", "")
+	entryNumber, err := s.generator.GenerateJournalEntryNumber(
+		ctx,
+		payment.OrganizationID,
+		payment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
-	batchNumber, err := s.generator.GenerateJournalBatchNumber(ctx, payment.OrganizationID, payment.BusinessUnitID, "", "")
+	batchNumber, err := s.generator.GenerateJournalBatchNumber(
+		ctx,
+		payment.OrganizationID,
+		payment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
 	now := timeutils.NowUnix()
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(control, actor.UserID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(
+		control,
+		actor.UserID,
+		now,
+	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		payment.Applications = append(payment.Applications, applications...)
 		payment.UpdatedByID = actor.UserID
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(applications[idx].AppliedAmountMinor + applications[idx].ShortPayAmountMinor)
+			inv.ApplyPaymentMinor(
+				applications[idx].AppliedAmountMinor + applications[idx].ShortPayAmountMinor,
+			)
 			updatedInvoice, txErr := s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr
@@ -285,14 +471,29 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 
 		entryDescription := fmt.Sprintf("Customer payment application %s", payment.ID.String())
 		creditAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == tenant.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			creditAccountID = control.DefaultRevenueAccountID
-			entryDescription = fmt.Sprintf("Customer payment revenue recognition %s", payment.ID.String())
+			entryDescription = fmt.Sprintf(
+				"Customer payment revenue recognition %s",
+				payment.ID.String(),
+			)
 		}
 		lines := make([]repositories.JournalPostingLine, 0, len(applications)+1)
 		var totalApplied int64
 		lineNumber := int16(1)
-		lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultUnappliedCashAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor, NetAmount: payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor, CustomerID: payment.CustomerID})
+		lines = append(
+			lines,
+			repositories.JournalPostingLine{
+				ID:          pulid.MustNew("jel_"),
+				GLAccountID: control.DefaultUnappliedCashAccountID,
+				LineNumber:  lineNumber,
+				Description: entryDescription,
+				DebitAmount: payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor,
+				NetAmount:   payment.AppliedAmountMinor - originalPayment.AppliedAmountMinor,
+				CustomerID:  payment.CustomerID,
+			},
+		)
 		lineNumber++
 		for _, app := range applications {
 			if app == nil {
@@ -300,13 +501,46 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 			}
 			totalApplied += app.AppliedAmountMinor
 			if app.AppliedAmountMinor > 0 {
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: creditAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.AppliedAmountMinor, NetAmount: -app.AppliedAmountMinor, CustomerID: payment.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:           pulid.MustNew("jel_"),
+						GLAccountID:  creditAccountID,
+						LineNumber:   lineNumber,
+						Description:  entryDescription,
+						CreditAmount: app.AppliedAmountMinor,
+						NetAmount:    -app.AppliedAmountMinor,
+						CustomerID:   payment.CustomerID,
+					},
+				)
 				lineNumber++
 			}
 			if app.ShortPayAmountMinor > 0 {
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultARAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: app.ShortPayAmountMinor, NetAmount: -app.ShortPayAmountMinor, CustomerID: payment.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:           pulid.MustNew("jel_"),
+						GLAccountID:  control.DefaultARAccountID,
+						LineNumber:   lineNumber,
+						Description:  entryDescription,
+						CreditAmount: app.ShortPayAmountMinor,
+						NetAmount:    -app.ShortPayAmountMinor,
+						CustomerID:   payment.CustomerID,
+					},
+				)
 				lineNumber++
-				lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultWriteOffAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: app.ShortPayAmountMinor, NetAmount: app.ShortPayAmountMinor, CustomerID: payment.CustomerID})
+				lines = append(
+					lines,
+					repositories.JournalPostingLine{
+						ID:          pulid.MustNew("jel_"),
+						GLAccountID: control.DefaultWriteOffAccountID,
+						LineNumber:  lineNumber,
+						Description: entryDescription,
+						DebitAmount: app.ShortPayAmountMinor,
+						NetAmount:   app.ShortPayAmountMinor,
+						CustomerID:  payment.CustomerID,
+					},
+				)
 				lineNumber++
 			}
 		}
@@ -321,11 +555,45 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 					continue
 				}
 				if app.AppliedAmountMinor > 0 {
-					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, CustomerID: payment.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: "CustomerPaymentApplied", RelatedInvoiceID: app.InvoiceID, DocumentNumber: payment.ReferenceNumber, TransactionDate: req.AccountingDate, LineNumber: projectionLine, AmountMinor: -app.AppliedAmountMinor, CreatedByID: actor.UserID})
+					ledgerEntries = append(
+						ledgerEntries,
+						&customerledger.Entry{
+							ID:               pulid.MustNew("cledg_"),
+							OrganizationID:   payment.OrganizationID,
+							BusinessUnitID:   payment.BusinessUnitID,
+							CustomerID:       payment.CustomerID,
+							SourceObjectType: "CustomerPayment",
+							SourceObjectID:   payment.ID.String(),
+							SourceEventType:  "CustomerPaymentApplied",
+							RelatedInvoiceID: app.InvoiceID,
+							DocumentNumber:   payment.ReferenceNumber,
+							TransactionDate:  req.AccountingDate,
+							LineNumber:       projectionLine,
+							AmountMinor:      -app.AppliedAmountMinor,
+							CreatedByID:      actor.UserID,
+						},
+					)
 					projectionLine++
 				}
 				if app.ShortPayAmountMinor > 0 {
-					ledgerEntries = append(ledgerEntries, &customerledger.Entry{ID: pulid.MustNew("cledg_"), OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, CustomerID: payment.CustomerID, SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerShortPayRecognized.String(), RelatedInvoiceID: app.InvoiceID, DocumentNumber: payment.ReferenceNumber, TransactionDate: req.AccountingDate, LineNumber: projectionLine, AmountMinor: -app.ShortPayAmountMinor, CreatedByID: actor.UserID})
+					ledgerEntries = append(
+						ledgerEntries,
+						&customerledger.Entry{
+							ID:               pulid.MustNew("cledg_"),
+							OrganizationID:   payment.OrganizationID,
+							BusinessUnitID:   payment.BusinessUnitID,
+							CustomerID:       payment.CustomerID,
+							SourceObjectType: "CustomerPayment",
+							SourceObjectID:   payment.ID.String(),
+							SourceEventType:  tenant.JournalSourceEventCustomerShortPayRecognized.String(),
+							RelatedInvoiceID: app.InvoiceID,
+							DocumentNumber:   payment.ReferenceNumber,
+							TransactionDate:  req.AccountingDate,
+							LineNumber:       projectionLine,
+							AmountMinor:      -app.ShortPayAmountMinor,
+							CreatedByID:      actor.UserID,
+						},
+					)
 					projectionLine++
 				}
 			}
@@ -338,21 +606,40 @@ func (s *Service) ApplyUnapplied(ctx context.Context, req *serviceports.ApplyCus
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(payment, &originalPayment, actor.UserID, permission.OpUpdate, "Customer payment unapplied amount applied")
+	s.logAudit(
+		payment,
+		&originalPayment,
+		actor.UserID,
+		permission.OpUpdate,
+		"Customer payment unapplied amount applied",
+	)
 	for idx, inv := range invoices {
 		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
 	}
 	return payment, nil
 }
 
-func (s *Service) Reverse(ctx context.Context, req *serviceports.ReverseCustomerPaymentRequest, actor *serviceports.RequestActor) (*customerpayment.Payment, error) {
+func (s *Service) Reverse(
+	ctx context.Context,
+	req *serviceports.ReverseCustomerPaymentRequest,
+	actor *serviceports.RequestActor,
+) (*customerpayment.Payment, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("request", errortypes.ErrRequired, "Request is required")
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"Request is required",
+		)
 	}
 	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError("Customer payment reversal requires an authenticated user")
+		return nil, errortypes.NewAuthorizationError(
+			"Customer payment reversal requires an authenticated user",
+		)
 	}
-	payment, err := s.repo.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo})
+	payment, err := s.repo.GetByID(
+		ctx,
+		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -360,20 +647,42 @@ func (s *Service) Reverse(ctx context.Context, req *serviceports.ReverseCustomer
 	if err != nil {
 		return nil, err
 	}
-	invoices, period, me := s.validator.ValidateReverse(ctx, payment, req.AccountingDate, control, repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo})
+	invoices, period, me := s.validator.ValidateReverse(
+		ctx,
+		payment,
+		req.AccountingDate,
+		control,
+		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
+	)
 	if me != nil {
 		return nil, me
 	}
-	batchNumber, err := s.generator.GenerateJournalBatchNumber(ctx, payment.OrganizationID, payment.BusinessUnitID, "", "")
+	batchNumber, err := s.generator.GenerateJournalBatchNumber(
+		ctx,
+		payment.OrganizationID,
+		payment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
-	entryNumber, err := s.generator.GenerateJournalEntryNumber(ctx, payment.OrganizationID, payment.BusinessUnitID, "", "")
+	entryNumber, err := s.generator.GenerateJournalEntryNumber(
+		ctx,
+		payment.OrganizationID,
+		payment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
 	now := timeutils.NowUnix()
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(control, actor.UserID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := paymentPostingWorkflow(
+		control,
+		actor.UserID,
+		now,
+	)
 	originalPayment := *payment
 	originalInvoices := cloneInvoices(invoices)
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -391,21 +700,55 @@ func (s *Service) Reverse(ctx context.Context, req *serviceports.ReverseCustomer
 
 		entryDescription := fmt.Sprintf("Customer payment reversal %s", payment.ID.String())
 		debitAccountID := control.DefaultARAccountID
-		if control.AccountingBasis == tenant.AccountingBasisCash || control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
+		if control.AccountingBasis == tenant.AccountingBasisCash ||
+			control.RevenueRecognitionPolicy == tenant.RevenueRecognitionOnCashReceipt {
 			debitAccountID = control.DefaultRevenueAccountID
 			entryDescription = fmt.Sprintf("Customer cash receipt reversal %s", payment.ID.String())
 		}
 		lines := make([]repositories.JournalPostingLine, 0, 3)
 		lineNumber := int16(1)
 		if payment.AppliedAmountMinor > 0 {
-			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: debitAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: payment.AppliedAmountMinor, NetAmount: payment.AppliedAmountMinor, CustomerID: payment.CustomerID})
+			lines = append(
+				lines,
+				repositories.JournalPostingLine{
+					ID:          pulid.MustNew("jel_"),
+					GLAccountID: debitAccountID,
+					LineNumber:  lineNumber,
+					Description: entryDescription,
+					DebitAmount: payment.AppliedAmountMinor,
+					NetAmount:   payment.AppliedAmountMinor,
+					CustomerID:  payment.CustomerID,
+				},
+			)
 			lineNumber++
 		}
 		if payment.UnappliedAmountMinor > 0 {
-			lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultUnappliedCashAccountID, LineNumber: lineNumber, Description: entryDescription, DebitAmount: payment.UnappliedAmountMinor, NetAmount: payment.UnappliedAmountMinor, CustomerID: payment.CustomerID})
+			lines = append(
+				lines,
+				repositories.JournalPostingLine{
+					ID:          pulid.MustNew("jel_"),
+					GLAccountID: control.DefaultUnappliedCashAccountID,
+					LineNumber:  lineNumber,
+					Description: entryDescription,
+					DebitAmount: payment.UnappliedAmountMinor,
+					NetAmount:   payment.UnappliedAmountMinor,
+					CustomerID:  payment.CustomerID,
+				},
+			)
 			lineNumber++
 		}
-		lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: control.DefaultCashAccountID, LineNumber: lineNumber, Description: entryDescription, CreditAmount: payment.AmountMinor, NetAmount: -payment.AmountMinor, CustomerID: payment.CustomerID})
+		lines = append(
+			lines,
+			repositories.JournalPostingLine{
+				ID:           pulid.MustNew("jel_"),
+				GLAccountID:  control.DefaultCashAccountID,
+				LineNumber:   lineNumber,
+				Description:  entryDescription,
+				CreditAmount: payment.AmountMinor,
+				NetAmount:    -payment.AmountMinor,
+				CustomerID:   payment.CustomerID,
+			},
+		)
 
 		batchID := pulid.MustNew("jb_")
 		if txErr := s.journalRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{BatchID: batchID, OrganizationID: payment.OrganizationID, BusinessUnitID: payment.BusinessUnitID, BatchNumber: batchNumber, BatchType: "Reversal", BatchStatus: batchStatus, BatchDescription: entryDescription, FiscalYearID: period.FiscalYearID, FiscalPeriodID: period.ID, AccountingDate: req.AccountingDate, PostedAt: postedAt, PostedByID: postedByID, CreatedByID: actor.UserID, UpdatedByID: actor.UserID, EntryID: pulid.MustNew("je_"), EntryNumber: entryNumber, EntryType: "Reversal", EntryStatus: entryStatus, ReferenceNumber: payment.ReferenceNumber, ReferenceType: tenant.JournalSourceEventCustomerPaymentReversed.String(), ReferenceID: payment.ID.String(), EntryDescription: entryDescription, TotalDebit: payment.AmountMinor, TotalCredit: payment.AmountMinor, IsPosted: postedAt != nil, IsAutoGenerated: false, ReversalDate: postedAt, ReversalReason: req.Reason, RequiresApproval: requiresApproval, IsApproved: isApproved, ApprovedByID: approvedByID, ApprovedAt: approvedAt, SourceID: pulid.MustNew("jsrc_"), SourceObjectType: "CustomerPayment", SourceObjectID: payment.ID.String(), SourceEventType: tenant.JournalSourceEventCustomerPaymentReversed.String(), SourceStatus: entryStatus, SourceDocumentNumber: payment.ReferenceNumber, SourceIdempotencyKey: "customer-payment-reversed:" + payment.ID.String(), Lines: lines}); txErr != nil {
@@ -440,27 +783,46 @@ func (s *Service) Reverse(ctx context.Context, req *serviceports.ReverseCustomer
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(payment, &originalPayment, actor.UserID, permission.OpUpdate, "Customer payment reversed")
+	s.logAudit(
+		payment,
+		&originalPayment,
+		actor.UserID,
+		permission.OpUpdate,
+		"Customer payment reversed",
+	)
 	for idx, inv := range invoices {
 		s.logInvoiceAudit(originalInvoices[idx], inv, actor.UserID)
 	}
 	return payment, nil
 }
 
-func mapApplications(inputs []*serviceports.CustomerPaymentApplicationInput) []*customerpayment.Application {
+func mapApplications(
+	inputs []*serviceports.CustomerPaymentApplicationInput,
+) []*customerpayment.Application {
 	apps := make([]*customerpayment.Application, 0, len(inputs))
 	for idx, input := range inputs {
 		if input == nil {
 			apps = append(apps, nil)
 			continue
 		}
-		apps = append(apps, &customerpayment.Application{LineNumber: idx + 1, InvoiceID: input.InvoiceID, AppliedAmountMinor: input.AppliedAmountMinor})
+		apps = append(
+			apps,
+			&customerpayment.Application{
+				LineNumber:         idx + 1,
+				InvoiceID:          input.InvoiceID,
+				AppliedAmountMinor: input.AppliedAmountMinor,
+			},
+		)
 		apps[len(apps)-1].ShortPayAmountMinor = input.ShortPayAmountMinor
 	}
 	return apps
 }
 
-func paymentPostingWorkflow(control *tenant.AccountingControl, userID pulid.ID, now int64) (string, string, *int64, pulid.ID, bool, bool, pulid.ID, *int64) {
+func paymentPostingWorkflow(
+	control *tenant.AccountingControl,
+	userID pulid.ID,
+	now int64,
+) (string, string, *int64, pulid.ID, bool, bool, pulid.ID, *int64) {
 	entryStatus := "Posted"
 	batchStatus := "Posted"
 	postedAt := &now
@@ -500,8 +862,22 @@ func cloneInvoices(invoices []*invoice.Invoice) []*invoice.Invoice {
 	return clones
 }
 
-func (s *Service) logAudit(current *customerpayment.Payment, previous *customerpayment.Payment, userID pulid.ID, operation permission.Operation, comment string) {
-	params := &serviceports.LogActionParams{Resource: permission.ResourceCustomerPayment, ResourceID: current.ID.String(), Operation: operation, UserID: userID, CurrentState: jsonutils.MustToJSON(current), OrganizationID: current.OrganizationID, BusinessUnitID: current.BusinessUnitID}
+func (s *Service) logAudit(
+	current *customerpayment.Payment,
+	previous *customerpayment.Payment,
+	userID pulid.ID,
+	operation permission.Operation,
+	comment string,
+) {
+	params := &serviceports.LogActionParams{
+		Resource:       permission.ResourceCustomerPayment,
+		ResourceID:     current.ID.String(),
+		Operation:      operation,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(current),
+		OrganizationID: current.OrganizationID,
+		BusinessUnitID: current.BusinessUnitID,
+	}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
@@ -510,16 +886,37 @@ func (s *Service) logAudit(current *customerpayment.Payment, previous *customerp
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
 	if err := s.auditService.LogAction(params, options...); err != nil {
-		s.l.Error("failed to log customer payment audit action", zap.Error(err), zap.String("paymentId", current.ID.String()))
+		s.l.Error(
+			"failed to log customer payment audit action",
+			zap.Error(err),
+			zap.String("paymentId", current.ID.String()),
+		)
 	}
 }
 
-func (s *Service) logInvoiceAudit(previous *invoice.Invoice, current *invoice.Invoice, userID pulid.ID) {
+func (s *Service) logInvoiceAudit(
+	previous *invoice.Invoice,
+	current *invoice.Invoice,
+	userID pulid.ID,
+) {
 	if previous == nil || current == nil {
 		return
 	}
-	params := &serviceports.LogActionParams{Resource: permission.ResourceInvoice, ResourceID: current.ID.String(), Operation: permission.OpUpdate, UserID: userID, CurrentState: jsonutils.MustToJSON(current), PreviousState: jsonutils.MustToJSON(previous), OrganizationID: current.OrganizationID, BusinessUnitID: current.BusinessUnitID}
+	params := &serviceports.LogActionParams{
+		Resource:       permission.ResourceInvoice,
+		ResourceID:     current.ID.String(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(current),
+		PreviousState:  jsonutils.MustToJSON(previous),
+		OrganizationID: current.OrganizationID,
+		BusinessUnitID: current.BusinessUnitID,
+	}
 	if err := s.auditService.LogAction(params, auditservice.WithComment("Invoice updated from customer payment application"), auditservice.WithDiff(previous, current)); err != nil {
-		s.l.Error("failed to log invoice payment application audit action", zap.Error(err), zap.String("invoiceId", current.ID.String()))
+		s.l.Error(
+			"failed to log invoice payment application audit action",
+			zap.Error(err),
+			zap.String("invoiceId", current.ID.String()),
+		)
 	}
 }

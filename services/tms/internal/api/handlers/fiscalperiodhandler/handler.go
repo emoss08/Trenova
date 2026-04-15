@@ -75,6 +75,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpClose),
 		h.close,
 	)
+	api.GET(
+		"/:fiscalPeriodID/close-blockers/",
+		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpRead),
+		h.closeBlockers,
+	)
 	api.PUT(
 		"/:fiscalPeriodID/reopen/",
 		h.pm.RequirePermission(permission.ResourceFiscalPeriod.String(), permission.OpReopen),
@@ -162,6 +167,32 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) closeBlockers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	fiscalPeriodID, err := pulid.MustParse(c.Param("fiscalPeriodID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.GetCloseBlockers(
+		c.Request.Context(),
+		repositories.GetFiscalPeriodByIDRequest{
+			ID: fiscalPeriodID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
 }
 
 // @Summary Create a fiscal period

@@ -35,8 +35,7 @@ function DataTableRow<TData>({
 
   const isClickable = !!(onRowClick || (hasPanel && canUpdate));
   const hasContextMenu =
-    (contextMenuActions && contextMenuActions.length > 0) ||
-    (hasPanel && canUpdate);
+    (contextMenuActions && contextMenuActions.length > 0) || (hasPanel && canUpdate);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>) => {
@@ -69,7 +68,7 @@ function DataTableRow<TData>({
       data-state={selected && "selected"}
       onClick={isClickable ? handleRowClick : undefined}
       className={cn(
-        "-outline-offset-2 outline-muted-foreground transition-colors data-[state=selected]:outline",
+        "-outline-offset-2 outline-brand transition-colors data-[state=selected]:outline",
         isClickable && "cursor-pointer",
         table.options.meta?.getRowClassName?.(row),
       )}
@@ -138,10 +137,7 @@ export function DataTableBody<TData extends Record<string, any>>({
         })
       ) : isLoading ? (
         <TableRow>
-          <TableCell
-            colSpan={columns.length}
-            className="h-24 rounded-b-md border-b text-center"
-          >
+          <TableCell colSpan={columns.length} className="h-24 rounded-b-md border-b text-center">
             <div className="mx-auto flex w-fit flex-row items-center justify-center rounded-md border border-border bg-muted-foreground/10 p-2 text-sm font-medium text-foreground">
               <Spinner className="size-4" />
               <p className="text-xs text-foreground">Loading data...</p>

@@ -31,6 +31,9 @@ func TestGetAgingSummaryAggregatesTotals(t *testing.T) {
 type fakeARRepo struct {
 	ledger []*accountsreceivable.LedgerEntry
 	rows   []*accountsreceivable.CustomerAgingRow
+	items  []*accountsreceivable.OpenItem
+	name   string
+	aging  *accountsreceivable.CustomerAgingRow
 }
 
 func (f fakeARRepo) ListCustomerLedger(context.Context, repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error) {
@@ -39,4 +42,60 @@ func (f fakeARRepo) ListCustomerLedger(context.Context, repositories.ListCustome
 
 func (f fakeARRepo) ListARAging(context.Context, repositories.ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error) {
 	return f.rows, nil
+}
+
+func (f fakeARRepo) ListOpenItems(context.Context, repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error) {
+	return f.items, nil
+}
+
+func (f fakeARRepo) GetCustomerName(context.Context, repositories.GetARCustomerNameRequest) (string, error) {
+	return f.name, nil
+}
+
+func (f fakeARRepo) GetCustomerAging(context.Context, repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error) {
+	return f.aging, nil
+}
+
+func TestListOpenItemsDefaultsAsOfDate(t *testing.T) {
+	t.Parallel()
+
+	expected := []*accountsreceivable.OpenItem{{InvoiceID: pulid.MustNew("inv_")}}
+	repo := fakeARRepo{items: expected}
+	svc := &Service{repo: repo}
+
+	items, err := svc.ListOpenItems(t.Context(), pagination.TenantInfo{}, pulid.ID(""), 0)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, items)
+}
+
+func TestGetCustomerStatementBuildsBalanceForwardAndRunningBalance(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	repo := fakeARRepo{
+		name: "Acme",
+		ledger: []*accountsreceivable.LedgerEntry{
+			{CustomerID: customerID, TransactionDate: 10, EventType: "InvoicePosted", DocumentNumber: "INV-1", AmountMinor: 10000},
+			{CustomerID: customerID, TransactionDate: 20, EventType: "CustomerPaymentPosted", DocumentNumber: "PAY-1", AmountMinor: -4000},
+			{CustomerID: customerID, TransactionDate: 30, EventType: "InvoicePosted", DocumentNumber: "INV-2", AmountMinor: 3000},
+		},
+		items: []*accountsreceivable.OpenItem{{InvoiceID: pulid.MustNew("inv_"), CustomerID: customerID, OpenAmountMinor: 9000}},
+		aging: &accountsreceivable.CustomerAgingRow{CustomerID: customerID, CustomerName: "Acme", Buckets: accountsreceivable.AgingBucketTotals{TotalOpenMinor: 9000}},
+	}
+	svc := &Service{repo: repo}
+
+	statement, err := svc.GetCustomerStatement(t.Context(), pagination.TenantInfo{}, customerID, 15, 40)
+
+	require.NoError(t, err)
+	require.NotNil(t, statement)
+	assert.Equal(t, "Acme", statement.CustomerName)
+	assert.Equal(t, int64(10000), statement.OpeningBalanceMinor)
+	assert.Equal(t, int64(3000), statement.TotalChargesMinor)
+	assert.Equal(t, int64(4000), statement.TotalPaymentsMinor)
+	assert.Equal(t, int64(9000), statement.EndingBalanceMinor)
+	require.Len(t, statement.Transactions, 2)
+	assert.Equal(t, int64(6000), statement.Transactions[0].RunningBalanceMinor)
+	assert.Equal(t, int64(9000), statement.Transactions[1].RunningBalanceMinor)
+	assert.Equal(t, int64(9000), statement.Aging.TotalOpenMinor)
 }

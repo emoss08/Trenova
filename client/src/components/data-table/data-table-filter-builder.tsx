@@ -256,7 +256,7 @@ export default function DataTableFilterBuilder<TData>({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
-          <Button variant="outline" className="h-8">
+          <Button variant="outline" size="sm">
             <FilterIcon className="size-3.5" />
             Filter
             {totalFilters > 0 && (
@@ -640,7 +640,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
               <Button
                 variant="outline"
                 className={cn(
-                  "h-8 w-full justify-start truncate rounded-md bg-muted text-left text-sm font-normal",
+                  "h-7 w-full justify-start truncate rounded-md bg-muted text-left text-sm font-normal",
                   (!dateValue.from || !dateValue.to) && "text-muted-foreground",
                 )}
               >
@@ -686,7 +686,7 @@ function FilterValueInput({ filter, onChange }: FilterValueInputProps) {
             <Button
               variant="outline"
               className={cn(
-                "h-8 w-full justify-start rounded-md bg-muted text-left text-sm font-normal",
+                "h-7 w-full justify-start rounded-md bg-muted text-left text-sm font-normal",
                 !dateValue && "text-muted-foreground",
               )}
             >

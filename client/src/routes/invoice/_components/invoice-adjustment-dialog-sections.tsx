@@ -128,9 +128,7 @@ export function InvoiceAdjustmentTypeSelector({
               <div
                 className={cn(
                   "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md transition-colors",
-                  isSelected
-                    ? "bg-brand/10 text-brand"
-                    : "bg-muted text-muted-foreground",
+                  isSelected ? "bg-brand/10 text-brand" : "bg-muted text-muted-foreground",
                 )}
               >
                 {type.icon}
@@ -152,9 +150,7 @@ export function InvoiceAdjustmentTypeSelector({
                   isSelected ? "border-brand bg-brand" : "border-muted-foreground/30",
                 )}
               >
-                {isSelected ? (
-                  <div className="size-1.5 rounded-full bg-white" />
-                ) : null}
+                {isSelected ? <div className="size-1.5 rounded-full bg-white" /> : null}
               </div>
             </button>
           );
@@ -173,9 +169,9 @@ export function InvoiceAdjustmentTypeSelector({
                   type="button"
                   title={strategy.description}
                   className={cn(
-                    "flex-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
+                    "flex-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150 border border-transparent",
                     isSelected
-                      ? "bg-background text-foreground shadow-sm"
+                      ? "bg-background text-foreground border-border"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
@@ -431,8 +427,14 @@ export function InvoiceAdjustmentPreviewPanel({
           <p className="text-xs font-medium text-muted-foreground">Adjustment Summary</p>
         </div>
         <div className="divide-y divide-border">
-          <PreviewRow label="Credit Total" value={formatCurrency(Number(preview.creditTotalAmount))} />
-          <PreviewRow label="Rebill Total" value={formatCurrency(Number(preview.rebillTotalAmount))} />
+          <PreviewRow
+            label="Credit Total"
+            value={formatCurrency(Number(preview.creditTotalAmount))}
+          />
+          <PreviewRow
+            label="Rebill Total"
+            value={formatCurrency(Number(preview.rebillTotalAmount))}
+          />
           <PreviewRow
             label="Net Delta"
             value={formatCurrency(Number(preview.netDeltaAmount))}
@@ -446,10 +448,10 @@ export function InvoiceAdjustmentPreviewPanel({
         </div>
       </div>
 
-      {(preview.requiresApproval ||
-        preview.requiresReconciliationException ||
-        preview.requiresReplacementInvoiceReview ||
-        preview.wouldCreateUnappliedCredit) ? (
+      {preview.requiresApproval ||
+      preview.requiresReconciliationException ||
+      preview.requiresReplacementInvoiceReview ||
+      preview.wouldCreateUnappliedCredit ? (
         <div className="rounded-lg border border-yellow-600/20 bg-yellow-600/5 px-4 py-3">
           <div className="flex items-center gap-2">
             <ShieldAlertIcon className="size-3.5 text-yellow-600 dark:text-yellow-400" />
@@ -540,7 +542,9 @@ function PreviewRow({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className={cn("flex items-center justify-between px-4 py-2.5", highlight && "bg-muted/30")}>
+    <div
+      className={cn("flex items-center justify-between px-4 py-2.5", highlight && "bg-muted/30")}
+    >
       <span
         className={cn(
           "flex items-center gap-1.5 text-xs",

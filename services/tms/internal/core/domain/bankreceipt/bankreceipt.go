@@ -22,6 +22,7 @@ type Receipt struct {
 	ReferenceNumber          string   `json:"referenceNumber"          bun:"reference_number,type:VARCHAR(100),nullzero"`
 	Memo                     string   `json:"memo"                     bun:"memo,type:TEXT,nullzero"`
 	Status                   Status   `json:"status"                   bun:"status,type:VARCHAR(50),notnull"`
+	ImportBatchID            pulid.ID `json:"importBatchId"            bun:"import_batch_id,type:VARCHAR(100),nullzero"`
 	MatchedCustomerPaymentID pulid.ID `json:"matchedCustomerPaymentId" bun:"matched_customer_payment_id,type:VARCHAR(100),nullzero"`
 	MatchedAt                *int64   `json:"matchedAt"                bun:"matched_at,type:BIGINT,nullzero"`
 	MatchedByID              pulid.ID `json:"matchedById"              bun:"matched_by_id,type:VARCHAR(100),nullzero"`

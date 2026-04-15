@@ -82,7 +82,7 @@ export default function DataTableSearch({
       defaultValue={value}
       onChange={(e) => handleChange(e.target.value)}
       placeholder={placeholder ?? "Search..."}
-      className="h-8 w-48 text-sm"
+      className="h-7 w-48 text-sm"
       leftElement={
         <SearchIcon className="size-3.5 shrink-0 text-muted-foreground" />
       }

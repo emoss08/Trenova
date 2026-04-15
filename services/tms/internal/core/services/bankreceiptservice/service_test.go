@@ -249,6 +249,17 @@ func (f *fakeBankReceiptRepo) ListExceptions(
 	return []*bankreceipt.Receipt{f.receipt}, nil
 }
 
+func (f *fakeBankReceiptRepo) ListByImportBatchID(
+	context.Context,
+	repositories.ListBankReceiptsByImportBatchRequest,
+) ([]*bankreceipt.Receipt, error) {
+	if f.receipt == nil {
+		return nil, nil
+	}
+
+	return []*bankreceipt.Receipt{f.receipt}, nil
+}
+
 func (f *fakeBankReceiptRepo) GetSummary(
 	context.Context,
 	repositories.GetBankReceiptSummaryRequest,

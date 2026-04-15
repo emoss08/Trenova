@@ -18,6 +18,7 @@ export const APP_ENV = (import.meta.env.MODE as string) || "development";
 
 export const US_CENTER = { lat: 39.8, lng: -98.5 };
 export const DEFAULT_ZOOM = 4;
-export const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_ID as string;
+export const MAP_ID_LIGHT = import.meta.env.VITE_GOOGLE_MAPS_ID_LIGHT as string;
+export const MAP_ID_DARK = import.meta.env.VITE_GOOGLE_MAPS_ID_DARK as string;
 
 export const GOOGLE_MAPS_ERROR_MESSAGE = "GoogleMaps integration is not configured";

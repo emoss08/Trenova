@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/authservice"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptbatchservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
@@ -127,7 +128,12 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documentuploadservice.New,
 	accessorialchargeservice.New,
 	assignmentservice.New,
+	fx.Annotate(
+		bankreceiptbatchservice.New,
+		fx.As(new(services.BankReceiptBatchService)),
+	),
 	bankreceiptservice.New,
+	func(s *bankreceiptservice.Service) services.BankReceiptService { return s },
 	bankreceiptworkitemservice.New,
 	versionservice.New,
 	servicetypeservice.New,
@@ -142,7 +148,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	commodityservice.New,
-	customerpaymentservice.New,
+	fx.Annotate(
+		customerpaymentservice.New,
+		fx.As(new(services.CustomerPaymentService)),
+	),
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
 	accountingcontrolservice.New,

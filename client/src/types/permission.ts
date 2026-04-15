@@ -125,6 +125,13 @@ export const Resource = {
   FiscalYear: "fiscal_year",
   FiscalPeriod: "fiscal_period",
   DocumentParsingRule: "document_parsing_rule",
+  ManualJournal: "manual_journal",
+  JournalReversal: "journal_reversal",
+  JournalEntry: "journal_entry",
+  AccountingReport: "accounting_report",
+  CustomerPayment: "customer_payment",
+  BankReceipt: "bank_receipt",
+  BankReceiptWorkItem: "bank_receipt_work_item",
 } as const;
 
 export type ResourceType = (typeof Resource)[keyof typeof Resource];

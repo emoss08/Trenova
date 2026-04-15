@@ -18,6 +18,8 @@ var CatalogDefinitions = []CatalogItem{
 		DocsURL:       "https://developers.samsara.com/docs/tms-integration",
 		WebsiteURL:    "https://www.samsara.com/",
 		Color:         "#002e8a",
+		GlowFrom:      "#002e8a",
+		GlowTo:        "#00b4d8",
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
@@ -46,6 +48,8 @@ var CatalogDefinitions = []CatalogItem{
 		DocsURL:       "https://developers.google.com/maps/documentation",
 		WebsiteURL:    "https://maps.google.com/",
 		Color:         "#8a0000",
+		GlowFrom:      "#4285f4",
+		GlowTo:        "#34a853",
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
@@ -74,6 +78,8 @@ var CatalogDefinitions = []CatalogItem{
 		DocsURL:       "https://platform.openai.com/docs",
 		WebsiteURL:    "https://openai.com/",
 		Color:         "#0f172a",
+		GlowFrom:      "#0f172a",
+		GlowTo:        "#10a37f",
 		Links: []CatalogLink{
 			{
 				Kind:  CatalogLinkKindDocs,
@@ -88,6 +94,36 @@ var CatalogDefinitions = []CatalogItem{
 		},
 		Featured:           true,
 		SortOrder:          30,
+		PrimaryActionLabel: "View Integration",
+	},
+	{
+		Type:          integration.TypeOpenWeatherMap,
+		Name:          "OpenWeatherMap",
+		Description:   "Real-time weather map overlays including wind speed, cloud cover, temperature, and atmospheric pressure layers for fleet route planning.",
+		Category:      integration.CategoryWeather,
+		CategoryLabel: "Weather",
+		LogoURL:       "/integrations/logos/open_weather_logo.webp",
+		LogoLightURL:  "/integrations/logos/open_weather_logo.webp",
+		LogoDarkURL:   "/integrations/logos/open_weather_dark.webp",
+		DocsURL:       "https://openweathermap.org/api/weathermaps",
+		WebsiteURL:    "https://openweathermap.org/",
+		Color:         "#eb6e4b",
+		GlowFrom:      "#eb6e4b",
+		GlowTo:        "#f9d423",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://openweathermap.org/api/weathermaps",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://openweathermap.org/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          25,
 		PrimaryActionLabel: "View Integration",
 	},
 }
@@ -138,6 +174,8 @@ type CatalogItem struct {
 	LogoLightURL        string                        `json:"logoLightUrl,omitempty"`
 	LogoDarkURL         string                        `json:"logoDarkUrl,omitempty"`
 	Color               string                        `json:"color,omitempty"`
+	GlowFrom            string                        `json:"glowFrom,omitempty"`
+	GlowTo              string                        `json:"glowTo,omitempty"`
 	DocsURL             string                        `json:"docsUrl,omitempty"`
 	WebsiteURL          string                        `json:"websiteUrl,omitempty"`
 	Links               []CatalogLink                 `json:"links"`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -47,6 +48,10 @@ type ApplyCustomerPaymentRequest struct {
 }
 
 type CustomerPaymentService interface {
+	List(
+		ctx context.Context,
+		req *repositories.ListCustomerPaymentsRequest,
+	) (*pagination.ListResult[*customerpayment.Payment], error)
 	Get(ctx context.Context, req *GetCustomerPaymentRequest) (*customerpayment.Payment, error)
 	PostAndApply(
 		ctx context.Context,

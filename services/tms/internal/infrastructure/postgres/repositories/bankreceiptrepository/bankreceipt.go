@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -65,6 +66,26 @@ func (r *repository) GetByID(
 		return nil, dberror.HandleNotFoundError(err, "BankReceipt")
 	}
 	return entity, nil
+}
+
+func (r *repository) ListByImportBatchID(
+	ctx context.Context,
+	req repositories.ListBankReceiptsByImportBatchRequest,
+) ([]*bankreceipt.Receipt, error) {
+	items := make([]*bankreceipt.Receipt, 0)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&items).
+		Where("br.import_batch_id = ?", req.BatchID).
+		Where("br.organization_id = ?", req.TenantInfo.OrgID).
+		Where("br.business_unit_id = ?", req.TenantInfo.BuID).
+		Order("br.receipt_date ASC").
+		Order("br.created_at ASC").
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list bank receipts by import batch: %w", err)
+	}
+	return items, nil
 }
 
 func (r *repository) ListExceptions(
@@ -165,6 +186,7 @@ func (r *repository) Update(
 	ctx context.Context,
 	entity *bankreceipt.Receipt,
 ) (*bankreceipt.Receipt, error) {
+	entity.UpdatedAt = timeutils.NowUnix()
 	res, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
@@ -178,6 +200,7 @@ func (r *repository) Update(
 		Set("matched_by_id = ?", entity.MatchedByID).
 		Set("exception_reason = ?", entity.ExceptionReason).
 		Set("updated_by_id = ?", entity.UpdatedByID).
+		Set("updated_at = ?", entity.UpdatedAt).
 		Set("version = version + 1").
 		Exec(ctx)
 	if err != nil {

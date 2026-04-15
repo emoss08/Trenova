@@ -1,8 +1,10 @@
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { MapStyleId, OverlayId } from "@/types/shipment-map";
+import type { LucideIcon } from "lucide-react";
 import {
   CircleDotIcon,
   CloudSunIcon,
@@ -12,8 +14,6 @@ import {
   TrafficConeIcon,
   TruckIcon,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { MapStyleId, OverlayId } from "./use-map-ui-state";
 
 type OverlayConfig = {
   id: OverlayId;
@@ -55,11 +55,7 @@ export function MapOptionsPopover({
           render={
             <PopoverTrigger
               render={
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8 bg-background shadow-sm"
-                />
+                <Button variant="outline" size="icon" className="size-8 bg-background shadow-sm" />
               }
             />
           }

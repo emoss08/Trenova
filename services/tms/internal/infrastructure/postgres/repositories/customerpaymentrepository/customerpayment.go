@@ -31,7 +31,51 @@ func New(p Params) repositories.CustomerPaymentRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.customer-payment-repository")}
 }
 
-func (r *repository) GetByID(ctx context.Context, req repositories.GetCustomerPaymentByIDRequest) (*customerpayment.Payment, error) {
+func (r *repository) List(
+	ctx context.Context,
+	req *repositories.ListCustomerPaymentsRequest,
+) (*pagination.ListResult[*customerpayment.Payment], error) {
+	limit := req.Filter.Pagination.SafeLimit()
+	items := make([]*customerpayment.Payment, 0, limit)
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&items).
+		Where("cp.organization_id = ?", req.Filter.TenantInfo.OrgID).
+		Where("cp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+		Relation("Applications", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("cpa.line_number ASC")
+		}).
+		Order("cp.created_at DESC").
+		Limit(limit).
+		Offset(req.Filter.Pagination.SafeOffset())
+
+	if req.Filter.Query != "" {
+		query = query.Where(
+			"(cp.reference_number ILIKE ? OR cp.memo ILIKE ?)",
+			"%"+req.Filter.Query+"%",
+			"%"+req.Filter.Query+"%",
+		)
+	}
+	if !req.CustomerID.IsNil() {
+		query = query.Where("cp.customer_id = ?", req.CustomerID)
+	}
+	if req.Status != "" {
+		query = query.Where("cp.status = ?", req.Status)
+	}
+
+	total, err := query.ScanAndCount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list customer payments: %w", err)
+	}
+
+	return &pagination.ListResult[*customerpayment.Payment]{Items: items, Total: total}, nil
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req repositories.GetCustomerPaymentByIDRequest,
+) (*customerpayment.Payment, error) {
 	entity := new(customerpayment.Payment)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -47,7 +91,10 @@ func (r *repository) GetByID(ctx context.Context, req repositories.GetCustomerPa
 	return entity, nil
 }
 
-func (r *repository) FindMatchCandidates(ctx context.Context, req repositories.FindCustomerPaymentMatchCandidatesRequest) ([]*customerpayment.Payment, error) {
+func (r *repository) FindMatchCandidates(
+	ctx context.Context,
+	req repositories.FindCustomerPaymentMatchCandidatesRequest,
+) ([]*customerpayment.Payment, error) {
 	items := make([]*customerpayment.Payment, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -66,7 +113,10 @@ func (r *repository) FindMatchCandidates(ctx context.Context, req repositories.F
 	return items, nil
 }
 
-func (r *repository) FindSuggestedMatchCandidates(ctx context.Context, req repositories.FindCustomerPaymentMatchCandidatesRequest) ([]*customerpayment.Payment, error) {
+func (r *repository) FindSuggestedMatchCandidates(
+	ctx context.Context,
+	req repositories.FindCustomerPaymentMatchCandidatesRequest,
+) ([]*customerpayment.Payment, error) {
 	items := make([]*customerpayment.Payment, 0)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
@@ -76,11 +126,16 @@ func (r *repository) FindSuggestedMatchCandidates(ctx context.Context, req repos
 		Where("cp.status = ?", customerpayment.StatusPosted).
 		Where("NOT EXISTS (SELECT 1 FROM bank_receipts br WHERE br.organization_id = cp.organization_id AND br.business_unit_id = cp.business_unit_id AND br.matched_customer_payment_id = cp.id AND br.status = 'Matched')")
 	if req.ReferenceNumber != "" {
-		query = query.Where("cp.reference_number = ? OR cp.reference_number ILIKE ?", req.ReferenceNumber, "%"+req.ReferenceNumber+"%")
+		query = query.Where(
+			"cp.reference_number = ? OR cp.reference_number ILIKE ?",
+			req.ReferenceNumber,
+			"%"+req.ReferenceNumber+"%",
+		)
 	}
 	if req.AmountMinor > 0 {
 		query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("cp.amount_minor = ?", req.AmountMinor).WhereOr("ABS(cp.amount_minor - ?) <= 100", req.AmountMinor)
+			return q.Where("cp.amount_minor = ?", req.AmountMinor).
+				WhereOr("ABS(cp.amount_minor - ?) <= 100", req.AmountMinor)
 		})
 	}
 	if req.ReceiptDate > 0 {
@@ -93,7 +148,10 @@ func (r *repository) FindSuggestedMatchCandidates(ctx context.Context, req repos
 	return items, nil
 }
 
-func (r *repository) Create(ctx context.Context, entity *customerpayment.Payment) (*customerpayment.Payment, error) {
+func (r *repository) Create(
+	ctx context.Context,
+	entity *customerpayment.Payment,
+) (*customerpayment.Payment, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("cpay_")
 	}
@@ -107,10 +165,22 @@ func (r *repository) Create(ctx context.Context, entity *customerpayment.Payment
 			return nil, fmt.Errorf("create customer payment applications: %w", err)
 		}
 	}
-	return r.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}})
+	return r.GetByID(
+		ctx,
+		repositories.GetCustomerPaymentByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		},
+	)
 }
 
-func (r *repository) Update(ctx context.Context, entity *customerpayment.Payment) (*customerpayment.Payment, error) {
+func (r *repository) Update(
+	ctx context.Context,
+	entity *customerpayment.Payment,
+) (*customerpayment.Payment, error) {
 	entity.SyncAmounts()
 	assignApplicationFields(entity)
 	res, err := r.db.DBForContext(ctx).
@@ -153,7 +223,16 @@ func (r *repository) Update(ctx context.Context, entity *customerpayment.Payment
 			}
 		}
 	}
-	return r.GetByID(ctx, repositories.GetCustomerPaymentByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}})
+	return r.GetByID(
+		ctx,
+		repositories.GetCustomerPaymentByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		},
+	)
 }
 
 func assignApplicationFields(entity *customerpayment.Payment) {

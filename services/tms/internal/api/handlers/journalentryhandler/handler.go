@@ -2,10 +2,13 @@ package journalentryhandler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -32,8 +35,81 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/accounting/journal-entries")
-	api.GET("/:journalEntryID/", h.pm.RequirePermission(permission.ResourceJournalEntry.String(), permission.OpRead), h.getEntry)
-	api.GET("/source/:sourceObjectType/:sourceObjectID/", h.pm.RequirePermission(permission.ResourceJournalEntry.String(), permission.OpRead), h.getSource)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceJournalEntry.String(), permission.OpRead),
+		h.listEntries,
+	)
+	api.GET(
+		"/:journalEntryID/",
+		h.pm.RequirePermission(permission.ResourceJournalEntry.String(), permission.OpRead),
+		h.getEntry,
+	)
+	api.GET(
+		"/source/:sourceObjectType/:sourceObjectID/",
+		h.pm.RequirePermission(permission.ResourceJournalEntry.String(), permission.OpRead),
+		h.getSource,
+	)
+}
+
+func (h *Handler) listEntries(c *gin.Context) {
+	auth := authctx.GetAuthContext(c)
+	query := pagination.NewQueryOptions(c, auth)
+
+	var fiscalYearID pulid.ID
+	if raw := c.Query("fiscalYearId"); raw != "" {
+		parsed, err := pulid.MustParse(raw)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		fiscalYearID = parsed
+	}
+
+	var fiscalPeriodID pulid.ID
+	if raw := c.Query("fiscalPeriodId"); raw != "" {
+		parsed, err := pulid.MustParse(raw)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		fiscalPeriodID = parsed
+	}
+
+	accountingDateStart := int64(0)
+	if raw := c.Query("accountingDateStart"); raw != "" {
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		accountingDateStart = parsed
+	}
+
+	accountingDateEnd := int64(0)
+	if raw := c.Query("accountingDateEnd"); raw != "" {
+		parsed, err := strconv.ParseInt(raw, 10, 64)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		accountingDateEnd = parsed
+	}
+
+	pagination.List(c, query, h.eh, func() (*pagination.ListResult[*journalentry.Entry], error) {
+		return h.service.ListEntries(
+			c.Request.Context(),
+			&repositories.ListJournalEntriesRequest{
+				Filter:              query,
+				FiscalYearID:        fiscalYearID,
+				FiscalPeriodID:      fiscalPeriodID,
+				ReferenceType:       c.Query("referenceType"),
+				Status:              c.Query("status"),
+				AccountingDateStart: accountingDateStart,
+				AccountingDateEnd:   accountingDateEnd,
+			},
+		)
+	})
 }
 
 func (h *Handler) getEntry(c *gin.Context) {
@@ -43,7 +119,15 @@ func (h *Handler) getEntry(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	entity, err := h.service.GetEntry(c.Request.Context(), pagination.TenantInfo{OrgID: auth.OrganizationID, BuID: auth.BusinessUnitID, UserID: auth.UserID}, id)
+	entity, err := h.service.GetEntry(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID:  auth.OrganizationID,
+			BuID:   auth.BusinessUnitID,
+			UserID: auth.UserID,
+		},
+		id,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -53,7 +137,16 @@ func (h *Handler) getEntry(c *gin.Context) {
 
 func (h *Handler) getSource(c *gin.Context) {
 	auth := authctx.GetAuthContext(c)
-	entity, err := h.service.GetSourceByObject(c.Request.Context(), pagination.TenantInfo{OrgID: auth.OrganizationID, BuID: auth.BusinessUnitID, UserID: auth.UserID}, c.Param("sourceObjectType"), c.Param("sourceObjectID"))
+	entity, err := h.service.GetSourceByObject(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID:  auth.OrganizationID,
+			BuID:   auth.BusinessUnitID,
+			UserID: auth.UserID,
+		},
+		c.Param("sourceObjectType"),
+		c.Param("sourceObjectID"),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

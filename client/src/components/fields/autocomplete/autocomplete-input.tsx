@@ -39,7 +39,7 @@ export function AutocompleteTrigger<TOption>({
       aria-expanded={open}
       aria-controls={listboxId}
       className={cn(
-        "h-8 w-full gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 text-xs font-normal",
+        "h-7 w-full gap-2 rounded border-muted-foreground/20 bg-muted px-1.5 text-xs font-normal",
         "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/30 data-pressed:outline-hidden",
         "cursor-default justify-between hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/30 [&_svg]:size-3",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",

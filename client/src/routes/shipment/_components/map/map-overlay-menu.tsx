@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -9,8 +10,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { OverlayId, WeatherLayerId } from "@/types/shipment-map";
+import type { LucideIcon } from "lucide-react";
 import {
   CircleDotIcon,
   CloudIcon,
@@ -25,8 +27,6 @@ import {
   WindIcon,
   XIcon,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import type { OverlayId, WeatherLayerId } from "./use-map-ui-state";
 
 type OverlayConfig = {
   id: OverlayId;
@@ -74,11 +74,7 @@ export function MapOverlayMenu({
     <DropdownMenu>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <DropdownMenuTrigger
-              render={<Button variant="ghost" size="icon-sm" />}
-            />
-          }
+          render={<DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" />} />}
         >
           <SlidersHorizontalIcon className="size-3.5" />
         </TooltipTrigger>
@@ -123,17 +119,11 @@ export function MapOverlayMenu({
             {WEATHER_OPTIONS.map((opt) => {
               const needsConfig = opt.requiresOWM && !owmConfigured;
               return (
-                <DropdownMenuRadioItem
-                  key={opt.id}
-                  value={opt.id}
-                  disabled={needsConfig}
-                >
+                <DropdownMenuRadioItem key={opt.id} value={opt.id} disabled={needsConfig}>
                   <opt.icon className="size-3.5 text-muted-foreground" />
                   <span>{opt.label}</span>
                   {needsConfig && (
-                    <span className="ml-auto text-2xs text-muted-foreground">
-                      (Setup Required)
-                    </span>
+                    <span className="ml-auto text-2xs text-muted-foreground">(Setup Required)</span>
                   )}
                 </DropdownMenuRadioItem>
               );

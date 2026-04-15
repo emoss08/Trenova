@@ -80,7 +80,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
 
 export function BooleanBadge({ value }: { value: boolean }) {
   return (
-    <Badge variant={value ? "active" : "inactive"} className="max-h-6">
+    <Badge variant={value ? "active" : "inactive"} className="max-h-5">
       {value ? "Yes" : "No"}
     </Badge>
   );
@@ -107,7 +107,7 @@ export function PTOStatusBadge({ status }: { status: PTOStatus }) {
   };
 
   return (
-    <Badge variant={ptoStatusAttrs[status].variant} className="max-h-6">
+    <Badge variant={ptoStatusAttrs[status].variant} className="max-h-5">
       {ptoStatusAttrs[status].text}
     </Badge>
   );
@@ -132,7 +132,7 @@ export function PermissionScopeBadge({ scope }: { scope?: string }) {
   };
 
   return (
-    <Badge variant={valueAttrs[scope].variant} className="max-h-6">
+    <Badge variant={valueAttrs[scope].variant} className="max-h-5">
       {valueAttrs[scope].icon}
       {valueAttrs[scope].text}
     </Badge>
@@ -172,7 +172,7 @@ export function PTOTypeBadge({ type }: { type: PTOType }) {
   };
 
   return (
-    <Badge variant={ptoTypeAttributes[type].variant} className="max-h-6">
+    <Badge variant={ptoTypeAttributes[type].variant} className="max-h-5">
       {ptoTypeAttributes[type].text}
     </Badge>
   );
@@ -247,7 +247,7 @@ export function ShipmentStatusBadge({
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -298,7 +298,7 @@ export function BillingQueueStatusBadge({
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );
@@ -380,7 +380,7 @@ export function InvoiceStatusBadge({
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-6")}>
+    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
       {statusAttributes[status].text}
     </Badge>
   );

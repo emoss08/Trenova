@@ -2,11 +2,13 @@ package journalentryrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -27,6 +29,86 @@ type repository struct {
 
 func New(p Params) repositories.JournalEntryRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-entry-repository")}
+}
+
+func (r *repository) List(
+	ctx context.Context,
+	req *repositories.ListJournalEntriesRequest,
+) (*pagination.ListResult[*journalentry.Entry], error) {
+	limit := req.Filter.Pagination.SafeLimit()
+	records := make([]*entryRecord, 0, limit)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&records).
+		Where("je.organization_id = ?", req.Filter.TenantInfo.OrgID).
+		Where("je.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+		Order("je.accounting_date DESC").
+		Order("je.entry_number DESC").
+		Limit(limit).
+		Offset(req.Filter.Pagination.SafeOffset())
+
+	if req.Filter.Query != "" {
+		like := "%" + req.Filter.Query + "%"
+		query = query.Where(
+			"(je.entry_number ILIKE ? OR je.description ILIKE ? OR je.reference_id ILIKE ? OR je.reference_type ILIKE ?)",
+			like,
+			like,
+			like,
+			like,
+		)
+	}
+	if !req.FiscalYearID.IsNil() {
+		query = query.Where("je.fiscal_year_id = ?", req.FiscalYearID)
+	}
+	if !req.FiscalPeriodID.IsNil() {
+		query = query.Where("je.fiscal_period_id = ?", req.FiscalPeriodID)
+	}
+	if req.ReferenceType != "" {
+		query = query.Where("je.reference_type = ?", req.ReferenceType)
+	}
+	if req.Status != "" {
+		query = query.Where("je.status = ?", req.Status)
+	}
+	if req.AccountingDateStart > 0 {
+		query = query.Where("je.accounting_date >= ?", req.AccountingDateStart)
+	}
+	if req.AccountingDateEnd > 0 {
+		query = query.Where("je.accounting_date <= ?", req.AccountingDateEnd)
+	}
+
+	total, err := query.ScanAndCount(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list journal entries: %w", err)
+	}
+
+	items := make([]*journalentry.Entry, 0, len(records))
+	for _, rec := range records {
+		items = append(items, &journalentry.Entry{
+			ID:             parseID(rec.ID),
+			OrganizationID: parseID(rec.OrganizationID),
+			BusinessUnitID: parseID(rec.BusinessUnitID),
+			BatchID:        parseID(rec.BatchID),
+			FiscalYearID:   parseID(rec.FiscalYearID),
+			FiscalPeriodID: parseID(rec.FiscalPeriodID),
+			EntryNumber:    rec.EntryNumber,
+			EntryType:      rec.EntryType,
+			Status:         rec.Status,
+			AccountingDate: rec.AccountingDate,
+			Description:    rec.Description,
+			ReferenceType:  rec.ReferenceType,
+			ReferenceID:    rec.ReferenceID,
+			TotalDebit:     rec.TotalDebit,
+			TotalCredit:    rec.TotalCredit,
+			IsPosted:       rec.IsPosted,
+			IsReversal:     rec.IsReversal,
+			ReversalOfID:   parseID(rec.ReversalOfID),
+			ReversedByID:   parseID(rec.ReversedByID),
+			ReversalDate:   rec.ReversalDate,
+			ReversalReason: rec.ReversalReason,
+		})
+	}
+
+	return &pagination.ListResult[*journalentry.Entry]{Items: items, Total: total}, nil
 }
 
 type entryRecord struct {
@@ -71,7 +153,10 @@ type lineRecord struct {
 	LocationID     string `bun:"location_id"`
 }
 
-func (r *repository) GetByID(ctx context.Context, req repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error) {
+func (r *repository) GetByID(
+	ctx context.Context,
+	req repositories.GetJournalEntryByIDRequest,
+) (*journalentry.Entry, error) {
 	rec := new(entryRecord)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -127,7 +212,12 @@ func (r *repository) GetByID(ctx context.Context, req repositories.GetJournalEnt
 	return entry, nil
 }
 
-func (r *repository) MarkReversed(ctx context.Context, req repositories.MarkJournalEntryReversedRequest) error {
+//
+//nolint:gocritic // repository contract uses value request types
+func (r *repository) MarkReversed(
+	ctx context.Context,
+	req repositories.MarkJournalEntryReversedRequest,
+) error {
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Table("journal_entries").

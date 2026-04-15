@@ -266,6 +266,96 @@ const accountingModule: NavModule = {
       path: "/accounting",
     },
     {
+      id: "manual-journals",
+      label: "Manual Journals",
+      path: "/accounting/manual-journals",
+      resource: Resource.ManualJournal,
+    },
+    {
+      id: "journal-reversals",
+      label: "Journal Reversals",
+      path: "/accounting/journal-reversals",
+      resource: Resource.JournalReversal,
+    },
+    {
+      id: "reports-group",
+      label: "Reports",
+      defaultOpen: false,
+      items: [
+        {
+          id: "trial-balance",
+          label: "Trial Balance",
+          path: "/accounting/reports/trial-balance",
+          resource: Resource.AccountingReport,
+        },
+        {
+          id: "income-statement",
+          label: "Income Statement",
+          path: "/accounting/reports/income-statement",
+          resource: Resource.AccountingReport,
+        },
+        {
+          id: "balance-sheet",
+          label: "Balance Sheet",
+          path: "/accounting/reports/balance-sheet",
+          resource: Resource.AccountingReport,
+        },
+      ],
+    },
+    {
+      id: "ar-group",
+      label: "Accounts Receivable",
+      defaultOpen: false,
+      items: [
+        {
+          id: "ar-aging",
+          label: "AR Aging",
+          path: "/accounting/ar/aging",
+        },
+        {
+          id: "customer-ledger",
+          label: "Customer Ledger",
+          path: "/accounting/ar/customer-ledger",
+        },
+        {
+          id: "ar-open-items",
+          label: "Open Items",
+          path: "/accounting/ar/open-items",
+        },
+      ],
+    },
+    {
+      id: "reconciliation-group",
+      label: "Bank Reconciliation",
+      defaultOpen: false,
+      items: [
+        {
+          id: "bank-receipts",
+          label: "Bank Receipts",
+          path: "/accounting/reconciliation/bank-receipts",
+          resource: Resource.BankReceipt,
+        },
+        {
+          id: "work-queue",
+          label: "Work Queue",
+          path: "/accounting/reconciliation/work-queue",
+          resource: Resource.BankReceiptWorkItem,
+        },
+        {
+          id: "reconciliation-summary",
+          label: "Summary",
+          path: "/accounting/reconciliation/summary",
+          resource: Resource.BankReceipt,
+        },
+        {
+          id: "import-batches",
+          label: "Import Batches",
+          path: "/accounting/reconciliation/import-batches",
+          resource: Resource.BankReceipt,
+        },
+      ],
+    },
+    {
       id: "configuration-files-group",
       label: "Configuration Files",
       defaultOpen: false,

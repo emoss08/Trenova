@@ -196,6 +196,192 @@ const routes: RouteObject[] = [
           },
 
           {
+            path: "/accounting",
+            loader: protectedLoader,
+            async lazy() {
+              const { AccountingDashboardPage } = await import(
+                "@/routes/accounting-dashboard/page"
+              );
+              return { Component: AccountingDashboardPage };
+            },
+          },
+          {
+            path: "/accounting/manual-journals",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.ManualJournal),
+            ),
+            async lazy() {
+              const { ManualJournalsPage } = await import("@/routes/manual-journal/page");
+              return { Component: ManualJournalsPage };
+            },
+          },
+          {
+            path: "/accounting/journal-reversals",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.JournalReversal),
+            ),
+            async lazy() {
+              const { JournalReversalsPage } = await import("@/routes/journal-reversal/page");
+              return { Component: JournalReversalsPage };
+            },
+          },
+          {
+            path: "/accounting/journal-entries/:id",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.JournalEntry),
+            ),
+            async lazy() {
+              const { JournalEntryDetailPage } = await import("@/routes/journal-entry/page");
+              return { Component: JournalEntryDetailPage };
+            },
+          },
+          {
+            path: "/accounting/journal-entries/source/:type/:sourceId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.JournalEntry),
+            ),
+            async lazy() {
+              const { SourceDrillDownPage } = await import(
+                "@/routes/journal-entry/_components/source-drill-down-page"
+              );
+              return { Component: SourceDrillDownPage };
+            },
+          },
+          {
+            path: "/accounting/reports/trial-balance",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { TrialBalancePage } = await import("@/routes/trial-balance/page");
+              return { Component: TrialBalancePage };
+            },
+          },
+          {
+            path: "/accounting/reports/income-statement",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { IncomeStatementPage } = await import("@/routes/income-statement/page");
+              return { Component: IncomeStatementPage };
+            },
+          },
+          {
+            path: "/accounting/reports/balance-sheet",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingReport),
+            ),
+            async lazy() {
+              const { BalanceSheetPage } = await import("@/routes/balance-sheet/page");
+              return { Component: BalanceSheetPage };
+            },
+          },
+          {
+            path: "/accounting/ar/aging",
+            loader: protectedLoader,
+            async lazy() {
+              const { ARAgingPage } = await import("@/routes/ar-aging/page");
+              return { Component: ARAgingPage };
+            },
+          },
+          {
+            path: "/accounting/ar/customer-ledger",
+            loader: protectedLoader,
+            async lazy() {
+              const { CustomerLedgerPage } = await import("@/routes/customer-ledger/page");
+              return { Component: CustomerLedgerPage };
+            },
+          },
+          {
+            path: "/accounting/ar/open-items",
+            loader: protectedLoader,
+            async lazy() {
+              const { AROpenItemsPage } = await import("@/routes/ar-open-items/page");
+              return { Component: AROpenItemsPage };
+            },
+          },
+          {
+            path: "/accounting/ar/customer-statement/:customerId",
+            loader: protectedLoader,
+            async lazy() {
+              const { CustomerStatementPage } = await import(
+                "@/routes/customer-statement/page"
+              );
+              return { Component: CustomerStatementPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/bank-receipts",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceipt),
+            ),
+            async lazy() {
+              const { BankReceiptPage } = await import("@/routes/bank-receipt/page");
+              return { Component: BankReceiptPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/work-queue",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceiptWorkItem),
+            ),
+            async lazy() {
+              const { BankReceiptQueuePage: BankReceiptWorkQueuePage } = await import(
+                "@/routes/bank-receipt-queue/page"
+              );
+              return { Component: BankReceiptWorkQueuePage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/summary",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceipt),
+            ),
+            async lazy() {
+              const { ReconciliationSummaryPage } = await import(
+                "@/routes/reconciliation-summary/page"
+              );
+              return { Component: ReconciliationSummaryPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/import-batches",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceipt),
+            ),
+            async lazy() {
+              const { BankReceiptBatchPage } = await import(
+                "@/routes/bank-receipt-batch/page"
+              );
+              return { Component: BankReceiptBatchPage };
+            },
+          },
+          {
+            path: "/accounting/reconciliation/import-batches/:batchId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.BankReceipt),
+            ),
+            async lazy() {
+              const { BankReceiptBatchDetailPage } = await import(
+                "@/routes/bank-receipt-batch/detail-page"
+              );
+              return { Component: BankReceiptBatchDetailPage };
+            },
+          },
+          {
             path: "/accounting/configuration-files/account-types",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.AccountType)),
             async lazy() {

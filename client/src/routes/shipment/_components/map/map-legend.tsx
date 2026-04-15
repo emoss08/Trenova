@@ -1,6 +1,6 @@
+import type { OverlayId, WeatherLayerId } from "@/types/shipment-map";
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
 import { useMemo } from "react";
-import type { OverlayId, WeatherLayerId } from "./use-map-ui-state";
 
 type LegendEntry = {
   key: string;
@@ -11,15 +11,7 @@ type LegendEntry = {
 function RouteSwatch() {
   return (
     <svg width="20" height="6" className="shrink-0">
-      <line
-        x1="0"
-        y1="3"
-        x2="20"
-        y2="3"
-        stroke="#3b82f6"
-        strokeWidth="2"
-        strokeDasharray="4 3"
-      />
+      <line x1="0" y1="3" x2="20" y2="3" stroke="#3b82f6" strokeWidth="2" strokeDasharray="4 3" />
     </svg>
   );
 }

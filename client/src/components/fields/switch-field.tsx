@@ -49,7 +49,7 @@ export function SwitchField<T extends FieldValues>({
       render={({ field: { value, onChange, disabled, onBlur, name, ref }, fieldState }) => (
         <div
           className={cn(
-            "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-3 transition-all duration-300 ease-in-out",
+            "group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5 transition-all duration-300 ease-in-out",
             outlined &&
               "border-input bg-muted transition-[border-color,box-shadow,background-color] duration-200 ease-in-out has-data-checked:border-blue-600 has-data-checked:bg-blue-600/10 has-data-checked:text-blue-500 has-data-checked:ring-4 has-data-checked:ring-blue-600/20 dark:has-data-checked:text-blue-400",
             fieldState.error &&
@@ -133,7 +133,7 @@ export function SwitchField<T extends FieldValues>({
 
 export function SwitchFieldSkeleton() {
   return (
-    <div className="group relative flex w-full items-start gap-2 rounded-md border border-transparent p-3">
+    <div className="group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5">
       <Skeleton className="size-5" />
       <div className="grid grow gap-1">
         <Skeleton className="h-4 w-[150px]" />

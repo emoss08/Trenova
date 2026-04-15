@@ -97,7 +97,7 @@ export function NumberField<T extends FieldValues>({
                   props["aria-describedby"],
                 )}
                 className={cn(
-                  "flex h-8 w-full min-w-0 rounded-md border border-input bg-muted px-2.5 py-1 outline-none md:text-xs",
+                  "flex h-7 w-full min-w-0 rounded-md border border-input bg-muted px-2 py-0.5 outline-none md:text-xs",
                   "file:border-0 file:bg-transparent file:text-sm file:font-medium",
                   "placeholder:text-muted-foreground",
                   "disabled:cursor-not-allowed disabled:opacity-50",
@@ -122,7 +122,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Increment"
-                    className="inline-flex w-7 h-8 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex w-6 h-7 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue + step;
@@ -135,7 +135,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Decrement"
-                    className="inline-flex w-7 h-8 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex w-6 h-7 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue - step;

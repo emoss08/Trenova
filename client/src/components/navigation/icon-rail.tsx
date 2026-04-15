@@ -83,7 +83,7 @@ function OrgAvatar() {
 
   if (isLoading) {
     return (
-      <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
         <Loader2 className="size-3 animate-spin" />
       </div>
     );
@@ -103,7 +103,7 @@ function OrgAvatar() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <a href="/" className="flex size-8 shrink-0 items-center justify-center rounded-md overflow-hidden select-none" />
+            <a href="/" className="flex size-7 shrink-0 items-center justify-center rounded-md overflow-hidden select-none" />
           }
         >
           {avatarContent}
@@ -124,7 +124,7 @@ function OrgAvatar() {
               render={
                 <button
                   type="button"
-                  className="flex size-8 shrink-0 items-center justify-center rounded-md overflow-hidden select-none"
+                  className="flex size-7 shrink-0 items-center justify-center rounded-md overflow-hidden select-none"
                   disabled={switchMutation.isPending}
                 />
               }
@@ -229,7 +229,7 @@ function ModuleButton({
             type="button"
             onClick={onSelect}
             className={cn(
-              "flex size-8 items-center justify-center rounded-md transition-colors",
+              "flex size-7 items-center justify-center rounded-md transition-colors",
               isActive
                 ? "bg-accent text-foreground"
                 : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50",
@@ -237,7 +237,7 @@ function ModuleButton({
           />
         }
       >
-        <Icon className="size-[18px]" strokeWidth={isActive ? 2 : 1.5} />
+        <Icon className="size-4" strokeWidth={isActive ? 2 : 1.5} />
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={6}>
         {module.label}
@@ -255,7 +255,7 @@ function FavoritesButton({ isActive, onSelect }: { isActive: boolean; onSelect: 
             type="button"
             onClick={onSelect}
             className={cn(
-              "flex size-8 items-center justify-center rounded-md transition-colors",
+              "flex size-7 items-center justify-center rounded-md transition-colors",
               isActive
                 ? "bg-accent text-foreground"
                 : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50",
@@ -263,7 +263,7 @@ function FavoritesButton({ isActive, onSelect }: { isActive: boolean; onSelect: 
           />
         }
       >
-        <Star className={cn("size-4", isActive && "fill-amber-400 text-amber-400")} strokeWidth={isActive ? 2 : 1.5} />
+        <Star className={cn("size-3.5", isActive && "fill-amber-400 text-amber-400")} strokeWidth={isActive ? 2 : 1.5} />
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={6}>
         Favorites
@@ -282,11 +282,11 @@ function SearchButton() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent/50 hover:text-muted-foreground"
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent/50 hover:text-muted-foreground"
           />
         }
       >
-        <Search className="size-4" strokeWidth={1.5} />
+        <Search className="size-3.5" strokeWidth={1.5} />
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={6}>
         Search
@@ -320,7 +320,7 @@ function UserMenu() {
                 render={
                   <button
                     type="button"
-                    className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-accent/50"
+                    className="flex size-7 items-center justify-center rounded-md transition-colors hover:bg-accent/50"
                   />
                 }
               />
@@ -331,7 +331,7 @@ function UserMenu() {
               name={user?.name}
               profilePicUrl={user?.profilePicUrl}
               thumbnailUrl={user?.thumbnailUrl}
-              className="size-8"
+              className="size-7"
               fallbackClassName="bg-muted text-[10px] font-medium text-muted-foreground"
             />
           </TooltipTrigger>
@@ -427,9 +427,9 @@ export function IconRail({
   onFavoritesSelect,
 }: IconRailProps) {
   return (
-    <div className="flex h-screen w-12 flex-col items-center border-r border-border bg-sidebar">
+    <div className="flex h-screen w-10 flex-col items-center border-r border-border bg-sidebar">
       {/* Organization logo */}
-      <div className="flex h-12 items-center justify-center">
+      <div className="flex h-10 items-center justify-center">
         <OrgAvatar />
       </div>
 
@@ -449,7 +449,7 @@ export function IconRail({
       <div className="flex flex-col items-center gap-1 px-1.5 pb-3">
         <FavoritesButton isActive={isFavoritesActive} onSelect={onFavoritesSelect} />
         <SearchButton />
-        <div className="my-1 h-px w-5 bg-border" />
+        <div className="my-1 h-px w-4 bg-border" />
         <UserMenu />
       </div>
     </div>
