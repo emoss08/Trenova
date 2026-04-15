@@ -3,7 +3,7 @@ import { useShipmentMapStore } from "@/stores/shipment-map-store";
 import type { WeatherLayerId } from "@/types/shipment-map";
 import { useQuery } from "@tanstack/react-query";
 import { useMap } from "@vis.gl/react-google-maps";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { WeatherTimeline } from "./weather-timeline";
 
 const REFRESH_INTERVAL = 10 * 60 * 1000;
@@ -22,7 +22,7 @@ function useWeatherRadar() {
     retry: false,
   });
 
-  const frames = data?.radar.past ?? [];
+  const frames = useMemo(() => data?.radar.past ?? [], [data?.radar.past]);
   const host = data?.host ?? "";
 
   useEffect(() => {
@@ -30,7 +30,7 @@ function useWeatherRadar() {
       setCurrentIndex(frames.length - 1);
       hasInitialized.current = true;
     }
-  }, [frames]);
+  }, [frames, setCurrentIndex]);
 
   useEffect(() => {
     if (!isPlaying || frames.length === 0) return;
@@ -43,11 +43,11 @@ function useWeatherRadar() {
     }, PLAYBACK_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [isPlaying, frames.length]);
+  }, [isPlaying, frames.length, setCurrentIndex]);
 
   const togglePlay = useCallback(() => {
     setIsPlaying((p) => !p);
-  }, []);
+  }, [setIsPlaying]);
 
   return {
     frames,

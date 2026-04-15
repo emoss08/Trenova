@@ -89,22 +89,22 @@ export function PdfViewer({
     <div
       data-slot="pdf-viewer"
       className={cn(
-        "flex flex-col border border-border rounded-lg bg-background overflow-hidden",
+        "flex flex-col overflow-hidden rounded-lg border border-border bg-background",
         className,
       )}
     >
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4 p-3 border-b border-border bg-muted/50">
+      <div className="flex items-center justify-between gap-4 border-b border-border bg-muted/50 p-3">
         {/* Mode Switcher */}
-        <div className="flex items-center gap-1 border border-border rounded-md p-1 bg-background">
+        <div className="flex items-center gap-1 rounded-md border border-border bg-background p-1">
           <button
             type="button"
             onClick={() => setViewMode("single")}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "single"
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             Single
@@ -113,10 +113,10 @@ export function PdfViewer({
             type="button"
             onClick={() => setViewMode("scroll")}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "scroll"
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             Scroll
@@ -125,10 +125,10 @@ export function PdfViewer({
             type="button"
             onClick={() => setViewMode("book")}
             className={cn(
-              "px-3 py-1.5 text-xs font-medium rounded transition-colors",
+              "rounded px-3 py-1.5 text-xs font-medium transition-colors",
               viewMode === "book"
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             Book
@@ -142,7 +142,7 @@ export function PdfViewer({
               type="button"
               onClick={goToPreviousPage}
               disabled={currentPage <= 1}
-              className="px-2 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border bg-background px-2 py-1 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               ←
             </button>
@@ -153,7 +153,7 @@ export function PdfViewer({
                 max={numPages}
                 value={currentPage}
                 onChange={handlePageInput}
-                className="w-12 px-2 py-1 text-center border border-border rounded bg-background"
+                className="w-12 rounded border border-border bg-background px-2 py-1 text-center"
               />
               <span className="text-muted-foreground">/ {numPages}</span>
             </div>
@@ -161,7 +161,7 @@ export function PdfViewer({
               type="button"
               onClick={goToNextPage}
               disabled={currentPage >= numPages}
-              className="px-2 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded border border-border bg-background px-2 py-1 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               →
             </button>
@@ -174,25 +174,25 @@ export function PdfViewer({
             type="button"
             onClick={handleZoomOut}
             disabled={zoom <= 0.5}
-            className="px-2 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-border bg-background px-2 py-1 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             −
           </button>
-          <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
+          <span className="min-w-[3rem] text-center text-sm text-muted-foreground">
             {Math.round(zoom * 100)}%
           </span>
           <button
             type="button"
             onClick={handleZoomIn}
             disabled={zoom >= 2.0}
-            className="px-2 py-1 text-sm border border-border rounded bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded border border-border bg-background px-2 py-1 text-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
           >
             +
           </button>
           <button
             type="button"
             onClick={handleFitWidth}
-            className="px-2 py-1 text-xs border border-border rounded bg-background hover:bg-muted"
+            className="rounded border border-border bg-background px-2 py-1 text-xs hover:bg-muted"
           >
             Fit
           </button>
@@ -232,14 +232,14 @@ export function PdfViewer({
         >
           {viewMode === "scroll" && (
             <>
-              {Array.from(new Array(numPages), (_, index) => (
+              {Array.from({ length: numPages }, (_, index) => (
                 <div key={`page_${index + 1}`} className="flex justify-center">
                   <Page
                     pageNumber={index + 1}
                     width={pageWidth}
                     className="shadow-lg"
                     loading={
-                      <div className="h-[800px] w-full bg-background animate-pulse rounded" />
+                      <div className="h-[800px] w-full animate-pulse rounded bg-background" />
                     }
                   />
                 </div>
@@ -254,7 +254,7 @@ export function PdfViewer({
                 width={pageWidth}
                 className="shadow-lg"
                 loading={
-                  <div className="h-[800px] w-full bg-background animate-pulse rounded" />
+                  <div className="h-[800px] w-full animate-pulse rounded bg-background" />
                 }
               />
             </div>
@@ -268,7 +268,7 @@ export function PdfViewer({
                   width={pageWidth}
                   className="shadow-lg"
                   loading={
-                    <div className="h-[800px] w-full bg-background animate-pulse rounded" />
+                    <div className="h-[800px] w-full animate-pulse rounded bg-background" />
                   }
                 />
               </div>
@@ -281,7 +281,7 @@ export function PdfViewer({
                       width={pageWidth}
                       className="shadow-lg"
                       loading={
-                        <div className="h-[800px] w-full bg-background animate-pulse rounded" />
+                        <div className="h-[800px] w-full animate-pulse rounded bg-background" />
                       }
                     />
                   </div>

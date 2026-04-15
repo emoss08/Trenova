@@ -34,7 +34,7 @@ export function useMapUIState() {
 
   const toggleFullscreen = useCallback(() => {
     setIsFullscreen((p) => !p);
-  }, []);
+  }, [setIsFullscreen]);
 
   useEffect(() => {
     if (!isFullscreen) return;
@@ -43,7 +43,7 @@ export function useMapUIState() {
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [isFullscreen]);
+  }, [isFullscreen, setIsFullscreen]);
 
   return {
     overlays,

@@ -168,7 +168,7 @@ export function WeatherTimeline({
       onWeatherLayerChange(layer);
       setWeatherLayerOpen(false);
     },
-    [onWeatherLayerChange],
+    [onWeatherLayerChange, setWeatherLayerOpen],
   );
 
   return (
@@ -184,7 +184,7 @@ export function WeatherTimeline({
                 />
               }
             >
-              <activeOption.icon className="size-4 text-foreground fill-foreground" />
+              <activeOption.icon className="size-4 fill-foreground text-foreground" />
               <span>{activeOption.label}</span>
               <ChevronDownIcon className="size-3 text-muted-foreground" />
             </PopoverTrigger>
@@ -192,16 +192,16 @@ export function WeatherTimeline({
               side="top"
               sideOffset={8}
               align="start"
-              className="w-auto shadow-sm p-1 gap-0"
+              className="w-auto gap-0 p-1 shadow-sm"
             >
               {WEATHER_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
                   type="button"
                   onClick={() => handleWeatherLayerChange(opt.id)}
-                  className="flex w-full items-start gap-1.5 px-3 py-2 text-left hover:bg-accent rounded-md"
+                  className="flex w-full items-start gap-1.5 rounded-md px-3 py-2 text-left hover:bg-accent"
                 >
-                  <opt.icon className="mt-px size-4 shrink-0 text-foreground fill-foreground" />
+                  <opt.icon className="mt-px size-4 shrink-0 fill-foreground text-foreground" />
                   <div className="min-w-0">
                     <div className="text-sm font-medium">{opt.label}</div>
                     <div className="text-2xs text-muted-foreground">{opt.description}</div>
@@ -263,7 +263,7 @@ export function WeatherTimeline({
                 isLive ? "bg-green-500" : "bg-muted-foreground",
               )}
             />
-            <span className="tabular-nums text-muted-foreground">{dateTimeLabel}</span>
+            <span className="text-muted-foreground tabular-nums">{dateTimeLabel}</span>
           </div>
         </div>
         <div className="px-3 pb-2.5">
@@ -282,7 +282,7 @@ export function WeatherTimeline({
             {ticks.map((tick, i) => (
               <span
                 key={tick.label}
-                className="absolute whitespace-nowrap text-[10px] tabular-nums text-muted-foreground"
+                className="absolute text-[10px] whitespace-nowrap text-muted-foreground tabular-nums"
                 style={{
                   left: `${tick.position}%`,
                   transform:
