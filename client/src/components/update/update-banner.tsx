@@ -38,8 +38,8 @@ export function LatestChange() {
         "transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0",
       )}
     >
-      <span className="font-light font-mono text-[10px] text-muted-foreground">UPDATE</span>
-      <p className="font-medium text-xs">v{status.latestVersion} available</p>
+      <span className="font-mono text-[10px] font-light text-muted-foreground">UPDATE</span>
+      <p className="text-xs font-medium">v{status.latestVersion} available</p>
       <span className="text-[10px] text-muted-foreground">Running v{status.currentVersion}</span>
       {status.latestRelease.htmlUrl && (
         <Button
@@ -48,7 +48,7 @@ export function LatestChange() {
               View Release
             </a>
           }
-          className="w-max px-0 font-light text-xs"
+          className="w-max px-0 text-xs font-light"
           size="sm"
           variant="link"
         >

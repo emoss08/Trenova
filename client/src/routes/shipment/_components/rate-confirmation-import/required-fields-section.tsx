@@ -21,7 +21,7 @@ export function RequiredFieldsSection({ control, hasValues }: RequiredFieldsSect
     <div className="px-3 py-2">
       {!hasValues && (
         <div className="mb-2 flex items-center gap-2 rounded-md bg-amber-500/[0.06] px-2.5 py-1.5">
-          <AlertCircleIcon className="size-3 text-amber-500 shrink-0" />
+          <AlertCircleIcon className="size-3 shrink-0 text-amber-500" />
           <span className="text-2xs text-amber-600 dark:text-amber-400">
             Complete these fields to create the shipment
           </span>

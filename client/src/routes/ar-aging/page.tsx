@@ -164,7 +164,7 @@ function AgingKPICard({
       </CardHeader>
       <CardContent>
         <p
-          className={`text-2xl font-semibold tabular-nums tracking-tight ${
+          className={`text-2xl font-semibold tracking-tight tabular-nums ${
             variant === "danger"
               ? "text-red-600 dark:text-red-400"
               : variant === "primary"

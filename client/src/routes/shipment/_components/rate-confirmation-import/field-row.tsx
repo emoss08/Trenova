@@ -69,7 +69,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
   if (field.status === "missing" && !isEditing) {
     return (
       <div
-        className="group flex items-center gap-2 rounded px-2 py-1 hover:bg-muted/50 transition-colors"
+        className="group flex items-center gap-2 rounded px-2 py-1 transition-colors hover:bg-muted/50"
         onKeyDown={handleKeyDown}
         tabIndex={0}
         role="row"
@@ -80,7 +80,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         <Button
           variant="ghost"
           size="icon-xs"
-          className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+          className="ml-auto opacity-0 transition-opacity group-hover:opacity-100"
           onClick={handleStartEdit}
         >
           <PencilIcon className="size-2.5" />
@@ -104,7 +104,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
         <div className={cn("mt-1.5 size-1.5 shrink-0 rounded-full", style.dot)} />
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-baseline gap-2 min-w-0">
+            <div className="flex min-w-0 items-baseline gap-2">
               <span className="shrink-0 text-2xs text-muted-foreground">{field.label}</span>
               {isEditing ? (
                 <Input
@@ -112,13 +112,13 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onBlur={handleSaveEdit}
-                  className="h-6 text-xs flex-1"
+                  className="h-6 flex-1 text-xs"
                 />
               ) : (
                 <span className="truncate text-xs text-foreground">{displayVal}</span>
               )}
             </div>
-            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+            <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
               {(field.status === "needs-review" || field.status === "conflicting") && (
                 <Button variant="ghost" size="icon-xs" onClick={() => onAccept(field.key)}>
                   <CheckIcon className="size-2.5" />
@@ -150,7 +150,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
             <div className="mt-0.5">
               <button
                 type="button"
-                className="flex items-center gap-1 text-2xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                className="flex items-center gap-1 text-2xs text-muted-foreground/50 transition-colors hover:text-muted-foreground"
                 onClick={() => setShowAlts(!showAlts)}
               >
                 <ChevronDownIcon className={cn("size-2.5 transition-transform", showAlts && "rotate-180")} />
@@ -162,7 +162,7 @@ export function FieldRow({ field, onAccept, onEdit, onReset, onSelectAlternative
                     <button
                       key={alt}
                       type="button"
-                      className="rounded border px-1.5 py-0.5 text-2xs hover:bg-muted transition-colors"
+                      className="rounded border px-1.5 py-0.5 text-2xs transition-colors hover:bg-muted"
                       onClick={() => {
                         onSelectAlternative?.(field.key, alt);
                         setShowAlts(false);

@@ -143,7 +143,7 @@ export function BillingQueueActionBar({
               render={
                 <Button
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                  className="bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
                   onClick={() => updateStatus({ status: "Approved" })}
                   disabled={isPending || !canApprove}
                 >

@@ -6,11 +6,11 @@ import { useEffect, useRef } from "react";
 import { useTheme } from "../theme-provider";
 
 const LetterGlitch = ({
-  glitchColors = ["#2b4539", "#61dca3", "#61b3dc"],
-  glitchSpeed = 50,
-  centerVignette = false,
-  outerVignette = true,
-  smooth = true,
+  glitchColors,
+  glitchSpeed,
+  centerVignette,
+  outerVignette,
+  smooth,
   className,
   canvasClassName,
 }: {

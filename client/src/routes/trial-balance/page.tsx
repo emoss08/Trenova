@@ -63,7 +63,7 @@ export function TrialBalancePage() {
                   >
                     <td className="px-3 py-2 font-mono text-xs">{balance.accountCode}</td>
                     <td className="px-3 py-2 text-xs">{balance.accountName}</td>
-                    <td className="px-3 py-2 text-xs capitalize text-muted-foreground">
+                    <td className="px-3 py-2 text-xs text-muted-foreground capitalize">
                       {balance.accountCategory}
                     </td>
                     <td className="px-3 py-2 text-right">

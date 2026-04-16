@@ -279,7 +279,7 @@ export function BillingQueueSidebar({
               }
             />
           </div>
-          <PopoverContent sideOffset={4} className="w-[400px] p-3 dark">
+          <PopoverContent sideOffset={4} className="dark w-[400px] p-3">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">Filters</span>

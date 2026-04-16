@@ -16,7 +16,7 @@ export function SuccessPhase({ shipmentId, attachError, onDone }: SuccessPhasePr
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="flex flex-col items-center gap-6 max-w-xs text-center"
+        className="flex max-w-xs flex-col items-center gap-6 text-center"
       >
         <div className="flex size-10 items-center justify-center rounded-full bg-foreground text-background">
           <CheckIcon className="size-5" />

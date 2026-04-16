@@ -73,7 +73,7 @@ export default function LoadPlannerDialog({
         if (!isOpen) onOpenChange(null);
       }}
     >
-      <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-3xl overflow-hidden">
+      <DialogContent className="flex max-h-[85vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-md bg-primary/10">
@@ -131,7 +131,7 @@ export default function LoadPlannerDialog({
 
                 {data.recommendations.length > 0 && (
                   <div>
-                    <span className="mb-1.5 block text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <span className="mb-1.5 block text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                       Recommendations
                     </span>
                     <LoadingRecommendations
@@ -142,7 +142,7 @@ export default function LoadPlannerDialog({
 
                 {data.warnings.length > 0 && (
                   <div>
-                    <span className="mb-1.5 block text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <span className="mb-1.5 block text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                       Alerts
                     </span>
                     <LoadingWarnings warnings={data.warnings} />

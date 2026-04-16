@@ -6,14 +6,9 @@ import { EmptyMilesCard } from "./cards/empty-miles-card";
 import { OnTimeCard } from "./cards/on-time-card";
 import { ReadyToDispatchCard } from "./cards/ready-to-dispatch-card";
 import { RevenueTodayCard } from "./cards/revenue-today-card";
-import {
-  defaultAnalyticsData,
-  type ShipmentAnalyticsData,
-} from "./mock-data";
 
 export default function ShipmentAnalytics() {
-  const { data: raw } = useSuspenseQuery(analytics.get("shipment-management"));
-  const data = (raw as ShipmentAnalyticsData) ?? defaultAnalyticsData;
+  const { data } = useSuspenseQuery(analytics.get("shipment-management"));
 
   return (
     <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-3 xl:grid-cols-6">

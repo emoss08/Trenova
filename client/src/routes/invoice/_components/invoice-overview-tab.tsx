@@ -230,7 +230,7 @@ function ChargeSummaryRow({
       </span>
       <span
         className={cn(
-          "tabular-nums tracking-tight",
+          "tracking-tight tabular-nums",
           bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
         )}
       >
@@ -261,7 +261,7 @@ function LifecycleStep({
           )}
         />
         {!isLast ? (
-          <div className={cn("w-px flex-1 my-0.5", active ? "bg-green-600/30" : "bg-border")} />
+          <div className={cn("my-0.5 w-px flex-1", active ? "bg-green-600/30" : "bg-border")} />
         ) : null}
       </div>
       <div className={cn("pb-3", isLast && "pb-0")}>

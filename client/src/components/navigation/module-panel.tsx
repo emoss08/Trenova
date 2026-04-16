@@ -36,11 +36,11 @@ function NavItemLink({ item, currentPath }: { item: NavItem; currentPath: string
     <Link
       to={item.path}
       className={cn(
-        "flex items-center gap-2 rounded-md px-2 h-6 text-base transition-colors",
+        "flex h-6 items-center gap-2 rounded-md px-2 text-base transition-colors",
         active
-          ? "bg-accent text-accent-foreground font-medium"
+          ? "bg-accent font-medium text-accent-foreground"
           : "text-foreground/70 hover:bg-muted hover:text-foreground",
-        item.disabled && "opacity-40 pointer-events-none",
+        item.disabled && "pointer-events-none opacity-40",
       )}
       aria-disabled={item.disabled}
       tabIndex={item.disabled ? -1 : undefined}
@@ -68,9 +68,9 @@ function NavGroupSection({
           <button
             {...props}
             className={cn(
-              "flex w-full items-center justify-between rounded-md px-2 h-6 text-base",
-              "text-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
-              hasActiveChild && "text-foreground font-medium",
+              "flex h-6 w-full items-center justify-between rounded-md px-2 text-base",
+              "text-foreground/70 transition-colors hover:bg-muted hover:text-foreground",
+              hasActiveChild && "font-medium text-foreground",
             )}
           >
             <span className="truncate">{group.label}</span>
@@ -81,7 +81,7 @@ function NavGroupSection({
         )}
       />
       <CollapsibleContent>
-        <div className="ml-2 border-l border-border pl-2 mt-0.5 flex flex-col gap-0.5">
+        <div className="mt-0.5 ml-2 flex flex-col gap-0.5 border-l border-border pl-2">
           {group.items.map((item) => (
             <NavItemLink key={item.id} item={item} currentPath={currentPath} />
           ))}
@@ -117,7 +117,7 @@ function AdminSection({ currentPath }: { currentPath: string }) {
     <div className="flex flex-col gap-4">
       {Array.from(grouped.entries()).map(([groupName, links]) => (
         <div key={groupName} className="flex flex-col gap-0.5">
-          <span className="px-2 text-xs font-semibold uppercase tracking-wide text-foreground/50 select-none mb-1">
+          <span className="mb-1 px-2 text-xs font-semibold tracking-wide text-foreground/50 uppercase select-none">
             {groupName}
           </span>
           {links.map((link) => {
@@ -127,11 +127,11 @@ function AdminSection({ currentPath }: { currentPath: string }) {
                 key={`${groupName}:${link.title}:${link.href}`}
                 to={link.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-2 h-6 text-base transition-colors",
+                  "flex h-6 items-center gap-2 rounded-md px-2 text-base transition-colors",
                   active
-                    ? "bg-accent text-accent-foreground font-medium"
+                    ? "bg-accent font-medium text-accent-foreground"
                     : "text-foreground/70 hover:bg-muted hover:text-foreground",
-                  link.disabled && "opacity-40 pointer-events-none",
+                  link.disabled && "pointer-events-none opacity-40",
                 )}
                 aria-disabled={link.disabled}
                 tabIndex={link.disabled ? -1 : undefined}
@@ -161,10 +161,10 @@ export function ModulePanel({ module, collapsed, onToggleCollapse }: ModulePanel
   return (
     <div className="flex h-full w-[200px] flex-col border-r border-border bg-background transition-all duration-200">
       <div className="flex items-center justify-between px-3 py-3">
-        <h2 className="text-base font-semibold truncate">{module.label}</h2>
+        <h2 className="truncate text-base font-semibold">{module.label}</h2>
         <button
           onClick={onToggleCollapse}
-          className="flex size-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex size-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           {collapsed ? (
             <ChevronRightIcon className="size-3.5" />

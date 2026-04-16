@@ -58,7 +58,7 @@ export function ReconciliationSummaryPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-semibold tabular-nums tracking-tight">
+                  <p className="text-3xl font-semibold tracking-tight tabular-nums">
                     {matchRate}%
                   </p>
                 </CardContent>
@@ -174,7 +174,7 @@ function SummaryKPICard({
       </CardHeader>
       <CardContent>
         <p
-          className={`text-2xl font-semibold tabular-nums tracking-tight ${
+          className={`text-2xl font-semibold tracking-tight tabular-nums ${
             variant === "danger" ? "text-red-600 dark:text-red-400" : ""
           }`}
         >

@@ -29,13 +29,13 @@ function ResizableHandle({
   return (
     <Separator
       className={cn(
-        "bg-border focus-visible:ring-ring relative flex w-px items-center justify-center after:absolute after:inset-y-0 after:-left-1 after:-right-1 focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-hidden data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:inset-x-0 data-[panel-group-direction=vertical]:after:-top-1 data-[panel-group-direction=vertical]:after:-bottom-1 data-[panel-group-direction=vertical]:after:left-auto data-[panel-group-direction=vertical]:after:right-auto [&[data-panel-group-direction=vertical]>div]:rotate-90",
+        "relative flex w-px items-center justify-center bg-border after:absolute after:inset-y-0 after:-right-1 after:-left-1 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:outline-hidden data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full data-[panel-group-direction=vertical]:after:inset-x-0 data-[panel-group-direction=vertical]:after:-top-1 data-[panel-group-direction=vertical]:after:right-auto data-[panel-group-direction=vertical]:after:-bottom-1 data-[panel-group-direction=vertical]:after:left-auto [&[data-panel-group-direction=vertical]>div]:rotate-90",
         className,
       )}
       {...props}
     >
       {withHandle && (
-        <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-sm border">
+        <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
           <GripVerticalIcon className="size-2.5" />
         </div>
       )}

@@ -52,7 +52,7 @@ function SectionHeader({
   return (
     <button
       type="button"
-      className="flex w-full items-center gap-2 px-2 py-1.5 text-2xs font-medium uppercase tracking-wider text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+      className="flex w-full items-center gap-2 px-2 py-1.5 text-2xs font-medium tracking-wider text-muted-foreground/60 uppercase transition-colors hover:text-muted-foreground"
       onClick={onToggle}
     >
       <ChevronDownIcon
@@ -60,7 +60,7 @@ function SectionHeader({
       />
       <span>{label}</span>
       {issueCount > 0 && (
-        <span className="flex size-4 items-center justify-center rounded-full bg-amber-500/15 text-amber-500 text-2xs font-medium">
+        <span className="flex size-4 items-center justify-center rounded-full bg-amber-500/15 text-2xs font-medium text-amber-500">
           {issueCount}
         </span>
       )}

@@ -199,7 +199,7 @@ function KPICard({
         </span>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold tabular-nums tracking-tight">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
         {detail ? <p className="text-[11px] text-muted-foreground">{detail}</p> : null}
       </CardContent>
     </Card>

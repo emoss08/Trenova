@@ -166,7 +166,7 @@ export function InvoiceSidebar({
                 title="No invoices found"
                 description="Adjust the search or filters to find draft and posted invoices."
                 icons={[ReceiptTextIcon, FileTextIcon, ReceiptTextIcon]}
-                className="flex flex-col h-full max-w-none items-center justify-center rounded-none border-none p-6 shadow-none"
+                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
               />
             </div>
           ) : null}

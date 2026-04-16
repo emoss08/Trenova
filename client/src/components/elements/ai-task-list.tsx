@@ -99,13 +99,13 @@ function AiTaskList({
         open={isOpen}
         onOpenChange={handleOpenChange}
         className={cn(
-          "rounded-lg border border-border bg-card text-card-foreground overflow-hidden",
+          "overflow-hidden rounded-lg border border-border bg-card text-card-foreground",
           className,
         )}
       >
         <CollapsiblePrimitive.Trigger
           data-slot="ai-task-list-trigger"
-          className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted">
             <ListTodo className="size-4 text-muted-foreground" />
@@ -130,7 +130,7 @@ function AiTaskList({
           data-slot="ai-task-list-content"
           className="border-t border-border data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down"
         >
-          <div className="p-3 space-y-1">
+          <div className="space-y-1 p-3">
             {hasChildren
               ? children
               : tasks.map((task) => (
@@ -201,7 +201,7 @@ function AiTaskListItem({
       <div className={cn("mt-0.5 shrink-0", statusConfig.className)}>
         {statusConfig.icon}
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div
           className={cn(
             "text-sm font-medium",
@@ -233,7 +233,7 @@ function AiTaskListFile({
     <div
       data-slot="ai-task-list-file"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded bg-muted px-2 py-1 text-xs font-mono",
+        "inline-flex items-center gap-1.5 rounded bg-muted px-2 py-1 font-mono text-xs",
         className,
       )}
     >

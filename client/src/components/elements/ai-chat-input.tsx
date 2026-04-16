@@ -99,7 +99,7 @@ export function AiChatInput({
               className="flex items-center gap-1.5 border bg-muted px-2 py-1 text-xs"
             >
               <Paperclip className="size-3 text-muted-foreground" />
-              <span className="max-w-[150px] truncate uppercase tracking-wider">
+              <span className="max-w-[150px] truncate tracking-wider uppercase">
                 {file.name}
               </span>
               <button
@@ -156,7 +156,7 @@ export function AiChatInput({
 
         <button
           type="button"
-          className="shrink-0 border-l px-4 py-2.5 text-xs uppercase tracking-wider transition-colors hover:bg-muted disabled:opacity-30"
+          className="shrink-0 border-l px-4 py-2.5 text-xs tracking-wider uppercase transition-colors hover:bg-muted disabled:opacity-30"
           onClick={handleSubmit}
           disabled={!canSubmit}
         >

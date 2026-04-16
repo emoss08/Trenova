@@ -85,7 +85,7 @@ export function CustomerLedgerPage() {
                       {new Date(entry.transactionDate * 1000).toLocaleDateString()}
                     </td>
                     <td className="px-3 py-2 font-mono text-xs">{entry.documentNumber}</td>
-                    <td className="px-3 py-2 text-xs capitalize text-muted-foreground">
+                    <td className="px-3 py-2 text-xs text-muted-foreground capitalize">
                       {entry.sourceEventType}
                     </td>
                     <td className="px-3 py-2">

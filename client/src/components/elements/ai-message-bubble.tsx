@@ -126,11 +126,11 @@ export function AiMessageBubble({
       >
         <div aria-live={isStreaming ? "polite" : undefined}>
           {children ? (
-            <div className="prose prose-xs dark:prose-invert max-w-none text-[13px] leading-relaxed [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-[13px] [&_h4]:text-[13px] [&_p]:text-[13px] [&_li]:text-[13px] [&_code]:text-xs [&_pre]:text-xs">
+            <div className="prose prose-xs dark:prose-invert max-w-none text-[13px] leading-relaxed [&_code]:text-xs [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-[13px] [&_h4]:text-[13px] [&_li]:text-[13px] [&_p]:text-[13px] [&_pre]:text-xs">
               {children}
             </div>
           ) : (
-            <p className="m-0 whitespace-pre-wrap text-[13px] leading-relaxed">
+            <p className="m-0 text-[13px] leading-relaxed whitespace-pre-wrap">
               {content}
             </p>
           )}
@@ -140,7 +140,7 @@ export function AiMessageBubble({
         </div>
 
         {timestamp && (
-          <time className="mt-2 block text-[10px] uppercase tracking-wider opacity-60">
+          <time className="mt-2 block text-[10px] tracking-wider uppercase opacity-60">
             {timestamp.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -151,7 +151,7 @@ export function AiMessageBubble({
         {!isUser && !isStreaming && (
           <button
             type="button"
-            className="absolute -right-8 top-0.5 flex size-6 items-center justify-center border bg-background opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+            className="absolute top-0.5 -right-8 flex size-6 items-center justify-center border bg-background opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted"
             onClick={handleCopy}
           >
             {copied ? (

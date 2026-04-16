@@ -49,11 +49,11 @@ export default function BillingQueueDetailPane({
 
   if (!selectedItemId) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground p-4">
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-muted-foreground">
         <ClipboardListIcon className="size-12" />
         <div className="text-center">
           <p className="text-sm font-medium">No item selected</p>
-          <p className="text-xs mt-1">Select a billing queue item from the sidebar to review it</p>
+          <p className="mt-1 text-xs">Select a billing queue item from the sidebar to review it</p>
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export default function BillingQueueDetailPane({
         </div>
       )}
       {item.exceptionReasonCode && (
-        <div className="px-4 pt-2 shrink-0">
+        <div className="shrink-0 px-4 pt-2">
           <Alert variant="destructive">
             <AlertTriangleIcon className="size-4" />
             <AlertTitle>
@@ -153,19 +153,19 @@ export default function BillingQueueDetailPane({
           correctionGroupId={item.correctionGroupId}
         />
       ) : null}
-      <Tabs defaultValue="charges" className="flex flex-1 flex-col min-h-0">
+      <Tabs defaultValue="charges" className="flex min-h-0 flex-1 flex-col">
         <TabsList variant="underline" className="w-full border-b border-border">
           <TabsTrigger value="charges">Charges</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
           <TabsTrigger value="comments">Comments</TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
         </TabsList>
-        <TabsContent value="charges" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="charges" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">
             <BillingQueueChargesTab item={item} />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="documents" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="documents" className="mt-0 min-h-0 flex-1">
           <BillingQueueDocumentsTab
             shipmentId={item.shipmentId}
             selectedDocumentId={selectedDocumentId ?? null}
@@ -173,10 +173,10 @@ export default function BillingQueueDetailPane({
             isEditable={item.status === "InReview"}
           />
         </TabsContent>
-        <TabsContent value="comments" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="comments" className="mt-0 min-h-0 flex-1">
           <ShipmentCommentsTab shipmentId={item.shipmentId} />
         </TabsContent>
-        <TabsContent value="activity" className="flex-1 min-h-0 mt-0">
+        <TabsContent value="activity" className="mt-0 min-h-0 flex-1">
           <ScrollArea className="h-full">
             <div className="px-4">
               <AuditTab resourceId={item.shipmentId} />
@@ -333,7 +333,7 @@ function ReviewTimer({ startedAt }: { startedAt: number }) {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <span className="inline-flex items-center gap-1 tabular-nums text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-muted-foreground tabular-nums">
       <TimerIcon className="size-3" />
       {pad(hours)}:{pad(minutes)}:{pad(seconds)}
     </span>

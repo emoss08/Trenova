@@ -188,7 +188,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         <Alert variant="warning">
           <AlertTriangleIcon className="size-4" />
           <AlertDescription>
-            <ul className="list-disc pl-4 text-xs space-y-0.5">
+            <ul className="list-disc space-y-0.5 pl-4 text-xs">
               {warnings.map((w) => (
                 <li key={w}>{w}</li>
               ))}
@@ -234,8 +234,8 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
       )}
 
       <div className="flex flex-col">
-        <div className="flex items-center justify-between gap-2 group hover:bg-muted rounded-md p-2">
-          <div className="flex flex-col min-w-0">
+        <div className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted">
+          <div className="flex min-w-0 flex-col">
             <span className="text-sm">Base Rate</span>
             <span className="text-[11px] text-muted-foreground">
               Per-unit rate before formula
@@ -292,7 +292,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
               </Button>
             </div>
           ) : (
-            <div className="relative flex items-center justify-end min-w-[80px]">
+            <div className="relative flex min-w-[80px] items-center justify-end">
               <span
                 className={cn(
                   "text-sm font-medium tabular-nums transition-opacity",
@@ -302,7 +302,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                 {formatCurrency(baseRate)}
               </span>
               {isEditable && (
-                <div className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                   <Tooltip>
                     <TooltipTrigger
                       render={
@@ -337,7 +337,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
         <Separator className="my-1" />
         <div className="flex items-center justify-between p-2">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             Accessorials
           </span>
           {isEditable && (
@@ -362,7 +362,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
         </div>
 
         {additionalCharges.length === 0 && (
-          <p className="text-xs text-muted-foreground px-2 pb-2">
+          <p className="px-2 pb-2 text-xs text-muted-foreground">
             No accessorial charges
           </p>
         )}
@@ -378,15 +378,15 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
           return (
             <div
               key={charge.id ?? index}
-              className="flex items-center justify-between gap-2 group hover:bg-muted rounded-md p-2"
+              className="group flex items-center justify-between gap-2 rounded-md p-2 hover:bg-muted"
             >
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm truncate">{name}</span>
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm">{name}</span>
                 <span className="text-[11px] text-muted-foreground">
                   {breakdown}
                 </span>
               </div>
-              <div className="relative flex items-center justify-end min-w-[80px]">
+              <div className="relative flex min-w-[80px] items-center justify-end">
                 <span
                   className={cn(
                     "text-sm font-medium tabular-nums transition-opacity",
@@ -396,7 +396,7 @@ export function BillingQueueChargesTab({ item }: { item: BillingQueueItem }) {
                   {formatCurrency(total)}
                 </span>
                 {isEditable && (
-                  <div className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 flex items-center justify-end gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                     <Tooltip>
                       <TooltipTrigger
                         render={

@@ -647,7 +647,7 @@ function ChargeSummaryRow({
       </span>
       <span
         className={cn(
-          "tabular-nums tracking-tight",
+          "tracking-tight tabular-nums",
           bold ? "text-base font-semibold text-foreground" : "text-sm text-muted-foreground",
         )}
       >

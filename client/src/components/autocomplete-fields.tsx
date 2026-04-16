@@ -498,7 +498,7 @@ export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => getDocumentLabel(option)}
       getOptionLabel={(option) => getDocumentLabel(option)}
       renderBadge={(option) => (
-        <span className="truncate max-w-56">{getDocumentLabel(option)}</span>
+        <span className="max-w-56 truncate">{getDocumentLabel(option)}</span>
       )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">

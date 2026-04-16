@@ -9,7 +9,7 @@ type BetaTagProps = {
 
 export function BetaTag({ label = "BETA", includeIcon = true, className }: BetaTagProps) {
   return (
-    <Badge tabIndex={0} variant="info" className={cn("ml-auto h-4 text-xs px-1", className)}>
+    <Badge tabIndex={0} variant="info" className={cn("ml-auto h-4 px-1 text-xs", className)}>
       {includeIcon && <SparklesIcon />}
       {label}
     </Badge>

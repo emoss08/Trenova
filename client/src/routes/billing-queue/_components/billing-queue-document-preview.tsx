@@ -20,9 +20,9 @@ export default function BillingQueueDocumentPreview({
 
   if (!documentId) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground p-4 bg-muted/20">
+      <div className="flex h-full flex-col items-center justify-center gap-2 bg-muted/20 p-4 text-muted-foreground">
         <FileSearchIcon className="size-10" />
-        <p className="text-sm text-center">
+        <p className="text-center text-sm">
           Select a document to preview it here
         </p>
       </div>

@@ -30,7 +30,7 @@ export function AxleWeightDisplay({
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="mb-2.5 flex items-center justify-between">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
           Axle Weights
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOverweight && "text-destructive")}>
@@ -77,16 +77,16 @@ export function AxleWeightDisplay({
       {revenue && (
         <div className="mt-2.5 flex items-center gap-4 border-t border-border pt-2.5">
           <span className="text-2xs font-medium text-muted-foreground">Revenue</span>
-          <span className="text-xs font-semibold tabular-nums text-foreground">
+          <span className="text-xs font-semibold text-foreground tabular-nums">
             ${revenue.revenuePerFoot.toFixed(0)}<span className="text-2xs font-normal text-muted-foreground">/ft</span>
           </span>
           {revenue.revenuePerMile > 0 && (
-            <span className="text-xs font-semibold tabular-nums text-foreground">
+            <span className="text-xs font-semibold text-foreground tabular-nums">
               ${revenue.revenuePerMile.toFixed(2)}<span className="text-2xs font-normal text-muted-foreground">/mi</span>
             </span>
           )}
           {revenue.emptySpaceFeet > 0 && (
-            <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+            <span className="ml-auto text-xs text-muted-foreground tabular-nums">
               {revenue.emptySpaceFeet.toFixed(0)}ft unused
             </span>
           )}

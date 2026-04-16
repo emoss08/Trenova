@@ -205,7 +205,7 @@ function DocumentSearch({
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Paste a document ID to inspect..."
-        className="font-mono placeholder:font-sans pr-18 truncate"
+        className="truncate pr-18 font-mono placeholder:font-sans"
         leftElement={<SearchIcon className="size-3.5 text-muted-foreground" />}
         rightElement={
           <Button

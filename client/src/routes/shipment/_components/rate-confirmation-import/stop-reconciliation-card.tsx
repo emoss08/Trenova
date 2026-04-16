@@ -51,7 +51,7 @@ function InlineField({
   return (
     <div className="flex items-center gap-2 py-px">
       <div className={cn("size-1 shrink-0 rounded-full", DOT_STYLE[status])} />
-      <span className="text-2xs text-muted-foreground w-12 shrink-0">{label}</span>
+      <span className="w-12 shrink-0 text-2xs text-muted-foreground">{label}</span>
       {editing ? (
         <Input
           value={editVal}
@@ -61,12 +61,12 @@ function InlineField({
             if (e.key === "Enter") save();
             if (e.key === "Escape") setEditing(false);
           }}
-          className="h-5 text-xs flex-1"
+          className="h-5 flex-1 text-xs"
           autoFocus
         />
       ) : (
         <span
-          className="text-xs flex-1 cursor-text truncate"
+          className="flex-1 cursor-text truncate text-xs"
           onClick={() => {
             setEditVal(value);
             setEditing(true);
@@ -114,7 +114,7 @@ export function StopReconciliationCard({
   return (
     <div className="rounded-lg border p-3">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isPickup ? (
             <TruckIcon className="size-3.5 text-muted-foreground" />
@@ -125,14 +125,14 @@ export function StopReconciliationCard({
             {isPickup ? "Pickup" : "Delivery"} {stop.sequence + 1}
           </span>
           {stop.confidence > 0 && (
-            <span className="text-2xs tabular-nums text-muted-foreground/50">
+            <span className="text-2xs text-muted-foreground/50 tabular-nums">
               {Math.round(stop.confidence * 100)}%
             </span>
           )}
         </div>
         <div className="flex items-center gap-1.5">
           {stop.appointmentRequired && (
-            <Badge variant="outline" className="text-2xs h-4 px-1">Appt</Badge>
+            <Badge variant="outline" className="h-4 px-1 text-2xs">Appt</Badge>
           )}
         </div>
       </div>
@@ -153,7 +153,7 @@ export function StopReconciliationCard({
       {/* Editable fields (only non-empty) */}
       {editableFields.length > 0 && (
         <details className="group">
-          <summary className="cursor-pointer text-2xs text-muted-foreground/40 hover:text-muted-foreground transition-colors">
+          <summary className="cursor-pointer text-2xs text-muted-foreground/40 transition-colors hover:text-muted-foreground">
             Edit fields
           </summary>
           <div className="mt-1.5 space-y-px">
@@ -171,7 +171,7 @@ export function StopReconciliationCard({
       )}
 
       {/* Location match */}
-      <div className="mt-2 pt-2 border-t">
+      <div className="mt-2 border-t pt-2">
         <LocationAutocompleteField
           control={formControl}
           name={locationFieldName}

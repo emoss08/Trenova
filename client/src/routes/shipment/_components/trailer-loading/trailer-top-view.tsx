@@ -23,7 +23,7 @@ export function TrailerTopView({ data, scoreBadge }: { data: LoadingOptimization
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
           Trailer Layout
         </span>
         <div className="flex items-center gap-2">

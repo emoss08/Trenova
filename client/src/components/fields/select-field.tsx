@@ -135,7 +135,7 @@ export function SelectField<T extends FieldValues>({
                     aria-invalid={fieldState.invalid}
                     className={cn(
                       "group flex h-7 w-full items-center justify-between rounded-md border border-input bg-muted whitespace-nowrap hover:bg-muted/80",
-                      "px-1.5 py-1 text-xs ring-offset-background outline-hidden placeholder:text-muted-foreground select-none",
+                      "px-1.5 py-1 text-xs ring-offset-background outline-hidden select-none placeholder:text-muted-foreground",
                       "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/30",
                       "transition-[border-color,box-shadow] duration-200 ease-in-out",
                       "cursor-default disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",

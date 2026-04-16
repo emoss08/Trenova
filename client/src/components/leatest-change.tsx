@@ -27,14 +27,14 @@ export function LatestChange() {
 				"transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0"
 			)}
 		>
-			<span className="font-light font-mono text-[10px] text-muted-foreground">
+			<span className="font-mono text-[10px] font-light text-muted-foreground">
 				{latestChange.badge}
 			</span>
-			<p className="font-medium text-xs">{latestChange.title}</p>
+			<p className="text-xs font-medium">{latestChange.title}</p>
 			<span className="text-[10px] text-muted-foreground">
 				{latestChange.description}
 			</span>
-			<Button className="w-max px-0 font-light text-xs" size="sm" variant="link" render={<a href={latestChange.readMore.href} />} nativeButton={false}>{latestChange.readMore.label}</Button>
+			<Button className="w-max px-0 text-xs font-light" size="sm" variant="link" render={<a href={latestChange.readMore.href} />} nativeButton={false}>{latestChange.readMore.label}</Button>
 			<Button
 				className="absolute top-2 right-2 z-10 size-6 rounded-full opacity-0 transition-opacity group-hover/latest-change:opacity-100"
 				onClick={() => setIsOpen(false)}

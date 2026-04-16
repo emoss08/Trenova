@@ -94,7 +94,7 @@ function AiToolCall({
         open={isOpen}
         onOpenChange={handleOpenChange}
         className={cn(
-          "rounded-lg border border-border bg-card text-card-foreground overflow-hidden",
+          "overflow-hidden rounded-lg border border-border bg-card text-card-foreground",
           className,
         )}
       >
@@ -159,7 +159,7 @@ function AiToolCallHeader({ children, className }: AiToolCallHeaderProps) {
     <CollapsiblePrimitive.Trigger
       data-slot="ai-tool-call-header"
       className={cn(
-        "flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex w-full items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         className,
       )}
     >
@@ -203,7 +203,7 @@ function AiToolCallContent({ children, className }: AiToolCallContentProps) {
         className,
       )}
     >
-      <div className="p-4 space-y-4">{children}</div>
+      <div className="space-y-4 p-4">{children}</div>
     </CollapsiblePrimitive.Content>
   );
 }
@@ -224,10 +224,10 @@ function AiToolCallInput({ input, className }: AiToolCallInputProps) {
       data-slot="ai-tool-call-input"
       className={cn("space-y-1.5", className)}
     >
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
         Input
       </span>
-      <pre className="rounded-md bg-muted/50 p-3 overflow-x-auto text-xs font-mono text-foreground">
+      <pre className="overflow-x-auto rounded-md bg-muted/50 p-3 font-mono text-xs text-foreground">
         {formattedJson}
       </pre>
     </div>
@@ -245,10 +245,10 @@ function AiToolCallOutput({ children, className }: AiToolCallOutputProps) {
       data-slot="ai-tool-call-output"
       className={cn("space-y-1.5", className)}
     >
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <span className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
         Output
       </span>
-      <div className="rounded-md bg-muted/50 p-3 overflow-x-auto text-sm">
+      <div className="overflow-x-auto rounded-md bg-muted/50 p-3 text-sm">
         {children}
       </div>
     </div>
@@ -266,10 +266,10 @@ function AiToolCallError({ error, className }: AiToolCallErrorProps) {
       data-slot="ai-tool-call-error"
       className={cn("space-y-1.5", className)}
     >
-      <span className="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wider">
+      <span className="text-xs font-medium tracking-wider text-red-600 uppercase dark:text-red-400">
         Error
       </span>
-      <div className="rounded-md bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 p-3 text-sm text-red-700 dark:text-red-300">
+      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
         {error}
       </div>
     </div>

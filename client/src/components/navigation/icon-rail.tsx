@@ -103,7 +103,7 @@ function OrgAvatar() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <a href="/" className="flex size-7 shrink-0 items-center justify-center rounded-md overflow-hidden select-none" />
+            <a href="/" className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md select-none" />
           }
         >
           {avatarContent}
@@ -124,7 +124,7 @@ function OrgAvatar() {
               render={
                 <button
                   type="button"
-                  className="flex size-7 shrink-0 items-center justify-center rounded-md overflow-hidden select-none"
+                  className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md select-none"
                   disabled={switchMutation.isPending}
                 />
               }
@@ -232,7 +232,7 @@ function ModuleButton({
               "flex size-7 items-center justify-center rounded-md transition-colors",
               isActive
                 ? "bg-accent text-foreground"
-                : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50",
+                : "text-muted-foreground/60 hover:bg-accent/50 hover:text-muted-foreground",
             )}
           />
         }
@@ -258,7 +258,7 @@ function FavoritesButton({ isActive, onSelect }: { isActive: boolean; onSelect: 
               "flex size-7 items-center justify-center rounded-md transition-colors",
               isActive
                 ? "bg-accent text-foreground"
-                : "text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50",
+                : "text-muted-foreground/60 hover:bg-accent/50 hover:text-muted-foreground",
             )}
           />
         }

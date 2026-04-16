@@ -57,7 +57,7 @@ function AiMessages({
         ref={containerRef}
         className="absolute inset-0 touch-pan-y overflow-y-auto"
       >
-        <div className="mx-auto flex min-w-0 max-w-3xl flex-col gap-6 px-4 py-8">
+        <div className="mx-auto flex max-w-3xl min-w-0 flex-col gap-6 px-4 py-8">
           {children}
           <div ref={endRef} className="min-h-6 shrink-0" />
         </div>

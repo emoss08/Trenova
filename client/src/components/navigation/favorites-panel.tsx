@@ -31,12 +31,12 @@ export function FavoritesPanel({ collapsed, onToggleCollapse }: FavoritesPanelPr
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-1.5">
           <Star className="size-3 fill-amber-400 text-amber-400" />
-          <h2 className="text-base font-semibold truncate">Favorites</h2>
+          <h2 className="truncate text-base font-semibold">Favorites</h2>
         </div>
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="flex size-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex size-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ChevronLeftIcon className="size-3.5" />
         </button>
@@ -58,9 +58,9 @@ export function FavoritesPanel({ collapsed, onToggleCollapse }: FavoritesPanelPr
                   key={fav.id}
                   to={fav.pageUrl}
                   className={cn(
-                    "flex items-center gap-2 rounded-md px-2 h-6 text-base transition-colors",
+                    "flex h-6 items-center gap-2 rounded-md px-2 text-base transition-colors",
                     active
-                      ? "bg-accent text-accent-foreground font-medium"
+                      ? "bg-accent font-medium text-accent-foreground"
                       : "text-foreground/70 hover:bg-muted hover:text-foreground",
                   )}
                 >

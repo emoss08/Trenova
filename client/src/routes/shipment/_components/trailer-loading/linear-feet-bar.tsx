@@ -27,7 +27,7 @@ export function LinearFeetBar({
   return (
     <div className="rounded-lg border border-border p-3">
       <div className="mb-2 flex items-center justify-between">
-        <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
           Linear Feet
         </span>
         <span className={cn("text-xs font-semibold tabular-nums", isOver && "text-destructive")}>

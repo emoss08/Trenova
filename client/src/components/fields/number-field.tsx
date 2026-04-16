@@ -122,7 +122,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Increment"
-                    className="inline-flex w-6 h-7 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex h-7 w-6 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue + step;
@@ -135,7 +135,7 @@ export function NumberField<T extends FieldValues>({
                   <button
                     type="button"
                     aria-label="Decrement"
-                    className="inline-flex w-6 h-7 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
+                    className="inline-flex h-7 w-6 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                     disabled={props.disabled || props.readOnly}
                     onClick={() => {
                       let next = currentValue - step;

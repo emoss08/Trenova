@@ -105,7 +105,7 @@ function StepDot({ state }: { state: StepState }) {
     <div className="relative flex items-center justify-center">
       <div
         className={cn(
-          "size-5 rounded-full border flex items-center justify-center transition-all duration-500",
+          "flex size-5 items-center justify-center rounded-full border transition-all duration-500",
           state === "complete" && "border-emerald-500 bg-emerald-500",
           state === "active" && "border-foreground/25",
           state === "pending" && "border-border",
@@ -114,7 +114,7 @@ function StepDot({ state }: { state: StepState }) {
       >
         {state === "complete" && (
           <m.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 500, damping: 25 }}>
-            <CheckIcon className="size-2.5 text-white stroke-[3]" />
+            <CheckIcon className="size-2.5 stroke-[3] text-white" />
           </m.div>
         )}
         {state === "active" && <LoaderCircleIcon className="size-2.5 animate-spin text-foreground/70" />}
@@ -197,7 +197,7 @@ export function ProcessingPhase({
                       <StepDot state={step.state} />
                       {i < steps.length - 1 && (
                         <m.div
-                          className="w-px flex-1 min-h-4 rounded-full"
+                          className="min-h-4 w-px flex-1 rounded-full"
                           animate={{
                             backgroundColor: step.state === "complete" ? "var(--color-emerald-400)" : "var(--color-border)",
                           }}
@@ -211,7 +211,7 @@ export function ProcessingPhase({
                         className={cn(
                           "text-[13px] leading-5 transition-all duration-500",
                           step.state === "complete" && "text-foreground",
-                          step.state === "active" && "text-foreground font-medium",
+                          step.state === "active" && "font-medium text-foreground",
                           step.state === "pending" && "text-muted-foreground/30",
                           step.state === "error" && "text-destructive",
                         )}

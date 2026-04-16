@@ -19,7 +19,7 @@ export function LoadingWarnings({ warnings }: { warnings: LoadingWarning[] }) {
         return (
           <div
             key={idx}
-            className="flex items-start gap-2 rounded-md border border-border px-3 py-2 bg-card"
+            className="flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2"
           >
             <Icon className={cn("mt-0.5 size-3.5 shrink-0", config.color)} />
             <span className="text-xs leading-relaxed text-muted-foreground">

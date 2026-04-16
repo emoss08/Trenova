@@ -80,7 +80,7 @@ export function NumberInput({
         {...props}
       />
 
-      <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0 h-6">
+      <div className="absolute top-px right-px bottom-px flex h-6 items-center gap-1 pr-0">
         {sideText ? (
           <div className="pointer-events-none mr-2 text-xs text-muted-foreground select-none">
             {sideText}

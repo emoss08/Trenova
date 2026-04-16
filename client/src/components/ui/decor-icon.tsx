@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const DecorIconVariants = cva(
-  "pointer-events-none absolute z-1 size-5 shrink-0 stroke-1 stroke-muted-foreground",
+  "pointer-events-none absolute z-1 size-5 shrink-0 stroke-muted-foreground stroke-1",
   {
     variants: {
       position: {

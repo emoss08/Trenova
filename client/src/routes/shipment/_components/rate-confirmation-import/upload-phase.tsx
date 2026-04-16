@@ -46,7 +46,7 @@ export function UploadPhase({
         transition={{ duration: 0.3 }}
         className="w-full max-w-md space-y-6"
       >
-        <div className="text-center space-y-1">
+        <div className="space-y-1 text-center">
           <h2 className="text-base font-medium">Upload rate confirmation</h2>
           <p className="text-sm text-muted-foreground">
             PDF or image. Shipment details are extracted automatically.
@@ -64,7 +64,7 @@ export function UploadPhase({
           <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="rounded-lg border bg-background p-3 space-y-3"
+            className="space-y-3 rounded-lg border bg-background p-3"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">

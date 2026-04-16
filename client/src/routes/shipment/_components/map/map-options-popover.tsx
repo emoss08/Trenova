@@ -111,7 +111,7 @@ export function MapOptionsPopover({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
       {children}
     </span>
   );

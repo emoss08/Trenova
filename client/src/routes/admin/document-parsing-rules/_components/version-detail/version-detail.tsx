@@ -150,7 +150,7 @@ function VersionDetailForm({ version, onBack }: { version: RuleVersion; onBack: 
           <button
             type="button"
             onClick={onBack}
-            className="group flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground mt-2"
+            className="group mt-2 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeftIcon className="size-3 transition-transform group-hover:-translate-x-0.5" />
             Back to versions

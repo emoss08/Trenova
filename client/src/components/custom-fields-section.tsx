@@ -27,7 +27,7 @@ function mapSelectOptions(options: SelectOption[]) {
 function CustomFieldRenderer<T extends FieldValues>({
   definition,
   control,
-  fieldPrefix = "customFields",
+  fieldPrefix,
 }: {
   definition: CustomFieldDefinition;
   control: Control<T>;

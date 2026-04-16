@@ -73,8 +73,8 @@ export default function ReconciliationWorkspace({
   const [showIssuesOnly, setShowIssuesOnly] = useState(false);
 
   return (
-    <div className="flex flex-1 flex-col min-h-0">
-      <ResizablePanelGroup orientation="horizontal" className="flex-1 min-h-0">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1">
         <ResizablePanel defaultSize={35} minSize={20}>
           <SuspenseLoader componentLoaderProps={{ message: "Loading document preview..." }}>
             <DocumentPreviewPanel documentId={documentId} fileName={fileName} />
@@ -92,10 +92,10 @@ export default function ReconciliationWorkspace({
               showIssuesOnly={showIssuesOnly}
             />
 
-            <ScrollArea className="flex-1 min-h-0">
+            <ScrollArea className="min-h-0 flex-1">
               <div className="border-b">
                 <div className="px-3 pt-2 pb-1">
-                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/50">
+                  <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
                     Required Details
                   </span>
                 </div>
@@ -107,7 +107,7 @@ export default function ReconciliationWorkspace({
 
               <div className="border-b">
                 <div className="px-3 pt-3 pb-1">
-                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/50">
+                  <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
                     Extracted Fields
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export default function ReconciliationWorkspace({
               {state.stops.length > 0 && (
                 <div>
                   <div className="px-3 pt-3 pb-1">
-                    <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground/50">
+                    <span className="text-2xs font-medium tracking-wider text-muted-foreground/50 uppercase">
                       Stops
                     </span>
                   </div>
@@ -142,11 +142,11 @@ export default function ReconciliationWorkspace({
                 </div>
               )}
             </ScrollArea>
-            <div className="shrink-0 flex items-center justify-between border-t bg-muted/30 px-4 py-2.5">
+            <div className="flex shrink-0 items-center justify-between border-t bg-muted/30 px-4 py-2.5">
               <div className="text-xs text-muted-foreground">
                 {counts.total} fields
                 {issueCount > 0 && (
-                  <span className="text-amber-500 ml-1">&middot; {issueCount} need attention</span>
+                  <span className="ml-1 text-amber-500">&middot; {issueCount} need attention</span>
                 )}
               </div>
               <Button

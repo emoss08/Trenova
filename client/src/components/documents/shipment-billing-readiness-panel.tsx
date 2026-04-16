@@ -133,7 +133,7 @@ export function ShipmentBillingReadinessPanel({
 
         <div className="mt-3 space-y-1.5">
           <Progress value={progressValue} max={progressMax} variant={progressVariant} />
-          <p className="text-xs tabular-nums text-muted-foreground">
+          <p className="text-xs text-muted-foreground tabular-nums">
             {totalRequirements > 0
               ? `${completedRequirements} of ${totalRequirements} documents uploaded`
               : "No documents required"}

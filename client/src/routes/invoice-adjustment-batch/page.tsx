@@ -133,7 +133,7 @@ export function InvoiceAdjustmentBatchPage() {
                       <p className="text-sm font-medium">{row.batchId}</p>
                       <p className="text-xs text-muted-foreground">{row.submittedByName || row.submittedById || "System"}</p>
                     </div>
-                    <span className="rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.16em]">
+                    <span className="rounded-full border px-2 py-0.5 text-[10px] tracking-[0.16em] uppercase">
                       {row.status}
                     </span>
                   </div>
@@ -240,7 +240,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
   return (
     <Card className="shadow-none">
       <CardContent className="px-4 py-3">
-        <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+        <p className="text-[11px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
         <p className="mt-1 text-2xl font-semibold">{value}</p>
       </CardContent>
     </Card>
@@ -250,7 +250,7 @@ function SummaryCard({ label, value }: { label: string; value: string }) {
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border bg-background px-3 py-2">
-      <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="text-[10px] tracking-[0.16em] text-muted-foreground uppercase">{label}</p>
       <p className="mt-1 text-sm font-medium break-all">{value}</p>
     </div>
   );

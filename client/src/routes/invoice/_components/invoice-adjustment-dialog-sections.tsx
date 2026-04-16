@@ -169,9 +169,9 @@ export function InvoiceAdjustmentTypeSelector({
                   type="button"
                   title={strategy.description}
                   className={cn(
-                    "flex-1 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-150 border border-transparent",
+                    "flex-1 rounded-md border border-transparent px-2.5 py-1.5 text-xs font-medium transition-all duration-150",
                     isSelected
-                      ? "bg-background text-foreground border-border"
+                      ? "border-border bg-background text-foreground"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
@@ -273,8 +273,8 @@ export function InvoiceAdjustmentLineEditor({
     <div className="overflow-hidden rounded-lg border border-border">
       <div className="grid grid-cols-[1fr_120px_120px] items-center border-b border-border bg-muted/40 px-4 py-2">
         <span className="text-xs font-medium text-muted-foreground">Description</span>
-        <span className="text-xs font-medium text-muted-foreground text-right">Credit</span>
-        <span className="text-xs font-medium text-muted-foreground text-right">Rebill</span>
+        <span className="text-right text-xs font-medium text-muted-foreground">Credit</span>
+        <span className="text-right text-xs font-medium text-muted-foreground">Rebill</span>
       </div>
       <div className="divide-y divide-border">
         {lines.map((line, index) => (
@@ -506,7 +506,7 @@ export function InvoiceAdjustmentPreviewPanel({
             ))}
             {previewErrors.map(([field, messages]) => (
               <div key={field}>
-                <p className="text-2xs font-medium uppercase tracking-wide text-destructive/70">
+                <p className="text-2xs font-medium tracking-wide text-destructive/70 uppercase">
                   {field}
                 </p>
                 {messages.map((message) => (

@@ -91,7 +91,7 @@ export default function DocumentPreviewPanel({ documentId, fileName }: DocumentP
           >
             <ZoomOutIcon className="size-3.5" />
           </Button>
-          <span className="text-2xs tabular-nums text-muted-foreground w-10 text-center">
+          <span className="w-10 text-center text-2xs text-muted-foreground tabular-nums">
             {Math.round(scale * 100)}%
           </span>
           <Button
