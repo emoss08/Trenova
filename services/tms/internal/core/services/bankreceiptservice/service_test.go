@@ -25,16 +25,18 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	receiptRepo := &fakeBankReceiptRepo{}
-	paymentRepo := &fakeMatchedPaymentRepo{
-		payment: &customerpayment.Payment{
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	paymentRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: pulid.MustNew("cpay_"), TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
+		Return(&customerpayment.Payment{
 			ID:             pulid.MustNew("cpay_"),
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			AmountMinor:    10000,
 			Status:         customerpayment.StatusPosted,
-		},
-	}
+		}, nil).
+		Once()
 	svc := &Service{
 		repo:         receiptRepo,
 		paymentRepo:  paymentRepo,
@@ -59,7 +61,7 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 		t.Context(),
 		&serviceports.MatchBankReceiptRequest{
 			ReceiptID:  receipt.ID,
-			PaymentID:  paymentRepo.payment.ID,
+			PaymentID:  pulid.MustNew("cpay_"),
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		},
 		testutil.NewSessionActor(userID, orgID, buID),
@@ -67,7 +69,7 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, matched)
 	assert.Equal(t, bankreceipt.StatusMatched, matched.Status)
-	assert.Equal(t, paymentRepo.payment.ID, matched.MatchedCustomerPaymentID)
+	assert.Equal(t, pulid.MustNew("cpay_"), matched.MatchedCustomerPaymentID)
 }
 
 func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
@@ -84,8 +86,12 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 		Status:          customerpayment.StatusPosted,
 		ReferenceNumber: "AUTO-1",
 	}
-	receiptRepo := &fakeBankReceiptRepo{}
-	paymentRepo := &fakeMatchedPaymentRepo{payment: payment}
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	paymentRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: payment.ID}).
+		Return(payment, nil).
+		Once()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -120,8 +126,8 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	receiptRepo := &fakeBankReceiptRepo{}
-	paymentRepo := &fakeMatchedPaymentRepo{}
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -156,9 +162,19 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	receiptRepo := &fakeBankReceiptRepo{}
-	paymentRepo := &fakeMatchedPaymentRepo{}
-	workItemRepo := &fakeBankReceiptWorkItemRepo{}
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
+	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	paymentRepo.EXPECT().
+		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: pulid.MustNew("cpay_"), TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
+		Return(&customerpayment.Payment{
+			ID:             pulid.MustNew("cpay_"),
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			AmountMinor:    10000,
+			Status:         customerpayment.StatusPosted,
+		}, nil).
+		Once()
+	workItemRepo := mocks.NewMockBankReceiptWorkItemRepository(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -184,8 +200,8 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	require.NotNil(t, workItemRepo.item)
-	assert.Equal(t, bankreceiptworkitem.StatusOpen, workItemRepo.item.Status)
+	require.NotNil(t, workItem)
+	assert.Equal(t, bankreceiptworkitem.StatusOpen, workItem.Status)
 }
 
 func TestListExceptionsAndSuggestMatches(t *testing.T) {

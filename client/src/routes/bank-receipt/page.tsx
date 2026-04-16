@@ -82,13 +82,9 @@ export function BankReceiptPage() {
     },
   });
 
-  const allRows = useMemo(
-    () => listData?.pages.flatMap((page) => page) ?? [],
-    [listData?.pages],
-  );
+  const allRows = useMemo(() => listData?.pages.flatMap((page) => page) ?? [], [listData?.pages]);
 
-  const selectedRow =
-    allRows.find((row) => row.id === selectedReceiptId) ?? allRows[0] ?? null;
+  const selectedRow = allRows.find((row) => row.id === selectedReceiptId) ?? allRows[0] ?? null;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -125,8 +121,7 @@ export function BankReceiptPage() {
     <BillingWorkspaceLayout
       pageHeaderProps={{
         title: "Bank Receipt Reconciliation",
-        description:
-          "Match imported bank receipts to customer payments and resolve exceptions.",
+        description: "Match imported bank receipts to customer payments and resolve exceptions.",
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
@@ -217,9 +212,7 @@ export function BankReceiptPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {row.referenceNumber}
-                        </p>
+                        <p className="truncate text-xs font-medium">{row.referenceNumber}</p>
                         <p className="truncate text-2xs text-muted-foreground">
                           {formatReceiptDate(row.receiptDate)}
                         </p>
@@ -255,12 +248,12 @@ export function BankReceiptPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center p-6">
+            <div className="flex h-full items-center justify-center">
               <EmptyState
                 title="No receipt selected"
                 description="Select a bank receipt from the list to view details and match suggestions."
                 icons={[BanknoteIcon, ReceiptTextIcon, WalletCardsIcon]}
-                className="max-w-xl border-none p-8 shadow-none"
+                className="flex h-full flex-col items-center justify-center rounded-none max-w-none border-none p-8 shadow-none"
               />
             </div>
           ) : detailQuery.isLoading || !detailQuery.data ? (
@@ -269,10 +262,7 @@ export function BankReceiptPage() {
               <Skeleton className="h-64 w-full" />
             </div>
           ) : (
-            <ReceiptDetail
-              receipt={detailQuery.data}
-              queryClient={queryClient}
-            />
+            <ReceiptDetail receipt={detailQuery.data} queryClient={queryClient} />
           )}
         </ScrollArea>
       }
@@ -307,14 +297,9 @@ function ReceiptDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{receipt.referenceNumber}</h2>
-          <p className="text-sm text-muted-foreground">
-            {formatReceiptDate(receipt.receiptDate)}
-          </p>
+          <p className="text-sm text-muted-foreground">{formatReceiptDate(receipt.receiptDate)}</p>
         </div>
-        <AmountDisplay
-          value={receipt.amountMinor}
-          className="text-2xl font-bold"
-        />
+        <AmountDisplay value={receipt.amountMinor} className="text-2xl font-bold" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -395,9 +380,7 @@ function ReceiptDetail({
                   <SectionLabel>Match Suggestions</SectionLabel>
                 </div>
                 {suggestionsQuery.data ? (
-                  <Badge variant="secondary">
-                    {suggestionsQuery.data.length} found
-                  </Badge>
+                  <Badge variant="secondary">{suggestionsQuery.data.length} found</Badge>
                 ) : null}
               </div>
               <div className="mt-2">
@@ -454,9 +437,7 @@ function SuggestionTable({
               key={suggestion.customerPaymentId}
               className="border-t transition-colors hover:bg-muted/50"
             >
-              <td className="px-3 py-2 font-mono text-2xs">
-                {suggestion.referenceNumber}
-              </td>
+              <td className="px-3 py-2 font-mono text-2xs">{suggestion.referenceNumber}</td>
               <td className="px-3 py-2 text-right text-xs tabular-nums">
                 <AmountDisplay value={suggestion.amountMinor} className="text-xs" />
               </td>
@@ -494,15 +475,7 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
-function SummaryCard({
-  label,
-  value,
-  amount,
-}: {
-  label: string;
-  value: string;
-  amount?: number;
-}) {
+function SummaryCard({ label, value, amount }: { label: string; value: string; amount?: number }) {
   return (
     <div className="rounded-lg border bg-card px-3 py-2.5">
       <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">

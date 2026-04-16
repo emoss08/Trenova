@@ -84,6 +84,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
+	"github.com/emoss08/trenova/internal/core/services/weatheralertservice"
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
@@ -154,6 +155,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	customerservice.New,
 	googlemapsservice.NewAutoCompleteService,
+	fx.Annotate(
+		weatheralertservice.New,
+		fx.As(new(services.WeatherAlertService)),
+	),
 	accountingcontrolservice.New,
 	accountingcontrolpolicyservice.New,
 	accountsreceivableservice.New,

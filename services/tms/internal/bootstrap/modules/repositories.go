@@ -87,6 +87,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/usstaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/weatheralertrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerptorepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
 	"github.com/emoss08/trenova/pkg/seqgen"
@@ -111,6 +112,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tractorrepository.New,
 	trailerrepository.New,
 	workerrepository.New,
+	weatheralertrepository.New,
 	workerptorepository.New,
 	auditdlqrepository.New,
 	auditrepository.New,

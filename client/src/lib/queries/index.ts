@@ -32,6 +32,7 @@ import { notification } from "./notification";
 import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
 import { user, userOrganization } from "./user";
+import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
 
@@ -71,5 +72,6 @@ export const queries = mergeQueryKeys(
   audit,
   notification,
   tableChangeAlert,
+  weatherAlert,
   weatherRadar,
 );

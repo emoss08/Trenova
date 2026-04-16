@@ -1,5 +1,5 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { InfoIcon } from "lucide-react";
@@ -34,15 +34,7 @@ function Ring({ color }: { color: string }) {
 function DashedLine() {
   return (
     <svg width="20" height="8" className="shrink-0">
-      <line
-        x1="0"
-        y1="4"
-        x2="20"
-        y2="4"
-        stroke="#3b82f6"
-        strokeWidth="2.5"
-        strokeDasharray="4 3"
-      />
+      <line x1="0" y1="4" x2="20" y2="4" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="4 3" />
     </svg>
   );
 }
@@ -63,13 +55,7 @@ export function MapLegendPopover() {
         <TooltipTrigger
           render={
             <PopoverTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-background shadow-sm"
-                />
-              }
+              render={<Button variant="outline" size="icon" className="bg-background shadow-sm" />}
             />
           }
         >
@@ -77,7 +63,7 @@ export function MapLegendPopover() {
         </TooltipTrigger>
         <TooltipContent side="left">Map legend</TooltipContent>
       </Tooltip>
-      <PopoverContent side="left" sideOffset={8} className="w-48 p-3">
+      <PopoverContent side="left" sideOffset={8} className="w-48 p-3 gap-0.5">
         <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           Legend
         </span>
@@ -95,22 +81,10 @@ export function MapLegendPopover() {
           Overlays
         </span>
         <div className="mt-2 flex flex-col gap-0.5">
-          <LegendItem
-            swatch={<GradientBar from="#22c55e" to="#ef4444" />}
-            label="Traffic"
-          />
-          <LegendItem
-            swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />}
-            label="Precipitation"
-          />
-          <LegendItem
-            swatch={<GradientBar from="#dbeafe" to="#6366f1" />}
-            label="Wind Speed"
-          />
-          <LegendItem
-            swatch={<GradientBar from="#3b82f6" to="#ef4444" />}
-            label="Temperature"
-          />
+          <LegendItem swatch={<GradientBar from="#22c55e" to="#ef4444" />} label="Traffic" />
+          <LegendItem swatch={<GradientBar from="#a3d9f5" to="#1e3a8a" />} label="Precipitation" />
+          <LegendItem swatch={<GradientBar from="#dbeafe" to="#6366f1" />} label="Wind Speed" />
+          <LegendItem swatch={<GradientBar from="#3b82f6" to="#ef4444" />} label="Temperature" />
         </div>
       </PopoverContent>
     </Popover>

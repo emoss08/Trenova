@@ -1,7 +1,7 @@
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useShipmentMapStore } from "@/stores/shipment-map-store";
 import type { MapStyleId, OverlayId, WeatherLayerId } from "@/types/shipment-map";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 const DEFAULT_OVERLAYS: Record<OverlayId, boolean> = {
   vehicles: true,
@@ -10,12 +10,18 @@ const DEFAULT_OVERLAYS: Record<OverlayId, boolean> = {
   geofences: true,
   traffic: false,
   weather: false,
+  alerts: false,
 };
 
 export function useMapUIState() {
-  const [overlays, setOverlays] = useLocalStorage<Record<OverlayId, boolean>>(
+  const [rawOverlays, setOverlays] = useLocalStorage<Record<OverlayId, boolean>>(
     "shipment-map-overlays",
     DEFAULT_OVERLAYS,
+  );
+
+  const overlays = useMemo(
+    () => ({ ...DEFAULT_OVERLAYS, ...rawOverlays }),
+    [rawOverlays],
   );
   const [mapStyle, setMapStyle] = useLocalStorage<MapStyleId>("shipment-map-style", "roadmap");
   const [weatherLayer, setWeatherLayer] = useLocalStorage<WeatherLayerId>(

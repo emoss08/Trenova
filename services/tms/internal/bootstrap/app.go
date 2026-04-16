@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/smsjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.uber.org/fx"
 )
@@ -58,6 +59,7 @@ func Options() fx.Option {
 		smsjobs.Module,
 		samsarajobs.Module,
 		shipmentjobs.Module,
+		weatheralertjobs.Module,
 		fiscaljobs.Module,
 		invoiceadjustmentjobs.Module,
 		analyticsservice.Module,

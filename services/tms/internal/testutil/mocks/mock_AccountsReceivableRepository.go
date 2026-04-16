@@ -39,6 +39,140 @@ func (_m *MockAccountsReceivableRepository) EXPECT() *MockAccountsReceivableRepo
 	return &MockAccountsReceivableRepository_Expecter{mock: &_m.Mock}
 }
 
+// GetCustomerAging provides a mock function for the type MockAccountsReceivableRepository
+func (_mock *MockAccountsReceivableRepository) GetCustomerAging(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCustomerAging")
+	}
+
+	var r0 *accountsreceivable.CustomerAgingRow
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) *accountsreceivable.CustomerAgingRow); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*accountsreceivable.CustomerAgingRow)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetARCustomerAgingRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccountsReceivableRepository_GetCustomerAging_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCustomerAging'
+type MockAccountsReceivableRepository_GetCustomerAging_Call struct {
+	*mock.Call
+}
+
+// GetCustomerAging is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetARCustomerAgingRequest
+func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerAging(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+	return &MockAccountsReceivableRepository_GetCustomerAging_Call{Call: _e.mock.On("GetCustomerAging", ctx, req)}
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Run(run func(ctx context.Context, req repositories.GetARCustomerAgingRequest)) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetARCustomerAgingRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetARCustomerAgingRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Return(customerAgingRow *accountsreceivable.CustomerAgingRow, err error) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+	_c.Call.Return(customerAgingRow, err)
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error)) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCustomerName provides a mock function for the type MockAccountsReceivableRepository
+func (_mock *MockAccountsReceivableRepository) GetCustomerName(ctx context.Context, req repositories.GetARCustomerNameRequest) (string, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCustomerName")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerNameRequest) (string, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerNameRequest) string); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetARCustomerNameRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccountsReceivableRepository_GetCustomerName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCustomerName'
+type MockAccountsReceivableRepository_GetCustomerName_Call struct {
+	*mock.Call
+}
+
+// GetCustomerName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetARCustomerNameRequest
+func (_e *MockAccountsReceivableRepository_Expecter) GetCustomerName(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_GetCustomerName_Call {
+	return &MockAccountsReceivableRepository_GetCustomerName_Call{Call: _e.mock.On("GetCustomerName", ctx, req)}
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerName_Call) Run(run func(ctx context.Context, req repositories.GetARCustomerNameRequest)) *MockAccountsReceivableRepository_GetCustomerName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetARCustomerNameRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetARCustomerNameRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerName_Call) Return(s string, err error) *MockAccountsReceivableRepository_GetCustomerName_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_GetCustomerName_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetARCustomerNameRequest) (string, error)) *MockAccountsReceivableRepository_GetCustomerName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListARAging provides a mock function for the type MockAccountsReceivableRepository
 func (_mock *MockAccountsReceivableRepository) ListARAging(ctx context.Context, req repositories.ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error) {
 	ret := _mock.Called(ctx, req)
@@ -171,6 +305,74 @@ func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(ledge
 }
 
 func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error)) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListOpenItems provides a mock function for the type MockAccountsReceivableRepository
+func (_mock *MockAccountsReceivableRepository) ListOpenItems(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOpenItems")
+	}
+
+	var r0 []*accountsreceivable.OpenItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) []*accountsreceivable.OpenItem); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*accountsreceivable.OpenItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListAROpenItemsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAccountsReceivableRepository_ListOpenItems_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOpenItems'
+type MockAccountsReceivableRepository_ListOpenItems_Call struct {
+	*mock.Call
+}
+
+// ListOpenItems is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListAROpenItemsRequest
+func (_e *MockAccountsReceivableRepository_Expecter) ListOpenItems(ctx interface{}, req interface{}) *MockAccountsReceivableRepository_ListOpenItems_Call {
+	return &MockAccountsReceivableRepository_ListOpenItems_Call{Call: _e.mock.On("ListOpenItems", ctx, req)}
+}
+
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Run(run func(ctx context.Context, req repositories.ListAROpenItemsRequest)) *MockAccountsReceivableRepository_ListOpenItems_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListAROpenItemsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListAROpenItemsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Return(openItems []*accountsreceivable.OpenItem, err error) *MockAccountsReceivableRepository_ListOpenItems_Call {
+	_c.Call.Return(openItems, err)
+	return _c
+}
+
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error)) *MockAccountsReceivableRepository_ListOpenItems_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -75,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/userhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/usstatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/versionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/weatheralerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/workerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/workerptohandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -131,6 +132,7 @@ type RouterParams struct {
 	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	VersionHandler                  *versionhandler.Handler
+	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
 	SequenceConfigHandler           *sequenceconfighandler.Handler
 	ShipmentControlHandler          *shipmentcontrolhandler.Handler
@@ -220,6 +222,7 @@ type Router struct {
 	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	versionHandler                  *versionhandler.Handler
+	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
 	hazardousMaterialHandler        *hazardousmaterialhandler.Handler
 	hazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
@@ -306,6 +309,7 @@ func NewRouter(p RouterParams) *Router {
 		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		versionHandler:                  p.VersionHandler,
+		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
 		hazardousMaterialHandler:        p.HazardousMaterialHandler,
 		hazmatSegregationRuleHandler:    p.HazmatSegregationRuleHandler,
@@ -446,6 +450,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)
 	r.googleMapsHandler.RegisterRoutes(protected)
+	r.weatherAlertHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.accountsReceivableHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)

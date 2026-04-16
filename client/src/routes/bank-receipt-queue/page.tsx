@@ -13,13 +13,17 @@ import {
 } from "@/components/ui/select";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import { Textarea } from "@/components/ui/textarea";
 import { resolutionTypeChoices, workItemStatusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { cn, formatCurrency } from "@/lib/utils";
 import { apiService } from "@/services/api";
-import type { BankReceiptWorkItem, ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
+import type {
+  BankReceiptWorkItem,
+  ResolutionType,
+  WorkItemStatus,
+} from "@/types/bank-receipt-work-item";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ClipboardListIcon,
@@ -40,7 +44,10 @@ const STATUS_LABELS: Record<WorkItemStatus, string> = {
   Dismissed: "Dismissed",
 };
 
-const STATUS_VARIANTS: Record<WorkItemStatus, "default" | "secondary" | "warning" | "info" | "active"> = {
+const STATUS_VARIANTS: Record<
+  WorkItemStatus,
+  "default" | "secondary" | "warning" | "info" | "active"
+> = {
   Open: "secondary",
   Assigned: "info",
   InReview: "warning",
@@ -80,17 +87,14 @@ export function BankReceiptQueuePage() {
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === 20) {
+      if (lastPage.length === 20) {
         return lastPageParam + 20;
       }
       return undefined;
     },
   });
 
-  const allRows = useMemo(
-    () => listData?.pages.flatMap((page) => page.results) ?? [],
-    [listData?.pages],
-  );
+  const allRows = useMemo(() => listData?.pages.flat() ?? [], [listData?.pages]);
 
   const selectedRow = allRows.find((row) => row.id === selectedWorkItemId) ?? null;
 
@@ -142,8 +146,7 @@ export function BankReceiptQueuePage() {
   });
 
   const startReviewMutation = useMutation({
-    mutationFn: async (id: string) =>
-      apiService.bankReceiptWorkItemService.startReview(id),
+    mutationFn: async (id: string) => apiService.bankReceiptWorkItemService.startReview(id),
     onSuccess: () => {
       invalidateAll();
       toast.success("Review started");
@@ -182,8 +185,7 @@ export function BankReceiptQueuePage() {
     <BillingWorkspaceLayout
       pageHeaderProps={{
         title: "Bank Receipt Work Queue",
-        description:
-          "Review and resolve bank receipt exceptions requiring attention.",
+        description: "Review and resolve bank receipt exceptions requiring attention.",
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
@@ -203,10 +205,7 @@ export function BankReceiptQueuePage() {
             label="In Review"
             value={String(summaryQuery.data?.inReviewWorkItemCount ?? 0)}
           />
-          <SummaryCard
-            label="Exceptions"
-            value={String(summaryQuery.data?.exceptionCount ?? 0)}
-          />
+          <SummaryCard label="Exceptions" value={String(summaryQuery.data?.exceptionCount ?? 0)} />
         </div>
       }
       sidebar={
@@ -271,18 +270,14 @@ export function BankReceiptQueuePage() {
                     )}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <p className="min-w-0 truncate text-xs font-medium">
-                        {row.bankReceiptId}
-                      </p>
+                      <p className="min-w-0 truncate text-xs font-medium">{row.bankReceiptId}</p>
                       <Badge variant={STATUS_VARIANTS[row.status]}>
                         {STATUS_LABELS[row.status]}
                       </Badge>
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
                       {row.assignedToUserId ? (
-                        <span className="text-2xs text-muted-foreground">
-                          Assigned
-                        </span>
+                        <span className="text-2xs text-muted-foreground">Assigned</span>
                       ) : (
                         <span className="text-2xs text-muted-foreground">Unassigned</span>
                       )}
@@ -305,12 +300,12 @@ export function BankReceiptQueuePage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center p-6">
+            <div className="flex h-full items-center justify-center">
               <EmptyState
                 title="No work item selected"
                 description="Select a work item from the list to review and take action."
                 icons={[ClipboardListIcon, InboxIcon, ShieldCheckIcon]}
-                className="max-w-xl border-none p-8 shadow-none"
+                className="flex h-full flex-col items-center justify-center rounded-none max-w-none border-none p-8 shadow-none"
               />
             </div>
           ) : detailQuery.isLoading || !detailQuery.data ? (
@@ -341,10 +336,16 @@ function WorkItemDetail({
   dismissMutation,
 }: {
   workItem: BankReceiptWorkItem;
-  assignMutation: ReturnType<typeof useMutation<BankReceiptWorkItem, Error, { id: string; userId: string }>>;
+  assignMutation: ReturnType<
+    typeof useMutation<BankReceiptWorkItem, Error, { id: string; userId: string }>
+  >;
   startReviewMutation: ReturnType<typeof useMutation<BankReceiptWorkItem, Error, string>>;
   resolveMutation: ReturnType<
-    typeof useMutation<BankReceiptWorkItem, Error, { id: string; resolutionType: string; resolutionNote: string }>
+    typeof useMutation<
+      BankReceiptWorkItem,
+      Error,
+      { id: string; resolutionType: string; resolutionNote: string }
+    >
   >;
   dismissMutation: ReturnType<
     typeof useMutation<BankReceiptWorkItem, Error, { id: string; resolutionNote: string }>
@@ -367,13 +368,9 @@ function WorkItemDetail({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">{workItem.id}</h2>
-          <p className="text-sm text-muted-foreground">
-            Bank Receipt: {workItem.bankReceiptId}
-          </p>
+          <p className="text-sm text-muted-foreground">Bank Receipt: {workItem.bankReceiptId}</p>
         </div>
-        <Badge variant={STATUS_VARIANTS[workItem.status]}>
-          {STATUS_LABELS[workItem.status]}
-        </Badge>
+        <Badge variant={STATUS_VARIANTS[workItem.status]}>{STATUS_LABELS[workItem.status]}</Badge>
       </div>
 
       {receipt ? (
@@ -430,7 +427,7 @@ function WorkItemDetail({
         </div>
       ) : null}
 
-      {(workItem.status === "Resolved" || workItem.status === "Dismissed") ? (
+      {workItem.status === "Resolved" || workItem.status === "Dismissed" ? (
         <div className="rounded-lg border bg-card p-3">
           <SectionLabel>Resolution</SectionLabel>
           <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-2">
@@ -471,9 +468,7 @@ function WorkItemDetail({
               <Button
                 size="sm"
                 type="button"
-                onClick={() =>
-                  assignMutation.mutate({ id: workItem.id!, userId: "me" })
-                }
+                onClick={() => assignMutation.mutate({ id: workItem.id!, userId: "me" })}
                 disabled={assignMutation.isPending}
               >
                 <UserPlusIcon className="size-3.5" />

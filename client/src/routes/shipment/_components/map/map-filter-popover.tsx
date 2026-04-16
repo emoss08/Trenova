@@ -61,7 +61,7 @@ export function MapFilterPopover({
         </TooltipTrigger>
         <TooltipContent side="left">Filters</TooltipContent>
       </Tooltip>
-      <PopoverContent side="left" sideOffset={8} className="w-44 p-2.5">
+      <PopoverContent side="left" sideOffset={8} className="w-44 p-2.5 gap-0.5">
         <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           Status
         </span>

@@ -14,6 +14,7 @@ export const OVERLAY_IDS = [
   "geofences",
   "traffic",
   "weather",
+  "alerts",
 ] as const;
 
 export type OverlayId = (typeof OVERLAY_IDS)[number];

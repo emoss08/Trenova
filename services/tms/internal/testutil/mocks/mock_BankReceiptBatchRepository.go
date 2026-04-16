@@ -108,6 +108,74 @@ func (_c *MockBankReceiptBatchRepository_Create_Call) RunAndReturn(run func(ctx 
 	return _c
 }
 
+// DistinctSources provides a mock function for the type MockBankReceiptBatchRepository
+func (_mock *MockBankReceiptBatchRepository) DistinctSources(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DistinctSources")
+	}
+
+	var r0 *pagination.ListResult[*bankreceiptbatch.SourceOption]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*bankreceiptbatch.SourceOption]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*bankreceiptbatch.SourceOption])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.SelectQueryRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBankReceiptBatchRepository_DistinctSources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DistinctSources'
+type MockBankReceiptBatchRepository_DistinctSources_Call struct {
+	*mock.Call
+}
+
+// DistinctSources is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *pagination.SelectQueryRequest
+func (_e *MockBankReceiptBatchRepository_Expecter) DistinctSources(ctx interface{}, req interface{}) *MockBankReceiptBatchRepository_DistinctSources_Call {
+	return &MockBankReceiptBatchRepository_DistinctSources_Call{Call: _e.mock.On("DistinctSources", ctx, req)}
+}
+
+func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) Run(run func(ctx context.Context, req *pagination.SelectQueryRequest)) *MockBankReceiptBatchRepository_DistinctSources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *pagination.SelectQueryRequest
+		if args[1] != nil {
+			arg1 = args[1].(*pagination.SelectQueryRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) Return(listResult *pagination.ListResult[*bankreceiptbatch.SourceOption], err error) *MockBankReceiptBatchRepository_DistinctSources_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)) *MockBankReceiptBatchRepository_DistinctSources_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByID provides a mock function for the type MockBankReceiptBatchRepository
 func (_mock *MockBankReceiptBatchRepository) GetByID(ctx context.Context, req repositories.GetBankReceiptBatchByIDRequest) (*bankreceiptbatch.Batch, error) {
 	ret := _mock.Called(ctx, req)
@@ -240,74 +308,6 @@ func (_c *MockBankReceiptBatchRepository_List_Call) Return(batchs []*bankreceipt
 }
 
 func (_c *MockBankReceiptBatchRepository_List_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error)) *MockBankReceiptBatchRepository_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DistinctSources provides a mock function for the type MockBankReceiptBatchRepository
-func (_mock *MockBankReceiptBatchRepository) DistinctSources(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DistinctSources")
-	}
-
-	var r0 *pagination.ListResult[*bankreceiptbatch.SourceOption]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*bankreceiptbatch.SourceOption]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*bankreceiptbatch.SourceOption])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.SelectQueryRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockBankReceiptBatchRepository_DistinctSources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DistinctSources'
-type MockBankReceiptBatchRepository_DistinctSources_Call struct {
-	*mock.Call
-}
-
-// DistinctSources is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *pagination.SelectQueryRequest
-func (_e *MockBankReceiptBatchRepository_Expecter) DistinctSources(ctx interface{}, req interface{}) *MockBankReceiptBatchRepository_DistinctSources_Call {
-	return &MockBankReceiptBatchRepository_DistinctSources_Call{Call: _e.mock.On("DistinctSources", ctx, req)}
-}
-
-func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) Run(run func(ctx context.Context, req *pagination.SelectQueryRequest)) *MockBankReceiptBatchRepository_DistinctSources_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *pagination.SelectQueryRequest
-		if args[1] != nil {
-			arg1 = args[1].(*pagination.SelectQueryRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) Return(result *pagination.ListResult[*bankreceiptbatch.SourceOption], err error) *MockBankReceiptBatchRepository_DistinctSources_Call {
-	_c.Call.Return(result, err)
-	return _c
-}
-
-func (_c *MockBankReceiptBatchRepository_DistinctSources_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)) *MockBankReceiptBatchRepository_DistinctSources_Call {
 	_c.Call.Return(run)
 	return _c
 }

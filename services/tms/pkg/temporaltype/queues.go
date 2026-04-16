@@ -8,6 +8,7 @@ const (
 	TaskQueueBilling     TaskQueue = "billing-queue"
 	TaskQueueDocumentIntelligence TaskQueue = "document-intelligence-queue"
 	TaskQueueIntegration TaskQueue = "integration-queue"
+	TaskQueueWeatherAlert TaskQueue = "weather-alert-queue"
 	TaskQueueSystem      TaskQueue = "system-queue"
 	TaskQueueThumbnail   TaskQueue = "thumbnail-queue"
 	TaskQueueUpload      TaskQueue = "upload-queue"
@@ -26,3 +27,4 @@ const UploadTaskQueue = string(TaskQueueUpload)
 const SMSTaskQueue = string(TaskQueueSMS)
 const FiscalTaskQueue = string(TaskQueueFiscal)
 const IntegrationTaskQueue = string(TaskQueueIntegration)
+const WeatherAlertTaskQueue = string(TaskQueueWeatherAlert)

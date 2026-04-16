@@ -12,6 +12,7 @@ import {
   MapPinIcon,
   RouteIcon,
   TrafficConeIcon,
+  TriangleAlertIcon,
   TruckIcon,
 } from "lucide-react";
 
@@ -28,6 +29,7 @@ const OVERLAY_OPTIONS: OverlayConfig[] = [
   { id: "routes", label: "Routes", icon: RouteIcon },
   { id: "stops", label: "Stops", icon: MapPinIcon },
   { id: "geofences", label: "Geofences", icon: CircleDotIcon },
+  { id: "alerts", label: "Weather Alerts", icon: TriangleAlertIcon },
 ];
 
 const MAP_BASE_OPTIONS: { id: MapStyleId; label: string }[] = [

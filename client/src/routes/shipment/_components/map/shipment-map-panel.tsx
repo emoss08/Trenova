@@ -22,6 +22,7 @@ import { TractorMarker } from "./tractor-marker";
 import { TrafficLayer } from "./traffic-layer";
 import { useMapUIState } from "./use-map-ui-state";
 import { MapZoomControls } from "./map-zoom-controls";
+import { WeatherAlertLayer } from "./weather-alert-layer";
 import { WeatherRadarLayer } from "./weather-radar-layer";
 
 const INITIAL_FILTERS: MapFilters = {
@@ -145,6 +146,8 @@ export default function ShipmentMapPanel() {
               onWeatherLayerChange={setWeatherLayer}
             />
           )}
+
+          {overlays.alerts && <WeatherAlertLayer />}
 
           <MapZoomControls />
 

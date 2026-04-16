@@ -41,70 +41,6 @@ func (_m *MockCustomerPaymentService) EXPECT() *MockCustomerPaymentService_Expec
 	return &MockCustomerPaymentService_Expecter{mock: &_m.Mock}
 }
 
-// List provides a mock function for the type MockCustomerPaymentService
-func (_mock *MockCustomerPaymentService) List(ctx context.Context, req *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for List")
-	}
-
-	var r0 *pagination.ListResult[*customerpayment.Payment]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomerPaymentsRequest) *pagination.ListResult[*customerpayment.Payment]); ok {
-		r0 = returnFunc(ctx, req)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*pagination.ListResult[*customerpayment.Payment])
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListCustomerPaymentsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockCustomerPaymentService_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
-type MockCustomerPaymentService_List_Call struct {
-	*mock.Call
-}
-
-// List is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListCustomerPaymentsRequest
-func (_e *MockCustomerPaymentService_Expecter) List(ctx interface{}, req interface{}) *MockCustomerPaymentService_List_Call {
-	return &MockCustomerPaymentService_List_Call{Call: _e.mock.On("List", ctx, req)}
-}
-
-func (_c *MockCustomerPaymentService_List_Call) Run(run func(ctx context.Context, req *repositories.ListCustomerPaymentsRequest)) *MockCustomerPaymentService_List_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListCustomerPaymentsRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListCustomerPaymentsRequest)
-		}
-		run(arg0, arg1)
-	})
-	return _c
-}
-
-func (_c *MockCustomerPaymentService_List_Call) Return(result *pagination.ListResult[*customerpayment.Payment], err error) *MockCustomerPaymentService_List_Call {
-	_c.Call.Return(result, err)
-	return _c
-}
-
-func (_c *MockCustomerPaymentService_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error)) *MockCustomerPaymentService_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ApplyUnapplied provides a mock function for the type MockCustomerPaymentService
 func (_mock *MockCustomerPaymentService) ApplyUnapplied(ctx context.Context, req *services.ApplyCustomerPaymentRequest, actor *services.RequestActor) (*customerpayment.Payment, error) {
 	ret := _mock.Called(ctx, req, actor)
@@ -243,6 +179,74 @@ func (_c *MockCustomerPaymentService_Get_Call) Return(payment *customerpayment.P
 }
 
 func (_c *MockCustomerPaymentService_Get_Call) RunAndReturn(run func(ctx context.Context, req *services.GetCustomerPaymentRequest) (*customerpayment.Payment, error)) *MockCustomerPaymentService_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// List provides a mock function for the type MockCustomerPaymentService
+func (_mock *MockCustomerPaymentService) List(ctx context.Context, req *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 *pagination.ListResult[*customerpayment.Payment]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListCustomerPaymentsRequest) *pagination.ListResult[*customerpayment.Payment]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*customerpayment.Payment])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListCustomerPaymentsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockCustomerPaymentService_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
+type MockCustomerPaymentService_List_Call struct {
+	*mock.Call
+}
+
+// List is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListCustomerPaymentsRequest
+func (_e *MockCustomerPaymentService_Expecter) List(ctx interface{}, req interface{}) *MockCustomerPaymentService_List_Call {
+	return &MockCustomerPaymentService_List_Call{Call: _e.mock.On("List", ctx, req)}
+}
+
+func (_c *MockCustomerPaymentService_List_Call) Run(run func(ctx context.Context, req *repositories.ListCustomerPaymentsRequest)) *MockCustomerPaymentService_List_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListCustomerPaymentsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListCustomerPaymentsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_List_Call) Return(listResult *pagination.ListResult[*customerpayment.Payment], err error) *MockCustomerPaymentService_List_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockCustomerPaymentService_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListCustomerPaymentsRequest) (*pagination.ListResult[*customerpayment.Payment], error)) *MockCustomerPaymentService_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

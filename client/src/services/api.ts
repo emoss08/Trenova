@@ -59,6 +59,7 @@ import { TableConfigurationService } from "./table-configuration";
 import { TractorService } from "./tractor";
 import { TrailerService } from "./trailer";
 import { UserService } from "./user";
+import { WeatherAlertService } from "./weather-alert";
 import { WeatherRadarService } from "./weather-radar";
 import { WorkerService } from "./worker";
 
@@ -125,6 +126,7 @@ class APIService {
   public bankReceiptService: BankReceiptService;
   public bankReceiptBatchService: BankReceiptBatchService;
   public bankReceiptWorkItemService: BankReceiptWorkItemService;
+  public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
 
   constructor() {
@@ -190,6 +192,7 @@ class APIService {
     this.bankReceiptService = new BankReceiptService();
     this.bankReceiptBatchService = new BankReceiptBatchService();
     this.bankReceiptWorkItemService = new BankReceiptWorkItemService();
+    this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
   }
 }

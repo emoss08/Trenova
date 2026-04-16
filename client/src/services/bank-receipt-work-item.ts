@@ -1,14 +1,14 @@
+import { z } from "zod";
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import { bankReceiptWorkItemSchema, type BankReceiptWorkItem } from "@/types/bank-receipt-work-item";
-import { createLimitOffsetResponse } from "@/types/server";
 
-const workItemListSchema = createLimitOffsetResponse(bankReceiptWorkItemSchema);
+const workItemListSchema = z.array(bankReceiptWorkItemSchema);
 
 export class BankReceiptWorkItemService {
   async list(params?: Record<string, string>) {
     const query = params ? `?${new URLSearchParams(params).toString()}` : "";
-    const response = await api.get<{ results: BankReceiptWorkItem[]; count: number }>(
+    const response = await api.get<BankReceiptWorkItem[]>(
       `/accounting/bank-receipt-work-items/${query}`,
     );
     return safeParse(workItemListSchema, response, "BankReceiptWorkItemList");

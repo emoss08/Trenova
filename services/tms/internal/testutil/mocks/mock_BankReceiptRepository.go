@@ -244,6 +244,74 @@ func (_c *MockBankReceiptRepository_GetSummary_Call) RunAndReturn(run func(ctx c
 	return _c
 }
 
+// ListByImportBatchID provides a mock function for the type MockBankReceiptRepository
+func (_mock *MockBankReceiptRepository) ListByImportBatchID(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListByImportBatchID")
+	}
+
+	var r0 []*bankreceipt.Receipt
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) []*bankreceipt.Receipt); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*bankreceipt.Receipt)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBankReceiptRepository_ListByImportBatchID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListByImportBatchID'
+type MockBankReceiptRepository_ListByImportBatchID_Call struct {
+	*mock.Call
+}
+
+// ListByImportBatchID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListBankReceiptsByImportBatchRequest
+func (_e *MockBankReceiptRepository_Expecter) ListByImportBatchID(ctx interface{}, req interface{}) *MockBankReceiptRepository_ListByImportBatchID_Call {
+	return &MockBankReceiptRepository_ListByImportBatchID_Call{Call: _e.mock.On("ListByImportBatchID", ctx, req)}
+}
+
+func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) Run(run func(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest)) *MockBankReceiptRepository_ListByImportBatchID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListBankReceiptsByImportBatchRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListBankReceiptsByImportBatchRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) Return(receipts []*bankreceipt.Receipt, err error) *MockBankReceiptRepository_ListByImportBatchID_Call {
+	_c.Call.Return(receipts, err)
+	return _c
+}
+
+func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error)) *MockBankReceiptRepository_ListByImportBatchID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListExceptions provides a mock function for the type MockBankReceiptRepository
 func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.Receipt, error) {
 	ret := _mock.Called(ctx, tenantInfo)

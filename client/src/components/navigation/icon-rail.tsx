@@ -1,3 +1,7 @@
+import { LazyImage } from "@/components/image";
+import { UserSettingsDialog } from "@/components/navigation/user-settings-dialog";
+import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
+import { useTheme } from "@/components/theme-provider";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,26 +16,18 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { LazyImage } from "@/components/image";
-import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { ModuleId, NavModule } from "@/config/navigation.types";
 import { useSwitchOrganization } from "@/hooks/use-organization-switch";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { UserOrganization } from "@/types/organization";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
+import type { UserOrganization } from "@/types/organization";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Loader2, LogOut, Palette, Search, Settings, Star, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { useTheme } from "@/components/theme-provider";
-import { UserSettingsDialog } from "@/components/navigation/user-settings-dialog";
 
 type IconRailProps = {
   modules: NavModule[];
@@ -42,9 +38,7 @@ type IconRailProps = {
 };
 
 function OrgAvatar() {
-  const { data: organizations, isLoading } = useQuery(
-    queries.userOrganization.all(),
-  );
+  const { data: organizations, isLoading } = useQuery(queries.userOrganization.all());
   const switchMutation = useSwitchOrganization();
 
   const currentOrg = organizations?.find((org) => org.isCurrent);
@@ -61,12 +55,9 @@ function OrgAvatar() {
 
   const currentOrgLogoUrl = currentOrg?.logoUrl ?? "";
   const hasAbsoluteLogoURL =
-    currentOrgLogoUrl.startsWith("http://") ||
-    currentOrgLogoUrl.startsWith("https://");
+    currentOrgLogoUrl.startsWith("http://") || currentOrgLogoUrl.startsWith("https://");
   const shouldResolveLogo =
-    Boolean(currentOrg?.id) &&
-    Boolean(currentOrgLogoUrl) &&
-    !hasAbsoluteLogoURL;
+    Boolean(currentOrg?.id) && Boolean(currentOrgLogoUrl) && !hasAbsoluteLogoURL;
 
   const { data: resolvedLogoURL } = useQuery({
     ...queries.organization.logo(currentOrg?.id ?? ""),
@@ -103,7 +94,10 @@ function OrgAvatar() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <a href="/" className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md select-none" />
+            <a
+              href="/"
+              className="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md select-none"
+            />
           }
         >
           {avatarContent}
@@ -137,12 +131,7 @@ function OrgAvatar() {
           {currentOrg?.name ?? "Switch organization"}
         </TooltipContent>
       </Tooltip>
-      <DropdownMenuContent
-        side="right"
-        align="start"
-        sideOffset={8}
-        className="w-56"
-      >
+      <DropdownMenuContent side="right" align="start" sideOffset={8} className="w-56">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Switch Organization</DropdownMenuLabel>
           {organizations?.map((org) => (
@@ -153,11 +142,7 @@ function OrgAvatar() {
               onClick={() => handleSwitch(org)}
               disabled={switchMutation.isPending || org.isCurrent}
               className={cn(org.isCurrent && "bg-accent")}
-              endContent={
-                org.isCurrent ? (
-                  <Check className="size-4 text-primary" />
-                ) : undefined
-              }
+              endContent={org.isCurrent ? <Check className="size-4 text-primary" /> : undefined}
             />
           ))}
         </DropdownMenuGroup>
@@ -263,7 +248,10 @@ function FavoritesButton({ isActive, onSelect }: { isActive: boolean; onSelect: 
           />
         }
       >
-        <Star className={cn("size-3.5", isActive && "fill-amber-400 text-amber-400")} strokeWidth={isActive ? 2 : 1.5} />
+        <Star
+          className={cn("size-3.5", isActive && "fill-amber-400 text-amber-400")}
+          strokeWidth={isActive ? 2 : 1.5}
+        />
       </TooltipTrigger>
       <TooltipContent side="right" sideOffset={6}>
         Favorites
@@ -357,7 +345,7 @@ function UserMenu() {
                   fallbackClassName="rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-xs font-semibold text-sidebar-accent-foreground"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user?.name}</span>
+                  <span className="truncate text-foreground font-semibold">{user?.name}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {user?.emailAddress}
                   </span>
