@@ -86,9 +86,7 @@ export function MapOptionsPopover({
               </label>
             ))}
           </div>
-
           <Separator className="my-2.5" />
-
           <SectionLabel>Overlay</SectionLabel>
           <div className="mt-1.5 flex flex-col">
             {OVERLAY_OPTIONS.map((opt) => (

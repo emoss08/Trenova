@@ -2,8 +2,8 @@ import { LoadingSkeletonState } from "@/components/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, GOOGLE_MAPS_ERROR_MESSAGE, US_CENTER } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import type { ShipmentStatus } from "@/types/shipment";
 import { QueryErrorResetBoundary, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
@@ -14,6 +14,7 @@ import { useNavigate } from "react-router";
 import { GeofenceCircle } from "./geofence-circle";
 import { MapControls } from "./map-controls";
 import type { MapFilters } from "./map-filter-bar";
+import { MapZoomControls } from "./map-zoom-controls";
 import { MOCK_TRACTORS } from "./mock-data";
 import { OWMTileLayer, type OWMLayerId } from "./owm-tile-layer";
 import { RoutePolyline } from "./route-polyline";
@@ -21,7 +22,6 @@ import { TractorInfoWindow } from "./tractor-info-window";
 import { TractorMarker } from "./tractor-marker";
 import { TrafficLayer } from "./traffic-layer";
 import { useMapUIState } from "./use-map-ui-state";
-import { MapZoomControls } from "./map-zoom-controls";
 import { WeatherAlertLayer } from "./weather-alert-layer";
 import { WeatherRadarLayer } from "./weather-radar-layer";
 
@@ -118,7 +118,6 @@ export default function ShipmentMapPanel() {
                 onClick={handleMarkerClick}
               />
             ))}
-
           {selectedTractor && (
             <>
               <TractorInfoWindow
@@ -127,30 +126,19 @@ export default function ShipmentMapPanel() {
               />
               {overlays.routes && <RoutePolyline path={selectedTractor.routePath} />}
               {selectedTractor.stops.map((stop) => (
-                <span key={stop.id}>
-                  {overlays.geofences && <GeofenceCircle stop={stop} />}
-                </span>
+                <span key={stop.id}>{overlays.geofences && <GeofenceCircle stop={stop} />}</span>
               ))}
             </>
           )}
-
           {overlays.traffic && <TrafficLayer />}
-
           {showWeather && owmLayerId && owmApiKey && (
             <OWMTileLayer layerId={owmLayerId} apiKey={owmApiKey} />
           )}
-
           {showWeather && (
-            <WeatherRadarLayer
-              weatherLayer={weatherLayer}
-              onWeatherLayerChange={setWeatherLayer}
-            />
+            <WeatherRadarLayer weatherLayer={weatherLayer} onWeatherLayerChange={setWeatherLayer} />
           )}
-
           {overlays.alerts && <WeatherAlertLayer />}
-
           <MapZoomControls />
-
           <MapControls
             mapStyle={mapStyle}
             onMapStyleChange={setMapStyle}

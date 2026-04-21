@@ -94,9 +94,7 @@ export function MapOverlayMenu({
             </DropdownMenuCheckboxItem>
           ))}
         </DropdownMenuGroup>
-
         <DropdownMenuSeparator />
-
         <DropdownMenuGroup>
           <DropdownMenuLabel>Traffic</DropdownMenuLabel>
           <DropdownMenuCheckboxItem
@@ -107,9 +105,7 @@ export function MapOverlayMenu({
             <span>Traffic Layer</span>
           </DropdownMenuCheckboxItem>
         </DropdownMenuGroup>
-
         <DropdownMenuSeparator />
-
         <DropdownMenuGroup>
           <DropdownMenuLabel>Weather</DropdownMenuLabel>
           <DropdownMenuRadioGroup

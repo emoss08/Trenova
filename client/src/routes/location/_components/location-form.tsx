@@ -9,6 +9,7 @@ import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import type { Location } from "@/types/location";
 import { useFormContext } from "react-hook-form";
+import { LocationGeofenceEditor } from "./location-geofence-editor";
 
 export function LocationForm() {
   const { control } = useFormContext<Location>();
@@ -120,6 +121,12 @@ export function LocationForm() {
             />
           </FormControl>
         </FormGroup>
+      </FormSection>
+      <FormSection
+        title="Geofence"
+        description="Define the operating boundary for this location using the embedded map editor."
+      >
+        <LocationGeofenceEditor />
       </FormSection>
     </div>
   );

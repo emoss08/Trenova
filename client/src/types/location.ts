@@ -2,6 +2,22 @@ import { z } from "zod";
 import { nullableStringSchema, statusSchema, tenantInfoSchema } from "./helpers";
 import { usStateSchema } from "./us-state";
 
+export const locationGeofenceTypeSchema = z.enum(["auto", "circle", "rectangle", "draw"]);
+
+export type LocationGeofenceType = z.infer<typeof locationGeofenceTypeSchema>;
+
+export const locationGeofenceVertexSchema = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+});
+
+export type LocationGeofenceVertex = z.infer<typeof locationGeofenceVertexSchema>;
+
+const locationGeofenceVerticesSchema = z
+  .array(locationGeofenceVertexSchema)
+  .nullish()
+  .transform((value) => value ?? []);
+
 export const locationSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
@@ -30,6 +46,9 @@ export const locationSchema = z.object({
   longitude: z.number().nullable().optional(),
   latitude: z.number().nullable().optional(),
   placeId: nullableStringSchema,
+  geofenceType: locationGeofenceTypeSchema.default("auto"),
+  geofenceRadiusMeters: z.number().positive().nullable().optional(),
+  geofenceVertices: locationGeofenceVerticesSchema,
   state: usStateSchema.nullish(),
 });
 

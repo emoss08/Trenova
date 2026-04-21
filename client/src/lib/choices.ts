@@ -78,6 +78,7 @@ import type {
   WriteOffApprovalPolicy,
 } from "@/types/invoice-adjustment-control";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
+import type { LocationGeofenceType } from "@/types/location";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
   MoveStatus,
@@ -114,6 +115,13 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+export const locationGeofenceTypeChoices = [
+  { label: "Auto", value: "auto" },
+  { label: "Circle", value: "circle" },
+  { label: "Rectangle", value: "rectangle" },
+  { label: "Draw", value: "draw" },
+] satisfies ReadonlyArray<GenericSelectOption<LocationGeofenceType>>;
 
 export const shipmentStatusChoices = [
   { label: "New", value: "New", color: "#3b82f6" },

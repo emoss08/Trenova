@@ -39,6 +39,9 @@ export function LocationPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       longitude: null,
       latitude: null,
       placeId: null,
+      geofenceType: "auto",
+      geofenceRadiusMeters: 250,
+      geofenceVertices: [],
     },
     mode: "onChange",
   });
@@ -53,6 +56,7 @@ export function LocationPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         url="/locations/"
         queryKey="location-list"
         title="Location"
+        size="xl"
         formComponent={<LocationForm />}
         fieldKey="code"
         titleComponent={(currentRecord) => {
@@ -84,6 +88,7 @@ export function LocationPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       url="/locations/"
       queryKey="location-list"
       title="Location"
+      size="xl"
       formComponent={<LocationForm />}
     />
   );
