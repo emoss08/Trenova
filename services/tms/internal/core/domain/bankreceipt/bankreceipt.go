@@ -11,7 +11,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type Receipt struct {
+type BankReceipt struct {
 	bun.BaseModel `bun:"table:bank_receipts,alias:br" json:"-"`
 
 	ID                       pulid.ID `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
@@ -34,41 +34,7 @@ type Receipt struct {
 	UpdatedAt                int64    `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
-type MatchSuggestion struct {
-	CustomerPaymentID pulid.ID `json:"customerPaymentId"`
-	ReferenceNumber   string   `json:"referenceNumber"`
-	AmountMinor       int64    `json:"amountMinor"`
-	CustomerID        pulid.ID `json:"customerId"`
-	Score             int      `json:"score"`
-	Reason            string   `json:"reason"`
-}
-
-type ExceptionAging struct {
-	CurrentCount    int64 `json:"currentCount"`
-	CurrentAmount   int64 `json:"currentAmount"`
-	Days1To3Count   int64 `json:"days1To3Count"`
-	Days1To3Amount  int64 `json:"days1To3Amount"`
-	Days4To7Count   int64 `json:"days4To7Count"`
-	Days4To7Amount  int64 `json:"days4To7Amount"`
-	DaysOver7Count  int64 `json:"daysOver7Count"`
-	DaysOver7Amount int64 `json:"daysOver7Amount"`
-}
-
-type ReconciliationSummary struct {
-	AsOfDate              int64          `json:"asOfDate"`
-	ImportedCount         int64          `json:"importedCount"`
-	ImportedAmount        int64          `json:"importedAmount"`
-	MatchedCount          int64          `json:"matchedCount"`
-	MatchedAmount         int64          `json:"matchedAmount"`
-	ExceptionCount        int64          `json:"exceptionCount"`
-	ExceptionAmount       int64          `json:"exceptionAmount"`
-	ActiveWorkItemCount   int64          `json:"activeWorkItemCount"`
-	AssignedWorkItemCount int64          `json:"assignedWorkItemCount"`
-	InReviewWorkItemCount int64          `json:"inReviewWorkItemCount"`
-	ExceptionAging        ExceptionAging `json:"exceptionAging"`
-}
-
-func (r *Receipt) Validate(multiErr *errortypes.MultiError) {
+func (r *BankReceipt) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(r,
 		validation.Field(&r.OrganizationID, validation.Required),
 		validation.Field(&r.BusinessUnitID, validation.Required),
@@ -89,7 +55,7 @@ func (r *Receipt) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (r *Receipt) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (r *BankReceipt) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()
 	switch query.(type) {
 	case *bun.InsertQuery:

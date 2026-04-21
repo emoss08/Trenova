@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,7 +20,8 @@ import (
 func NewMockInvoiceAdjustmentService(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockInvoiceAdjustmentService {
+},
+) *MockInvoiceAdjustmentService {
 	mock := &MockInvoiceAdjustmentService{}
 	mock.Mock.Test(t)
 
@@ -42,23 +44,23 @@ func (_m *MockInvoiceAdjustmentService) EXPECT() *MockInvoiceAdjustmentService_E
 }
 
 // Approve provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) Approve(ctx context.Context, req *services.ApproveInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) Approve(ctx context.Context, req *services.ApproveInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Approve")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApproveInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApproveInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApproveInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ApproveInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ApproveInvoiceAdjustmentRequest, *services.RequestActor) error); ok {
@@ -105,12 +107,12 @@ func (_c *MockInvoiceAdjustmentService_Approve_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Approve_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_Approve_Call {
+func (_c *MockInvoiceAdjustmentService_Approve_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Approve_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Approve_Call) RunAndReturn(run func(ctx context.Context, req *services.ApproveInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_Approve_Call {
+func (_c *MockInvoiceAdjustmentService_Approve_Call) RunAndReturn(run func(ctx context.Context, req *services.ApproveInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_Approve_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -190,23 +192,23 @@ func (_c *MockInvoiceAdjustmentService_BulkPreview_Call) RunAndReturn(run func(c
 }
 
 // BulkSubmit provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) BulkSubmit(ctx context.Context, req *services.InvoiceAdjustmentBulkRequest, actor *services.RequestActor) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentService) BulkSubmit(ctx context.Context, req *services.InvoiceAdjustmentBulkRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BulkSubmit")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentBulkRequest, *services.RequestActor) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentBulkRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentBulkRequest, *services.RequestActor) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentBulkRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.InvoiceAdjustmentBulkRequest, *services.RequestActor) error); ok {
@@ -253,34 +255,34 @@ func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Return(batch *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentService_BulkSubmit_Call {
+func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_BulkSubmit_Call {
 	_c.Call.Return(batch, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceAdjustmentBulkRequest, actor *services.RequestActor) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentService_BulkSubmit_Call {
+func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceAdjustmentBulkRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentService_BulkSubmit_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateDraft provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) CreateDraft(ctx context.Context, req *services.CreateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) CreateDraft(ctx context.Context, req *services.CreateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateDraft")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateDraftInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateDraftInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateDraftInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateDraftInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateDraftInvoiceAdjustmentRequest, *services.RequestActor) error); ok {
@@ -327,34 +329,34 @@ func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_CreateDraft_Call {
+func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_CreateDraft_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_CreateDraft_Call {
+func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_CreateDraft_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBatch provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) GetBatch(ctx context.Context, batchID pulid.ID, tenantInfo pagination.TenantInfo) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentService) GetBatch(ctx context.Context, batchID pulid.ID, tenantInfo pagination.TenantInfo) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, batchID, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBatch")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, batchID, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, batchID, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
@@ -401,34 +403,34 @@ func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Return(batch *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentService_GetBatch_Call {
+func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_GetBatch_Call {
 	_c.Call.Return(batch, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetBatch_Call) RunAndReturn(run func(ctx context.Context, batchID pulid.ID, tenantInfo pagination.TenantInfo) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentService_GetBatch_Call {
+func (_c *MockInvoiceAdjustmentService_GetBatch_Call) RunAndReturn(run func(ctx context.Context, batchID pulid.ID, tenantInfo pagination.TenantInfo) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentService_GetBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetDetail provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) GetDetail(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) GetDetail(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDetail")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest) error); ok {
@@ -469,12 +471,12 @@ func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_GetDetail_Call {
+func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_GetDetail_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetDetail_Call) RunAndReturn(run func(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_GetDetail_Call {
+func (_c *MockInvoiceAdjustmentService_GetDetail_Call) RunAndReturn(run func(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_GetDetail_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -548,23 +550,23 @@ func (_c *MockInvoiceAdjustmentService_GetLineage_Call) RunAndReturn(run func(ct
 }
 
 // GetOperationsSummary provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error) {
+func (_mock *MockInvoiceAdjustmentService) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOperationsSummary")
 	}
 
-	var r0 *invoiceadjustment.OperationsSummary
+	var r0 *repositoryports.InvoiceAdjustmentOperationsSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *invoiceadjustment.OperationsSummary); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositoryports.InvoiceAdjustmentOperationsSummary); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.OperationsSummary)
+			r0 = ret.Get(0).(*repositoryports.InvoiceAdjustmentOperationsSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -605,34 +607,34 @@ func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Return(operationsSummary *invoiceadjustment.OperationsSummary, err error) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
+func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Return(operationsSummary *repositoryports.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
 	_c.Call.Return(operationsSummary, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error)) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
+func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error)) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListApprovals provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApprovals")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem]
+	var r0 *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem]); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
@@ -673,34 +675,34 @@ func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(listResult *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListBatches provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListBatches(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentService) ListBatches(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListBatches")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.BatchQueueItem]
+	var r0 *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*invoiceadjustment.BatchQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.BatchQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
@@ -741,34 +743,34 @@ func (_c *MockInvoiceAdjustmentService_ListBatches_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListBatches_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.BatchQueueItem], err error) *MockInvoiceAdjustmentService_ListBatches_Call {
+func (_c *MockInvoiceAdjustmentService_ListBatches_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], err error) *MockInvoiceAdjustmentService_ListBatches_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListBatches_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error)) *MockInvoiceAdjustmentService_ListBatches_Call {
+func (_c *MockInvoiceAdjustmentService_ListBatches_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)) *MockInvoiceAdjustmentService_ListBatches_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReconciliationExceptions provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListReconciliationExceptions(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentService) ListReconciliationExceptions(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReconciliationExceptions")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem]
+	var r0 *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem]); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
@@ -809,12 +811,12 @@ func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Run(ru
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], err error) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
+func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Return(listResult *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], err error) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error)) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
+func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -968,23 +970,23 @@ func (_c *MockInvoiceAdjustmentService_PreviewDraft_Call) RunAndReturn(run func(
 }
 
 // Reject provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) Reject(ctx context.Context, req *services.RejectInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) Reject(ctx context.Context, req *services.RejectInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Reject")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RejectInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RejectInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RejectInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RejectInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.RejectInvoiceAdjustmentRequest, *services.RequestActor) error); ok {
@@ -1031,34 +1033,34 @@ func (_c *MockInvoiceAdjustmentService_Reject_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Reject_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_Reject_Call {
+func (_c *MockInvoiceAdjustmentService_Reject_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Reject_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Reject_Call) RunAndReturn(run func(ctx context.Context, req *services.RejectInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_Reject_Call {
+func (_c *MockInvoiceAdjustmentService_Reject_Call) RunAndReturn(run func(ctx context.Context, req *services.RejectInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_Reject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Submit provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) Submit(ctx context.Context, req *services.InvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) Submit(ctx context.Context, req *services.InvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Submit")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.InvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.InvoiceAdjustmentRequest, *services.RequestActor) error); ok {
@@ -1105,34 +1107,34 @@ func (_c *MockInvoiceAdjustmentService_Submit_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Submit_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_Submit_Call {
+func (_c *MockInvoiceAdjustmentService_Submit_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Submit_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Submit_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_Submit_Call {
+func (_c *MockInvoiceAdjustmentService_Submit_Call) RunAndReturn(run func(ctx context.Context, req *services.InvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_Submit_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SubmitDraft provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) SubmitDraft(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) SubmitDraft(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SubmitDraft")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.GetInvoiceAdjustmentDetailRequest, *services.RequestActor) error); ok {
@@ -1179,34 +1181,34 @@ func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_SubmitDraft_Call {
+func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_SubmitDraft_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_SubmitDraft_Call {
+func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.GetInvoiceAdjustmentDetailRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_SubmitDraft_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateDraft provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) UpdateDraft(ctx context.Context, req *services.UpdateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentService) UpdateDraft(ctx context.Context, req *services.UpdateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateDraft")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateDraftInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateDraftInvoiceAdjustmentRequest, *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req, actor)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateDraftInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateDraftInvoiceAdjustmentRequest, *services.RequestActor) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req, actor)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UpdateDraftInvoiceAdjustmentRequest, *services.RequestActor) error); ok {
@@ -1253,12 +1255,12 @@ func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentService_UpdateDraft_Call {
+func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_UpdateDraft_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.UpdateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentService_UpdateDraft_Call {
+func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) RunAndReturn(run func(ctx context.Context, req *services.UpdateDraftInvoiceAdjustmentRequest, actor *services.RequestActor) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentService_UpdateDraft_Call {
 	_c.Call.Return(run)
 	return _c
 }

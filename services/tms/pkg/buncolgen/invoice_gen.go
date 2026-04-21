@@ -24,6 +24,223 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// InoviceLine — table "invoice_lines", alias "invl"
+// ---------------------------------------------------------------------------
+
+// InoviceLineTable holds the table name, alias, and primary key columns
+// for the "invoice_lines" table. The alias "invl" is used in all generated
+// SQL fragments (e.g. "invl.id = ?").
+var InoviceLineTable = TableInfo{
+	Name:       "invoice_lines",
+	Alias:      "invl",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// InoviceLineColumns provides type-safe column references for the "invoice_lines" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(InoviceLineColumns.ID.String())
+//	// SELECT invl.id FROM invoice_lines AS invl
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(InoviceLineColumns.ID.Eq(), id)           // WHERE invl.id = ?
+//	q.Order(InoviceLineColumns.CreatedAt.OrderDesc())  // ORDER BY invl.created_at DESC
+var InoviceLineColumns = struct {
+	ID             Column // "id" → qualified: "invl.id"
+	OrganizationID Column // "organization_id" → qualified: "invl.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "invl.business_unit_id"
+	InvoiceID      Column // "invoice_id" → qualified: "invl.invoice_id"
+	LineNumber     Column // "line_number" → qualified: "invl.line_number"
+	Type           Column // "type" → qualified: "invl.type"
+	Description    Column // "description" → qualified: "invl.description"
+	Quantity       Column // "quantity" → qualified: "invl.quantity"
+	UnitPrice      Column // "unit_price" → qualified: "invl.unit_price"
+	Amount         Column // "amount" → qualified: "invl.amount"
+	AmountMinor    Column // "amount_minor" → qualified: "invl.amount_minor"
+	Version        Column // "version" → qualified: "invl.version"
+	CreatedAt      Column // "created_at" → qualified: "invl.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "invl.updated_at"
+}{
+	ID:             NewColumn("id", "invl"),
+	OrganizationID: NewColumn("organization_id", "invl"),
+	BusinessUnitID: NewColumn("business_unit_id", "invl"),
+	InvoiceID:      NewColumn("invoice_id", "invl"),
+	LineNumber:     NewColumn("line_number", "invl"),
+	Type:           NewColumn("type", "invl"),
+	Description:    NewColumn("description", "invl"),
+	Quantity:       NewColumn("quantity", "invl"),
+	UnitPrice:      NewColumn("unit_price", "invl"),
+	Amount:         NewColumn("amount", "invl"),
+	AmountMinor:    NewColumn("amount_minor", "invl"),
+	Version:        NewColumn("version", "invl"),
+	CreatedAt:      NewColumn("created_at", "invl"),
+	UpdatedAt:      NewColumn("updated_at", "invl"),
+}
+
+// InoviceLineFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by InoviceLine.GetStaticFieldMap().
+var InoviceLineFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"invoiceId":      "invoice_id",
+	"lineNumber":     "line_number",
+	"type":           "type",
+	"description":    "description",
+	"quantity":       "quantity",
+	"unitPrice":      "unit_price",
+	"amount":         "amount",
+	"amountMinor":    "amount_minor",
+	"version":        "version",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// InoviceLineInsertableColumns lists column names suitable for INSERT statements on the "invoice_lines" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var InoviceLineInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"invoice_id",
+	"line_number",
+	"type",
+	"description",
+	"quantity",
+	"unit_price",
+	"amount",
+	"amount_minor",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// InoviceLineRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(InoviceLineRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var InoviceLineRelations = struct {
+	Invoice string
+}{
+	Invoice: "Invoice",
+}
+
+// InoviceLineScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE invl.organization_id = ? AND invl.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.InoviceLineScopeTenant(sq, ti).
+//		Where(buncolgen.InoviceLineColumns.ID.Eq(), id)
+func InoviceLineScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, InoviceLineColumns.OrganizationID, InoviceLineColumns.BusinessUnitID, ti)
+}
+
+// InoviceLineScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.InoviceLineScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.InoviceLineColumns.ID.In(), bun.List(ids))
+//	})
+func InoviceLineScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, InoviceLineColumns.OrganizationID, InoviceLineColumns.BusinessUnitID, ti)
+}
+
+// InoviceLineScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.InoviceLineScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.InoviceLineColumns.ID.Eq(), id)
+//	})
+func InoviceLineScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, InoviceLineColumns.OrganizationID, InoviceLineColumns.BusinessUnitID, ti)
+}
+
+// InoviceLineApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.InoviceLineApplyTenant(tenantInfo))
+func InoviceLineApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(InoviceLineColumns.OrganizationID, InoviceLineColumns.BusinessUnitID, ti)
+}
+
+// InoviceLineFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_lines" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	InoviceLineFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var InoviceLineFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	LineNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
+	Type           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Quantity       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
+	UnitPrice      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
+	Amount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
+	AmountMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amountMinor" → DB: "amount_minor"
+	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	LineNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineNumber", op, value)
+	},
+	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("type", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Quantity: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("quantity", op, value)
+	},
+	UnitPrice: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("unitPrice", op, value)
+	},
+	Amount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("amount", op, value)
+	},
+	AmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("amountMinor", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // Invoice — table "invoices", alias "inv"
 // ---------------------------------------------------------------------------
 
@@ -49,69 +266,93 @@ var InvoiceTable = TableInfo{
 //	q.Where(InvoiceColumns.ID.Eq(), id)           // WHERE inv.id = ?
 //	q.Order(InvoiceColumns.CreatedAt.OrderDesc())  // ORDER BY inv.created_at DESC
 var InvoiceColumns = struct {
-	ID                 Column // "id" → qualified: "inv.id"
-	OrganizationID     Column // "organization_id" → qualified: "inv.organization_id"
-	BusinessUnitID     Column // "business_unit_id" → qualified: "inv.business_unit_id"
-	BillingQueueItemID Column // "billing_queue_item_id" → qualified: "inv.billing_queue_item_id"
-	ShipmentID         Column // "shipment_id" → qualified: "inv.shipment_id"
-	CustomerID         Column // "customer_id" → qualified: "inv.customer_id"
-	Number             Column // "number" → qualified: "inv.number"
-	BillType           Column // "bill_type" → qualified: "inv.bill_type"
-	Status             Column // "status" → qualified: "inv.status"
-	PaymentTerm        Column // "payment_term" → qualified: "inv.payment_term"
-	CurrencyCode       Column // "currency_code" → qualified: "inv.currency_code"
-	InvoiceDate        Column // "invoice_date" → qualified: "inv.invoice_date"
-	DueDate            Column // "due_date" → qualified: "inv.due_date"
-	PostedAt           Column // "posted_at" → qualified: "inv.posted_at"
-	ShipmentProNumber  Column // "shipment_pro_number" → qualified: "inv.shipment_pro_number"
-	ShipmentBOL        Column // "shipment_bol" → qualified: "inv.shipment_bol"
-	ServiceDate        Column // "service_date" → qualified: "inv.service_date"
-	BillToName         Column // "bill_to_name" → qualified: "inv.bill_to_name"
-	BillToCode         Column // "bill_to_code" → qualified: "inv.bill_to_code"
-	BillToAddressLine1 Column // "bill_to_address_line_1" → qualified: "inv.bill_to_address_line_1"
-	BillToAddressLine2 Column // "bill_to_address_line_2" → qualified: "inv.bill_to_address_line_2"
-	BillToCity         Column // "bill_to_city" → qualified: "inv.bill_to_city"
-	BillToState        Column // "bill_to_state" → qualified: "inv.bill_to_state"
-	BillToPostalCode   Column // "bill_to_postal_code" → qualified: "inv.bill_to_postal_code"
-	BillToCountry      Column // "bill_to_country" → qualified: "inv.bill_to_country"
-	SubtotalAmount     Column // "subtotal_amount" → qualified: "inv.subtotal_amount"
-	OtherAmount        Column // "other_amount" → qualified: "inv.other_amount"
-	TotalAmount        Column // "total_amount" → qualified: "inv.total_amount"
-	Version            Column // "version" → qualified: "inv.version"
-	CreatedAt          Column // "created_at" → qualified: "inv.created_at"
-	UpdatedAt          Column // "updated_at" → qualified: "inv.updated_at"
+	ID                        Column // "id" → qualified: "inv.id"
+	OrganizationID            Column // "organization_id" → qualified: "inv.organization_id"
+	BusinessUnitID            Column // "business_unit_id" → qualified: "inv.business_unit_id"
+	BillingQueueItemID        Column // "billing_queue_item_id" → qualified: "inv.billing_queue_item_id"
+	ShipmentID                Column // "shipment_id" → qualified: "inv.shipment_id"
+	CustomerID                Column // "customer_id" → qualified: "inv.customer_id"
+	Number                    Column // "number" → qualified: "inv.number"
+	BillType                  Column // "bill_type" → qualified: "inv.bill_type"
+	Status                    Column // "status" → qualified: "inv.status"
+	PaymentTerm               Column // "payment_term" → qualified: "inv.payment_term"
+	CurrencyCode              Column // "currency_code" → qualified: "inv.currency_code"
+	InvoiceDate               Column // "invoice_date" → qualified: "inv.invoice_date"
+	DueDate                   Column // "due_date" → qualified: "inv.due_date"
+	PostedAt                  Column // "posted_at" → qualified: "inv.posted_at"
+	ShipmentProNumber         Column // "shipment_pro_number" → qualified: "inv.shipment_pro_number"
+	ShipmentBOL               Column // "shipment_bol" → qualified: "inv.shipment_bol"
+	ServiceDate               Column // "service_date" → qualified: "inv.service_date"
+	BillToName                Column // "bill_to_name" → qualified: "inv.bill_to_name"
+	BillToCode                Column // "bill_to_code" → qualified: "inv.bill_to_code"
+	BillToAddressLine1        Column // "bill_to_address_line_1" → qualified: "inv.bill_to_address_line_1"
+	BillToAddressLine2        Column // "bill_to_address_line_2" → qualified: "inv.bill_to_address_line_2"
+	BillToCity                Column // "bill_to_city" → qualified: "inv.bill_to_city"
+	BillToState               Column // "bill_to_state" → qualified: "inv.bill_to_state"
+	BillToPostalCode          Column // "bill_to_postal_code" → qualified: "inv.bill_to_postal_code"
+	BillToCountry             Column // "bill_to_country" → qualified: "inv.bill_to_country"
+	SubtotalAmount            Column // "subtotal_amount" → qualified: "inv.subtotal_amount"
+	SubtotalAmountMinor       Column // "subtotal_amount_minor" → qualified: "inv.subtotal_amount_minor"
+	OtherAmount               Column // "other_amount" → qualified: "inv.other_amount"
+	OtherAmountMinor          Column // "other_amount_minor" → qualified: "inv.other_amount_minor"
+	TotalAmount               Column // "total_amount" → qualified: "inv.total_amount"
+	TotalAmountMinor          Column // "total_amount_minor" → qualified: "inv.total_amount_minor"
+	AppliedAmount             Column // "applied_amount" → qualified: "inv.applied_amount"
+	AppliedAmountMinor        Column // "applied_amount_minor" → qualified: "inv.applied_amount_minor"
+	SettlementStatus          Column // "settlement_status" → qualified: "inv.settlement_status"
+	DisputeStatus             Column // "dispute_status" → qualified: "inv.dispute_status"
+	CorrectionGroupID         Column // "correction_group_id" → qualified: "inv.correction_group_id"
+	SupersedesInvoiceID       Column // "supersedes_invoice_id" → qualified: "inv.supersedes_invoice_id"
+	SupersededByInvoiceID     Column // "superseded_by_invoice_id" → qualified: "inv.superseded_by_invoice_id"
+	SourceInvoiceAdjustmentID Column // "source_invoice_adjustment_id" → qualified: "inv.source_invoice_adjustment_id"
+	IsAdjustmentArtifact      Column // "is_adjustment_artifact" → qualified: "inv.is_adjustment_artifact"
+	Version                   Column // "version" → qualified: "inv.version"
+	CreatedAt                 Column // "created_at" → qualified: "inv.created_at"
+	UpdatedAt                 Column // "updated_at" → qualified: "inv.updated_at"
 }{
-	ID:                 NewColumn("id", "inv"),
-	OrganizationID:     NewColumn("organization_id", "inv"),
-	BusinessUnitID:     NewColumn("business_unit_id", "inv"),
-	BillingQueueItemID: NewColumn("billing_queue_item_id", "inv"),
-	ShipmentID:         NewColumn("shipment_id", "inv"),
-	CustomerID:         NewColumn("customer_id", "inv"),
-	Number:             NewColumn("number", "inv"),
-	BillType:           NewColumn("bill_type", "inv"),
-	Status:             NewColumn("status", "inv"),
-	PaymentTerm:        NewColumn("payment_term", "inv"),
-	CurrencyCode:       NewColumn("currency_code", "inv"),
-	InvoiceDate:        NewColumn("invoice_date", "inv"),
-	DueDate:            NewColumn("due_date", "inv"),
-	PostedAt:           NewColumn("posted_at", "inv"),
-	ShipmentProNumber:  NewColumn("shipment_pro_number", "inv"),
-	ShipmentBOL:        NewColumn("shipment_bol", "inv"),
-	ServiceDate:        NewColumn("service_date", "inv"),
-	BillToName:         NewColumn("bill_to_name", "inv"),
-	BillToCode:         NewColumn("bill_to_code", "inv"),
-	BillToAddressLine1: NewColumn("bill_to_address_line_1", "inv"),
-	BillToAddressLine2: NewColumn("bill_to_address_line_2", "inv"),
-	BillToCity:         NewColumn("bill_to_city", "inv"),
-	BillToState:        NewColumn("bill_to_state", "inv"),
-	BillToPostalCode:   NewColumn("bill_to_postal_code", "inv"),
-	BillToCountry:      NewColumn("bill_to_country", "inv"),
-	SubtotalAmount:     NewColumn("subtotal_amount", "inv"),
-	OtherAmount:        NewColumn("other_amount", "inv"),
-	TotalAmount:        NewColumn("total_amount", "inv"),
-	Version:            NewColumn("version", "inv"),
-	CreatedAt:          NewColumn("created_at", "inv"),
-	UpdatedAt:          NewColumn("updated_at", "inv"),
+	ID:                        NewColumn("id", "inv"),
+	OrganizationID:            NewColumn("organization_id", "inv"),
+	BusinessUnitID:            NewColumn("business_unit_id", "inv"),
+	BillingQueueItemID:        NewColumn("billing_queue_item_id", "inv"),
+	ShipmentID:                NewColumn("shipment_id", "inv"),
+	CustomerID:                NewColumn("customer_id", "inv"),
+	Number:                    NewColumn("number", "inv"),
+	BillType:                  NewColumn("bill_type", "inv"),
+	Status:                    NewColumn("status", "inv"),
+	PaymentTerm:               NewColumn("payment_term", "inv"),
+	CurrencyCode:              NewColumn("currency_code", "inv"),
+	InvoiceDate:               NewColumn("invoice_date", "inv"),
+	DueDate:                   NewColumn("due_date", "inv"),
+	PostedAt:                  NewColumn("posted_at", "inv"),
+	ShipmentProNumber:         NewColumn("shipment_pro_number", "inv"),
+	ShipmentBOL:               NewColumn("shipment_bol", "inv"),
+	ServiceDate:               NewColumn("service_date", "inv"),
+	BillToName:                NewColumn("bill_to_name", "inv"),
+	BillToCode:                NewColumn("bill_to_code", "inv"),
+	BillToAddressLine1:        NewColumn("bill_to_address_line_1", "inv"),
+	BillToAddressLine2:        NewColumn("bill_to_address_line_2", "inv"),
+	BillToCity:                NewColumn("bill_to_city", "inv"),
+	BillToState:               NewColumn("bill_to_state", "inv"),
+	BillToPostalCode:          NewColumn("bill_to_postal_code", "inv"),
+	BillToCountry:             NewColumn("bill_to_country", "inv"),
+	SubtotalAmount:            NewColumn("subtotal_amount", "inv"),
+	SubtotalAmountMinor:       NewColumn("subtotal_amount_minor", "inv"),
+	OtherAmount:               NewColumn("other_amount", "inv"),
+	OtherAmountMinor:          NewColumn("other_amount_minor", "inv"),
+	TotalAmount:               NewColumn("total_amount", "inv"),
+	TotalAmountMinor:          NewColumn("total_amount_minor", "inv"),
+	AppliedAmount:             NewColumn("applied_amount", "inv"),
+	AppliedAmountMinor:        NewColumn("applied_amount_minor", "inv"),
+	SettlementStatus:          NewColumn("settlement_status", "inv"),
+	DisputeStatus:             NewColumn("dispute_status", "inv"),
+	CorrectionGroupID:         NewColumn("correction_group_id", "inv"),
+	SupersedesInvoiceID:       NewColumn("supersedes_invoice_id", "inv"),
+	SupersededByInvoiceID:     NewColumn("superseded_by_invoice_id", "inv"),
+	SourceInvoiceAdjustmentID: NewColumn("source_invoice_adjustment_id", "inv"),
+	IsAdjustmentArtifact:      NewColumn("is_adjustment_artifact", "inv"),
+	Version:                   NewColumn("version", "inv"),
+	CreatedAt:                 NewColumn("created_at", "inv"),
+	UpdatedAt:                 NewColumn("updated_at", "inv"),
 }
 
 // InvoiceFieldMap maps JSON API field names to database column names.
@@ -119,37 +360,49 @@ var InvoiceColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Invoice.GetStaticFieldMap().
 var InvoiceFieldMap = map[string]string{
-	"id":                 "id",
-	"organizationId":     "organization_id",
-	"businessUnitId":     "business_unit_id",
-	"billingQueueItemId": "billing_queue_item_id",
-	"shipmentId":         "shipment_id",
-	"customerId":         "customer_id",
-	"number":             "number",
-	"billType":           "bill_type",
-	"status":             "status",
-	"paymentTerm":        "payment_term",
-	"currencyCode":       "currency_code",
-	"invoiceDate":        "invoice_date",
-	"dueDate":            "due_date",
-	"postedAt":           "posted_at",
-	"shipmentProNumber":  "shipment_pro_number",
-	"shipmentBol":        "shipment_bol",
-	"serviceDate":        "service_date",
-	"billToName":         "bill_to_name",
-	"billToCode":         "bill_to_code",
-	"billToAddressLine1": "bill_to_address_line_1",
-	"billToAddressLine2": "bill_to_address_line_2",
-	"billToCity":         "bill_to_city",
-	"billToState":        "bill_to_state",
-	"billToPostalCode":   "bill_to_postal_code",
-	"billToCountry":      "bill_to_country",
-	"subtotalAmount":     "subtotal_amount",
-	"otherAmount":        "other_amount",
-	"totalAmount":        "total_amount",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                        "id",
+	"organizationId":            "organization_id",
+	"businessUnitId":            "business_unit_id",
+	"billingQueueItemId":        "billing_queue_item_id",
+	"shipmentId":                "shipment_id",
+	"customerId":                "customer_id",
+	"number":                    "number",
+	"billType":                  "bill_type",
+	"status":                    "status",
+	"paymentTerm":               "payment_term",
+	"currencyCode":              "currency_code",
+	"invoiceDate":               "invoice_date",
+	"dueDate":                   "due_date",
+	"postedAt":                  "posted_at",
+	"shipmentProNumber":         "shipment_pro_number",
+	"shipmentBol":               "shipment_bol",
+	"serviceDate":               "service_date",
+	"billToName":                "bill_to_name",
+	"billToCode":                "bill_to_code",
+	"billToAddressLine1":        "bill_to_address_line_1",
+	"billToAddressLine2":        "bill_to_address_line_2",
+	"billToCity":                "bill_to_city",
+	"billToState":               "bill_to_state",
+	"billToPostalCode":          "bill_to_postal_code",
+	"billToCountry":             "bill_to_country",
+	"subtotalAmount":            "subtotal_amount",
+	"subtotalAmountMinor":       "subtotal_amount_minor",
+	"otherAmount":               "other_amount",
+	"otherAmountMinor":          "other_amount_minor",
+	"totalAmount":               "total_amount",
+	"totalAmountMinor":          "total_amount_minor",
+	"appliedAmount":             "applied_amount",
+	"appliedAmountMinor":        "applied_amount_minor",
+	"settlementStatus":          "settlement_status",
+	"disputeStatus":             "dispute_status",
+	"correctionGroupId":         "correction_group_id",
+	"supersedesInvoiceId":       "supersedes_invoice_id",
+	"supersededByInvoiceId":     "superseded_by_invoice_id",
+	"sourceInvoiceAdjustmentId": "source_invoice_adjustment_id",
+	"isAdjustmentArtifact":      "is_adjustment_artifact",
+	"version":                   "version",
+	"createdAt":                 "created_at",
+	"updatedAt":                 "updated_at",
 }
 
 // InvoiceInsertableColumns lists column names suitable for INSERT statements on the "invoices" table.
@@ -181,8 +434,20 @@ var InvoiceInsertableColumns = []string{
 	"bill_to_postal_code",
 	"bill_to_country",
 	"subtotal_amount",
+	"subtotal_amount_minor",
 	"other_amount",
+	"other_amount_minor",
 	"total_amount",
+	"total_amount_minor",
+	"applied_amount",
+	"applied_amount_minor",
+	"settlement_status",
+	"dispute_status",
+	"correction_group_id",
+	"supersedes_invoice_id",
+	"superseded_by_invoice_id",
+	"source_invoice_adjustment_id",
+	"is_adjustment_artifact",
 	"version",
 	"created_at",
 	"updated_at",
@@ -255,37 +520,49 @@ func InvoiceApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Se
 //	InvoiceFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var InvoiceFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	BillingQueueItemID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingQueueItemId" → DB: "billing_queue_item_id"
-	ShipmentID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	CustomerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	Number             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
-	BillType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
-	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	PaymentTerm        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTerm" → DB: "payment_term"
-	CurrencyCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
-	InvoiceDate        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDate" → DB: "invoice_date"
-	DueDate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueDate" → DB: "due_date"
-	PostedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
-	ShipmentProNumber  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
-	ShipmentBOL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
-	ServiceDate        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceDate" → DB: "service_date"
-	BillToName         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToName" → DB: "bill_to_name"
-	BillToCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCode" → DB: "bill_to_code"
-	BillToAddressLine1 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToAddressLine1" → DB: "bill_to_address_line_1"
-	BillToAddressLine2 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToAddressLine2" → DB: "bill_to_address_line_2"
-	BillToCity         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCity" → DB: "bill_to_city"
-	BillToState        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToState" → DB: "bill_to_state"
-	BillToPostalCode   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToPostalCode" → DB: "bill_to_postal_code"
-	BillToCountry      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCountry" → DB: "bill_to_country"
-	SubtotalAmount     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subtotalAmount" → DB: "subtotal_amount"
-	OtherAmount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherAmount" → DB: "other_amount"
-	TotalAmount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	BillingQueueItemID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingQueueItemId" → DB: "billing_queue_item_id"
+	ShipmentID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	CustomerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
+	BillType                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
+	Status                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	PaymentTerm               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTerm" → DB: "payment_term"
+	CurrencyCode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	InvoiceDate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDate" → DB: "invoice_date"
+	DueDate                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dueDate" → DB: "due_date"
+	PostedAt                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
+	ShipmentProNumber         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentProNumber" → DB: "shipment_pro_number"
+	ShipmentBOL               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentBol" → DB: "shipment_bol"
+	ServiceDate               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "serviceDate" → DB: "service_date"
+	BillToName                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToName" → DB: "bill_to_name"
+	BillToCode                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCode" → DB: "bill_to_code"
+	BillToAddressLine1        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToAddressLine1" → DB: "bill_to_address_line_1"
+	BillToAddressLine2        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToAddressLine2" → DB: "bill_to_address_line_2"
+	BillToCity                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCity" → DB: "bill_to_city"
+	BillToState               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToState" → DB: "bill_to_state"
+	BillToPostalCode          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToPostalCode" → DB: "bill_to_postal_code"
+	BillToCountry             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToCountry" → DB: "bill_to_country"
+	SubtotalAmount            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subtotalAmount" → DB: "subtotal_amount"
+	SubtotalAmountMinor       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subtotalAmountMinor" → DB: "subtotal_amount_minor"
+	OtherAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherAmount" → DB: "other_amount"
+	OtherAmountMinor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "otherAmountMinor" → DB: "other_amount_minor"
+	TotalAmount               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
+	TotalAmountMinor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmountMinor" → DB: "total_amount_minor"
+	AppliedAmount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedAmount" → DB: "applied_amount"
+	AppliedAmountMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedAmountMinor" → DB: "applied_amount_minor"
+	SettlementStatus          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementStatus" → DB: "settlement_status"
+	DisputeStatus             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disputeStatus" → DB: "dispute_status"
+	CorrectionGroupID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "correctionGroupId" → DB: "correction_group_id"
+	SupersedesInvoiceID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersedesInvoiceId" → DB: "supersedes_invoice_id"
+	SupersededByInvoiceID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededByInvoiceId" → DB: "superseded_by_invoice_id"
+	SourceInvoiceAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceAdjustmentId" → DB: "source_invoice_adjustment_id"
+	IsAdjustmentArtifact      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentArtifact" → DB: "is_adjustment_artifact"
+	Version                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -365,220 +642,47 @@ var InvoiceFilter = struct {
 	SubtotalAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("subtotalAmount", op, value)
 	},
+	SubtotalAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subtotalAmountMinor", op, value)
+	},
 	OtherAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("otherAmount", op, value)
+	},
+	OtherAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("otherAmountMinor", op, value)
 	},
 	TotalAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("totalAmount", op, value)
 	},
-	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("version", op, value)
+	TotalAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("totalAmountMinor", op, value)
 	},
-	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("createdAt", op, value)
+	AppliedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedAmount", op, value)
 	},
-	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("updatedAt", op, value)
+	AppliedAmountMinor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedAmountMinor", op, value)
 	},
-}
-
-// ---------------------------------------------------------------------------
-// Line — table "invoice_lines", alias "invl"
-// ---------------------------------------------------------------------------
-
-// LineTable holds the table name, alias, and primary key columns
-// for the "invoice_lines" table. The alias "invl" is used in all generated
-// SQL fragments (e.g. "invl.id = ?").
-var LineTable = TableInfo{
-	Name:       "invoice_lines",
-	Alias:      "invl",
-	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
-}
-
-// LineColumns provides type-safe column references for the "invoice_lines" table.
-// Each field is a [Column] whose methods return pre-computed SQL fragments.
-//
-// Use String() when Bun manages the alias (model-aware queries):
-//
-//	q.Column(LineColumns.ID.String())
-//	// SELECT invl.id FROM invoice_lines AS invl
-//
-// Use expression helpers for raw WHERE/ORDER BY clauses:
-//
-//	q.Where(LineColumns.ID.Eq(), id)           // WHERE invl.id = ?
-//	q.Order(LineColumns.CreatedAt.OrderDesc())  // ORDER BY invl.created_at DESC
-var LineColumns = struct {
-	ID             Column // "id" → qualified: "invl.id"
-	OrganizationID Column // "organization_id" → qualified: "invl.organization_id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "invl.business_unit_id"
-	InvoiceID      Column // "invoice_id" → qualified: "invl.invoice_id"
-	LineNumber     Column // "line_number" → qualified: "invl.line_number"
-	Type           Column // "type" → qualified: "invl.type"
-	Description    Column // "description" → qualified: "invl.description"
-	Quantity       Column // "quantity" → qualified: "invl.quantity"
-	UnitPrice      Column // "unit_price" → qualified: "invl.unit_price"
-	Amount         Column // "amount" → qualified: "invl.amount"
-	Version        Column // "version" → qualified: "invl.version"
-	CreatedAt      Column // "created_at" → qualified: "invl.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "invl.updated_at"
-}{
-	ID:             NewColumn("id", "invl"),
-	OrganizationID: NewColumn("organization_id", "invl"),
-	BusinessUnitID: NewColumn("business_unit_id", "invl"),
-	InvoiceID:      NewColumn("invoice_id", "invl"),
-	LineNumber:     NewColumn("line_number", "invl"),
-	Type:           NewColumn("type", "invl"),
-	Description:    NewColumn("description", "invl"),
-	Quantity:       NewColumn("quantity", "invl"),
-	UnitPrice:      NewColumn("unit_price", "invl"),
-	Amount:         NewColumn("amount", "invl"),
-	Version:        NewColumn("version", "invl"),
-	CreatedAt:      NewColumn("created_at", "invl"),
-	UpdatedAt:      NewColumn("updated_at", "invl"),
-}
-
-// LineFieldMap maps JSON API field names to database column names.
-// The QueryBuilder uses this to translate filter/sort requests from the frontend
-// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
-// This is returned by Line.GetStaticFieldMap().
-var LineFieldMap = map[string]string{
-	"id":             "id",
-	"organizationId": "organization_id",
-	"businessUnitId": "business_unit_id",
-	"invoiceId":      "invoice_id",
-	"lineNumber":     "line_number",
-	"type":           "type",
-	"description":    "description",
-	"quantity":       "quantity",
-	"unitPrice":      "unit_price",
-	"amount":         "amount",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
-}
-
-// LineInsertableColumns lists column names suitable for INSERT statements on the "invoice_lines" table.
-// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
-var LineInsertableColumns = []string{
-	"id",
-	"organization_id",
-	"business_unit_id",
-	"invoice_id",
-	"line_number",
-	"type",
-	"description",
-	"quantity",
-	"unit_price",
-	"amount",
-	"version",
-	"created_at",
-	"updated_at",
-}
-
-// LineRelations provides type-safe names for Bun eager-loading.
-// Use these instead of string literals in .Relation() calls to get compile-time safety.
-//
-//	q.Relation(LineRelations.Invoice)
-//	// Bun eager-loads the Invoice association via a separate query
-var LineRelations = struct {
-	Invoice string
-}{
-	Invoice: "Invoice",
-}
-
-// LineScopeTenant restricts a query to a single tenant by adding:
-//
-//	WHERE invl.organization_id = ? AND invl.business_unit_id = ?
-//
-// Returns the same *bun.SelectQuery so it can be chained fluently:
-//
-//	buncolgen.LineScopeTenant(sq, ti).
-//		Where(buncolgen.LineColumns.ID.Eq(), id)
-func LineScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
-	return ScopeTenant(q, LineColumns.OrganizationID, LineColumns.BusinessUnitID, ti)
-}
-
-// LineScopeTenantUpdate restricts an update query to a single tenant.
-// Use this inside UpdateQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-//		return buncolgen.LineScopeTenantUpdate(uq, req.TenantInfo).
-//			Where(buncolgen.LineColumns.ID.In(), bun.List(ids))
-//	})
-func LineScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
-	return ScopeTenantUpdate(q, LineColumns.OrganizationID, LineColumns.BusinessUnitID, ti)
-}
-
-// LineScopeTenantDelete restricts a delete query to a single tenant.
-// Use this inside DeleteQuery.WhereGroup callbacks:
-//
-//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-//		return buncolgen.LineScopeTenantDelete(dq, req.TenantInfo).
-//			Where(buncolgen.LineColumns.ID.Eq(), id)
-//	})
-func LineScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
-	return ScopeTenantDelete(q, LineColumns.OrganizationID, LineColumns.BusinessUnitID, ti)
-}
-
-// LineApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
-// Use this instead of wrapping ScopeTenant in an anonymous function:
-//
-//	q.Apply(buncolgen.LineApplyTenant(tenantInfo))
-func LineApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return ApplyTenant(LineColumns.OrganizationID, LineColumns.BusinessUnitID, ti)
-}
-
-// LineFilter builds [domaintypes.FieldFilter] values using the correct JSON
-// field names for the "invoice_lines" table. Pass these to the QueryBuilder's ApplyFilters.
-//
-// The JSON field name is baked in — you only provide the operator and value:
-//
-//	LineFilter.ID(dbtype.OpEq, value)
-//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
-var LineFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
-	LineNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineNumber" → DB: "line_number"
-	Type           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
-	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Quantity       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "quantity" → DB: "quantity"
-	UnitPrice      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "unitPrice" → DB: "unit_price"
-	Amount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "amount" → DB: "amount"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
-}{
-	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("id", op, value)
+	SettlementStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("settlementStatus", op, value)
 	},
-	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("organizationId", op, value)
+	DisputeStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("disputeStatus", op, value)
 	},
-	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("businessUnitId", op, value)
+	CorrectionGroupID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("correctionGroupId", op, value)
 	},
-	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("invoiceId", op, value)
+	SupersedesInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("supersedesInvoiceId", op, value)
 	},
-	LineNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("lineNumber", op, value)
+	SupersededByInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("supersededByInvoiceId", op, value)
 	},
-	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("type", op, value)
+	SourceInvoiceAdjustmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceInvoiceAdjustmentId", op, value)
 	},
-	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("description", op, value)
-	},
-	Quantity: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("quantity", op, value)
-	},
-	UnitPrice: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("unitPrice", op, value)
-	},
-	Amount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("amount", op, value)
+	IsAdjustmentArtifact: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isAdjustmentArtifact", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

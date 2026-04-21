@@ -21,7 +21,8 @@ import (
 func NewMockInvoiceAdjustmentRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockInvoiceAdjustmentRepository {
+},
+) *MockInvoiceAdjustmentRepository {
 	mock := &MockInvoiceAdjustmentRepository{}
 	mock.Mock.Test(t)
 
@@ -101,26 +102,26 @@ func (_c *MockInvoiceAdjustmentRepository_CreateAdjustmentArtifacts_Call) RunAnd
 }
 
 // CreateBatch provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) CreateBatch(ctx context.Context, batch *invoiceadjustment.Batch, items []*invoiceadjustment.BatchItem) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentRepository) CreateBatch(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch, items []*invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, batch, items)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateBatch")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Batch, []*invoiceadjustment.BatchItem) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch, []*invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, batch, items)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Batch, []*invoiceadjustment.BatchItem) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch, []*invoiceadjustment.InvoiceAdjustmentBatchItem) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, batch, items)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.Batch, []*invoiceadjustment.BatchItem) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch, []*invoiceadjustment.InvoiceAdjustmentBatchItem) error); ok {
 		r1 = returnFunc(ctx, batch, items)
 	} else {
 		r1 = ret.Error(1)
@@ -135,25 +136,25 @@ type MockInvoiceAdjustmentRepository_CreateBatch_Call struct {
 
 // CreateBatch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - batch *invoiceadjustment.Batch
-//   - items []*invoiceadjustment.BatchItem
+//   - batch *invoiceadjustment.InvoiceAdjustmentBatch
+//   - items []*invoiceadjustment.InvoiceAdjustmentBatchItem
 func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateBatch(ctx interface{}, batch interface{}, items interface{}) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
 	return &MockInvoiceAdjustmentRepository_CreateBatch_Call{Call: _e.mock.On("CreateBatch", ctx, batch, items)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Run(run func(ctx context.Context, batch *invoiceadjustment.Batch, items []*invoiceadjustment.BatchItem)) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Run(run func(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch, items []*invoiceadjustment.InvoiceAdjustmentBatchItem)) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.Batch
+		var arg1 *invoiceadjustment.InvoiceAdjustmentBatch
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.Batch)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
-		var arg2 []*invoiceadjustment.BatchItem
+		var arg2 []*invoiceadjustment.InvoiceAdjustmentBatchItem
 		if args[2] != nil {
-			arg2 = args[2].([]*invoiceadjustment.BatchItem)
+			arg2 = args[2].([]*invoiceadjustment.InvoiceAdjustmentBatchItem)
 		}
 		run(
 			arg0,
@@ -164,37 +165,37 @@ func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Return(batch1 *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Return(batch1 *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
 	_c.Call.Return(batch1, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) RunAndReturn(run func(ctx context.Context, batch *invoiceadjustment.Batch, items []*invoiceadjustment.BatchItem) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) RunAndReturn(run func(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch, items []*invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateCorrectionGroup provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) CreateCorrectionGroup(ctx context.Context, group *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error) {
+func (_mock *MockInvoiceAdjustmentRepository) CreateCorrectionGroup(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	ret := _mock.Called(ctx, group)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCorrectionGroup")
 	}
 
-	var r0 *invoiceadjustment.CorrectionGroup
+	var r0 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)); ok {
 		return returnFunc(ctx, group)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.CorrectionGroup) *invoiceadjustment.CorrectionGroup); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup); ok {
 		r0 = returnFunc(ctx, group)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.CorrectionGroup)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.CorrectionGroup) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error); ok {
 		r1 = returnFunc(ctx, group)
 	} else {
 		r1 = ret.Error(1)
@@ -209,20 +210,20 @@ type MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call struct {
 
 // CreateCorrectionGroup is a helper method to define mock.On call
 //   - ctx context.Context
-//   - group *invoiceadjustment.CorrectionGroup
+//   - group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 func (_e *MockInvoiceAdjustmentRepository_Expecter) CreateCorrectionGroup(ctx interface{}, group interface{}) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
 	return &MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call{Call: _e.mock.On("CreateCorrectionGroup", ctx, group)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Run(run func(ctx context.Context, group *invoiceadjustment.CorrectionGroup)) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Run(run func(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup)) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.CorrectionGroup
+		var arg1 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.CorrectionGroup)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 		run(
 			arg0,
@@ -232,34 +233,34 @@ func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.CorrectionGroup, err error) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
 	_c.Call.Return(correctionGroup, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, group *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error)) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBatchByID provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetBatchByID(ctx context.Context, req repositories.GetBatchRequest) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetBatchByID(ctx context.Context, req repositories.GetBatchRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBatchByID")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchRequest) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchRequest) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchRequest) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetBatchRequest) error); ok {
@@ -300,34 +301,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Return(batch *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
 	_c.Call.Return(batch, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBatchRequest) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBatchRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetBatchByIdempotencyKey provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetBatchByIdempotencyKey(ctx context.Context, req repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetBatchByIdempotencyKey(ctx context.Context, req repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBatchByIdempotencyKey")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchByIdempotencyRequest) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBatchByIdempotencyRequest) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetBatchByIdempotencyRequest) error); ok {
@@ -368,34 +369,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Run(run
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Return(batch *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
 	_c.Call.Return(batch, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBatchByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetByID(ctx context.Context, req repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetByID(ctx context.Context, req repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentRequest) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentRequest) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetInvoiceAdjustmentRequest) error); ok {
@@ -436,34 +437,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentRepository_GetByID_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByID_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentRepository_GetByID_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceAdjustmentRequest) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByIdempotencyKey provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetByIdempotencyKey(ctx context.Context, req repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetByIdempotencyKey(ctx context.Context, req repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByIdempotencyKey")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentByIdempotencyRequest) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceAdjustmentByIdempotencyRequest) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetInvoiceAdjustmentByIdempotencyRequest) error); ok {
@@ -504,34 +505,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Run(run func
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Return(adjustment *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
 	_c.Call.Return(adjustment, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceAdjustmentByIdempotencyRequest) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCorrectionGroup provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetCorrectionGroup(ctx context.Context, req repositories.GetCorrectionGroupRequest) (*invoiceadjustment.CorrectionGroup, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetCorrectionGroup(ctx context.Context, req repositories.GetCorrectionGroupRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCorrectionGroup")
 	}
 
-	var r0 *invoiceadjustment.CorrectionGroup
+	var r0 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupRequest) (*invoiceadjustment.CorrectionGroup, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupRequest) *invoiceadjustment.CorrectionGroup); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupRequest) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.CorrectionGroup)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCorrectionGroupRequest) error); ok {
@@ -572,34 +573,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.CorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
 	_c.Call.Return(correctionGroup, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCorrectionGroupRequest) (*invoiceadjustment.CorrectionGroup, error)) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCorrectionGroupRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCorrectionGroupByRootInvoice provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetCorrectionGroupByRootInvoice(ctx context.Context, req repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.CorrectionGroup, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetCorrectionGroupByRootInvoice(ctx context.Context, req repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCorrectionGroupByRootInvoice")
 	}
 
-	var r0 *invoiceadjustment.CorrectionGroup
+	var r0 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.CorrectionGroup, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupByRootInvoiceRequest) *invoiceadjustment.CorrectionGroup); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetCorrectionGroupByRootInvoiceRequest) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.CorrectionGroup)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetCorrectionGroupByRootInvoiceRequest) error); ok {
@@ -640,12 +641,12 @@ func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) 
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) Return(correctionGroup *invoiceadjustment.CorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
 	_c.Call.Return(correctionGroup, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.CorrectionGroup, error)) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetCorrectionGroupByRootInvoiceRequest) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -793,23 +794,23 @@ func (_c *MockInvoiceAdjustmentRepository_GetLineage_Call) RunAndReturn(run func
 }
 
 // GetOperationsSummary provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error) {
+func (_mock *MockInvoiceAdjustmentRepository) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOperationsSummary")
 	}
 
-	var r0 *invoiceadjustment.OperationsSummary
+	var r0 *repositories.InvoiceAdjustmentOperationsSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *invoiceadjustment.OperationsSummary); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositories.InvoiceAdjustmentOperationsSummary); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.OperationsSummary)
+			r0 = ret.Get(0).(*repositories.InvoiceAdjustmentOperationsSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -850,34 +851,34 @@ func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Return(operationsSummary *invoiceadjustment.OperationsSummary, err error) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Return(operationsSummary *repositories.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
 	_c.Call.Return(operationsSummary, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*invoiceadjustment.OperationsSummary, error)) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
+func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error)) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListApprovalQueue provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) ListApprovalQueue(ctx context.Context, req repositories.ListApprovalQueueRequest) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentRepository) ListApprovalQueue(ctx context.Context, req repositories.ListApprovalQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApprovalQueue")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem]
+	var r0 *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListApprovalQueueRequest) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListApprovalQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListApprovalQueueRequest) *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListApprovalQueueRequest) *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListApprovalQueueRequest) error); ok {
@@ -918,34 +919,34 @@ func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], err error) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) Return(listResult *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListApprovalQueueRequest) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error)) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListApprovalQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListBatchQueue provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) ListBatchQueue(ctx context.Context, req repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentRepository) ListBatchQueue(ctx context.Context, req repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListBatchQueue")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.BatchQueueItem]
+	var r0 *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBatchQueueRequest) *pagination.ListResult[*invoiceadjustment.BatchQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBatchQueueRequest) *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.BatchQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListBatchQueueRequest) error); ok {
@@ -986,34 +987,34 @@ func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.BatchQueueItem], err error) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], err error) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReconciliationQueue provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) ListReconciliationQueue(ctx context.Context, req repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentRepository) ListReconciliationQueue(ctx context.Context, req repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReconciliationQueue")
 	}
 
-	var r0 *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem]
+	var r0 *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListReconciliationQueueRequest) *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListReconciliationQueueRequest) *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListReconciliationQueueRequest) error); ok {
@@ -1054,12 +1055,12 @@ func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Run(run 
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Return(listResult *pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], err error) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Return(listResult *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], err error) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListReconciliationQueueRequest) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1247,26 +1248,26 @@ func (_c *MockInvoiceAdjustmentRepository_ReplaceDocumentReferences_Call) RunAnd
 }
 
 // UpdateAdjustment provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) UpdateAdjustment(ctx context.Context, adjustment *invoiceadjustment.Adjustment) (*invoiceadjustment.Adjustment, error) {
+func (_mock *MockInvoiceAdjustmentRepository) UpdateAdjustment(ctx context.Context, adjustment *invoiceadjustment.InvoiceAdjustment) (*invoiceadjustment.InvoiceAdjustment, error) {
 	ret := _mock.Called(ctx, adjustment)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAdjustment")
 	}
 
-	var r0 *invoiceadjustment.Adjustment
+	var r0 *invoiceadjustment.InvoiceAdjustment
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Adjustment) (*invoiceadjustment.Adjustment, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustment) (*invoiceadjustment.InvoiceAdjustment, error)); ok {
 		return returnFunc(ctx, adjustment)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Adjustment) *invoiceadjustment.Adjustment); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustment) *invoiceadjustment.InvoiceAdjustment); ok {
 		r0 = returnFunc(ctx, adjustment)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Adjustment)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustment)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.Adjustment) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustment) error); ok {
 		r1 = returnFunc(ctx, adjustment)
 	} else {
 		r1 = ret.Error(1)
@@ -1281,20 +1282,20 @@ type MockInvoiceAdjustmentRepository_UpdateAdjustment_Call struct {
 
 // UpdateAdjustment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - adjustment *invoiceadjustment.Adjustment
+//   - adjustment *invoiceadjustment.InvoiceAdjustment
 func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateAdjustment(ctx interface{}, adjustment interface{}) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateAdjustment_Call{Call: _e.mock.On("UpdateAdjustment", ctx, adjustment)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Run(run func(ctx context.Context, adjustment *invoiceadjustment.Adjustment)) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Run(run func(ctx context.Context, adjustment *invoiceadjustment.InvoiceAdjustment)) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.Adjustment
+		var arg1 *invoiceadjustment.InvoiceAdjustment
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.Adjustment)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustment)
 		}
 		run(
 			arg0,
@@ -1304,37 +1305,37 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Return(adjustment1 *invoiceadjustment.Adjustment, err error) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Return(adjustment1 *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
 	_c.Call.Return(adjustment1, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) RunAndReturn(run func(ctx context.Context, adjustment *invoiceadjustment.Adjustment) (*invoiceadjustment.Adjustment, error)) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) RunAndReturn(run func(ctx context.Context, adjustment *invoiceadjustment.InvoiceAdjustment) (*invoiceadjustment.InvoiceAdjustment, error)) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBatch provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) UpdateBatch(ctx context.Context, batch *invoiceadjustment.Batch) (*invoiceadjustment.Batch, error) {
+func (_mock *MockInvoiceAdjustmentRepository) UpdateBatch(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	ret := _mock.Called(ctx, batch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBatch")
 	}
 
-	var r0 *invoiceadjustment.Batch
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Batch) (*invoiceadjustment.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch) (*invoiceadjustment.InvoiceAdjustmentBatch, error)); ok {
 		return returnFunc(ctx, batch)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.Batch) *invoiceadjustment.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch) *invoiceadjustment.InvoiceAdjustmentBatch); ok {
 		r0 = returnFunc(ctx, batch)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.Batch)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.Batch) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatch) error); ok {
 		r1 = returnFunc(ctx, batch)
 	} else {
 		r1 = ret.Error(1)
@@ -1349,20 +1350,20 @@ type MockInvoiceAdjustmentRepository_UpdateBatch_Call struct {
 
 // UpdateBatch is a helper method to define mock.On call
 //   - ctx context.Context
-//   - batch *invoiceadjustment.Batch
+//   - batch *invoiceadjustment.InvoiceAdjustmentBatch
 func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatch(ctx interface{}, batch interface{}) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateBatch_Call{Call: _e.mock.On("UpdateBatch", ctx, batch)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Run(run func(ctx context.Context, batch *invoiceadjustment.Batch)) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Run(run func(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch)) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.Batch
+		var arg1 *invoiceadjustment.InvoiceAdjustmentBatch
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.Batch)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustmentBatch)
 		}
 		run(
 			arg0,
@@ -1372,37 +1373,37 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Return(batch1 *invoiceadjustment.Batch, err error) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Return(batch1 *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
 	_c.Call.Return(batch1, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) RunAndReturn(run func(ctx context.Context, batch *invoiceadjustment.Batch) (*invoiceadjustment.Batch, error)) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) RunAndReturn(run func(ctx context.Context, batch *invoiceadjustment.InvoiceAdjustmentBatch) (*invoiceadjustment.InvoiceAdjustmentBatch, error)) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBatchItem provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) UpdateBatchItem(ctx context.Context, item *invoiceadjustment.BatchItem) (*invoiceadjustment.BatchItem, error) {
+func (_mock *MockInvoiceAdjustmentRepository) UpdateBatchItem(ctx context.Context, item *invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
 	ret := _mock.Called(ctx, item)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBatchItem")
 	}
 
-	var r0 *invoiceadjustment.BatchItem
+	var r0 *invoiceadjustment.InvoiceAdjustmentBatchItem
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.BatchItem) (*invoiceadjustment.BatchItem, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error)); ok {
 		return returnFunc(ctx, item)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.BatchItem) *invoiceadjustment.BatchItem); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatchItem) *invoiceadjustment.InvoiceAdjustmentBatchItem); ok {
 		r0 = returnFunc(ctx, item)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.BatchItem)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentBatchItem)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.BatchItem) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentBatchItem) error); ok {
 		r1 = returnFunc(ctx, item)
 	} else {
 		r1 = ret.Error(1)
@@ -1417,20 +1418,20 @@ type MockInvoiceAdjustmentRepository_UpdateBatchItem_Call struct {
 
 // UpdateBatchItem is a helper method to define mock.On call
 //   - ctx context.Context
-//   - item *invoiceadjustment.BatchItem
+//   - item *invoiceadjustment.InvoiceAdjustmentBatchItem
 func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateBatchItem(ctx interface{}, item interface{}) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateBatchItem_Call{Call: _e.mock.On("UpdateBatchItem", ctx, item)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Run(run func(ctx context.Context, item *invoiceadjustment.BatchItem)) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Run(run func(ctx context.Context, item *invoiceadjustment.InvoiceAdjustmentBatchItem)) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.BatchItem
+		var arg1 *invoiceadjustment.InvoiceAdjustmentBatchItem
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.BatchItem)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustmentBatchItem)
 		}
 		run(
 			arg0,
@@ -1440,37 +1441,37 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Return(batchItem *invoiceadjustment.BatchItem, err error) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Return(batchItem *invoiceadjustment.InvoiceAdjustmentBatchItem, err error) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
 	_c.Call.Return(batchItem, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) RunAndReturn(run func(ctx context.Context, item *invoiceadjustment.BatchItem) (*invoiceadjustment.BatchItem, error)) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) RunAndReturn(run func(ctx context.Context, item *invoiceadjustment.InvoiceAdjustmentBatchItem) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error)) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateCorrectionGroup provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) UpdateCorrectionGroup(ctx context.Context, group *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error) {
+func (_mock *MockInvoiceAdjustmentRepository) UpdateCorrectionGroup(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	ret := _mock.Called(ctx, group)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCorrectionGroup")
 	}
 
-	var r0 *invoiceadjustment.CorrectionGroup
+	var r0 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)); ok {
 		return returnFunc(ctx, group)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.CorrectionGroup) *invoiceadjustment.CorrectionGroup); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) *invoiceadjustment.InvoiceAdjustmentCorrectionGroup); ok {
 		r0 = returnFunc(ctx, group)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*invoiceadjustment.CorrectionGroup)
+			r0 = ret.Get(0).(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.CorrectionGroup) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) error); ok {
 		r1 = returnFunc(ctx, group)
 	} else {
 		r1 = ret.Error(1)
@@ -1485,20 +1486,20 @@ type MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call struct {
 
 // UpdateCorrectionGroup is a helper method to define mock.On call
 //   - ctx context.Context
-//   - group *invoiceadjustment.CorrectionGroup
+//   - group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 func (_e *MockInvoiceAdjustmentRepository_Expecter) UpdateCorrectionGroup(ctx interface{}, group interface{}) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
 	return &MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call{Call: _e.mock.On("UpdateCorrectionGroup", ctx, group)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Run(run func(ctx context.Context, group *invoiceadjustment.CorrectionGroup)) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Run(run func(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup)) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *invoiceadjustment.CorrectionGroup
+		var arg1 *invoiceadjustment.InvoiceAdjustmentCorrectionGroup
 		if args[1] != nil {
-			arg1 = args[1].(*invoiceadjustment.CorrectionGroup)
+			arg1 = args[1].(*invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 		}
 		run(
 			arg0,
@@ -1508,12 +1509,12 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.CorrectionGroup, err error) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
 	_c.Call.Return(correctionGroup, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, group *invoiceadjustment.CorrectionGroup) (*invoiceadjustment.CorrectionGroup, error)) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
+func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) RunAndReturn(run func(ctx context.Context, group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error)) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }

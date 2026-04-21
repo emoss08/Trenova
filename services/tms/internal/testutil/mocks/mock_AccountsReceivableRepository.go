@@ -7,7 +7,6 @@ package mocks
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountsreceivable"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +39,23 @@ func (_m *MockAccountsReceivableRepository) EXPECT() *MockAccountsReceivableRepo
 }
 
 // GetCustomerAging provides a mock function for the type MockAccountsReceivableRepository
-func (_mock *MockAccountsReceivableRepository) GetCustomerAging(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error) {
+func (_mock *MockAccountsReceivableRepository) GetCustomerAging(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*repositories.ARCustomerAgingRow, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCustomerAging")
 	}
 
-	var r0 *accountsreceivable.CustomerAgingRow
+	var r0 *repositories.ARCustomerAgingRow
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) (*repositories.ARCustomerAgingRow, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) *accountsreceivable.CustomerAgingRow); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetARCustomerAgingRequest) *repositories.ARCustomerAgingRow); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*accountsreceivable.CustomerAgingRow)
+			r0 = ret.Get(0).(*repositories.ARCustomerAgingRow)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetARCustomerAgingRequest) error); ok {
@@ -97,12 +96,12 @@ func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Return(customerAgingRow *accountsreceivable.CustomerAgingRow, err error) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Return(customerAgingRow *repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_GetCustomerAging_Call {
 	_c.Call.Return(customerAgingRow, err)
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*accountsreceivable.CustomerAgingRow, error)) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetARCustomerAgingRequest) (*repositories.ARCustomerAgingRow, error)) *MockAccountsReceivableRepository_GetCustomerAging_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -174,23 +173,23 @@ func (_c *MockAccountsReceivableRepository_GetCustomerName_Call) RunAndReturn(ru
 }
 
 // ListARAging provides a mock function for the type MockAccountsReceivableRepository
-func (_mock *MockAccountsReceivableRepository) ListARAging(ctx context.Context, req repositories.ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error) {
+func (_mock *MockAccountsReceivableRepository) ListARAging(ctx context.Context, req repositories.ListARAgingRequest) ([]*repositories.ARCustomerAgingRow, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListARAging")
 	}
 
-	var r0 []*accountsreceivable.CustomerAgingRow
+	var r0 []*repositories.ARCustomerAgingRow
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListARAgingRequest) ([]*repositories.ARCustomerAgingRow, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListARAgingRequest) []*accountsreceivable.CustomerAgingRow); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListARAgingRequest) []*repositories.ARCustomerAgingRow); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accountsreceivable.CustomerAgingRow)
+			r0 = ret.Get(0).([]*repositories.ARCustomerAgingRow)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListARAgingRequest) error); ok {
@@ -231,34 +230,34 @@ func (_c *MockAccountsReceivableRepository_ListARAging_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListARAging_Call) Return(customerAgingRows []*accountsreceivable.CustomerAgingRow, err error) *MockAccountsReceivableRepository_ListARAging_Call {
+func (_c *MockAccountsReceivableRepository_ListARAging_Call) Return(customerAgingRows []*repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_ListARAging_Call {
 	_c.Call.Return(customerAgingRows, err)
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListARAging_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListARAgingRequest) ([]*accountsreceivable.CustomerAgingRow, error)) *MockAccountsReceivableRepository_ListARAging_Call {
+func (_c *MockAccountsReceivableRepository_ListARAging_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListARAgingRequest) ([]*repositories.ARCustomerAgingRow, error)) *MockAccountsReceivableRepository_ListARAging_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListCustomerLedger provides a mock function for the type MockAccountsReceivableRepository
-func (_mock *MockAccountsReceivableRepository) ListCustomerLedger(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error) {
+func (_mock *MockAccountsReceivableRepository) ListCustomerLedger(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*repositories.ARLedgerEntry, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCustomerLedger")
 	}
 
-	var r0 []*accountsreceivable.LedgerEntry
+	var r0 []*repositories.ARLedgerEntry
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCustomerLedgerRequest) ([]*repositories.ARLedgerEntry, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCustomerLedgerRequest) []*accountsreceivable.LedgerEntry); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListCustomerLedgerRequest) []*repositories.ARLedgerEntry); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accountsreceivable.LedgerEntry)
+			r0 = ret.Get(0).([]*repositories.ARLedgerEntry)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListCustomerLedgerRequest) error); ok {
@@ -299,34 +298,34 @@ func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Run(run func
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(ledgerEntrys []*accountsreceivable.LedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(ledgerEntrys []*repositories.ARLedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
 	_c.Call.Return(ledgerEntrys, err)
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*accountsreceivable.LedgerEntry, error)) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListCustomerLedgerRequest) ([]*repositories.ARLedgerEntry, error)) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListOpenItems provides a mock function for the type MockAccountsReceivableRepository
-func (_mock *MockAccountsReceivableRepository) ListOpenItems(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error) {
+func (_mock *MockAccountsReceivableRepository) ListOpenItems(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*repositories.AROpenItem, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOpenItems")
 	}
 
-	var r0 []*accountsreceivable.OpenItem
+	var r0 []*repositories.AROpenItem
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) ([]*repositories.AROpenItem, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) []*accountsreceivable.OpenItem); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListAROpenItemsRequest) []*repositories.AROpenItem); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*accountsreceivable.OpenItem)
+			r0 = ret.Get(0).([]*repositories.AROpenItem)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListAROpenItemsRequest) error); ok {
@@ -367,12 +366,12 @@ func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Return(openItems []*accountsreceivable.OpenItem, err error) *MockAccountsReceivableRepository_ListOpenItems_Call {
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Return(openItems []*repositories.AROpenItem, err error) *MockAccountsReceivableRepository_ListOpenItems_Call {
 	_c.Call.Return(openItems, err)
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*accountsreceivable.OpenItem, error)) *MockAccountsReceivableRepository_ListOpenItems_Call {
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListAROpenItemsRequest) ([]*repositories.AROpenItem, error)) *MockAccountsReceivableRepository_ListOpenItems_Call {
 	_c.Call.Return(run)
 	return _c
 }

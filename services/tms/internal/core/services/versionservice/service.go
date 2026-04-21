@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/system"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -34,7 +34,7 @@ type Service struct {
 	httpClient *http.Client
 
 	mu           sync.RWMutex
-	cachedStatus *system.UpdateStatus
+	cachedStatus *serviceports.UpdateStatus
 	lastCheck    time.Time
 }
 
@@ -48,16 +48,16 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) GetVersionInfo(_ context.Context) (*system.VersionInfo, error) {
-	return &system.VersionInfo{
+func (s *Service) GetVersionInfo(_ context.Context) (*serviceports.VersionInfo, error) {
+	return &serviceports.VersionInfo{
 		Version:     s.cfg.App.Version,
 		Environment: s.cfg.App.Env,
 	}, nil
 }
 
-func (s *Service) GetUpdateStatus(ctx context.Context) (*system.UpdateStatus, error) {
+func (s *Service) GetUpdateStatus(ctx context.Context) (*serviceports.UpdateStatus, error) {
 	if !s.cfg.Update.Enabled {
-		return &system.UpdateStatus{
+		return &serviceports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     0,
@@ -76,9 +76,9 @@ func (s *Service) GetUpdateStatus(ctx context.Context) (*system.UpdateStatus, er
 	return s.CheckForUpdates(ctx)
 }
 
-func (s *Service) CheckForUpdates(ctx context.Context) (*system.UpdateStatus, error) {
+func (s *Service) CheckForUpdates(ctx context.Context) (*serviceports.UpdateStatus, error) {
 	if !s.cfg.Update.Enabled {
-		return &system.UpdateStatus{
+		return &serviceports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
@@ -87,7 +87,7 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*system.UpdateStatus, er
 
 	if s.cfg.Update.OfflineMode {
 		s.l.Debug("offline mode enabled, skipping remote update check")
-		return &system.UpdateStatus{
+		return &serviceports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
@@ -97,21 +97,21 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*system.UpdateStatus, er
 	release, err := s.fetchLatestRelease(ctx)
 	if err != nil {
 		if errors.Is(err, ErrNoReleaseFound) {
-			return &system.UpdateStatus{
+			return &serviceports.UpdateStatus{
 				CurrentVersion:  s.cfg.App.Version,
 				UpdateAvailable: false,
 				LastChecked:     timeutils.NowUnix(),
 			}, nil
 		}
 		s.l.Warn("failed to fetch latest release", zap.Error(err))
-		return &system.UpdateStatus{
+		return &serviceports.UpdateStatus{
 			CurrentVersion:  s.cfg.App.Version,
 			UpdateAvailable: false,
 			LastChecked:     timeutils.NowUnix(),
 		}, nil
 	}
 
-	status := &system.UpdateStatus{
+	status := &serviceports.UpdateStatus{
 		CurrentVersion:  s.cfg.App.Version,
 		LatestVersion:   release.Version,
 		UpdateAvailable: s.isNewerVersion(release.Version, s.cfg.App.Version),
@@ -127,7 +127,7 @@ func (s *Service) CheckForUpdates(ctx context.Context) (*system.UpdateStatus, er
 	return status, nil
 }
 
-func (s *Service) fetchLatestRelease(ctx context.Context) (*system.ReleaseInfo, error) {
+func (s *Service) fetchLatestRelease(ctx context.Context) (*serviceports.ReleaseInfo, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest",
 		s.cfg.Update.GetGitHubOwner(),
 		s.cfg.Update.GetGitHubRepo(),
@@ -160,7 +160,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*system.ReleaseInfo, 
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var ghRelease system.GitHubRelease
+	var ghRelease serviceports.GitHubRelease
 	if err = sonic.Unmarshal(body, &ghRelease); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -183,7 +183,7 @@ func (s *Service) fetchLatestRelease(ctx context.Context) (*system.ReleaseInfo, 
 		}
 	}
 
-	return &system.ReleaseInfo{
+	return &serviceports.ReleaseInfo{
 		Version:      strings.TrimPrefix(ghRelease.TagName, "v"),
 		TagName:      ghRelease.TagName,
 		PublishedAt:  publishedAt.Unix(),

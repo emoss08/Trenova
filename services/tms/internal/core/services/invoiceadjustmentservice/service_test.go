@@ -52,9 +52,9 @@ func TestApplyCreditBalancePolicyDisallow(t *testing.T) {
 func TestApplyReplacementReviewPolicy(t *testing.T) {
 	svc := &Service{}
 	preview := &serviceports.InvoiceAdjustmentPreview{
-		Kind:                 invoiceadjustment.KindCreditRebill,
-		CreditTotalAmount:    decimal.NewFromInt(100),
-		RebillTotalAmount:    decimal.NewFromInt(110),
+		Kind:                  invoiceadjustment.KindCreditRebill,
+		CreditTotalAmount:     decimal.NewFromInt(100),
+		RebillTotalAmount:     decimal.NewFromInt(110),
 		RerateVariancePercent: decimal.NewFromInt(12),
 	}
 
@@ -86,11 +86,14 @@ func TestValidateSettlementPolicy(t *testing.T) {
 }
 
 func TestSumInvoiceLines(t *testing.T) {
-	lines := []*invoice.Line{
-		{Type: invoice.LineTypeFreight, Amount: decimal.NewFromInt(100)},
-		{Type: invoice.LineTypeAccessorial, Amount: decimal.NewFromInt(20)},
+	lines := []*invoice.InoviceLine{
+		{Type: invoice.InvoiceLineTypeFreight, Amount: decimal.NewFromInt(100)},
+		{Type: invoice.InvoiceLineTypeAccessorial, Amount: decimal.NewFromInt(20)},
 	}
 
-	assert.True(t, decimal.NewFromInt(100).Equal(sumInvoiceLines(lines, invoice.LineTypeFreight)))
+	assert.True(
+		t,
+		decimal.NewFromInt(100).Equal(sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight)),
+	)
 	assert.True(t, decimal.NewFromInt(120).Equal(sumInvoiceLines(lines, "")))
 }

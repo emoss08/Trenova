@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
@@ -29,7 +30,7 @@ func RegisterEntities() []any {
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},
 		&invoice.Invoice{},
-		&invoice.Line{},
+		&invoice.InoviceLine{},
 		&tenant.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
@@ -50,5 +51,6 @@ func RegisterEntities() []any {
 		&shipmentimportchat.Conversation{},
 		&shipmentimportchat.Turn{},
 		&customer.CustomerBillingProfileDocumentType{},
+		&bankreceipt.BankReceipt{},
 	}
 }

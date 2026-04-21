@@ -19,24 +19,27 @@ import (
 func (s *Service) createReplacementDraftInvoice(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	adjustment *invoiceadjustment.Adjustment,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	lines []*invoice.Line,
+	lines []*invoice.InoviceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*invoice.Invoice, error) {
 	entity := &invoice.Invoice{
-		OrganizationID:            sourceInvoice.OrganizationID,
-		BusinessUnitID:            sourceInvoice.BusinessUnitID,
-		BillingQueueItemID:        item.ID,
-		ShipmentID:                sourceInvoice.ShipmentID,
-		CustomerID:                sourceInvoice.CustomerID,
-		Number:                    item.Number,
-		BillType:                  billingqueue.BillTypeInvoice,
-		Status:                    invoice.StatusDraft,
-		PaymentTerm:               sourceInvoice.PaymentTerm,
-		CurrencyCode:              sourceInvoice.CurrencyCode,
-		InvoiceDate:               preview.AccountingDate,
-		DueDate:                   invoice.DueDateFromPaymentTerm(preview.AccountingDate, sourceInvoice.PaymentTerm),
+		OrganizationID:     sourceInvoice.OrganizationID,
+		BusinessUnitID:     sourceInvoice.BusinessUnitID,
+		BillingQueueItemID: item.ID,
+		ShipmentID:         sourceInvoice.ShipmentID,
+		CustomerID:         sourceInvoice.CustomerID,
+		Number:             item.Number,
+		BillType:           billingqueue.BillTypeInvoice,
+		Status:             invoice.StatusDraft,
+		PaymentTerm:        sourceInvoice.PaymentTerm,
+		CurrencyCode:       sourceInvoice.CurrencyCode,
+		InvoiceDate:        preview.AccountingDate,
+		DueDate: invoice.DueDateFromPaymentTerm(
+			preview.AccountingDate,
+			sourceInvoice.PaymentTerm,
+		),
 		ShipmentProNumber:         sourceInvoice.ShipmentProNumber,
 		ShipmentBOL:               sourceInvoice.ShipmentBOL,
 		ServiceDate:               sourceInvoice.ServiceDate,
@@ -48,8 +51,8 @@ func (s *Service) createReplacementDraftInvoice(
 		BillToState:               sourceInvoice.BillToState,
 		BillToPostalCode:          sourceInvoice.BillToPostalCode,
 		BillToCountry:             sourceInvoice.BillToCountry,
-		SubtotalAmount:            sumInvoiceLines(lines, invoice.LineTypeFreight),
-		OtherAmount:               sumInvoiceLines(lines, invoice.LineTypeAccessorial),
+		SubtotalAmount:            sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight),
+		OtherAmount:               sumInvoiceLines(lines, invoice.InvoiceLineTypeAccessorial),
 		TotalAmount:               preview.RebillTotalAmount,
 		AppliedAmount:             decimal.Zero,
 		SettlementStatus:          invoice.SettlementStatusUnpaid,
@@ -77,7 +80,7 @@ func (s *Service) createReplacementDraftInvoice(
 
 func (s *Service) createWriteOffJournalEntry(
 	ctx context.Context,
-	adjustment *invoiceadjustment.Adjustment,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
 	preview *servicesports.InvoiceAdjustmentPreview,
 	actor *servicesports.RequestActor,
@@ -87,10 +90,22 @@ func (s *Service) createWriteOffJournalEntry(
 		return pulid.ID(""), err
 	}
 	if accountingControl.DefaultWriteOffAccountID.IsNil() {
-		return pulid.ID(""), errortypes.NewValidationError("defaultWriteOffAccountId", errortypes.ErrRequired, "Default write-off account is required for write-offs")
+		return pulid.ID(
+				"",
+			), errortypes.NewValidationError(
+				"defaultWriteOffAccountId",
+				errortypes.ErrRequired,
+				"Default write-off account is required for write-offs",
+			)
 	}
 	if accountingControl.DefaultARAccountID.IsNil() {
-		return pulid.ID(""), errortypes.NewValidationError("defaultArAccountId", errortypes.ErrRequired, "Default AR account is required for write-offs")
+		return pulid.ID(
+				"",
+			), errortypes.NewValidationError(
+				"defaultArAccountId",
+				errortypes.ErrRequired,
+				"Default AR account is required for write-offs",
+			)
 	}
 	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
 		OrgID: adjustment.OrganizationID,
@@ -105,11 +120,23 @@ func (s *Service) createWriteOffJournalEntry(
 	amount := money.MinorUnits(preview.CreditTotalAmount.Abs())
 	entryID := pulid.MustNew("je_")
 	batchID := pulid.MustNew("jb_")
-	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "")
+	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(
+		ctx,
+		adjustment.OrganizationID,
+		adjustment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return pulid.ID(""), err
 	}
-	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(ctx, adjustment.OrganizationID, adjustment.BusinessUnitID, "", "")
+	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(
+		ctx,
+		adjustment.OrganizationID,
+		adjustment.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return pulid.ID(""), err
 	}
@@ -126,7 +153,13 @@ func (s *Service) createWriteOffJournalEntry(
 	switch accountingControl.JournalPostingMode {
 	case tenant.JournalPostingModeManual:
 		if accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {
-			return pulid.ID(""), errortypes.NewValidationError("manualJournalEntryPolicy", errortypes.ErrInvalidOperation, "Manual journal entries are disallowed by accounting policy")
+			return pulid.ID(
+					"",
+				), errortypes.NewValidationError(
+					"manualJournalEntryPolicy",
+					errortypes.ErrInvalidOperation,
+					"Manual journal entries are disallowed by accounting policy",
+				)
 		}
 		entryStatus = "Pending"
 		batchStatus = "Pending"

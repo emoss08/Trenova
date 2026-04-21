@@ -234,14 +234,18 @@ func (s *Service) syncAdjustmentLineage(
 		}
 	}
 
-	if s.adjustmentRepo != nil && item.CorrectionGroupID != nil && item.CorrectionGroupID.IsNotNil() {
-		group, err := s.adjustmentRepo.GetCorrectionGroup(ctx, repositories.GetCorrectionGroupRequest{
-			ID: *item.CorrectionGroupID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: item.OrganizationID,
-				BuID:  item.BusinessUnitID,
+	if s.adjustmentRepo != nil && item.CorrectionGroupID != nil &&
+		item.CorrectionGroupID.IsNotNil() {
+		group, err := s.adjustmentRepo.GetCorrectionGroup(
+			ctx,
+			repositories.GetCorrectionGroupRequest{
+				ID: *item.CorrectionGroupID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: item.OrganizationID,
+					BuID:  item.BusinessUnitID,
+				},
 			},
-		})
+		)
 		if err == nil && group != nil {
 			group.CurrentInvoiceID = created.ID
 			if _, err = s.adjustmentRepo.UpdateCorrectionGroup(ctx, group); err != nil {
@@ -642,14 +646,14 @@ func (s *Service) buildInvoiceEntity(
 }
 
 type adjustmentInvoiceContext struct {
-	ReplacementLines   []*invoice.Line `json:"replacementLines"`
-	SubtotalAmount     decimal.Decimal `json:"subtotalAmount"`
-	OtherAmount        decimal.Decimal `json:"otherAmount"`
-	TotalAmount        decimal.Decimal `json:"totalAmount"`
-	AccountingDate     int64           `json:"accountingDate"`
-	SourceInvoiceID    pulid.ID        `json:"sourceInvoiceId"`
-	CorrectionGroupID  pulid.ID        `json:"correctionGroupId"`
-	SourceAdjustmentID pulid.ID        `json:"sourceAdjustmentId"`
+	ReplacementLines   []*invoice.InoviceLine `json:"replacementLines"`
+	SubtotalAmount     decimal.Decimal        `json:"subtotalAmount"`
+	OtherAmount        decimal.Decimal        `json:"otherAmount"`
+	TotalAmount        decimal.Decimal        `json:"totalAmount"`
+	AccountingDate     int64                  `json:"accountingDate"`
+	SourceInvoiceID    pulid.ID               `json:"sourceInvoiceId"`
+	CorrectionGroupID  pulid.ID               `json:"correctionGroupId"`
+	SourceAdjustmentID pulid.ID               `json:"sourceAdjustmentId"`
 }
 
 func (s *Service) buildAdjustmentOriginInvoiceEntity(
@@ -719,8 +723,8 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		Lines:                     lines,
 	}
 	if ctx.SubtotalAmount.IsZero() && ctx.OtherAmount.IsZero() {
-		entity.SubtotalAmount = sumLinesByType(lines, invoice.LineTypeFreight)
-		entity.OtherAmount = sumLinesByType(lines, invoice.LineTypeAccessorial)
+		entity.SubtotalAmount = sumLinesByType(lines, invoice.InvoiceLineTypeFreight)
+		entity.OtherAmount = sumLinesByType(lines, invoice.InvoiceLineTypeAccessorial)
 	}
 	if ctx.TotalAmount.IsZero() {
 		entity.TotalAmount = sumLinesByType(lines, "")
@@ -733,7 +737,10 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 	return entity
 }
 
-func sumLinesByType(lines []*invoice.Line, lineType invoice.LineType) decimal.Decimal {
+func sumLinesByType(
+	lines []*invoice.InoviceLine,
+	lineType invoice.InvoiceLineType,
+) decimal.Decimal {
 	total := decimal.Zero
 	for _, line := range lines {
 		if line == nil {
@@ -749,12 +756,12 @@ func sumLinesByType(lines []*invoice.Line, lineType invoice.LineType) decimal.De
 func buildInvoiceLines(
 	billType billingqueue.BillType,
 	shp *shipment.Shipment,
-) []*invoice.Line {
-	lines := make([]*invoice.Line, 0, 1+len(shp.AdditionalCharges))
+) []*invoice.InoviceLine {
+	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
 	freightAmount := signedAmount(billType, shp.FreightChargeAmount.Decimal)
-	lines = append(lines, &invoice.Line{
+	lines = append(lines, &invoice.InoviceLine{
 		LineNumber:  1,
-		Type:        invoice.LineTypeFreight,
+		Type:        invoice.InvoiceLineTypeFreight,
 		Description: "Freight charge",
 		Quantity:    decimal.NewFromInt(1),
 		UnitPrice:   freightAmount,
@@ -783,9 +790,9 @@ func buildInvoiceLines(
 			description = charge.AccessorialCharge.Description
 		}
 
-		lines = append(lines, &invoice.Line{
+		lines = append(lines, &invoice.InoviceLine{
 			LineNumber:  idx + 2,
-			Type:        invoice.LineTypeAccessorial,
+			Type:        invoice.InvoiceLineTypeAccessorial,
 			Description: description,
 			Quantity:    quantity,
 			UnitPrice:   unitPrice,
@@ -894,7 +901,9 @@ func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Serv
 	if s.accountingPolicy != nil {
 		return s.accountingPolicy
 	}
-	return accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()})
+	return accountingcontrolpolicyservice.New(
+		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+	)
 }
 
 func (s *Service) billingPolicyService() *billingcontrolpolicyservice.Service {

@@ -3,7 +3,6 @@ package postgis
 import (
 	"database/sql/driver"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/paulmach/orb"
@@ -28,11 +27,14 @@ func (p *Point) Scan(src any) error {
 
 	switch v := src.(type) {
 	case []byte:
-		data = v
-	case string:
-		data, err = hex.DecodeString(v)
+		data, err = decodeHexEncodedGeometry(v)
 		if err != nil {
-			return fmt.Errorf("failed to decode hex string: %w", err)
+			return err
+		}
+	case string:
+		data, err = decodeHexString(v)
+		if err != nil {
+			return err
 		}
 	default:
 		return fmt.Errorf("unsupported scan type for Point: %T", src)

@@ -49,45 +49,63 @@ var BillingQueueItemTable = TableInfo{
 //	q.Where(BillingQueueItemColumns.ID.Eq(), id)           // WHERE bqi.id = ?
 //	q.Order(BillingQueueItemColumns.CreatedAt.OrderDesc())  // ORDER BY bqi.created_at DESC
 var BillingQueueItemColumns = struct {
-	ID                  Column // "id" → qualified: "bqi.id"
-	OrganizationID      Column // "organization_id" → qualified: "bqi.organization_id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "bqi.business_unit_id"
-	ShipmentID          Column // "shipment_id" → qualified: "bqi.shipment_id"
-	AssignedBillerID    Column // "assigned_biller_id" → qualified: "bqi.assigned_biller_id"
-	Number              Column // "number" → qualified: "bqi.number"
-	Status              Column // "status" → qualified: "bqi.status"
-	BillType            Column // "bill_type" → qualified: "bqi.bill_type"
-	ExceptionReasonCode Column // "exception_reason_code" → qualified: "bqi.exception_reason_code"
-	ReviewNotes         Column // "review_notes" → qualified: "bqi.review_notes"
-	ExceptionNotes      Column // "exception_notes" → qualified: "bqi.exception_notes"
-	ReviewStartedAt     Column // "review_started_at" → qualified: "bqi.review_started_at"
-	ReviewCompletedAt   Column // "review_completed_at" → qualified: "bqi.review_completed_at"
-	CanceledByID        Column // "canceled_by_id" → qualified: "bqi.canceled_by_id"
-	CanceledAt          Column // "canceled_at" → qualified: "bqi.canceled_at"
-	CancelReason        Column // "cancel_reason" → qualified: "bqi.cancel_reason"
-	Version             Column // "version" → qualified: "bqi.version"
-	CreatedAt           Column // "created_at" → qualified: "bqi.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "bqi.updated_at"
+	ID                        Column // "id" → qualified: "bqi.id"
+	OrganizationID            Column // "organization_id" → qualified: "bqi.organization_id"
+	BusinessUnitID            Column // "business_unit_id" → qualified: "bqi.business_unit_id"
+	ShipmentID                Column // "shipment_id" → qualified: "bqi.shipment_id"
+	AssignedBillerID          Column // "assigned_biller_id" → qualified: "bqi.assigned_biller_id"
+	Number                    Column // "number" → qualified: "bqi.number"
+	Status                    Column // "status" → qualified: "bqi.status"
+	BillType                  Column // "bill_type" → qualified: "bqi.bill_type"
+	ExceptionReasonCode       Column // "exception_reason_code" → qualified: "bqi.exception_reason_code"
+	ReviewNotes               Column // "review_notes" → qualified: "bqi.review_notes"
+	ExceptionNotes            Column // "exception_notes" → qualified: "bqi.exception_notes"
+	ReviewStartedAt           Column // "review_started_at" → qualified: "bqi.review_started_at"
+	ReviewCompletedAt         Column // "review_completed_at" → qualified: "bqi.review_completed_at"
+	CanceledByID              Column // "canceled_by_id" → qualified: "bqi.canceled_by_id"
+	CanceledAt                Column // "canceled_at" → qualified: "bqi.canceled_at"
+	CancelReason              Column // "cancel_reason" → qualified: "bqi.cancel_reason"
+	IsAdjustmentOrigin        Column // "is_adjustment_origin" → qualified: "bqi.is_adjustment_origin"
+	SourceInvoiceID           Column // "source_invoice_id" → qualified: "bqi.source_invoice_id"
+	SourceInvoiceAdjustmentID Column // "source_invoice_adjustment_id" → qualified: "bqi.source_invoice_adjustment_id"
+	SourceCreditMemoInvoiceID Column // "source_credit_memo_invoice_id" → qualified: "bqi.source_credit_memo_invoice_id"
+	CorrectionGroupID         Column // "correction_group_id" → qualified: "bqi.correction_group_id"
+	RebillStrategy            Column // "rebill_strategy" → qualified: "bqi.rebill_strategy"
+	RequiresReplacementReview Column // "requires_replacement_review" → qualified: "bqi.requires_replacement_review"
+	RerateVariancePercent     Column // "rerate_variance_percent" → qualified: "bqi.rerate_variance_percent"
+	AdjustmentContext         Column // "adjustment_context" → qualified: "bqi.adjustment_context"
+	Version                   Column // "version" → qualified: "bqi.version"
+	CreatedAt                 Column // "created_at" → qualified: "bqi.created_at"
+	UpdatedAt                 Column // "updated_at" → qualified: "bqi.updated_at"
 }{
-	ID:                  NewColumn("id", "bqi"),
-	OrganizationID:      NewColumn("organization_id", "bqi"),
-	BusinessUnitID:      NewColumn("business_unit_id", "bqi"),
-	ShipmentID:          NewColumn("shipment_id", "bqi"),
-	AssignedBillerID:    NewColumn("assigned_biller_id", "bqi"),
-	Number:              NewColumn("number", "bqi"),
-	Status:              NewColumn("status", "bqi"),
-	BillType:            NewColumn("bill_type", "bqi"),
-	ExceptionReasonCode: NewColumn("exception_reason_code", "bqi"),
-	ReviewNotes:         NewColumn("review_notes", "bqi"),
-	ExceptionNotes:      NewColumn("exception_notes", "bqi"),
-	ReviewStartedAt:     NewColumn("review_started_at", "bqi"),
-	ReviewCompletedAt:   NewColumn("review_completed_at", "bqi"),
-	CanceledByID:        NewColumn("canceled_by_id", "bqi"),
-	CanceledAt:          NewColumn("canceled_at", "bqi"),
-	CancelReason:        NewColumn("cancel_reason", "bqi"),
-	Version:             NewColumn("version", "bqi"),
-	CreatedAt:           NewColumn("created_at", "bqi"),
-	UpdatedAt:           NewColumn("updated_at", "bqi"),
+	ID:                        NewColumn("id", "bqi"),
+	OrganizationID:            NewColumn("organization_id", "bqi"),
+	BusinessUnitID:            NewColumn("business_unit_id", "bqi"),
+	ShipmentID:                NewColumn("shipment_id", "bqi"),
+	AssignedBillerID:          NewColumn("assigned_biller_id", "bqi"),
+	Number:                    NewColumn("number", "bqi"),
+	Status:                    NewColumn("status", "bqi"),
+	BillType:                  NewColumn("bill_type", "bqi"),
+	ExceptionReasonCode:       NewColumn("exception_reason_code", "bqi"),
+	ReviewNotes:               NewColumn("review_notes", "bqi"),
+	ExceptionNotes:            NewColumn("exception_notes", "bqi"),
+	ReviewStartedAt:           NewColumn("review_started_at", "bqi"),
+	ReviewCompletedAt:         NewColumn("review_completed_at", "bqi"),
+	CanceledByID:              NewColumn("canceled_by_id", "bqi"),
+	CanceledAt:                NewColumn("canceled_at", "bqi"),
+	CancelReason:              NewColumn("cancel_reason", "bqi"),
+	IsAdjustmentOrigin:        NewColumn("is_adjustment_origin", "bqi"),
+	SourceInvoiceID:           NewColumn("source_invoice_id", "bqi"),
+	SourceInvoiceAdjustmentID: NewColumn("source_invoice_adjustment_id", "bqi"),
+	SourceCreditMemoInvoiceID: NewColumn("source_credit_memo_invoice_id", "bqi"),
+	CorrectionGroupID:         NewColumn("correction_group_id", "bqi"),
+	RebillStrategy:            NewColumn("rebill_strategy", "bqi"),
+	RequiresReplacementReview: NewColumn("requires_replacement_review", "bqi"),
+	RerateVariancePercent:     NewColumn("rerate_variance_percent", "bqi"),
+	AdjustmentContext:         NewColumn("adjustment_context", "bqi"),
+	Version:                   NewColumn("version", "bqi"),
+	CreatedAt:                 NewColumn("created_at", "bqi"),
+	UpdatedAt:                 NewColumn("updated_at", "bqi"),
 }
 
 // BillingQueueItemFieldMap maps JSON API field names to database column names.
@@ -95,25 +113,34 @@ var BillingQueueItemColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by BillingQueueItem.GetStaticFieldMap().
 var BillingQueueItemFieldMap = map[string]string{
-	"id":                  "id",
-	"organizationId":      "organization_id",
-	"businessUnitId":      "business_unit_id",
-	"shipmentId":          "shipment_id",
-	"assignedBillerId":    "assigned_biller_id",
-	"number":              "number",
-	"status":              "status",
-	"billType":            "bill_type",
-	"exceptionReasonCode": "exception_reason_code",
-	"reviewNotes":         "review_notes",
-	"exceptionNotes":      "exception_notes",
-	"reviewStartedAt":     "review_started_at",
-	"reviewCompletedAt":   "review_completed_at",
-	"canceledById":        "canceled_by_id",
-	"canceledAt":          "canceled_at",
-	"cancelReason":        "cancel_reason",
-	"version":             "version",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                        "id",
+	"organizationId":            "organization_id",
+	"businessUnitId":            "business_unit_id",
+	"shipmentId":                "shipment_id",
+	"assignedBillerId":          "assigned_biller_id",
+	"number":                    "number",
+	"status":                    "status",
+	"billType":                  "bill_type",
+	"exceptionReasonCode":       "exception_reason_code",
+	"reviewNotes":               "review_notes",
+	"exceptionNotes":            "exception_notes",
+	"reviewStartedAt":           "review_started_at",
+	"reviewCompletedAt":         "review_completed_at",
+	"canceledById":              "canceled_by_id",
+	"canceledAt":                "canceled_at",
+	"cancelReason":              "cancel_reason",
+	"isAdjustmentOrigin":        "is_adjustment_origin",
+	"sourceInvoiceId":           "source_invoice_id",
+	"sourceInvoiceAdjustmentId": "source_invoice_adjustment_id",
+	"sourceCreditMemoInvoiceId": "source_credit_memo_invoice_id",
+	"correctionGroupId":         "correction_group_id",
+	"rebillStrategy":            "rebill_strategy",
+	"requiresReplacementReview": "requires_replacement_review",
+	"rerateVariancePercent":     "rerate_variance_percent",
+	"adjustmentContext":         "adjustment_context",
+	"version":                   "version",
+	"createdAt":                 "created_at",
+	"updatedAt":                 "updated_at",
 }
 
 // BillingQueueItemInsertableColumns lists column names suitable for INSERT statements on the "billing_queue_items" table.
@@ -135,6 +162,15 @@ var BillingQueueItemInsertableColumns = []string{
 	"canceled_by_id",
 	"canceled_at",
 	"cancel_reason",
+	"is_adjustment_origin",
+	"source_invoice_id",
+	"source_invoice_adjustment_id",
+	"source_credit_memo_invoice_id",
+	"correction_group_id",
+	"rebill_strategy",
+	"requires_replacement_review",
+	"rerate_variance_percent",
+	"adjustment_context",
 	"version",
 	"created_at",
 	"updated_at",
@@ -205,25 +241,34 @@ func BillingQueueItemApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery
 //	BillingQueueItemFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var BillingQueueItemFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	ShipmentID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	AssignedBillerID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assignedBillerId" → DB: "assigned_biller_id"
-	Number              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
-	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	BillType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
-	ExceptionReasonCode func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionReasonCode" → DB: "exception_reason_code"
-	ReviewNotes         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewNotes" → DB: "review_notes"
-	ExceptionNotes      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionNotes" → DB: "exception_notes"
-	ReviewStartedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewStartedAt" → DB: "review_started_at"
-	ReviewCompletedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewCompletedAt" → DB: "review_completed_at"
-	CanceledByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledById" → DB: "canceled_by_id"
-	CanceledAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
-	CancelReason        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
-	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	ShipmentID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	AssignedBillerID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "assignedBillerId" → DB: "assigned_biller_id"
+	Number                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "number" → DB: "number"
+	Status                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	BillType                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billType" → DB: "bill_type"
+	ExceptionReasonCode       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionReasonCode" → DB: "exception_reason_code"
+	ReviewNotes               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewNotes" → DB: "review_notes"
+	ExceptionNotes            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionNotes" → DB: "exception_notes"
+	ReviewStartedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewStartedAt" → DB: "review_started_at"
+	ReviewCompletedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewCompletedAt" → DB: "review_completed_at"
+	CanceledByID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledById" → DB: "canceled_by_id"
+	CanceledAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "canceledAt" → DB: "canceled_at"
+	CancelReason              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
+	IsAdjustmentOrigin        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isAdjustmentOrigin" → DB: "is_adjustment_origin"
+	SourceInvoiceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceId" → DB: "source_invoice_id"
+	SourceInvoiceAdjustmentID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceInvoiceAdjustmentId" → DB: "source_invoice_adjustment_id"
+	SourceCreditMemoInvoiceID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceCreditMemoInvoiceId" → DB: "source_credit_memo_invoice_id"
+	CorrectionGroupID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "correctionGroupId" → DB: "correction_group_id"
+	RebillStrategy            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rebillStrategy" → DB: "rebill_strategy"
+	RequiresReplacementReview func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requiresReplacementReview" → DB: "requires_replacement_review"
+	RerateVariancePercent     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rerateVariancePercent" → DB: "rerate_variance_percent"
+	AdjustmentContext         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "adjustmentContext" → DB: "adjustment_context"
+	Version                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -272,6 +317,33 @@ var BillingQueueItemFilter = struct {
 	},
 	CancelReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("cancelReason", op, value)
+	},
+	IsAdjustmentOrigin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isAdjustmentOrigin", op, value)
+	},
+	SourceInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceInvoiceId", op, value)
+	},
+	SourceInvoiceAdjustmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceInvoiceAdjustmentId", op, value)
+	},
+	SourceCreditMemoInvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceCreditMemoInvoiceId", op, value)
+	},
+	CorrectionGroupID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("correctionGroupId", op, value)
+	},
+	RebillStrategy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rebillStrategy", op, value)
+	},
+	RequiresReplacementReview: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requiresReplacementReview", op, value)
+	},
+	RerateVariancePercent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rerateVariancePercent", op, value)
+	},
+	AdjustmentContext: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("adjustmentContext", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

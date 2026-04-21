@@ -121,6 +121,7 @@ func (s *Service) Create(
 		log.Error("failed to transform location", zap.Error(err))
 		return nil, err
 	}
+	entity.NormalizeGeofence()
 
 	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
 		return nil, multiErr
@@ -168,6 +169,7 @@ func (s *Service) Update(
 		log.Error("failed to transform location", zap.Error(err))
 		return nil, err
 	}
+	entity.NormalizeGeofence()
 
 	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
 		return nil, multiErr

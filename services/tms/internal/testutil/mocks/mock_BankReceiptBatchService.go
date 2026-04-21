@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -18,7 +19,8 @@ import (
 func NewMockBankReceiptBatchService(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockBankReceiptBatchService {
+},
+) *MockBankReceiptBatchService {
 	mock := &MockBankReceiptBatchService{}
 	mock.Mock.Test(t)
 
@@ -41,23 +43,23 @@ func (_m *MockBankReceiptBatchService) EXPECT() *MockBankReceiptBatchService_Exp
 }
 
 // DistinctSources provides a mock function for the type MockBankReceiptBatchService
-func (_mock *MockBankReceiptBatchService) DistinctSources(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
+func (_mock *MockBankReceiptBatchService) DistinctSources(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DistinctSources")
 	}
 
-	var r0 *pagination.ListResult[*bankreceiptbatch.SourceOption]
+	var r0 *pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*bankreceiptbatch.SourceOption]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.SelectQueryRequest) *pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*bankreceiptbatch.SourceOption])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.SelectQueryRequest) error); ok {
@@ -98,12 +100,12 @@ func (_c *MockBankReceiptBatchService_DistinctSources_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockBankReceiptBatchService_DistinctSources_Call) Return(listResult *pagination.ListResult[*bankreceiptbatch.SourceOption], err error) *MockBankReceiptBatchService_DistinctSources_Call {
+func (_c *MockBankReceiptBatchService_DistinctSources_Call) Return(listResult *pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], err error) *MockBankReceiptBatchService_DistinctSources_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockBankReceiptBatchService_DistinctSources_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)) *MockBankReceiptBatchService_DistinctSources_Call {
+func (_c *MockBankReceiptBatchService_DistinctSources_Call) RunAndReturn(run func(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error)) *MockBankReceiptBatchService_DistinctSources_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -251,23 +253,23 @@ func (_c *MockBankReceiptBatchService_Import_Call) RunAndReturn(run func(ctx con
 }
 
 // List provides a mock function for the type MockBankReceiptBatchService
-func (_mock *MockBankReceiptBatchService) List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error) {
+func (_mock *MockBankReceiptBatchService) List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.BankReceiptBatch, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 []*bankreceiptbatch.Batch
+	var r0 []*bankreceiptbatch.BankReceiptBatch
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*bankreceiptbatch.BankReceiptBatch, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*bankreceiptbatch.Batch); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*bankreceiptbatch.BankReceiptBatch); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*bankreceiptbatch.Batch)
+			r0 = ret.Get(0).([]*bankreceiptbatch.BankReceiptBatch)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -308,12 +310,12 @@ func (_c *MockBankReceiptBatchService_List_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockBankReceiptBatchService_List_Call) Return(batchs []*bankreceiptbatch.Batch, err error) *MockBankReceiptBatchService_List_Call {
+func (_c *MockBankReceiptBatchService_List_Call) Return(batchs []*bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchService_List_Call {
 	_c.Call.Return(batchs, err)
 	return _c
 }
 
-func (_c *MockBankReceiptBatchService_List_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error)) *MockBankReceiptBatchService_List_Call {
+func (_c *MockBankReceiptBatchService_List_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.BankReceiptBatch, error)) *MockBankReceiptBatchService_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

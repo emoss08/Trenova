@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,16 +25,16 @@ type Params struct {
 	fx.In
 	Logger             *zap.Logger
 	DB                 ports.DBConnection
-	Repo               repositories.BankReceiptBatchRepository
-	ReceiptRepo        repositories.BankReceiptRepository
+	Repo               repositoryports.BankReceiptBatchRepository
+	ReceiptRepo        repositoryports.BankReceiptRepository
 	BankReceiptService serviceports.BankReceiptService
 	AuditService       serviceports.AuditService
 }
 type Service struct {
 	l                  *zap.Logger
 	db                 ports.DBConnection
-	repo               repositories.BankReceiptBatchRepository
-	receiptRepo        repositories.BankReceiptRepository
+	repo               repositoryports.BankReceiptBatchRepository
+	receiptRepo        repositoryports.BankReceiptRepository
 	bankReceiptService serviceports.BankReceiptService
 	auditService       serviceports.AuditService
 }
@@ -65,7 +65,7 @@ func (s *Service) Get(
 
 	batch, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptBatchByIDRequest{
+		repositoryports.GetBankReceiptBatchByIDRequest{
 			ID:         req.BatchID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -76,7 +76,7 @@ func (s *Service) Get(
 
 	receipts, err := s.receiptRepo.ListByImportBatchID(
 		ctx,
-		repositories.ListBankReceiptsByImportBatchRequest{
+		repositoryports.ListBankReceiptsByImportBatchRequest{
 			BatchID:    req.BatchID,
 			TenantInfo: req.TenantInfo,
 		},
@@ -91,14 +91,14 @@ func (s *Service) Get(
 func (s *Service) List(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*bankreceiptbatch.Batch, error) {
+) ([]*bankreceiptbatch.BankReceiptBatch, error) {
 	return s.repo.List(ctx, tenantInfo)
 }
 
 func (s *Service) DistinctSources(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
+) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error) {
 	return s.repo.DistinctSources(ctx, req)
 }
 
@@ -126,7 +126,7 @@ func (s *Service) Import(
 			"At least one receipt is required",
 		)
 	}
-	batch := &bankreceiptbatch.Batch{
+	batch := &bankreceiptbatch.BankReceiptBatch{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		Source:         strings.TrimSpace(req.Source),
@@ -154,11 +154,11 @@ func (s *Service) importBatchWithinTx(
 	ctx context.Context,
 	req *serviceports.ImportBankReceiptBatchRequest,
 	actor *serviceports.RequestActor,
-	batch *bankreceiptbatch.Batch,
-) (*bankreceiptbatch.Batch, []*bankreceipt.Receipt, error) {
+	batch *bankreceiptbatch.BankReceiptBatch,
+) (*bankreceiptbatch.BankReceiptBatch, []*bankreceipt.BankReceipt, error) {
 	var (
-		updatedBatch *bankreceiptbatch.Batch
-		receipts     []*bankreceipt.Receipt
+		updatedBatch *bankreceiptbatch.BankReceiptBatch
+		receipts     []*bankreceipt.BankReceipt
 	)
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -167,7 +167,7 @@ func (s *Service) importBatchWithinTx(
 			return txErr
 		}
 
-		receipts = make([]*bankreceipt.Receipt, 0, len(req.Receipts))
+		receipts = make([]*bankreceipt.BankReceipt, 0, len(req.Receipts))
 		for idx, line := range req.Receipts {
 			if line == nil {
 				return errortypes.NewValidationError(
@@ -222,7 +222,7 @@ func (s *Service) importBatchWithinTx(
 }
 
 func (s *Service) logAudit(
-	current, previous *bankreceiptbatch.Batch,
+	current, previous *bankreceiptbatch.BankReceiptBatch,
 	userID pulid.ID,
 	comment string,
 ) {

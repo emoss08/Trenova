@@ -344,55 +344,56 @@ var CustomerBillingProfileTable = TableInfo{
 //	q.Where(CustomerBillingProfileColumns.ID.Eq(), id)           // WHERE cbp.id = ?
 //	q.Order(CustomerBillingProfileColumns.CreatedAt.OrderDesc())  // ORDER BY cbp.created_at DESC
 var CustomerBillingProfileColumns = struct {
-	ID                                   Column // "id" → qualified: "cbp.id"
-	BusinessUnitID                       Column // "business_unit_id" → qualified: "cbp.business_unit_id"
-	OrganizationID                       Column // "organization_id" → qualified: "cbp.organization_id"
-	CustomerID                           Column // "customer_id" → qualified: "cbp.customer_id"
-	BillingCycleType                     Column // "billing_cycle_type" → qualified: "cbp.billing_cycle_type"
-	BillingCycleDayOfWeek                Column // "billing_cycle_day_of_week" → qualified: "cbp.billing_cycle_day_of_week"
-	PaymentTerm                          Column // "payment_term" → qualified: "cbp.payment_term"
-	HasBillingControlOverrides           Column // "has_billing_control_overrides" → qualified: "cbp.has_billing_control_overrides"
-	CreditLimit                          Column // "credit_limit" → qualified: "cbp.credit_limit"
-	CreditBalance                        Column // "credit_balance" → qualified: "cbp.credit_balance"
-	CreditStatus                         Column // "credit_status" → qualified: "cbp.credit_status"
-	EnforceCreditLimit                   Column // "enforce_credit_limit" → qualified: "cbp.enforce_credit_limit"
-	AutoCreditHold                       Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
-	CreditHoldReason                     Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
-	InvoiceMethod                        Column // "invoice_method" → qualified: "cbp.invoice_method"
-	SummaryTransmitOnGeneration          Column // "summary_transmit_on_generation" → qualified: "cbp.summary_transmit_on_generation"
-	AllowInvoiceConsolidation            Column // "allow_invoice_consolidation" → qualified: "cbp.allow_invoice_consolidation"
-	ConsolidationPeriodDays              Column // "consolidation_period_days" → qualified: "cbp.consolidation_period_days"
-	ConsolidationGroupBy                 Column // "consolidation_group_by" → qualified: "cbp.consolidation_group_by"
-	InvoiceNumberFormat                  Column // "invoice_number_format" → qualified: "cbp.invoice_number_format"
-	CustomerInvoicePrefix                Column // "customer_invoice_prefix" → qualified: "cbp.customer_invoice_prefix"
-	InvoiceCopies                        Column // "invoice_copies" → qualified: "cbp.invoice_copies"
-	RevenueAccountID                     Column // "revenue_account_id" → qualified: "cbp.revenue_account_id"
-	ARAccountID                          Column // "ar_account_id" → qualified: "cbp.ar_account_id"
-	ApplyLateCharges                     Column // "apply_late_charges" → qualified: "cbp.apply_late_charges"
-	LateChargeRate                       Column // "late_charge_rate" → qualified: "cbp.late_charge_rate"
-	GracePeriodDays                      Column // "grace_period_days" → qualified: "cbp.grace_period_days"
-	TaxExempt                            Column // "tax_exempt" → qualified: "cbp.tax_exempt"
-	TaxExemptNumber                      Column // "tax_exempt_number" → qualified: "cbp.tax_exempt_number"
-	EnforceCustomerBillingReq            Column // "enforce_customer_billing_req" → qualified: "cbp.enforce_customer_billing_req"
-	ValidateCustomerRates                Column // "validate_customer_rates" → qualified: "cbp.validate_customer_rates"
-	AutoTransfer                         Column // "auto_transfer" → qualified: "cbp.auto_transfer"
-	AutoMarkReadyToBill                  Column // "auto_mark_ready_to_bill" → qualified: "cbp.auto_mark_ready_to_bill"
-	AutoBill                             Column // "auto_bill" → qualified: "cbp.auto_bill"
-	DetentionBillingEnabled              Column // "detention_billing_enabled" → qualified: "cbp.detention_billing_enabled"
-	DetentionFreeMinutes                 Column // "detention_free_minutes" → qualified: "cbp.detention_free_minutes"
-	DetentionRatePerHour                 Column // "detention_rate_per_hour" → qualified: "cbp.detention_rate_per_hour"
-	CountLateOnlyOnAppointmentStops      Column // "count_late_only_on_appointment_stops" → qualified: "cbp.count_late_only_on_appointment_stops"
-	CountDetentionOnlyOnAppointmentStops Column // "count_detention_only_on_appointment_stops" → qualified: "cbp.count_detention_only_on_appointment_stops"
-	AutoApplyAccessorials                Column // "auto_apply_accessorials" → qualified: "cbp.auto_apply_accessorials"
-	BillingCurrency                      Column // "billing_currency" → qualified: "cbp.billing_currency"
-	RequirePONumber                      Column // "require_po_number" → qualified: "cbp.require_po_number"
-	RequireBOLNumber                     Column // "require_bol_number" → qualified: "cbp.require_bol_number"
-	RequireDeliveryNumber                Column // "require_delivery_number" → qualified: "cbp.require_delivery_number"
-	DefaultBillerID                      Column // "default_biller_id" → qualified: "cbp.default_biller_id"
-	BillingNotes                         Column // "billing_notes" → qualified: "cbp.billing_notes"
-	Version                              Column // "version" → qualified: "cbp.version"
-	CreatedAt                            Column // "created_at" → qualified: "cbp.created_at"
-	UpdatedAt                            Column // "updated_at" → qualified: "cbp.updated_at"
+	ID                                        Column // "id" → qualified: "cbp.id"
+	BusinessUnitID                            Column // "business_unit_id" → qualified: "cbp.business_unit_id"
+	OrganizationID                            Column // "organization_id" → qualified: "cbp.organization_id"
+	CustomerID                                Column // "customer_id" → qualified: "cbp.customer_id"
+	BillingCycleType                          Column // "billing_cycle_type" → qualified: "cbp.billing_cycle_type"
+	BillingCycleDayOfWeek                     Column // "billing_cycle_day_of_week" → qualified: "cbp.billing_cycle_day_of_week"
+	PaymentTerm                               Column // "payment_term" → qualified: "cbp.payment_term"
+	HasBillingControlOverrides                Column // "has_billing_control_overrides" → qualified: "cbp.has_billing_control_overrides"
+	CreditLimit                               Column // "credit_limit" → qualified: "cbp.credit_limit"
+	CreditBalance                             Column // "credit_balance" → qualified: "cbp.credit_balance"
+	CreditStatus                              Column // "credit_status" → qualified: "cbp.credit_status"
+	EnforceCreditLimit                        Column // "enforce_credit_limit" → qualified: "cbp.enforce_credit_limit"
+	AutoCreditHold                            Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
+	CreditHoldReason                          Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
+	InvoiceMethod                             Column // "invoice_method" → qualified: "cbp.invoice_method"
+	SummaryTransmitOnGeneration               Column // "summary_transmit_on_generation" → qualified: "cbp.summary_transmit_on_generation"
+	AllowInvoiceConsolidation                 Column // "allow_invoice_consolidation" → qualified: "cbp.allow_invoice_consolidation"
+	ConsolidationPeriodDays                   Column // "consolidation_period_days" → qualified: "cbp.consolidation_period_days"
+	ConsolidationGroupBy                      Column // "consolidation_group_by" → qualified: "cbp.consolidation_group_by"
+	InvoiceNumberFormat                       Column // "invoice_number_format" → qualified: "cbp.invoice_number_format"
+	CustomerInvoicePrefix                     Column // "customer_invoice_prefix" → qualified: "cbp.customer_invoice_prefix"
+	InvoiceCopies                             Column // "invoice_copies" → qualified: "cbp.invoice_copies"
+	RevenueAccountID                          Column // "revenue_account_id" → qualified: "cbp.revenue_account_id"
+	ARAccountID                               Column // "ar_account_id" → qualified: "cbp.ar_account_id"
+	ApplyLateCharges                          Column // "apply_late_charges" → qualified: "cbp.apply_late_charges"
+	LateChargeRate                            Column // "late_charge_rate" → qualified: "cbp.late_charge_rate"
+	GracePeriodDays                           Column // "grace_period_days" → qualified: "cbp.grace_period_days"
+	TaxExempt                                 Column // "tax_exempt" → qualified: "cbp.tax_exempt"
+	TaxExemptNumber                           Column // "tax_exempt_number" → qualified: "cbp.tax_exempt_number"
+	EnforceCustomerBillingReq                 Column // "enforce_customer_billing_req" → qualified: "cbp.enforce_customer_billing_req"
+	ValidateCustomerRates                     Column // "validate_customer_rates" → qualified: "cbp.validate_customer_rates"
+	AutoTransfer                              Column // "auto_transfer" → qualified: "cbp.auto_transfer"
+	AutoMarkReadyToBill                       Column // "auto_mark_ready_to_bill" → qualified: "cbp.auto_mark_ready_to_bill"
+	AutoBill                                  Column // "auto_bill" → qualified: "cbp.auto_bill"
+	DetentionBillingEnabled                   Column // "detention_billing_enabled" → qualified: "cbp.detention_billing_enabled"
+	DetentionFreeMinutes                      Column // "detention_free_minutes" → qualified: "cbp.detention_free_minutes"
+	DetentionRatePerHour                      Column // "detention_rate_per_hour" → qualified: "cbp.detention_rate_per_hour"
+	CountLateOnlyOnAppointmentStops           Column // "count_late_only_on_appointment_stops" → qualified: "cbp.count_late_only_on_appointment_stops"
+	CountDetentionOnlyOnAppointmentStops      Column // "count_detention_only_on_appointment_stops" → qualified: "cbp.count_detention_only_on_appointment_stops"
+	AutoApplyAccessorials                     Column // "auto_apply_accessorials" → qualified: "cbp.auto_apply_accessorials"
+	BillingCurrency                           Column // "billing_currency" → qualified: "cbp.billing_currency"
+	RequirePONumber                           Column // "require_po_number" → qualified: "cbp.require_po_number"
+	RequireBOLNumber                          Column // "require_bol_number" → qualified: "cbp.require_bol_number"
+	RequireDeliveryNumber                     Column // "require_delivery_number" → qualified: "cbp.require_delivery_number"
+	InvoiceAdjustmentSupportingDocumentPolicy Column // "invoice_adjustment_supporting_document_policy" → qualified: "cbp.invoice_adjustment_supporting_document_policy"
+	DefaultBillerID                           Column // "default_biller_id" → qualified: "cbp.default_biller_id"
+	BillingNotes                              Column // "billing_notes" → qualified: "cbp.billing_notes"
+	Version                                   Column // "version" → qualified: "cbp.version"
+	CreatedAt                                 Column // "created_at" → qualified: "cbp.created_at"
+	UpdatedAt                                 Column // "updated_at" → qualified: "cbp.updated_at"
 }{
 	ID:                                   NewColumn("id", "cbp"),
 	BusinessUnitID:                       NewColumn("business_unit_id", "cbp"),
@@ -438,11 +439,12 @@ var CustomerBillingProfileColumns = struct {
 	RequirePONumber:                      NewColumn("require_po_number", "cbp"),
 	RequireBOLNumber:                     NewColumn("require_bol_number", "cbp"),
 	RequireDeliveryNumber:                NewColumn("require_delivery_number", "cbp"),
-	DefaultBillerID:                      NewColumn("default_biller_id", "cbp"),
-	BillingNotes:                         NewColumn("billing_notes", "cbp"),
-	Version:                              NewColumn("version", "cbp"),
-	CreatedAt:                            NewColumn("created_at", "cbp"),
-	UpdatedAt:                            NewColumn("updated_at", "cbp"),
+	InvoiceAdjustmentSupportingDocumentPolicy: NewColumn("invoice_adjustment_supporting_document_policy", "cbp"),
+	DefaultBillerID: NewColumn("default_biller_id", "cbp"),
+	BillingNotes:    NewColumn("billing_notes", "cbp"),
+	Version:         NewColumn("version", "cbp"),
+	CreatedAt:       NewColumn("created_at", "cbp"),
+	UpdatedAt:       NewColumn("updated_at", "cbp"),
 }
 
 // CustomerBillingProfileFieldMap maps JSON API field names to database column names.
@@ -450,55 +452,56 @@ var CustomerBillingProfileColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by CustomerBillingProfile.GetStaticFieldMap().
 var CustomerBillingProfileFieldMap = map[string]string{
-	"id":                                   "id",
-	"businessUnitId":                       "business_unit_id",
-	"organizationId":                       "organization_id",
-	"customerId":                           "customer_id",
-	"billingCycleType":                     "billing_cycle_type",
-	"billingCycleDayOfWeek":                "billing_cycle_day_of_week",
-	"paymentTerm":                          "payment_term",
-	"hasBillingControlOverrides":           "has_billing_control_overrides",
-	"creditLimit":                          "credit_limit",
-	"creditBalance":                        "credit_balance",
-	"creditStatus":                         "credit_status",
-	"enforceCreditLimit":                   "enforce_credit_limit",
-	"autoCreditHold":                       "auto_credit_hold",
-	"creditHoldReason":                     "credit_hold_reason",
-	"invoiceMethod":                        "invoice_method",
-	"summaryTransmitOnGeneration":          "summary_transmit_on_generation",
-	"allowInvoiceConsolidation":            "allow_invoice_consolidation",
-	"consolidationPeriodDays":              "consolidation_period_days",
-	"consolidationGroupBy":                 "consolidation_group_by",
-	"invoiceNumberFormat":                  "invoice_number_format",
-	"customerInvoicePrefix":                "customer_invoice_prefix",
-	"invoiceCopies":                        "invoice_copies",
-	"revenueAccountId":                     "revenue_account_id",
-	"arAccountId":                          "ar_account_id",
-	"applyLateCharges":                     "apply_late_charges",
-	"lateChargeRate":                       "late_charge_rate",
-	"gracePeriodDays":                      "grace_period_days",
-	"taxExempt":                            "tax_exempt",
-	"taxExemptNumber":                      "tax_exempt_number",
-	"enforceCustomerBillingReq":            "enforce_customer_billing_req",
-	"validateCustomerRates":                "validate_customer_rates",
-	"autoTransfer":                         "auto_transfer",
-	"autoMarkReadyToBill":                  "auto_mark_ready_to_bill",
-	"autoBill":                             "auto_bill",
-	"detentionBillingEnabled":              "detention_billing_enabled",
-	"detentionFreeMinutes":                 "detention_free_minutes",
-	"detentionRatePerHour":                 "detention_rate_per_hour",
-	"countLateOnlyOnAppointmentStops":      "count_late_only_on_appointment_stops",
-	"countDetentionOnlyOnAppointmentStops": "count_detention_only_on_appointment_stops",
-	"autoApplyAccessorials":                "auto_apply_accessorials",
-	"billingCurrency":                      "billing_currency",
-	"requirePONumber":                      "require_po_number",
-	"requireBOLNumber":                     "require_bol_number",
-	"requireDeliveryNumber":                "require_delivery_number",
-	"defaultBillerId":                      "default_biller_id",
-	"billingNotes":                         "billing_notes",
-	"version":                              "version",
-	"createdAt":                            "created_at",
-	"updatedAt":                            "updated_at",
+	"id":                                        "id",
+	"businessUnitId":                            "business_unit_id",
+	"organizationId":                            "organization_id",
+	"customerId":                                "customer_id",
+	"billingCycleType":                          "billing_cycle_type",
+	"billingCycleDayOfWeek":                     "billing_cycle_day_of_week",
+	"paymentTerm":                               "payment_term",
+	"hasBillingControlOverrides":                "has_billing_control_overrides",
+	"creditLimit":                               "credit_limit",
+	"creditBalance":                             "credit_balance",
+	"creditStatus":                              "credit_status",
+	"enforceCreditLimit":                        "enforce_credit_limit",
+	"autoCreditHold":                            "auto_credit_hold",
+	"creditHoldReason":                          "credit_hold_reason",
+	"invoiceMethod":                             "invoice_method",
+	"summaryTransmitOnGeneration":               "summary_transmit_on_generation",
+	"allowInvoiceConsolidation":                 "allow_invoice_consolidation",
+	"consolidationPeriodDays":                   "consolidation_period_days",
+	"consolidationGroupBy":                      "consolidation_group_by",
+	"invoiceNumberFormat":                       "invoice_number_format",
+	"customerInvoicePrefix":                     "customer_invoice_prefix",
+	"invoiceCopies":                             "invoice_copies",
+	"revenueAccountId":                          "revenue_account_id",
+	"arAccountId":                               "ar_account_id",
+	"applyLateCharges":                          "apply_late_charges",
+	"lateChargeRate":                            "late_charge_rate",
+	"gracePeriodDays":                           "grace_period_days",
+	"taxExempt":                                 "tax_exempt",
+	"taxExemptNumber":                           "tax_exempt_number",
+	"enforceCustomerBillingReq":                 "enforce_customer_billing_req",
+	"validateCustomerRates":                     "validate_customer_rates",
+	"autoTransfer":                              "auto_transfer",
+	"autoMarkReadyToBill":                       "auto_mark_ready_to_bill",
+	"autoBill":                                  "auto_bill",
+	"detentionBillingEnabled":                   "detention_billing_enabled",
+	"detentionFreeMinutes":                      "detention_free_minutes",
+	"detentionRatePerHour":                      "detention_rate_per_hour",
+	"countLateOnlyOnAppointmentStops":           "count_late_only_on_appointment_stops",
+	"countDetentionOnlyOnAppointmentStops":      "count_detention_only_on_appointment_stops",
+	"autoApplyAccessorials":                     "auto_apply_accessorials",
+	"billingCurrency":                           "billing_currency",
+	"requirePONumber":                           "require_po_number",
+	"requireBOLNumber":                          "require_bol_number",
+	"requireDeliveryNumber":                     "require_delivery_number",
+	"invoiceAdjustmentSupportingDocumentPolicy": "invoice_adjustment_supporting_document_policy",
+	"defaultBillerId":                           "default_biller_id",
+	"billingNotes":                              "billing_notes",
+	"version":                                   "version",
+	"createdAt":                                 "created_at",
+	"updatedAt":                                 "updated_at",
 }
 
 // CustomerBillingProfileInsertableColumns lists column names suitable for INSERT statements on the "customer_billing_profiles" table.
@@ -548,6 +551,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"require_po_number",
 	"require_bol_number",
 	"require_delivery_number",
+	"invoice_adjustment_supporting_document_policy",
 	"default_biller_id",
 	"billing_notes",
 	"version",
@@ -624,55 +628,56 @@ func CustomerBillingProfileApplyTenant(ti pagination.TenantInfo) func(*bun.Selec
 //	CustomerBillingProfileFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var CustomerBillingProfileFilter = struct {
-	ID                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	CustomerID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	BillingCycleType                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleType" → DB: "billing_cycle_type"
-	BillingCycleDayOfWeek                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleDayOfWeek" → DB: "billing_cycle_day_of_week"
-	PaymentTerm                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTerm" → DB: "payment_term"
-	HasBillingControlOverrides           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasBillingControlOverrides" → DB: "has_billing_control_overrides"
-	CreditLimit                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditLimit" → DB: "credit_limit"
-	CreditBalance                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditBalance" → DB: "credit_balance"
-	CreditStatus                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditStatus" → DB: "credit_status"
-	EnforceCreditLimit                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCreditLimit" → DB: "enforce_credit_limit"
-	AutoCreditHold                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
-	CreditHoldReason                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
-	InvoiceMethod                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceMethod" → DB: "invoice_method"
-	SummaryTransmitOnGeneration          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summaryTransmitOnGeneration" → DB: "summary_transmit_on_generation"
-	AllowInvoiceConsolidation            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowInvoiceConsolidation" → DB: "allow_invoice_consolidation"
-	ConsolidationPeriodDays              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPeriodDays" → DB: "consolidation_period_days"
-	ConsolidationGroupBy                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupBy" → DB: "consolidation_group_by"
-	InvoiceNumberFormat                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumberFormat" → DB: "invoice_number_format"
-	CustomerInvoicePrefix                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerInvoicePrefix" → DB: "customer_invoice_prefix"
-	InvoiceCopies                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceCopies" → DB: "invoice_copies"
-	RevenueAccountID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revenueAccountId" → DB: "revenue_account_id"
-	ARAccountID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "arAccountId" → DB: "ar_account_id"
-	ApplyLateCharges                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "applyLateCharges" → DB: "apply_late_charges"
-	LateChargeRate                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeRate" → DB: "late_charge_rate"
-	GracePeriodDays                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "gracePeriodDays" → DB: "grace_period_days"
-	TaxExempt                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxExempt" → DB: "tax_exempt"
-	TaxExemptNumber                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxExemptNumber" → DB: "tax_exempt_number"
-	EnforceCustomerBillingReq            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCustomerBillingReq" → DB: "enforce_customer_billing_req"
-	ValidateCustomerRates                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validateCustomerRates" → DB: "validate_customer_rates"
-	AutoTransfer                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoTransfer" → DB: "auto_transfer"
-	AutoMarkReadyToBill                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMarkReadyToBill" → DB: "auto_mark_ready_to_bill"
-	AutoBill                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoBill" → DB: "auto_bill"
-	DetentionBillingEnabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionBillingEnabled" → DB: "detention_billing_enabled"
-	DetentionFreeMinutes                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionFreeMinutes" → DB: "detention_free_minutes"
-	DetentionRatePerHour                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionRatePerHour" → DB: "detention_rate_per_hour"
-	CountLateOnlyOnAppointmentStops      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countLateOnlyOnAppointmentStops" → DB: "count_late_only_on_appointment_stops"
-	CountDetentionOnlyOnAppointmentStops func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countDetentionOnlyOnAppointmentStops" → DB: "count_detention_only_on_appointment_stops"
-	AutoApplyAccessorials                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApplyAccessorials" → DB: "auto_apply_accessorials"
-	BillingCurrency                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
-	RequirePONumber                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePONumber" → DB: "require_po_number"
-	RequireBOLNumber                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireBOLNumber" → DB: "require_bol_number"
-	RequireDeliveryNumber                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireDeliveryNumber" → DB: "require_delivery_number"
-	DefaultBillerID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultBillerId" → DB: "default_biller_id"
-	BillingNotes                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
-	Version                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CustomerID                                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	BillingCycleType                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleType" → DB: "billing_cycle_type"
+	BillingCycleDayOfWeek                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCycleDayOfWeek" → DB: "billing_cycle_day_of_week"
+	PaymentTerm                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentTerm" → DB: "payment_term"
+	HasBillingControlOverrides                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasBillingControlOverrides" → DB: "has_billing_control_overrides"
+	CreditLimit                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditLimit" → DB: "credit_limit"
+	CreditBalance                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditBalance" → DB: "credit_balance"
+	CreditStatus                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditStatus" → DB: "credit_status"
+	EnforceCreditLimit                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCreditLimit" → DB: "enforce_credit_limit"
+	AutoCreditHold                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
+	CreditHoldReason                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
+	InvoiceMethod                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceMethod" → DB: "invoice_method"
+	SummaryTransmitOnGeneration               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summaryTransmitOnGeneration" → DB: "summary_transmit_on_generation"
+	AllowInvoiceConsolidation                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowInvoiceConsolidation" → DB: "allow_invoice_consolidation"
+	ConsolidationPeriodDays                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPeriodDays" → DB: "consolidation_period_days"
+	ConsolidationGroupBy                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupBy" → DB: "consolidation_group_by"
+	InvoiceNumberFormat                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumberFormat" → DB: "invoice_number_format"
+	CustomerInvoicePrefix                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerInvoicePrefix" → DB: "customer_invoice_prefix"
+	InvoiceCopies                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceCopies" → DB: "invoice_copies"
+	RevenueAccountID                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revenueAccountId" → DB: "revenue_account_id"
+	ARAccountID                               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "arAccountId" → DB: "ar_account_id"
+	ApplyLateCharges                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "applyLateCharges" → DB: "apply_late_charges"
+	LateChargeRate                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lateChargeRate" → DB: "late_charge_rate"
+	GracePeriodDays                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "gracePeriodDays" → DB: "grace_period_days"
+	TaxExempt                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxExempt" → DB: "tax_exempt"
+	TaxExemptNumber                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taxExemptNumber" → DB: "tax_exempt_number"
+	EnforceCustomerBillingReq                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enforceCustomerBillingReq" → DB: "enforce_customer_billing_req"
+	ValidateCustomerRates                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validateCustomerRates" → DB: "validate_customer_rates"
+	AutoTransfer                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoTransfer" → DB: "auto_transfer"
+	AutoMarkReadyToBill                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoMarkReadyToBill" → DB: "auto_mark_ready_to_bill"
+	AutoBill                                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoBill" → DB: "auto_bill"
+	DetentionBillingEnabled                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionBillingEnabled" → DB: "detention_billing_enabled"
+	DetentionFreeMinutes                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionFreeMinutes" → DB: "detention_free_minutes"
+	DetentionRatePerHour                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detentionRatePerHour" → DB: "detention_rate_per_hour"
+	CountLateOnlyOnAppointmentStops           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countLateOnlyOnAppointmentStops" → DB: "count_late_only_on_appointment_stops"
+	CountDetentionOnlyOnAppointmentStops      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "countDetentionOnlyOnAppointmentStops" → DB: "count_detention_only_on_appointment_stops"
+	AutoApplyAccessorials                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoApplyAccessorials" → DB: "auto_apply_accessorials"
+	BillingCurrency                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingCurrency" → DB: "billing_currency"
+	RequirePONumber                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requirePONumber" → DB: "require_po_number"
+	RequireBOLNumber                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireBOLNumber" → DB: "require_bol_number"
+	RequireDeliveryNumber                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requireDeliveryNumber" → DB: "require_delivery_number"
+	InvoiceAdjustmentSupportingDocumentPolicy func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceAdjustmentSupportingDocumentPolicy" → DB: "invoice_adjustment_supporting_document_policy"
+	DefaultBillerID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultBillerId" → DB: "default_biller_id"
+	BillingNotes                              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billingNotes" → DB: "billing_notes"
+	Version                                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -805,6 +810,9 @@ var CustomerBillingProfileFilter = struct {
 	},
 	RequireDeliveryNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("requireDeliveryNumber", op, value)
+	},
+	InvoiceAdjustmentSupportingDocumentPolicy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceAdjustmentSupportingDocumentPolicy", op, value)
 	},
 	DefaultBillerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("defaultBillerId", op, value)

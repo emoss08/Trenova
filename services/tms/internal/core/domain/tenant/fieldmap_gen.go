@@ -39,6 +39,13 @@ func (e *DocumentControl) GetStaticFieldMap() map[string]string {
 	return buncolgen.DocumentControlFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InvoiceAdjustmentControl].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.InvoiceAdjustmentControlFieldMap] instead of parsing struct tags via reflection.
+func (e *InvoiceAdjustmentControl) GetStaticFieldMap() map[string]string {
+	return buncolgen.InvoiceAdjustmentControlFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Organization].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.OrganizationFieldMap] instead of parsing struct tags via reflection.

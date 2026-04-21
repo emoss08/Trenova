@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,21 +29,21 @@ type Params struct {
 	fx.In
 
 	Logger           *zap.Logger
-	Repo             repositories.BankReceiptRepository
-	WorkItemRepo     repositories.BankReceiptWorkItemRepository
-	PaymentRepo      repositories.CustomerPaymentRepository
-	AccountingRepo   repositories.AccountingControlRepository
-	NotificationRepo repositories.NotificationRepository
+	Repo             repositoryports.BankReceiptRepository
+	WorkItemRepo     repositoryports.BankReceiptWorkItemRepository
+	PaymentRepo      repositoryports.CustomerPaymentRepository
+	AccountingRepo   repositoryports.AccountingControlRepository
+	NotificationRepo repositoryports.NotificationRepository
 	AuditService     serviceports.AuditService
 }
 
 type Service struct {
 	l                *zap.Logger
-	repo             repositories.BankReceiptRepository
-	workItemRepo     repositories.BankReceiptWorkItemRepository
-	paymentRepo      repositories.CustomerPaymentRepository
-	accountingRepo   repositories.AccountingControlRepository
-	notificationRepo repositories.NotificationRepository
+	repo             repositoryports.BankReceiptRepository
+	workItemRepo     repositoryports.BankReceiptWorkItemRepository
+	paymentRepo      repositoryports.CustomerPaymentRepository
+	accountingRepo   repositoryports.AccountingControlRepository
+	notificationRepo repositoryports.NotificationRepository
 	auditService     serviceports.AuditService
 }
 
@@ -63,17 +63,17 @@ func New(p Params) *Service {
 func (s *Service) Get(
 	ctx context.Context,
 	req *serviceports.GetBankReceiptRequest,
-) (*bankreceipt.Receipt, error) {
+) (*bankreceipt.BankReceipt, error) {
 	return s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
 	)
 }
 
 func (s *Service) ListExceptions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*bankreceipt.Receipt, error) {
+) ([]*bankreceipt.BankReceipt, error) {
 	return s.repo.ListExceptions(ctx, tenantInfo)
 }
 
@@ -81,30 +81,30 @@ func (s *Service) GetSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	asOfDate int64,
-) (*bankreceipt.ReconciliationSummary, error) {
+) (*repositoryports.BankReceiptReconciliationSummary, error) {
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
 	return s.repo.GetSummary(
 		ctx,
-		repositories.GetBankReceiptSummaryRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
+		repositoryports.GetBankReceiptSummaryRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
 	)
 }
 
 func (s *Service) SuggestMatches(
 	ctx context.Context,
 	req *serviceports.GetBankReceiptRequest,
-) ([]*bankreceipt.MatchSuggestion, error) {
+) ([]*serviceports.BankReceiptMatchSuggestion, error) {
 	receipt, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	candidates, err := s.paymentRepo.FindSuggestedMatchCandidates(
 		ctx,
-		repositories.FindCustomerPaymentMatchCandidatesRequest{
+		repositoryports.FindCustomerPaymentMatchCandidatesRequest{
 			TenantInfo:      req.TenantInfo,
 			ReferenceNumber: receipt.ReferenceNumber,
 			AmountMinor:     receipt.AmountMinor,
@@ -120,7 +120,7 @@ func (s *Service) Import(
 	ctx context.Context,
 	req *serviceports.ImportBankReceiptRequest,
 	actor *serviceports.RequestActor,
-) (*bankreceipt.Receipt, error) {
+) (*bankreceipt.BankReceipt, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -133,7 +133,7 @@ func (s *Service) Import(
 			"Bank receipt import requires an authenticated user",
 		)
 	}
-	entity := &bankreceipt.Receipt{
+	entity := &bankreceipt.BankReceipt{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		ImportBatchID:   req.BatchID,
@@ -168,7 +168,7 @@ func (s *Service) Match(
 	ctx context.Context,
 	req *serviceports.MatchBankReceiptRequest,
 	actor *serviceports.RequestActor,
-) (*bankreceipt.Receipt, error) {
+) (*bankreceipt.BankReceipt, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"request",
@@ -183,14 +183,17 @@ func (s *Service) Match(
 	}
 	receipt, err := s.repo.GetByID(
 		ctx,
-		repositories.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
+		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
 	)
 	if err != nil {
 		return nil, err
 	}
 	payment, err := s.paymentRepo.GetByID(
 		ctx,
-		repositories.GetCustomerPaymentByIDRequest{ID: req.PaymentID, TenantInfo: req.TenantInfo},
+		repositoryports.GetCustomerPaymentByIDRequest{
+			ID:         req.PaymentID,
+			TenantInfo: req.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -248,9 +251,9 @@ func (s *Service) Match(
 
 func (s *Service) applyReconciliationPolicy(
 	ctx context.Context,
-	receipt *bankreceipt.Receipt,
+	receipt *bankreceipt.BankReceipt,
 	actor *serviceports.RequestActor,
-) (*bankreceipt.Receipt, error) {
+) (*bankreceipt.BankReceipt, error) {
 	if receipt == nil || s.accountingRepo == nil {
 		return receipt, nil
 	}
@@ -272,7 +275,7 @@ func (s *Service) applyReconciliationPolicy(
 	}
 	candidates, err := s.paymentRepo.FindSuggestedMatchCandidates(
 		ctx,
-		repositories.FindCustomerPaymentMatchCandidatesRequest{
+		repositoryports.FindCustomerPaymentMatchCandidatesRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID: receipt.OrganizationID,
 				BuID:  receipt.BusinessUnitID,
@@ -312,11 +315,11 @@ func (s *Service) applyReconciliationPolicy(
 
 func (s *Service) markException(
 	ctx context.Context,
-	receipt *bankreceipt.Receipt,
+	receipt *bankreceipt.BankReceipt,
 	actor *serviceports.RequestActor,
 	reason string,
 	skipAudit bool,
-) (*bankreceipt.Receipt, error) {
+) (*bankreceipt.BankReceipt, error) {
 	original := *receipt
 	receipt.Status = bankreceipt.StatusException
 	receipt.ExceptionReason = reason
@@ -383,8 +386,8 @@ func (s *Service) markException(
 }
 
 func (s *Service) logAudit(
-	current *bankreceipt.Receipt,
-	previous *bankreceipt.Receipt,
+	current *bankreceipt.BankReceipt,
+	previous *bankreceipt.BankReceipt,
 	userID pulid.ID,
 	operation permission.Operation,
 	comment string,
@@ -415,7 +418,7 @@ func (s *Service) logAudit(
 }
 
 func scoreMatchSuggestion(
-	receipt *bankreceipt.Receipt,
+	receipt *bankreceipt.BankReceipt,
 	payment *customerpayment.Payment,
 ) (score int, reason string) {
 	if receipt == nil || payment == nil {
@@ -465,10 +468,10 @@ func resolveMatchScore(
 }
 
 func buildMatchSuggestions(
-	receipt *bankreceipt.Receipt,
+	receipt *bankreceipt.BankReceipt,
 	candidates []*customerpayment.Payment,
-) []*bankreceipt.MatchSuggestion {
-	suggestions := make([]*bankreceipt.MatchSuggestion, 0, len(candidates))
+) []*serviceports.BankReceiptMatchSuggestion {
+	suggestions := make([]*serviceports.BankReceiptMatchSuggestion, 0, len(candidates))
 	for _, candidate := range candidates {
 		if candidate == nil {
 			continue
@@ -479,7 +482,7 @@ func buildMatchSuggestions(
 		}
 		suggestions = append(
 			suggestions,
-			&bankreceipt.MatchSuggestion{
+			&serviceports.BankReceiptMatchSuggestion{
 				CustomerPaymentID: candidate.ID,
 				ReferenceNumber:   candidate.ReferenceNumber,
 				AmountMinor:       candidate.AmountMinor,
@@ -498,7 +501,7 @@ func buildMatchSuggestions(
 	return suggestions
 }
 
-func shouldAutoMatchSuggestion(suggestions []*bankreceipt.MatchSuggestion) bool {
+func shouldAutoMatchSuggestion(suggestions []*serviceports.BankReceiptMatchSuggestion) bool {
 	if len(suggestions) == 0 {
 		return false
 	}

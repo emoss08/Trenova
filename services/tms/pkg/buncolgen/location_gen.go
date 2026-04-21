@@ -49,53 +49,59 @@ var LocationTable = TableInfo{
 //	q.Where(LocationColumns.ID.Eq(), id)           // WHERE loc.id = ?
 //	q.Order(LocationColumns.CreatedAt.OrderDesc())  // ORDER BY loc.created_at DESC
 var LocationColumns = struct {
-	ID                 Column // "id" → qualified: "loc.id"
-	BusinessUnitID     Column // "business_unit_id" → qualified: "loc.business_unit_id"
-	OrganizationID     Column // "organization_id" → qualified: "loc.organization_id"
-	LocationCategoryID Column // "location_category_id" → qualified: "loc.location_category_id"
-	StateID            Column // "state_id" → qualified: "loc.state_id"
-	Status             Column // "status" → qualified: "loc.status"
-	Code               Column // "code" → qualified: "loc.code"
-	Name               Column // "name" → qualified: "loc.name"
-	Description        Column // "description" → qualified: "loc.description"
-	AddressLine1       Column // "address_line_1" → qualified: "loc.address_line_1"
-	AddressLine2       Column // "address_line_2" → qualified: "loc.address_line_2"
-	City               Column // "city" → qualified: "loc.city"
-	PostalCode         Column // "postal_code" → qualified: "loc.postal_code"
-	PlaceID            Column // "place_id" → qualified: "loc.place_id"
-	IsGeocoded         Column // "is_geocoded" → qualified: "loc.is_geocoded"
-	Longitude          Column // "longitude" → qualified: "loc.longitude"
-	Latitude           Column // "latitude" → qualified: "loc.latitude"
-	Geom               Column // "geom" → qualified: "loc.geom"
-	Version            Column // "version" → qualified: "loc.version"
-	CreatedAt          Column // "created_at" → qualified: "loc.created_at"
-	UpdatedAt          Column // "updated_at" → qualified: "loc.updated_at"
-	SearchVector       Column // "search_vector" → qualified: "loc.search_vector"
-	Rank               Column // "rank" → qualified: "loc.rank"
+	ID                   Column // "id" → qualified: "loc.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "loc.business_unit_id"
+	OrganizationID       Column // "organization_id" → qualified: "loc.organization_id"
+	LocationCategoryID   Column // "location_category_id" → qualified: "loc.location_category_id"
+	StateID              Column // "state_id" → qualified: "loc.state_id"
+	Status               Column // "status" → qualified: "loc.status"
+	Code                 Column // "code" → qualified: "loc.code"
+	Name                 Column // "name" → qualified: "loc.name"
+	Description          Column // "description" → qualified: "loc.description"
+	AddressLine1         Column // "address_line_1" → qualified: "loc.address_line_1"
+	AddressLine2         Column // "address_line_2" → qualified: "loc.address_line_2"
+	City                 Column // "city" → qualified: "loc.city"
+	PostalCode           Column // "postal_code" → qualified: "loc.postal_code"
+	PlaceID              Column // "place_id" → qualified: "loc.place_id"
+	IsGeocoded           Column // "is_geocoded" → qualified: "loc.is_geocoded"
+	Longitude            Column // "longitude" → qualified: "loc.longitude"
+	Latitude             Column // "latitude" → qualified: "loc.latitude"
+	Geom                 Column // "geom" → qualified: "loc.geom"
+	GeofenceType         Column // "geofence_type" → qualified: "loc.geofence_type"
+	GeofenceRadiusMeters Column // "geofence_radius_meters" → qualified: "loc.geofence_radius_meters"
+	GeofenceGeometry     Column // "geofence_geometry" → qualified: "loc.geofence_geometry"
+	Version              Column // "version" → qualified: "loc.version"
+	CreatedAt            Column // "created_at" → qualified: "loc.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "loc.updated_at"
+	SearchVector         Column // "search_vector" → qualified: "loc.search_vector"
+	Rank                 Column // "rank" → qualified: "loc.rank"
 }{
-	ID:                 NewColumn("id", "loc"),
-	BusinessUnitID:     NewColumn("business_unit_id", "loc"),
-	OrganizationID:     NewColumn("organization_id", "loc"),
-	LocationCategoryID: NewColumn("location_category_id", "loc"),
-	StateID:            NewColumn("state_id", "loc"),
-	Status:             NewColumn("status", "loc"),
-	Code:               NewColumn("code", "loc"),
-	Name:               NewColumn("name", "loc"),
-	Description:        NewColumn("description", "loc"),
-	AddressLine1:       NewColumn("address_line_1", "loc"),
-	AddressLine2:       NewColumn("address_line_2", "loc"),
-	City:               NewColumn("city", "loc"),
-	PostalCode:         NewColumn("postal_code", "loc"),
-	PlaceID:            NewColumn("place_id", "loc"),
-	IsGeocoded:         NewColumn("is_geocoded", "loc"),
-	Longitude:          NewColumn("longitude", "loc"),
-	Latitude:           NewColumn("latitude", "loc"),
-	Geom:               NewColumn("geom", "loc"),
-	Version:            NewColumn("version", "loc"),
-	CreatedAt:          NewColumn("created_at", "loc"),
-	UpdatedAt:          NewColumn("updated_at", "loc"),
-	SearchVector:       NewColumn("search_vector", "loc"),
-	Rank:               NewColumn("rank", "loc"),
+	ID:                   NewColumn("id", "loc"),
+	BusinessUnitID:       NewColumn("business_unit_id", "loc"),
+	OrganizationID:       NewColumn("organization_id", "loc"),
+	LocationCategoryID:   NewColumn("location_category_id", "loc"),
+	StateID:              NewColumn("state_id", "loc"),
+	Status:               NewColumn("status", "loc"),
+	Code:                 NewColumn("code", "loc"),
+	Name:                 NewColumn("name", "loc"),
+	Description:          NewColumn("description", "loc"),
+	AddressLine1:         NewColumn("address_line_1", "loc"),
+	AddressLine2:         NewColumn("address_line_2", "loc"),
+	City:                 NewColumn("city", "loc"),
+	PostalCode:           NewColumn("postal_code", "loc"),
+	PlaceID:              NewColumn("place_id", "loc"),
+	IsGeocoded:           NewColumn("is_geocoded", "loc"),
+	Longitude:            NewColumn("longitude", "loc"),
+	Latitude:             NewColumn("latitude", "loc"),
+	Geom:                 NewColumn("geom", "loc"),
+	GeofenceType:         NewColumn("geofence_type", "loc"),
+	GeofenceRadiusMeters: NewColumn("geofence_radius_meters", "loc"),
+	GeofenceGeometry:     NewColumn("geofence_geometry", "loc"),
+	Version:              NewColumn("version", "loc"),
+	CreatedAt:            NewColumn("created_at", "loc"),
+	UpdatedAt:            NewColumn("updated_at", "loc"),
+	SearchVector:         NewColumn("search_vector", "loc"),
+	Rank:                 NewColumn("rank", "loc"),
 }
 
 // LocationFieldMap maps JSON API field names to database column names.
@@ -103,26 +109,28 @@ var LocationColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Location.GetStaticFieldMap().
 var LocationFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"locationCategoryId": "location_category_id",
-	"stateId":            "state_id",
-	"status":             "status",
-	"code":               "code",
-	"name":               "name",
-	"description":        "description",
-	"addressLine1":       "address_line_1",
-	"addressLine2":       "address_line_2",
-	"city":               "city",
-	"postalCode":         "postal_code",
-	"placeId":            "place_id",
-	"isGeocoded":         "is_geocoded",
-	"longitude":          "longitude",
-	"latitude":           "latitude",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"locationCategoryId":   "location_category_id",
+	"stateId":              "state_id",
+	"status":               "status",
+	"code":                 "code",
+	"name":                 "name",
+	"description":          "description",
+	"addressLine1":         "address_line_1",
+	"addressLine2":         "address_line_2",
+	"city":                 "city",
+	"postalCode":           "postal_code",
+	"placeId":              "place_id",
+	"isGeocoded":           "is_geocoded",
+	"longitude":            "longitude",
+	"latitude":             "latitude",
+	"geofenceType":         "geofence_type",
+	"geofenceRadiusMeters": "geofence_radius_meters",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
 }
 
 // LocationInsertableColumns lists column names suitable for INSERT statements on the "locations" table.
@@ -145,6 +153,8 @@ var LocationInsertableColumns = []string{
 	"is_geocoded",
 	"longitude",
 	"latitude",
+	"geofence_type",
+	"geofence_radius_meters",
 	"version",
 	"created_at",
 	"updated_at",
@@ -217,26 +227,28 @@ func LocationApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	LocationFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var LocationFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	LocationCategoryID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationCategoryId" → DB: "location_category_id"
-	StateID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
-	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Code               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	AddressLine1       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
-	AddressLine2       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
-	City               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
-	PostalCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
-	PlaceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
-	IsGeocoded         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isGeocoded" → DB: "is_geocoded"
-	Longitude          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "longitude" → DB: "longitude"
-	Latitude           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latitude" → DB: "latitude"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	LocationCategoryID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationCategoryId" → DB: "location_category_id"
+	StateID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stateId" → DB: "state_id"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Code                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	AddressLine1         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine1" → DB: "address_line_1"
+	AddressLine2         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "addressLine2" → DB: "address_line_2"
+	City                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "city" → DB: "city"
+	PostalCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postalCode" → DB: "postal_code"
+	PlaceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "placeId" → DB: "place_id"
+	IsGeocoded           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isGeocoded" → DB: "is_geocoded"
+	Longitude            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "longitude" → DB: "longitude"
+	Latitude             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latitude" → DB: "latitude"
+	GeofenceType         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "geofenceType" → DB: "geofence_type"
+	GeofenceRadiusMeters func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "geofenceRadiusMeters" → DB: "geofence_radius_meters"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -288,6 +300,12 @@ var LocationFilter = struct {
 	},
 	Latitude: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("latitude", op, value)
+	},
+	GeofenceType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("geofenceType", op, value)
+	},
+	GeofenceRadiusMeters: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("geofenceRadiusMeters", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

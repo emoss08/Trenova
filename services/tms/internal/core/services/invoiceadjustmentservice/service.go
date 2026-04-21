@@ -35,8 +35,10 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const batchInlineThreshold = 25
-const adjustmentDocumentResourceType = "invoice_adjustment"
+const (
+	batchInlineThreshold           = 25
+	adjustmentDocumentResourceType = "invoice_adjustment"
+)
 
 type Params struct {
 	fx.In
@@ -92,9 +94,9 @@ type previewComputation struct {
 	control           *tenant.InvoiceAdjustmentControl
 	accountingControl *tenant.AccountingControl
 	preview           *servicesports.InvoiceAdjustmentPreview
-	lines             []*invoiceadjustment.AdjustmentLine
-	creditLineItems   []*invoice.Line
-	replacementLines  []*invoice.Line
+	lines             []*invoiceadjustment.InvoiceAdjustmentLine
+	creditLineItems   []*invoice.InoviceLine
+	replacementLines  []*invoice.InoviceLine
 }
 
 type supportingDocumentRequirementResolution struct {
@@ -132,7 +134,7 @@ func (s *Service) CreateDraft(
 	ctx context.Context,
 	req *servicesports.CreateDraftInvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
 		ID: req.InvoiceID,
 		TenantInfo: pagination.TenantInfo{
@@ -155,7 +157,7 @@ func (s *Service) CreateDraft(
 		}
 	}
 
-	draft := &invoiceadjustment.Adjustment{
+	draft := &invoiceadjustment.InvoiceAdjustment{
 		ID:                      pulid.MustNew("iadj_"),
 		OrganizationID:          req.TenantInfo.OrgID,
 		BusinessUnitID:          req.TenantInfo.BuID,
@@ -199,7 +201,7 @@ func (s *Service) UpdateDraft(
 	ctx context.Context,
 	req *servicesports.UpdateDraftInvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
@@ -292,7 +294,7 @@ func (s *Service) SubmitDraft(
 	ctx context.Context,
 	req *servicesports.GetInvoiceAdjustmentDetailRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, draftReq, err := s.loadDraftRequest(ctx, req)
 	if err != nil {
 		return nil, err
@@ -347,7 +349,7 @@ func (s *Service) SubmitDraft(
 		entity.ApprovalStatus = invoiceadjustment.ApprovalStatusPending
 	}
 
-	snapshots := []*invoiceadjustment.Snapshot{{
+	snapshots := []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		AdjustmentID:   entity.ID,
@@ -394,7 +396,7 @@ func (s *Service) Submit(
 	ctx context.Context,
 	req *servicesports.InvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	if multiErr := s.validator.ValidateRequest(ctx, req); multiErr != nil {
 		return nil, multiErr
 	}
@@ -415,7 +417,7 @@ func (s *Service) Submit(
 		return nil, previewErrorsToMultiError(computation.preview.Errors)
 	}
 
-	var result *invoiceadjustment.Adjustment
+	var result *invoiceadjustment.InvoiceAdjustment
 	err = s.db.WithTx(
 		ctx,
 		ports.TxOptions{LockTimeout: 5 * 1000000000},
@@ -432,7 +434,7 @@ func (s *Service) Submit(
 			}
 
 			now := timeutils.NowUnix()
-			adjustment := &invoiceadjustment.Adjustment{
+			adjustment := &invoiceadjustment.InvoiceAdjustment{
 				ID:                pulid.MustNew("iadj_"),
 				OrganizationID:    req.TenantInfo.OrgID,
 				BusinessUnitID:    req.TenantInfo.BuID,
@@ -479,7 +481,7 @@ func (s *Service) Submit(
 				return refErr
 			}
 
-			snapshots := []*invoiceadjustment.Snapshot{{
+			snapshots := []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
 				OrganizationID: req.TenantInfo.OrgID,
 				BusinessUnitID: req.TenantInfo.BuID,
 				InvoiceID:      computation.invoice.ID,
@@ -539,8 +541,8 @@ func (s *Service) Approve(
 	ctx context.Context,
 	req *servicesports.ApproveInvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
-	var result *invoiceadjustment.Adjustment
+) (*invoiceadjustment.InvoiceAdjustment, error) {
+	var result *invoiceadjustment.InvoiceAdjustment
 	err := s.db.WithTx(
 		ctx,
 		ports.TxOptions{LockTimeout: 5 * 1000000000},
@@ -575,7 +577,7 @@ func (s *Service) Reject(
 	ctx context.Context,
 	req *servicesports.RejectInvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
@@ -611,7 +613,7 @@ func (s *Service) Reject(
 func (s *Service) GetDetail(
 	ctx context.Context,
 	req *servicesports.GetInvoiceAdjustmentDetailRequest,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
@@ -620,12 +622,15 @@ func (s *Service) GetDetail(
 		return nil, err
 	}
 
-	adjustmentDocs, err := s.documentRepo.GetByResourceID(ctx, &repositories.GetDocumentsByResourceRequest{
-		TenantInfo:          req.TenantInfo,
-		ResourceID:          req.AdjustmentID.String(),
-		ResourceType:        adjustmentDocumentResourceType,
-		IncludeDocumentType: true,
-	})
+	adjustmentDocs, err := s.documentRepo.GetByResourceID(
+		ctx,
+		&repositories.GetDocumentsByResourceRequest{
+			TenantInfo:          req.TenantInfo,
+			ResourceID:          req.AdjustmentID.String(),
+			ResourceType:        adjustmentDocumentResourceType,
+			IncludeDocumentType: true,
+		},
+	)
 	if err == nil {
 		entity.AdjustmentDocuments = adjustmentDocs
 	}
@@ -696,7 +701,7 @@ func (s *Service) BulkSubmit(
 	ctx context.Context,
 	req *servicesports.InvoiceAdjustmentBulkRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Batch, error) {
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	if err := validateBulkRequest(req); err != nil {
 		return nil, err
 	}
@@ -711,7 +716,7 @@ func (s *Service) BulkSubmit(
 
 	inlineProcessing := len(req.Items) <= batchInlineThreshold
 	now := timeutils.NowUnix()
-	batch := &invoiceadjustment.Batch{
+	batch := &invoiceadjustment.InvoiceAdjustmentBatch{
 		ID:             pulid.MustNew("iadjb_"),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
@@ -728,10 +733,10 @@ func (s *Service) BulkSubmit(
 		batch.Status = invoiceadjustment.BatchStatusRunning
 	}
 
-	items := make([]*invoiceadjustment.BatchItem, 0, len(req.Items))
+	items := make([]*invoiceadjustment.InvoiceAdjustmentBatchItem, 0, len(req.Items))
 	for idx, item := range req.Items {
 		item.TenantInfo = req.TenantInfo
-		items = append(items, &invoiceadjustment.BatchItem{
+		items = append(items, &invoiceadjustment.InvoiceAdjustmentBatchItem{
 			OrganizationID: req.TenantInfo.OrgID,
 			BusinessUnitID: req.TenantInfo.BuID,
 			BatchID:        batch.ID,
@@ -841,7 +846,7 @@ func (s *Service) GetBatch(
 	ctx context.Context,
 	batchID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*invoiceadjustment.Batch, error) {
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	return s.repo.GetBatchByID(ctx, repositories.GetBatchRequest{
 		ID:         batchID,
 		TenantInfo: tenantInfo,
@@ -851,28 +856,31 @@ func (s *Service) GetBatch(
 func (s *Service) ListApprovals(
 	ctx context.Context,
 	filter pagination.QueryOptions,
-) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error) {
+) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
 	return s.repo.ListApprovalQueue(ctx, repositories.ListApprovalQueueRequest{Filter: filter})
 }
 
 func (s *Service) ListReconciliationExceptions(
 	ctx context.Context,
 	filter pagination.QueryOptions,
-) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error) {
-	return s.repo.ListReconciliationQueue(ctx, repositories.ListReconciliationQueueRequest{Filter: filter})
+) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
+	return s.repo.ListReconciliationQueue(
+		ctx,
+		repositories.ListReconciliationQueueRequest{Filter: filter},
+	)
 }
 
 func (s *Service) ListBatches(
 	ctx context.Context,
 	filter pagination.QueryOptions,
-) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error) {
+) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
 	return s.repo.ListBatchQueue(ctx, repositories.ListBatchQueueRequest{Filter: filter})
 }
 
 func (s *Service) GetOperationsSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*invoiceadjustment.OperationsSummary, error) {
+) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
 	return s.repo.GetOperationsSummary(ctx, tenantInfo)
 }
 
@@ -905,10 +913,16 @@ func (s *Service) computePreview(
 		Kind:                             req.Kind,
 		RebillStrategy:                   req.RebillStrategy,
 		CustomerSupportingDocumentPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
-		SupportingDocumentPolicySource:   string(invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl),
-		Warnings:                         make([]string, 0),
-		Errors:                           make(map[string][]string),
-		Lines:                            make([]*servicesports.InvoiceAdjustmentPreviewLine, 0, len(entity.Lines)),
+		SupportingDocumentPolicySource: string(
+			invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+		),
+		Warnings: make([]string, 0),
+		Errors:   make(map[string][]string),
+		Lines: make(
+			[]*servicesports.InvoiceAdjustmentPreviewLine,
+			0,
+			len(entity.Lines),
+		),
 	}
 
 	if entity.Status != invoice.StatusPosted {
@@ -946,7 +960,8 @@ func (s *Service) computePreview(
 		if group, groupErr := s.repo.GetCorrectionGroupByRootInvoice(ctx, repositories.GetCorrectionGroupByRootInvoiceRequest{
 			RootInvoiceID: entity.ID,
 			TenantInfo:    req.TenantInfo,
-		}); groupErr == nil && group != nil {
+		}); groupErr == nil &&
+			group != nil {
 			preview.CorrectionGroupID = group.ID
 		} else {
 			preview.CorrectionGroupID = pulid.MustNew("icg_")
@@ -973,9 +988,9 @@ func (s *Service) computePreview(
 		requestedByLine[line.OriginalLineID.String()] = line
 	}
 
-	lines := make([]*invoiceadjustment.AdjustmentLine, 0, len(entity.Lines))
-	creditLines := make([]*invoice.Line, 0, len(entity.Lines))
-	replacementLines := make([]*invoice.Line, 0, len(entity.Lines))
+	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(entity.Lines))
+	creditLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
+	replacementLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
 	fullScope := len(req.Lines) == 0
 
 	for _, sourceLine := range entity.Lines {
@@ -1057,7 +1072,7 @@ func (s *Service) computePreview(
 		preview.CreditTotalAmount = preview.CreditTotalAmount.Add(creditAmount)
 		preview.RebillTotalAmount = preview.RebillTotalAmount.Add(rebillAmount)
 
-		lines = append(lines, &invoiceadjustment.AdjustmentLine{
+		lines = append(lines, &invoiceadjustment.InvoiceAdjustmentLine{
 			OriginalInvoiceID:       entity.ID,
 			OriginalLineID:          sourceLine.ID,
 			LineNumber:              sourceLine.LineNumber,
@@ -1075,7 +1090,7 @@ func (s *Service) computePreview(
 			if creditQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = creditAmount.Div(creditQuantity)
 			}
-			creditLines = append(creditLines, &invoice.Line{
+			creditLines = append(creditLines, &invoice.InoviceLine{
 				LineNumber:  sourceLine.LineNumber,
 				Type:        sourceLine.Type,
 				Description: description,
@@ -1090,7 +1105,7 @@ func (s *Service) computePreview(
 			if rebillQuantity.GreaterThan(decimal.Zero) {
 				unitPrice = rebillAmount.Div(rebillQuantity)
 			}
-			replacementLines = append(replacementLines, &invoice.Line{
+			replacementLines = append(replacementLines, &invoice.InoviceLine{
 				LineNumber:  len(replacementLines) + 1,
 				Type:        sourceLine.Type,
 				Description: description,
@@ -1342,7 +1357,7 @@ func (s *Service) validateAttachments(
 func (s *Service) loadDraftRequest(
 	ctx context.Context,
 	req *servicesports.GetInvoiceAdjustmentDetailRequest,
-) (*invoiceadjustment.Adjustment, *servicesports.InvoiceAdjustmentRequest, error) {
+) (*invoiceadjustment.InvoiceAdjustment, *servicesports.InvoiceAdjustmentRequest, error) {
 	entity, err := s.repo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
 		ID:         req.AdjustmentID,
 		TenantInfo: req.TenantInfo,
@@ -1386,10 +1401,10 @@ func (s *Service) buildDraftLines(
 	sourceInvoice *invoice.Invoice,
 	adjustmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) []*invoiceadjustment.AdjustmentLine {
-	lines := make([]*invoiceadjustment.AdjustmentLine, 0, len(sourceInvoice.Lines))
+) []*invoiceadjustment.InvoiceAdjustmentLine {
+	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(sourceInvoice.Lines))
 	for _, line := range sourceInvoice.Lines {
-		lines = append(lines, &invoiceadjustment.AdjustmentLine{
+		lines = append(lines, &invoiceadjustment.InvoiceAdjustmentLine{
 			OrganizationID:          tenantInfo.OrgID,
 			BusinessUnitID:          tenantInfo.BuID,
 			AdjustmentID:            adjustmentID,
@@ -1413,13 +1428,13 @@ func (s *Service) buildAdjustmentLines(
 	invoiceID pulid.ID,
 	inputs []*servicesports.InvoiceAdjustmentLineInput,
 	tenantInfo pagination.TenantInfo,
-) []*invoiceadjustment.AdjustmentLine {
-	lines := make([]*invoiceadjustment.AdjustmentLine, 0, len(inputs))
+) []*invoiceadjustment.InvoiceAdjustmentLine {
+	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(inputs))
 	for idx, line := range inputs {
 		if line == nil {
 			continue
 		}
-		lines = append(lines, &invoiceadjustment.AdjustmentLine{
+		lines = append(lines, &invoiceadjustment.InvoiceAdjustmentLine{
 			OrganizationID:          tenantInfo.OrgID,
 			BusinessUnitID:          tenantInfo.BuID,
 			AdjustmentID:            adjustmentID,
@@ -1446,7 +1461,7 @@ func (s *Service) buildDocumentReferences(
 	tenantInfo pagination.TenantInfo,
 	actor *servicesports.RequestActor,
 	fieldName string,
-) ([]*invoiceadjustment.DocumentReference, error) {
+) ([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, error) {
 	if len(documentIDs) == 0 {
 		return nil, nil
 	}
@@ -1471,7 +1486,7 @@ func (s *Service) buildDocumentReferences(
 	}
 
 	now := timeutils.NowUnix()
-	refs := make([]*invoiceadjustment.DocumentReference, 0, len(docs))
+	refs := make([]*invoiceadjustment.InvoiceAdjustmentDocumentReference, 0, len(docs))
 	for _, doc := range docs {
 		if doc == nil || doc.Status == document.StatusArchived {
 			return nil, errortypes.NewValidationError(
@@ -1489,7 +1504,7 @@ func (s *Service) buildDocumentReferences(
 			)
 		}
 
-		refs = append(refs, &invoiceadjustment.DocumentReference{
+		refs = append(refs, &invoiceadjustment.InvoiceAdjustmentDocumentReference{
 			OrganizationID:       tenantInfo.OrgID,
 			BusinessUnitID:       tenantInfo.BuID,
 			AdjustmentID:         adjustmentID,
@@ -1663,7 +1678,7 @@ func (s *Service) computeRerate(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
-) ([]*invoice.Line, decimal.Decimal, decimal.Decimal, error) {
+) ([]*invoice.InoviceLine, decimal.Decimal, decimal.Decimal, error) {
 	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         entity.ShipmentID,
 		TenantInfo: tenantInfo,
@@ -1700,7 +1715,7 @@ func (s *Service) computeRerate(
 func (s *Service) ensureCorrectionGroup(
 	ctx context.Context,
 	entity *invoice.Invoice,
-) (*invoiceadjustment.CorrectionGroup, error) {
+) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	rootID := entity.ID
 	if entity.CorrectionGroupID.IsNotNil() {
 		group, err := s.repo.GetCorrectionGroup(ctx, repositories.GetCorrectionGroupRequest{
@@ -1726,7 +1741,7 @@ func (s *Service) ensureCorrectionGroup(
 		return group, nil
 	}
 
-	return s.repo.CreateCorrectionGroup(ctx, &invoiceadjustment.CorrectionGroup{
+	return s.repo.CreateCorrectionGroup(ctx, &invoiceadjustment.InvoiceAdjustmentCorrectionGroup{
 		OrganizationID:   entity.OrganizationID,
 		BusinessUnitID:   entity.BusinessUnitID,
 		RootInvoiceID:    rootID,
@@ -1739,7 +1754,7 @@ func (s *Service) executeApprovedAdjustment(
 	adjustmentID pulid.ID,
 	req *servicesports.InvoiceAdjustmentRequest,
 	actor *servicesports.RequestActor,
-) (*invoiceadjustment.Adjustment, error) {
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	var tenantInfo pagination.TenantInfo
 	if req != nil {
 		tenantInfo = req.TenantInfo
@@ -1912,7 +1927,7 @@ func (s *Service) executeApprovedAdjustment(
 	if computation.preview.RequiresReconciliationException {
 		if _, err = s.db.DBForContext(ctx).
 			NewInsert().
-			Model(&invoiceadjustment.ReconciliationException{
+			Model(&invoiceadjustment.InvoiceAdjustmentReconciliationException{
 				OrganizationID:      adjustment.OrganizationID,
 				BusinessUnitID:      adjustment.BusinessUnitID,
 				AdjustmentID:        adjustment.ID,
@@ -1933,7 +1948,7 @@ func (s *Service) executeApprovedAdjustment(
 
 	if _, err = s.db.DBForContext(ctx).
 		NewInsert().
-		Model(&invoiceadjustment.Snapshot{
+		Model(&invoiceadjustment.InvoiceAdjustmentSnapshot{
 			OrganizationID: adjustment.OrganizationID,
 			BusinessUnitID: adjustment.BusinessUnitID,
 			AdjustmentID:   adjustment.ID,
@@ -1977,7 +1992,7 @@ func (s *Service) executeApprovedAdjustment(
 
 func (s *Service) createCreditMemoQueueItem(
 	ctx context.Context,
-	adjustment *invoiceadjustment.Adjustment,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
@@ -2014,9 +2029,9 @@ func (s *Service) createCreditMemoQueueItem(
 func (s *Service) createCreditMemoInvoice(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
-	adjustment *invoiceadjustment.Adjustment,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	lines []*invoice.Line,
+	lines []*invoice.InoviceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 	postedAt int64,
 ) (*invoice.Invoice, error) {
@@ -2026,7 +2041,7 @@ func (s *Service) createCreditMemoInvoice(
 		if line == nil {
 			continue
 		}
-		if line.Type == invoice.LineTypeFreight {
+		if line.Type == invoice.InvoiceLineTypeFreight {
 			subtotal = subtotal.Add(line.Amount)
 		} else {
 			other = other.Add(line.Amount)
@@ -2075,10 +2090,10 @@ func (s *Service) createCreditMemoInvoice(
 
 func (s *Service) createReplacementQueueItem(
 	ctx context.Context,
-	adjustment *invoiceadjustment.Adjustment,
+	adjustment *invoiceadjustment.InvoiceAdjustment,
 	sourceInvoice *invoice.Invoice,
-	group *invoiceadjustment.CorrectionGroup,
-	lines []*invoice.Line,
+	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
+	lines []*invoice.InoviceLine,
 	preview *servicesports.InvoiceAdjustmentPreview,
 ) (*billingqueue.BillingQueueItem, error) {
 	number, err := s.generator.GenerateInvoiceNumber(
@@ -2109,8 +2124,8 @@ func (s *Service) createReplacementQueueItem(
 		RerateVariancePercent:     preview.RerateVariancePercent,
 		AdjustmentContext: map[string]any{
 			"replacementLines":   lines,
-			"subtotalAmount":     sumInvoiceLines(lines, invoice.LineTypeFreight),
-			"otherAmount":        sumInvoiceLines(lines, invoice.LineTypeAccessorial),
+			"subtotalAmount":     sumInvoiceLines(lines, invoice.InvoiceLineTypeFreight),
+			"otherAmount":        sumInvoiceLines(lines, invoice.InvoiceLineTypeAccessorial),
 			"totalAmount":        preview.RebillTotalAmount,
 			"accountingDate":     preview.AccountingDate,
 			"sourceInvoiceId":    sourceInvoice.ID,
@@ -2132,7 +2147,7 @@ func (s *Service) snapshotPayload(entity *invoice.Invoice) map[string]any {
 }
 
 func (s *Service) requestLinesFromAdjustment(
-	entity *invoiceadjustment.Adjustment,
+	entity *invoiceadjustment.InvoiceAdjustment,
 ) []*servicesports.InvoiceAdjustmentLineInput {
 	lines := make([]*servicesports.InvoiceAdjustmentLineInput, 0, len(entity.Lines))
 	for _, line := range entity.Lines {
@@ -2153,7 +2168,7 @@ func (s *Service) requestLinesFromAdjustment(
 }
 
 func (s *Service) logAudit(
-	entity *invoiceadjustment.Adjustment,
+	entity *invoiceadjustment.InvoiceAdjustment,
 	actor *servicesports.RequestActor,
 	op permission.Operation,
 	comment string,
@@ -2182,7 +2197,7 @@ func (s *Service) logAudit(
 
 func (s *Service) logAdjustmentEvent(
 	message string,
-	entity *invoiceadjustment.Adjustment,
+	entity *invoiceadjustment.InvoiceAdjustment,
 	level zapcore.Level,
 ) {
 	if entity == nil {
@@ -2271,7 +2286,10 @@ func replacementReviewStatus(required bool) invoiceadjustment.ReplacementReviewS
 	return invoiceadjustment.ReplacementReviewStatusNotRequired
 }
 
-func sumInvoiceLines(lines []*invoice.Line, lineType invoice.LineType) decimal.Decimal {
+func sumInvoiceLines(
+	lines []*invoice.InoviceLine,
+	lineType invoice.InvoiceLineType,
+) decimal.Decimal {
 	total := decimal.Zero
 	for _, line := range lines {
 		if line == nil {
@@ -2284,12 +2302,12 @@ func sumInvoiceLines(lines []*invoice.Line, lineType invoice.LineType) decimal.D
 	return total
 }
 
-func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.Line {
-	lines := make([]*invoice.Line, 0, 1+len(shp.AdditionalCharges))
+func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.InoviceLine {
+	lines := make([]*invoice.InoviceLine, 0, 1+len(shp.AdditionalCharges))
 	freight := shp.FreightChargeAmount.Decimal
-	lines = append(lines, &invoice.Line{
+	lines = append(lines, &invoice.InoviceLine{
 		LineNumber:  1,
-		Type:        invoice.LineTypeFreight,
+		Type:        invoice.InvoiceLineTypeFreight,
 		Description: "Freight charge",
 		Quantity:    decimal.NewFromInt(1),
 		UnitPrice:   freight,
@@ -2312,9 +2330,9 @@ func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.Line {
 			strings.TrimSpace(charge.AccessorialCharge.Description) != "" {
 			description = charge.AccessorialCharge.Description
 		}
-		lines = append(lines, &invoice.Line{
+		lines = append(lines, &invoice.InoviceLine{
 			LineNumber:  idx + 2,
-			Type:        invoice.LineTypeAccessorial,
+			Type:        invoice.InvoiceLineTypeAccessorial,
 			Description: description,
 			Quantity:    qty,
 			UnitPrice:   unitPrice,
@@ -2348,7 +2366,7 @@ func optionalIDString(id pulid.ID) *string {
 	return &value
 }
 
-func collectBatchItemIDs(items []*invoiceadjustment.BatchItem) []pulid.ID {
+func collectBatchItemIDs(items []*invoiceadjustment.InvoiceAdjustmentBatchItem) []pulid.ID {
 	ids := make([]pulid.ID, 0, len(items))
 	for _, item := range items {
 		if item != nil {

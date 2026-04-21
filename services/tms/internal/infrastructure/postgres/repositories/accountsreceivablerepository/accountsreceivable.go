@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountsreceivable"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -60,8 +59,8 @@ func New(p Params) repositories.AccountsReceivableRepository {
 func (r *repository) ListCustomerLedger(
 	ctx context.Context,
 	req repositories.ListCustomerLedgerRequest,
-) ([]*accountsreceivable.LedgerEntry, error) {
-	entries := make([]*accountsreceivable.LedgerEntry, 0)
+) ([]*repositories.ARLedgerEntry, error) {
+	entries := make([]*repositories.ARLedgerEntry, 0)
 	err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_id, amount_minor
 		FROM customer_ledger_entries
@@ -79,7 +78,7 @@ func (r *repository) ListCustomerLedger(
 func (r *repository) ListARAging(
 	ctx context.Context,
 	req repositories.ListARAgingRequest,
-) ([]*accountsreceivable.CustomerAgingRow, error) {
+) ([]*repositories.ARCustomerAgingRow, error) {
 	records := make([]*agingRowRecord, 0)
 	err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -103,12 +102,12 @@ func (r *repository) ListARAging(
 	if err != nil {
 		return nil, err
 	}
-	rows := make([]*accountsreceivable.CustomerAgingRow, 0, len(records))
+	rows := make([]*repositories.ARCustomerAgingRow, 0, len(records))
 	for _, rec := range records {
-		rows = append(rows, &accountsreceivable.CustomerAgingRow{
+		rows = append(rows, &repositories.ARCustomerAgingRow{
 			CustomerID:   pulid.ID(rec.CustomerID),
 			CustomerName: rec.CustomerName,
-			Buckets: accountsreceivable.AgingBucketTotals{
+			Buckets: repositories.ARAgingBucketTotals{
 				CurrentMinor:    rec.CurrentMinor,
 				Days1To30Minor:  rec.Days1To30Minor,
 				Days31To60Minor: rec.Days31To60Minor,
@@ -124,7 +123,7 @@ func (r *repository) ListARAging(
 func (r *repository) ListOpenItems(
 	ctx context.Context,
 	req repositories.ListAROpenItemsRequest,
-) ([]*accountsreceivable.OpenItem, error) {
+) ([]*repositories.AROpenItem, error) {
 	records := make([]*openItemRecord, 0)
 	query := `
 		SELECT
@@ -165,9 +164,9 @@ func (r *repository) ListOpenItems(
 		return nil, fmt.Errorf("list ar open items: %w", err)
 	}
 
-	items := make([]*accountsreceivable.OpenItem, 0, len(records))
+	items := make([]*repositories.AROpenItem, 0, len(records))
 	for _, rec := range records {
-		items = append(items, &accountsreceivable.OpenItem{
+		items = append(items, &repositories.AROpenItem{
 			InvoiceID:          pulid.ID(rec.InvoiceID),
 			CustomerID:         pulid.ID(rec.CustomerID),
 			CustomerName:       rec.CustomerName,
@@ -213,7 +212,7 @@ func (r *repository) GetCustomerName(
 func (r *repository) GetCustomerAging(
 	ctx context.Context,
 	req repositories.GetARCustomerAgingRequest,
-) (*accountsreceivable.CustomerAgingRow, error) {
+) (*repositories.ARCustomerAgingRow, error) {
 	records := make([]*agingRowRecord, 0, 1)
 	err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -238,14 +237,14 @@ func (r *repository) GetCustomerAging(
 		return nil, fmt.Errorf("get customer ar aging: %w", err)
 	}
 	if len(records) == 0 {
-		return &accountsreceivable.CustomerAgingRow{CustomerID: req.CustomerID}, nil
+		return &repositories.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
 	}
 
 	rec := records[0]
-	return &accountsreceivable.CustomerAgingRow{
+	return &repositories.ARCustomerAgingRow{
 		CustomerID:   pulid.ID(rec.CustomerID),
 		CustomerName: rec.CustomerName,
-		Buckets: accountsreceivable.AgingBucketTotals{
+		Buckets: repositories.ARAgingBucketTotals{
 			CurrentMinor:    rec.CurrentMinor,
 			Days1To30Minor:  rec.Days1To30Minor,
 			Days31To60Minor: rec.Days31To60Minor,

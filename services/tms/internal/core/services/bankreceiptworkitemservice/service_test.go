@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -28,7 +29,45 @@ func TestWorkItemLifecycle(t *testing.T) {
 		BusinessUnitID: buID,
 		Status:         bankreceiptworkitem.StatusOpen,
 	}
-	repo := &fakeBRWorkItemRepo{item: work}
+	repo := mocks.NewMockBankReceiptWorkItemRepository(t)
+	var current *bankreceiptworkitem.WorkItem
+	setCurrent := func(item *bankreceiptworkitem.WorkItem) {
+		copy := *item
+		current = &copy
+	}
+	setCurrent(work)
+	repo.EXPECT().
+		ListActive(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			_ pagination.TenantInfo,
+		) ([]*bankreceiptworkitem.WorkItem, error) {
+			if current == nil {
+				return nil, nil
+			}
+			return []*bankreceiptworkitem.WorkItem{current}, nil
+		}).
+		Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			_ repositories.GetBankReceiptWorkItemByIDRequest,
+		) (*bankreceiptworkitem.WorkItem, error) {
+			return current, nil
+		}).
+		Times(4)
+	repo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			entity *bankreceiptworkitem.WorkItem,
+		) (*bankreceiptworkitem.WorkItem, error) {
+			copy := *entity
+			current = &copy
+			return &copy, nil
+		}).
+		Times(4)
 	svc := New(Params{Logger: zap.NewNop(), Repo: repo, AuditService: &mocks.NoopAuditService{}})
 
 	items, err := svc.ListActive(t.Context(), pagination.TenantInfo{OrgID: orgID, BuID: buID})
@@ -71,16 +110,16 @@ func TestWorkItemLifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, bankreceiptworkitem.StatusResolved, resolved.Status)
 
-	repo.item = &bankreceiptworkitem.WorkItem{
+	setCurrent(&bankreceiptworkitem.WorkItem{
 		ID:             pulid.MustNew("brwi_"),
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Status:         bankreceiptworkitem.StatusOpen,
-	}
+	})
 	dismissed, err := svc.Dismiss(
 		t.Context(),
 		&serviceports.DismissBankReceiptWorkItemRequest{
-			WorkItemID:     repo.item.ID,
+			WorkItemID:     current.ID,
 			ResolutionNote: "ignore",
 			TenantInfo:     pagination.TenantInfo{OrgID: orgID, BuID: buID},
 		},
@@ -88,49 +127,4 @@ func TestWorkItemLifecycle(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, bankreceiptworkitem.StatusDismissed, dismissed.Status)
-}
-
-type fakeBRWorkItemRepo struct{ item *bankreceiptworkitem.WorkItem }
-
-func (f *fakeBRWorkItemRepo) GetByID(
-	context.Context,
-	repositories.GetBankReceiptWorkItemByIDRequest,
-) (*bankreceiptworkitem.WorkItem, error) {
-	return f.item, nil
-}
-
-func (f *fakeBRWorkItemRepo) GetActiveByReceiptID(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-) (*bankreceiptworkitem.WorkItem, error) {
-	return f.item, nil
-}
-
-func (f *fakeBRWorkItemRepo) ListActive(
-	context.Context,
-	pagination.TenantInfo,
-) ([]*bankreceiptworkitem.WorkItem, error) {
-	if f.item == nil {
-		return nil, nil
-	}
-	return []*bankreceiptworkitem.WorkItem{f.item}, nil
-}
-
-func (f *fakeBRWorkItemRepo) Create(
-	_ context.Context,
-	entity *bankreceiptworkitem.WorkItem,
-) (*bankreceiptworkitem.WorkItem, error) {
-	copy := *entity
-	f.item = &copy
-	return &copy, nil
-}
-
-func (f *fakeBRWorkItemRepo) Update(
-	_ context.Context,
-	entity *bankreceiptworkitem.WorkItem,
-) (*bankreceiptworkitem.WorkItem, error) {
-	copy := *entity
-	f.item = &copy
-	return &copy, nil
 }

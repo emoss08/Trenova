@@ -39,9 +39,19 @@ func TestGetReturnsRequest(t *testing.T) {
 	t.Parallel()
 
 	request := approvedRequest(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
-	svc := &Service{repo: &fakeManualJournalRepository{entity: request}}
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{repo: repo}
 
-	result, err := svc.Get(t.Context(), &serviceports.GetManualJournalRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: request.OrganizationID, BuID: request.BusinessUnitID}})
+	result, err := svc.Get(
+		t.Context(),
+		&serviceports.GetManualJournalRequest{
+			RequestID: request.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: request.OrganizationID,
+				BuID:  request.BusinessUnitID,
+			},
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -52,9 +62,20 @@ func TestListReturnsRequests(t *testing.T) {
 	t.Parallel()
 
 	request := approvedRequest(pulid.MustNew("org_"), pulid.MustNew("bu_"), pulid.MustNew("usr_"))
-	svc := &Service{repo: &fakeManualJournalRepository{entity: request}}
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{repo: repo}
 
-	result, err := svc.List(t.Context(), &repositories.ListManualJournalRequest{Filter: &pagination.QueryOptions{TenantInfo: pagination.TenantInfo{OrgID: request.OrganizationID, BuID: request.BusinessUnitID}}})
+	result, err := svc.List(
+		t.Context(),
+		&repositories.ListManualJournalRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: request.OrganizationID,
+					BuID:  request.BusinessUnitID,
+				},
+			},
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, result.Items, 1)
@@ -79,11 +100,15 @@ func TestCreateDraftPersistsGeneratedNumber(t *testing.T) {
 		ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll,
 	}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, PeriodType: fiscalperiod.PeriodTypeMonth}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, PeriodType: fiscalperiod.PeriodTypeMonth}, nil)
 	glRepo := mocks.NewMockGLAccountRepository(t)
-	glRepo.EXPECT().GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
+	glRepo.EXPECT().
+		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
+		Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
 
-	manualRepo := &fakeManualJournalRepository{}
+	manualRepo, _ := newManualJournalRepositoryMock(t, nil)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           manualRepo,
@@ -121,8 +146,16 @@ func TestUpdateDraftBlocksNonDraftRequest(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusApproved
 
-	svc := &Service{repo: &fakeManualJournalRepository{entity: request}}
-	result, err := svc.UpdateDraft(t.Context(), &serviceports.UpdateManualJournalDraftRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{repo: repo}
+	result, err := svc.UpdateDraft(
+		t.Context(),
+		&serviceports.UpdateManualJournalDraftRequest{
+			RequestID:  request.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)
@@ -143,13 +176,19 @@ func TestUpdateDraftReplacesLines(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{ManualJournalEntryPolicy: tenant.ManualJournalEntryPolicyAllowAll}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_200}).Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, PeriodType: fiscalperiod.PeriodTypeMonth}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_200}).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, PeriodType: fiscalperiod.PeriodTypeMonth}, nil)
 	glRepo := mocks.NewMockGLAccountRepository(t)
-	glRepo.EXPECT().GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
+	glRepo.EXPECT().
+		GetByIDs(mock.Anything, repositories.GetGLAccountsByIDsRequest{TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID}, GLAccountIDs: []pulid.ID{accountID1, accountID2}}).
+		Return([]*glaccount.GLAccount{{ID: accountID1, Status: domaintypes.StatusActive, AllowManualJE: true}, {ID: accountID2, Status: domaintypes.StatusActive, AllowManualJE: true}}, nil)
 
-	manualRepo := &fakeManualJournalRepository{entity: request}
+	manualRepo, _ := newManualJournalRepositoryMock(t, request)
 	svc := &Service{
 		db:             fakeDBConnection{},
 		repo:           manualRepo,
@@ -189,19 +228,21 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo := &fakeManualJournalRepository{entity: request}
-	journalRepo := &fakeJournalPostingRepository{}
+	manualRepo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
 	}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{
-		ID:           periodID,
-		FiscalYearID: fyID,
-		PeriodType:   fiscalperiod.PeriodTypeMonth,
-		Status:       fiscalperiod.StatusOpen,
-	}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           periodID,
+			FiscalYearID: fyID,
+			PeriodType:   fiscalperiod.PeriodTypeMonth,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil)
 
 	svc := &Service{
 		db:             fakeDBConnection{},
@@ -222,16 +263,16 @@ func TestPostCreatesJournalPostingAndMarksRequestPosted(t *testing.T) {
 	require.NotNil(t, result)
 	assert.Equal(t, manualjournal.StatusPosted, result.Status)
 	assert.True(t, result.PostedBatchID.IsNotNil())
-	require.NotNil(t, journalRepo.last)
-	assert.Equal(t, request.TotalDebit, journalRepo.last.TotalDebit)
-	assert.Equal(t, request.TotalCredit, journalRepo.last.TotalCredit)
-	assert.Equal(t, "ManualJournalRequest", journalRepo.last.ReferenceType)
-	assert.Equal(t, periodID, journalRepo.last.FiscalPeriodID)
-	assert.Equal(t, request.AccountingDate, journalRepo.last.AccountingDate)
-	assert.False(t, journalRepo.last.RequiresApproval)
-	require.Len(t, journalRepo.last.Lines, 2)
-	assert.Equal(t, int64(1000), journalRepo.last.Lines[0].DebitAmount)
-	assert.Equal(t, int64(1000), journalRepo.last.Lines[1].CreditAmount)
+	require.NotNil(t, journalTracker.last)
+	assert.Equal(t, request.TotalDebit, journalTracker.last.TotalDebit)
+	assert.Equal(t, request.TotalCredit, journalTracker.last.TotalCredit)
+	assert.Equal(t, "ManualJournalRequest", journalTracker.last.ReferenceType)
+	assert.Equal(t, periodID, journalTracker.last.FiscalPeriodID)
+	assert.Equal(t, request.AccountingDate, journalTracker.last.AccountingDate)
+	assert.False(t, journalTracker.last.RequiresApproval)
+	require.Len(t, journalTracker.last.Lines, 2)
+	assert.Equal(t, int64(1000), journalTracker.last.Lines[0].DebitAmount)
+	assert.Equal(t, int64(1000), journalTracker.last.Lines[1].CreditAmount)
 }
 
 func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
@@ -245,23 +286,38 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo := &fakeManualJournalRepository{entity: request}
-	journalRepo := &fakeJournalPostingRepository{}
+	manualRepo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
 	}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{
-		ID:           closedPeriodID,
-		FiscalYearID: fyID,
-		PeriodNumber: 1,
-		Status:       fiscalperiod.StatusClosed,
-	}, nil)
-	fiscalRepo.EXPECT().ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).Return([]*fiscalperiod.FiscalPeriod{
-		{ID: closedPeriodID, FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed},
-		{ID: nextPeriodID, FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusOpen, StartDate: 1_700_001_000},
-	}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           closedPeriodID,
+			FiscalYearID: fyID,
+			PeriodNumber: 1,
+			Status:       fiscalperiod.StatusClosed,
+		}, nil)
+	fiscalRepo.EXPECT().
+		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
+		Return([]*fiscalperiod.FiscalPeriod{
+			{
+				ID:           closedPeriodID,
+				FiscalYearID: fyID,
+				PeriodNumber: 1,
+				Status:       fiscalperiod.StatusClosed,
+			},
+			{
+				ID:           nextPeriodID,
+				FiscalYearID: fyID,
+				PeriodNumber: 2,
+				Status:       fiscalperiod.StatusOpen,
+				StartDate:    1_700_001_000,
+			},
+		}, nil)
 
 	svc := &Service{
 		db:             fakeDBConnection{},
@@ -279,9 +335,9 @@ func TestPostUsesNextOpenPeriodWhenConfigured(t *testing.T) {
 	}, testutil.NewSessionActor(userID, orgID, buID))
 
 	require.NoError(t, err)
-	require.NotNil(t, journalRepo.last)
-	assert.Equal(t, nextPeriodID, journalRepo.last.FiscalPeriodID)
-	assert.Equal(t, int64(1_700_001_000), journalRepo.last.AccountingDate)
+	require.NotNil(t, journalTracker.last)
+	assert.Equal(t, nextPeriodID, journalTracker.last.FiscalPeriodID)
+	assert.Equal(t, int64(1_700_001_000), journalTracker.last.AccountingDate)
 }
 
 func TestPostBlocksNonApprovedRequest(t *testing.T) {
@@ -293,13 +349,17 @@ func TestPostBlocksNonApprovedRequest(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusDraft
 
+	manualRepo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo, _ := newJournalPostingRepositoryMock(t)
 	svc := &Service{
 		db:          fakeDBConnection{},
-		repo:        &fakeManualJournalRepository{entity: request},
-		journalRepo: &fakeJournalPostingRepository{},
+		repo:        manualRepo,
+		journalRepo: journalRepo,
 		accountingRepo: func() repositories.AccountingControlRepository {
 			repo := mocks.NewMockAccountingControlRepository(t)
-			repo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
+			repo.EXPECT().
+				GetByOrgID(mock.Anything, orgID).
+				Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
 			return repo
 		}(),
 		generator:    testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
@@ -331,17 +391,20 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen,
 	}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{
-		ID:           pulid.MustNew("fp_"),
-		FiscalYearID: fyID,
-		PeriodNumber: 1,
-		Status:       fiscalperiod.StatusClosed,
-	}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           pulid.MustNew("fp_"),
+			FiscalYearID: fyID,
+			PeriodNumber: 1,
+			Status:       fiscalperiod.StatusClosed,
+		}, nil)
 
-	journalRepo := &fakeJournalPostingRepository{}
+	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	repo, _ := newManualJournalRepositoryMock(t, request)
 	svc := &Service{
 		db:             fakeDBConnection{},
-		repo:           &fakeManualJournalRepository{entity: request},
+		repo:           repo,
 		journalRepo:    journalRepo,
 		accountingRepo: accountingRepo,
 		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
@@ -357,7 +420,7 @@ func TestPostBlocksClosedPeriodWhenReopenRequired(t *testing.T) {
 	require.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "reopen")
-	assert.Nil(t, journalRepo.last)
+	assert.Nil(t, journalTracker.last)
 }
 
 func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
@@ -375,9 +438,10 @@ func TestSubmitMovesToPendingApprovalWhenRequired(t *testing.T) {
 		RequireManualJEApproval:  true,
 	}, nil)
 
+	repo, _ := newManualJournalRepositoryMock(t, request)
 	svc := &Service{
 		db:             fakeDBConnection{},
-		repo:           &fakeManualJournalRepository{entity: request},
+		repo:           repo,
 		accountingRepo: accountingRepo,
 		validator:      &Validator{},
 		auditService:   &mocks.NoopAuditService{},
@@ -411,9 +475,10 @@ func TestSubmitAutoApprovesWhenApprovalNotRequired(t *testing.T) {
 		RequireManualJEApproval:  false,
 	}, nil)
 
+	repo, _ := newManualJournalRepositoryMock(t, request)
 	svc := &Service{
 		db:             fakeDBConnection{},
-		repo:           &fakeManualJournalRepository{entity: request},
+		repo:           repo,
 		accountingRepo: accountingRepo,
 		validator:      &Validator{},
 		auditService:   &mocks.NoopAuditService{},
@@ -442,8 +507,21 @@ func TestApproveMarksApproved(t *testing.T) {
 	request.ApprovedAt = nil
 	request.ApprovedByID = pulid.Nil
 
-	svc := &Service{db: fakeDBConnection{}, repo: &fakeManualJournalRepository{entity: request}, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Approve(t.Context(), &serviceports.GetManualJournalRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{
+		db:           fakeDBConnection{},
+		repo:         repo,
+		validator:    &Validator{},
+		auditService: &mocks.NoopAuditService{},
+	}
+	result, err := svc.Approve(
+		t.Context(),
+		&serviceports.GetManualJournalRequest{
+			RequestID:  request.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, manualjournal.StatusApproved, result.Status)
@@ -460,8 +538,21 @@ func TestApproveBlocksInvalidStatus(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusDraft
 
-	svc := &Service{db: fakeDBConnection{}, repo: &fakeManualJournalRepository{entity: request}, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Approve(t.Context(), &serviceports.GetManualJournalRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{
+		db:           fakeDBConnection{},
+		repo:         repo,
+		validator:    &Validator{},
+		auditService: &mocks.NoopAuditService{},
+	}
+	result, err := svc.Approve(
+		t.Context(),
+		&serviceports.GetManualJournalRequest{
+			RequestID:  request.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)
@@ -477,8 +568,22 @@ func TestRejectMarksRejected(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusPendingApproval
 
-	svc := &Service{db: fakeDBConnection{}, repo: &fakeManualJournalRepository{entity: request}, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Reject(t.Context(), &serviceports.RejectManualJournalRequest{RequestID: request.ID, Reason: "Insufficient support", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{
+		db:           fakeDBConnection{},
+		repo:         repo,
+		validator:    &Validator{},
+		auditService: &mocks.NoopAuditService{},
+	}
+	result, err := svc.Reject(
+		t.Context(),
+		&serviceports.RejectManualJournalRequest{
+			RequestID:  request.ID,
+			Reason:     "Insufficient support",
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, manualjournal.StatusRejected, result.Status)
@@ -495,8 +600,22 @@ func TestCancelMarksCancelled(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 	request.Status = manualjournal.StatusApproved
 
-	svc := &Service{db: fakeDBConnection{}, repo: &fakeManualJournalRepository{entity: request}, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Cancel(t.Context(), &serviceports.CancelManualJournalRequest{RequestID: request.ID, Reason: "Posted in error", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	svc := &Service{
+		db:           fakeDBConnection{},
+		repo:         repo,
+		validator:    &Validator{},
+		auditService: &mocks.NoopAuditService{},
+	}
+	result, err := svc.Cancel(
+		t.Context(),
+		&serviceports.CancelManualJournalRequest{
+			RequestID:  request.ID,
+			Reason:     "Posted in error",
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
 	assert.Equal(t, manualjournal.StatusCancelled, result.Status)
@@ -513,19 +632,38 @@ func TestPostAllowsLockedPeriod(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	request := approvedRequest(orgID, buID, userID)
 
-	manualRepo := &fakeManualJournalRepository{entity: request}
-	journalRepo := &fakeJournalPostingRepository{}
+	manualRepo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyRequireReopen}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: fyID, Status: fiscalperiod.StatusLocked}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: fyID, Status: fiscalperiod.StatusLocked}, nil)
 
-	svc := &Service{db: fakeDBConnection{}, repo: manualRepo, journalRepo: journalRepo, accountingRepo: accountingRepo, generator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, validator: &Validator{fiscalRepo: fiscalRepo}, auditService: &mocks.NoopAuditService{}}
-	_, err := svc.Post(t.Context(), &serviceports.GetManualJournalRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	svc := &Service{
+		db:             fakeDBConnection{},
+		repo:           manualRepo,
+		journalRepo:    journalRepo,
+		accountingRepo: accountingRepo,
+		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:      &Validator{fiscalRepo: fiscalRepo},
+		auditService:   &mocks.NoopAuditService{},
+	}
+	_, err := svc.Post(
+		t.Context(),
+		&serviceports.GetManualJournalRequest{
+			RequestID:  request.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
-	require.NotNil(t, journalRepo.last)
-	assert.Equal(t, request.AccountingDate, journalRepo.last.AccountingDate)
+	require.NotNil(t, journalTracker.last)
+	assert.Equal(t, request.AccountingDate, journalTracker.last.AccountingDate)
 }
 
 func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
@@ -538,67 +676,131 @@ func TestPostErrorsWhenNoNextOpenPeriodExists(t *testing.T) {
 	request := approvedRequest(orgID, buID, userID)
 
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 3, Status: fiscalperiod.StatusClosed}, nil)
-	fiscalRepo.EXPECT().ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusClosed}}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: request.AccountingDate}).
+		Return(&fiscalperiod.FiscalPeriod{ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 3, Status: fiscalperiod.StatusClosed}, nil)
+	fiscalRepo.EXPECT().
+		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
+		Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusClosed}}, nil)
 
-	journalRepo := &fakeJournalPostingRepository{}
-	svc := &Service{db: fakeDBConnection{}, repo: &fakeManualJournalRepository{entity: request}, journalRepo: journalRepo, accountingRepo: accountingRepo, generator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, validator: &Validator{fiscalRepo: fiscalRepo}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Post(t.Context(), &serviceports.GetManualJournalRequest{RequestID: request.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	repo, _ := newManualJournalRepositoryMock(t, request)
+	journalRepo, journalTracker := newJournalPostingRepositoryMock(t)
+	svc := &Service{
+		db:             fakeDBConnection{},
+		repo:           repo,
+		journalRepo:    journalRepo,
+		accountingRepo: accountingRepo,
+		generator:      testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:      &Validator{fiscalRepo: fiscalRepo},
+		auditService:   &mocks.NoopAuditService{},
+	}
+	result, err := svc.Post(
+		t.Context(),
+		&serviceports.GetManualJournalRequest{
+			RequestID:  request.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "No next open")
-	assert.Nil(t, journalRepo.last)
+	assert.Nil(t, journalTracker.last)
 }
 
 type fakeDBConnection struct{}
 
 func (fakeDBConnection) DB() *bun.DB                          { return nil }
 func (fakeDBConnection) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeDBConnection) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+
+func (fakeDBConnection) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
 	return fn(ctx, bun.Tx{})
 }
 func (fakeDBConnection) HealthCheck(context.Context) error { return nil }
 func (fakeDBConnection) IsHealthy(context.Context) bool    { return true }
 func (fakeDBConnection) Close() error                      { return nil }
 
-type fakeManualJournalRepository struct {
-	entity  *manualjournal.Request
+type manualJournalRepositoryTracker struct {
+	current *manualjournal.Request
 	updated *manualjournal.Request
 }
 
-func (f *fakeManualJournalRepository) List(context.Context, *repositories.ListManualJournalRequest) (*pagination.ListResult[*manualjournal.Request], error) {
-	return &pagination.ListResult[*manualjournal.Request]{Items: []*manualjournal.Request{cloneRequest(f.entity)}}, nil
+func newManualJournalRepositoryMock(
+	t *testing.T,
+	entity *manualjournal.Request,
+) (*mocks.MockManualJournalRepository, *manualJournalRepositoryTracker) {
+	t.Helper()
+
+	tracker := &manualJournalRepositoryTracker{current: cloneRequest(entity)}
+	repo := mocks.NewMockManualJournalRepository(t)
+	repo.EXPECT().
+		List(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ *repositories.ListManualJournalRequest) (*pagination.ListResult[*manualjournal.Request], error) {
+			items := []*manualjournal.Request{}
+			if tracker.current != nil {
+				items = append(items, cloneRequest(tracker.current))
+			}
+			return &pagination.ListResult[*manualjournal.Request]{Items: items}, nil
+		}).
+		Maybe()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ repositories.GetManualJournalByIDRequest) (*manualjournal.Request, error) {
+			return cloneRequest(tracker.current), nil
+		}).
+		Maybe()
+	repo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
+			entity.SyncTotals()
+			tracker.current = cloneRequest(entity)
+			return cloneRequest(entity), nil
+		}).
+		Maybe()
+	repo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
+			entity.SyncTotals()
+			tracker.current = cloneRequest(entity)
+			tracker.updated = cloneRequest(entity)
+			return cloneRequest(entity), nil
+		}).
+		Maybe()
+
+	return repo, tracker
 }
 
-func (f *fakeManualJournalRepository) GetByID(context.Context, repositories.GetManualJournalByIDRequest) (*manualjournal.Request, error) {
-	return cloneRequest(f.entity), nil
-}
-
-func (f *fakeManualJournalRepository) Create(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
-	entity.SyncTotals()
-	f.entity = cloneRequest(entity)
-	return cloneRequest(entity), nil
-}
-
-func (f *fakeManualJournalRepository) Update(_ context.Context, entity *manualjournal.Request) (*manualjournal.Request, error) {
-	entity.SyncTotals()
-	f.entity = cloneRequest(entity)
-	f.updated = cloneRequest(entity)
-	return cloneRequest(entity), nil
-}
-
-type fakeJournalPostingRepository struct {
+type journalPostingRepositoryTracker struct {
 	last *repositories.CreateJournalPostingParams
 }
 
-func (f *fakeJournalPostingRepository) CreatePosting(_ context.Context, params repositories.CreateJournalPostingParams) error {
-	copyParams := params
-	copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
-	f.last = &copyParams
-	return nil
+func newJournalPostingRepositoryMock(
+	t *testing.T,
+) (*mocks.MockJournalPostingRepository, *journalPostingRepositoryTracker) {
+	t.Helper()
+
+	tracker := &journalPostingRepositoryTracker{}
+	repo := mocks.NewMockJournalPostingRepository(t)
+	repo.EXPECT().
+		CreatePosting(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+			copyParams := params
+			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			tracker.last = &copyParams
+			return nil
+		}).
+		Maybe()
+
+	return repo, tracker
 }
 
 func approvedRequest(orgID, buID, userID pulid.ID) *manualjournal.Request {
@@ -621,8 +823,18 @@ func approvedRequest(orgID, buID, userID pulid.ID) *manualjournal.Request {
 		CreatedByID:             userID,
 		UpdatedByID:             userID,
 		Lines: []*manualjournal.Line{
-			{ID: pulid.MustNew("mjrl_"), GLAccountID: pulid.MustNew("gla_"), Description: "Debit", DebitAmount: 1000},
-			{ID: pulid.MustNew("mjrl_"), GLAccountID: pulid.MustNew("gla_"), Description: "Credit", CreditAmount: 1000},
+			{
+				ID:          pulid.MustNew("mjrl_"),
+				GLAccountID: pulid.MustNew("gla_"),
+				Description: "Debit",
+				DebitAmount: 1000,
+			},
+			{
+				ID:           pulid.MustNew("mjrl_"),
+				GLAccountID:  pulid.MustNew("gla_"),
+				Description:  "Credit",
+				CreditAmount: 1000,
+			},
 		},
 	}
 }

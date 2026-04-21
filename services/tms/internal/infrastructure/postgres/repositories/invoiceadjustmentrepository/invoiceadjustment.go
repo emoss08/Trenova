@@ -56,8 +56,8 @@ func New(p Params) repositories.InvoiceAdjustmentRepository {
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetInvoiceAdjustmentRequest,
-) (*invoiceadjustment.Adjustment, error) {
-	entity := new(invoiceadjustment.Adjustment)
+) (*invoiceadjustment.InvoiceAdjustment, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustment)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -83,8 +83,8 @@ func (r *repository) GetByID(
 func (r *repository) GetByIdempotencyKey(
 	ctx context.Context,
 	req repositories.GetInvoiceAdjustmentByIdempotencyRequest,
-) (*invoiceadjustment.Adjustment, error) {
-	entity := new(invoiceadjustment.Adjustment)
+) (*invoiceadjustment.InvoiceAdjustment, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustment)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -137,7 +137,7 @@ func (r *repository) GetInvoiceLineCreditUsage(
 	rows := make([]row, 0)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
-		Model((*invoiceadjustment.AdjustmentLine)(nil)).
+		Model((*invoiceadjustment.InvoiceAdjustmentLine)(nil)).
 		Column("original_line_id").
 		ColumnExpr("COALESCE(SUM(ABS(credit_amount)), 0) AS amount_credited").
 		Where("original_invoice_id = ?", req.InvoiceID).
@@ -167,8 +167,8 @@ func (r *repository) GetInvoiceLineCreditUsage(
 func (r *repository) GetCorrectionGroup(
 	ctx context.Context,
 	req repositories.GetCorrectionGroupRequest,
-) (*invoiceadjustment.CorrectionGroup, error) {
-	entity := new(invoiceadjustment.CorrectionGroup)
+) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -186,8 +186,8 @@ func (r *repository) GetCorrectionGroup(
 func (r *repository) GetCorrectionGroupByRootInvoice(
 	ctx context.Context,
 	req repositories.GetCorrectionGroupByRootInvoiceRequest,
-) (*invoiceadjustment.CorrectionGroup, error) {
-	entity := new(invoiceadjustment.CorrectionGroup)
+) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustmentCorrectionGroup)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -204,8 +204,8 @@ func (r *repository) GetCorrectionGroupByRootInvoice(
 
 func (r *repository) CreateCorrectionGroup(
 	ctx context.Context,
-	group *invoiceadjustment.CorrectionGroup,
-) (*invoiceadjustment.CorrectionGroup, error) {
+	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
+) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(group).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("create correction group: %w", err)
 	}
@@ -221,8 +221,8 @@ func (r *repository) CreateCorrectionGroup(
 
 func (r *repository) UpdateCorrectionGroup(
 	ctx context.Context,
-	group *invoiceadjustment.CorrectionGroup,
-) (*invoiceadjustment.CorrectionGroup, error) {
+	group *invoiceadjustment.InvoiceAdjustmentCorrectionGroup,
+) (*invoiceadjustment.InvoiceAdjustmentCorrectionGroup, error) {
 	if _, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(group).
@@ -291,8 +291,8 @@ func (r *repository) CreateAdjustmentArtifacts(
 
 func (r *repository) UpdateAdjustment(
 	ctx context.Context,
-	adjustment *invoiceadjustment.Adjustment,
-) (*invoiceadjustment.Adjustment, error) {
+	adjustment *invoiceadjustment.InvoiceAdjustment,
+) (*invoiceadjustment.InvoiceAdjustment, error) {
 	adjustment.SyncMinorAmounts()
 
 	res, err := r.db.DBForContext(ctx).
@@ -377,7 +377,7 @@ func (r *repository) GetLineage(
 		return nil, fmt.Errorf("get lineage invoices: %w", err)
 	}
 
-	adjustments := make([]*invoiceadjustment.Adjustment, 0)
+	adjustments := make([]*invoiceadjustment.InvoiceAdjustment, 0)
 	if err = r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&adjustments).
@@ -402,7 +402,7 @@ func (r *repository) ReplaceAdjustmentLines(
 ) error {
 	if _, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Model((*invoiceadjustment.AdjustmentLine)(nil)).
+		Model((*invoiceadjustment.InvoiceAdjustmentLine)(nil)).
 		Where("adjustment_id = ?", req.AdjustmentID).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
@@ -435,7 +435,7 @@ func (r *repository) ReplaceDocumentReferences(
 ) error {
 	if _, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Model((*invoiceadjustment.DocumentReference)(nil)).
+		Model((*invoiceadjustment.InvoiceAdjustmentDocumentReference)(nil)).
 		Where("adjustment_id = ?", req.AdjustmentID).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
@@ -456,9 +456,9 @@ func (r *repository) ReplaceDocumentReferences(
 
 func (r *repository) CreateBatch(
 	ctx context.Context,
-	batch *invoiceadjustment.Batch,
-	items []*invoiceadjustment.BatchItem,
-) (*invoiceadjustment.Batch, error) {
+	batch *invoiceadjustment.InvoiceAdjustmentBatch,
+	items []*invoiceadjustment.InvoiceAdjustmentBatchItem,
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(batch).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("create batch: %w", err)
 	}
@@ -480,8 +480,8 @@ func (r *repository) CreateBatch(
 func (r *repository) GetBatchByID(
 	ctx context.Context,
 	req repositories.GetBatchRequest,
-) (*invoiceadjustment.Batch, error) {
-	entity := new(invoiceadjustment.Batch)
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -499,8 +499,8 @@ func (r *repository) GetBatchByID(
 func (r *repository) GetBatchByIdempotencyKey(
 	ctx context.Context,
 	req repositories.GetBatchByIdempotencyRequest,
-) (*invoiceadjustment.Batch, error) {
-	entity := new(invoiceadjustment.Batch)
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
+	entity := new(invoiceadjustment.InvoiceAdjustmentBatch)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -520,8 +520,8 @@ func (r *repository) GetBatchByIdempotencyKey(
 
 func (r *repository) UpdateBatch(
 	ctx context.Context,
-	batch *invoiceadjustment.Batch,
-) (*invoiceadjustment.Batch, error) {
+	batch *invoiceadjustment.InvoiceAdjustmentBatch,
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	res, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(batch).
@@ -557,8 +557,8 @@ func (r *repository) UpdateBatch(
 
 func (r *repository) UpdateBatchItem(
 	ctx context.Context,
-	item *invoiceadjustment.BatchItem,
-) (*invoiceadjustment.BatchItem, error) {
+	item *invoiceadjustment.InvoiceAdjustmentBatchItem,
+) (*invoiceadjustment.InvoiceAdjustmentBatchItem, error) {
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(item).
@@ -576,7 +576,7 @@ func (r *repository) UpdateBatchItem(
 		return nil, fmt.Errorf("update batch item: %w", err)
 	}
 
-	entity := new(invoiceadjustment.BatchItem)
+	entity := new(invoiceadjustment.InvoiceAdjustmentBatchItem)
 	if err = r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -593,8 +593,12 @@ func (r *repository) UpdateBatchItem(
 func (r *repository) ListApprovalQueue(
 	ctx context.Context,
 	req repositories.ListApprovalQueueRequest,
-) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error) {
-	entities := make([]*invoiceadjustment.ApprovalQueueItem, 0, req.Filter.Pagination.SafeLimit())
+) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
+	entities := make(
+		[]*repositories.InvoiceAdjustmentApprovalQueueItem,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
@@ -661,7 +665,7 @@ func (r *repository) ListApprovalQueue(
 		return nil, err
 	}
 
-	return &pagination.ListResult[*invoiceadjustment.ApprovalQueueItem]{
+	return &pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]{
 		Items: entities,
 		Total: total,
 	}, nil
@@ -670,8 +674,12 @@ func (r *repository) ListApprovalQueue(
 func (r *repository) ListReconciliationQueue(
 	ctx context.Context,
 	req repositories.ListReconciliationQueueRequest,
-) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error) {
-	entities := make([]*invoiceadjustment.ReconciliationQueueItem, 0, req.Filter.Pagination.SafeLimit())
+) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
+	entities := make(
+		[]*repositories.InvoiceAdjustmentReconciliationQueueItem,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
@@ -723,7 +731,7 @@ func (r *repository) ListReconciliationQueue(
 		return nil, err
 	}
 
-	return &pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem]{
+	return &pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem]{
 		Items: entities,
 		Total: total,
 	}, nil
@@ -732,13 +740,17 @@ func (r *repository) ListReconciliationQueue(
 func (r *repository) ListBatchQueue(
 	ctx context.Context,
 	req repositories.ListBatchQueueRequest,
-) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error) {
-	entities := make([]*invoiceadjustment.BatchQueueItem, 0, req.Filter.Pagination.SafeLimit())
+) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
+	entities := make(
+		[]*invoiceadjustment.InvoiceAdjustmentBatch,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		ModelTableExpr("invoice_adjustment_batches AS iab").
-		ColumnExpr("iab.id AS batch_id").
+		ColumnExpr("iab.id").
 		ColumnExpr("iab.idempotency_key").
 		ColumnExpr("iab.status").
 		ColumnExpr("iab.total_count").
@@ -786,7 +798,7 @@ func (r *repository) ListBatchQueue(
 		return nil, err
 	}
 
-	return &pagination.ListResult[*invoiceadjustment.BatchQueueItem]{
+	return &pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]{
 		Items: entities,
 		Total: total,
 	}, nil
@@ -795,12 +807,12 @@ func (r *repository) ListBatchQueue(
 func (r *repository) GetOperationsSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*invoiceadjustment.OperationsSummary, error) {
-	summary := &invoiceadjustment.OperationsSummary{
-		AdjustmentsByStatus:         make([]*invoiceadjustment.SummaryCount, 0),
-		ReasonDistribution:          make([]*invoiceadjustment.SummaryCount, 0),
-		RepeatedAdjustments:         make([]*invoiceadjustment.RepeatedAdjustmentSummary, 0),
-		RepeatedCustomerAdjustments: make([]*invoiceadjustment.RepeatedAdjustmentSummary, 0),
+) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
+	summary := &repositories.InvoiceAdjustmentOperationsSummary{
+		AdjustmentsByStatus:         make([]*repositories.InvoiceAdjustmentSummaryCount, 0),
+		ReasonDistribution:          make([]*repositories.InvoiceAdjustmentSummaryCount, 0),
+		RepeatedAdjustments:         make([]*repositories.InvoiceAdjustmentRepeatedSummary, 0),
+		RepeatedCustomerAdjustments: make([]*repositories.InvoiceAdjustmentRepeatedSummary, 0),
 	}
 
 	type countRow struct {
@@ -822,10 +834,13 @@ func (r *repository) GetOperationsSummary(
 		return nil, fmt.Errorf("get adjustment status summary: %w", err)
 	}
 	for _, row := range adjustmentCounts {
-		summary.AdjustmentsByStatus = append(summary.AdjustmentsByStatus, &invoiceadjustment.SummaryCount{
-			Label: row.Label,
-			Count: row.Count,
-		})
+		summary.AdjustmentsByStatus = append(
+			summary.AdjustmentsByStatus,
+			&repositories.InvoiceAdjustmentSummaryCount{
+				Label: row.Label,
+				Count: row.Count,
+			},
+		)
 	}
 
 	var err error
@@ -860,10 +875,13 @@ func (r *repository) GetOperationsSummary(
 		return nil, fmt.Errorf("get adjustment reason summary: %w", err)
 	}
 	for _, row := range reasonRows {
-		summary.ReasonDistribution = append(summary.ReasonDistribution, &invoiceadjustment.SummaryCount{
-			Label: row.Label,
-			Count: row.Count,
-		})
+		summary.ReasonDistribution = append(
+			summary.ReasonDistribution,
+			&repositories.InvoiceAdjustmentSummaryCount{
+				Label: row.Label,
+				Count: row.Count,
+			},
+		)
 	}
 
 	type repeatedRow struct {
@@ -892,12 +910,15 @@ func (r *repository) GetOperationsSummary(
 		return nil, fmt.Errorf("get repeated invoice adjustments: %w", err)
 	}
 	for _, row := range repeatedInvoices {
-		summary.RepeatedAdjustments = append(summary.RepeatedAdjustments, &invoiceadjustment.RepeatedAdjustmentSummary{
-			EntityID:   row.EntityID,
-			EntityType: row.EntityType,
-			Label:      row.Label,
-			Count:      row.Count,
-		})
+		summary.RepeatedAdjustments = append(
+			summary.RepeatedAdjustments,
+			&repositories.InvoiceAdjustmentRepeatedSummary{
+				EntityID:   row.EntityID,
+				EntityType: row.EntityType,
+				Label:      row.Label,
+				Count:      row.Count,
+			},
+		)
 	}
 
 	repeatedCustomers := make([]repeatedRow, 0)
@@ -919,12 +940,15 @@ func (r *repository) GetOperationsSummary(
 		return nil, fmt.Errorf("get repeated customer adjustments: %w", err)
 	}
 	for _, row := range repeatedCustomers {
-		summary.RepeatedCustomerAdjustments = append(summary.RepeatedCustomerAdjustments, &invoiceadjustment.RepeatedAdjustmentSummary{
-			EntityID:   row.EntityID,
-			EntityType: row.EntityType,
-			Label:      row.Label,
-			Count:      row.Count,
-		})
+		summary.RepeatedCustomerAdjustments = append(
+			summary.RepeatedCustomerAdjustments,
+			&repositories.InvoiceAdjustmentRepeatedSummary{
+				EntityID:   row.EntityID,
+				EntityType: row.EntityType,
+				Label:      row.Label,
+				Count:      row.Count,
+			},
+		)
 	}
 
 	return summary, nil

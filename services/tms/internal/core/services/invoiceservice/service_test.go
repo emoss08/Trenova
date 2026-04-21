@@ -142,26 +142,29 @@ func TestShouldAutoPost(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 
-	t.Run("organization auto posting requires both org automation and customer opt-in", func(t *testing.T) {
-		t.Parallel()
+	t.Run(
+		"organization auto posting requires both org automation and customer opt-in",
+		func(t *testing.T) {
+			t.Parallel()
 
-		billingRepo := mocks.NewMockBillingControlRepository(t)
-		billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
-			InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
-			InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
-		}, nil)
+			billingRepo := mocks.NewMockBillingControlRepository(t)
+			billingRepo.EXPECT().GetByOrgID(t.Context(), orgID).Return(&tenant.BillingControl{
+				InvoiceDraftCreationMode: tenant.InvoiceDraftCreationModeAutomaticWhenTransferred,
+				InvoicePostingMode:       tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions,
+			}, nil)
 
-		svc := &Service{
-			l:           zap.NewNop(),
-			billingRepo: billingRepo,
-		}
+			svc := &Service{
+				l:           zap.NewNop(),
+				billingRepo: billingRepo,
+			}
 
-		autoPost := svc.shouldAutoPost(t.Context(), orgID, &customer.Customer{
-			BillingProfile: &customer.CustomerBillingProfile{AutoBill: true},
-		})
+			autoPost := svc.shouldAutoPost(t.Context(), orgID, &customer.Customer{
+				BillingProfile: &customer.CustomerBillingProfile{AutoBill: true},
+			})
 
-		assert.True(t, autoPost)
-	})
+			assert.True(t, autoPost)
+		},
+	)
 
 	t.Run("customer auto bill cannot loosen organization manual review policy", func(t *testing.T) {
 		t.Parallel()
@@ -250,9 +253,21 @@ func TestValidatorValidatePost_BlocksLockedPeriodPosting(t *testing.T) {
 func TestInvoicePostingSourceEvent(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, tenant.JournalSourceEventInvoicePosted, invoicePostingSourceEvent(billingqueue.BillTypeInvoice))
-	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted, invoicePostingSourceEvent(billingqueue.BillTypeCreditMemo))
-	assert.Equal(t, tenant.JournalSourceEventDebitMemoPosted, invoicePostingSourceEvent(billingqueue.BillTypeDebitMemo))
+	assert.Equal(
+		t,
+		tenant.JournalSourceEventInvoicePosted,
+		invoicePostingSourceEvent(billingqueue.BillTypeInvoice),
+	)
+	assert.Equal(
+		t,
+		tenant.JournalSourceEventCreditMemoPosted,
+		invoicePostingSourceEvent(billingqueue.BillTypeCreditMemo),
+	)
+	assert.Equal(
+		t,
+		tenant.JournalSourceEventDebitMemoPosted,
+		invoicePostingSourceEvent(billingqueue.BillTypeDebitMemo),
+	)
 }
 
 func TestInvoicePostingWorkflow(t *testing.T) {
@@ -261,10 +276,14 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	now := int64(1_700_000_000)
 
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(&tenant.AccountingControl{
-		JournalPostingMode:      tenant.JournalPostingModeAutomatic,
-		RequireManualJEApproval: true,
-	}, userID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(
+		&tenant.AccountingControl{
+			JournalPostingMode:      tenant.JournalPostingModeAutomatic,
+			RequireManualJEApproval: true,
+		},
+		userID,
+		now,
+	)
 	assert.Equal(t, "Posted", entryStatus)
 	assert.Equal(t, "Posted", batchStatus)
 	require.NotNil(t, postedAt)
@@ -275,10 +294,14 @@ func TestInvoicePostingWorkflow(t *testing.T) {
 	assert.Equal(t, userID, approvedByID)
 	require.NotNil(t, approvedAt)
 
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt = invoicePostingWorkflow(&tenant.AccountingControl{
-		JournalPostingMode:      tenant.JournalPostingModeManual,
-		RequireManualJEApproval: true,
-	}, userID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt = invoicePostingWorkflow(
+		&tenant.AccountingControl{
+			JournalPostingMode:      tenant.JournalPostingModeManual,
+			RequireManualJEApproval: true,
+		},
+		userID,
+		now,
+	)
 	assert.Equal(t, "Pending", entryStatus)
 	assert.Equal(t, "Pending", batchStatus)
 	assert.Nil(t, postedAt)
@@ -306,19 +329,33 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 		AccountingBasis:          tenant.AccountingBasisAccrual,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnInvoicePost,
 		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents:     []tenant.JournalSourceEventType{tenant.JournalSourceEventCreditMemoPosted},
-		DefaultRevenueAccountID:  revenueAccountID,
-		DefaultARAccountID:       arAccountID,
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventCreditMemoPosted,
+		},
+		DefaultRevenueAccountID: revenueAccountID,
+		DefaultARAccountID:      arAccountID,
 	}, nil)
 
 	fiscalPeriodRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalPeriodRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).Return(&fiscalperiod.FiscalPeriod{
-		ID:           periodID,
-		FiscalYearID: fyID,
-		Status:       fiscalperiod.StatusOpen,
-	}, nil)
+	fiscalPeriodRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
+		Return(&fiscalperiod.FiscalPeriod{
+			ID:           periodID,
+			FiscalYearID: fyID,
+			Status:       fiscalperiod.StatusOpen,
+		}, nil)
 
-	journalRepo := &fakeInvoiceJournalPostingRepository{}
+	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	var lastParams *repositories.CreateJournalPostingParams
+	journalRepo.EXPECT().
+		CreatePosting(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+			copyParams := params
+			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			lastParams = &copyParams
+			return nil
+		}).
+		Once()
 	svc := &Service{
 		l:                 zap.NewNop(),
 		accountingRepo:    accountingRepo,
@@ -339,16 +376,18 @@ func TestCreateInvoiceJournalPostingBuildsCreditMemoPolarity(t *testing.T) {
 	}, testutil.NewSessionActor(userID, orgID, buID))
 
 	require.NoError(t, err)
-	require.NotNil(t, journalRepo.last)
-	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted.String(), journalRepo.last.SourceEventType)
-	require.Len(t, journalRepo.last.Lines, 2)
-	assert.Equal(t, revenueAccountID, journalRepo.last.Lines[0].GLAccountID)
-	assert.Equal(t, int64(13500), journalRepo.last.Lines[0].DebitAmount)
-	assert.Equal(t, arAccountID, journalRepo.last.Lines[1].GLAccountID)
-	assert.Equal(t, int64(13500), journalRepo.last.Lines[1].CreditAmount)
+	require.NotNil(t, lastParams)
+	assert.Equal(t, tenant.JournalSourceEventCreditMemoPosted.String(), lastParams.SourceEventType)
+	require.Len(t, lastParams.Lines, 2)
+	assert.Equal(t, revenueAccountID, lastParams.Lines[0].GLAccountID)
+	assert.Equal(t, int64(13500), lastParams.Lines[0].DebitAmount)
+	assert.Equal(t, arAccountID, lastParams.Lines[1].GLAccountID)
+	assert.Equal(t, int64(13500), lastParams.Lines[1].CreditAmount)
 }
 
-func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoicePosting(t *testing.T) {
+func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoicePosting(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	orgID := pulid.MustNew("org_")
@@ -360,15 +399,33 @@ func TestCreateInvoiceJournalPostingSkipsWhenRecognitionPolicyDoesNotAllowInvoic
 		AccountingBasis:          tenant.AccountingBasisCash,
 		RevenueRecognitionPolicy: tenant.RevenueRecognitionOnCashReceipt,
 		JournalPostingMode:       tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents:     []tenant.JournalSourceEventType{tenant.JournalSourceEventCustomerPaymentPosted},
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventCustomerPaymentPosted,
+		},
 	}, nil)
-	journalRepo := &fakeInvoiceJournalPostingRepository{}
-	svc := &Service{l: zap.NewNop(), accountingRepo: accountingRepo, journalRepo: journalRepo, sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, validator: &Validator{}}
+	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	svc := &Service{
+		l:                 zap.NewNop(),
+		accountingRepo:    accountingRepo,
+		journalRepo:       journalRepo,
+		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:         &Validator{},
+	}
 
-	err := svc.createInvoiceJournalPosting(t.Context(), &invoice.Invoice{ID: pulid.MustNew("inv_"), OrganizationID: orgID, BusinessUnitID: buID, BillType: billingqueue.BillTypeInvoice, TotalAmountMinor: 10000, PostedAt: &now}, testutil.NewSessionActor(userID, orgID, buID))
+	err := svc.createInvoiceJournalPosting(
+		t.Context(),
+		&invoice.Invoice{
+			ID:               pulid.MustNew("inv_"),
+			OrganizationID:   orgID,
+			BusinessUnitID:   buID,
+			BillType:         billingqueue.BillTypeInvoice,
+			TotalAmountMinor: 10000,
+			PostedAt:         &now,
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
-	assert.Nil(t, journalRepo.last)
 }
 
 func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
@@ -379,16 +436,34 @@ func TestCreateInvoiceJournalPostingSkipsWhenAutoPostDisabled(t *testing.T) {
 	now := int64(1_700_000_000)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{
-		JournalPostingMode:   tenant.JournalPostingModeAutomatic,
-		AutoPostSourceEvents: []tenant.JournalSourceEventType{tenant.JournalSourceEventCustomerPaymentPosted},
+		JournalPostingMode: tenant.JournalPostingModeAutomatic,
+		AutoPostSourceEvents: []tenant.JournalSourceEventType{
+			tenant.JournalSourceEventCustomerPaymentPosted,
+		},
 	}, nil)
-	journalRepo := &fakeInvoiceJournalPostingRepository{}
-	svc := &Service{l: zap.NewNop(), accountingRepo: accountingRepo, journalRepo: journalRepo, sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, validator: &Validator{}}
+	journalRepo := mocks.NewMockJournalPostingRepository(t)
+	svc := &Service{
+		l:                 zap.NewNop(),
+		accountingRepo:    accountingRepo,
+		journalRepo:       journalRepo,
+		sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		validator:         &Validator{},
+	}
 
-	err := svc.createInvoiceJournalPosting(t.Context(), &invoice.Invoice{ID: pulid.MustNew("inv_"), OrganizationID: orgID, BusinessUnitID: buID, BillType: billingqueue.BillTypeInvoice, TotalAmountMinor: 10000, PostedAt: &now}, testutil.NewSessionActor(pulid.MustNew("usr_"), orgID, buID))
+	err := svc.createInvoiceJournalPosting(
+		t.Context(),
+		&invoice.Invoice{
+			ID:               pulid.MustNew("inv_"),
+			OrganizationID:   orgID,
+			BusinessUnitID:   buID,
+			BillType:         billingqueue.BillTypeInvoice,
+			TotalAmountMinor: 10000,
+			PostedAt:         &now,
+		},
+		testutil.NewSessionActor(pulid.MustNew("usr_"), orgID, buID),
+	)
 
 	require.NoError(t, err)
-	assert.Nil(t, journalRepo.last)
 }
 
 func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
@@ -399,11 +474,21 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	fyID := pulid.MustNew("fy_")
 	now := int64(1_700_000_000)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).Return(&fiscalperiod.FiscalPeriod{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, nil)
-	fiscalRepo.EXPECT().ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusOpen, StartDate: 1_700_001_000}}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: now}).
+		Return(&fiscalperiod.FiscalPeriod{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, nil)
+	fiscalRepo.EXPECT().
+		ListByFiscalYearID(mock.Anything, repositories.ListByFiscalYearIDRequest{FiscalYearID: fyID, OrgID: orgID, BuID: buID}).
+		Return([]*fiscalperiod.FiscalPeriod{{FiscalYearID: fyID, PeriodNumber: 1, Status: fiscalperiod.StatusClosed}, {ID: pulid.MustNew("fp_"), FiscalYearID: fyID, PeriodNumber: 2, Status: fiscalperiod.StatusOpen, StartDate: 1_700_001_000}}, nil)
 	svc := &Service{validator: &Validator{fiscalPeriodRepo: fiscalRepo}}
 
-	period, date, err := svc.resolveInvoicePostingPeriod(t.Context(), &invoice.Invoice{OrganizationID: orgID, BusinessUnitID: buID, PostedAt: &now}, &tenant.AccountingControl{ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen})
+	period, date, err := svc.resolveInvoicePostingPeriod(
+		t.Context(),
+		&invoice.Invoice{OrganizationID: orgID, BusinessUnitID: buID, PostedAt: &now},
+		&tenant.AccountingControl{
+			ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+		},
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, period)
@@ -414,20 +499,37 @@ func TestShouldAutoPostInvoiceSource(t *testing.T) {
 	t.Parallel()
 
 	assert.False(t, shouldAutoPostInvoiceSource(nil, tenant.JournalSourceEventInvoicePosted))
-	assert.False(t, shouldAutoPostInvoiceSource(&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeManual}, tenant.JournalSourceEventInvoicePosted))
-	assert.True(t, shouldAutoPostInvoiceSource(&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeAutomatic, AutoPostSourceEvents: []tenant.JournalSourceEventType{tenant.JournalSourceEventInvoicePosted}}, tenant.JournalSourceEventInvoicePosted))
-	assert.False(t, shouldAutoPostInvoiceSource(&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeAutomatic, AutoPostSourceEvents: []tenant.JournalSourceEventType{tenant.JournalSourceEventCustomerPaymentPosted}}, tenant.JournalSourceEventInvoicePosted))
-}
-
-type fakeInvoiceJournalPostingRepository struct {
-	last *repositories.CreateJournalPostingParams
-}
-
-func (f *fakeInvoiceJournalPostingRepository) CreatePosting(_ context.Context, params repositories.CreateJournalPostingParams) error {
-	copyParams := params
-	copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
-	f.last = &copyParams
-	return nil
+	assert.False(
+		t,
+		shouldAutoPostInvoiceSource(
+			&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeManual},
+			tenant.JournalSourceEventInvoicePosted,
+		),
+	)
+	assert.True(
+		t,
+		shouldAutoPostInvoiceSource(
+			&tenant.AccountingControl{
+				JournalPostingMode: tenant.JournalPostingModeAutomatic,
+				AutoPostSourceEvents: []tenant.JournalSourceEventType{
+					tenant.JournalSourceEventInvoicePosted,
+				},
+			},
+			tenant.JournalSourceEventInvoicePosted,
+		),
+	)
+	assert.False(
+		t,
+		shouldAutoPostInvoiceSource(
+			&tenant.AccountingControl{
+				JournalPostingMode: tenant.JournalPostingModeAutomatic,
+				AutoPostSourceEvents: []tenant.JournalSourceEventType{
+					tenant.JournalSourceEventCustomerPaymentPosted,
+				},
+			},
+			tenant.JournalSourceEventInvoicePosted,
+		),
+	)
 }
 
 func int64Ptr(v int64) *int64 {

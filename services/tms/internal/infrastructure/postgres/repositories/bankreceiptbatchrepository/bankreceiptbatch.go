@@ -32,8 +32,8 @@ func New(p Params) repositories.BankReceiptBatchRepository {
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetBankReceiptBatchByIDRequest,
-) (*bankreceiptbatch.Batch, error) {
-	entity := new(bankreceiptbatch.Batch)
+) (*bankreceiptbatch.BankReceiptBatch, error) {
+	entity := new(bankreceiptbatch.BankReceiptBatch)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -50,8 +50,8 @@ func (r *repository) GetByID(
 func (r *repository) List(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*bankreceiptbatch.Batch, error) {
-	items := make([]*bankreceiptbatch.Batch, 0)
+) ([]*bankreceiptbatch.BankReceiptBatch, error) {
+	items := make([]*bankreceiptbatch.BankReceiptBatch, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
@@ -67,8 +67,8 @@ func (r *repository) List(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *bankreceiptbatch.Batch,
-) (*bankreceiptbatch.Batch, error) {
+	entity *bankreceiptbatch.BankReceiptBatch,
+) (*bankreceiptbatch.BankReceiptBatch, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("create bank receipt batch: %w", err)
 	}
@@ -87,7 +87,7 @@ func (r *repository) Create(
 func (r *repository) DistinctSources(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
+) (*pagination.ListResult[*repositories.BankReceiptBatchSourceOption], error) {
 	var sources []string
 	q := r.db.DBForContext(ctx).
 		NewSelect().
@@ -107,9 +107,9 @@ func (r *repository) DistinctSources(
 		return nil, fmt.Errorf("distinct sources: %w", err)
 	}
 
-	options := make([]*bankreceiptbatch.SourceOption, len(sources))
+	options := make([]*repositories.BankReceiptBatchSourceOption, len(sources))
 	for i, s := range sources {
-		options[i] = &bankreceiptbatch.SourceOption{Value: s, Label: s}
+		options[i] = &repositories.BankReceiptBatchSourceOption{Value: s, Label: s}
 	}
 
 	limit := req.Pagination.SafeLimit()
@@ -124,7 +124,7 @@ func (r *repository) DistinctSources(
 		end = total
 	}
 
-	return &pagination.ListResult[*bankreceiptbatch.SourceOption]{
+	return &pagination.ListResult[*repositories.BankReceiptBatchSourceOption]{
 		Items: options[offset:end],
 		Total: total,
 	}, nil
@@ -132,8 +132,8 @@ func (r *repository) DistinctSources(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *bankreceiptbatch.Batch,
-) (*bankreceiptbatch.Batch, error) {
+	entity *bankreceiptbatch.BankReceiptBatch,
+) (*bankreceiptbatch.BankReceiptBatch, error) {
 	entity.UpdatedAt = timeutils.NowUnix()
 	res, err := r.db.DBForContext(ctx).
 		NewUpdate().

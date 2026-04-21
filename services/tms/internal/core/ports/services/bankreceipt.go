@@ -4,9 +4,19 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+type BankReceiptMatchSuggestion struct {
+	CustomerPaymentID pulid.ID `json:"customerPaymentId"`
+	ReferenceNumber   string   `json:"referenceNumber"`
+	AmountMinor       int64    `json:"amountMinor"`
+	CustomerID        pulid.ID `json:"customerId"`
+	Score             int      `json:"score"`
+	Reason            string   `json:"reason"`
+}
 
 type ImportBankReceiptRequest struct {
 	ReceiptDate     int64                 `json:"receiptDate"`
@@ -31,28 +41,28 @@ type GetBankReceiptRequest struct {
 }
 
 type BankReceiptService interface {
-	Get(ctx context.Context, req *GetBankReceiptRequest) (*bankreceipt.Receipt, error)
+	Get(ctx context.Context, req *GetBankReceiptRequest) (*bankreceipt.BankReceipt, error)
 	Import(
 		ctx context.Context,
 		req *ImportBankReceiptRequest,
 		actor *RequestActor,
-	) (*bankreceipt.Receipt, error)
+	) (*bankreceipt.BankReceipt, error)
 	Match(
 		ctx context.Context,
 		req *MatchBankReceiptRequest,
 		actor *RequestActor,
-	) (*bankreceipt.Receipt, error)
+	) (*bankreceipt.BankReceipt, error)
 	ListExceptions(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) ([]*bankreceipt.Receipt, error)
+	) ([]*bankreceipt.BankReceipt, error)
 	SuggestMatches(
 		ctx context.Context,
 		req *GetBankReceiptRequest,
-	) ([]*bankreceipt.MatchSuggestion, error)
+	) ([]*BankReceiptMatchSuggestion, error)
 	GetSummary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 		asOfDate int64,
-	) (*bankreceipt.ReconciliationSummary, error)
+	) (*repositoryports.BankReceiptReconciliationSummary, error)
 }

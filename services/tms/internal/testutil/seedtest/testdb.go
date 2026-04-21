@@ -104,16 +104,16 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 		defer cancel()
 
 		req := testcontainers.ContainerRequest{
-			Name:         "trenova-test-postgis",
 			Image:        "postgis/postgis:16-3.4-alpine",
 			ExposedPorts: []string{"5432/tcp"},
+			Cmd:          []string{"postgres", "-c", "max_connections=300"},
 			Env: map[string]string{
 				"POSTGRES_DB":       "trenova_seed_test",
 				"POSTGRES_USER":     "test",
 				"POSTGRES_PASSWORD": "test",
 			},
 			WaitingFor: wait.ForLog("database system is ready to accept connections").
-				WithOccurrence(2),
+				WithOccurrence(1),
 		}
 
 		container, err := testcontainers.GenericContainer(
@@ -121,7 +121,6 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 			testcontainers.GenericContainerRequest{
 				ContainerRequest: req,
 				Started:          true,
-				Reuse:            true,
 			},
 		)
 		if err != nil {
@@ -147,13 +146,17 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 			port.Port(),
 		)
 		adminSQL := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(adminDSN)))
+		adminSQL.SetMaxOpenConns(4)
+		adminSQL.SetMaxIdleConns(2)
+		adminSQL.SetConnMaxIdleTime(30 * time.Second)
+		adminSQL.SetConnMaxLifetime(2 * time.Minute)
 		adminDB := bun.NewDB(adminSQL, pgdialect.New())
 
-		for i := range 30 {
+		for i := range 120 {
 			if pingErr := adminDB.PingContext(ctx); pingErr == nil {
 				break
 			}
-			if i == 29 {
+			if i == 119 {
 				adminDB.Close()
 				sharedSeedErr = fmt.Errorf("failed to connect to postgis container after retries")
 				return
@@ -177,6 +180,10 @@ func getSharedSeedEnv() (*seedEnvironment, error) {
 			dbName,
 		)
 		sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+		sqldb.SetMaxOpenConns(2)
+		sqldb.SetMaxIdleConns(1)
+		sqldb.SetConnMaxIdleTime(30 * time.Second)
+		sqldb.SetConnMaxLifetime(2 * time.Minute)
 		db := bun.NewDB(sqldb, pgdialect.New())
 
 		if err := db.PingContext(ctx); err != nil {
@@ -234,6 +241,10 @@ func SetupTestDB(t *testing.T) (context.Context, *bun.DB, func()) {
 		dbName,
 	)
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	sqldb.SetMaxOpenConns(2)
+	sqldb.SetMaxIdleConns(1)
+	sqldb.SetConnMaxIdleTime(30 * time.Second)
+	sqldb.SetConnMaxLifetime(2 * time.Minute)
 	db := bun.NewDB(sqldb, pgdialect.New())
 	require.NoError(t, db.PingContext(ctx), "failed to ping isolated test database")
 

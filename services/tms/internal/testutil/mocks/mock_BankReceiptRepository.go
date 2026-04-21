@@ -18,7 +18,8 @@ import (
 func NewMockBankReceiptRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *MockBankReceiptRepository {
+},
+) *MockBankReceiptRepository {
 	mock := &MockBankReceiptRepository{}
 	mock.Mock.Test(t)
 
@@ -41,26 +42,26 @@ func (_m *MockBankReceiptRepository) EXPECT() *MockBankReceiptRepository_Expecte
 }
 
 // Create provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) Create(ctx context.Context, entity *bankreceipt.Receipt) (*bankreceipt.Receipt, error) {
+func (_mock *MockBankReceiptRepository) Create(ctx context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *bankreceipt.Receipt
+	var r0 *bankreceipt.BankReceipt
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.Receipt) (*bankreceipt.Receipt, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.Receipt) *bankreceipt.Receipt); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.BankReceipt) *bankreceipt.BankReceipt); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bankreceipt.Receipt)
+			r0 = ret.Get(0).(*bankreceipt.BankReceipt)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *bankreceipt.Receipt) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *bankreceipt.BankReceipt) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +76,20 @@ type MockBankReceiptRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *bankreceipt.Receipt
+//   - entity *bankreceipt.BankReceipt
 func (_e *MockBankReceiptRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockBankReceiptRepository_Create_Call {
 	return &MockBankReceiptRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockBankReceiptRepository_Create_Call) Run(run func(ctx context.Context, entity *bankreceipt.Receipt)) *MockBankReceiptRepository_Create_Call {
+func (_c *MockBankReceiptRepository_Create_Call) Run(run func(ctx context.Context, entity *bankreceipt.BankReceipt)) *MockBankReceiptRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *bankreceipt.Receipt
+		var arg1 *bankreceipt.BankReceipt
 		if args[1] != nil {
-			arg1 = args[1].(*bankreceipt.Receipt)
+			arg1 = args[1].(*bankreceipt.BankReceipt)
 		}
 		run(
 			arg0,
@@ -98,34 +99,34 @@ func (_c *MockBankReceiptRepository_Create_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_Create_Call) Return(receipt *bankreceipt.Receipt, err error) *MockBankReceiptRepository_Create_Call {
+func (_c *MockBankReceiptRepository_Create_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_Create_Call {
 	_c.Call.Return(receipt, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *bankreceipt.Receipt) (*bankreceipt.Receipt, error)) *MockBankReceiptRepository_Create_Call {
+func (_c *MockBankReceiptRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByID provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) GetByID(ctx context.Context, req repositories.GetBankReceiptByIDRequest) (*bankreceipt.Receipt, error) {
+func (_mock *MockBankReceiptRepository) GetByID(ctx context.Context, req repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *bankreceipt.Receipt
+	var r0 *bankreceipt.BankReceipt
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptByIDRequest) (*bankreceipt.Receipt, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptByIDRequest) *bankreceipt.Receipt); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptByIDRequest) *bankreceipt.BankReceipt); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bankreceipt.Receipt)
+			r0 = ret.Get(0).(*bankreceipt.BankReceipt)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetBankReceiptByIDRequest) error); ok {
@@ -166,34 +167,34 @@ func (_c *MockBankReceiptRepository_GetByID_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_GetByID_Call) Return(receipt *bankreceipt.Receipt, err error) *MockBankReceiptRepository_GetByID_Call {
+func (_c *MockBankReceiptRepository_GetByID_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_GetByID_Call {
 	_c.Call.Return(receipt, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBankReceiptByIDRequest) (*bankreceipt.Receipt, error)) *MockBankReceiptRepository_GetByID_Call {
+func (_c *MockBankReceiptRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSummary provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) GetSummary(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error) {
+func (_mock *MockBankReceiptRepository) GetSummary(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*repositories.BankReceiptReconciliationSummary, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSummary")
 	}
 
-	var r0 *bankreceipt.ReconciliationSummary
+	var r0 *repositories.BankReceiptReconciliationSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) (*repositories.BankReceiptReconciliationSummary, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) *bankreceipt.ReconciliationSummary); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetBankReceiptSummaryRequest) *repositories.BankReceiptReconciliationSummary); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bankreceipt.ReconciliationSummary)
+			r0 = ret.Get(0).(*repositories.BankReceiptReconciliationSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetBankReceiptSummaryRequest) error); ok {
@@ -234,34 +235,34 @@ func (_c *MockBankReceiptRepository_GetSummary_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_GetSummary_Call) Return(reconciliationSummary *bankreceipt.ReconciliationSummary, err error) *MockBankReceiptRepository_GetSummary_Call {
+func (_c *MockBankReceiptRepository_GetSummary_Call) Return(reconciliationSummary *repositories.BankReceiptReconciliationSummary, err error) *MockBankReceiptRepository_GetSummary_Call {
 	_c.Call.Return(reconciliationSummary, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_GetSummary_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error)) *MockBankReceiptRepository_GetSummary_Call {
+func (_c *MockBankReceiptRepository_GetSummary_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetBankReceiptSummaryRequest) (*repositories.BankReceiptReconciliationSummary, error)) *MockBankReceiptRepository_GetSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListByImportBatchID provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) ListByImportBatchID(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error) {
+func (_mock *MockBankReceiptRepository) ListByImportBatchID(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.BankReceipt, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByImportBatchID")
 	}
 
-	var r0 []*bankreceipt.Receipt
+	var r0 []*bankreceipt.BankReceipt
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.BankReceipt, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) []*bankreceipt.Receipt); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) []*bankreceipt.BankReceipt); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*bankreceipt.Receipt)
+			r0 = ret.Get(0).([]*bankreceipt.BankReceipt)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListBankReceiptsByImportBatchRequest) error); ok {
@@ -302,34 +303,34 @@ func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) Run(run func(ctx c
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) Return(receipts []*bankreceipt.Receipt, err error) *MockBankReceiptRepository_ListByImportBatchID_Call {
+func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) Return(receipts []*bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_ListByImportBatchID_Call {
 	_c.Call.Return(receipts, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error)) *MockBankReceiptRepository_ListByImportBatchID_Call {
+func (_c *MockBankReceiptRepository_ListByImportBatchID_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_ListByImportBatchID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListExceptions provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.Receipt, error) {
+func (_mock *MockBankReceiptRepository) ListExceptions(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListExceptions")
 	}
 
-	var r0 []*bankreceipt.Receipt
+	var r0 []*bankreceipt.BankReceipt
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*bankreceipt.Receipt, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*bankreceipt.Receipt); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) []*bankreceipt.BankReceipt); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*bankreceipt.Receipt)
+			r0 = ret.Get(0).([]*bankreceipt.BankReceipt)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -370,37 +371,37 @@ func (_c *MockBankReceiptRepository_ListExceptions_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListExceptions_Call) Return(receipts []*bankreceipt.Receipt, err error) *MockBankReceiptRepository_ListExceptions_Call {
+func (_c *MockBankReceiptRepository_ListExceptions_Call) Return(receipts []*bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_ListExceptions_Call {
 	_c.Call.Return(receipts, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_ListExceptions_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.Receipt, error)) *MockBankReceiptRepository_ListExceptions_Call {
+func (_c *MockBankReceiptRepository_ListExceptions_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_ListExceptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockBankReceiptRepository
-func (_mock *MockBankReceiptRepository) Update(ctx context.Context, entity *bankreceipt.Receipt) (*bankreceipt.Receipt, error) {
+func (_mock *MockBankReceiptRepository) Update(ctx context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *bankreceipt.Receipt
+	var r0 *bankreceipt.BankReceipt
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.Receipt) (*bankreceipt.Receipt, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.Receipt) *bankreceipt.Receipt); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *bankreceipt.BankReceipt) *bankreceipt.BankReceipt); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bankreceipt.Receipt)
+			r0 = ret.Get(0).(*bankreceipt.BankReceipt)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *bankreceipt.Receipt) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *bankreceipt.BankReceipt) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -415,20 +416,20 @@ type MockBankReceiptRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *bankreceipt.Receipt
+//   - entity *bankreceipt.BankReceipt
 func (_e *MockBankReceiptRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockBankReceiptRepository_Update_Call {
 	return &MockBankReceiptRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockBankReceiptRepository_Update_Call) Run(run func(ctx context.Context, entity *bankreceipt.Receipt)) *MockBankReceiptRepository_Update_Call {
+func (_c *MockBankReceiptRepository_Update_Call) Run(run func(ctx context.Context, entity *bankreceipt.BankReceipt)) *MockBankReceiptRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *bankreceipt.Receipt
+		var arg1 *bankreceipt.BankReceipt
 		if args[1] != nil {
-			arg1 = args[1].(*bankreceipt.Receipt)
+			arg1 = args[1].(*bankreceipt.BankReceipt)
 		}
 		run(
 			arg0,
@@ -438,12 +439,12 @@ func (_c *MockBankReceiptRepository_Update_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_Update_Call) Return(receipt *bankreceipt.Receipt, err error) *MockBankReceiptRepository_Update_Call {
+func (_c *MockBankReceiptRepository_Update_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptRepository_Update_Call {
 	_c.Call.Return(receipt, err)
 	return _c
 }
 
-func (_c *MockBankReceiptRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *bankreceipt.Receipt) (*bankreceipt.Receipt, error)) *MockBankReceiptRepository_Update_Call {
+func (_c *MockBankReceiptRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error)) *MockBankReceiptRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -53,8 +53,8 @@ func New(p Params) repositories.BankReceiptRepository {
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetBankReceiptByIDRequest,
-) (*bankreceipt.Receipt, error) {
-	entity := new(bankreceipt.Receipt)
+) (*bankreceipt.BankReceipt, error) {
+	entity := new(bankreceipt.BankReceipt)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
@@ -71,8 +71,8 @@ func (r *repository) GetByID(
 func (r *repository) ListByImportBatchID(
 	ctx context.Context,
 	req repositories.ListBankReceiptsByImportBatchRequest,
-) ([]*bankreceipt.Receipt, error) {
-	items := make([]*bankreceipt.Receipt, 0)
+) ([]*bankreceipt.BankReceipt, error) {
+	items := make([]*bankreceipt.BankReceipt, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
@@ -91,8 +91,8 @@ func (r *repository) ListByImportBatchID(
 func (r *repository) ListExceptions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) ([]*bankreceipt.Receipt, error) {
-	items := make([]*bankreceipt.Receipt, 0)
+) ([]*bankreceipt.BankReceipt, error) {
+	items := make([]*bankreceipt.BankReceipt, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
@@ -110,7 +110,7 @@ func (r *repository) ListExceptions(
 func (r *repository) GetSummary(
 	ctx context.Context,
 	req repositories.GetBankReceiptSummaryRequest,
-) (*bankreceipt.ReconciliationSummary, error) {
+) (*repositories.BankReceiptReconciliationSummary, error) {
 	rec := new(summaryRecord)
 	err := r.db.DBForContext(ctx).NewRaw(`
 		SELECT
@@ -139,7 +139,7 @@ func (r *repository) GetSummary(
 	if err != nil {
 		return nil, fmt.Errorf("get bank receipt summary: %w", err)
 	}
-	return &bankreceipt.ReconciliationSummary{
+	return &repositories.BankReceiptReconciliationSummary{
 		AsOfDate:              req.AsOfDate,
 		ImportedCount:         rec.ImportedCount,
 		ImportedAmount:        rec.ImportedAmount,
@@ -150,7 +150,7 @@ func (r *repository) GetSummary(
 		ActiveWorkItemCount:   rec.ActiveWorkItemCount,
 		AssignedWorkItemCount: rec.AssignedWorkItemCount,
 		InReviewWorkItemCount: rec.InReviewWorkItemCount,
-		ExceptionAging: bankreceipt.ExceptionAging{
+		ExceptionAging: repositories.BankReceiptExceptionAging{
 			CurrentCount:    rec.CurrentCount,
 			CurrentAmount:   rec.CurrentAmount,
 			Days1To3Count:   rec.Days1To3Count,
@@ -165,8 +165,8 @@ func (r *repository) GetSummary(
 
 func (r *repository) Create(
 	ctx context.Context,
-	entity *bankreceipt.Receipt,
-) (*bankreceipt.Receipt, error) {
+	entity *bankreceipt.BankReceipt,
+) (*bankreceipt.BankReceipt, error) {
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
 		return nil, fmt.Errorf("create bank receipt: %w", err)
 	}
@@ -184,8 +184,8 @@ func (r *repository) Create(
 
 func (r *repository) Update(
 	ctx context.Context,
-	entity *bankreceipt.Receipt,
-) (*bankreceipt.Receipt, error) {
+	entity *bankreceipt.BankReceipt,
+) (*bankreceipt.BankReceipt, error) {
 	entity.UpdatedAt = timeutils.NowUnix()
 	res, err := r.db.DBForContext(ctx).
 		NewUpdate().

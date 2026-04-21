@@ -2,7 +2,9 @@ package locationrepository
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/geofence"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -10,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -49,6 +52,88 @@ func (r *repository) filterQuery(
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
+func applyLocationGeofence(
+	insertQuery *bun.InsertQuery,
+	updateQuery *bun.UpdateQuery,
+	entity *location.Location,
+) error {
+	switch entity.GeofenceType {
+	case geofence.TypeAuto, geofence.TypeCircle:
+		if entity.Longitude == nil || entity.Latitude == nil || entity.GeofenceRadiusMeters == nil {
+			return fmt.Errorf("circle geofences require longitude, latitude, and radius")
+		}
+
+		expression, args := postgis.CirclePolygonExpression(
+			*entity.Longitude,
+			*entity.Latitude,
+			*entity.GeofenceRadiusMeters,
+		)
+
+		if insertQuery != nil {
+			insertQuery.Value("geofence_geometry", expression, args...)
+		}
+		if updateQuery != nil {
+			updateQuery.Set("geofence_geometry = "+expression, args...)
+		}
+
+		return nil
+	case geofence.TypeRectangle, geofence.TypeDraw:
+		geometry, err := entity.GeofencePolygon()
+		if err != nil {
+			return err
+		}
+
+		geometryJSON, err := geometry.GeoJSONString()
+		if err != nil {
+			return err
+		}
+
+		if insertQuery != nil {
+			insertQuery.Value("geofence_geometry", "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON)
+		}
+		if updateQuery != nil {
+			updateQuery.Set("geofence_geometry = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON)
+		}
+
+		return nil
+	default:
+		return fmt.Errorf("unsupported location geofence type %q", entity.GeofenceType)
+	}
+}
+
+var locationWritableColumns = []string{
+	"location_category_id",
+	"state_id",
+	"status",
+	"code",
+	"name",
+	"description",
+	"address_line_1",
+	"address_line_2",
+	"city",
+	"postal_code",
+	"place_id",
+	"is_geocoded",
+	"longitude",
+	"latitude",
+	"geofence_type",
+	"geofence_radius_meters",
+	"version",
+}
+
+func hydrateLocationGeofences(entities ...*location.Location) error {
+	for _, entity := range entities {
+		if entity == nil {
+			continue
+		}
+		if err := entity.PopulateGeofenceVertices(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListLocationRequest,
@@ -67,6 +152,10 @@ func (r *repository) List(
 		}).ScanAndCount(ctx)
 	if err != nil {
 		log.Error("failed to scan and count locations", zap.Error(err))
+		return nil, err
+	}
+	if err = hydrateLocationGeofences(entities...); err != nil {
+		log.Error("failed to hydrate location geofences", zap.Error(err))
 		return nil, err
 	}
 
@@ -101,6 +190,10 @@ func (r *repository) GetByID(
 		log.Error("failed to get location", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "Location")
 	}
+	if err = entity.PopulateGeofenceVertices(); err != nil {
+		log.Error("failed to hydrate location geofence", zap.Error(err))
+		return nil, err
+	}
 
 	return entity, nil
 }
@@ -114,12 +207,24 @@ func (r *repository) Create(
 		zap.String("code", entity.Code),
 	)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	query := r.db.DB().NewInsert().Model(entity)
+	if err := applyLocationGeofence(query, nil, entity); err != nil {
+		log.Error("failed to prepare geofence for location insert", zap.Error(err))
+		return nil, err
+	}
+
+	if _, err := query.Exec(ctx); err != nil {
 		log.Error("failed to create location", zap.Error(err))
 		return nil, err
 	}
 
-	return entity, nil
+	return r.GetByID(ctx, repositories.GetLocationByIDRequest{
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
 }
 
 func (r *repository) Update(
@@ -134,14 +239,18 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	results, err := r.db.DB().
+	query := r.db.DB().
 		NewUpdate().
 		Model(entity).
+		Column(locationWritableColumns...).
 		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
-		Returning("*").
-		Exec(ctx)
+		Where("version = ?", ov)
+	if err := applyLocationGeofence(nil, query, entity); err != nil {
+		log.Error("failed to prepare geofence for location update", zap.Error(err))
+		return nil, err
+	}
+
+	results, err := query.Exec(ctx)
 	if err != nil {
 		log.Error("failed to update location", zap.Error(err))
 		return nil, err
@@ -151,7 +260,13 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	return entity, nil
+	return r.GetByID(ctx, repositories.GetLocationByIDRequest{
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
 }
 
 func (r *repository) BulkUpdateStatus(
@@ -177,6 +292,10 @@ func (r *repository) BulkUpdateStatus(
 		Exec(ctx)
 	if err != nil {
 		log.Error("failed to bulk update location status", zap.Error(err))
+		return nil, err
+	}
+	if err = hydrateLocationGeofences(entities...); err != nil {
+		log.Error("failed to hydrate location geofences", zap.Error(err))
 		return nil, err
 	}
 
@@ -209,6 +328,10 @@ func (r *repository) GetByIDs(
 	if err != nil {
 		log.Error("failed to get locations", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "Location")
+	}
+	if err = hydrateLocationGeofences(entities...); err != nil {
+		log.Error("failed to hydrate location geofences", zap.Error(err))
+		return nil, err
 	}
 
 	return entities, nil

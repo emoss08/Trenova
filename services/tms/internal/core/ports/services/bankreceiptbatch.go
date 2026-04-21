@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -29,13 +30,23 @@ type GetBankReceiptBatchRequest struct {
 }
 
 type BankReceiptBatchResult struct {
-	Batch    *bankreceiptbatch.Batch `json:"batch"`
-	Receipts []*bankreceipt.Receipt  `json:"receipts"`
+	Batch    *bankreceiptbatch.BankReceiptBatch `json:"batch"`
+	Receipts []*bankreceipt.BankReceipt         `json:"receipts"`
 }
 
 type BankReceiptBatchService interface {
 	Get(ctx context.Context, req *GetBankReceiptBatchRequest) (*BankReceiptBatchResult, error)
-	List(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error)
-	Import(ctx context.Context, req *ImportBankReceiptBatchRequest, actor *RequestActor) (*BankReceiptBatchResult, error)
-	DistinctSources(ctx context.Context, req *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error)
+	List(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*bankreceiptbatch.BankReceiptBatch, error)
+	Import(
+		ctx context.Context,
+		req *ImportBankReceiptBatchRequest,
+		actor *RequestActor,
+	) (*BankReceiptBatchResult, error)
+	DistinctSources(
+		ctx context.Context,
+		req *pagination.SelectQueryRequest,
+	) (*pagination.ListResult[*repositoryports.BankReceiptBatchSourceOption], error)
 }

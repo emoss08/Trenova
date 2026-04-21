@@ -30,15 +30,54 @@ func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
 	entryID := pulid.MustNew("je_")
 	periodID := pulid.MustNew("fp_")
 	fyID := pulid.MustNew("fy_")
-	entryRepo := &fakeJournalEntryRepository{entry: postedEntry(entryID, orgID, buID)}
-	reversalRepo := &fakeJournalReversalRepository{}
+	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalEntryByIDRequest{
+				ID:         entryID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(postedEntry(entryID, orgID, buID), nil)
+	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
+		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+			copy := *entity
+			return &copy, nil
+		})
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyNextOpenPeriod, RequireManualJEApproval: true}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyNextOpenPeriod, RequireManualJEApproval: true}, nil)
 	fiscalRepo := mocks.NewMockFiscalPeriodRepository(t)
-	fiscalRepo.EXPECT().GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
+	fiscalRepo.EXPECT().
+		GetPeriodByDate(mock.Anything, repositories.GetPeriodByDateRequest{OrgID: orgID, BuID: buID, Date: 1_700_000_000}).
+		Return(&fiscalperiod.FiscalPeriod{ID: periodID, FiscalYearID: fyID, Status: fiscalperiod.StatusOpen}, nil)
 
-	svc := &Service{journalEntryRepo: entryRepo, journalReversalRepo: reversalRepo, accountingRepo: accountingRepo, validator: &Validator{fiscalRepo: fiscalRepo}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Create(t.Context(), &serviceports.CreateJournalReversalRequest{OriginalJournalEntryID: entryID, RequestedAccountingDate: 1_700_000_000, ReasonCode: "ERR", ReasonText: "reverse", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	svc := &Service{
+		journalEntryRepo:    entryRepo,
+		journalReversalRepo: reversalRepo,
+		accountingRepo:      accountingRepo,
+		validator:           &Validator{fiscalRepo: fiscalRepo},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	result, err := svc.Create(
+		t.Context(),
+		&serviceports.CreateJournalReversalRequest{
+			OriginalJournalEntryID:  entryID,
+			RequestedAccountingDate: 1_700_000_000,
+			ReasonCode:              "ERR",
+			ReasonText:              "reverse",
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  orgID,
+				BuID:   buID,
+				UserID: userID,
+			},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -53,13 +92,44 @@ func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 	entryID := pulid.MustNew("je_")
-	entryRepo := &fakeJournalEntryRepository{entry: postedEntry(entryID, orgID, buID)}
-	reversalRepo := &fakeJournalReversalRepository{}
+	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalEntryByIDRequest{
+				ID:         entryID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(postedEntry(entryID, orgID, buID), nil)
+	reversalRepo := mocks.NewMockJournalReversalRepository(t)
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
-	accountingRepo.EXPECT().GetByOrgID(mock.Anything, orgID).Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyDisallow}, nil)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{JournalReversalPolicy: tenant.JournalReversalPolicyDisallow}, nil)
 
-	svc := &Service{journalEntryRepo: entryRepo, journalReversalRepo: reversalRepo, accountingRepo: accountingRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Create(t.Context(), &serviceports.CreateJournalReversalRequest{OriginalJournalEntryID: entryID, RequestedAccountingDate: 1_700_000_000, ReasonCode: "ERR", ReasonText: "reverse", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	svc := &Service{
+		journalEntryRepo:    entryRepo,
+		journalReversalRepo: reversalRepo,
+		accountingRepo:      accountingRepo,
+		validator:           &Validator{},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	result, err := svc.Create(
+		t.Context(),
+		&serviceports.CreateJournalReversalRequest{
+			OriginalJournalEntryID:  entryID,
+			RequestedAccountingDate: 1_700_000_000,
+			ReasonCode:              "ERR",
+			ReasonText:              "reverse",
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  orgID,
+				BuID:   buID,
+				UserID: userID,
+			},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)
@@ -69,15 +139,44 @@ func TestCreateJournalReversalBlockedWhenPolicyDisallows(t *testing.T) {
 func TestListAndGetJournalReversal(t *testing.T) {
 	t.Parallel()
 
-	entity := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), Status: journalreversal.StatusRequested}
-	repo := &fakeJournalReversalRepository{entity: entity}
+	entity := &journalreversal.Reversal{
+		ID:     pulid.MustNew("jrev_"),
+		Status: journalreversal.StatusRequested,
+	}
+	repo := mocks.NewMockJournalReversalRepository(t)
+	repo.EXPECT().
+		List(mock.Anything, mock.Anything).
+		Return(
+			&pagination.ListResult[*journalreversal.Reversal]{
+				Items: []*journalreversal.Reversal{entity},
+				Total: 1,
+			},
+			nil,
+		)
+	repo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{}},
+		).
+		Return(entity, nil)
 	svc := &Service{journalReversalRepo: repo}
 
-	list, err := svc.List(t.Context(), &repositories.ListJournalReversalsRequest{Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}}})
+	list, err := svc.List(
+		t.Context(),
+		&repositories.ListJournalReversalsRequest{
+			Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
+		},
+	)
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 
-	got, err := svc.Get(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: entity.ID, TenantInfo: pagination.TenantInfo{}})
+	got, err := svc.Get(
+		t.Context(),
+		&serviceports.GetJournalReversalRequest{
+			ReversalID: entity.ID,
+			TenantInfo: pagination.TenantInfo{},
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, entity.ID, got.ID)
 }
@@ -89,25 +188,122 @@ func TestApproveRejectAndCancelJournalReversal(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
 
-	base := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusRequested}
+	base := &journalreversal.Reversal{
+		ID:             pulid.MustNew("jrev_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         journalreversal.StatusRequested,
+	}
 
-	approveRepo := &fakeJournalReversalRepository{entity: base}
-	svcApprove := &Service{journalReversalRepo: approveRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	approved, err := svcApprove.Approve(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: base.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	approveRepo := mocks.NewMockJournalReversalRepository(t)
+	approveRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{
+				ID:         base.ID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(base, nil)
+	approveRepo.EXPECT().
+		Update(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
+		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+			copy := *entity
+			return &copy, nil
+		})
+	svcApprove := &Service{
+		journalReversalRepo: approveRepo,
+		validator:           &Validator{},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	approved, err := svcApprove.Approve(
+		t.Context(),
+		&serviceports.GetJournalReversalRequest{
+			ReversalID: base.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, journalreversal.StatusApproved, approved.Status)
 	assert.Equal(t, userID, approved.ApprovedByID)
 
-	rejectRepo := &fakeJournalReversalRepository{entity: &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusRequested}}
-	svcReject := &Service{journalReversalRepo: rejectRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	rejected, err := svcReject.Reject(t.Context(), &serviceports.RejectJournalReversalRequest{ReversalID: rejectRepo.entity.ID, Reason: "bad", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	rejectEntity := &journalreversal.Reversal{
+		ID:             pulid.MustNew("jrev_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         journalreversal.StatusRequested,
+	}
+	rejectRepo := mocks.NewMockJournalReversalRepository(t)
+	rejectRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{
+				ID:         rejectEntity.ID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(rejectEntity, nil)
+	rejectRepo.EXPECT().
+		Update(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
+		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+			copy := *entity
+			return &copy, nil
+		})
+	svcReject := &Service{
+		journalReversalRepo: rejectRepo,
+		validator:           &Validator{},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	rejected, err := svcReject.Reject(
+		t.Context(),
+		&serviceports.RejectJournalReversalRequest{
+			ReversalID: rejectEntity.ID,
+			Reason:     "bad",
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, journalreversal.StatusRejected, rejected.Status)
 	assert.Equal(t, "bad", rejected.RejectionReason)
 
-	cancelRepo := &fakeJournalReversalRepository{entity: &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, Status: journalreversal.StatusApproved}}
-	svcCancel := &Service{journalReversalRepo: cancelRepo, validator: &Validator{}, auditService: &mocks.NoopAuditService{}}
-	cancelled, err := svcCancel.Cancel(t.Context(), &serviceports.CancelJournalReversalRequest{ReversalID: cancelRepo.entity.ID, Reason: "stop", TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	cancelEntity := &journalreversal.Reversal{
+		ID:             pulid.MustNew("jrev_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         journalreversal.StatusApproved,
+	}
+	cancelRepo := mocks.NewMockJournalReversalRepository(t)
+	cancelRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{
+				ID:         cancelEntity.ID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(cancelEntity, nil)
+	cancelRepo.EXPECT().
+		Update(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
+		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+			copy := *entity
+			return &copy, nil
+		})
+	svcCancel := &Service{
+		journalReversalRepo: cancelRepo,
+		validator:           &Validator{},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	cancelled, err := svcCancel.Cancel(
+		t.Context(),
+		&serviceports.CancelJournalReversalRequest{
+			ReversalID: cancelEntity.ID,
+			Reason:     "stop",
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 	require.NoError(t, err)
 	assert.Equal(t, journalreversal.StatusCancelled, cancelled.Status)
 	assert.Equal(t, "stop", cancelled.CancelReason)
@@ -122,10 +318,56 @@ func TestPostBlocksAlreadyReversedEntry(t *testing.T) {
 	entryID := pulid.MustNew("je_")
 	original := postedEntry(entryID, orgID, buID)
 	original.ReversedByID = pulid.MustNew("je_")
-	reversal := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: orgID, BusinessUnitID: buID, OriginalJournalEntryID: entryID, Status: journalreversal.StatusApproved, RequestedAccountingDate: 1_700_000_000, ResolvedFiscalYearID: pulid.MustNew("fy_"), ResolvedFiscalPeriodID: pulid.MustNew("fp_"), ReasonCode: "ERR", ReasonText: "reverse me", RequestedByID: userID}
+	reversal := &journalreversal.Reversal{
+		ID:                      pulid.MustNew("jrev_"),
+		OrganizationID:          orgID,
+		BusinessUnitID:          buID,
+		OriginalJournalEntryID:  entryID,
+		Status:                  journalreversal.StatusApproved,
+		RequestedAccountingDate: 1_700_000_000,
+		ResolvedFiscalYearID:    pulid.MustNew("fy_"),
+		ResolvedFiscalPeriodID:  pulid.MustNew("fp_"),
+		ReasonCode:              "ERR",
+		ReasonText:              "reverse me",
+		RequestedByID:           userID,
+	}
 
-	svc := &Service{db: fakeReversalDB{}, journalEntryRepo: &fakeJournalEntryRepository{entry: original}, journalReversalRepo: &fakeJournalReversalRepository{entity: reversal}, journalPostingRepo: &fakeReversalPostingRepository{}, sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, auditService: &mocks.NoopAuditService{}}
-	result, err := svc.Post(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: reversal.ID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalEntryByIDRequest{
+				ID:         entryID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(cloneEntry(original), nil)
+	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{
+				ID:         reversal.ID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(reversal, nil)
+	svc := &Service{
+		db:                  fakeReversalDB{},
+		journalEntryRepo:    entryRepo,
+		journalReversalRepo: reversalRepo,
+		journalPostingRepo:  mocks.NewMockJournalPostingRepository(t),
+		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		auditService:        &mocks.NoopAuditService{},
+	}
+	result, err := svc.Post(
+		t.Context(),
+		&serviceports.GetJournalReversalRequest{
+			ReversalID: reversal.ID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.Nil(t, result)
 	require.Error(t, err)
@@ -141,91 +383,139 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 	entryID := pulid.MustNew("je_")
 	reversalID := pulid.MustNew("jrev_")
 	original := postedEntry(entryID, orgID, buID)
-	reversal := &journalreversal.Reversal{ID: reversalID, OrganizationID: orgID, BusinessUnitID: buID, OriginalJournalEntryID: entryID, Status: journalreversal.StatusApproved, RequestedAccountingDate: 1_700_000_000, ResolvedFiscalYearID: pulid.MustNew("fy_"), ResolvedFiscalPeriodID: pulid.MustNew("fp_"), ReasonCode: "ERR", ReasonText: "reverse me", RequestedByID: userID}
+	reversal := &journalreversal.Reversal{
+		ID:                      reversalID,
+		OrganizationID:          orgID,
+		BusinessUnitID:          buID,
+		OriginalJournalEntryID:  entryID,
+		Status:                  journalreversal.StatusApproved,
+		RequestedAccountingDate: 1_700_000_000,
+		ResolvedFiscalYearID:    pulid.MustNew("fy_"),
+		ResolvedFiscalPeriodID:  pulid.MustNew("fp_"),
+		ReasonCode:              "ERR",
+		ReasonText:              "reverse me",
+		RequestedByID:           userID,
+	}
 
-	reversalRepo := &fakeJournalReversalRepository{entity: reversal}
-	entryRepo := &fakeJournalEntryRepository{entry: original}
-	postingRepo := &fakeReversalPostingRepository{}
-	svc := &Service{db: fakeReversalDB{}, journalEntryRepo: entryRepo, journalReversalRepo: reversalRepo, journalPostingRepo: postingRepo, sequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "SEQ-1"}, auditService: &mocks.NoopAuditService{}}
+	reversalRepo := mocks.NewMockJournalReversalRepository(t)
+	reversalRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalReversalByIDRequest{
+				ID:         reversalID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(reversal, nil)
+	reversalRepo.EXPECT().
+		Update(mock.Anything, mock.AnythingOfType("*journalreversal.Reversal")).
+		RunAndReturn(func(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+			copy := *entity
+			return &copy, nil
+		})
+	entryRepo := mocks.NewMockJournalEntryRepository(t)
+	entryRepo.EXPECT().
+		GetByID(
+			mock.Anything,
+			repositories.GetJournalEntryByIDRequest{
+				ID:         entryID,
+				TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+			},
+		).
+		Return(cloneEntry(original), nil)
+	var markReq *repositories.MarkJournalEntryReversedRequest
+	entryRepo.EXPECT().
+		MarkReversed(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, req repositories.MarkJournalEntryReversedRequest) error {
+			copy := req
+			markReq = &copy
+			return nil
+		})
+	postingRepo := mocks.NewMockJournalPostingRepository(t)
+	var postingParams *repositories.CreateJournalPostingParams
+	postingRepo.EXPECT().
+		CreatePosting(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params repositories.CreateJournalPostingParams) error {
+			copyParams := params
+			copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
+			postingParams = &copyParams
+			return nil
+		})
+	svc := &Service{
+		db:                  fakeReversalDB{},
+		journalEntryRepo:    entryRepo,
+		journalReversalRepo: reversalRepo,
+		journalPostingRepo:  postingRepo,
+		sequenceGenerator:   testutil.TestSequenceGenerator{SingleValue: "SEQ-1"},
+		auditService:        &mocks.NoopAuditService{},
+	}
 
-	result, err := svc.Post(t.Context(), &serviceports.GetJournalReversalRequest{ReversalID: reversalID, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, testutil.NewSessionActor(userID, orgID, buID))
+	result, err := svc.Post(
+		t.Context(),
+		&serviceports.GetJournalReversalRequest{
+			ReversalID: reversalID,
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		testutil.NewSessionActor(userID, orgID, buID),
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, journalreversal.StatusPosted, result.Status)
-	require.NotNil(t, postingRepo.last)
-	assert.True(t, postingRepo.last.IsReversal)
-	assert.Equal(t, entryID, postingRepo.last.ReversalOfID)
-	require.Len(t, postingRepo.last.Lines, 2)
-	assert.Equal(t, original.Lines[0].CreditAmount, postingRepo.last.Lines[0].DebitAmount)
-	assert.Equal(t, original.Lines[0].DebitAmount, postingRepo.last.Lines[0].CreditAmount)
-	require.NotNil(t, entryRepo.markReq)
-	assert.Equal(t, entryID, entryRepo.markReq.OriginalEntryID)
-	assert.Equal(t, result.ReversalJournalEntryID, entryRepo.markReq.ReversalEntryID)
+	require.NotNil(t, postingParams)
+	assert.True(t, postingParams.IsReversal)
+	assert.Equal(t, entryID, postingParams.ReversalOfID)
+	require.Len(t, postingParams.Lines, 2)
+	assert.Equal(t, original.Lines[0].CreditAmount, postingParams.Lines[0].DebitAmount)
+	assert.Equal(t, original.Lines[0].DebitAmount, postingParams.Lines[0].CreditAmount)
+	require.NotNil(t, markReq)
+	assert.Equal(t, entryID, markReq.OriginalEntryID)
+	assert.Equal(t, result.ReversalJournalEntryID, markReq.ReversalEntryID)
 }
 
 type fakeReversalDB struct{}
 
 func (fakeReversalDB) DB() *bun.DB                          { return nil }
 func (fakeReversalDB) DBForContext(context.Context) bun.IDB { return nil }
-func (fakeReversalDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+
+func (fakeReversalDB) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
 	return fn(ctx, bun.Tx{})
 }
 func (fakeReversalDB) HealthCheck(context.Context) error { return nil }
 func (fakeReversalDB) IsHealthy(context.Context) bool    { return true }
 func (fakeReversalDB) Close() error                      { return nil }
 
-type fakeJournalEntryRepository struct {
-	entry   *journalentry.Entry
-	markReq *repositories.MarkJournalEntryReversedRequest
-}
-
-func (f *fakeJournalEntryRepository) GetByID(context.Context, repositories.GetJournalEntryByIDRequest) (*journalentry.Entry, error) {
-	return cloneEntry(f.entry), nil
-}
-func (f *fakeJournalEntryRepository) MarkReversed(_ context.Context, req repositories.MarkJournalEntryReversedRequest) error {
-	f.markReq = &req
-	return nil
-}
-
-type fakeJournalReversalRepository struct {
-	entity *journalreversal.Reversal
-}
-
-func (f *fakeJournalReversalRepository) List(context.Context, *repositories.ListJournalReversalsRequest) (*pagination.ListResult[*journalreversal.Reversal], error) {
-	return &pagination.ListResult[*journalreversal.Reversal]{Items: []*journalreversal.Reversal{f.entity}, Total: 1}, nil
-}
-func (f *fakeJournalReversalRepository) GetByID(context.Context, repositories.GetJournalReversalByIDRequest) (*journalreversal.Reversal, error) {
-	if f.entity == nil {
-		return nil, nil
-	}
-	copy := *f.entity
-	return &copy, nil
-}
-func (f *fakeJournalReversalRepository) Create(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
-	copy := *entity
-	f.entity = &copy
-	return &copy, nil
-}
-func (f *fakeJournalReversalRepository) Update(_ context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
-	copy := *entity
-	f.entity = &copy
-	return &copy, nil
-}
-
-type fakeReversalPostingRepository struct {
-	last *repositories.CreateJournalPostingParams
-}
-
-func (f *fakeReversalPostingRepository) CreatePosting(_ context.Context, params repositories.CreateJournalPostingParams) error {
-	copyParams := params
-	copyParams.Lines = append([]repositories.JournalPostingLine(nil), params.Lines...)
-	f.last = &copyParams
-	return nil
-}
-
 func postedEntry(id, orgID, buID pulid.ID) *journalentry.Entry {
-	return &journalentry.Entry{ID: id, OrganizationID: orgID, BusinessUnitID: buID, EntryNumber: "JE-1", Status: "Posted", IsPosted: true, Lines: []*journalentry.Line{{GLAccountID: pulid.MustNew("gla_"), LineNumber: 1, Description: "Debit", DebitAmount: 1000, CreditAmount: 0, NetAmount: 1000}, {GLAccountID: pulid.MustNew("gla_"), LineNumber: 2, Description: "Credit", DebitAmount: 0, CreditAmount: 1000, NetAmount: -1000}}}
+	return &journalentry.Entry{
+		ID:             id,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		EntryNumber:    "JE-1",
+		Status:         "Posted",
+		IsPosted:       true,
+		Lines: []*journalentry.Line{
+			{
+				GLAccountID:  pulid.MustNew("gla_"),
+				LineNumber:   1,
+				Description:  "Debit",
+				DebitAmount:  1000,
+				CreditAmount: 0,
+				NetAmount:    1000,
+			},
+			{
+				GLAccountID:  pulid.MustNew("gla_"),
+				LineNumber:   2,
+				Description:  "Credit",
+				DebitAmount:  0,
+				CreditAmount: 1000,
+				NetAmount:    -1000,
+			},
+		},
+	}
 }
 
 func cloneEntry(src *journalentry.Entry) *journalentry.Entry {

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptbatch"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -26,26 +25,76 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	repo := &fakeBatchRepo{}
-	receiptRepo := &fakeReceiptRepo{}
+	repo := mocks.NewMockBankReceiptBatchRepository(t)
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	db := fakeBatchDB{}
 	auditSvc := mocks.NewMockAuditService(t)
 	bankSvc := mocks.NewMockBankReceiptService(t)
-	svc := New(Params{Logger: zap.NewNop(), DB: db, Repo: repo, ReceiptRepo: receiptRepo, BankReceiptService: bankSvc, AuditService: auditSvc})
+	repo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			entity *bankreceiptbatch.BankReceiptBatch,
+		) (*bankreceiptbatch.BankReceiptBatch, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brib_")
+			}
+			return &copy, nil
+		}).
+		Once()
+	repo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			entity *bankreceiptbatch.BankReceiptBatch,
+		) (*bankreceiptbatch.BankReceiptBatch, error) {
+			copy := *entity
+			return &copy, nil
+		}).
+		Once()
+	svc := New(
+		Params{
+			Logger:             zap.NewNop(),
+			DB:                 db,
+			Repo:               repo,
+			ReceiptRepo:        receiptRepo,
+			BankReceiptService: bankSvc,
+			AuditService:       auditSvc,
+		},
+	)
 	actor := testutil.NewSessionActor(userID, orgID, buID)
 
-	returnedReceipts := []*bankreceipt.Receipt{{ID: pulid.MustNew("brcpt_"), Status: bankreceipt.StatusMatched, AmountMinor: 10000}, {ID: pulid.MustNew("brcpt_"), Status: bankreceipt.StatusException, AmountMinor: 5000}}
-	bankSvc.EXPECT().Import(mock.Anything, mock.Anything, actor).RunAndReturn(func(_ context.Context, req *serviceports.ImportBankReceiptRequest, _ *serviceports.RequestActor) (*bankreceipt.Receipt, error) {
-		require.False(t, req.BatchID.IsNil())
-		require.True(t, req.SkipAudit)
-		receipt := *returnedReceipts[0]
-		returnedReceipts = returnedReceipts[1:]
-		receipt.ImportBatchID = req.BatchID
-		return &receipt, nil
-	}).Twice()
+	returnedReceipts := []*bankreceipt.BankReceipt{
+		{ID: pulid.MustNew("brcpt_"), Status: bankreceipt.StatusMatched, AmountMinor: 10000},
+		{ID: pulid.MustNew("brcpt_"), Status: bankreceipt.StatusException, AmountMinor: 5000},
+	}
+	bankSvc.EXPECT().
+		Import(mock.Anything, mock.Anything, actor).
+		RunAndReturn(func(_ context.Context, req *serviceports.ImportBankReceiptRequest, _ *serviceports.RequestActor) (*bankreceipt.BankReceipt, error) {
+			require.False(t, req.BatchID.IsNil())
+			require.True(t, req.SkipAudit)
+			receipt := *returnedReceipts[0]
+			returnedReceipts = returnedReceipts[1:]
+			receipt.ImportBatchID = req.BatchID
+			return &receipt, nil
+		}).
+		Twice()
 	auditSvc.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
 
-	result, err := svc.Import(t.Context(), &serviceports.ImportBankReceiptBatchRequest{Source: "csv", Reference: "BATCH-1", Receipts: []*serviceports.ImportBankReceiptBatchLine{{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"}, {ReceiptDate: 2, AmountMinor: 5000, ReferenceNumber: "B"}}, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, actor)
+	result, err := svc.Import(
+		t.Context(),
+		&serviceports.ImportBankReceiptBatchRequest{
+			Source:    "csv",
+			Reference: "BATCH-1",
+			Receipts: []*serviceports.ImportBankReceiptBatchLine{
+				{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"},
+				{ReceiptDate: 2, AmountMinor: 5000, ReferenceNumber: "B"},
+			},
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		actor,
+	)
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -68,81 +117,54 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	repo := &fakeBatchRepo{}
-	receiptRepo := &fakeReceiptRepo{}
+	repo := mocks.NewMockBankReceiptBatchRepository(t)
+	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	db := fakeBatchDB{}
 	auditSvc := mocks.NewMockAuditService(t)
 	bankSvc := mocks.NewMockBankReceiptService(t)
-	svc := New(Params{Logger: zap.NewNop(), DB: db, Repo: repo, ReceiptRepo: receiptRepo, BankReceiptService: bankSvc, AuditService: auditSvc})
+	repo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(
+			_ context.Context,
+			entity *bankreceiptbatch.BankReceiptBatch,
+		) (*bankreceiptbatch.BankReceiptBatch, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brib_")
+			}
+			return &copy, nil
+		}).
+		Once()
+	svc := New(
+		Params{
+			Logger:             zap.NewNop(),
+			DB:                 db,
+			Repo:               repo,
+			ReceiptRepo:        receiptRepo,
+			BankReceiptService: bankSvc,
+			AuditService:       auditSvc,
+		},
+	)
 	actor := testutil.NewSessionActor(userID, orgID, buID)
 
 	bankSvc.EXPECT().Import(mock.Anything, mock.Anything, actor).Return(nil, assert.AnError).Once()
 
-	result, err := svc.Import(t.Context(), &serviceports.ImportBankReceiptBatchRequest{Source: "csv", Reference: "BATCH-ERR", Receipts: []*serviceports.ImportBankReceiptBatchLine{{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"}}, TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}, actor)
+	result, err := svc.Import(
+		t.Context(),
+		&serviceports.ImportBankReceiptBatchRequest{
+			Source:    "csv",
+			Reference: "BATCH-ERR",
+			Receipts: []*serviceports.ImportBankReceiptBatchLine{
+				{ReceiptDate: 1, AmountMinor: 10000, ReferenceNumber: "A"},
+			},
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
+		},
+		actor,
+	)
 
 	require.ErrorIs(t, err, assert.AnError)
 	assert.Nil(t, result)
 	auditSvc.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
-}
-
-type fakeBatchRepo struct{ batch *bankreceiptbatch.Batch }
-
-func (f *fakeBatchRepo) GetByID(context.Context, repositories.GetBankReceiptBatchByIDRequest) (*bankreceiptbatch.Batch, error) {
-	return f.batch, nil
-}
-
-func (f *fakeBatchRepo) List(context.Context, pagination.TenantInfo) ([]*bankreceiptbatch.Batch, error) {
-	if f.batch == nil {
-		return nil, nil
-	}
-
-	return []*bankreceiptbatch.Batch{f.batch}, nil
-}
-
-func (f *fakeBatchRepo) Create(_ context.Context, entity *bankreceiptbatch.Batch) (*bankreceiptbatch.Batch, error) {
-	if entity.ID.IsNil() {
-		entity.ID = pulid.MustNew("brib_")
-	}
-
-	copy := *entity
-	f.batch = &copy
-	return &copy, nil
-}
-
-func (f *fakeBatchRepo) Update(_ context.Context, entity *bankreceiptbatch.Batch) (*bankreceiptbatch.Batch, error) {
-	copy := *entity
-	f.batch = &copy
-	return &copy, nil
-}
-
-func (f *fakeBatchRepo) DistinctSources(context.Context, *pagination.SelectQueryRequest) (*pagination.ListResult[*bankreceiptbatch.SourceOption], error) {
-	return &pagination.ListResult[*bankreceiptbatch.SourceOption]{}, nil
-}
-
-type fakeReceiptRepo struct{}
-
-func (f *fakeReceiptRepo) GetByID(context.Context, repositories.GetBankReceiptByIDRequest) (*bankreceipt.Receipt, error) {
-	return nil, nil
-}
-
-func (f *fakeReceiptRepo) ListByImportBatchID(context.Context, repositories.ListBankReceiptsByImportBatchRequest) ([]*bankreceipt.Receipt, error) {
-	return nil, nil
-}
-
-func (f *fakeReceiptRepo) ListExceptions(context.Context, pagination.TenantInfo) ([]*bankreceipt.Receipt, error) {
-	return nil, nil
-}
-
-func (f *fakeReceiptRepo) GetSummary(context.Context, repositories.GetBankReceiptSummaryRequest) (*bankreceipt.ReconciliationSummary, error) {
-	return nil, nil
-}
-
-func (f *fakeReceiptRepo) Create(context.Context, *bankreceipt.Receipt) (*bankreceipt.Receipt, error) {
-	return nil, nil
-}
-
-func (f *fakeReceiptRepo) Update(context.Context, *bankreceipt.Receipt) (*bankreceipt.Receipt, error) {
-	return nil, nil
 }
 
 type fakeBatchDB struct{}
@@ -151,7 +173,11 @@ func (fakeBatchDB) DB() *bun.DB { return nil }
 
 func (fakeBatchDB) DBForContext(context.Context) bun.IDB { return nil }
 
-func (fakeBatchDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
+func (fakeBatchDB) WithTx(
+	ctx context.Context,
+	_ ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
 	return fn(ctx, bun.Tx{})
 }
 

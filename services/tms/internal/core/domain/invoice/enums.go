@@ -7,11 +7,11 @@ const (
 	StatusPosted = Status("Posted")
 )
 
-type LineType string
+type InvoiceLineType string
 
 const (
-	LineTypeFreight     = LineType("Freight")
-	LineTypeAccessorial = LineType("Accessorial")
+	InvoiceLineTypeFreight     = InvoiceLineType("Freight")
+	InvoiceLineTypeAccessorial = InvoiceLineType("Accessorial")
 )
 
 type PaymentTerm string
@@ -50,9 +50,9 @@ func (s Status) IsValid() bool {
 	}
 }
 
-func (t LineType) IsValid() bool {
+func (t InvoiceLineType) IsValid() bool {
 	switch t {
-	case LineTypeFreight, LineTypeAccessorial:
+	case InvoiceLineTypeFreight, InvoiceLineTypeAccessorial:
 		return true
 	default:
 		return false

@@ -66,12 +66,12 @@ tasks:
   test-integration:
     desc: Run integration tests only
     cmds:
-      - go test -v -tags=integration ./...
+      - go test -p 1 -v -tags=integration ./...
 
   test-all:
     desc: Run all tests (unit + integration)
     cmds:
-      - go test -v -tags=integration ./...
+      - go test -p 1 -v -tags=integration ./...
 
   test-coverage:
     desc: Run unit tests with coverage
@@ -82,7 +82,7 @@ tasks:
   test-coverage-all:
     desc: Run all tests with coverage
     cmds:
-      - go test -v -tags=integration -coverprofile=coverage.out ./...
+      - go test -p 1 -v -tags=integration -coverprofile=coverage.out ./...
       - go tool cover -html=coverage.out -o coverage.html
 
   test-short:

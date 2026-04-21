@@ -7,7 +7,6 @@ package mocks
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/glbalance"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +39,23 @@ func (_m *MockGLBalanceRepository) EXPECT() *MockGLBalanceRepository_Expecter {
 }
 
 // ListTrialBalanceByPeriod provides a mock function for the type MockGLBalanceRepository
-func (_mock *MockGLBalanceRepository) ListTrialBalanceByPeriod(ctx context.Context, req repositories.ListTrialBalanceByPeriodRequest) ([]*glbalance.PeriodAccountBalance, error) {
+func (_mock *MockGLBalanceRepository) ListTrialBalanceByPeriod(ctx context.Context, req repositories.ListTrialBalanceByPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListTrialBalanceByPeriod")
 	}
 
-	var r0 []*glbalance.PeriodAccountBalance
+	var r0 []*repositories.GLPeriodAccountBalance
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListTrialBalanceByPeriodRequest) ([]*glbalance.PeriodAccountBalance, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListTrialBalanceByPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListTrialBalanceByPeriodRequest) []*glbalance.PeriodAccountBalance); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListTrialBalanceByPeriodRequest) []*repositories.GLPeriodAccountBalance); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*glbalance.PeriodAccountBalance)
+			r0 = ret.Get(0).([]*repositories.GLPeriodAccountBalance)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListTrialBalanceByPeriodRequest) error); ok {
@@ -97,12 +96,12 @@ func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Return(periodAccountBalances []*glbalance.PeriodAccountBalance, err error) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
+func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Return(periodAccountBalances []*repositories.GLPeriodAccountBalance, err error) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
 	_c.Call.Return(periodAccountBalances, err)
 	return _c
 }
 
-func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListTrialBalanceByPeriodRequest) ([]*glbalance.PeriodAccountBalance, error)) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
+func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListTrialBalanceByPeriodRequest) ([]*repositories.GLPeriodAccountBalance, error)) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
 	_c.Call.Return(run)
 	return _c
 }

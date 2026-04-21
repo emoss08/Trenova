@@ -3,7 +3,6 @@ package glbalancerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/glbalance"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"go.uber.org/fx"
@@ -29,8 +28,8 @@ func New(p Params) repositories.GLBalanceRepository {
 func (r *repository) ListTrialBalanceByPeriod(
 	ctx context.Context,
 	req repositories.ListTrialBalanceByPeriodRequest,
-) ([]*glbalance.PeriodAccountBalance, error) {
-	balances := make([]*glbalance.PeriodAccountBalance, 0)
+) ([]*repositories.GLPeriodAccountBalance, error) {
+	balances := make([]*repositories.GLPeriodAccountBalance, 0)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		TableExpr("gl_account_balances_by_period AS gb").

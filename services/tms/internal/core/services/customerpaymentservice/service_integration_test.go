@@ -231,10 +231,10 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),
@@ -502,10 +502,10 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),
@@ -771,10 +771,10 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),
@@ -809,10 +809,10 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(50),
@@ -1087,10 +1087,10 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),
@@ -1385,10 +1385,10 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),
@@ -1637,10 +1637,10 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 			AppliedAmount:      decimal.Zero,
 			SettlementStatus:   invoice.SettlementStatusUnpaid,
 			DisputeStatus:      invoice.DisputeStatusNone,
-			Lines: []*invoice.Line{
+			Lines: []*invoice.InoviceLine{
 				{
 					LineNumber:  1,
-					Type:        invoice.LineTypeFreight,
+					Type:        invoice.InvoiceLineTypeFreight,
 					Description: "Freight",
 					Quantity:    decimal.NewFromInt(1),
 					UnitPrice:   decimal.NewFromInt(100),

@@ -3,8 +3,8 @@ package accountsreceivableservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/accountsreceivable"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -16,12 +16,12 @@ type Params struct {
 	fx.In
 
 	Logger *zap.Logger
-	Repo   repositories.AccountsReceivableRepository
+	Repo   repositoryports.AccountsReceivableRepository
 }
 
 type Service struct {
 	l    *zap.Logger
-	repo repositories.AccountsReceivableRepository
+	repo repositoryports.AccountsReceivableRepository
 }
 
 func New(p Params) *Service {
@@ -32,10 +32,10 @@ func (s *Service) ListCustomerLedger(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
-) ([]*accountsreceivable.LedgerEntry, error) {
+) ([]*repositoryports.ARLedgerEntry, error) {
 	return s.repo.ListCustomerLedger(
 		ctx,
-		repositories.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		repositoryports.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
 	)
 }
 
@@ -44,14 +44,14 @@ func (s *Service) ListOpenItems(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	asOfDate int64,
-) ([]*accountsreceivable.OpenItem, error) {
+) ([]*repositoryports.AROpenItem, error) {
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
 
 	return s.repo.ListOpenItems(
 		ctx,
-		repositories.ListAROpenItemsRequest{
+		repositoryports.ListAROpenItemsRequest{
 			TenantInfo: tenantInfo,
 			CustomerID: customerID,
 			AsOfDate:   asOfDate,
@@ -64,14 +64,14 @@ func (s *Service) GetCustomerStatement(
 	tenantInfo pagination.TenantInfo,
 	customerID pulid.ID,
 	startDate, asOfDate int64,
-) (*accountsreceivable.CustomerStatement, error) {
+) (*serviceports.ARCustomerStatement, error) {
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
 
 	customerName, err := s.repo.GetCustomerName(
 		ctx,
-		repositories.GetARCustomerNameRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		repositoryports.GetARCustomerNameRequest{TenantInfo: tenantInfo, CustomerID: customerID},
 	)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (s *Service) GetCustomerStatement(
 
 	ledger, err := s.repo.ListCustomerLedger(
 		ctx,
-		repositories.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
+		repositoryports.ListCustomerLedgerRequest{TenantInfo: tenantInfo, CustomerID: customerID},
 	)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (s *Service) GetCustomerStatement(
 
 	openItems, err := s.repo.ListOpenItems(
 		ctx,
-		repositories.ListAROpenItemsRequest{
+		repositoryports.ListAROpenItemsRequest{
 			TenantInfo: tenantInfo,
 			CustomerID: customerID,
 			AsOfDate:   asOfDate,
@@ -99,7 +99,7 @@ func (s *Service) GetCustomerStatement(
 
 	aging, err := s.repo.GetCustomerAging(
 		ctx,
-		repositories.GetARCustomerAgingRequest{
+		repositoryports.GetARCustomerAgingRequest{
 			TenantInfo: tenantInfo,
 			CustomerID: customerID,
 			AsOfDate:   asOfDate,
@@ -109,7 +109,7 @@ func (s *Service) GetCustomerStatement(
 		return nil, err
 	}
 
-	statement := &accountsreceivable.CustomerStatement{
+	statement := &serviceports.ARCustomerStatement{
 		CustomerID:    customerID,
 		CustomerName:  customerName,
 		StatementDate: asOfDate,
@@ -121,7 +121,7 @@ func (s *Service) GetCustomerStatement(
 	}
 
 	runningBalance := int64(0)
-	transactions := make([]*accountsreceivable.StatementTransaction, 0, len(ledger))
+	transactions := make([]*serviceports.ARStatementTransaction, 0, len(ledger))
 	for _, entry := range ledger {
 		if entry == nil || entry.TransactionDate > asOfDate {
 			continue
@@ -132,7 +132,7 @@ func (s *Service) GetCustomerStatement(
 			continue
 		}
 
-		txn := &accountsreceivable.StatementTransaction{
+		txn := &serviceports.ARStatementTransaction{
 			TransactionDate: entry.TransactionDate,
 			EventType:       entry.EventType,
 			DocumentNumber:  entry.DocumentNumber,
@@ -160,18 +160,18 @@ func (s *Service) GetAgingSummary(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	asOfDate int64,
-) (*accountsreceivable.AgingSummary, error) {
+) (*serviceports.ARAgingSummary, error) {
 	if asOfDate == 0 {
 		asOfDate = timeutils.NowUnix()
 	}
 	rows, err := s.repo.ListARAging(
 		ctx,
-		repositories.ListARAgingRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
+		repositoryports.ListARAgingRequest{TenantInfo: tenantInfo, AsOfDate: asOfDate},
 	)
 	if err != nil {
 		return nil, err
 	}
-	summary := &accountsreceivable.AgingSummary{AsOfDate: asOfDate, Rows: rows}
+	summary := &serviceports.ARAgingSummary{AsOfDate: asOfDate, Rows: rows}
 	for _, row := range rows {
 		summary.Totals.CurrentMinor += row.Buckets.CurrentMinor
 		summary.Totals.Days1To30Minor += row.Buckets.Days1To30Minor

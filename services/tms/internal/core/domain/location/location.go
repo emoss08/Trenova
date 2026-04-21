@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/geofence"
 	"github.com/emoss08/trenova/internal/core/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -27,29 +28,33 @@ var (
 type Location struct {
 	bun.BaseModel `bun:"table:locations,alias:loc" json:"-"`
 
-	ID                 pulid.ID           `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID     pulid.ID           `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID           `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	LocationCategoryID pulid.ID           `json:"locationCategoryId" bun:"location_category_id,type:VARCHAR(100),notnull"`
-	StateID            pulid.ID           `json:"stateId"            bun:"state_id,type:VARCHAR(100),notnull"`
-	Status             domaintypes.Status `json:"status"             bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code               string             `json:"code"               bun:"code,type:VARCHAR(10),notnull"`
-	Name               string             `json:"name"               bun:"name,type:VARCHAR(255),notnull"`
-	Description        string             `json:"description"        bun:"description,type:VARCHAR(255),nullzero"`
-	AddressLine1       string             `json:"addressLine1"       bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2       string             `json:"addressLine2"       bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City               string             `json:"city"               bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode         string             `json:"postalCode"         bun:"postal_code,type:us_postal_code,notnull"`
-	PlaceID            string             `json:"placeId"            bun:"place_id,type:TEXT,nullzero"`
-	IsGeocoded         bool               `json:"isGeocoded"         bun:"is_geocoded,type:BOOLEAN,default:false"`
-	Longitude          *float64           `json:"longitude"          bun:"longitude,type:FLOAT,nullzero"`
-	Latitude           *float64           `json:"latitude"           bun:"latitude,type:FLOAT,nullzero"`
-	Geom               *postgis.Point     `json:"-"                  bun:"geom,type:geography,scanonly"`
-	Version            int64              `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64              `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64              `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector       string             `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank               string             `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly"`
+	ID                   pulid.ID           `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID       pulid.ID           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID       pulid.ID           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	LocationCategoryID   pulid.ID           `json:"locationCategoryId"   bun:"location_category_id,type:VARCHAR(100),notnull"`
+	StateID              pulid.ID           `json:"stateId"              bun:"state_id,type:VARCHAR(100),notnull"`
+	Status               domaintypes.Status `json:"status"               bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code                 string             `json:"code"                 bun:"code,type:VARCHAR(10),notnull"`
+	Name                 string             `json:"name"                 bun:"name,type:VARCHAR(255),notnull"`
+	Description          string             `json:"description"          bun:"description,type:VARCHAR(255),nullzero"`
+	AddressLine1         string             `json:"addressLine1"         bun:"address_line_1,type:VARCHAR(150),notnull"`
+	AddressLine2         string             `json:"addressLine2"         bun:"address_line_2,type:VARCHAR(150),nullzero"`
+	City                 string             `json:"city"                 bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode           string             `json:"postalCode"           bun:"postal_code,type:us_postal_code,notnull"`
+	PlaceID              string             `json:"placeId"              bun:"place_id,type:TEXT,nullzero"`
+	IsGeocoded           bool               `json:"isGeocoded"           bun:"is_geocoded,type:BOOLEAN,default:false"`
+	Longitude            *float64           `json:"longitude"            bun:"longitude,type:FLOAT,nullzero"`
+	Latitude             *float64           `json:"latitude"             bun:"latitude,type:FLOAT,nullzero"`
+	Geom                 *postgis.Point     `json:"-"                    bun:"geom,type:geography,scanonly"`
+	GeofenceType         geofence.Type      `json:"geofenceType"         bun:"geofence_type,type:location_geofence_type_enum,notnull,default:'auto'"`
+	GeofenceRadiusMeters *float64           `json:"geofenceRadiusMeters" bun:"geofence_radius_meters,type:DOUBLE PRECISION,nullzero"`
+	GeofenceVertices     []geofence.Vertex  `json:"geofenceVertices"     bun:"-"`
+	GeofenceGeometry     *postgis.Geometry  `json:"-"                    bun:"geofence_geometry,type:geometry,scanonly"`
+	Version              int64              `json:"version"              bun:"version,type:BIGINT"`
+	CreatedAt            int64              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector         string             `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                 string             `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit     *tenant.BusinessUnit               `json:"-"                          bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -93,6 +98,8 @@ func (l *Location) Validate(multiErr *errortypes.MultiError) {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
+
+	l.validateGeofence(multiErr)
 }
 
 func (l *Location) GetID() pulid.ID {

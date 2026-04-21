@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/system"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	_ *system.VersionInfo
-	_ *system.UpdateStatus
+	_ *serviceports.VersionInfo
+	_ *serviceports.UpdateStatus
 )
 
 type Params struct {
@@ -59,7 +59,7 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 // @ID getVersion
 // @Tags System
 // @Produce json
-// @Success 200 {object} system.VersionInfo
+// @Success 200 {object} services.VersionInfo
 // @Failure 500 {object} helpers.ProblemDetail
 // @Router /system/version [get]
 func (h *Handler) getVersion(c *gin.Context) {
@@ -77,7 +77,7 @@ func (h *Handler) getVersion(c *gin.Context) {
 // @ID getUpdateStatus
 // @Tags System
 // @Produce json
-// @Success 200 {object} system.UpdateStatus
+// @Success 200 {object} services.UpdateStatus
 // @Failure 500 {object} helpers.ProblemDetail
 // @Router /system/update-status [get]
 func (h *Handler) getUpdateStatus(c *gin.Context) {
@@ -95,7 +95,7 @@ func (h *Handler) getUpdateStatus(c *gin.Context) {
 // @ID checkForUpdates
 // @Tags System
 // @Produce json
-// @Success 200 {object} system.UpdateStatus
+// @Success 200 {object} services.UpdateStatus
 // @Failure 500 {object} helpers.ProblemDetail
 // @Router /system/check-updates [post]
 func (h *Handler) checkUpdates(c *gin.Context) {

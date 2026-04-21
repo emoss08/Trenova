@@ -25,18 +25,43 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
+	paymentID := pulid.MustNew("cpay_")
 	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	paymentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: pulid.MustNew("cpay_"), TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
-		Return(&customerpayment.Payment{
-			ID:             pulid.MustNew("cpay_"),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			AmountMinor:    10000,
-			Status:         customerpayment.StatusPosted,
-		}, nil).
+	var receipt *bankreceipt.BankReceipt
+	receiptRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brcpt_")
+			}
+			receipt = &copy
+			return &copy, nil
+		}).
 		Once()
+	receiptRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
+			return receipt, nil
+		}).
+		Once()
+	receiptRepo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			receipt = &copy
+			return &copy, nil
+		}).
+		Once()
+	payment := &customerpayment.Payment{
+		ID:             paymentID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		AmountMinor:    10000,
+		Status:         customerpayment.StatusPosted,
+	}
+	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
 	svc := &Service{
 		repo:         receiptRepo,
 		paymentRepo:  paymentRepo,
@@ -61,7 +86,7 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 		t.Context(),
 		&serviceports.MatchBankReceiptRequest{
 			ReceiptID:  receipt.ID,
-			PaymentID:  pulid.MustNew("cpay_"),
+			PaymentID:  paymentID,
 			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID},
 		},
 		testutil.NewSessionActor(userID, orgID, buID),
@@ -69,7 +94,7 @@ func TestImportAndMatchBankReceipt(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, matched)
 	assert.Equal(t, bankreceipt.StatusMatched, matched.Status)
-	assert.Equal(t, pulid.MustNew("cpay_"), matched.MatchedCustomerPaymentID)
+	assert.Equal(t, paymentID, matched.MatchedCustomerPaymentID)
 }
 
 func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
@@ -88,9 +113,36 @@ func TestImportAutoMatchesWhenUniqueCandidateExists(t *testing.T) {
 	}
 	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	var createdReceipt *bankreceipt.BankReceipt
+	receiptRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brcpt_")
+			}
+			createdReceipt = &copy
+			return &copy, nil
+		}).
+		Once()
 	paymentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: payment.ID}).
-		Return(payment, nil).
+		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
+		Return([]*customerpayment.Payment{payment}, nil).
+		Once()
+	paymentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(payment, nil).Once()
+	receiptRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ repositories.GetBankReceiptByIDRequest) (*bankreceipt.BankReceipt, error) {
+			return createdReceipt, nil
+		}).
+		Once()
+	receiptRepo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			createdReceipt = &copy
+			return &copy, nil
+		}).
 		Once()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
@@ -128,6 +180,30 @@ func TestImportMarksExceptionWhenNoUniqueCandidateExists(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
+	var receipt *bankreceipt.BankReceipt
+	receiptRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brcpt_")
+			}
+			receipt = &copy
+			return &copy, nil
+		}).
+		Once()
+	paymentRepo.EXPECT().
+		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
+	receiptRepo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			receipt = &copy
+			return &copy, nil
+		}).
+		Once()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -164,17 +240,41 @@ func TestImportCreatesWorkItemForException(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	receiptRepo := mocks.NewMockBankReceiptRepository(t)
 	paymentRepo := mocks.NewMockCustomerPaymentRepository(t)
-	paymentRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetCustomerPaymentByIDRequest{ID: pulid.MustNew("cpay_"), TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}}).
-		Return(&customerpayment.Payment{
-			ID:             pulid.MustNew("cpay_"),
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			AmountMinor:    10000,
-			Status:         customerpayment.StatusPosted,
-		}, nil).
-		Once()
 	workItemRepo := mocks.NewMockBankReceiptWorkItemRepository(t)
+	var workItem *bankreceiptworkitem.WorkItem
+	receiptRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			if copy.ID.IsNil() {
+				copy.ID = pulid.MustNew("brcpt_")
+			}
+			return &copy, nil
+		}).
+		Once()
+	paymentRepo.EXPECT().
+		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
+	receiptRepo.EXPECT().
+		Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceipt.BankReceipt) (*bankreceipt.BankReceipt, error) {
+			copy := *entity
+			return &copy, nil
+		}).
+		Once()
+	workItemRepo.EXPECT().
+		GetActiveByReceiptID(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Once()
+	workItemRepo.EXPECT().
+		Create(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, entity *bankreceiptworkitem.WorkItem) (*bankreceiptworkitem.WorkItem, error) {
+			copy := *entity
+			workItem = &copy
+			return &copy, nil
+		}).
+		Once()
 	accountingRepo := mocks.NewMockAccountingControlRepository(t)
 	accountingRepo.EXPECT().
 		GetByOrgID(mock.Anything, orgID).
@@ -209,7 +309,7 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	receipt := &bankreceipt.Receipt{
+	receipt := &bankreceipt.BankReceipt{
 		ID:              pulid.MustNew("brcpt_"),
 		OrganizationID:  orgID,
 		BusinessUnitID:  buID,
@@ -225,10 +325,22 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 		Status:          customerpayment.StatusPosted,
 	}
 	svc := &Service{
-		repo:         &fakeBankReceiptRepo{receipt: receipt},
-		paymentRepo:  &fakeMatchedPaymentRepo{payment: payment},
+		repo:         mocks.NewMockBankReceiptRepository(t),
+		paymentRepo:  mocks.NewMockCustomerPaymentRepository(t),
 		auditService: &mocks.NoopAuditService{},
 	}
+	svc.repo.(*mocks.MockBankReceiptRepository).EXPECT().
+		ListExceptions(mock.Anything, mock.Anything).
+		Return([]*bankreceipt.BankReceipt{receipt}, nil).
+		Once()
+	svc.repo.(*mocks.MockBankReceiptRepository).EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(receipt, nil).
+		Once()
+	svc.paymentRepo.(*mocks.MockCustomerPaymentRepository).EXPECT().
+		FindSuggestedMatchCandidates(mock.Anything, mock.Anything).
+		Return([]*customerpayment.Payment{payment}, nil).
+		Once()
 
 	items, err := svc.ListExceptions(t.Context(), pagination.TenantInfo{OrgID: orgID, BuID: buID})
 	require.NoError(t, err)
@@ -244,148 +356,4 @@ func TestListExceptionsAndSuggestMatches(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, suggestions, 1)
 	assert.Equal(t, 95, suggestions[0].Score)
-}
-
-type fakeBankReceiptRepo struct{ receipt *bankreceipt.Receipt }
-
-func (f *fakeBankReceiptRepo) GetByID(
-	context.Context,
-	repositories.GetBankReceiptByIDRequest,
-) (*bankreceipt.Receipt, error) {
-	return f.receipt, nil
-}
-
-func (f *fakeBankReceiptRepo) ListExceptions(
-	context.Context,
-	pagination.TenantInfo,
-) ([]*bankreceipt.Receipt, error) {
-	if f.receipt == nil {
-		return nil, nil
-	}
-	return []*bankreceipt.Receipt{f.receipt}, nil
-}
-
-func (f *fakeBankReceiptRepo) ListByImportBatchID(
-	context.Context,
-	repositories.ListBankReceiptsByImportBatchRequest,
-) ([]*bankreceipt.Receipt, error) {
-	if f.receipt == nil {
-		return nil, nil
-	}
-
-	return []*bankreceipt.Receipt{f.receipt}, nil
-}
-
-func (f *fakeBankReceiptRepo) GetSummary(
-	context.Context,
-	repositories.GetBankReceiptSummaryRequest,
-) (*bankreceipt.ReconciliationSummary, error) {
-	return &bankreceipt.ReconciliationSummary{}, nil
-}
-
-func (f *fakeBankReceiptRepo) Create(
-	_ context.Context,
-	entity *bankreceipt.Receipt,
-) (*bankreceipt.Receipt, error) {
-	if entity.ID.IsNil() {
-		entity.ID = pulid.MustNew("brcpt_")
-	}
-	copy := *entity
-	f.receipt = &copy
-	return &copy, nil
-}
-
-func (f *fakeBankReceiptRepo) Update(
-	_ context.Context,
-	entity *bankreceipt.Receipt,
-) (*bankreceipt.Receipt, error) {
-	copy := *entity
-	f.receipt = &copy
-	return &copy, nil
-}
-
-type fakeMatchedPaymentRepo struct{ payment *customerpayment.Payment }
-
-func (f *fakeMatchedPaymentRepo) GetByID(
-	context.Context,
-	repositories.GetCustomerPaymentByIDRequest,
-) (*customerpayment.Payment, error) {
-	return f.payment, nil
-}
-
-func (f *fakeMatchedPaymentRepo) FindMatchCandidates(
-	_ context.Context,
-	req repositories.FindCustomerPaymentMatchCandidatesRequest,
-) ([]*customerpayment.Payment, error) {
-	if f.payment != nil && f.payment.ReferenceNumber == req.ReferenceNumber &&
-		f.payment.AmountMinor == req.AmountMinor {
-		return []*customerpayment.Payment{f.payment}, nil
-	}
-	return nil, nil
-}
-
-func (f *fakeMatchedPaymentRepo) FindSuggestedMatchCandidates(
-	ctx context.Context,
-	req repositories.FindCustomerPaymentMatchCandidatesRequest,
-) ([]*customerpayment.Payment, error) {
-	return f.FindMatchCandidates(ctx, req)
-}
-
-func (f *fakeMatchedPaymentRepo) Create(
-	context.Context,
-	*customerpayment.Payment,
-) (*customerpayment.Payment, error) {
-	return nil, nil
-}
-
-func (f *fakeMatchedPaymentRepo) Update(
-	context.Context,
-	*customerpayment.Payment,
-) (*customerpayment.Payment, error) {
-	return nil, nil
-}
-
-type fakeBankReceiptWorkItemRepo struct{ item *bankreceiptworkitem.WorkItem }
-
-func (f *fakeBankReceiptWorkItemRepo) GetByID(
-	context.Context,
-	repositories.GetBankReceiptWorkItemByIDRequest,
-) (*bankreceiptworkitem.WorkItem, error) {
-	return f.item, nil
-}
-
-func (f *fakeBankReceiptWorkItemRepo) GetActiveByReceiptID(
-	context.Context,
-	pagination.TenantInfo,
-	pulid.ID,
-) (*bankreceiptworkitem.WorkItem, error) {
-	return f.item, nil
-}
-
-func (f *fakeBankReceiptWorkItemRepo) ListActive(
-	context.Context,
-	pagination.TenantInfo,
-) ([]*bankreceiptworkitem.WorkItem, error) {
-	if f.item == nil {
-		return nil, nil
-	}
-	return []*bankreceiptworkitem.WorkItem{f.item}, nil
-}
-
-func (f *fakeBankReceiptWorkItemRepo) Create(
-	_ context.Context,
-	entity *bankreceiptworkitem.WorkItem,
-) (*bankreceiptworkitem.WorkItem, error) {
-	copy := *entity
-	f.item = &copy
-	return &copy, nil
-}
-
-func (f *fakeBankReceiptWorkItemRepo) Update(
-	_ context.Context,
-	entity *bankreceiptworkitem.WorkItem,
-) (*bankreceiptworkitem.WorkItem, error) {
-	copy := *entity
-	f.item = &copy
-	return &copy, nil
 }

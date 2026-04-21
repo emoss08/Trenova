@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -112,9 +113,9 @@ type InvoiceAdjustmentBulkRequest struct {
 }
 
 type InvoiceAdjustmentLineage struct {
-	CorrectionGroup *invoiceadjustment.CorrectionGroup `json:"correctionGroup"`
-	Invoices        []*invoice.Invoice                 `json:"invoices"`
-	Adjustments     []*invoiceadjustment.Adjustment    `json:"adjustments"`
+	CorrectionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup `json:"correctionGroup"`
+	Invoices        []*invoice.Invoice                                  `json:"invoices"`
+	Adjustments     []*invoiceadjustment.InvoiceAdjustment              `json:"adjustments"`
 }
 
 type InvoiceAdjustGenerator interface {
@@ -135,12 +136,12 @@ type InvoiceAdjustmentService interface {
 		ctx context.Context,
 		req *CreateDraftInvoiceAdjustmentRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	UpdateDraft(
 		ctx context.Context,
 		req *UpdateDraftInvoiceAdjustmentRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	PreviewDraft(
 		ctx context.Context,
 		req *GetInvoiceAdjustmentDetailRequest,
@@ -150,7 +151,7 @@ type InvoiceAdjustmentService interface {
 		ctx context.Context,
 		req *GetInvoiceAdjustmentDetailRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	Preview(
 		ctx context.Context,
 		req *InvoiceAdjustmentRequest,
@@ -160,21 +161,21 @@ type InvoiceAdjustmentService interface {
 		ctx context.Context,
 		req *InvoiceAdjustmentRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	Approve(
 		ctx context.Context,
 		req *ApproveInvoiceAdjustmentRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	Reject(
 		ctx context.Context,
 		req *RejectInvoiceAdjustmentRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	GetDetail(
 		ctx context.Context,
 		req *GetInvoiceAdjustmentDetailRequest,
-	) (*invoiceadjustment.Adjustment, error)
+	) (*invoiceadjustment.InvoiceAdjustment, error)
 	GetLineage(
 		ctx context.Context,
 		req *GetInvoiceAdjustmentLineageRequest,
@@ -188,26 +189,26 @@ type InvoiceAdjustmentService interface {
 		ctx context.Context,
 		req *InvoiceAdjustmentBulkRequest,
 		actor *RequestActor,
-	) (*invoiceadjustment.Batch, error)
+	) (*invoiceadjustment.InvoiceAdjustmentBatch, error)
 	GetBatch(
 		ctx context.Context,
 		batchID pulid.ID,
 		tenantInfo pagination.TenantInfo,
-	) (*invoiceadjustment.Batch, error)
+	) (*invoiceadjustment.InvoiceAdjustmentBatch, error)
 	ListApprovals(
 		ctx context.Context,
 		filter pagination.QueryOptions,
-	) (*pagination.ListResult[*invoiceadjustment.ApprovalQueueItem], error)
+	) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)
 	ListReconciliationExceptions(
 		ctx context.Context,
 		filter pagination.QueryOptions,
-	) (*pagination.ListResult[*invoiceadjustment.ReconciliationQueueItem], error)
+	) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error)
 	ListBatches(
 		ctx context.Context,
 		filter pagination.QueryOptions,
-	) (*pagination.ListResult[*invoiceadjustment.BatchQueueItem], error)
+	) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)
 	GetOperationsSummary(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*invoiceadjustment.OperationsSummary, error)
+	) (*repositories.InvoiceAdjustmentOperationsSummary, error)
 }

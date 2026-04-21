@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/system"
+	services "github.com/emoss08/trenova/internal/core/ports/services"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -39,23 +39,23 @@ func (_m *MockVersionService) EXPECT() *MockVersionService_Expecter {
 }
 
 // CheckForUpdates provides a mock function for the type MockVersionService
-func (_mock *MockVersionService) CheckForUpdates(ctx context.Context) (*system.UpdateStatus, error) {
+func (_mock *MockVersionService) CheckForUpdates(ctx context.Context) (*services.UpdateStatus, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckForUpdates")
 	}
 
-	var r0 *system.UpdateStatus
+	var r0 *services.UpdateStatus
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (*system.UpdateStatus, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*services.UpdateStatus, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) *system.UpdateStatus); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *services.UpdateStatus); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*system.UpdateStatus)
+			r0 = ret.Get(0).(*services.UpdateStatus)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -90,34 +90,34 @@ func (_c *MockVersionService_CheckForUpdates_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockVersionService_CheckForUpdates_Call) Return(updateStatus *system.UpdateStatus, err error) *MockVersionService_CheckForUpdates_Call {
+func (_c *MockVersionService_CheckForUpdates_Call) Return(updateStatus *services.UpdateStatus, err error) *MockVersionService_CheckForUpdates_Call {
 	_c.Call.Return(updateStatus, err)
 	return _c
 }
 
-func (_c *MockVersionService_CheckForUpdates_Call) RunAndReturn(run func(ctx context.Context) (*system.UpdateStatus, error)) *MockVersionService_CheckForUpdates_Call {
+func (_c *MockVersionService_CheckForUpdates_Call) RunAndReturn(run func(ctx context.Context) (*services.UpdateStatus, error)) *MockVersionService_CheckForUpdates_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUpdateStatus provides a mock function for the type MockVersionService
-func (_mock *MockVersionService) GetUpdateStatus(ctx context.Context) (*system.UpdateStatus, error) {
+func (_mock *MockVersionService) GetUpdateStatus(ctx context.Context) (*services.UpdateStatus, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUpdateStatus")
 	}
 
-	var r0 *system.UpdateStatus
+	var r0 *services.UpdateStatus
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (*system.UpdateStatus, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*services.UpdateStatus, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) *system.UpdateStatus); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *services.UpdateStatus); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*system.UpdateStatus)
+			r0 = ret.Get(0).(*services.UpdateStatus)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -152,34 +152,34 @@ func (_c *MockVersionService_GetUpdateStatus_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockVersionService_GetUpdateStatus_Call) Return(updateStatus *system.UpdateStatus, err error) *MockVersionService_GetUpdateStatus_Call {
+func (_c *MockVersionService_GetUpdateStatus_Call) Return(updateStatus *services.UpdateStatus, err error) *MockVersionService_GetUpdateStatus_Call {
 	_c.Call.Return(updateStatus, err)
 	return _c
 }
 
-func (_c *MockVersionService_GetUpdateStatus_Call) RunAndReturn(run func(ctx context.Context) (*system.UpdateStatus, error)) *MockVersionService_GetUpdateStatus_Call {
+func (_c *MockVersionService_GetUpdateStatus_Call) RunAndReturn(run func(ctx context.Context) (*services.UpdateStatus, error)) *MockVersionService_GetUpdateStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetVersionInfo provides a mock function for the type MockVersionService
-func (_mock *MockVersionService) GetVersionInfo(ctx context.Context) (*system.VersionInfo, error) {
+func (_mock *MockVersionService) GetVersionInfo(ctx context.Context) (*services.VersionInfo, error) {
 	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetVersionInfo")
 	}
 
-	var r0 *system.VersionInfo
+	var r0 *services.VersionInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context) (*system.VersionInfo, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*services.VersionInfo, error)); ok {
 		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context) *system.VersionInfo); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *services.VersionInfo); ok {
 		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*system.VersionInfo)
+			r0 = ret.Get(0).(*services.VersionInfo)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
@@ -214,12 +214,12 @@ func (_c *MockVersionService_GetVersionInfo_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockVersionService_GetVersionInfo_Call) Return(versionInfo *system.VersionInfo, err error) *MockVersionService_GetVersionInfo_Call {
+func (_c *MockVersionService_GetVersionInfo_Call) Return(versionInfo *services.VersionInfo, err error) *MockVersionService_GetVersionInfo_Call {
 	_c.Call.Return(versionInfo, err)
 	return _c
 }
 
-func (_c *MockVersionService_GetVersionInfo_Call) RunAndReturn(run func(ctx context.Context) (*system.VersionInfo, error)) *MockVersionService_GetVersionInfo_Call {
+func (_c *MockVersionService_GetVersionInfo_Call) RunAndReturn(run func(ctx context.Context) (*services.VersionInfo, error)) *MockVersionService_GetVersionInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }

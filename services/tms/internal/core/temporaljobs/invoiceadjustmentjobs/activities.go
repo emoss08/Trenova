@@ -127,7 +127,7 @@ func (a *Activities) refreshBatchProgress(
 	ctx context.Context,
 	batchID pulid.ID,
 	tenantInfo pagination.TenantInfo,
-) (*invoiceadjustment.Batch, error) {
+) (*invoiceadjustment.InvoiceAdjustmentBatch, error) {
 	batch, err := a.repo.GetBatchByID(ctx, repositories.GetBatchRequest{
 		ID:         batchID,
 		TenantInfo: tenantInfo,
@@ -180,7 +180,7 @@ func decodeRequestPayload(payload map[string]any, req *servicesports.InvoiceAdju
 	return sonic.Unmarshal(raw, req)
 }
 
-func findBatchItem(items []*invoiceadjustment.BatchItem, itemID pulid.ID) *invoiceadjustment.BatchItem {
+func findBatchItem(items []*invoiceadjustment.InvoiceAdjustmentBatchItem, itemID pulid.ID) *invoiceadjustment.InvoiceAdjustmentBatchItem {
 	for _, item := range items {
 		if item != nil && item.ID == itemID {
 			return item
