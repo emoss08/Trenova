@@ -1,9 +1,7 @@
-import { NumberField } from "@/components/fields/number-field";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMapId } from "@/hooks/use-map-id";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
+import { cn } from "@/lib/utils";
 import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@/types/location";
@@ -17,19 +15,17 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { MapPinIcon, RefreshCcwIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 250;
 const SHAPE_COLORS = {
-  stroke: "#0f766e",
-  fill: "#14b8a61f",
-  center: "#0f766e",
+  stroke: "#2563eb",
+  fill: "#3b82f6",
+  center: "#1d4ed8",
 } as const;
 
-export function LocationGeofenceEditor() {
-  const mapId = useMapId();
+function useLocationGeofence() {
   const { control, setValue } = useFormContext<Location>();
   const { errors } = useFormState<Location>({
     control,
@@ -38,11 +34,6 @@ export function LocationGeofenceEditor() {
   const [geofenceType, geofenceRadiusMeters, geofenceVertices, latitude, longitude] = useWatch({
     control,
     name: ["geofenceType", "geofenceRadiusMeters", "geofenceVertices", "latitude", "longitude"],
-  });
-
-  const googleMapsQuery = useQuery({
-    ...queries.integration.runtimeConfig("GoogleMaps"),
-    staleTime: 5 * 60 * 1000,
   });
 
   const center = useMemo(
@@ -56,10 +47,6 @@ export function LocationGeofenceEditor() {
   const polygonPaths = useMemo(
     () => (geofenceType === "draw" ? (geofenceVertices ?? []).map(toLatLng) : []),
     [geofenceType, geofenceVertices],
-  );
-  const activeChoice = useMemo(
-    () => locationGeofenceTypeChoices.find((choice) => choice.value === geofenceType),
-    [geofenceType],
   );
   const errorMessages = useMemo(
     () =>
@@ -102,20 +89,6 @@ export function LocationGeofenceEditor() {
       }
     },
     [setFieldValue, updateCenter],
-  );
-
-  const resetManualShape = useCallback(
-    (nextType: LocationGeofenceType) => {
-      const size = geofenceRadiusMeters ?? DEFAULT_GEOFENCE_RADIUS_METERS;
-
-      if (nextType === "rectangle") {
-        updateVertices(buildRectangleVertices(center, size));
-        return;
-      }
-
-      updateVertices(buildPolygonVertices(center, size));
-    },
-    [center, geofenceRadiusMeters, updateVertices],
   );
 
   const handleTypeChange = useCallback(
@@ -164,192 +137,194 @@ export function LocationGeofenceEditor() {
     }
   }, [center, geofenceType, geofenceVertices, updateVertices]);
 
+  return {
+    geofenceType,
+    geofenceRadiusMeters,
+    latitude,
+    longitude,
+    center,
+    rectangleBounds,
+    polygonPaths,
+    errorMessages,
+    setFieldValue,
+    updateCenter,
+    updateVertices,
+    handleTypeChange,
+  };
+}
+
+export function LocationGeofenceControls({ className }: { className?: string }) {
+  const { geofenceType, handleTypeChange } = useLocationGeofence();
+  const activeChoice = useMemo(
+    () => locationGeofenceTypeChoices.find((choice) => choice.value === geofenceType),
+    [geofenceType],
+  );
+
   return (
-    <Card className="border-dashed bg-muted/20">
-      <CardHeader className="gap-2 border-b">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <CardTitle className="flex items-center gap-2">
-              <MapPinIcon className="size-4 text-muted-foreground" />
-              Geofence
-            </CardTitle>
-            <CardDescription>
-              Build the location boundary directly on the map. Use auto for a standard radius, or
-              switch to a manual shape when the site needs tighter control.
-            </CardDescription>
-          </div>
-          {(geofenceType === "rectangle" || geofenceType === "draw") && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => resetManualShape(geofenceType)}
-            >
-              <RefreshCcwIcon className="size-3.5" />
-              Reset Shape
-            </Button>
-          )}
+    <div className={cn("space-y-2", className)}>
+      <Tabs value={geofenceType} onValueChange={handleTypeChange} className="gap-3">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+          {locationGeofenceTypeChoices.map((choice) => (
+            <TabsTrigger key={choice.value} value={choice.value}>
+              {choice.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+      <p className="text-xs text-muted-foreground">
+        {describeMode(activeChoice?.value ?? "auto")}
+      </p>
+    </div>
+  );
+}
+
+export function LocationGeofenceMap({ className }: { className?: string }) {
+  const mapId = useMapId();
+  const {
+    geofenceType,
+    geofenceRadiusMeters,
+    latitude,
+    longitude,
+    center,
+    rectangleBounds,
+    polygonPaths,
+    errorMessages,
+    setFieldValue,
+    updateCenter,
+    updateVertices,
+  } = useLocationGeofence();
+
+  const googleMapsQuery = useQuery({
+    ...queries.integration.runtimeConfig("GoogleMaps"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  return (
+    <div className={cn("relative h-full w-full overflow-hidden bg-background", className)}>
+      {googleMapsQuery.isLoading ? (
+        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+          Loading map editor...
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Tabs value={geofenceType} onValueChange={handleTypeChange} className="gap-3">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-              {locationGeofenceTypeChoices.map((choice) => (
-                <TabsTrigger key={choice.value} value={choice.value}>
-                  {choice.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <p className="text-xs text-muted-foreground">
-            {describeMode(activeChoice?.value ?? "auto")}
-          </p>
+      ) : !googleMapsQuery.data?.apiKey ? (
+        <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
+          Google Maps is not configured for this environment, so the geofence editor cannot be
+          displayed.
         </div>
+      ) : (
+        <APIProvider apiKey={googleMapsQuery.data.apiKey}>
+          <Map
+            mapId={mapId}
+            defaultCenter={center}
+            defaultZoom={latitude != null && longitude != null ? 15 : DEFAULT_ZOOM}
+            gestureHandling="greedy"
+            disableDefaultUI
+            onClick={({ detail }) => {
+              if (!detail.latLng) {
+                return;
+              }
 
-        {geofenceType === "circle" && (
-          <NumberField
-            control={control}
-            name="geofenceRadiusMeters"
-            label="Radius"
-            description="Circular geofence radius in meters."
-            min={1}
-            step={25}
-            sideText="m"
-            decimalScale={0}
-          />
-        )}
-
-        {errorMessages.length > 0 && (
-          <div className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600">
-            {errorMessages[0]}
-          </div>
-        )}
-
-        <div className="overflow-hidden rounded-lg border bg-background">
-          {googleMapsQuery.isLoading ? (
-            <div className="flex h-[320px] items-center justify-center text-sm text-muted-foreground">
-              Loading map editor...
-            </div>
-          ) : !googleMapsQuery.data?.apiKey ? (
-            <div className="flex h-[320px] items-center justify-center px-6 text-center text-sm text-muted-foreground">
-              Google Maps is not configured for this environment, so the geofence editor cannot be
-              displayed.
-            </div>
-          ) : (
-            <APIProvider apiKey={googleMapsQuery.data.apiKey}>
-              <Map
-                mapId={mapId}
-                defaultCenter={center}
-                defaultZoom={latitude != null && longitude != null ? 15 : DEFAULT_ZOOM}
-                gestureHandling="greedy"
-                disableDefaultUI
-                onClick={({ detail }) => {
-                  if (!detail.latLng) {
+              if (geofenceType === "auto" || geofenceType === "circle") {
+                updateCenter(detail.latLng);
+              }
+            }}
+            className="h-full w-full"
+          >
+            <MapCenterSync center={center} />
+            {(geofenceType === "auto" || geofenceType === "circle") && (
+              <>
+                <AdvancedMarker
+                  position={center}
+                  draggable
+                  onDragEnd={(event) => {
+                    if (event.latLng) {
+                      updateCenter({
+                        lat: event.latLng.lat(),
+                        lng: event.latLng.lng(),
+                      });
+                    }
+                  }}
+                >
+                  <div
+                    className="size-3 rounded-full border-2 border-white shadow-md ring-1 ring-black/20"
+                    style={{ backgroundColor: SHAPE_COLORS.center }}
+                  />
+                </AdvancedMarker>
+                <Circle
+                  center={center}
+                  radius={geofenceRadiusMeters ?? DEFAULT_GEOFENCE_RADIUS_METERS}
+                  editable={geofenceType === "circle"}
+                  draggable={geofenceType === "circle"}
+                  onCenterChanged={(nextCenter) => {
+                    if (nextCenter) {
+                      updateCenter({ lat: nextCenter.lat(), lng: nextCenter.lng() });
+                    }
+                  }}
+                  onRadiusChanged={(nextRadius) => {
+                    if (geofenceType === "circle") {
+                      setFieldValue(
+                        "geofenceRadiusMeters",
+                        Math.max(1, Math.round(nextRadius)),
+                      );
+                    }
+                  }}
+                  strokeColor={SHAPE_COLORS.stroke}
+                  strokeOpacity={0.95}
+                  strokeWeight={2}
+                  fillColor={SHAPE_COLORS.fill}
+                  fillOpacity={0.24}
+                />
+              </>
+            )}
+            {geofenceType === "rectangle" && rectangleBounds && (
+              <Rectangle
+                bounds={rectangleBounds}
+                editable
+                draggable
+                onBoundsChanged={(bounds) => {
+                  if (!bounds) {
                     return;
                   }
 
-                  if (geofenceType === "auto" || geofenceType === "circle") {
-                    updateCenter(detail.latLng);
-                  }
+                  updateVertices(boundsToVertices(bounds));
                 }}
-                className="h-[320px] w-full"
-              >
-                <MapCenterSync center={center} />
-                {(geofenceType === "auto" || geofenceType === "circle") && (
-                  <>
-                    <AdvancedMarker
-                      position={center}
-                      draggable
-                      onDragEnd={(event) => {
-                        if (event.latLng) {
-                          updateCenter({
-                            lat: event.latLng.lat(),
-                            lng: event.latLng.lng(),
-                          });
-                        }
-                      }}
-                    />
-                    <Circle
-                      center={center}
-                      radius={geofenceRadiusMeters ?? DEFAULT_GEOFENCE_RADIUS_METERS}
-                      editable={geofenceType === "circle"}
-                      draggable={geofenceType === "circle"}
-                      onCenterChanged={(nextCenter) => {
-                        if (nextCenter) {
-                          updateCenter({ lat: nextCenter.lat(), lng: nextCenter.lng() });
-                        }
-                      }}
-                      onRadiusChanged={(nextRadius) => {
-                        if (geofenceType === "circle") {
-                          setFieldValue(
-                            "geofenceRadiusMeters",
-                            Math.max(1, Math.round(nextRadius)),
-                          );
-                        }
-                      }}
-                      strokeColor={SHAPE_COLORS.stroke}
-                      strokeOpacity={0.95}
-                      strokeWeight={2}
-                      fillColor={SHAPE_COLORS.fill}
-                      fillOpacity={0.24}
-                    />
-                  </>
-                )}
-                {geofenceType === "rectangle" && rectangleBounds && (
-                  <Rectangle
-                    bounds={rectangleBounds}
-                    editable
-                    draggable
-                    onBoundsChanged={(bounds) => {
-                      if (!bounds) {
-                        return;
-                      }
+                strokeColor={SHAPE_COLORS.stroke}
+                strokeOpacity={0.95}
+                strokeWeight={2}
+                fillColor={SHAPE_COLORS.fill}
+                fillOpacity={0.18}
+              />
+            )}
+            {geofenceType === "draw" && polygonPaths.length >= 3 && (
+              <Polygon
+                paths={polygonPaths}
+                editable
+                draggable
+                onPathsChanged={(paths) => {
+                  const nextPath = paths[0] ?? [];
+                  updateVertices(
+                    nextPath.map((point) => ({
+                      latitude: point.lat(),
+                      longitude: point.lng(),
+                    })),
+                  );
+                }}
+                strokeColor={SHAPE_COLORS.stroke}
+                strokeOpacity={0.95}
+                strokeWeight={2}
+                fillColor={SHAPE_COLORS.fill}
+                fillOpacity={0.18}
+              />
+            )}
+          </Map>
+        </APIProvider>
+      )}
 
-                      updateVertices(boundsToVertices(bounds));
-                    }}
-                    strokeColor={SHAPE_COLORS.stroke}
-                    strokeOpacity={0.95}
-                    strokeWeight={2}
-                    fillColor={SHAPE_COLORS.fill}
-                    fillOpacity={0.18}
-                  />
-                )}
-                {geofenceType === "draw" && polygonPaths.length >= 3 && (
-                  <Polygon
-                    paths={polygonPaths}
-                    editable
-                    draggable
-                    onPathsChanged={(paths) => {
-                      const nextPath = paths[0] ?? [];
-                      updateVertices(
-                        nextPath.map((point) => ({
-                          latitude: point.lat(),
-                          longitude: point.lng(),
-                        })),
-                      );
-                    }}
-                    strokeColor={SHAPE_COLORS.stroke}
-                    strokeOpacity={0.95}
-                    strokeWeight={2}
-                    fillColor={SHAPE_COLORS.fill}
-                    fillOpacity={0.18}
-                  />
-                )}
-              </Map>
-            </APIProvider>
-          )}
+      {errorMessages.length > 0 && (
+        <div className="pointer-events-none absolute top-3 left-3 max-w-sm rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-600 shadow-sm backdrop-blur">
+          {errorMessages[0]}
         </div>
-
-        <p className="text-xs text-muted-foreground">
-          {geofenceType === "auto" || geofenceType === "circle"
-            ? "Click the map or drag the pin to reposition the location. Circle mode also lets you resize the boundary."
-            : geofenceType === "rectangle"
-              ? "Drag the rectangle or pull its handles to match the facility footprint."
-              : "Drag polygon vertices and edge handles to sketch the exact yard or campus boundary."}
-        </p>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }
 
