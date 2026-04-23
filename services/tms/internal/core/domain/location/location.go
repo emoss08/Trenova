@@ -36,7 +36,7 @@ type Location struct {
 	Status               domaintypes.Status `json:"status"               bun:"status,type:status_enum,notnull,default:'Active'"`
 	Code                 string             `json:"code"                 bun:"code,type:VARCHAR(10),notnull"`
 	Name                 string             `json:"name"                 bun:"name,type:VARCHAR(255),notnull"`
-	Description          string             `json:"description"          bun:"description,type:VARCHAR(255),nullzero"`
+	Description          string             `json:"description"          bun:"description,type:TEXT,nullzero"`
 	AddressLine1         string             `json:"addressLine1"         bun:"address_line_1,type:VARCHAR(150),notnull"`
 	AddressLine2         string             `json:"addressLine2"         bun:"address_line_2,type:VARCHAR(150),nullzero"`
 	City                 string             `json:"city"                 bun:"city,type:VARCHAR(100),notnull"`
