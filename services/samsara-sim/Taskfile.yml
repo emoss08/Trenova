@@ -23,7 +23,7 @@ tasks:
     desc: Build simulator binary
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BIN_PATH}} ./cmd/samsara-sim
+      - go build -buildvcs=false -o {{.BIN_PATH}} ./cmd/samsara-sim
 
   run:
     desc: Run simulator locally

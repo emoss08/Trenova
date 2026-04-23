@@ -29,7 +29,7 @@ tasks:
     desc: Build the unified CLI tool
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.CLI_PATH}} ./cmd/cli
+      - go build -buildvcs=false -o {{.CLI_PATH}} ./cmd/cli
 
   run:
     desc: Run the API server via CLI
