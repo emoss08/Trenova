@@ -144,9 +144,6 @@ export function AddressField<TForm extends FieldValues>({
             (location.stateId || "") as PathValue<TForm, typeof stateIdField>,
           );
         }
-        if (placeIdField) {
-          setFieldValue(placeIdField, locationId as PathValue<TForm, typeof placeIdField>);
-        }
         if (longitudeField) {
           setFieldValue(
             longitudeField,
@@ -158,6 +155,9 @@ export function AddressField<TForm extends FieldValues>({
             latitudeField,
             (location.latitude || 0) as PathValue<TForm, typeof latitudeField>,
           );
+        }
+        if (placeIdField) {
+          setFieldValue(placeIdField, locationId as PathValue<TForm, typeof placeIdField>);
         }
       }
 

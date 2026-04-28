@@ -15,7 +15,7 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 
 const DEFAULT_GEOFENCE_RADIUS_METERS = 250;
@@ -35,6 +35,11 @@ function useLocationGeofence() {
     control,
     name: ["geofenceType", "geofenceRadiusMeters", "geofenceVertices", "latitude", "longitude"],
   });
+  const placeId = useWatch({
+    control,
+    name: "placeId",
+  });
+  const previousPlaceIdRef = useRef(placeId);
 
   const center = useMemo(
     () => resolveCenter(latitude ?? null, longitude ?? null, geofenceVertices ?? []),
@@ -136,6 +141,19 @@ function useLocationGeofence() {
       updateVertices(buildPolygonVertices(center));
     }
   }, [center, geofenceType, geofenceVertices, updateVertices]);
+
+  useEffect(() => {
+    const previousPlaceId = previousPlaceIdRef.current;
+    previousPlaceIdRef.current = placeId;
+
+    if (!placeId || placeId === previousPlaceId || latitude == null || longitude == null) {
+      return;
+    }
+
+    setFieldValue("geofenceType", "auto");
+    setFieldValue("geofenceRadiusMeters", DEFAULT_GEOFENCE_RADIUS_METERS);
+    setFieldValue("geofenceVertices", []);
+  }, [latitude, longitude, placeId, setFieldValue]);
 
   return {
     geofenceType,
