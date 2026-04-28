@@ -144,10 +144,10 @@ function CreateDialog({ open, onOpenChange, form }: CreateDialogProps) {
         if (next) reset();
         onOpenChange(next);
       }}
-      titleNode={<DialogTitle>Create new place</DialogTitle>}
+      titleNode={<DialogTitle>Create new location</DialogTitle>}
       descriptionNode={
-        <DialogDescription>
-          Build the operating boundary for this location with the map editor on the right.
+        <DialogDescription className="text-xs text-muted-foreground">
+          Fill out the form below to create a new Location.
         </DialogDescription>
       }
       footer={
@@ -289,7 +289,9 @@ function EditDialog({ open, onOpenChange, row, form }: EditDialogProps) {
       }
       descriptionNode={
         lastUpdatedDescription ? (
-          <DialogDescription>{lastUpdatedDescription}</DialogDescription>
+          <DialogDescription className="text-xs text-muted-foreground">
+            {lastUpdatedDescription}
+          </DialogDescription>
         ) : null
       }
       footer={
@@ -343,7 +345,7 @@ function DialogShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="grid h-[80vh] shadow-lg max-h-[800px] w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-[1100px] lg:grid-cols-[minmax(0,440px)_1fr]"
+        className="grid h-[80vh] shadow-lg max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
       >
         <FormProvider {...form}>
           <Form
