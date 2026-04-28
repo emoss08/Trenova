@@ -52,6 +52,10 @@ func (r *repository) filterQuery(
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
+func withLocationGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.ColumnExpr("loc.*").ColumnExpr("loc.geofence_geometry AS geofence_geometry")
+}
+
 func applyLocationGeofence(
 	insertQuery *bun.InsertQuery,
 	updateQuery *bun.UpdateQuery,
@@ -147,6 +151,7 @@ func (r *repository) List(
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
+		Apply(withLocationGeofenceGeometry).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return r.filterQuery(sq, req)
 		}).ScanAndCount(ctx)
@@ -178,6 +183,7 @@ func (r *repository) GetByID(
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
+		Apply(withLocationGeofenceGeometry).
 		Relation("State").
 		Relation("LocationCategory").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -319,6 +325,7 @@ func (r *repository) GetByIDs(
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
+		Apply(withLocationGeofenceGeometry).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("loc.organization_id = ?", req.TenantInfo.OrgID).
 				Where("loc.business_unit_id = ?", req.TenantInfo.BuID).

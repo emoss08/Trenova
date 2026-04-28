@@ -23,7 +23,7 @@ tasks:
     desc: Build the GTC binary
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -o {{.BIN_PATH}} ./cmd/gateway
+      - go build -buildvcs=false -o {{.BIN_PATH}} ./cmd/gateway
 
   run:
     desc: Run the GTC service locally

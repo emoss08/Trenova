@@ -1,6 +1,12 @@
 import { GeocodedBadge } from "@/components/geocode-badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
@@ -18,6 +24,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import type { DataTablePanelProps } from "@/types/data-table";
 import { type Location, type locationSchema } from "@/types/location";
 import { useQueryClient } from "@tanstack/react-query";
+import { XIcon } from "lucide-react";
 import { useEffect } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
@@ -334,16 +341,32 @@ function DialogShell({
 }: DialogShellProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="grid h-[80vh] max-h-[800px] w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-[1100px] lg:grid-cols-[minmax(0,440px)_1fr]">
+      <DialogContent
+        showCloseButton={false}
+        className="grid h-[80vh] max-h-[800px] w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-[1100px] lg:grid-cols-[minmax(0,440px)_1fr]"
+      >
         <FormProvider {...form}>
           <Form
             id={FORM_ID}
             onSubmit={form.handleSubmit(onValidSubmit)}
             className="flex h-full min-h-0 min-w-0 flex-col border-r"
           >
-            <div className="flex shrink-0 flex-col gap-1 border-b bg-background px-5 py-4">
-              {titleNode}
-              {descriptionNode}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+              <div className="flex shrink-0 flex-col gap-1">
+                {titleNode}
+                {descriptionNode}
+              </div>
+              <DialogClose
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <XIcon className="size-4" />
+                  </Button>
+                }
+              />
             </div>
             <ScrollArea className="min-h-0 flex-1">
               <LocationForm />
