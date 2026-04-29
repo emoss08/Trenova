@@ -16,7 +16,7 @@ import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { useEffect, useDeferredValue, useMemo, useRef } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import { invoiceSearchParamsParser } from "../use-invoice-state";
 import { InvoiceItemCard } from "./invoice-item-card";
 
@@ -40,13 +40,7 @@ export function InvoiceSidebar({
     [status, billType, deferredSearch],
   );
 
-  const {
-    data,
-    isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useInfiniteQuery({
     queryKey,
     queryFn: async ({ pageParam }) => {
       const params = new URLSearchParams({
@@ -79,10 +73,7 @@ export function InvoiceSidebar({
     },
   });
 
-  const invoices = useMemo(
-    () => data?.pages.flatMap((page) => page.results) ?? [],
-    [data?.pages],
-  );
+  const invoices = useMemo(() => data?.pages.flatMap((page) => page.results) ?? [], [data?.pages]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -159,7 +150,9 @@ export function InvoiceSidebar({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className={cn("flex flex-col gap-1.5 p-2", invoices.length === 0 && "h-full p-0")}>
+        <div
+          className={cn("flex flex-col gap-1.5 p-2", invoices.length === 0 && "h-full p-0 gap-0")}
+        >
           {!isLoading && invoices.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <EmptyState

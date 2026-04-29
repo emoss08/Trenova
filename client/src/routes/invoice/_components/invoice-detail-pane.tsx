@@ -61,12 +61,12 @@ export default function InvoiceDetailPane({
 
   if (!selectedInvoiceId) {
     return (
-      <div className="flex h-full items-center justify-center p-6">
+      <div className="flex h-full items-center justify-center">
         <EmptyState
           title="No invoice selected"
           description="Select an invoice to review the posted billing record, shipment references, and receivable details."
           icons={[ReceiptTextIcon, FileTextIcon, PackageCheckIcon]}
-          className="max-w-xl border-none p-8 shadow-none"
+          className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
         />
       </div>
     );

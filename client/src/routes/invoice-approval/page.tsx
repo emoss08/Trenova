@@ -37,8 +37,8 @@ import {
 } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
 import { useForm } from "react-hook-form";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { invoiceApprovalSearchParamsParser } from "./use-invoice-approval-state";
 
@@ -187,8 +187,7 @@ export function InvoiceApprovalPage() {
     <BillingWorkspaceLayout
       pageHeaderProps={{
         title: "Pending Approvals",
-        description:
-          "Review policy-controlled invoice adjustments awaiting finance approval.",
+        description: "Review policy-controlled invoice adjustments awaiting finance approval.",
       }}
       toolbar={
         <div className="mx-4 mt-3 grid gap-2.5 md:grid-cols-4">
@@ -200,10 +199,7 @@ export function InvoiceApprovalPage() {
             label="Reconciliation"
             value={String(summaryQuery.data?.reconciliationPending ?? 0)}
           />
-          <SummaryCard
-            label="Write-Offs"
-            value={String(summaryQuery.data?.writeOffPending ?? 0)}
-          />
+          <SummaryCard label="Write-Offs" value={String(summaryQuery.data?.writeOffPending ?? 0)} />
           <SummaryCard
             label="Batch Failures"
             value={String(summaryQuery.data?.failedBatchItems ?? 0)}
@@ -244,7 +240,7 @@ export function InvoiceApprovalPage() {
             <div
               className={cn(
                 "flex flex-col gap-1.5 p-2",
-                !isLoading && allRows.length === 0 && "h-full p-0",
+                !isLoading && allRows.length === 0 && "h-full p-0 gap-0",
               )}
             >
               {isLoading
@@ -281,9 +277,7 @@ export function InvoiceApprovalPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-medium">
-                          {row.originalInvoiceNumber}
-                        </p>
+                        <p className="truncate text-xs font-medium">{row.originalInvoiceNumber}</p>
                         <p className="truncate text-2xs text-muted-foreground">
                           {row.customerName}
                         </p>
@@ -321,12 +315,12 @@ export function InvoiceApprovalPage() {
       detail={
         <ScrollArea className="h-full">
           {!selectedRow ? (
-            <div className="flex h-full items-center justify-center p-6">
+            <div className="flex h-full items-center justify-center">
               <EmptyState
                 title="No approval selected"
                 description="Select a submitted adjustment to review policy context and approve or reject it."
                 icons={[GitBranchPlusIcon, ReceiptTextIcon, ClipboardListIcon]}
-                className="max-w-xl border-none p-8 shadow-none"
+                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-6 shadow-none"
               />
             </div>
           ) : detailQuery.isLoading || !detailQuery.data ? (
@@ -380,9 +374,7 @@ function ApprovalDetail({
           <h2 className="text-lg font-semibold">{selectedRow.originalInvoiceNumber}</h2>
           <p className="text-sm text-muted-foreground">{selectedRow.customerName}</p>
         </div>
-        <p className="text-2xl font-bold tabular-nums">
-          {formatCurrency(netDelta)}
-        </p>
+        <p className="text-2xl font-bold tabular-nums">{formatCurrency(netDelta)}</p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -404,11 +396,7 @@ function ApprovalDetail({
                 value={formatCurrency(Number(selectedRow.rebillTotalAmount))}
               />
               <Separator />
-              <ChargeSummaryRow
-                label="Net Delta"
-                value={formatCurrency(netDelta)}
-                bold
-              />
+              <ChargeSummaryRow label="Net Delta" value={formatCurrency(netDelta)} bold />
             </div>
           </div>
 
@@ -447,9 +435,7 @@ function ApprovalDetail({
                 </span>
               </PropertyCell>
               <PropertyCell label="Invoice Status">
-                <span className="text-xs font-medium">
-                  {selectedRow.originalInvoiceStatus}
-                </span>
+                <span className="text-xs font-medium">{selectedRow.originalInvoiceStatus}</span>
               </PropertyCell>
             </div>
             {selectedRow.requiresReconciliationException ||
@@ -519,10 +505,7 @@ function ApprovalDetail({
                 </thead>
                 <tbody>
                   {detail.lines.map((line) => (
-                    <tr
-                      key={line.id}
-                      className="border-t transition-colors hover:bg-muted/50"
-                    >
+                    <tr key={line.id} className="border-t transition-colors hover:bg-muted/50">
                       <td className="px-3 py-2 font-mono text-2xs">{line.lineNumber}</td>
                       <td className="px-3 py-2 text-xs">{line.description}</td>
                       <td className="px-3 py-2 text-right text-xs tabular-nums">
