@@ -4,11 +4,11 @@ import { GEOFENCE_OPACITY, GEOFENCE_STYLE, GEOFENCE_Z_INDEX } from "./geofence-s
 import type { NormalizedGeofence } from "./geofence-types";
 
 type Props = {
-  geofence: Extract<NormalizedGeofence, { kind: "circle" }>;
+  geofence: Extract<NormalizedGeofence, { kind: "polygon" }>;
   onSelect: (geofence: NormalizedGeofence) => void;
 };
 
-export function GeofenceCircle({ geofence, onSelect }: Props) {
+export function GeofencePolygon({ geofence, onSelect }: Props) {
   const map = useMap();
   const mapsLib = useMapsLibrary("maps");
   const onSelectRef = useRef(onSelect);
@@ -17,9 +17,8 @@ export function GeofenceCircle({ geofence, onSelect }: Props) {
   useEffect(() => {
     if (!map || !mapsLib) return;
 
-    const circle = new mapsLib.Circle({
-      center: geofence.center,
-      radius: geofence.radiusMeters,
+    const polygon = new mapsLib.Polygon({
+      paths: geofence.path,
       map,
       strokeColor: GEOFENCE_STYLE.stroke,
       strokeWeight: GEOFENCE_OPACITY.weight,
@@ -30,21 +29,21 @@ export function GeofenceCircle({ geofence, onSelect }: Props) {
       zIndex: GEOFENCE_Z_INDEX,
     });
 
-    const overListener = circle.addListener("mouseover", () => {
-      circle.setOptions({
+    const overListener = polygon.addListener("mouseover", () => {
+      polygon.setOptions({
         strokeOpacity: GEOFENCE_OPACITY.strokeHover,
         fillOpacity: GEOFENCE_OPACITY.fillHover,
         strokeWeight: GEOFENCE_OPACITY.weightHover,
       });
     });
-    const outListener = circle.addListener("mouseout", () => {
-      circle.setOptions({
+    const outListener = polygon.addListener("mouseout", () => {
+      polygon.setOptions({
         strokeOpacity: GEOFENCE_OPACITY.stroke,
         fillOpacity: GEOFENCE_OPACITY.fill,
         strokeWeight: GEOFENCE_OPACITY.weight,
       });
     });
-    const clickListener = circle.addListener("click", () => {
+    const clickListener = polygon.addListener("click", () => {
       onSelectRef.current(geofence);
     });
 
@@ -52,7 +51,7 @@ export function GeofenceCircle({ geofence, onSelect }: Props) {
       overListener.remove();
       outListener.remove();
       clickListener.remove();
-      circle.setMap(null);
+      polygon.setMap(null);
     };
   }, [map, mapsLib, geofence]);
 

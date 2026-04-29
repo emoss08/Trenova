@@ -34,7 +34,7 @@ type Location struct {
 	LocationCategoryID   pulid.ID           `json:"locationCategoryId"   bun:"location_category_id,type:VARCHAR(100),notnull"`
 	StateID              pulid.ID           `json:"stateId"              bun:"state_id,type:VARCHAR(100),notnull"`
 	Status               domaintypes.Status `json:"status"               bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                 string             `json:"code"                 bun:"code,type:VARCHAR(10),notnull"`
+	Code                 string             `json:"code"                 bun:"code,type:VARCHAR(32),notnull"`
 	Name                 string             `json:"name"                 bun:"name,type:VARCHAR(255),notnull"`
 	Description          string             `json:"description"          bun:"description,type:TEXT,nullzero"`
 	AddressLine1         string             `json:"addressLine1"         bun:"address_line_1,type:VARCHAR(150),notnull"`
@@ -66,8 +66,7 @@ type Location struct {
 func (l *Location) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(l,
 		validation.Field(&l.Code,
-			validation.Required.Error("Code is required"),
-			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
+			validation.Length(0, tenant.MaxLocationCodeLength).Error("Code must be 32 characters or less"),
 		),
 		validation.Field(&l.Name,
 			validation.Required.Error("Name is required"),

@@ -47,6 +47,7 @@ export function WeatherAlertLayer() {
   });
 
   const [selectedFeature, setSelectedFeature] = useState<WeatherAlertFeature | null>(null);
+  const [legendCollapsed, setLegendCollapsed] = useState(false);
 
   const handlePolygonClick = useCallback(
     (feature: WeatherAlertFeature) => {
@@ -58,6 +59,7 @@ export function WeatherAlertLayer() {
           map.fitBounds(bounds, { top: 60, right: 60, bottom: 60, left: 340 });
         }
 
+        setLegendCollapsed(true);
         return feature;
       });
     },
@@ -78,7 +80,11 @@ export function WeatherAlertLayer() {
         />
       ))}
 
-      <WeatherAlertLegendPanel features={features} />
+      <WeatherAlertLegendPanel
+        features={features}
+        collapsed={legendCollapsed}
+        onCollapsedChange={setLegendCollapsed}
+      />
 
       {selectedFeature && (
         <WeatherAlertDetailPanel

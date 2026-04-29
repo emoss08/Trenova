@@ -4,10 +4,8 @@ import type { MapStyleId, OverlayId, WeatherLayerId } from "@/types/shipment-map
 import { useCallback, useEffect, useMemo } from "react";
 
 const DEFAULT_OVERLAYS: Record<OverlayId, boolean> = {
-  vehicles: true,
-  routes: true,
-  stops: true,
-  geofences: true,
+  geofences: false,
+  addresses: false,
   traffic: false,
   weather: false,
   alerts: false,
@@ -19,10 +17,7 @@ export function useMapUIState() {
     DEFAULT_OVERLAYS,
   );
 
-  const overlays = useMemo(
-    () => ({ ...DEFAULT_OVERLAYS, ...rawOverlays }),
-    [rawOverlays],
-  );
+  const overlays = useMemo(() => ({ ...DEFAULT_OVERLAYS, ...rawOverlays }), [rawOverlays]);
   const [mapStyle, setMapStyle] = useLocalStorage<MapStyleId>("shipment-map-style", "roadmap");
   const [weatherLayer, setWeatherLayer] = useLocalStorage<WeatherLayerId>(
     "shipment-map-weather",

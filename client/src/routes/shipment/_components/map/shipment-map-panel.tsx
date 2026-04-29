@@ -4,31 +4,23 @@ import { useMapId } from "@/hooks/use-map-id";
 import { DEFAULT_ZOOM, GOOGLE_MAPS_ERROR_MESSAGE, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { ShipmentStatus } from "@/types/shipment";
 import { QueryErrorResetBoundary, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { MapPinOffIcon, SettingsIcon, TriangleAlertIcon } from "lucide-react";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useNavigate } from "react-router";
-import { GeofenceCircle } from "./geofence-circle";
+import { GeofenceOverlay } from "./geofence-overlay";
+import { GeofencePopover } from "./geofence-popover";
+import { LocationAddressMarker } from "./location-address-marker";
 import { MapControls } from "./map-controls";
-import type { MapFilters } from "./map-filter-bar";
 import { MapZoomControls } from "./map-zoom-controls";
-import { MOCK_TRACTORS } from "./mock-data";
+import { collectGeofencesFromLocations } from "./normalize-geofence";
 import { OWMTileLayer, type OWMLayerId } from "./owm-tile-layer";
-import { RoutePolyline } from "./route-polyline";
-import { TractorInfoWindow } from "./tractor-info-window";
-import { TractorMarker } from "./tractor-marker";
 import { TrafficLayer } from "./traffic-layer";
 import { useMapUIState } from "./use-map-ui-state";
 import { WeatherAlertLayer } from "./weather-alert-layer";
 import { WeatherRadarLayer } from "./weather-radar-layer";
-
-const INITIAL_FILTERS: MapFilters = {
-  delayedOnly: false,
-  statuses: new Set<ShipmentStatus>(),
-};
 
 const OWM_LAYER_MAP: Record<string, OWMLayerId> = {
   wind: "wind_new",
@@ -42,8 +34,27 @@ export default function ShipmentMapPanel() {
   const { data } = useSuspenseQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
   });
-  const [selectedTractorId, setSelectedTractorId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<MapFilters>(INITIAL_FILTERS);
+  const [selectedGeofenceId, setSelectedGeofenceId] = useState<string | null>(null);
+
+  const locationsQuery = useQuery({
+    ...queries.location.geofences(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const locations = useMemo(
+    () => locationsQuery.data?.results ?? [],
+    [locationsQuery.data],
+  );
+  const allGeofences = useMemo(
+    () => collectGeofencesFromLocations(locations),
+    [locations],
+  );
+  const locationsById = useMemo(() => {
+    const lookup = new globalThis.Map<string, (typeof locations)[number]>();
+    for (const loc of locations) {
+      if (loc.id) lookup.set(loc.id, loc);
+    }
+    return lookup;
+  }, [locations]);
   const {
     overlays,
     toggleOverlay,
@@ -62,32 +73,36 @@ export default function ShipmentMapPanel() {
 
   const owmApiKey = owmQuery.data?.apiKey ?? "";
 
-  const filteredTractors = useMemo(() => {
-    return MOCK_TRACTORS.filter((t) => {
-      if (filters.delayedOnly && t.shipmentStatus !== "Delayed") return false;
-      if (filters.statuses.size > 0 && !filters.statuses.has(t.shipmentStatus)) return false;
-      return true;
-    });
-  }, [filters]);
-
-  const selectedTractor = useMemo(
-    () => MOCK_TRACTORS.find((t) => t.id === selectedTractorId) ?? null,
-    [selectedTractorId],
+  const selectedGeofence = useMemo(
+    () => allGeofences.find((g) => g.id === selectedGeofenceId) ?? null,
+    [allGeofences, selectedGeofenceId],
   );
 
-  const handleMarkerClick = useCallback((id: string) => {
-    setSelectedTractorId((prev) => (prev === id ? null : id));
-  }, []);
-
-  const handleMapClick = useCallback(() => {
-    setSelectedTractorId(null);
-  }, []);
+  const boundsPoints = useMemo<google.maps.LatLngLiteral[]>(() => {
+    const points: google.maps.LatLngLiteral[] = [];
+    for (const loc of locations) {
+      if (
+        loc.latitude != null &&
+        loc.longitude != null &&
+        Number.isFinite(loc.latitude) &&
+        Number.isFinite(loc.longitude)
+      ) {
+        points.push({ lat: loc.latitude, lng: loc.longitude });
+      }
+    }
+    for (const g of allGeofences) {
+      if (g.kind === "polygon") {
+        for (const p of g.path) points.push(p);
+      }
+    }
+    return points;
+  }, [locations, allGeofences]);
 
   useEffect(() => {
-    if (!overlays.vehicles) {
-      setSelectedTractorId(null);
+    if (!overlays.geofences) {
+      setSelectedGeofenceId(null);
     }
-  }, [overlays.vehicles]);
+  }, [overlays.geofences]);
 
   const owmLayerId = OWM_LAYER_MAP[weatherLayer];
   const showWeather = overlays.weather;
@@ -107,29 +122,26 @@ export default function ShipmentMapPanel() {
           defaultZoom={DEFAULT_ZOOM}
           gestureHandling="greedy"
           disableDefaultUI
-          onClick={handleMapClick}
         >
-          {overlays.vehicles &&
-            filteredTractors.map((tractor) => (
-              <TractorMarker
-                key={tractor.id}
-                tractor={tractor}
-                isSelected={tractor.id === selectedTractorId}
-                onClick={handleMarkerClick}
+          {overlays.geofences &&
+            allGeofences.map((geofence) => (
+              <GeofenceOverlay
+                key={geofence.id}
+                geofence={geofence}
+                onSelect={(g) => setSelectedGeofenceId(g.id)}
               />
             ))}
-          {selectedTractor && (
-            <>
-              <TractorInfoWindow
-                tractor={selectedTractor}
-                onClose={() => setSelectedTractorId(null)}
-              />
-              {overlays.routes && <RoutePolyline path={selectedTractor.routePath} />}
-              {selectedTractor.stops.map((stop) => (
-                <span key={stop.id}>{overlays.geofences && <GeofenceCircle stop={stop} />}</span>
-              ))}
-            </>
+          {overlays.geofences && selectedGeofence && (
+            <GeofencePopover
+              geofence={selectedGeofence}
+              location={locationsById.get(selectedGeofence.id) ?? null}
+              onClose={() => setSelectedGeofenceId(null)}
+            />
           )}
+          {overlays.addresses &&
+            locations.map((location) => (
+              <LocationAddressMarker key={location.id} location={location} />
+            ))}
           {overlays.traffic && <TrafficLayer />}
           {showWeather && owmLayerId && owmApiKey && (
             <OWMTileLayer layerId={owmLayerId} apiKey={owmApiKey} />
@@ -146,10 +158,7 @@ export default function ShipmentMapPanel() {
             onToggleOverlay={toggleOverlay}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
-            filteredTractors={filteredTractors}
-            filters={filters}
-            onFiltersChange={setFilters}
-            totalCount={MOCK_TRACTORS.length}
+            boundsPoints={boundsPoints}
           />
         </Map>
       </div>

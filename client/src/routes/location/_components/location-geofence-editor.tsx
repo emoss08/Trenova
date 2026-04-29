@@ -1,9 +1,8 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMapId } from "@/hooks/use-map-id";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
-import { cn } from "@/lib/utils";
 import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import type { Location, LocationGeofenceType, LocationGeofenceVertex } from "@/types/location";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,10 +14,18 @@ import {
   Rectangle,
   useMap,
 } from "@vis.gl/react-google-maps";
+import { Circle as CircleIcon, PenTool, Sparkles, Square } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";
 
-const DEFAULT_GEOFENCE_RADIUS_METERS = 250;
+const DEFAULT_GEOFENCE_RADIUS_METERS = 50;
+const LOCATION_ZOOM = 18;
+const GEOFENCE_TYPE_ICONS: Record<LocationGeofenceType, typeof CircleIcon> = {
+  auto: Sparkles,
+  circle: CircleIcon,
+  rectangle: Square,
+  draw: PenTool,
+};
 const SHAPE_COLORS = {
   stroke: "#2563eb",
   fill: "#3b82f6",
@@ -173,25 +180,30 @@ function useLocationGeofence() {
 
 export function LocationGeofenceControls({ className }: { className?: string }) {
   const { geofenceType, handleTypeChange } = useLocationGeofence();
-  const activeChoice = useMemo(
-    () => locationGeofenceTypeChoices.find((choice) => choice.value === geofenceType),
-    [geofenceType],
-  );
 
   return (
-    <div className={cn("space-y-2", className)}>
-      <Tabs value={geofenceType} onValueChange={handleTypeChange} className="gap-3">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
-          {locationGeofenceTypeChoices.map((choice) => (
-            <TabsTrigger key={choice.value} value={choice.value}>
-              {choice.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <p className="text-xs text-muted-foreground">
-        {describeMode(activeChoice?.value ?? "auto")}
-      </p>
+    <div className={cn("grid grid-cols-2 gap-2 md:grid-cols-4", className)}>
+      {locationGeofenceTypeChoices.map((choice) => {
+        const isActive = choice.value === geofenceType;
+        const Icon = GEOFENCE_TYPE_ICONS[choice.value];
+        return (
+          <button
+            key={choice.value}
+            type="button"
+            onClick={() => handleTypeChange(choice.value)}
+            aria-pressed={isActive}
+            className={cn(
+              "flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+              isActive
+                ? "border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300"
+                : "border-border bg-background text-foreground hover:bg-muted",
+            )}
+          >
+            <Icon className="size-4 shrink-0" aria-hidden />
+            {choice.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -233,7 +245,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
           <Map
             mapId={mapId}
             defaultCenter={center}
-            defaultZoom={latitude != null && longitude != null ? 15 : DEFAULT_ZOOM}
+            defaultZoom={latitude != null && longitude != null ? LOCATION_ZOOM : DEFAULT_ZOOM}
             gestureHandling="greedy"
             disableDefaultUI
             onClick={({ detail }) => {
@@ -247,7 +259,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
             }}
             className="h-full w-full"
           >
-            <MapCenterSync center={center} />
+            <MapCenterSync center={center} hasLocation={latitude != null && longitude != null} />
             {(geofenceType === "auto" || geofenceType === "circle") && (
               <>
                 <AdvancedMarker
@@ -279,10 +291,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
                   }}
                   onRadiusChanged={(nextRadius) => {
                     if (geofenceType === "circle") {
-                      setFieldValue(
-                        "geofenceRadiusMeters",
-                        Math.max(1, Math.round(nextRadius)),
-                      );
+                      setFieldValue("geofenceRadiusMeters", Math.max(1, Math.round(nextRadius)));
                     }
                   }}
                   strokeColor={SHAPE_COLORS.stroke}
@@ -346,7 +355,13 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
   );
 }
 
-function MapCenterSync({ center }: { center: google.maps.LatLngLiteral }) {
+function MapCenterSync({
+  center,
+  hasLocation,
+}: {
+  center: google.maps.LatLngLiteral;
+  hasLocation: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
@@ -355,7 +370,11 @@ function MapCenterSync({ center }: { center: google.maps.LatLngLiteral }) {
     }
 
     map.panTo(center);
-  }, [center, map]);
+
+    if (hasLocation && (map.getZoom() ?? 0) < LOCATION_ZOOM) {
+      map.setZoom(LOCATION_ZOOM);
+    }
+  }, [center, hasLocation, map]);
 
   return null;
 }
@@ -492,17 +511,4 @@ function readFieldError(error: unknown) {
   }
 
   return null;
-}
-
-function describeMode(mode: LocationGeofenceType) {
-  switch (mode) {
-    case "auto":
-      return "Auto uses the location point with the default 250 meter operating radius.";
-    case "circle":
-      return "Circle lets you control the radius while keeping the geofence centered on the map pin.";
-    case "rectangle":
-      return "Rectangle is useful for facilities with a simple box-shaped footprint.";
-    case "draw":
-      return "Draw unlocks a freeform polygon for yards, campuses, and irregular site boundaries.";
-  }
 }

@@ -4,11 +4,8 @@ import type { MapStyleId, OverlayId } from "@/types/shipment-map";
 import { ControlPosition, MapControl, useMap } from "@vis.gl/react-google-maps";
 import { LocateFixedIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
 import { useCallback } from "react";
-import type { MapFilters } from "./map-filter-bar";
-import { MapFilterPopover } from "./map-filter-popover";
 import { MapLegendPopover } from "./map-legend-popover";
 import { MapOptionsPopover } from "./map-options-popover";
-import type { MockTractor } from "./mock-data";
 
 export function MapControls({
   mapStyle,
@@ -17,10 +14,7 @@ export function MapControls({
   onToggleOverlay,
   isFullscreen,
   onToggleFullscreen,
-  filteredTractors,
-  filters,
-  onFiltersChange,
-  totalCount,
+  boundsPoints,
 }: {
   mapStyle: MapStyleId;
   onMapStyleChange: (s: MapStyleId) => void;
@@ -28,36 +22,16 @@ export function MapControls({
   onToggleOverlay: (id: OverlayId) => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
-  filteredTractors: MockTractor[];
-  filters: MapFilters;
-  onFiltersChange: (filters: MapFilters) => void;
-  totalCount: number;
+  boundsPoints: google.maps.LatLngLiteral[];
 }) {
   const map = useMap();
 
   const handleZoomToFit = useCallback(() => {
-    if (!map || filteredTractors.length === 0) return;
-
+    if (!map || boundsPoints.length === 0) return;
     const bounds = new google.maps.LatLngBounds();
-
-    for (const tractor of filteredTractors) {
-      bounds.extend({ lat: tractor.lat, lng: tractor.lng });
-
-      if (overlays.routes) {
-        for (const point of tractor.routePath) {
-          bounds.extend(point);
-        }
-      }
-
-      if (overlays.stops) {
-        for (const stop of tractor.stops) {
-          bounds.extend({ lat: stop.lat, lng: stop.lng });
-        }
-      }
-    }
-
+    for (const point of boundsPoints) bounds.extend(point);
     map.fitBounds(bounds, { top: 48, right: 48, bottom: 48, left: 48 });
-  }, [map, filteredTractors, overlays.routes, overlays.stops]);
+  }, [map, boundsPoints]);
 
   return (
     <MapControl position={ControlPosition.RIGHT_TOP}>
@@ -67,12 +41,6 @@ export function MapControls({
           onMapStyleChange={onMapStyleChange}
           overlays={overlays}
           onToggleOverlay={onToggleOverlay}
-        />
-        <MapFilterPopover
-          filters={filters}
-          onFiltersChange={onFiltersChange}
-          totalCount={totalCount}
-          filteredCount={filteredTractors.length}
         />
         <MapLegendPopover />
         <Tooltip>
@@ -104,6 +72,7 @@ export function MapControls({
                 size="icon"
                 className="size-8 bg-background shadow-sm"
                 onClick={handleZoomToFit}
+                disabled={boundsPoints.length === 0}
               />
             }
           >

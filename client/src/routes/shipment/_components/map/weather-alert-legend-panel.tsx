@@ -6,10 +6,17 @@ import {
 } from "@/types/weather-alert";
 import { ControlPosition, MapControl } from "@vis.gl/react-google-maps";
 import { ChevronDownIcon, TriangleAlertIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-export function WeatherAlertLegendPanel({ features }: { features: WeatherAlertFeature[] }) {
-  const [collapsed, setCollapsed] = useState(false);
+export function WeatherAlertLegendPanel({
+  features,
+  collapsed,
+  onCollapsedChange,
+}: {
+  features: WeatherAlertFeature[];
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+}) {
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<WeatherAlertCategory, number>();
@@ -27,7 +34,7 @@ export function WeatherAlertLegendPanel({ features }: { features: WeatherAlertFe
       <div className="m-2.5 rounded-lg border bg-background shadow-sm">
         <button
           type="button"
-          onClick={() => setCollapsed((p) => !p)}
+          onClick={() => onCollapsedChange(!collapsed)}
           className="flex w-full items-center justify-between gap-2 px-3 py-2"
         >
           <div className="flex items-center gap-1.5">

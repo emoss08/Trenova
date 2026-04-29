@@ -45,17 +45,6 @@ export function LocationForm() {
             />
           </FormControl>
           <FormControl cols="full">
-            <InputField
-              control={control}
-              rules={{ required: true }}
-              name="code"
-              label="Code"
-              placeholder="Code"
-              description="A unique code for this location."
-              maxLength={10}
-            />
-          </FormControl>
-          <FormControl cols="full">
             <LocationCategoryAutocompleteField
               control={control}
               rules={{ required: true }}

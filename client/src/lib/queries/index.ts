@@ -23,6 +23,7 @@ import { integration } from "./integration";
 import { invoice } from "./invoice";
 import { invoiceAdjustment } from "./invoice-adjustment";
 import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
+import { location } from "./location";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { sequenceConfig } from "./sequence-config";
@@ -62,6 +63,7 @@ export const queries = mergeQueryKeys(
   invoice,
   invoiceAdjustment,
   invoiceAdjustmentControl,
+  location,
   customer,
   shipment,
   formulaTemplate,

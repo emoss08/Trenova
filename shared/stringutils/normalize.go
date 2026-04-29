@@ -11,3 +11,16 @@ func NormalizeIdentifier(value string) string {
 	}
 	return string(buf)
 }
+
+func TruncateRunes(value string, maxLength int) string {
+	if maxLength <= 0 {
+		return ""
+	}
+
+	runes := []rune(value)
+	if len(runes) <= maxLength {
+		return value
+	}
+
+	return string(runes[:maxLength])
+}

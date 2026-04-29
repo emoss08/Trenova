@@ -9,11 +9,9 @@ import {
   CircleDotIcon,
   CloudSunIcon,
   LayersIcon,
-  MapPinIcon,
-  RouteIcon,
+  MapPinnedIcon,
   TrafficConeIcon,
   TriangleAlertIcon,
-  TruckIcon,
 } from "lucide-react";
 
 type OverlayConfig = {
@@ -23,12 +21,10 @@ type OverlayConfig = {
 };
 
 const OVERLAY_OPTIONS: OverlayConfig[] = [
+  { id: "geofences", label: "Geofences", icon: CircleDotIcon },
+  { id: "addresses", label: "Addresses", icon: MapPinnedIcon },
   { id: "traffic", label: "Traffic", icon: TrafficConeIcon },
   { id: "weather", label: "Weather", icon: CloudSunIcon },
-  { id: "vehicles", label: "Vehicles", icon: TruckIcon },
-  { id: "routes", label: "Routes", icon: RouteIcon },
-  { id: "stops", label: "Stops", icon: MapPinIcon },
-  { id: "geofences", label: "Geofences", icon: CircleDotIcon },
   { id: "alerts", label: "Weather Alerts", icon: TriangleAlertIcon },
 ];
 

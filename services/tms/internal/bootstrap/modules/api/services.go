@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/journalentryservice"
 	"github.com/emoss08/trenova/internal/core/services/journalreversalservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
+	"github.com/emoss08/trenova/internal/core/services/locationcodegenerator"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/manualjournalservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
@@ -167,6 +168,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	glbalanceservice.New,
 	fiscalyearservice.New,
 	fiscalperiodservice.New,
+	locationcodegenerator.New,
 	locationcategoryservice.New,
 	locationservice.New,
 	documenttypeservice.New,

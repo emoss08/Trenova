@@ -21,10 +21,7 @@ const locationGeofenceVerticesSchema = z
 export const locationSchema = z.object({
   ...tenantInfoSchema.shape,
   status: statusSchema,
-  code: z
-    .string()
-    .min(1, { error: "Code is required" })
-    .max(10, { error: "Code must be 10 characters or less" }),
+  code: z.string().max(32, { error: "Code must be 32 characters or less" }).optional(),
   name: z
     .string()
     .min(1, { error: "Name is required" })

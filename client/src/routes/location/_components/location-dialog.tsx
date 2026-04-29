@@ -22,11 +22,12 @@ import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
 import { useAuthStore } from "@/stores/auth-store";
 import type { DataTablePanelProps } from "@/types/data-table";
-import { type Location, type locationSchema } from "@/types/location";
+import { locationSchema, type Location } from "@/types/location";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { useEffect } from "react";
-import { FormProvider, type UseFormReturn } from "react-hook-form";
+import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { LocationForm } from "./location-form";
@@ -51,24 +52,43 @@ const EDIT_SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save-close", label: "Save & Close" },
 ];
 
-type LocationDialogProps = DataTablePanelProps<Location> & {
-  form: LocationFormReturn;
+const CREATE_DEFAULT_VALUES: LocationFormInput = {
+  status: "Active",
+  name: "",
+  locationCategoryId: "",
+  description: null,
+  addressLine1: "",
+  addressLine2: null,
+  city: "",
+  stateId: "",
+  postalCode: "",
+  isGeocoded: false,
+  longitude: null,
+  latitude: null,
+  placeId: null,
+  geofenceType: "auto",
+  geofenceRadiusMeters: 250,
+  geofenceVertices: [],
 };
 
-export function LocationDialog({ open, onOpenChange, mode, row, form }: LocationDialogProps) {
+export function LocationDialog({ open, onOpenChange, mode, row }: DataTablePanelProps<Location>) {
   if (mode === "edit") {
-    return <EditDialog open={open} onOpenChange={onOpenChange} row={row} form={form} />;
+    return <EditDialog open={open} onOpenChange={onOpenChange} row={row} />;
   }
-  return <CreateDialog open={open} onOpenChange={onOpenChange} form={form} />;
+  return <CreateDialog open={open} onOpenChange={onOpenChange} />;
 }
 
 type CreateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  form: LocationFormReturn;
 };
 
-function CreateDialog({ open, onOpenChange, form }: CreateDialogProps) {
+function CreateDialog({ open, onOpenChange }: CreateDialogProps) {
+  const form = useForm<LocationFormInput, unknown, Location>({
+    resolver: zodResolver(locationSchema),
+    defaultValues: CREATE_DEFAULT_VALUES,
+    mode: "onChange",
+  });
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
   const { isPopout, closePopout } = usePopoutWindow();
@@ -182,10 +202,14 @@ type EditDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   row: Location | null;
-  form: LocationFormReturn;
 };
 
-function EditDialog({ open, onOpenChange, row, form }: EditDialogProps) {
+function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
+  const form = useForm<LocationFormInput, unknown, Location>({
+    resolver: zodResolver(locationSchema),
+    defaultValues: CREATE_DEFAULT_VALUES,
+    mode: "onChange",
+  });
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const { isPopout, closePopout } = usePopoutWindow();
