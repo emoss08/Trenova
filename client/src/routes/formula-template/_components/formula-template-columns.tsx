@@ -1,18 +1,11 @@
 import { EditableStatusBadge } from "@/components/editable-status-badge";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Badge } from "@/components/ui/badge";
-import {
-  formulaTemplateStatusChoices,
-  formulaTypeChoices,
-} from "@/lib/choices";
+import { formulaTemplateStatusChoices, formulaTypeChoices } from "@/lib/choices";
 import { patchFormulaTemplate } from "@/lib/formula-template-api";
-import type {
-  FormulaTemplate,
-  FormulaTemplateStatus,
-} from "@/types/formula-template";
+import type { FormulaTemplate, FormulaTemplateStatus } from "@/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ColumnDef } from "@tanstack/react-table";
-import { FileCode2 } from "lucide-react";
 import { useCallback } from "react";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -60,9 +53,6 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       header: "Name",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <FileCode2 className="size-4 text-primary" />
-          </div>
           <div className="min-w-0">
             <span className="text-sm font-medium">{row.original.name}</span>
             {row.original.description && (
@@ -89,10 +79,7 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => (
-        <FormulaTemplateStatusCell
-          id={row.original.id}
-          status={row.original.status}
-        />
+        <FormulaTemplateStatusCell id={row.original.id} status={row.original.status} />
       ),
       meta: {
         label: "Status",
@@ -111,9 +98,7 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
       accessorKey: "type",
       header: "Type",
       cell: ({ row }) => {
-        const typeLabel = formulaTypeChoices.find(
-          (c) => c.value === row.original.type,
-        )?.label;
+        const typeLabel = formulaTypeChoices.find((c) => c.value === row.original.type)?.label;
         const variant = TYPE_BADGE_VARIANT[row.original.type] ?? "info";
         return <Badge variant={variant}>{typeLabel || row.original.type}</Badge>;
       },
@@ -152,9 +137,7 @@ export function getColumns(): ColumnDef<FormulaTemplate>[] {
     {
       accessorKey: "createdAt",
       header: "Created At",
-      cell: ({ row }) => (
-        <HoverCardTimestamp timestamp={row.original.createdAt} />
-      ),
+      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
       meta: {
         label: "Created At",
         apiField: "createdAt",
