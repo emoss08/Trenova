@@ -3,6 +3,7 @@ import { ExternalLink } from "@/components/link";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { MagicCard } from "@/components/ui/magic-card";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,6 @@ import { searchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
-import { MagicCard } from "@/components/ui/magic-card";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
@@ -244,61 +244,61 @@ export function IntegrationCatalogCard() {
                     className="rounded-xl"
                   >
                     <Card className="group relative overflow-hidden border-none bg-transparent transition-all">
-                    <CardHeader className="space-y-2 pb-3">
-                      <div className="relative flex items-start justify-between gap-3">
-                        <div className="space-y-1 pr-14">
-                          <CardTitle className="text-base">{item.name}</CardTitle>
-                          <CardDescription className="text-xs">
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              {item.links.map((link) => (
-                                <ExternalLink
-                                  key={`${item.type}-${link.kind}-${link.url}`}
-                                  href={link.url}
-                                  className="inline-flex items-center gap-1 hover:text-foreground"
-                                >
-                                  {link.label}
-                                </ExternalLink>
-                              ))}
-                            </div>
-                          </CardDescription>
+                      <CardHeader className="space-y-2 pb-3">
+                        <div className="relative flex items-start justify-between gap-3">
+                          <div className="space-y-1 pr-14">
+                            <CardTitle className="text-base">{item.name}</CardTitle>
+                            <CardDescription className="text-xs">
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                {item.links.map((link) => (
+                                  <ExternalLink
+                                    key={`${item.type}-${link.kind}-${link.url}`}
+                                    href={link.url}
+                                    className="inline-flex items-center gap-1 hover:text-foreground"
+                                  >
+                                    {link.label}
+                                  </ExternalLink>
+                                ))}
+                              </div>
+                            </CardDescription>
+                          </div>
+                          <div className="absolute -top-5 -right-10 inline-flex size-20">
+                            {logoURL ? (
+                              <LazyImage
+                                src={logoURL}
+                                alt={`${item.name} logo`}
+                                className="size-24 object-contain"
+                              />
+                            ) : (
+                              <span className="text-xs font-semibold text-foreground/80">
+                                {getProviderMonogram(item.name)}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        <div className="absolute -top-5 -right-10 inline-flex size-20">
-                          {logoURL ? (
-                            <LazyImage
-                              src={logoURL}
-                              alt={`${item.name} logo`}
-                              className="size-24 object-contain"
-                            />
-                          ) : (
-                            <span className="text-xs font-semibold text-foreground/80">
-                              {getProviderMonogram(item.name)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <CatalogItemDescription description={item.description} />
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-0">
-                      <div className="flex items-center justify-between gap-2 border-t border-border/80 pt-3">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => openModal(item.type)}
-                          disabled={!canConfigure}
-                        >
-                          {item.primaryActionLabel}
-                        </Button>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={item.enabled}
-                            aria-label={`${item.name} integration enabled`}
-                            onCheckedChange={() => openModal(item.type)}
+                        <CatalogItemDescription description={item.description} />
+                      </CardHeader>
+                      <CardContent className="space-y-3 pt-0">
+                        <div className="flex items-center justify-between gap-2 border-t border-border/80 pt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openModal(item.type)}
                             disabled={!canConfigure}
-                          />
+                          >
+                            {item.primaryActionLabel}
+                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={item.enabled}
+                              aria-label={`${item.name} integration enabled`}
+                              onCheckedChange={() => openModal(item.type)}
+                              disabled={!canConfigure}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
                   </MagicCard>
                 );
               })}
@@ -309,7 +309,10 @@ export function IntegrationCatalogCard() {
       <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
       <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
       <OpenAIIntegrationModal open={isOpenAIModalOpen} onOpenChange={setIsOpenAIModalOpen} />
-      <OpenWeatherMapIntegrationModal open={isOpenWeatherMapModalOpen} onOpenChange={setIsOpenWeatherMapModalOpen} />
+      <OpenWeatherMapIntegrationModal
+        open={isOpenWeatherMapModalOpen}
+        onOpenChange={setIsOpenWeatherMapModalOpen}
+      />
     </>
   );
 }
@@ -319,7 +322,7 @@ export function CatalogItemDescription({ description }: { description: string })
     <Tooltip>
       <TooltipTrigger
         render={
-          <p className="line-clamp-2 min-h-10 w-87.5 text-sm text-pretty text-muted-foreground">
+          <p className="line-clamp-2 min-h-8 w-87.5 text-sm text-pretty text-muted-foreground">
             {description}
           </p>
         }
