@@ -12,6 +12,7 @@ const (
 	SequenceTypeJournalBatch         = SequenceType("journal_batch")
 	SequenceTypeJournalEntry         = SequenceType("journal_entry")
 	SequenceTypeManualJournalRequest = SequenceType("manual_journal_request")
+	SequenceTypeLocationCode         = SequenceType("location_code")
 )
 
 type AccountingBasisType string

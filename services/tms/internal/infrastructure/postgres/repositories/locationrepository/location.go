@@ -52,7 +52,7 @@ func (r *repository) filterQuery(
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
-func withLocationGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
+func WithGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
 	return q.ColumnExpr("loc.*").ColumnExpr("loc.geofence_geometry AS geofence_geometry")
 }
 
@@ -125,19 +125,6 @@ var locationWritableColumns = []string{
 	"version",
 }
 
-func hydrateLocationGeofences(entities ...*location.Location) error {
-	for _, entity := range entities {
-		if entity == nil {
-			continue
-		}
-		if err := entity.PopulateGeofenceVertices(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListLocationRequest,
@@ -151,7 +138,9 @@ func (r *repository) List(
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Apply(withLocationGeofenceGeometry).
+		Apply(WithGeofenceGeometry).
+		Relation("State").
+		Relation("LocationCategory").
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return r.filterQuery(sq, req)
 		}).ScanAndCount(ctx)
@@ -159,7 +148,7 @@ func (r *repository) List(
 		log.Error("failed to scan and count locations", zap.Error(err))
 		return nil, err
 	}
-	if err = hydrateLocationGeofences(entities...); err != nil {
+	if err = location.HydrateGeofences(entities...); err != nil {
 		log.Error("failed to hydrate location geofences", zap.Error(err))
 		return nil, err
 	}
@@ -183,7 +172,7 @@ func (r *repository) GetByID(
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
-		Apply(withLocationGeofenceGeometry).
+		Apply(WithGeofenceGeometry).
 		Relation("State").
 		Relation("LocationCategory").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -210,7 +199,6 @@ func (r *repository) Create(
 ) (*location.Location, error) {
 	log := r.l.With(
 		zap.String("operation", "Create"),
-		zap.String("code", entity.Code),
 	)
 
 	query := r.db.DB().NewInsert().Model(entity)
@@ -300,7 +288,7 @@ func (r *repository) BulkUpdateStatus(
 		log.Error("failed to bulk update location status", zap.Error(err))
 		return nil, err
 	}
-	if err = hydrateLocationGeofences(entities...); err != nil {
+	if err = location.HydrateGeofences(entities...); err != nil {
 		log.Error("failed to hydrate location geofences", zap.Error(err))
 		return nil, err
 	}
@@ -325,7 +313,7 @@ func (r *repository) GetByIDs(
 	err := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Apply(withLocationGeofenceGeometry).
+		Apply(WithGeofenceGeometry).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("loc.organization_id = ?", req.TenantInfo.OrgID).
 				Where("loc.business_unit_id = ?", req.TenantInfo.BuID).
@@ -336,7 +324,7 @@ func (r *repository) GetByIDs(
 		log.Error("failed to get locations", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "Location")
 	}
-	if err = hydrateLocationGeofences(entities...); err != nil {
+	if err = location.HydrateGeofences(entities...); err != nil {
 		log.Error("failed to hydrate location geofences", zap.Error(err))
 		return nil, err
 	}

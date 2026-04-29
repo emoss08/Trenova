@@ -115,6 +115,18 @@ func (v *Validator) ValidateUpdate(
 		if !cfg.AllowCustomFormat {
 			cfg.CustomFormat = ""
 		}
+		if cfg.SequenceType == tenant.SequenceTypeLocationCode {
+			cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
+			if err := cfg.LocationCodeStrategy.Validate(); err != nil {
+				cfgErr.Add(
+					"locationCodeStrategy",
+					errortypes.ErrInvalid,
+					err.Error(),
+				)
+			}
+		} else {
+			cfg.LocationCodeStrategy = nil
+		}
 	}
 
 	sort.Slice(requiredTypes, func(i, j int) bool {

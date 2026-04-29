@@ -2,6 +2,7 @@ package locationservice
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -104,5 +105,16 @@ func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *location.Location,
 ) *errortypes.MultiError {
-	return v.validator.ValidateUpdate(ctx, entity)
+	multiErr := v.validator.ValidateUpdate(ctx, entity)
+	if multiErr == nil {
+		multiErr = errortypes.NewMultiError()
+	}
+	if strings.TrimSpace(entity.Code) == "" {
+		multiErr.Add("code", errortypes.ErrRequired, "Code is required")
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }

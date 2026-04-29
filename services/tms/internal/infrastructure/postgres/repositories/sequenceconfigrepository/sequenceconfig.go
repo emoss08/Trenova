@@ -63,12 +63,23 @@ func (r *repository) GetByTenant(
 			configs[j].SequenceType,
 		)
 	})
+	normalizeSequenceConfigs(configs)
 
 	return &tenant.SequenceConfigDocument{
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		Configs:        configs,
 	}, nil
+}
+
+func normalizeSequenceConfigs(configs []*tenant.SequenceConfig) {
+	for _, cfg := range configs {
+		if cfg == nil || cfg.SequenceType != tenant.SequenceTypeLocationCode {
+			continue
+		}
+
+		cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
+	}
 }
 
 func (r *repository) UpdateByTenant(
@@ -112,7 +123,8 @@ func (r *repository) UpdateByTenant(
 				Set("separator_char = EXCLUDED.separator_char").
 				Set("allow_custom_format = EXCLUDED.allow_custom_format").
 				Set("custom_format = EXCLUDED.custom_format").
-				Set("version = sequence_configs.version + 1").
+				Set("location_code_strategy = EXCLUDED.location_code_strategy").
+				Set("version = sqcfg.version + 1").
 				Set("updated_at = EXCLUDED.updated_at").
 				Returning("*").
 				Exec(c)

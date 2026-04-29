@@ -14,6 +14,7 @@ var requiredSequenceTypes = []SequenceType{
 	SequenceTypeJournalBatch,
 	SequenceTypeJournalEntry,
 	SequenceTypeManualJournalRequest,
+	SequenceTypeLocationCode,
 }
 
 var sequenceTypeOrder = map[SequenceType]int{
@@ -26,6 +27,7 @@ var sequenceTypeOrder = map[SequenceType]int{
 	SequenceTypeManualJournalRequest: 7,
 	SequenceTypeCreditMemo:           8,
 	SequenceTypeDebitMemo:            9,
+	SequenceTypeLocationCode:         10,
 }
 
 func RequiredSequenceTypes() []SequenceType {
@@ -65,6 +67,9 @@ func DefaultSequenceFormat(sequenceType SequenceType) (*SequenceFormat, error) {
 		return &SequenceFormat{Type: sequenceType, Prefix: "JE", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
 	case SequenceTypeManualJournalRequest:
 		return &SequenceFormat{Type: sequenceType, Prefix: "MJR", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+	case SequenceTypeLocationCode:
+		strategy := DefaultLocationCodeStrategy()
+		return &SequenceFormat{Type: sequenceType, Prefix: strategy.FallbackPrefix, YearDigits: 2, SequenceDigits: int(strategy.SequenceDigits), UseSeparators: strategy.Separator != "", SeparatorChar: strategy.Separator}, nil
 	default:
 		return nil, fmt.Errorf("invalid sequence type: %s", sequenceType)
 	}
@@ -76,7 +81,7 @@ func DefaultSequenceConfig(orgID, buID pulid.ID, sequenceType SequenceType) *Seq
 		return nil
 	}
 
-	return &SequenceConfig{
+	cfg := &SequenceConfig{
 		ID:                      pulid.MustNew("sqcfg_"),
 		OrganizationID:          orgID,
 		BusinessUnitID:          buID,
@@ -99,4 +104,9 @@ func DefaultSequenceConfig(orgID, buID pulid.ID, sequenceType SequenceType) *Seq
 		CustomFormat:            format.CustomFormat,
 		Version:                 0,
 	}
+	if sequenceType == SequenceTypeLocationCode {
+		cfg.LocationCodeStrategy = DefaultLocationCodeStrategy()
+	}
+
+	return cfg
 }
