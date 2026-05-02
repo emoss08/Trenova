@@ -134,9 +134,8 @@ const routes: RouteObject[] = [
             path: "/billing/reconciliation-exceptions",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
-              const { InvoiceReconciliationPage } = await import(
-                "@/routes/invoice-reconciliation/page"
-              );
+              const { InvoiceReconciliationPage } =
+                await import("@/routes/invoice-reconciliation/page");
               return { Component: InvoiceReconciliationPage };
             },
           },
@@ -144,9 +143,8 @@ const routes: RouteObject[] = [
             path: "/billing/adjustment-batches",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
-              const { InvoiceAdjustmentBatchPage } = await import(
-                "@/routes/invoice-adjustment-batch/page"
-              );
+              const { InvoiceAdjustmentBatchPage } =
+                await import("@/routes/invoice-adjustment-batch/page");
               return { Component: InvoiceAdjustmentBatchPage };
             },
           },
@@ -199,18 +197,14 @@ const routes: RouteObject[] = [
             path: "/accounting",
             loader: protectedLoader,
             async lazy() {
-              const { AccountingDashboardPage } = await import(
-                "@/routes/accounting-dashboard/page"
-              );
+              const { AccountingDashboardPage } =
+                await import("@/routes/accounting-dashboard/page");
               return { Component: AccountingDashboardPage };
             },
           },
           {
             path: "/accounting/manual-journals",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ManualJournal),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ManualJournal)),
             async lazy() {
               const { ManualJournalsPage } = await import("@/routes/manual-journal/page");
               return { Component: ManualJournalsPage };
@@ -229,10 +223,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/journal-entries/:id",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.JournalEntry),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
             async lazy() {
               const { JournalEntryDetailPage } = await import("@/routes/journal-entry/page");
               return { Component: JournalEntryDetailPage };
@@ -240,14 +231,10 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/journal-entries/source/:type/:sourceId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.JournalEntry),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.JournalEntry)),
             async lazy() {
-              const { SourceDrillDownPage } = await import(
-                "@/routes/journal-entry/_components/source-drill-down-page"
-              );
+              const { SourceDrillDownPage } =
+                await import("@/routes/journal-entry/_components/source-drill-down-page");
               return { Component: SourceDrillDownPage };
             },
           },
@@ -312,18 +299,13 @@ const routes: RouteObject[] = [
             path: "/accounting/ar/customer-statement/:customerId",
             loader: protectedLoader,
             async lazy() {
-              const { CustomerStatementPage } = await import(
-                "@/routes/customer-statement/page"
-              );
+              const { CustomerStatementPage } = await import("@/routes/customer-statement/page");
               return { Component: CustomerStatementPage };
             },
           },
           {
             path: "/accounting/reconciliation/bank-receipts",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BankReceipt),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
             async lazy() {
               const { BankReceiptPage } = await import("@/routes/bank-receipt/page");
               return { Component: BankReceiptPage };
@@ -336,48 +318,34 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.BankReceiptWorkItem),
             ),
             async lazy() {
-              const { BankReceiptQueuePage: BankReceiptWorkQueuePage } = await import(
-                "@/routes/bank-receipt-queue/page"
-              );
+              const { BankReceiptQueuePage: BankReceiptWorkQueuePage } =
+                await import("@/routes/bank-receipt-queue/page");
               return { Component: BankReceiptWorkQueuePage };
             },
           },
           {
             path: "/accounting/reconciliation/summary",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BankReceipt),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
             async lazy() {
-              const { ReconciliationSummaryPage } = await import(
-                "@/routes/reconciliation-summary/page"
-              );
+              const { ReconciliationSummaryPage } =
+                await import("@/routes/reconciliation-summary/page");
               return { Component: ReconciliationSummaryPage };
             },
           },
           {
             path: "/accounting/reconciliation/import-batches",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BankReceipt),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
             async lazy() {
-              const { BankReceiptBatchPage } = await import(
-                "@/routes/bank-receipt-batch/page"
-              );
+              const { BankReceiptBatchPage } = await import("@/routes/bank-receipt-batch/page");
               return { Component: BankReceiptBatchPage };
             },
           },
           {
             path: "/accounting/reconciliation/import-batches/:batchId",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.BankReceipt),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BankReceipt)),
             async lazy() {
-              const { BankReceiptBatchDetailPage } = await import(
-                "@/routes/bank-receipt-batch/detail-page"
-              );
+              const { BankReceiptBatchDetailPage } =
+                await import("@/routes/bank-receipt-batch/detail-page");
               return { Component: BankReceiptBatchDetailPage };
             },
           },

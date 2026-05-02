@@ -30,7 +30,7 @@ const homeModule: NavModule = {
 };
 const adminModule: NavModule = {
   id: "admin",
-  label: "Administration",
+  label: "Organization Settings",
   icon: SettingsIcon,
   description: "System administration",
   basePath: "/admin/organization-settings",
