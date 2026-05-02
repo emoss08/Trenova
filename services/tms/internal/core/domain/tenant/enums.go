@@ -145,10 +145,12 @@ const (
 	JournalSourceEventCreditMemoPosted           = JournalSourceEventType("CreditMemoPosted")
 	JournalSourceEventDebitMemoPosted            = JournalSourceEventType("DebitMemoPosted")
 	JournalSourceEventCustomerPaymentPosted      = JournalSourceEventType("CustomerPaymentPosted")
-	JournalSourceEventCustomerShortPayRecognized = JournalSourceEventType("CustomerShortPayRecognized")
-	JournalSourceEventCustomerPaymentReversed    = JournalSourceEventType("CustomerPaymentReversed")
-	JournalSourceEventVendorBillPosted           = JournalSourceEventType("VendorBillPosted")
-	JournalSourceEventVendorPaymentPosted        = JournalSourceEventType("VendorPaymentPosted")
+	JournalSourceEventCustomerShortPayRecognized = JournalSourceEventType(
+		"CustomerShortPayRecognized",
+	)
+	JournalSourceEventCustomerPaymentReversed = JournalSourceEventType("CustomerPaymentReversed")
+	JournalSourceEventVendorBillPosted        = JournalSourceEventType("VendorBillPosted")
+	JournalSourceEventVendorPaymentPosted     = JournalSourceEventType("VendorPaymentPosted")
 )
 
 func (j JournalSourceEventType) String() string {
@@ -218,7 +220,9 @@ const (
 type LockedPeriodPostingPolicy string
 
 const (
-	LockedPeriodPostingPolicyBlockSubledgerAllowManualJe = LockedPeriodPostingPolicy("BlockSubledgerAllowManualJe")
+	LockedPeriodPostingPolicyBlockSubledgerAllowManualJe = LockedPeriodPostingPolicy(
+		"BlockSubledgerAllowManualJe",
+	)
 )
 
 type ClosedPeriodPostingPolicy string
@@ -279,15 +283,21 @@ const (
 type BillingExceptionDisposition string
 
 const (
-	BillingExceptionDispositionRouteToBillingReview = BillingExceptionDisposition("RouteToBillingReview")
-	BillingExceptionDispositionReturnToOperations   = BillingExceptionDisposition("ReturnToOperations")
+	BillingExceptionDispositionRouteToBillingReview = BillingExceptionDisposition(
+		"RouteToBillingReview",
+	)
+	BillingExceptionDispositionReturnToOperations = BillingExceptionDisposition(
+		"ReturnToOperations",
+	)
 )
 
 type ReadyToBillAssignmentMode string
 
 const (
 	ReadyToBillAssignmentModeManualOnly            = ReadyToBillAssignmentMode("ManualOnly")
-	ReadyToBillAssignmentModeAutomaticWhenEligible = ReadyToBillAssignmentMode("AutomaticWhenEligible")
+	ReadyToBillAssignmentModeAutomaticWhenEligible = ReadyToBillAssignmentMode(
+		"AutomaticWhenEligible",
+	)
 )
 
 type BillingQueueTransferMode string
@@ -301,21 +311,29 @@ type InvoiceDraftCreationMode string
 
 const (
 	InvoiceDraftCreationModeManualOnly               = InvoiceDraftCreationMode("ManualOnly")
-	InvoiceDraftCreationModeAutomaticWhenTransferred = InvoiceDraftCreationMode("AutomaticWhenTransferred")
+	InvoiceDraftCreationModeAutomaticWhenTransferred = InvoiceDraftCreationMode(
+		"AutomaticWhenTransferred",
+	)
 )
 
 type InvoicePostingMode string
 
 const (
 	InvoicePostingModeManualReviewRequired              = InvoicePostingMode("ManualReviewRequired")
-	InvoicePostingModeAutomaticWhenNoBlockingExceptions = InvoicePostingMode("AutomaticWhenNoBlockingExceptions")
+	InvoicePostingModeAutomaticWhenNoBlockingExceptions = InvoicePostingMode(
+		"AutomaticWhenNoBlockingExceptions",
+	)
 )
 
 type RateVarianceAutoResolutionMode string
 
 const (
-	RateVarianceAutoResolutionModeDisabled                    = RateVarianceAutoResolutionMode("Disabled")
-	RateVarianceAutoResolutionModeBypassReviewWithinTolerance = RateVarianceAutoResolutionMode("BypassReviewWithinTolerance")
+	RateVarianceAutoResolutionModeDisabled = RateVarianceAutoResolutionMode(
+		"Disabled",
+	)
+	RateVarianceAutoResolutionModeBypassReviewWithinTolerance = RateVarianceAutoResolutionMode(
+		"BypassReviewWithinTolerance",
+	)
 )
 
 type PaymentTerm string
@@ -341,16 +359,26 @@ const (
 type AdjustmentAccountingDatePolicy string
 
 const (
-	AdjustmentAccountingDateUseOriginalIfOpenElseNextOpen = AdjustmentAccountingDatePolicy("UseOriginalIfOpenElseNextOpen")
-	AdjustmentAccountingDateAlwaysNextOpen                = AdjustmentAccountingDatePolicy("AlwaysNextOpen")
+	AdjustmentAccountingDateUseOriginalIfOpenElseNextOpen = AdjustmentAccountingDatePolicy(
+		"UseOriginalIfOpenElseNextOpen",
+	)
+	AdjustmentAccountingDateAlwaysNextOpen = AdjustmentAccountingDatePolicy(
+		"AlwaysNextOpen",
+	)
 )
 
 type ClosedPeriodAdjustmentPolicy string
 
 const (
-	ClosedPeriodAdjustmentPolicyDisallow                         = ClosedPeriodAdjustmentPolicy("Disallow")
-	ClosedPeriodAdjustmentPolicyRequireReopen                    = ClosedPeriodAdjustmentPolicy("RequireReopen")
-	ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval = ClosedPeriodAdjustmentPolicy("PostInNextOpenPeriodWithApproval")
+	ClosedPeriodAdjustmentPolicyDisallow = ClosedPeriodAdjustmentPolicy(
+		"Disallow",
+	)
+	ClosedPeriodAdjustmentPolicyRequireReopen = ClosedPeriodAdjustmentPolicy(
+		"RequireReopen",
+	)
+	ClosedPeriodAdjustmentPolicyPostInNextOpenPeriodWithApproval = ClosedPeriodAdjustmentPolicy(
+		"PostInNextOpenPeriodWithApproval",
+	)
 )
 
 type RequirementPolicy string
@@ -364,8 +392,12 @@ type AdjustmentAttachmentPolicy string
 
 const (
 	AdjustmentAttachmentPolicyOptional                    = AdjustmentAttachmentPolicy("Optional")
-	AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff = AdjustmentAttachmentPolicy("RequiredForCreditOrWriteOff")
-	AdjustmentAttachmentPolicyRequiredForAll              = AdjustmentAttachmentPolicy("RequiredForAll")
+	AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff = AdjustmentAttachmentPolicy(
+		"RequiredForCreditOrWriteOff",
+	)
+	AdjustmentAttachmentPolicyRequiredForAll = AdjustmentAttachmentPolicy(
+		"RequiredForAll",
+	)
 )
 
 type ApprovalPolicy string
@@ -379,24 +411,36 @@ const (
 type WriteOffApprovalPolicy string
 
 const (
-	WriteOffApprovalPolicyDisallow                      = WriteOffApprovalPolicy("Disallow")
-	WriteOffApprovalPolicyAlwaysRequireApproval         = WriteOffApprovalPolicy("AlwaysRequireApproval")
-	WriteOffApprovalPolicyRequireApprovalAboveThreshold = WriteOffApprovalPolicy("RequireApprovalAboveThreshold")
+	WriteOffApprovalPolicyDisallow              = WriteOffApprovalPolicy("Disallow")
+	WriteOffApprovalPolicyAlwaysRequireApproval = WriteOffApprovalPolicy(
+		"AlwaysRequireApproval",
+	)
+	WriteOffApprovalPolicyRequireApprovalAboveThreshold = WriteOffApprovalPolicy(
+		"RequireApprovalAboveThreshold",
+	)
 )
 
 type ReplacementInvoiceReviewPolicy string
 
 const (
-	ReplacementInvoiceReviewPolicyNoAdditionalReview                   = ReplacementInvoiceReviewPolicy("NoAdditionalReview")
-	ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange = ReplacementInvoiceReviewPolicy("RequireReviewWhenEconomicTermsChange")
-	ReplacementInvoiceReviewPolicyAlwaysRequireReview                  = ReplacementInvoiceReviewPolicy("AlwaysRequireReview")
+	ReplacementInvoiceReviewPolicyNoAdditionalReview = ReplacementInvoiceReviewPolicy(
+		"NoAdditionalReview",
+	)
+	ReplacementInvoiceReviewPolicyRequireReviewWhenEconomicTermsChange = ReplacementInvoiceReviewPolicy(
+		"RequireReviewWhenEconomicTermsChange",
+	)
+	ReplacementInvoiceReviewPolicyAlwaysRequireReview = ReplacementInvoiceReviewPolicy(
+		"AlwaysRequireReview",
+	)
 )
 
 type CustomerCreditBalancePolicy string
 
 const (
 	CustomerCreditBalancePolicyDisallow             = CustomerCreditBalancePolicy("Disallow")
-	CustomerCreditBalancePolicyAllowUnappliedCredit = CustomerCreditBalancePolicy("AllowUnappliedCredit")
+	CustomerCreditBalancePolicyAllowUnappliedCredit = CustomerCreditBalancePolicy(
+		"AllowUnappliedCredit",
+	)
 )
 
 type OverCreditPolicy string
@@ -409,6 +453,10 @@ const (
 type SupersededInvoiceVisibilityPolicy string
 
 const (
-	SupersededInvoiceVisibilityPolicyShowCurrentOnlyExternally          = SupersededInvoiceVisibilityPolicy("ShowCurrentOnlyExternally")
-	SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally = SupersededInvoiceVisibilityPolicy("ShowCurrentAndSupersededExternally")
+	SupersededInvoiceVisibilityPolicyShowCurrentOnlyExternally = SupersededInvoiceVisibilityPolicy(
+		"ShowCurrentOnlyExternally",
+	)
+	SupersededInvoiceVisibilityPolicyShowCurrentAndSupersededExternally = SupersededInvoiceVisibilityPolicy(
+		"ShowCurrentAndSupersededExternally",
+	)
 )
