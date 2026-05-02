@@ -1,9 +1,5 @@
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import type { FormControlProps } from "@/types/fields";
 import { Paintbrush } from "lucide-react";
@@ -70,11 +66,7 @@ const solids = [
   { color: "#87cefa", name: "Light sky blue" },
 ];
 
-function ColorGrid({
-  handleChange,
-}: {
-  handleChange: (color: string) => void;
-}) {
+function ColorGrid({ handleChange }: { handleChange: (color: string) => void }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fill,minmax(20px,1fr))] gap-1.5">
       {solids.map(({ color }) => (
@@ -144,7 +136,7 @@ function ColorFieldInput<T extends FieldValues>({
               className,
             )}
           >
-            <div className="flex w-full items-center gap-2">
+            <div className="flex w-full items-center gap-1">
               {value ? (
                 <div
                   className="size-4 rounded bg-cover! bg-center! transition-all"
@@ -153,25 +145,19 @@ function ColorFieldInput<T extends FieldValues>({
               ) : (
                 <Paintbrush className="size-4" />
               )}
-              <div className="flex-1 truncate">
+              <div className="flex-1 truncate text-left mt-0.5">
                 {value ? value : "Pick a color"}
               </div>
             </div>
           </Button>
         }
       />
-      <PopoverContent
-        className={cn("p-2", autoWidth ? "w-52" : "w-(--anchor-width)")}
-      >
+      <PopoverContent className={cn("p-2", autoWidth ? "w-52" : "w-(--anchor-width)")}>
         <div className="flex flex-col gap-1">
           {!hideHeader && (
             <div className="mb-2 flex items-center justify-between border-b border-border">
-              <p className="text-left text-2xs font-normal">
-                Predefined Colors
-              </p>
-              <p className="text-2xs text-muted-foreground">
-                Click to select a color
-              </p>
+              <p className="text-left text-2xs font-normal">Predefined Colors</p>
+              <p className="text-2xs text-muted-foreground">Click to select a color</p>
             </div>
           )}
           <ColorGrid handleChange={handleChange} />
