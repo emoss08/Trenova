@@ -2,6 +2,7 @@ package bunmarshal
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 	"strings"
 
@@ -67,9 +68,7 @@ func fieldMappings(targetType reflect.Type) map[string]string {
 				embeddedType = embeddedType.Elem()
 			}
 			if embeddedType.Kind() == reflect.Struct {
-				for key, value := range fieldMappings(embeddedType) {
-					fields[key] = value
-				}
+				maps.Copy(fields, fieldMappings(embeddedType))
 			}
 			continue
 		}
