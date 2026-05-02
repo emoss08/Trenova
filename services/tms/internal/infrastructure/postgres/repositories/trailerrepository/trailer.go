@@ -148,7 +148,13 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	return entity, nil
+	return r.GetByID(ctx, repositories.GetTrailerByIDRequest{
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+	})
 }
 
 func (r *repository) GetByID(

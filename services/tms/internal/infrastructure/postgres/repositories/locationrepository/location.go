@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -38,22 +39,58 @@ func New(p Params) repositories.LocationRepository {
 	}
 }
 
+func WithGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
+	return q.ColumnExpr("loc.*").ColumnExpr("loc.geofence_geometry AS geofence_geometry")
+}
+
 func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListLocationRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(
 		q,
-		"loc",
+		buncolgen.LocationTable.Alias,
 		req.Filter,
 		(*location.Location)(nil),
 	)
 
+	relations := buncolgen.LocationRelations
+
+	q = q.Relation(relations.State).Relation(relations.LocationCategory)
+	q = q.Apply(WithGeofenceGeometry)
+
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 
-func WithGeofenceGeometry(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.ColumnExpr("loc.*").ColumnExpr("loc.geofence_geometry AS geofence_geometry")
+func (r *repository) List(
+	ctx context.Context,
+	req *repositories.ListLocationRequest,
+) (*pagination.ListResult[*location.Location], error) {
+	log := r.l.With(
+		zap.String("operation", "List"),
+		zap.Any("request", req),
+	)
+
+	entities := make([]*location.Location, 0, req.Filter.Pagination.SafeLimit())
+	total, err := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return r.filterQuery(sq, req)
+		}).ScanAndCount(ctx)
+	if err != nil {
+		log.Error("failed to scan and count locations", zap.Error(err))
+		return nil, err
+	}
+	if err = location.HydrateGeofences(entities...); err != nil {
+		log.Error("failed to hydrate location geofences", zap.Error(err))
+		return nil, err
+	}
+
+	return &pagination.ListResult[*location.Location]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func applyLocationGeofence(
@@ -93,10 +130,17 @@ func applyLocationGeofence(
 		}
 
 		if insertQuery != nil {
-			insertQuery.Value("geofence_geometry", "ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON)
+			insertQuery.Value(
+				"geofence_geometry",
+				"ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)",
+				geometryJSON,
+			)
 		}
 		if updateQuery != nil {
-			updateQuery.Set("geofence_geometry = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)", geometryJSON)
+			updateQuery.Set(
+				"geofence_geometry = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)",
+				geometryJSON,
+			)
 		}
 
 		return nil
@@ -125,40 +169,6 @@ var locationWritableColumns = []string{
 	"version",
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *repositories.ListLocationRequest,
-) (*pagination.ListResult[*location.Location], error) {
-	log := r.l.With(
-		zap.String("operation", "List"),
-		zap.Any("request", req),
-	)
-
-	entities := make([]*location.Location, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(WithGeofenceGeometry).
-		Relation("State").
-		Relation("LocationCategory").
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
-	if err != nil {
-		log.Error("failed to scan and count locations", zap.Error(err))
-		return nil, err
-	}
-	if err = location.HydrateGeofences(entities...); err != nil {
-		log.Error("failed to hydrate location geofences", zap.Error(err))
-		return nil, err
-	}
-
-	return &pagination.ListResult[*location.Location]{
-		Items: entities,
-		Total: total,
-	}, nil
-}
-
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetLocationByIDRequest,
@@ -168,17 +178,18 @@ func (r *repository) GetByID(
 		zap.String("id", req.ID.String()),
 	)
 
+	relations := buncolgen.LocationRelations
+
 	entity := new(location.Location)
 	err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		Apply(WithGeofenceGeometry).
-		Relation("State").
-		Relation("LocationCategory").
+		Relation(relations.State).
+		Relation(relations.LocationCategory).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("loc.id = ?", req.ID).
-				Where("loc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("loc.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.LocationColumns.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -238,7 +249,8 @@ func (r *repository) Update(
 		Model(entity).
 		Column(locationWritableColumns...).
 		WherePK().
-		Where("version = ?", ov)
+		Where(buncolgen.LocationColumns.Version.Eq(), ov)
+
 	if err := applyLocationGeofence(nil, query, entity); err != nil {
 		log.Error("failed to prepare geofence for location update", zap.Error(err))
 		return nil, err
@@ -277,11 +289,10 @@ func (r *repository) BulkUpdateStatus(
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("loc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("loc.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("loc.id IN (?)", bun.List(req.LocationIDs))
+			return buncolgen.LocationScopeTenantUpdate(uq, req.TenantInfo).
+				Where(buncolgen.LocationColumns.ID.In(), bun.List(req.LocationIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(buncolgen.LocationColumns.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -315,9 +326,8 @@ func (r *repository) GetByIDs(
 		Model(&entities).
 		Apply(WithGeofenceGeometry).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("loc.organization_id = ?", req.TenantInfo.OrgID).
-				Where("loc.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("loc.id IN (?)", bun.List(req.LocationIDs))
+			return buncolgen.LocationScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.LocationColumns.ID.In(), bun.List(req.LocationIDs))
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -336,32 +346,35 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.LocationSelectOptionsRequest,
 ) (*pagination.ListResult[*location.Location], error) {
+	cols := buncolgen.LocationColumns
+
 	return dbhelper.SelectOptions[*location.Location](
 		ctx,
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
-			Columns: []string{
-				"id",
-				"code",
-				"name",
-				"description",
-				"status",
-				"address_line_1",
-				"city",
-				"state_id",
-				"postal_code",
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Code,
+				cols.Name,
+				cols.Description,
+				cols.Status,
+				cols.AddressLine1,
+				cols.City,
+				cols.StateID,
+				cols.PostalCode,
 			},
-			OrgColumn: "loc.organization_id",
-			BuColumn:  "loc.business_unit_id",
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("loc.status = ?", domaintypes.StatusActive).Relation("State")
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive).
+					Relation(buncolgen.LocationRelations.State)
 			},
 			EntityName: "Location",
-			SearchColumns: []string{
-				"loc.code",
-				"loc.name",
-				"loc.description",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Code,
+				cols.Name,
+				cols.Description,
 			},
 		},
 	)
