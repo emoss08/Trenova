@@ -105,6 +105,22 @@ type supportingDocumentRequirementResolution struct {
 	Source         invoiceadjustment.SupportingDocumentPolicySource
 }
 
+type previewLineValuesRequest struct {
+	sourceLine *invoice.InoviceLine
+	input      *servicesports.InvoiceAdjustmentLineInput
+	kind       invoiceadjustment.Kind
+	eligible   decimal.Decimal
+}
+
+type previewLineValues struct {
+	creditAmount   decimal.Decimal
+	creditQuantity decimal.Decimal
+	rebillAmount   decimal.Decimal
+	rebillQuantity decimal.Decimal
+	description    string
+	payload        map[string]any
+}
+
 func New(p Params) servicesports.InvoiceAdjustmentService {
 	return &Service{
 		l:                  p.Logger.Named("service.invoice-adjustment"),
@@ -1008,31 +1024,18 @@ func (s *Service) computePreview(
 			eligible = decimal.Zero
 		}
 
-		creditAmount := eligible
-		creditQuantity := sourceLine.Quantity
-		rebillAmount := decimal.Zero
-		rebillQuantity := decimal.Zero
-		description := sourceLine.Description
-		payload := map[string]any{}
-
-		if hasInput && req.Kind != invoiceadjustment.KindFullReversal {
-			if !input.CreditAmount.IsZero() {
-				creditAmount = input.CreditAmount
-			}
-			if !input.CreditQuantity.IsZero() {
-				creditQuantity = input.CreditQuantity
-			}
-			if !input.RebillAmount.IsZero() {
-				rebillAmount = input.RebillAmount
-			}
-			if !input.RebillQuantity.IsZero() {
-				rebillQuantity = input.RebillQuantity
-			}
-			if strings.TrimSpace(input.Description) != "" {
-				description = input.Description
-			}
-			payload = input.ReplacementPayload
-		}
+		lineValues := resolvePreviewLineValues(previewLineValuesRequest{
+			sourceLine: sourceLine,
+			input:      input,
+			kind:       req.Kind,
+			eligible:   eligible,
+		})
+		creditAmount := lineValues.creditAmount
+		creditQuantity := lineValues.creditQuantity
+		rebillAmount := lineValues.rebillAmount
+		rebillQuantity := lineValues.rebillQuantity
+		description := lineValues.description
+		payload := lineValues.payload
 
 		if req.Kind == invoiceadjustment.KindCreditRebill && fullScope &&
 			req.RebillStrategy != invoiceadjustment.RebillStrategyRerate {
@@ -1580,6 +1583,40 @@ func (s *Service) resolveSupportingDocumentRequirement(
 	return resolution, nil
 }
 
+func resolvePreviewLineValues(req previewLineValuesRequest) previewLineValues {
+	values := previewLineValues{
+		creditAmount:   req.eligible,
+		creditQuantity: req.sourceLine.Quantity,
+		rebillAmount:   decimal.Zero,
+		rebillQuantity: decimal.Zero,
+		description:    req.sourceLine.Description,
+		payload:        map[string]any{},
+	}
+
+	if req.input == nil || req.kind == invoiceadjustment.KindFullReversal {
+		return values
+	}
+
+	if !req.input.CreditAmount.IsZero() {
+		values.creditAmount = req.input.CreditAmount
+	}
+	if !req.input.CreditQuantity.IsZero() {
+		values.creditQuantity = req.input.CreditQuantity
+	}
+	if !req.input.RebillAmount.IsZero() {
+		values.rebillAmount = req.input.RebillAmount
+	}
+	if !req.input.RebillQuantity.IsZero() {
+		values.rebillQuantity = req.input.RebillQuantity
+	}
+	if strings.TrimSpace(req.input.Description) != "" {
+		values.description = req.input.Description
+	}
+	values.payload = req.input.ReplacementPayload
+
+	return values
+}
+
 func organizationRequiresSupportingDocuments(
 	kind invoiceadjustment.Kind,
 	control *tenant.InvoiceAdjustmentControl,
@@ -1591,6 +1628,8 @@ func organizationRequiresSupportingDocuments(
 		return kind == invoiceadjustment.KindCreditOnly ||
 			kind == invoiceadjustment.KindFullReversal ||
 			kind == invoiceadjustment.KindWriteOff
+	case tenant.AdjustmentAttachmentPolicyOptional:
+		return false
 	default:
 		return false
 	}
