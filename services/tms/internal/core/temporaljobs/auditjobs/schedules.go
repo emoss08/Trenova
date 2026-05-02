@@ -4,14 +4,19 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/api/enums/v1"
 )
 
-type ScheduleProvider struct{}
+type ScheduleProvider struct {
+	bufferFlushInterval time.Duration
+}
 
-func NewScheduleProvider() *ScheduleProvider {
-	return &ScheduleProvider{}
+func NewScheduleProvider(cfg *config.Config) *ScheduleProvider {
+	return &ScheduleProvider{
+		bufferFlushInterval: cfg.Audit.GetBufferFlushInterval(),
+	}
 }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
@@ -19,7 +24,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		{
 			ID:            "audit-buffer-flush",
 			Description:   "Flush audit buffer from Redis for batch processing",
-			Spec:          schedule.Every(10 * time.Second),
+			Spec:          schedule.Every(p.bufferFlushInterval),
 			Workflow:      ScheduledAuditFlushWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

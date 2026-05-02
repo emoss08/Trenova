@@ -82,7 +82,7 @@ temporal:
     maxConcurrentWorkflows: 10
 
 audit:
-  bufferFlushInterval: 10s
+  bufferFlushInterval: 1m
   batchSize: 500
   maxEntriesPerFlush: 5000
   dlqRetryInterval: 5m

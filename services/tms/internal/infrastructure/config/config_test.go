@@ -194,7 +194,7 @@ func TestAuditConfig_GetBufferFlushInterval(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		t.Parallel()
 		c := &AuditConfig{}
-		assert.Equal(t, 10*time.Second, c.GetBufferFlushInterval())
+		assert.Equal(t, time.Minute, c.GetBufferFlushInterval())
 	})
 
 	t.Run("custom", func(t *testing.T) {

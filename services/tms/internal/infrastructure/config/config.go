@@ -512,7 +512,7 @@ func (c *StorageConfig) GetAllowedMIMETypes() []string {
 
 func (c *AuditConfig) GetBufferFlushInterval() time.Duration {
 	if c.BufferFlushInterval == 0 {
-		return 10 * time.Second
+		return time.Minute
 	}
 	return c.BufferFlushInterval
 }
