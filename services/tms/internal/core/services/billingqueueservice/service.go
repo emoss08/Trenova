@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -27,56 +28,59 @@ import (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	DB           ports.DBConnection
-	Repo         repositories.BillingQueueRepository
-	ShipmentRepo repositories.ShipmentRepository
-	ControlRepo  repositories.ShipmentControlRepository
-	CommentRepo  repositories.ShipmentCommentRepository
-	CustomerRepo repositories.CustomerRepository
-	UserRepo     repositories.UserRepository
-	InvoiceSvc   services.InvoiceService
-	Commercial   *shipmentcommercial.Calculator
-	Generator    seqgen.Generator
-	AuditService services.AuditService
-	Realtime     services.RealtimeService
-	Validator    *Validator
+	Logger         *zap.Logger
+	DB             ports.DBConnection
+	Repo           repositories.BillingQueueRepository
+	ShipmentRepo   repositories.ShipmentRepository
+	ControlRepo    repositories.ShipmentControlRepository
+	CommentRepo    repositories.ShipmentCommentRepository
+	CustomerRepo   repositories.CustomerRepository
+	UserRepo       repositories.UserRepository
+	AdjustmentRepo repositories.InvoiceAdjustmentRepository
+	InvoiceSvc     services.InvoiceService
+	Commercial     *shipmentcommercial.Calculator
+	Generator      seqgen.Generator
+	AuditService   services.AuditService
+	Realtime       services.RealtimeService
+	Validator      *Validator
 }
 
 type service struct {
-	l            *zap.Logger
-	db           ports.DBConnection
-	repo         repositories.BillingQueueRepository
-	shipmentRepo repositories.ShipmentRepository
-	controlRepo  repositories.ShipmentControlRepository
-	commentRepo  repositories.ShipmentCommentRepository
-	customerRepo repositories.CustomerRepository
-	userRepo     repositories.UserRepository
-	invoiceSvc   services.InvoiceService
-	commercial   *shipmentcommercial.Calculator
-	generator    seqgen.Generator
-	auditService services.AuditService
-	realtime     services.RealtimeService
-	validator    *Validator
+	l              *zap.Logger
+	db             ports.DBConnection
+	repo           repositories.BillingQueueRepository
+	shipmentRepo   repositories.ShipmentRepository
+	controlRepo    repositories.ShipmentControlRepository
+	commentRepo    repositories.ShipmentCommentRepository
+	customerRepo   repositories.CustomerRepository
+	userRepo       repositories.UserRepository
+	adjustmentRepo repositories.InvoiceAdjustmentRepository
+	invoiceSvc     services.InvoiceService
+	commercial     *shipmentcommercial.Calculator
+	generator      seqgen.Generator
+	auditService   services.AuditService
+	realtime       services.RealtimeService
+	validator      *Validator
 }
 
 //nolint:gocritic // dependency injection
 func New(p Params) services.BillingQueueService {
 	return &service{
-		l:            p.Logger.Named("service.billing-queue"),
-		db:           p.DB,
-		repo:         p.Repo,
-		shipmentRepo: p.ShipmentRepo,
-		controlRepo:  p.ControlRepo,
-		commentRepo:  p.CommentRepo,
-		customerRepo: p.CustomerRepo,
-		userRepo:     p.UserRepo,
-		invoiceSvc:   p.InvoiceSvc,
-		commercial:   p.Commercial,
-		generator:    p.Generator,
-		auditService: p.AuditService,
-		realtime:     p.Realtime,
-		validator:    p.Validator,
+		l:              p.Logger.Named("service.billing-queue"),
+		db:             p.DB,
+		repo:           p.Repo,
+		shipmentRepo:   p.ShipmentRepo,
+		controlRepo:    p.ControlRepo,
+		commentRepo:    p.CommentRepo,
+		customerRepo:   p.CustomerRepo,
+		userRepo:       p.UserRepo,
+		adjustmentRepo: p.AdjustmentRepo,
+		invoiceSvc:     p.InvoiceSvc,
+		commercial:     p.Commercial,
+		generator:      p.Generator,
+		auditService:   p.AuditService,
+		realtime:       p.Realtime,
+		validator:      p.Validator,
 	}
 }
 
@@ -469,6 +473,10 @@ func (s *service) UpdateStatus(
 			}
 		}
 
+		if updateErr = s.completeReplacementReview(txCtx, updated, req); updateErr != nil {
+			return updateErr
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -503,6 +511,35 @@ func (s *service) UpdateStatus(
 	s.publishInvalidation(ctx, updated, auditActor, "updated", updated)
 
 	return updated, nil
+}
+
+func (s *service) completeReplacementReview(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	req *services.UpdateBillingQueueStatusRequest,
+) error {
+	if req.NewStatus != billingqueue.StatusApproved && req.NewStatus != billingqueue.StatusPosted {
+		return nil
+	}
+	if !item.RequiresReplacementReview || item.SourceInvoiceAdjustmentID == nil ||
+		item.SourceInvoiceAdjustmentID.IsNil() {
+		return nil
+	}
+
+	adjustment, err := s.adjustmentRepo.GetByID(ctx, repositories.GetInvoiceAdjustmentRequest{
+		ID:         *item.SourceInvoiceAdjustmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if adjustment.ReplacementReviewStatus != invoiceadjustment.ReplacementReviewStatusRequired {
+		return nil
+	}
+
+	adjustment.ReplacementReviewStatus = invoiceadjustment.ReplacementReviewStatusCompleted
+	_, err = s.adjustmentRepo.UpdateAdjustment(ctx, adjustment)
+	return err
 }
 
 func (s *service) syncShipmentBillingStatus(

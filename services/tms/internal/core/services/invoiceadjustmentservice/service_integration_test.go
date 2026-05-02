@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/billingqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/invoiceadjustmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -36,7 +37,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoicerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -239,6 +244,21 @@ func (noopAuditService) RegisterSensitiveFields(
 	return nil
 }
 
+type noopRealtimeService struct{}
+
+func (noopRealtimeService) CreateTokenRequest(
+	*servicesports.CreateRealtimeTokenRequest,
+) (*servicesports.RealtimeTokenRequest, error) {
+	return nil, nil
+}
+
+func (noopRealtimeService) PublishResourceInvalidation(
+	context.Context,
+	*servicesports.PublishResourceInvalidationRequest,
+) error {
+	return nil
+}
+
 type fakeWorkflowRun struct {
 	id    string
 	runID string
@@ -366,6 +386,11 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		require.True(t, adjustment.CreditMemoInvoiceID.IsNotNil())
 		require.True(t, adjustment.ReplacementInvoiceID.IsNotNil())
 		require.True(t, adjustment.RebillQueueItemID.IsNotNil())
+		require.Equal(
+			t,
+			invoiceadjustment.ReplacementReviewStatusRequired,
+			adjustment.ReplacementReviewStatus,
+		)
 
 		replacement, getErr := h.invoiceRepo.GetByID(h.ctx, repositories.GetInvoiceByIDRequest{
 			ID:         adjustment.ReplacementInvoiceID,
@@ -386,6 +411,116 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		assert.Equal(t, billingqueue.StatusReadyForReview, queueItem.Status)
 		require.NotNil(t, queueItem.SourceCreditMemoInvoiceID)
 		assert.Equal(t, adjustment.CreditMemoInvoiceID, *queueItem.SourceCreditMemoInvoiceID)
+		require.NotNil(t, queueItem.SourceInvoiceAdjustmentID)
+		assert.Equal(t, adjustment.ID, *queueItem.SourceInvoiceAdjustmentID)
+		assert.True(t, queueItem.RequiresReplacementReview)
+
+		billerID := h.userID
+		queueItem.Status = billingqueue.StatusInReview
+		queueItem.AssignedBillerID = &billerID
+		_, updateErr := h.billingQueueRepo.Update(h.ctx, queueItem)
+		require.NoError(t, updateErr)
+
+		_, statusErr := h.buildBillingQueueService().UpdateStatus(
+			h.ctx,
+			&servicesports.UpdateBillingQueueStatusRequest{
+				ItemID:     queueItem.ID,
+				NewStatus:  billingqueue.StatusApproved,
+				TenantInfo: h.tenantInfo(),
+			},
+			h.actor(),
+		)
+		require.NoError(t, statusErr)
+
+		completed, completedErr := h.adjustmentRepo.GetByID(
+			h.ctx,
+			repositories.GetInvoiceAdjustmentRequest{
+				ID:         adjustment.ID,
+				TenantInfo: h.tenantInfo(),
+			},
+		)
+		require.NoError(t, completedErr)
+		assert.Equal(
+			t,
+			invoiceadjustment.ReplacementReviewStatusCompleted,
+			completed.ReplacementReviewStatus,
+		)
+	})
+
+	t.Run("full reversal ignores partial line input and does not rebill", func(t *testing.T) {
+		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+			control.StandardAdjustmentApprovalThreshold = decimal.NewFromInt(10_000)
+			control.ReplacementInvoiceReviewPolicy = tenant.ReplacementInvoiceReviewPolicyNoAdditionalReview
+		})
+
+		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
+			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
+		}, invoice.SettlementStatusUnpaid, decimal.Zero)
+
+		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+			InvoiceID:      entity.ID,
+			Kind:           invoiceadjustment.KindFullReversal,
+			IdempotencyKey: "full-reversal-preview-" + entity.ID.String(),
+			Reason:         "Reverse the invoice",
+			TenantInfo:     h.tenantInfo(),
+			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+				OriginalLineID: entity.Lines[0].ID,
+				CreditQuantity: decimal.NewFromInt(1),
+				CreditAmount:   decimal.NewFromInt(25),
+				RebillQuantity: decimal.NewFromInt(1),
+				RebillAmount:   decimal.NewFromInt(25),
+			}},
+		}, h.actor())
+		require.NoError(t, previewErr)
+		require.Empty(t, preview.Errors)
+		require.Len(t, preview.Lines, 2)
+		assert.True(t, decimal.NewFromInt(150).Equal(preview.CreditTotalAmount))
+		assert.True(t, preview.RebillTotalAmount.IsZero())
+
+		adjustment, submitErr := h.service.Submit(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+			InvoiceID:      entity.ID,
+			Kind:           invoiceadjustment.KindFullReversal,
+			IdempotencyKey: "full-reversal-submit-" + entity.ID.String(),
+			Reason:         "Reverse the invoice",
+			TenantInfo:     h.tenantInfo(),
+			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+				OriginalLineID: entity.Lines[0].ID,
+				CreditQuantity: decimal.NewFromInt(1),
+				CreditAmount:   decimal.NewFromInt(25),
+				RebillQuantity: decimal.NewFromInt(1),
+				RebillAmount:   decimal.NewFromInt(25),
+			}},
+		}, h.actor())
+		require.NoError(t, submitErr)
+		assert.True(t, decimal.NewFromInt(150).Equal(adjustment.CreditTotalAmount))
+		assert.True(t, adjustment.RebillTotalAmount.IsZero())
+		assert.True(t, adjustment.ReplacementInvoiceID.IsNil())
+		assert.True(t, adjustment.RebillQueueItemID.IsNil())
+	})
+
+	t.Run("credit only partial line behavior is unchanged", func(t *testing.T) {
+		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Base freight", 1, 100),
+			makeInvoiceLine(2, invoice.InvoiceLineTypeAccessorial, "Fuel", 1, 50),
+		}, invoice.SettlementStatusUnpaid, decimal.Zero)
+
+		preview, previewErr := h.service.Preview(h.ctx, &servicesports.InvoiceAdjustmentRequest{
+			InvoiceID:      entity.ID,
+			Kind:           invoiceadjustment.KindCreditOnly,
+			IdempotencyKey: "credit-only-partial-preview-" + entity.ID.String(),
+			Reason:         "Partial concession",
+			TenantInfo:     h.tenantInfo(),
+			Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+				OriginalLineID: entity.Lines[0].ID,
+				CreditQuantity: decimal.NewFromInt(1),
+				CreditAmount:   decimal.NewFromInt(40),
+			}},
+		}, h.actor())
+		require.NoError(t, previewErr)
+		require.Empty(t, preview.Errors)
+		require.Len(t, preview.Lines, 1)
+		assert.True(t, decimal.NewFromInt(40).Equal(preview.CreditTotalAmount))
 	})
 
 	t.Run("write-off uses write-off approval policy and creates journal entry", func(t *testing.T) {
@@ -799,6 +934,126 @@ func TestInvoiceAdjustmentService_EngineScenarios(t *testing.T) {
 		)
 	})
 
+	t.Run("organization supporting document policy applies when customer inherits", func(t *testing.T) {
+		entity := h.createPostedInvoice(t, []invoice.InoviceLine{
+			makeInvoiceLine(1, invoice.InvoiceLineTypeFreight, "Org policy", 1, 100),
+		}, invoice.SettlementStatusUnpaid, decimal.Zero)
+
+		tests := []struct {
+			name           string
+			customerPolicy customer.InvoiceAdjustmentSupportingDocumentPolicy
+			orgPolicy      tenant.AdjustmentAttachmentPolicy
+			kind           invoiceadjustment.Kind
+			required       bool
+			source         invoiceadjustment.SupportingDocumentPolicySource
+		}{
+			{
+				name:           "inherit uses required for all",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForAll,
+				kind:           invoiceadjustment.KindCreditRebill,
+				required:       true,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+			{
+				name:           "inherit uses optional",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyOptional,
+				kind:           invoiceadjustment.KindCreditOnly,
+				required:       false,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+			{
+				name:           "customer required overrides optional",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyRequired,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyOptional,
+				kind:           invoiceadjustment.KindCreditOnly,
+				required:       true,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile,
+			},
+			{
+				name:           "customer optional overrides required for all",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyOptional,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForAll,
+				kind:           invoiceadjustment.KindCreditOnly,
+				required:       false,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile,
+			},
+			{
+				name:           "credit only requires docs for credit or write off",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
+				kind:           invoiceadjustment.KindCreditOnly,
+				required:       true,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+			{
+				name:           "full reversal requires docs for credit or write off",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
+				kind:           invoiceadjustment.KindFullReversal,
+				required:       true,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+			{
+				name:           "write off requires docs for credit or write off",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
+				kind:           invoiceadjustment.KindWriteOff,
+				required:       true,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+			{
+				name:           "credit and rebill is optional for credit or write off",
+				customerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+				orgPolicy:      tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff,
+				kind:           invoiceadjustment.KindCreditRebill,
+				required:       false,
+				source:         invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				h.setCustomerSupportingDocumentPolicy(t, tt.customerPolicy)
+				h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+					control.AdjustmentAttachmentRequirement = tt.orgPolicy
+				})
+
+				preview, previewErr := h.service.Preview(
+					h.ctx,
+					&servicesports.InvoiceAdjustmentRequest{
+						InvoiceID:      entity.ID,
+						Kind:           tt.kind,
+						RebillStrategy: invoiceadjustment.RebillStrategyManual,
+						IdempotencyKey: "org-policy-" + tt.name,
+						Reason:         "Policy preview",
+						TenantInfo:     h.tenantInfo(),
+						Lines: []*servicesports.InvoiceAdjustmentLineInput{{
+							OriginalLineID: entity.Lines[0].ID,
+							CreditQuantity: decimal.NewFromInt(1),
+							CreditAmount:   decimal.NewFromInt(100),
+							RebillQuantity: decimal.NewFromInt(1),
+							RebillAmount:   decimal.NewFromInt(100),
+						}},
+					},
+					h.actor(),
+				)
+				require.NoError(t, previewErr)
+				assert.Equal(t, tt.required, preview.SupportingDocumentsRequired)
+				assert.Equal(t, string(tt.source), preview.SupportingDocumentPolicySource)
+			})
+		}
+
+		h.setCustomerSupportingDocumentPolicy(
+			t,
+			customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
+		)
+		h.setControls(t, func(control *tenant.InvoiceAdjustmentControl) {
+			control.AdjustmentAttachmentRequirement = tenant.AdjustmentAttachmentPolicyOptional
+		})
+	})
+
 	t.Run(
 		"bulk inline tracks partial success and large batches route to Temporal",
 		func(t *testing.T) {
@@ -1064,6 +1319,35 @@ func (h *integrationHarness) buildService(
 		}),
 		Generator:         &fakeGenerator{},
 		SequenceGenerator: testutil.TestSequenceGenerator{SingleValue: "ACC-SEQ"},
+	})
+}
+
+func (h *integrationHarness) buildBillingQueueService() servicesports.BillingQueueService {
+	logger := zap.NewNop()
+	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
+		DB: h.conn,
+		MoveRepository: shipmentmoverepository.New(
+			shipmentmoverepository.Params{DB: h.conn, Logger: logger},
+		),
+		AdditionalChargeRepository: shipmentadditionalchargerepository.New(
+			shipmentadditionalchargerepository.Params{DB: h.conn, Logger: logger},
+		),
+		CommodityRepository: shipmentcommodityrepository.New(
+			shipmentcommodityrepository.Params{DB: h.conn, Logger: logger},
+		),
+		Logger: logger,
+	})
+
+	return billingqueueservice.New(billingqueueservice.Params{
+		Logger:         logger,
+		DB:             h.conn,
+		Repo:           h.billingQueueRepo,
+		ShipmentRepo:   shipmentRepo,
+		CommentRepo:    shipmentcommentrepository.New(shipmentcommentrepository.Params{DB: h.conn, Logger: logger}),
+		AdjustmentRepo: h.adjustmentRepo,
+		AuditService:   noopAuditService{},
+		Realtime:       noopRealtimeService{},
+		Validator:      billingqueueservice.NewValidator(billingqueueservice.ValidatorParams{DB: h.conn}),
 	})
 }
 

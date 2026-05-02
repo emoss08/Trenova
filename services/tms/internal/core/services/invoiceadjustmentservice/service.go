@@ -991,7 +991,7 @@ func (s *Service) computePreview(
 	lines := make([]*invoiceadjustment.InvoiceAdjustmentLine, 0, len(entity.Lines))
 	creditLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
 	replacementLines := make([]*invoice.InoviceLine, 0, len(entity.Lines))
-	fullScope := len(req.Lines) == 0
+	fullScope := len(req.Lines) == 0 || req.Kind == invoiceadjustment.KindFullReversal
 
 	for _, sourceLine := range entity.Lines {
 		if sourceLine == nil {
@@ -1015,7 +1015,7 @@ func (s *Service) computePreview(
 		description := sourceLine.Description
 		payload := map[string]any{}
 
-		if hasInput {
+		if hasInput && req.Kind != invoiceadjustment.KindFullReversal {
 			if !input.CreditAmount.IsZero() {
 				creditAmount = input.CreditAmount
 			}
@@ -1536,9 +1536,6 @@ func (s *Service) resolveSupportingDocumentRequirement(
 	control *tenant.InvoiceAdjustmentControl,
 	tenantInfo pagination.TenantInfo,
 ) (*supportingDocumentRequirementResolution, error) {
-	_ = kind
-	_ = control
-
 	resolution := &supportingDocumentRequirementResolution{
 		CustomerPolicy: customer.InvoiceAdjustmentSupportingDocumentPolicyInherit,
 		Required:       false,
@@ -1557,6 +1554,8 @@ func (s *Service) resolveSupportingDocumentRequirement(
 	}
 
 	if entity.BillingProfile == nil {
+		resolution.Required = organizationRequiresSupportingDocuments(kind, control)
+		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl
 		return resolution, nil
 	}
 
@@ -1573,9 +1572,28 @@ func (s *Service) resolveSupportingDocumentRequirement(
 	case customer.InvoiceAdjustmentSupportingDocumentPolicyOptional:
 		resolution.Required = false
 		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceCustomerBillingProfile
+	case customer.InvoiceAdjustmentSupportingDocumentPolicyInherit:
+		resolution.Required = organizationRequiresSupportingDocuments(kind, control)
+		resolution.Source = invoiceadjustment.SupportingDocumentPolicySourceOrganizationControl
 	}
 
 	return resolution, nil
+}
+
+func organizationRequiresSupportingDocuments(
+	kind invoiceadjustment.Kind,
+	control *tenant.InvoiceAdjustmentControl,
+) bool {
+	switch control.AdjustmentAttachmentRequirement {
+	case tenant.AdjustmentAttachmentPolicyRequiredForAll:
+		return true
+	case tenant.AdjustmentAttachmentPolicyRequiredForCreditOrWriteOff:
+		return kind == invoiceadjustment.KindCreditOnly ||
+			kind == invoiceadjustment.KindFullReversal ||
+			kind == invoiceadjustment.KindWriteOff
+	default:
+		return false
+	}
 }
 
 func (s *Service) applyCreditBalancePolicy(
