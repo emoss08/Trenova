@@ -95,6 +95,27 @@ export function formatToUserTimezone(
   return new Intl.DateTimeFormat("en-US", formatOptions).format(date);
 }
 
+export function formatCurrentUserTime(
+  date: Date = new Date(),
+  timeFormat: TimeFormatType = TimeFormat.enum["24-hour"],
+  userTimezone: string = "auto",
+): string {
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return "N/A";
+  }
+
+  const timezone = resolveTimezone(userTimezone);
+
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: timeFormat === TimeFormat.enum["12-hour"],
+    timeZoneName: "shortGeneric",
+  }).format(date);
+}
+
 export function formatSplitDateTime(
   timestamp: number | undefined,
   timeFormat: TimeFormatType = TimeFormat.enum["12-hour"],

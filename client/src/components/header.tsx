@@ -21,6 +21,7 @@ import { ChevronLeft, ChevronRight, PanelLeftIcon, Star } from "lucide-react";
 import React from "react";
 import { Link, useLocation, useNavigation } from "react-router";
 import { toast } from "sonner";
+import { SystemInformation } from "./system-information";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
@@ -155,7 +156,8 @@ function NavActions() {
   };
 
   return (
-    <div className="ml-auto flex items-center gap-1 px-3">
+    <div className="ml-auto flex items-center text-center gap-1 px-3">
+      <SystemInformation />
       <NotificationPopover />
       <TooltipProvider>
         <Tooltip>
@@ -165,14 +167,14 @@ function NavActions() {
                 type="button"
                 variant="ghost"
                 className="cursor-pointer"
-                size="icon-xs"
+                size="xs"
                 onClick={handleToggle}
                 disabled={isLoading || isPending}
                 aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
               >
                 <Star
                   className={cn(
-                    "size-3.5 transition-colors",
+                    "size-3 transition-colors",
                     isFavorited && "fill-amber-400 text-amber-400",
                   )}
                 />

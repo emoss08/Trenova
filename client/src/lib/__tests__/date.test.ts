@@ -10,6 +10,7 @@ import {
   generateDateTimeString,
   generateDateTimeStringFromUnixTimestamp,
   formatToUserTimezone,
+  formatCurrentUserTime,
   formatDurationFromSeconds,
   inclusiveDays,
   formatRange,
@@ -243,11 +244,7 @@ describe("formatToUserTimezone", () => {
   });
 
   it("respects showTime=false", () => {
-    const result = formatToUserTimezone(
-      1705276800,
-      { showDate: true, showTime: false },
-      "UTC",
-    );
+    const result = formatToUserTimezone(1705276800, { showDate: true, showTime: false }, "UTC");
     expect(result).toMatch(/2024/);
   });
 
@@ -267,6 +264,22 @@ describe("formatToUserTimezone", () => {
       "UTC",
     );
     expect(result).not.toMatch(/AM|PM/);
+  });
+});
+
+describe("formatCurrentUserTime", () => {
+  const date = new Date("2026-05-04T19:26:00Z");
+
+  it("formats 24-hour time with seconds and timezone", () => {
+    expect(formatCurrentUserTime(date, "24-hour", "America/Chicago")).toBe("14:26:00 CT");
+  });
+
+  it("formats 12-hour time with seconds and timezone", () => {
+    expect(formatCurrentUserTime(date, "12-hour", "America/Chicago")).toBe("02:26:00 PM CT");
+  });
+
+  it("returns N/A for invalid dates", () => {
+    expect(formatCurrentUserTime(new Date("invalid"))).toBe("N/A");
   });
 });
 

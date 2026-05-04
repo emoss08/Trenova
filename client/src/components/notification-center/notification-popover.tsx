@@ -129,11 +129,11 @@ export function NotificationPopover() {
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="xs"
             aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
           >
             <span className="relative">
-              <BellIcon className={cn("size-4 transition-colors", open && "text-foreground")} />
+              <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
               {unreadCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] leading-none font-semibold text-destructive-foreground ring-2 ring-background">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -143,7 +143,7 @@ export function NotificationPopover() {
           </Button>
         }
       />
-      <PopoverContent align="end" sideOffset={8} className="w-[420px] p-0">
+      <PopoverContent align="end" sideOffset={8} className="w-105 p-0">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <h3 className="text-sm font-semibold">Notifications</h3>
