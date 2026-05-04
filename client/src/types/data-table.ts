@@ -98,6 +98,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
   preferDetailRowForEdit?: boolean;
+  initialColumnVisibility?: Record<string, boolean>;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

@@ -6,12 +6,15 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { LazyMapWithKey } from "@/components/lazy-map";
 import { BillingQueueStatusBadge, ShipmentStatusBadge } from "@/components/status-badge";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Progress } from "@/components/ui/progress";
 import { billingTransferStatusChoices, shipmentStatusChoices } from "@/lib/choices";
 import {
   getDestinationLocation,
   getDestinationStop,
   getOriginLocation,
   getOriginStop,
+  getShipmentProgress,
+  getTotalMiles,
 } from "@/lib/shipment-utils";
 import { formatLocation } from "@/lib/utils";
 import type { Customer } from "@/types/customer";
@@ -19,14 +22,55 @@ import type { Location } from "@/types/location";
 import type { Shipment } from "@/types/shipment";
 import type { User } from "@/types/user";
 import { type ColumnDef } from "@tanstack/react-table";
+import { ArrowRight, Dot } from "lucide-react";
 import { Suspense } from "react";
 
 export function getColumns(): ColumnDef<Shipment>[] {
   return [
     {
+      id: "lane",
+      header: "Lane",
+      cell: ({ row }) => {
+        const originLocation = getOriginLocation(row.original);
+        const destinationLocation = getDestinationLocation(row.original);
+
+        const originCode = originLocation?.code ?? "UNK";
+        const destinationCode = destinationLocation?.code ?? "UNK";
+
+        const mileage = getTotalMiles(row.original);
+
+        return (
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-row gap-1 items-center text-left">
+              <span className="font-semibold">{originCode}</span>
+              <ArrowRight className="size-3 text-amber-600 dark:text-amber-500 shrink-0" />
+              <span className="font-semibold truncate">{destinationCode}</span>
+            </div>
+            <div className="flex flex-row gap-1 text-left items-center">
+              <span className="text-xs text-muted-foreground">{row.original.proNumber}</span>
+              <Dot className="size-2 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">{mileage}mi</span>
+            </div>
+          </div>
+        );
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 300,
+    },
+    {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => <ShipmentStatusBadge status={row.original.status} />,
+      cell: ({ row }) => {
+        const { status } = row.original;
+        const progress = getShipmentProgress(status);
+        return (
+          <div className="flex flex-col gap-1.5">
+            <ShipmentStatusBadge status={status} />
+            <Progress size="sm" value={progress.value} variant={progress.variant} />
+          </div>
+        );
+      },
       meta: {
         apiField: "status",
         label: "Status",

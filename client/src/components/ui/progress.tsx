@@ -1,41 +1,36 @@
 import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
-const progressVariants = cva(
-  "relative h-2 w-full overflow-hidden rounded-full bg-muted",
-  {
-    variants: {
-      size: {
-        sm: "h-1",
-        default: "h-2",
-        lg: "h-3",
-      },
-    },
-    defaultVariants: {
-      size: "default",
+const progressVariants = cva("relative h-2 w-full overflow-hidden rounded-full bg-muted", {
+  variants: {
+    size: {
+      sm: "h-1",
+      default: "h-2",
+      lg: "h-3",
     },
   },
-);
+  defaultVariants: {
+    size: "default",
+  },
+});
 
-const progressIndicatorVariants = cva(
-  "h-full transition-all duration-300 ease-out",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary",
-        success: "bg-green-500",
-        error: "bg-destructive",
-        warning: "bg-yellow-500",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
+const progressIndicatorVariants = cva("h-full transition-all duration-300 ease-out", {
+  variants: {
+    variant: {
+      default: "bg-primary",
+      success: "bg-green-500",
+      error: "bg-destructive",
+      warning: "bg-amber-600",
     },
   },
-);
+  defaultVariants: {
+    variant: "default",
+  },
+});
 
 interface ProgressProps
-  extends React.ComponentProps<"div">,
+  extends
+    React.ComponentProps<"div">,
     VariantProps<typeof progressVariants>,
     VariantProps<typeof progressIndicatorVariants> {
   value: number;
@@ -80,4 +75,4 @@ function Progress({
   );
 }
 
-export { Progress, progressVariants, progressIndicatorVariants };
+export { Progress, progressIndicatorVariants, progressVariants };

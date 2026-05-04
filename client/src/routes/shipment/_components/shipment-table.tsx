@@ -205,6 +205,12 @@ export default function ShipmentTable() {
           expandShipmentDetails: true,
         }}
         preferDetailRowForEdit
+        initialColumnVisibility={{
+          originLocation: false,
+          originScheduledTime: false,
+          destinationLocation: false,
+          destinationScheduledTime: false,
+        }}
       />
       {duplicateShipmentId && (
         <ShipmentDuplicateDialog

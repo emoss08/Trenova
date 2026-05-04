@@ -61,6 +61,7 @@ export function DataTable<TData extends Record<string, any>>({
   contextMenuActions,
   onRowClick,
   preferDetailRowForEdit = false,
+  initialColumnVisibility,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -243,6 +244,9 @@ export function DataTable<TData extends Record<string, any>>({
     enableRowSelection,
     enableMultiRowSelection: true,
     onRowSelectionChange: setRowSelection,
+    initialState: initialColumnVisibility
+      ? { columnVisibility: initialColumnVisibility }
+      : undefined,
     state: {
       pagination: {
         pageIndex: pageIndex - 1,

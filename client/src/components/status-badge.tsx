@@ -247,7 +247,10 @@ export function ShipmentStatusBadge({
   };
 
   return (
-    <Badge variant={statusAttributes[status].variant} className={cn(className, "max-h-5")}>
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn(className, "max-h-5 uppercase")}
+    >
       {statusAttributes[status].text}
     </Badge>
   );
@@ -306,43 +309,35 @@ export function BillingQueueStatusBadge({
 export function PlainBillingQueueStatusBadge({ status }: { status: BillingQueueStatus }) {
   const statusAttributes: Record<BillingQueueStatus, PlainBadgeAttrProps> = {
     ReadyForReview: {
-      className:
-        "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+      className: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
       text: "Ready for Review",
     },
     InReview: {
-      className:
-        "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+      className: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
       text: "In Review",
     },
     Approved: {
-      className:
-        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Approved",
     },
     Posted: {
-      className:
-        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Posted",
     },
     OnHold: {
-      className:
-        "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      className: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
       text: "On Hold",
     },
     SentBackToOps: {
-      className:
-        "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+      className: "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
       text: "Sent Back to Ops",
     },
     Exception: {
-      className:
-        "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
+      className: "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300",
       text: "Exception",
     },
     Canceled: {
-      className:
-        "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+      className: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
       text: "Canceled",
     },
   };
@@ -417,13 +412,11 @@ export function PlainSettlementStatusBadge({ status }: { status: SettlementStatu
 export function PlainInvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
   const statusAttributes: Record<InvoiceStatus, PlainBadgeAttrProps> = {
     Draft: {
-      className:
-        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
       text: "Draft",
     },
     Posted: {
-      className:
-        "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
+      className: "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300",
       text: "Posted",
     },
   };
