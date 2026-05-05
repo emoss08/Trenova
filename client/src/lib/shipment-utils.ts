@@ -50,6 +50,16 @@ export function getDestinationLocation(shipment: Shipment) {
   return getDestinationStop(shipment)?.location ?? null;
 }
 
+export function getOrderedStops(shipment: Shipment): Stop[] {
+  if (!shipment.moves?.length) return [];
+  const flat: Stop[] = [];
+  for (const move of shipment.moves) {
+    if (!move.stops?.length) continue;
+    for (const stop of move.stops) flat.push(stop);
+  }
+  return flat;
+}
+
 export function getTotalMiles(shipment: Shipment) {
   if (!shipment.moves?.length) return 0;
 

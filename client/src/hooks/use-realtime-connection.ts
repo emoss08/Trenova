@@ -2,111 +2,29 @@ import { APP_ENV } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { useRealtimeStore, type RealtimeConnectionState } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import {
+  CORE_QUERY_KEYS,
+  RESOURCE_EVENT_NAME,
+  RESOURCE_QUERY_KEY_MAP,
+  isBulkAction,
+  parseInvalidationEvent,
+  patchEntityInListRows,
+  resolveEntityID,
+  shouldPatchEvent,
+  type ResourceInvalidationEvent,
+} from "./realtime-patching";
 
-const RESOURCE_EVENT_NAME = "resource.invalidation";
 const COALESCE_DELAY_MS = 300;
 
-const RESOURCE_QUERY_KEY_MAP: Record<string, string[]> = {
-  shipments: ["shipment-list"],
-  users: ["user-list"],
-  customers: ["customer-list"],
-  tractors: ["tractor-list"],
-  trailers: ["trailer-list"],
-  workers: ["worker-list"],
-  "audit-logs": ["audit-entry-list"],
-  billing_queue: ["billing-queue-list", "billingQueue"],
-};
-
-const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
-  users: new Set([
-    "status",
-    "name",
-    "emailAddress",
-    "username",
-    "thumbnailUrl",
-    "lastLoginAt",
-    "updatedAt",
-  ]),
-  customers: new Set(["status", "name", "code", "emailAddress", "updatedAt"]),
-  tractors: new Set(["status", "code", "updatedAt"]),
-  trailers: new Set(["status", "code", "updatedAt"]),
-  workers: new Set(["status", "firstName", "lastName", "updatedAt"]),
-};
-
-const CORE_QUERY_KEYS = Array.from(new Set(Object.values(RESOURCE_QUERY_KEY_MAP).flat()));
-
-interface ResourceInvalidationEvent {
-  type?: string;
-  organizationId: string;
-  businessUnitId: string;
-  resource: string;
-  action?: string;
-  fields?: string[];
-  entityId?: string;
-  recordId?: string;
-  entity?: Record<string, unknown>;
+function mapConnectionState(state: string): RealtimeConnectionState {
+  if (state === "connected") return "connected";
+  if (state === "initialized" || state === "connecting") return "connecting";
+  return "disconnected";
 }
-
-const parseInvalidationEvent = (payload: unknown): ResourceInvalidationEvent | null => {
-  if (!payload) return null;
-
-  let data: unknown = payload;
-  if (typeof payload === "string") {
-    try {
-      data = JSON.parse(payload);
-    } catch {
-      return null;
-    }
-  }
-
-  if (
-    typeof data !== "object" ||
-    data === null ||
-    !("organizationId" in data) ||
-    !("businessUnitId" in data) ||
-    !("resource" in data)
-  ) {
-    return null;
-  }
-
-  return data as ResourceInvalidationEvent;
-};
-
-const hasRowsShape = (value: unknown): value is { results: Record<string, unknown>[] } =>
-  !!value &&
-  typeof value === "object" &&
-  "results" in value &&
-  Array.isArray((value as { results: unknown[] }).results);
-
-const isBulkAction = (action: string) => action.startsWith("bulk_");
-
-const resolveEntityID = (event: ResourceInvalidationEvent) => {
-  const fromEvent = event.entityId || event.recordId;
-  if (fromEvent) return fromEvent;
-
-  const entity = event.entity;
-  if (!entity || typeof entity !== "object") return "";
-
-  return typeof entity.id === "string" ? entity.id : "";
-};
-
-const shouldPatchEvent = (event: ResourceInvalidationEvent) => {
-  const action = event.action ?? "";
-  const entityID = resolveEntityID(event);
-  if (action !== "updated" || !entityID || !event.entity) return false;
-
-  const patchableFields = PATCHABLE_FIELDS_BY_RESOURCE[event.resource];
-  if (!patchableFields) return false;
-
-  if (!event.fields || event.fields.length === 0) {
-    return true;
-  }
-
-  return event.fields.every((field) => patchableFields.has(field));
-};
 
 export function useRealtimeConnection() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -124,9 +42,11 @@ export function useRealtimeConnection() {
       !user.businessUnitId
     ) {
       apiService.realtimeService.safeClose();
+      useRealtimeStore.getState().setConnectionState("disconnected");
       return;
     }
 
+    useRealtimeStore.getState().setConnectionState("connecting");
     const pendingKeys = pendingKeysRef.current;
     const presenceChannelName = apiService.realtimeService.getUsersPresenceChannelName(
       user.currentOrganizationId,
@@ -165,24 +85,9 @@ export function useRealtimeConnection() {
 
       let patched = false;
       queryClient.setQueriesData({ queryKey: [queryKey] }, (current: unknown): unknown => {
-        if (!hasRowsShape(current)) return current;
-
-        const index = current.results.findIndex((row) => row.id === entityID);
-        if (index < 0) {
-          return current;
-        }
-
-        patched = true;
-        const nextResults = [...current.results];
-        nextResults[index] = {
-          ...nextResults[index],
-          ...entity,
-        };
-
-        return {
-          ...current,
-          results: nextResults,
-        };
+        const result = patchEntityInListRows(current, event);
+        patched = result.patched || patched;
+        return result.data;
       });
 
       return patched;
@@ -218,6 +123,8 @@ export function useRealtimeConnection() {
         return;
       }
 
+      useRealtimeStore.getState().setConnectionState(mapConnectionState(client.connection.state));
+
       if (client.connection.state === "connected") {
         void enterPresence();
         invalidateCoreKeys();
@@ -245,8 +152,7 @@ export function useRealtimeConnection() {
               message?: string;
             };
 
-            const isForCurrentUser =
-              !notif.targetUserId || notif.targetUserId === user.id;
+            const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
 
             if (isForCurrentUser && notif.title) {
               toast.info(notif.title, {
@@ -271,6 +177,7 @@ export function useRealtimeConnection() {
       ) {
         return;
       }
+      useRealtimeStore.getState().setLastEventAt(Date.now());
 
       const queryKeys = RESOURCE_QUERY_KEY_MAP[evt.resource] ?? [];
       if (queryKeys.length === 0) return;
@@ -314,6 +221,7 @@ export function useRealtimeConnection() {
       }
       dataEventsChannel.unsubscribe(onResourceEvent);
       void apiService.realtimeService.leavePresenceIfPossible(presenceChannelName);
+      useRealtimeStore.getState().setConnectionState("disconnected");
       if (flushTimeoutRef.current !== null) {
         clearTimeout(flushTimeoutRef.current);
         flushTimeoutRef.current = null;
