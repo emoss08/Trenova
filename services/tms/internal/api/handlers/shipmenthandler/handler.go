@@ -117,6 +117,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getDelayedShipments,
 	)
+	api.GET(
+		"/unassigned/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.getUnassignedShipments,
+	)
 	api.POST(
 		"/delay/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
@@ -248,6 +253,36 @@ func (h *Handler) list(c *gin.Context) {
 					Status:                helpers.QueryString(c, "status"),
 				},
 			})
+		},
+	)
+}
+
+// @Summary List unassigned shipments
+// @Description Returns paginated shipments that do not have an active assignment.
+// @ID listUnassignedShipments
+// @Tags Shipments
+// @Accept json
+// @Produce json
+// @Param query query string false "Search query"
+// @Param limit query int false "Page size" minimum(1) maximum(100)
+// @Param offset query int false "Page offset" minimum(0)
+// @Success 200 {object} pagination.Response[[]shipment.Shipment]
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /shipments/unassigned/ [get]
+func (h *Handler) getUnassignedShipments(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewQueryOptions(c, authCtx)
+
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*shipment.Shipment], error) {
+			return h.service.GetUnassigned(c.Request.Context(), req)
 		},
 	)
 }

@@ -132,6 +132,30 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) GetUnassigned(
+	ctx context.Context,
+	req *pagination.QueryOptions,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	entities := make([]*shipment.Shipment, 0, req.Pagination.SafeLimit())
+	dba := r.db.DBForContext(ctx)
+
+	total, err := dba.
+		NewSelect().
+		Model(&entities).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return unassignedFilterQuery(sq, dba, req)
+		}).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*shipment.Shipment]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 func (r *repository) hydrateMoves(
 	ctx context.Context,
 	shipments []*shipment.Shipment,

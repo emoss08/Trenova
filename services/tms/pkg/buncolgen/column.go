@@ -145,6 +145,12 @@ func (c Column) Qualified() string { return c.qualified }
 //	// WHERE wrk.status = 'Active'
 func (c Column) Eq() string { return c.eq }
 
+// EqColumn returns a "left_alias.column = right_alias.column" fragment.
+// Use it for joins and correlated subqueries where both sides are columns.
+func (c Column) EqColumn(other Column) string {
+	return c.qualified + " = " + other.qualified
+}
+
 // Ne returns a "alias.column != ?" fragment for WHERE clauses.
 func (c Column) Ne() string { return c.ne }
 

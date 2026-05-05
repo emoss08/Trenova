@@ -29,16 +29,17 @@ function pickupDisplay(shipment: Shipment): string {
   });
 }
 
-function priorityFor(s: Shipment): { label: "HOT" | "MED" | "LOW"; tone: "danger" | "warning" | "muted" } {
+function priorityFor(s: Shipment): {
+  label: "HOT" | "MED" | "LOW";
+  tone: "danger" | "warning" | "muted";
+} {
   if (s.status === "New") return { label: "HOT", tone: "danger" };
   if (s.status === "PartiallyAssigned") return { label: "MED", tone: "warning" };
   return { label: "LOW", tone: "muted" };
 }
 
 function equipCode(s: Shipment): string {
-  // Trailer type code is the closest analogue to the design's "53' DRY" / "REEFER".
-  // Falls back to a dash when no trailer is assigned yet.
-  return s.moves?.[0]?.assignment?.trailer?.code ?? "—";
+  return s.moves?.[0]?.assignment?.trailer?.equipmentType?.code ?? "—";
 }
 
 const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {

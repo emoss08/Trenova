@@ -374,6 +374,40 @@ func TestShipmentHandler_List_Success(t *testing.T) {
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 }
 
+func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	service.EXPECT().
+		GetUnassigned(mock.Anything, mock.MatchedBy(func(req *pagination.QueryOptions) bool {
+			return req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.TenantInfo.BuID == testutil.TestBuID &&
+				req.Pagination.SafeLimit() == 10 &&
+				req.Pagination.SafeOffset() == 5
+		})).
+		Return(&pagination.ListResult[*shipment.Shipment]{
+			Items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
+			Total: 1,
+		}, nil).
+		Once()
+
+	handler := setupShipmentHandler(t, service)
+
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/shipments/unassigned/").
+		WithQuery(map[string]string{
+			"limit":  "10",
+			"offset": "5",
+		}).
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+}
+
 func TestShipmentHandler_Get_Success(t *testing.T) {
 	t.Parallel()
 

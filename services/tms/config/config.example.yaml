@@ -80,7 +80,7 @@ documentIntelligence:
 # Security configuration
 security:
   session:
-    secret: super-secret-key # Session secret (min 32 chars)
+    secret: super-secret-key 
     name: trenova_session # Cookie name for session
     maxAge: 24h # Session max age in seconds (24 hours)
     httpOnly: true # HttpOnly flag for cookies

@@ -154,6 +154,13 @@ func (s *service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *service) GetUnassigned(
+	ctx context.Context,
+	req *pagination.QueryOptions,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	return s.repo.GetUnassigned(ctx, req)
+}
+
 func (s *service) GetUIPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -387,7 +394,10 @@ func (s *service) Update(
 			auditActor.UserID,
 		)
 		if autoMarkErr != nil {
-			log.Warn("failed to auto-mark shipment ready to invoice after completion", zap.Error(autoMarkErr))
+			log.Warn(
+				"failed to auto-mark shipment ready to invoice after completion",
+				zap.Error(autoMarkErr),
+			)
 		} else if autoMarkedEntity != nil {
 			updatedEntity = autoMarkedEntity
 		}

@@ -59,6 +59,7 @@ type HealthConfig struct {
 	CheckInterval time.Duration `mapstructure:"checkInterval"`
 	Timeout       time.Duration `mapstructure:"timeout"`
 }
+
 type LoggingConfig struct {
 	Level      string         `mapstructure:"level"          validate:"required,oneof=debug info warn error"`
 	Format     string         `mapstructure:"format"         validate:"required,oneof=json text"`
@@ -234,6 +235,7 @@ func (c *DocumentIntelligenceConfig) GetOCRCommand() string {
 	if c.OCRCommand == "" {
 		return "tesseract"
 	}
+
 	return c.OCRCommand
 }
 
@@ -241,6 +243,7 @@ func (c *DocumentIntelligenceConfig) GetOCRLanguage() string {
 	if c.OCRLanguage == "" {
 		return "eng"
 	}
+
 	return c.OCRLanguage
 }
 
@@ -248,6 +251,7 @@ func (c *DocumentIntelligenceConfig) GetOCRTimeout() time.Duration {
 	if c.OCRTimeout <= 0 {
 		return 45 * time.Second
 	}
+
 	return c.OCRTimeout
 }
 
@@ -259,6 +263,7 @@ func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
 	if c.AITimeout <= 0 {
 		return 20 * time.Second
 	}
+
 	return c.AITimeout
 }
 
@@ -266,6 +271,7 @@ func (c *DocumentIntelligenceConfig) GetAIMaxInputChars() int {
 	if c.AIMaxInputChars <= 0 {
 		return 24000
 	}
+
 	return c.AIMaxInputChars
 }
 
@@ -273,6 +279,7 @@ func (c *DocumentIntelligenceConfig) GetAIExtractionMaxTokens() int {
 	if c.AIExtractionMaxTokens <= 0 {
 		return 5000
 	}
+
 	return c.AIExtractionMaxTokens
 }
 
@@ -280,6 +287,7 @@ func (c *DocumentIntelligenceConfig) GetAIClassificationModel() string {
 	if c.AIClassificationModel == "" {
 		return "gpt-5-nano-2025-08-07"
 	}
+
 	return c.AIClassificationModel
 }
 
@@ -287,6 +295,7 @@ func (c *DocumentIntelligenceConfig) GetAIExtractionModel() string {
 	if c.AIExtractionModel == "" {
 		return "gpt-5-mini-2025-08-07"
 	}
+
 	return c.AIExtractionModel
 }
 
@@ -294,6 +303,7 @@ func (c *DocumentIntelligenceConfig) GetAIMaxRetries() int {
 	if c.AIMaxRetries <= 0 {
 		return 2
 	}
+
 	return c.AIMaxRetries
 }
 
@@ -305,6 +315,7 @@ func (c *DocumentIntelligenceConfig) GetOCRPreprocessingMode() string {
 	if c.OCRPreprocessingMode == "" {
 		return "standard"
 	}
+
 	return c.OCRPreprocessingMode
 }
 
@@ -312,6 +323,7 @@ func (c *DocumentIntelligenceConfig) GetOCRMaxImageDimension() int {
 	if c.OCRMaxImageDimension <= 0 {
 		return 2400
 	}
+
 	return c.OCRMaxImageDimension
 }
 
@@ -319,6 +331,7 @@ func (c *DocumentIntelligenceConfig) GetMaxOCRPages() int {
 	if c.MaxOCRPages <= 0 {
 		return 25
 	}
+
 	return c.MaxOCRPages
 }
 
@@ -326,6 +339,7 @@ func (c *DocumentIntelligenceConfig) GetMaxConcurrentActivities() int {
 	if c.MaxConcurrentActivities <= 0 {
 		return 2
 	}
+
 	return c.MaxConcurrentActivities
 }
 
@@ -333,6 +347,7 @@ func (c *DocumentIntelligenceConfig) GetMaxExtractedChars() int {
 	if c.MaxExtractedChars <= 0 {
 		return 200000
 	}
+
 	return c.MaxExtractedChars
 }
 
@@ -340,6 +355,7 @@ func (c *DocumentIntelligenceConfig) GetReconcileBatchSize() int {
 	if c.ReconcileBatchSize <= 0 {
 		return 100
 	}
+
 	return c.ReconcileBatchSize
 }
 
@@ -354,6 +370,7 @@ func (c *MeilisearchConfig) GetTimeout() time.Duration {
 	if c.Timeout <= 0 {
 		return 3 * time.Second
 	}
+
 	return c.Timeout
 }
 
@@ -378,6 +395,7 @@ func (c *TemporalConfig) GetNamespace() string {
 	if c.Namespace == "" {
 		return "default"
 	}
+
 	return c.Namespace
 }
 
@@ -385,6 +403,7 @@ func (c *TemporalConfig) GetIdentity() string {
 	if c.Identity == "" {
 		return "trenova-tms"
 	}
+
 	return c.Identity
 }
 
@@ -404,6 +423,7 @@ func (c *TemporalInterceptorConfig) GetLogLevel() string {
 	if c.LogLevel == "" {
 		return "info"
 	}
+
 	return c.LogLevel
 }
 
@@ -423,6 +443,7 @@ func (c *TemporalWorkerConfig) GetMaxConcurrentActivities() int {
 	if c.MaxConcurrentActivities == 0 {
 		return 10
 	}
+
 	return c.MaxConcurrentActivities
 }
 
@@ -430,6 +451,7 @@ func (c *TemporalWorkerConfig) GetMaxConcurrentWorkflows() int {
 	if c.MaxConcurrentWorkflows == 0 {
 		return 10
 	}
+
 	return c.MaxConcurrentWorkflows
 }
 
@@ -437,6 +459,7 @@ func (c *TemporalWorkerConfig) GetMaxActivityPollers() int {
 	if c.MaxActivityPollers == 0 {
 		return 2
 	}
+
 	return c.MaxActivityPollers
 }
 
@@ -444,6 +467,7 @@ func (c *TemporalWorkerConfig) GetMaxWorkflowPollers() int {
 	if c.MaxWorkflowPollers == 0 {
 		return 2
 	}
+
 	return c.MaxWorkflowPollers
 }
 
@@ -507,6 +531,7 @@ func (c *StorageConfig) GetAllowedMIMETypes() []string {
 			"text/html",
 		}
 	}
+
 	return c.AllowedMIMETypes
 }
 
@@ -514,6 +539,7 @@ func (c *AuditConfig) GetBufferFlushInterval() time.Duration {
 	if c.BufferFlushInterval == 0 {
 		return time.Minute
 	}
+
 	return c.BufferFlushInterval
 }
 
@@ -521,6 +547,7 @@ func (c *AuditConfig) GetBatchSize() int {
 	if c.BatchSize == 0 {
 		return 500
 	}
+
 	return c.BatchSize
 }
 
@@ -528,6 +555,7 @@ func (c *AuditConfig) GetMaxEntriesPerFlush() int {
 	if c.MaxEntriesPerFlush == 0 {
 		return 5000
 	}
+
 	return c.MaxEntriesPerFlush
 }
 
@@ -535,6 +563,7 @@ func (c *AuditConfig) GetDLQRetryInterval() time.Duration {
 	if c.DLQRetryInterval == 0 {
 		return 5 * time.Minute
 	}
+
 	return c.DLQRetryInterval
 }
 
@@ -542,6 +571,7 @@ func (c *AuditConfig) GetDLQMaxRetries() int {
 	if c.DLQMaxRetries == 0 {
 		return 5
 	}
+
 	return c.DLQMaxRetries
 }
 
@@ -557,26 +587,19 @@ type AppConfig struct {
 	ProblemTypeBaseURI string `mapstructure:"problemTypeBaseUri"`
 }
 
-func (c *AppConfig) IsDevelopment() bool {
-	return c.Env == EnvDevelopment
-}
+func (c *AppConfig) IsDevelopment() bool { return c.Env == EnvDevelopment }
 
-func (c *AppConfig) IsProduction() bool {
-	return c.Env == EnvProduction
-}
+func (c *AppConfig) IsProduction() bool { return c.Env == EnvProduction }
 
-func (c *AppConfig) IsStaging() bool {
-	return c.Env == EnvStaging
-}
+func (c *AppConfig) IsStaging() bool { return c.Env == EnvStaging }
 
-func (c *AppConfig) IsTest() bool {
-	return c.Env == EnvTest
-}
+func (c *AppConfig) IsTest() bool { return c.Env == EnvTest }
 
 func (c *AppConfig) GetProblemTypeBaseURI() string {
 	if c.ProblemTypeBaseURI != "" {
 		return strings.TrimSuffix(c.ProblemTypeBaseURI, "/") + "/"
 	}
+
 	return "https://api.trenova.app/problems/"
 }
 
@@ -634,41 +657,25 @@ type Config struct {
 	Twilio               TwilioConfig               `mapstructure:"twilio"`
 }
 
-func (c *Config) GetCacheConfig() *CacheConfig {
-	return &c.Cache
-}
+func (c *Config) GetCacheConfig() *CacheConfig { return &c.Cache }
 
-func (c *Config) GetSearchConfig() *SearchConfig {
-	return &c.Search
-}
+func (c *Config) GetSearchConfig() *SearchConfig { return &c.Search }
 
 func (c *Config) GetDocumentIntelligenceConfig() *DocumentIntelligenceConfig {
 	return &c.DocumentIntelligence
 }
 
-func (c *Config) GetTemporalConfig() *TemporalConfig {
-	return &c.Temporal
-}
+func (c *Config) GetTemporalConfig() *TemporalConfig { return &c.Temporal }
 
-func (c *Config) GetMetricsConfig() *MetricsConfig {
-	return &c.Monitoring.Metrics
-}
+func (c *Config) GetMetricsConfig() *MetricsConfig { return &c.Monitoring.Metrics }
 
-func (c *Config) GetStorageConfig() *StorageConfig {
-	return &c.Storage
-}
+func (c *Config) GetStorageConfig() *StorageConfig { return &c.Storage }
 
-func (c *Config) GetTwilioConfig() *TwilioConfig {
-	return &c.Twilio
-}
+func (c *Config) GetTwilioConfig() *TwilioConfig { return &c.Twilio }
 
-func (c *Config) GetAblyConfig() *AblyConfig {
-	return &c.Ably
-}
+func (c *Config) GetAblyConfig() *AblyConfig { return &c.Ably }
 
-func (c *Config) GetSystemConfig() *SystemConfig {
-	return &c.System
-}
+func (c *Config) GetSystemConfig() *SystemConfig { return &c.System }
 
 func (c *Config) GetDSN(password string) string {
 	escapedPassword := url.QueryEscape(password)
@@ -697,6 +704,4 @@ func (c *Config) GetDSNMasked() string {
 	)
 }
 
-func (c *Config) CorsEnabled() bool {
-	return c.Server.CORS.Enabled
-}
+func (c *Config) CorsEnabled() bool { return c.Server.CORS.Enabled }

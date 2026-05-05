@@ -806,6 +806,74 @@ func (_c *MockShipmentRepository_GetDelayedShipments_Call) RunAndReturn(run func
 	return _c
 }
 
+// GetUnassigned provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) GetUnassigned(ctx context.Context, req *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUnassigned")
+	}
+
+	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.QueryOptions) *pagination.ListResult[*shipment.Shipment]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.QueryOptions) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_GetUnassigned_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnassigned'
+type MockShipmentRepository_GetUnassigned_Call struct {
+	*mock.Call
+}
+
+// GetUnassigned is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *pagination.QueryOptions
+func (_e *MockShipmentRepository_Expecter) GetUnassigned(ctx interface{}, req interface{}) *MockShipmentRepository_GetUnassigned_Call {
+	return &MockShipmentRepository_GetUnassigned_Call{Call: _e.mock.On("GetUnassigned", ctx, req)}
+}
+
+func (_c *MockShipmentRepository_GetUnassigned_Call) Run(run func(ctx context.Context, req *pagination.QueryOptions)) *MockShipmentRepository_GetUnassigned_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *pagination.QueryOptions
+		if args[1] != nil {
+			arg1 = args[1].(*pagination.QueryOptions)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_GetUnassigned_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentRepository_GetUnassigned_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_GetUnassigned_Call) RunAndReturn(run func(ctx context.Context, req *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentRepository_GetUnassigned_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetPreviousRates provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) GetPreviousRates(ctx context.Context, req *repositories.GetPreviousRatesRequest) (*pagination.ListResult[*repositories.PreviousRateSummary], error) {
 	ret := _mock.Called(ctx, req)

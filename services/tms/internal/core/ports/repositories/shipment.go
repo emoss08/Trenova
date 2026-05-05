@@ -460,6 +460,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 	) (*shipment.Shipment, error)
+	GetUnassigned(
+		ctx context.Context,
+		req *pagination.QueryOptions,
+	) (*pagination.ListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,

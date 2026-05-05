@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 )
@@ -58,4 +59,45 @@ func filterQuery(
 	})
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+}
+
+func unassignedFilterQuery(
+	q *bun.SelectQuery,
+	dba bun.IDB,
+	req *pagination.QueryOptions,
+) *bun.SelectQuery {
+	sp := buncolgen.ShipmentColumns
+	sm := buncolgen.ShipmentMoveColumns
+	a := buncolgen.AssignmentColumns
+
+	q = querybuilder.ApplyFilters(
+		q,
+		buncolgen.ShipmentTable.Alias,
+		req,
+		(*shipment.Shipment)(nil),
+	)
+
+	activeAssignmentSubquery := dba.NewSelect().
+		Model((*shipment.ShipmentMove)(nil)).
+		ColumnExpr("1").
+		Join(
+			"JOIN ? AS ?",
+			bun.Ident(buncolgen.AssignmentTable.Name),
+			bun.Ident(buncolgen.AssignmentTable.Alias),
+		).
+		JoinOn(a.ShipmentMoveID.EqColumn(sm.ID)).
+		JoinOn(a.OrganizationID.EqColumn(sm.OrganizationID)).
+		JoinOn(a.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
+		JoinOn(a.ArchivedAt.IsNull()).
+		Where(sm.ShipmentID.EqColumn(sp.ID)).
+		Where(sm.OrganizationID.EqColumn(sp.OrganizationID)).
+		Where(sm.BusinessUnitID.EqColumn(sp.BusinessUnitID))
+
+	q = q.Where("NOT EXISTS (?)", activeAssignmentSubquery)
+
+	if len(req.Sort) == 0 {
+		q = q.Order(sp.CreatedAt.OrderDesc())
+	}
+
+	return q.Limit(req.Pagination.SafeLimit()).Offset(req.Pagination.SafeOffset())
 }

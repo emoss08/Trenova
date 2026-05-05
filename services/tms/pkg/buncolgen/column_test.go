@@ -21,6 +21,7 @@ func TestColumnBasicAccessors(t *testing.T) {
 
 func TestColumnWhereFragments(t *testing.T) {
 	assert.Equal(t, "wrk.first_name = ?", testCol.Eq())
+	assert.Equal(t, "wrk.first_name = wrk.last_name", testCol.EqColumn(testCol2))
 	assert.Equal(t, "wrk.first_name != ?", testCol.Ne())
 	assert.Equal(t, "wrk.first_name <> ?", testCol.NotEq())
 	assert.Equal(t, "wrk.first_name > ?", testCol.Gt())
