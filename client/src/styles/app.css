@@ -269,3 +269,178 @@
   vertical-align: baseline;
   line-height: 1.4;
 }
+
+/* ─── Shipments Command Center utilities (Phase 1) ─────────────────────── */
+
+.cc-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.lane-bar {
+  position: relative;
+  height: 4px;
+  background: color-mix(in oklch, var(--foreground) 8%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lane-bar > span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--brand);
+  border-radius: 999px;
+  transition: width 200ms ease;
+}
+
+.lane-bar-success > span {
+  background: var(--success);
+}
+
+.lane-bar-warning > span {
+  background: var(--warning);
+}
+
+.lane-bar-danger > span {
+  background: var(--destructive);
+}
+
+@keyframes cc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.cc-fade-in {
+  animation: cc-fade-in 180ms ease both;
+}
+
+.cc-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-table-scroll {
+  overflow-x: auto;
+}
+
+.cc-table {
+  width: 100%;
+  min-width: 1100px;
+  border-collapse: collapse;
+}
+
+.cc-th {
+  text-align: left;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  padding: 6px 10px;
+  background: color-mix(in oklch, var(--muted) 50%, transparent);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.cc-row {
+  border-bottom: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+  transition: background-color 80ms ease;
+  cursor: pointer;
+  height: 36px;
+}
+
+.cc-row:hover {
+  background: color-mix(in oklch, var(--foreground) 4%, transparent);
+}
+
+.cc-row-highlighted {
+  background: color-mix(in oklch, var(--brand) 7%, transparent);
+}
+
+.cc-row-expanded {
+  background: color-mix(in oklch, var(--brand) 5%, transparent);
+}
+
+.cc-td {
+  padding: 6px 10px;
+  vertical-align: middle;
+  font-size: 11.5px;
+}
+
+.cc-row-expansion {
+  background: color-mix(in oklch, var(--brand) 3%, var(--card));
+  border-bottom: 1px solid var(--border);
+}
+
+.cc-row-expansion:hover {
+  background: color-mix(in oklch, var(--brand) 3%, var(--card));
+}
+
+/* ─── Right-stack module chrome (Phase 4) ─────────────────────────────── */
+
+.cc-module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* ─── Map pin pulse halo (Phase 3) ─────────────────────────────────────── */
+
+@keyframes cc-pulse-pin-rest {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
+      0 0 0 3px color-mix(in oklch, currentColor 38%, transparent);
+  }
+  70% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklch, currentColor 22%, transparent),
+      0 0 0 11px color-mix(in oklch, currentColor 0%, transparent);
+  }
+}
+
+@keyframes cc-pulse-pin-active {
+  0%, 100% {
+    box-shadow:
+      0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
+      0 0 0 5px color-mix(in oklch, currentColor 50%, transparent);
+  }
+  70% {
+    box-shadow:
+      0 0 0 5px color-mix(in oklch, currentColor 28%, transparent),
+      0 0 0 16px color-mix(in oklch, currentColor 0%, transparent);
+  }
+}
+
+.cc-pulse-pin {
+  border-radius: 9999px;
+  animation: cc-pulse-pin-rest 2.2s ease-out infinite;
+}
+
+.cc-pulse-pin.is-highlighted {
+  animation: cc-pulse-pin-active 2.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-pulse-pin,
+  .cc-pulse-pin.is-highlighted {
+    animation: none;
+  }
+}

@@ -55,15 +55,17 @@ export function MapLegendPopover() {
         <TooltipTrigger
           render={
             <PopoverTrigger
-              render={<Button variant="outline" size="icon" className="bg-background shadow-sm" />}
+              render={
+                <Button variant="outline" size="icon" className="size-7 bg-background shadow-sm" />
+              }
             />
           }
         >
           <InfoIcon className="size-4" />
         </TooltipTrigger>
-        <TooltipContent side="left">Map legend</TooltipContent>
+        <TooltipContent side="bottom">Map legend</TooltipContent>
       </Tooltip>
-      <PopoverContent side="left" sideOffset={8} className="w-48 p-3 gap-0.5">
+      <PopoverContent side="bottom" sideOffset={8} className="w-48 gap-0.5 p-3">
         <span className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           Legend
         </span>

@@ -56,7 +56,7 @@ export function LocationForm() {
           </FormControl>
           <FormControl cols="full">
             <div className="space-y-1.5">
-              <p className="text-sm leading-none font-medium required">Geofence</p>
+              <p className="required text-sm leading-none font-medium">Geofence</p>
               <LocationGeofenceControls />
             </div>
           </FormControl>

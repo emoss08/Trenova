@@ -53,16 +53,16 @@ export function MapOptionsPopover({
           render={
             <PopoverTrigger
               render={
-                <Button variant="outline" size="icon" className="size-8 bg-background shadow-sm" />
+                <Button variant="outline" size="icon" className="size-7 bg-background shadow-sm" />
               }
             />
           }
         >
           <LayersIcon className="size-4" />
         </TooltipTrigger>
-        <TooltipContent side="left">Map options</TooltipContent>
+        <TooltipContent side="bottom">Map options</TooltipContent>
       </Tooltip>
-      <PopoverContent side="left" sideOffset={8} className="w-48 p-0">
+      <PopoverContent side="bottom" sideOffset={8} className="w-48 p-0">
         <div className="max-h-[70vh] overflow-y-auto p-3">
           <SectionLabel>Map Base</SectionLabel>
           <div className="mt-1.5 flex flex-col">

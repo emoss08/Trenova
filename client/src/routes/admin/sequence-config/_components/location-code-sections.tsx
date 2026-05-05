@@ -100,7 +100,7 @@ export function LocationCodeStrategySection({ index }: { index: number }) {
                               <Icon className="size-4" aria-hidden />
                             </span>
                             <span className="flex min-w-0 flex-1 flex-col">
-                              <span className="truncate font-medium leading-tight">
+                              <span className="truncate leading-tight font-medium">
                                 {componentLabels[component]}
                               </span>
                               <span className="truncate text-2xs text-muted-foreground">

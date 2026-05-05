@@ -1,19 +1,23 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { api } from "@/lib/api";
 import { apiService } from "@/services/api";
-import type { AddRecordAction, DockAction, RowAction } from "@/types/data-table";
-import { Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
-import { ArrowRightLeftIcon, BanIcon, CopyIcon, SendIcon, UndoIcon } from "lucide-react";
+import { useQueryStates } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { CommandCenterTable } from "./command-center/command-center-table";
+import { buildShipmentRowActions } from "./command-center/row-actions";
+import { getMandatoryFieldFilters } from "./command-center/saved-views";
+import { useCommandCenterUrl } from "./command-center/url-state";
 import { ShipmentCancelDialog } from "./shipment-cancel-dialog";
 import { getColumns } from "./shipment-columns";
 import { ShipmentDuplicateDialog } from "./shipment-duplicate-dialog";
 import { ShipmentPanel } from "./shipment-panel";
 import { ShipmentTransferOwnershipDialog } from "./shipment-transfer-ownership-dialog";
+
+const SHIPMENT_DETAIL_PARAMS = "?expandShipmentDetails=true";
 
 export default function ShipmentTable() {
   const [duplicateShipmentId, setDuplicateShipmentId] = useState<string | null>(null);
@@ -22,7 +26,33 @@ export default function ShipmentTable() {
     null,
   );
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
+
+  const [{ view: selectedView, chips }] = useCommandCenterUrl();
+
+  // Reuse the same nuqs parser the existing DataTable uses so deep-links to
+  // ?panelType=edit&panelEntityId=<id> still open the shipment editor.
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const { panelType, panelEntityId } = searchParams;
+
+  const isPanelOpen = panelType === "edit";
+
+  const { data: panelRow } = useQuery({
+    queryKey: ["shipment-list", "detail", panelEntityId],
+    queryFn: () => api.get<Shipment>(`/shipments/${panelEntityId}/${SHIPMENT_DETAIL_PARAMS}`),
+    enabled: !!panelEntityId && panelType === "edit",
+    staleTime: 0,
+  });
+
+  const closePanel = useCallback(() => {
+    void setSearchParams({ panelType: null, panelEntityId: null });
+  }, [setSearchParams]);
+
+  const handlePanelOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closePanel();
+    },
+    [closePanel],
+  );
 
   const { mutate: uncancelMutation } = useMutation({
     mutationFn: (shipmentId: string) => apiService.shipmentService.uncancel(shipmentId),
@@ -50,29 +80,18 @@ export default function ShipmentTable() {
     },
   });
 
+  const handleEdit = useCallback(
+    (row: Row<Shipment>) => {
+      const id = row.original.id;
+      if (!id) return;
+      void setSearchParams({ panelType: "edit", panelEntityId: id });
+    },
+    [setSearchParams],
+  );
+
   const handleTransferToBilling = useCallback(
     (row: Row<Shipment>) => transferToBillingMutation(row.original.id || ""),
     [transferToBillingMutation],
-  );
-
-  const handleBulkTransferToBilling = useCallback(
-    async (rows: Shipment[]) => {
-      const shipmentIds = rows.map((r) => r.id).filter(Boolean) as string[];
-      const response = await apiService.shipmentService.bulkTransferToBilling(shipmentIds);
-
-      if (response.errorCount > 0 && response.successCount > 0) {
-        toast.warning(`Transferred ${response.successCount} of ${response.totalCount} shipments`, {
-          description: `${response.errorCount} shipment(s) failed to transfer.`,
-        });
-      } else if (response.errorCount > 0) {
-        toast.error("Failed to transfer shipments to billing");
-      } else {
-        toast.success(`Transferred ${response.successCount} shipment(s) to billing`);
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ["shipment-list"], refetchType: "all" });
-    },
-    [queryClient],
   );
 
   const handleDuplicate = useCallback(
@@ -95,52 +114,18 @@ export default function ShipmentTable() {
     [],
   );
 
-  const columns = useMemo(() => getColumns(), []);
-
-  const contextMenuActions = useMemo<RowAction<Shipment>[]>(
-    () => [
-      {
-        id: "duplicate",
-        label: "Duplicate",
-        icon: CopyIcon,
-        onClick: handleDuplicate,
-      },
-      {
-        id: "cancel",
-        label: "Cancel",
-        icon: BanIcon,
-        variant: "destructive",
-        onClick: handleCancel,
-        hidden: (row) => row.original.status === "Canceled",
-      },
-      {
-        id: "uncancel",
-        label: "Uncancel",
-        icon: UndoIcon,
-        onClick: handleUncancel,
-        hidden: (row) => row.original.status !== "Canceled",
-      },
-      {
-        id: "transfer-ownership",
-        label: "Transfer Ownership",
-        icon: ArrowRightLeftIcon,
-        onClick: handleTransferOwnership,
-        hidden: (row) => row.original.status === "Canceled",
-      },
-      {
-        id: "transfer-to-billing",
-        label: "Transfer to Billing",
-        icon: SendIcon,
-        onClick: handleTransferToBilling,
-        hidden: (row) => {
-          const s = row.original;
-          if (s.status !== "ReadyToInvoice") return true;
-          const bts = s.billingTransferStatus;
-          return !!bts && bts !== "SentBackToOps";
-        },
-      },
-    ],
+  const rowActions = useMemo(
+    () =>
+      buildShipmentRowActions({
+        onEdit: handleEdit,
+        onDuplicate: handleDuplicate,
+        onCancel: handleCancel,
+        onUncancel: handleUncancel,
+        onTransferOwnership: handleTransferOwnership,
+        onTransferToBilling: handleTransferToBilling,
+      }),
     [
+      handleEdit,
       handleDuplicate,
       handleCancel,
       handleUncancel,
@@ -149,30 +134,11 @@ export default function ShipmentTable() {
     ],
   );
 
-  const addRecordActions = useMemo<AddRecordAction[]>(
-    () => [
-      {
-        id: "import-rate-confirmation",
-        label: "Import from Rate Confirmation",
-        description: "Upload a rate confirmation and build a shipment draft from it.",
-        onClick: () => navigate("/shipment-management/shipments/import"),
-      },
-    ],
-    [navigate],
-  );
+  const columns = useMemo(() => getColumns(rowActions), [rowActions]);
 
-  const dockActions = useMemo<DockAction<Shipment>[]>(
-    () => [
-      {
-        id: "transfer-to-billing",
-        label: "Transfer to Billing",
-        loadingLabel: "Transferring...",
-        icon: SendIcon,
-        onClick: handleBulkTransferToBilling,
-        clearSelectionOnSuccess: true,
-      },
-    ],
-    [handleBulkTransferToBilling],
+  const mandatoryFieldFilters = useMemo(
+    () => getMandatoryFieldFilters(selectedView, chips),
+    [selectedView, chips],
   );
 
   const handleDuplicateOpenChange = useCallback((open: boolean) => {
@@ -189,28 +155,12 @@ export default function ShipmentTable() {
 
   return (
     <>
-      <DataTable<Shipment>
-        name="Shipment"
-        link="/shipments/"
-        queryKey="shipment-list"
-        exportModelName="shipment"
-        resource={Resource.Shipment}
-        columns={columns}
-        TablePanel={ShipmentPanel}
-        addRecordActions={addRecordActions}
-        contextMenuActions={contextMenuActions}
-        dockActions={dockActions}
-        enableRowSelection
-        extraSearchParams={{
-          expandShipmentDetails: true,
-        }}
-        preferDetailRowForEdit
-        initialColumnVisibility={{
-          originLocation: false,
-          originScheduledTime: false,
-          destinationLocation: false,
-          destinationScheduledTime: false,
-        }}
+      <CommandCenterTable columns={columns} mandatoryFieldFilters={mandatoryFieldFilters} />
+      <ShipmentPanel
+        open={isPanelOpen}
+        onOpenChange={handlePanelOpenChange}
+        mode="edit"
+        row={panelRow ?? null}
       />
       {duplicateShipmentId && (
         <ShipmentDuplicateDialog

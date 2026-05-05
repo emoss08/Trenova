@@ -305,7 +305,7 @@ export function BankReceiptQueuePage() {
                 title="No work item selected"
                 description="Select a work item from the list to review and take action."
                 icons={[ClipboardListIcon, InboxIcon, ShieldCheckIcon]}
-                className="flex h-full flex-col items-center justify-center rounded-none max-w-none border-none p-8 shadow-none"
+                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-8 shadow-none"
               />
             </div>
           ) : detailQuery.isLoading || !detailQuery.data ? (

@@ -1,76 +1,33 @@
-import {
-  EntityRefCell,
-  NestedEntityRefCell,
-} from "@/components/data-table/_components/entity-ref-link";
-import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
-import { LazyMapWithKey } from "@/components/lazy-map";
-import { BillingQueueStatusBadge, ShipmentStatusBadge } from "@/components/status-badge";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Progress } from "@/components/ui/progress";
-import { billingTransferStatusChoices, shipmentStatusChoices } from "@/lib/choices";
-import {
-  getDestinationLocation,
-  getDestinationStop,
-  getOriginLocation,
-  getOriginStop,
-  getShipmentProgress,
-  getTotalMiles,
-} from "@/lib/shipment-utils";
-import { formatLocation } from "@/lib/utils";
+import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
+import { shipmentStatusChoices } from "@/lib/choices";
 import type { Customer } from "@/types/customer";
-import type { Location } from "@/types/location";
+import type { RowAction } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
-import type { User } from "@/types/user";
 import { type ColumnDef } from "@tanstack/react-table";
-import { ArrowRight, Dot } from "lucide-react";
-import { Suspense } from "react";
+import { ActionsCell } from "./command-center/cells/actions-cell";
+import { DriverCell } from "./command-center/cells/driver-cell";
+import { EtaCell } from "./command-center/cells/eta-cell";
+import { LaneCell } from "./command-center/cells/lane-cell";
+import { RevenueCell } from "./command-center/cells/revenue-cell";
+import { StatusCell } from "./command-center/cells/status-cell";
 
-export function getColumns(): ColumnDef<Shipment>[] {
+export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipment>[] {
   return [
     {
       id: "lane",
       header: "Lane",
-      cell: ({ row }) => {
-        const originLocation = getOriginLocation(row.original);
-        const destinationLocation = getDestinationLocation(row.original);
-
-        const originCode = originLocation?.code ?? "UNK";
-        const destinationCode = destinationLocation?.code ?? "UNK";
-
-        const mileage = getTotalMiles(row.original);
-
-        return (
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-row gap-1 items-center text-left">
-              <span className="font-semibold">{originCode}</span>
-              <ArrowRight className="size-3 text-amber-600 dark:text-amber-500 shrink-0" />
-              <span className="font-semibold truncate">{destinationCode}</span>
-            </div>
-            <div className="flex flex-row gap-1 text-left items-center">
-              <span className="text-xs text-muted-foreground">{row.original.proNumber}</span>
-              <Dot className="size-2 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">{mileage}mi</span>
-            </div>
-          </div>
-        );
-      },
-      size: 200,
-      minSize: 200,
-      maxSize: 300,
+      accessorFn: () => null,
+      cell: ({ row }) => <LaneCell shipment={row.original} />,
+      size: 280,
+      minSize: 240,
+      maxSize: 360,
+      meta: { label: "Lane", sortable: false, filterable: false },
     },
     {
+      id: "status",
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
-        const { status } = row.original;
-        const progress = getShipmentProgress(status);
-        return (
-          <div className="flex flex-col gap-1.5">
-            <ShipmentStatusBadge status={status} />
-            <Progress size="sm" value={progress.value} variant={progress.variant} />
-          </div>
-        );
-      },
+      cell: ({ row }) => <StatusCell shipment={row.original} />,
       meta: {
         apiField: "status",
         label: "Status",
@@ -80,16 +37,27 @@ export function getColumns(): ColumnDef<Shipment>[] {
         filterOptions: shipmentStatusChoices,
         defaultFilterOperator: "eq",
       },
-      size: 200,
-      minSize: 200,
-      maxSize: 250,
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
     },
     {
-      accessorKey: "proNumber",
-      header: "PRO Number",
-      size: 200,
-      minSize: 200,
-      maxSize: 250,
+      id: "proBol",
+      header: "PRO / BOL",
+      accessorFn: (row) => row.proNumber ?? row.bol ?? "",
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="truncate font-table text-[11.5px] font-semibold tabular-nums">
+            {row.original.proNumber || "—"}
+          </span>
+          <span className="truncate font-table text-[10px] text-muted-foreground tabular-nums">
+            {row.original.bol || "—"}
+          </span>
+        </div>
+      ),
+      size: 160,
+      minSize: 140,
+      maxSize: 220,
       meta: {
         label: "PRO Number",
         apiField: "proNumber",
@@ -100,45 +68,35 @@ export function getColumns(): ColumnDef<Shipment>[] {
       },
     },
     {
-      accessorKey: "bol",
-      header: "BOL",
-      size: 200,
-      minSize: 200,
-      maxSize: 250,
-      meta: {
-        label: "BOL",
-        apiField: "bol",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
-      },
-    },
-    {
       id: "customer",
       accessorKey: "customer",
       header: "Customer",
-      size: 250,
-      minSize: 200,
+      size: 220,
+      minSize: 180,
       maxSize: 300,
       cell: ({ row }) => {
-        const { customer } = row.original;
-
+        const { customer, weight } = row.original;
         if (!customer) {
-          return <p className="text-muted-foreground">-</p>;
+          return <p className="text-muted-foreground">—</p>;
         }
-
         return (
-          <EntityRefCell<Customer, Shipment>
-            entity={customer}
-            config={{
-              basePath: "/billing/configuration-files/customers",
-              getId: (customer) => customer.id,
-              getDisplayText: (customer) => customer.name,
-              getHeaderText: "Customer",
-            }}
-            parent={row.original}
-          />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <EntityRefCell<Customer, Shipment>
+              entity={customer}
+              config={{
+                basePath: "/billing/configuration-files/customers",
+                getId: (c) => c.id,
+                getDisplayText: (c) => c.name,
+                getHeaderText: "Customer",
+              }}
+              parent={row.original}
+            />
+            {typeof weight === "number" && weight > 0 && (
+              <span className="font-table text-[10px] text-muted-foreground tabular-nums">
+                {weight.toLocaleString()} lb
+              </span>
+            )}
+          </div>
         );
       },
       meta: {
@@ -151,297 +109,49 @@ export function getColumns(): ColumnDef<Shipment>[] {
       },
     },
     {
-      id: "originLocation",
-      accessorKey: "originLocation",
-      header: "Orig. Location",
-      size: 250,
-      minSize: 200,
-      maxSize: 300,
-      cell: ({ row }) => {
-        const originLocation = getOriginLocation(row.original);
-
-        if (!originLocation) {
-          return <p className="text-muted-foreground">-</p>;
-        }
-
-        const position = {
-          lat: originLocation?.latitude ?? 0,
-          lng: originLocation?.longitude ?? 0,
-        };
-
-        return (
-          <HoverCard>
-            <HoverCardTrigger
-              delay={500}
-              render={
-                <div>
-                  <NestedEntityRefCell<Location, Shipment>
-                    getValue={() => {
-                      return originLocation;
-                    }}
-                    row={row}
-                    config={{
-                      getEntity: () => {
-                        return originLocation;
-                      },
-                      basePath: "/dispatch/locations",
-                      getId: (location) => location.id,
-                      getDisplayText: (location: Location) => location.name,
-                      getSecondaryInfo: (location) => {
-                        return {
-                          entity: location,
-                          displayText: formatLocation(location),
-                          clickable: false,
-                        };
-                      },
-                    }}
-                  />
-                </div>
-              }
-            />
-            <HoverCardContent>
-              <div className="h-32 w-full overflow-hidden rounded-md border border-border">
-                <Suspense
-                  fallback={
-                    <div className="flex h-full w-full animate-pulse items-center justify-center bg-muted text-xs text-muted-foreground">
-                      Loading map...
-                    </div>
-                  }
-                >
-                  <LazyMapWithKey position={position} />
-                </Suspense>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        );
-      },
-      meta: {
-        apiField: "originLocation.name",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        label: "Orig. Location Name",
-        defaultFilterOperator: "contains",
-      },
-    },
-    {
-      id: "originScheduledTime",
-      accessorKey: "originPickup",
-      header: "Orig. Scheduled Time",
-      size: 350,
-      minSize: 350,
-      maxSize: 400,
-      cell: ({ row }) => {
-        const shipment = row.original;
-        const originStop = getOriginStop(shipment);
-
-        return (
-          <div className="flex flex-row gap-2">
-            <HoverCardTimestamp
-              className="font-table tracking-tight"
-              timestamp={originStop?.scheduledWindowStart}
-            />
-            <span className="text-muted-foreground">-</span>
-            {originStop?.scheduledWindowEnd && (
-              <HoverCardTimestamp
-                className="font-table tracking-tight"
-                timestamp={originStop.scheduledWindowEnd}
-              />
-            )}
-          </div>
-        );
-      },
-      meta: {
-        label: "Orig. Scheduled Time",
-        apiField: "originPickup.scheduledWindowStart",
-        filterable: false,
-        sortable: true,
-        filterType: "date",
-        defaultFilterOperator: "daterange",
-      },
-    },
-    {
-      id: "destinationLocation",
-      accessorKey: "destinationLocation",
-      header: "Dest. Location",
-      size: 250,
-      minSize: 200,
-      maxSize: 300,
-      cell: ({ row }) => {
-        const destinationLocation = getDestinationLocation(row.original);
-
-        if (!destinationLocation) {
-          return <p className="text-muted-foreground">-</p>;
-        }
-
-        const position = {
-          lat: destinationLocation?.latitude ?? 0,
-          lng: destinationLocation?.longitude ?? 0,
-        };
-
-        return (
-          <HoverCard>
-            <HoverCardTrigger
-              delay={500}
-              render={
-                <div>
-                  <NestedEntityRefCell<Location, Shipment>
-                    getValue={() => {
-                      return getDestinationLocation(row.original);
-                    }}
-                    row={row}
-                    config={{
-                      getEntity: (shipment) => {
-                        return getDestinationLocation(shipment);
-                      },
-                      basePath: "/dispatch/locations",
-                      getId: (location) => location.id,
-                      getDisplayText: (location: Location) => location.name,
-                      getSecondaryInfo: (location) => {
-                        return {
-                          entity: location,
-                          displayText: formatLocation(location),
-                          clickable: false,
-                        };
-                      },
-                    }}
-                  />
-                </div>
-              }
-            />
-            <HoverCardContent>
-              <div className="h-32 w-full overflow-hidden rounded-md border border-border">
-                <Suspense
-                  fallback={
-                    <div className="flex h-full w-full animate-pulse items-center justify-center bg-muted text-xs text-muted-foreground">
-                      Loading map...
-                    </div>
-                  }
-                >
-                  <LazyMapWithKey position={position} />
-                </Suspense>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        );
-      },
-      meta: {
-        apiField: "destinationLocation.name",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        label: "Dest. Location",
-        defaultFilterOperator: "contains",
-      },
-    },
-    {
-      id: "destinationScheduledTime",
-      accessorKey: "destinationPickup",
-      header: "Dest. Scheduled Time",
-      size: 350,
-      minSize: 350,
-      maxSize: 400,
-      cell: ({ row }) => {
-        const shipment = row.original;
-        const destinationStop = getDestinationStop(shipment);
-
-        return (
-          <div className="flex flex-row gap-2">
-            <HoverCardTimestamp
-              className="font-table tracking-tight"
-              timestamp={destinationStop?.scheduledWindowStart}
-            />
-            <span className="text-muted-foreground">-</span>
-            {destinationStop?.scheduledWindowEnd && (
-              <HoverCardTimestamp
-                className="font-table tracking-tight"
-                timestamp={destinationStop.scheduledWindowEnd}
-              />
-            )}
-          </div>
-        );
-      },
-      meta: {
-        label: "Dest. Scheduled Time",
-        apiField: "destinationPickup.scheduledWindowStart",
-        filterable: false,
-        sortable: true,
-        filterType: "date",
-        defaultFilterOperator: "daterange",
-      },
-    },
-    {
-      id: "owner",
-      accessorKey: "owner",
-      header: "Owner",
-      size: 250,
-      minSize: 200,
-      maxSize: 300,
-      cell: ({ row }) => {
-        const { owner } = row.original;
-
-        if (!owner) {
-          return <p className="text-muted-foreground">-</p>;
-        }
-
-        return (
-          <EntityRefCell<User, Shipment>
-            entity={owner}
-            config={{
-              basePath: "/admin/users",
-              getId: (user) => user.id,
-              getDisplayText: (user) => user.name,
-              getHeaderText: "Owner",
-            }}
-            parent={row.original}
-          />
-        );
-      },
-      meta: {
-        apiField: "owner.name",
-        label: "Owner Name",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
-      },
-    },
-    {
-      accessorKey: "billingTransferStatus",
-      header: "Billing Status",
-      cell: ({ row }) => {
-        const status = row.original.billingTransferStatus;
-        if (!status) return <p className="text-muted-foreground">-</p>;
-        return <BillingQueueStatusBadge status={status as any} />;
-      },
-      meta: {
-        apiField: "billingTransferStatus",
-        label: "Billing Status",
-        filterable: true,
-        sortable: true,
-        filterType: "select",
-        filterOptions: billingTransferStatusChoices,
-        defaultFilterOperator: "eq",
-      },
+      id: "driver",
+      header: "Driver / Equip",
+      accessorFn: () => null,
+      cell: ({ row }) => <DriverCell shipment={row.original} />,
       size: 200,
-      minSize: 150,
-      maxSize: 250,
+      minSize: 160,
+      maxSize: 260,
+      meta: { label: "Driver / Equip", sortable: false, filterable: false },
     },
     {
-      accessorKey: "createdAt",
-      header: "Created At",
-      cell: ({ row }) => <HoverCardTimestamp timestamp={row.original.createdAt} />,
+      id: "eta",
+      header: "ETA",
+      accessorFn: () => null,
+      cell: ({ row }) => <EtaCell shipment={row.original} />,
+      size: 160,
+      minSize: 140,
+      maxSize: 200,
+      meta: { label: "ETA", sortable: false, filterable: false },
+    },
+    {
+      id: "revenue",
+      header: () => <div className="text-right">Revenue</div>,
+      accessorKey: "totalChargeAmount",
+      cell: ({ row }) => <RevenueCell shipment={row.original} />,
+      size: 140,
+      minSize: 120,
+      maxSize: 180,
       meta: {
-        label: "Created At",
-        apiField: "createdAt",
-        filterable: false,
+        label: "Revenue",
+        apiField: "totalChargeAmount",
         sortable: true,
-        filterType: "date",
-        defaultFilterOperator: "daterange",
+        filterable: false,
       },
-      size: 300,
-      minSize: 250,
-      maxSize: 300,
+    },
+    {
+      id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => <ActionsCell row={row} actions={rowActions} />,
+      size: 56,
+      minSize: 56,
+      maxSize: 56,
+      enableHiding: false,
+      meta: { label: "Actions", sortable: false, filterable: false },
     },
   ];
 }

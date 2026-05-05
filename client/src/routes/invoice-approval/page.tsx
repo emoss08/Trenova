@@ -240,7 +240,7 @@ export function InvoiceApprovalPage() {
             <div
               className={cn(
                 "flex flex-col gap-1.5 p-2",
-                !isLoading && allRows.length === 0 && "h-full p-0 gap-0",
+                !isLoading && allRows.length === 0 && "h-full gap-0 p-0",
               )}
             >
               {isLoading

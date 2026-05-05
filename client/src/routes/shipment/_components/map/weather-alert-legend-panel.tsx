@@ -42,7 +42,7 @@ export function WeatherAlertLegendPanel({
             <span className="text-xs font-semibold text-foreground">
               Public Alerts
             </span>
-            <span className="text-2xs tabular-nums text-muted-foreground">({totalCount})</span>
+            <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>
           <ChevronDownIcon
             className={cn(
@@ -67,7 +67,7 @@ export function WeatherAlertLegendPanel({
                     />
                     <span className="text-xs text-foreground">{config.label}</span>
                   </div>
-                  <span className="text-2xs tabular-nums text-muted-foreground">{count}</span>
+                  <span className="text-2xs text-muted-foreground tabular-nums">{count}</span>
                 </div>
               );
             })}

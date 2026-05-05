@@ -253,7 +253,7 @@ export function BankReceiptPage() {
                 title="No receipt selected"
                 description="Select a bank receipt from the list to view details and match suggestions."
                 icons={[BanknoteIcon, ReceiptTextIcon, WalletCardsIcon]}
-                className="flex h-full flex-col items-center justify-center rounded-none max-w-none border-none p-8 shadow-none"
+                className="flex h-full max-w-none flex-col items-center justify-center rounded-none border-none p-8 shadow-none"
               />
             </div>
           ) : detailQuery.isLoading || !detailQuery.data ? (

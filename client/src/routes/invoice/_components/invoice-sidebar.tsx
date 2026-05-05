@@ -151,7 +151,7 @@ export function InvoiceSidebar({
 
       <ScrollArea className="flex-1">
         <div
-          className={cn("flex flex-col gap-1.5 p-2", invoices.length === 0 && "h-full p-0 gap-0")}
+          className={cn("flex flex-col gap-1.5 p-2", invoices.length === 0 && "h-full gap-0 p-0")}
         >
           {!isLoading && invoices.length === 0 ? (
             <div className="flex h-full items-center justify-center">

@@ -136,7 +136,7 @@ export function WeatherAlertDetailPanel({
             {props.instruction && (
               <>
                 <div className="px-3 py-2">
-                  <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+                  <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                     Recommended Action
                   </span>
                   <p className="mt-1 text-xs leading-relaxed text-foreground">
@@ -152,7 +152,7 @@ export function WeatherAlertDetailPanel({
                 <ClockIcon className="size-3" />
                 <span className="text-2xs">Effective</span>
               </div>
-              <span className="text-2xs tabular-nums text-foreground">
+              <span className="text-2xs text-foreground tabular-nums">
                 {formatUnixTimestamp(props.effective)}
               </span>
             </div>
@@ -161,7 +161,7 @@ export function WeatherAlertDetailPanel({
                 <ClockIcon className="size-3" />
                 <span className="text-2xs">Expires</span>
               </div>
-              <span className="text-2xs tabular-nums text-foreground">
+              <span className="text-2xs text-foreground tabular-nums">
                 {formatUnixTimestamp(props.expires)}
               </span>
             </div>
@@ -169,7 +169,7 @@ export function WeatherAlertDetailPanel({
             <Separator className="mx-3" />
 
             <div className="p-3">
-              <span className="text-2xs font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
                 Activity
               </span>
               <div className="mt-2">

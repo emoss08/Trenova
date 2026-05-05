@@ -369,7 +369,7 @@ function DialogShell({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="grid h-[80vh] shadow-lg max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
+        className="grid h-[80vh] max-h-200 w-[90vw] grid-cols-1 gap-0 overflow-hidden p-0 shadow-lg sm:max-w-275 lg:grid-cols-[minmax(0,440px)_1fr]"
       >
         <FormProvider {...form}>
           <Form
@@ -377,7 +377,7 @@ function DialogShell({
             onSubmit={form.handleSubmit(onValidSubmit)}
             className="flex h-full min-h-0 min-w-0 flex-col border-r"
           >
-            <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
               <div className="flex shrink-0 flex-col gap-1">
                 {titleNode}
                 {descriptionNode}
