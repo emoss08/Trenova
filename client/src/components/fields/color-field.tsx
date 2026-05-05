@@ -145,7 +145,7 @@ function ColorFieldInput<T extends FieldValues>({
               ) : (
                 <Paintbrush className="size-4" />
               )}
-              <div className="flex-1 truncate text-left mt-0.5">
+              <div className="mt-0.5 flex-1 truncate text-left">
                 {value ? value : "Pick a color"}
               </div>
             </div>
