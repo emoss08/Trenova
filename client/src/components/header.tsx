@@ -156,7 +156,7 @@ function NavActions() {
   };
 
   return (
-    <div className="ml-auto flex items-center text-center gap-1 px-3">
+    <div className="ml-auto flex items-center gap-1 px-3 text-center">
       <SystemInformation />
       <NotificationPopover />
       <TooltipProvider>

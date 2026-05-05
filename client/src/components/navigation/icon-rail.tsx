@@ -345,7 +345,7 @@ function UserMenu() {
                   fallbackClassName="rounded-lg bg-gradient-to-br from-sidebar-accent to-sidebar-accent/80 text-xs font-semibold text-sidebar-accent-foreground"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate text-foreground font-semibold">{user?.name}</span>
+                  <span className="truncate font-semibold text-foreground">{user?.name}</span>
                   <span className="truncate text-xs text-muted-foreground">
                     {user?.emailAddress}
                   </span>

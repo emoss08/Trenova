@@ -5,7 +5,7 @@ import React from "react";
 
 export function SystemInformation() {
   return (
-    <div className="ml-auto flex items-center text-center gap-1 px-3 font-table text-xs text-muted-foreground">
+    <div className="ml-auto flex items-center gap-1 px-3 text-center font-table text-xs text-muted-foreground">
       <SystemStatus />
       <Dot className="size-2.5 text-muted-foreground" />
       <UserCurrentTime />
@@ -30,8 +30,8 @@ function UserCurrentTime() {
 
 function SystemStatus() {
   return (
-    <div className="flex flex-row gap-1 items-center text-center justify-center">
-      <div className="size-1.5 rounded-full bg-green-500 mb-0.5" />
+    <div className="flex flex-row items-center justify-center gap-1 text-center">
+      <div className="mb-0.5 size-1.5 rounded-full bg-green-500" />
       <span className="text-xs text-muted-foreground">Systems nominal</span>
     </div>
   );
