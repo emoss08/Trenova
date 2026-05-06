@@ -38,6 +38,17 @@ export class ShipmentService {
     return safeParse(shipmentListSchema, response, "Shipment");
   }
 
+  public async listUnassigned(req: { limit: number; offset: number }) {
+    const params = new URLSearchParams({
+      limit: String(req.limit),
+      offset: String(req.offset),
+      expandShipmentDetails: "true",
+    });
+    const response = await api.get(`/shipments/unassigned/?${params.toString()}`);
+
+    return safeParse(shipmentListSchema, response, "Unassigned Shipments");
+  }
+
   public async get(id: Shipment["id"], params?: Record<string, string>) {
     const endpoint = params
       ? `/shipments/${id}/?${new URLSearchParams(params).toString()}`

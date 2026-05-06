@@ -216,10 +216,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get fiscal period for delete", zap.Error(err))
 		return err
@@ -392,10 +389,7 @@ func (s *Service) Reopen(
 	)
 
 	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
+		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
 		if err != nil {
 			log.Error("failed to get fiscal period", zap.Error(err))
 			return nil, err
@@ -439,10 +433,7 @@ func (s *Service) Reopen(
 			var txErr error
 			existing, txErr = s.repo.GetByIDForUpdate(
 				txCtx,
-				repositories.GetFiscalPeriodByIDRequest{
-					ID:         req.ID,
-					TenantInfo: req.TenantInfo,
-				},
+				repositories.GetFiscalPeriodByIDRequest(req),
 			)
 			if txErr != nil {
 				return txErr
@@ -506,10 +497,7 @@ func (s *Service) Lock(
 	)
 
 	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
+		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
 		if err != nil {
 			log.Error("failed to get fiscal period", zap.Error(err))
 			return nil, err
@@ -553,10 +541,7 @@ func (s *Service) Lock(
 			var txErr error
 			existing, txErr = s.repo.GetByIDForUpdate(
 				txCtx,
-				repositories.GetFiscalPeriodByIDRequest{
-					ID:         req.ID,
-					TenantInfo: req.TenantInfo,
-				},
+				repositories.GetFiscalPeriodByIDRequest(req),
 			)
 			if txErr != nil {
 				return txErr
@@ -608,10 +593,7 @@ func (s *Service) Unlock(
 	)
 
 	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
+		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalPeriodByIDRequest(req))
 		if err != nil {
 			log.Error("failed to get fiscal period", zap.Error(err))
 			return nil, err
@@ -655,10 +637,7 @@ func (s *Service) Unlock(
 			var txErr error
 			existing, txErr = s.repo.GetByIDForUpdate(
 				txCtx,
-				repositories.GetFiscalPeriodByIDRequest{
-					ID:         req.ID,
-					TenantInfo: req.TenantInfo,
-				},
+				repositories.GetFiscalPeriodByIDRequest(req),
 			)
 			if txErr != nil {
 				return txErr

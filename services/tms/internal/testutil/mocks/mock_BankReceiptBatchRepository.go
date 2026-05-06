@@ -18,8 +18,7 @@ import (
 func NewMockBankReceiptBatchRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockBankReceiptBatchRepository {
+}) *MockBankReceiptBatchRepository {
 	mock := &MockBankReceiptBatchRepository{}
 	mock.Mock.Test(t)
 
@@ -99,8 +98,8 @@ func (_c *MockBankReceiptBatchRepository_Create_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockBankReceiptBatchRepository_Create_Call) Return(batch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_Create_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockBankReceiptBatchRepository_Create_Call) Return(bankReceiptBatch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_Create_Call {
+	_c.Call.Return(bankReceiptBatch, err)
 	return _c
 }
 
@@ -235,8 +234,8 @@ func (_c *MockBankReceiptBatchRepository_GetByID_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockBankReceiptBatchRepository_GetByID_Call) Return(batch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_GetByID_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockBankReceiptBatchRepository_GetByID_Call) Return(bankReceiptBatch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_GetByID_Call {
+	_c.Call.Return(bankReceiptBatch, err)
 	return _c
 }
 
@@ -303,8 +302,8 @@ func (_c *MockBankReceiptBatchRepository_List_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockBankReceiptBatchRepository_List_Call) Return(batchs []*bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_List_Call {
-	_c.Call.Return(batchs, err)
+func (_c *MockBankReceiptBatchRepository_List_Call) Return(bankReceiptBatchs []*bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_List_Call {
+	_c.Call.Return(bankReceiptBatchs, err)
 	return _c
 }
 
@@ -371,8 +370,8 @@ func (_c *MockBankReceiptBatchRepository_Update_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockBankReceiptBatchRepository_Update_Call) Return(batch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_Update_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockBankReceiptBatchRepository_Update_Call) Return(bankReceiptBatch *bankreceiptbatch.BankReceiptBatch, err error) *MockBankReceiptBatchRepository_Update_Call {
+	_c.Call.Return(bankReceiptBatch, err)
 	return _c
 }
 

@@ -73,8 +73,6 @@ func TestIsActivityMethod(t *testing.T) {
 		{"No match 2", "AnotherMethod", false},
 	}
 
-	type testStruct struct{}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			method := reflect.Method{

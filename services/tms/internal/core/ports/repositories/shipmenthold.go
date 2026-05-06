@@ -139,7 +139,7 @@ func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
 		validation.Field(&r.StartedAt, validation.By(func(value any) error {
 			startedAt, _ := value.(*int64)
 			if startedAt != nil && *startedAt <= 0 {
-				return errors.New("Started At must be greater than zero")
+				return errors.New("started at must be greater than zero")
 			}
 			return nil
 		})),

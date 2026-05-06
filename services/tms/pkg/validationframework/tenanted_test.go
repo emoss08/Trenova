@@ -1140,11 +1140,6 @@ func TestValuesEqual(t *testing.T) {
 	}
 }
 
-//go:fix inline
-func ptr[T any](v T) *T {
-	return new(v)
-}
-
 func TestTenantedValidatorBuilder_WithDateAfter(t *testing.T) {
 	t.Parallel()
 

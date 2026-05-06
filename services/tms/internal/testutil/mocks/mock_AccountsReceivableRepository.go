@@ -96,8 +96,8 @@ func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Return(customerAgingRow *repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_GetCustomerAging_Call {
-	_c.Call.Return(customerAgingRow, err)
+func (_c *MockAccountsReceivableRepository_GetCustomerAging_Call) Return(aRCustomerAgingRow *repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_GetCustomerAging_Call {
+	_c.Call.Return(aRCustomerAgingRow, err)
 	return _c
 }
 
@@ -230,8 +230,8 @@ func (_c *MockAccountsReceivableRepository_ListARAging_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListARAging_Call) Return(customerAgingRows []*repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_ListARAging_Call {
-	_c.Call.Return(customerAgingRows, err)
+func (_c *MockAccountsReceivableRepository_ListARAging_Call) Return(aRCustomerAgingRows []*repositories.ARCustomerAgingRow, err error) *MockAccountsReceivableRepository_ListARAging_Call {
+	_c.Call.Return(aRCustomerAgingRows, err)
 	return _c
 }
 
@@ -298,8 +298,8 @@ func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Run(run func
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(ledgerEntrys []*repositories.ARLedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
-	_c.Call.Return(ledgerEntrys, err)
+func (_c *MockAccountsReceivableRepository_ListCustomerLedger_Call) Return(aRLedgerEntrys []*repositories.ARLedgerEntry, err error) *MockAccountsReceivableRepository_ListCustomerLedger_Call {
+	_c.Call.Return(aRLedgerEntrys, err)
 	return _c
 }
 
@@ -366,8 +366,8 @@ func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Run(run func(ctx 
 	return _c
 }
 
-func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Return(openItems []*repositories.AROpenItem, err error) *MockAccountsReceivableRepository_ListOpenItems_Call {
-	_c.Call.Return(openItems, err)
+func (_c *MockAccountsReceivableRepository_ListOpenItems_Call) Return(aROpenItems []*repositories.AROpenItem, err error) *MockAccountsReceivableRepository_ListOpenItems_Call {
+	_c.Call.Return(aROpenItems, err)
 	return _c
 }
 

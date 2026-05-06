@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -20,8 +20,7 @@ import (
 func NewMockInvoiceAdjustmentService(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockInvoiceAdjustmentService {
+}) *MockInvoiceAdjustmentService {
 	mock := &MockInvoiceAdjustmentService{}
 	mock.Mock.Test(t)
 
@@ -107,8 +106,8 @@ func (_c *MockInvoiceAdjustmentService_Approve_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Approve_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Approve_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_Approve_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Approve_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -255,8 +254,8 @@ func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_BulkSubmit_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockInvoiceAdjustmentService_BulkSubmit_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_BulkSubmit_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -329,8 +328,8 @@ func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_CreateDraft_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_CreateDraft_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_CreateDraft_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -403,8 +402,8 @@ func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_GetBatch_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockInvoiceAdjustmentService_GetBatch_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentService_GetBatch_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -471,8 +470,8 @@ func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_GetDetail_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_GetDetail_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_GetDetail_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -550,23 +549,23 @@ func (_c *MockInvoiceAdjustmentService_GetLineage_Call) RunAndReturn(run func(ct
 }
 
 // GetOperationsSummary provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error) {
+func (_mock *MockInvoiceAdjustmentService) GetOperationsSummary(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error) {
 	ret := _mock.Called(ctx, tenantInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOperationsSummary")
 	}
 
-	var r0 *repositoryports.InvoiceAdjustmentOperationsSummary
+	var r0 *repositories.InvoiceAdjustmentOperationsSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error)); ok {
 		return returnFunc(ctx, tenantInfo)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositoryports.InvoiceAdjustmentOperationsSummary); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) *repositories.InvoiceAdjustmentOperationsSummary); ok {
 		r0 = returnFunc(ctx, tenantInfo)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*repositoryports.InvoiceAdjustmentOperationsSummary)
+			r0 = ret.Get(0).(*repositories.InvoiceAdjustmentOperationsSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
@@ -607,34 +606,34 @@ func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Return(operationsSummary *repositoryports.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
-	_c.Call.Return(operationsSummary, err)
+func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) Return(invoiceAdjustmentOperationsSummary *repositories.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
+	_c.Call.Return(invoiceAdjustmentOperationsSummary, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositoryports.InvoiceAdjustmentOperationsSummary, error)) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
+func (_c *MockInvoiceAdjustmentService_GetOperationsSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*repositories.InvoiceAdjustmentOperationsSummary, error)) *MockInvoiceAdjustmentService_GetOperationsSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListApprovals provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentService) ListApprovals(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApprovals")
 	}
 
-	var r0 *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem]
+	var r0 *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem]); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
@@ -675,12 +674,12 @@ func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(listResult *pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) Return(listResult *pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], err error) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
+func (_c *MockInvoiceAdjustmentService_ListApprovals_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentApprovalQueueItem], error)) *MockInvoiceAdjustmentService_ListApprovals_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -754,23 +753,23 @@ func (_c *MockInvoiceAdjustmentService_ListBatches_Call) RunAndReturn(run func(c
 }
 
 // ListReconciliationExceptions provides a mock function for the type MockInvoiceAdjustmentService
-func (_mock *MockInvoiceAdjustmentService) ListReconciliationExceptions(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentService) ListReconciliationExceptions(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error) {
 	ret := _mock.Called(ctx, filter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReconciliationExceptions")
 	}
 
-	var r0 *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem]
+	var r0 *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
 		return returnFunc(ctx, filter)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.QueryOptions) *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem]); ok {
 		r0 = returnFunc(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem])
+			r0 = ret.Get(0).(*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.QueryOptions) error); ok {
@@ -811,12 +810,12 @@ func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Run(ru
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Return(listResult *pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], err error) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
+func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) Return(listResult *pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], err error) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositoryports.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
+func (_c *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call) RunAndReturn(run func(ctx context.Context, filter pagination.QueryOptions) (*pagination.ListResult[*repositories.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentService_ListReconciliationExceptions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1033,8 +1032,8 @@ func (_c *MockInvoiceAdjustmentService_Reject_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Reject_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Reject_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_Reject_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Reject_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -1107,8 +1106,8 @@ func (_c *MockInvoiceAdjustmentService_Submit_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_Submit_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Submit_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_Submit_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_Submit_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -1181,8 +1180,8 @@ func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_SubmitDraft_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_SubmitDraft_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_SubmitDraft_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -1255,8 +1254,8 @@ func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_UpdateDraft_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentService_UpdateDraft_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentService_UpdateDraft_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 

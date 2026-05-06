@@ -107,7 +107,7 @@ func TestExtractFieldsFromStruct_UnexportedFields(t *testing.T) {
 		internal string `bun:"internal"`
 	}
 
-	fields := ExtractFieldsFromStruct(&ModelWithUnexported{})
+	fields := ExtractFieldsFromStruct(&ModelWithUnexported{internal: "hidden"})
 
 	assert.Equal(t, "id", fields["id"])
 	assert.NotContains(t, fields, "internal")

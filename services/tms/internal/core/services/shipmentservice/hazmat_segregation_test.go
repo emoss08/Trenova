@@ -423,38 +423,6 @@ func mockHazmatControlRepo(
 	return repo
 }
 
-func mockHazmatCommodityRepo(
-	t *testing.T,
-	entity *shipment.Shipment,
-) *mocks.MockCommodityRepository {
-	t.Helper()
-
-	repo := mocks.NewMockCommodityRepository(t)
-	repo.EXPECT().
-		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCommoditiesByIDsRequest) bool {
-			return req.TenantInfo.OrgID == entity.OrganizationID &&
-				req.TenantInfo.BuID == entity.BusinessUnitID &&
-				len(req.CommodityIDs) == 2
-		})).
-		Return([]*commodity.Commodity{
-			hazardousCommodity(
-				entity.Commodities[0].CommodityID,
-				"Explosive",
-				hazardousmaterial.HazardousClass1,
-				pulid.MustNew("hm_"),
-			),
-			hazardousCommodity(
-				entity.Commodities[1].CommodityID,
-				"Paint",
-				hazardousmaterial.HazardousClass3,
-				pulid.MustNew("hm_"),
-			),
-		}, nil).
-		Once()
-
-	return repo
-}
-
 func hazardousShipmentCommodities() []*shipment.ShipmentCommodity {
 	return []*shipment.ShipmentCommodity{
 		{

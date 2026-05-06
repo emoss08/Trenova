@@ -11,11 +11,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-//go:fix inline
-func intPtr(v int) *int {
-	return new(v)
-}
-
 func validTrailer() *Trailer {
 	return &Trailer{
 		ID:                      pulid.MustNew("tr_"),

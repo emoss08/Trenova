@@ -4,7 +4,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 )
@@ -64,7 +63,7 @@ func filterQuery(
 func unassignedFilterQuery(
 	q *bun.SelectQuery,
 	dba bun.IDB,
-	req *pagination.QueryOptions,
+	req *repositories.GetUnassignedShipmentsRequest,
 ) *bun.SelectQuery {
 	sp := buncolgen.ShipmentColumns
 	sm := buncolgen.ShipmentMoveColumns
@@ -73,9 +72,13 @@ func unassignedFilterQuery(
 	q = querybuilder.ApplyFilters(
 		q,
 		buncolgen.ShipmentTable.Alias,
-		req,
+		req.Filter,
 		(*shipment.Shipment)(nil),
 	)
+
+	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return standardShipmentFilter(sq, req.ShipmentOptions)
+	})
 
 	activeAssignmentSubquery := dba.NewSelect().
 		Model((*shipment.ShipmentMove)(nil)).
@@ -95,9 +98,9 @@ func unassignedFilterQuery(
 
 	q = q.Where("NOT EXISTS (?)", activeAssignmentSubquery)
 
-	if len(req.Sort) == 0 {
+	if len(req.Filter.Sort) == 0 {
 		q = q.Order(sp.CreatedAt.OrderDesc())
 	}
 
-	return q.Limit(req.Pagination.SafeLimit()).Offset(req.Pagination.SafeOffset())
+	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }

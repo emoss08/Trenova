@@ -1,4 +1,5 @@
 import { Spinner } from "@/components/ui/spinner";
+import { TextShimmer } from "@/components/ui/text-shimmer";
 import { formatToUserTimezone } from "@/lib/date";
 import {
   getDestinationLocation,
@@ -9,6 +10,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import type { Shipment } from "@/types/shipment";
 import { GripVerticalIcon } from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
 import { useCommandCenterUrl } from "../url-state";
 import { ModuleCard } from "./module-card";
 import { useUnassignedShipments } from "./use-right-stack-data";
@@ -49,20 +51,50 @@ const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {
 };
 
 export function UnassignedQueue() {
-  const { data, isLoading } = useUnassignedShipments();
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useUnassignedShipments();
   const [, setUrl] = useCommandCenterUrl();
-  const shipments = (data?.results ?? []) as Shipment[];
+
+  const shipments = useMemo(
+    () => (data?.pages.flatMap((page) => page.results) ?? []) as Shipment[],
+    [data?.pages],
+  );
+  const totalCount = data?.pages[0]?.count;
 
   const pendingRevenue = shipments.reduce(
     (total, s) => total + parseDecimal(s.totalChargeAmount as unknown as string),
     0,
   );
 
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   return (
     <ModuleCard
       id="unassigned"
       title="Unassigned"
-      count={data?.count}
+      count={totalCount}
       countTone="warning"
       rightSlot={
         <span className="font-table hidden text-[9.5px] tabular-nums text-muted-foreground sm:inline">
@@ -128,6 +160,14 @@ export function UnassignedQueue() {
             </button>
           );
         })}
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center py-2">
+            <TextShimmer className="font-mono text-[10px]" duration={1}>
+              Loading more…
+            </TextShimmer>
+          </div>
+        )}
+        <div ref={observerTarget} aria-hidden className="h-px w-full" />
       </div>
     </ModuleCard>
   );

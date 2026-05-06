@@ -144,7 +144,7 @@ func (r *repository) GetInvoiceLineCreditUsage(
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
 		Where("adjustment_id IN (SELECT id FROM invoice_adjustments WHERE status IN (?) AND organization_id = ? AND business_unit_id = ?)",
-			bun.In([]invoiceadjustment.Status{invoiceadjustment.StatusApproved, invoiceadjustment.StatusExecuted}),
+			bun.List([]invoiceadjustment.Status{invoiceadjustment.StatusApproved, invoiceadjustment.StatusExecuted}),
 			req.TenantInfo.OrgID,
 			req.TenantInfo.BuID,
 		)
@@ -1061,7 +1061,7 @@ func (r *repository) countPendingWriteOffs(
 		Where("ia.organization_id = ?", tenantInfo.OrgID).
 		Where("ia.business_unit_id = ?", tenantInfo.BuID).
 		Where("ia.kind = ?", invoiceadjustment.KindWriteOff).
-		Where("ia.status IN (?)", bun.In([]invoiceadjustment.Status{
+		Where("ia.status IN (?)", bun.List([]invoiceadjustment.Status{
 			invoiceadjustment.StatusPendingApproval,
 			invoiceadjustment.StatusApproved,
 			invoiceadjustment.StatusExecuting,
@@ -1084,7 +1084,7 @@ func (r *repository) countBatchesInFlight(
 		TableExpr("invoice_adjustment_batches AS iab").
 		Where("iab.organization_id = ?", tenantInfo.OrgID).
 		Where("iab.business_unit_id = ?", tenantInfo.BuID).
-		Where("iab.status IN (?)", bun.In([]invoiceadjustment.BatchStatus{
+		Where("iab.status IN (?)", bun.List([]invoiceadjustment.BatchStatus{
 			invoiceadjustment.BatchStatusPending,
 			invoiceadjustment.BatchStatusQueued,
 			invoiceadjustment.BatchStatusSubmitted,

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestCreateSampler(t *testing.T) {
@@ -135,7 +135,7 @@ func TestTracerProvider_Tracer(t *testing.T) {
 	t.Parallel()
 
 	tp := &TracerProvider{
-		tracer: trace.NewNoopTracerProvider().Tracer("test"),
+		tracer: noop.NewTracerProvider().Tracer("test"),
 	}
 
 	tracer := tp.Tracer()
@@ -146,7 +146,7 @@ func TestTracerProvider_StartSpan(t *testing.T) {
 	t.Parallel()
 
 	tp := &TracerProvider{
-		tracer: trace.NewNoopTracerProvider().Tracer("test"),
+		tracer: noop.NewTracerProvider().Tracer("test"),
 	}
 
 	ctx, span := tp.StartSpan(t.Context(), "test-span")

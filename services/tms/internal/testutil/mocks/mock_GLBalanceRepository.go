@@ -96,8 +96,8 @@ func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Return(periodAccountBalances []*repositories.GLPeriodAccountBalance, err error) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
-	_c.Call.Return(periodAccountBalances, err)
+func (_c *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call) Return(gLPeriodAccountBalances []*repositories.GLPeriodAccountBalance, err error) *MockGLBalanceRepository_ListTrialBalanceByPeriod_Call {
+	_c.Call.Return(gLPeriodAccountBalances, err)
 	return _c
 }
 

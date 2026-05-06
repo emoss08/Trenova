@@ -156,7 +156,7 @@ func (s *service) Get(
 
 func (s *service) GetUnassigned(
 	ctx context.Context,
-	req *pagination.QueryOptions,
+	req *repositories.GetUnassignedShipmentsRequest,
 ) (*pagination.ListResult[*shipment.Shipment], error) {
 	return s.repo.GetUnassigned(ctx, req)
 }

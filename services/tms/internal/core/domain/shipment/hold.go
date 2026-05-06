@@ -91,7 +91,7 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&h.ReleasedAt,
 			validation.By(func(_ any) error {
 				if h.ReleasedAt != nil && *h.ReleasedAt < h.StartedAt {
-					return errors.New("Released At must be greater than or equal to Started At")
+					return errors.New("released at must be greater than or equal to started at")
 				}
 				return nil
 			}),
@@ -104,7 +104,7 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&h.BlocksDispatch,
 			validation.By(func(_ any) error {
 				if h.Severity == holdreason.HoldSeverityBlocking && !(h.BlocksDispatch || h.BlocksDelivery || h.BlocksBilling) {
-					return errors.New("Blocking holds must block dispatch, delivery, or billing")
+					return errors.New("blocking holds must block dispatch, delivery, or billing")
 				}
 				return nil
 			}),

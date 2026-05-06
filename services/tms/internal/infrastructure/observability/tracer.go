@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/exporters/zipkin"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -128,8 +127,6 @@ func createExporter(
 	case "jaeger":
 		logger.Info("Using OTLP exporter for Jaeger (recommended approach)")
 		return createOTLPExporter(ctx, cfg)
-	case "zipkin":
-		return createZipkinExporter(cfg)
 	case "otlp":
 		return createOTLPExporter(ctx, cfg)
 	case "otlp-grpc":
@@ -155,10 +152,6 @@ func createOTLPGRPCExporter(
 
 	client := otlptracegrpc.NewClient(opts...)
 	return otlptrace.New(ctx, client)
-}
-
-func createZipkinExporter(cfg *config.TracingConfig) (sdktrace.SpanExporter, error) {
-	return zipkin.New(cfg.Endpoint)
 }
 
 func createOTLPExporter(

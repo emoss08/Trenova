@@ -1,20 +1,14 @@
 import { fetchData } from "@/hooks/data-table/use-data-table-query";
+import { queries } from "@/lib/queries";
+import { apiService } from "@/services/api";
 import type { FieldFilter } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 const SHIPMENTS_LINK = "/shipments/";
 const DEFAULT_LIMIT = 20;
 
 export type ExceptionCategory = "all" | "eta-slip" | "detention" | "doc-issues";
-
-const UNASSIGNED_FILTERS: FieldFilter[] = [
-  {
-    field: "status",
-    operator: "in",
-    value: ["New", "PartiallyAssigned"],
-  },
-];
 
 function exceptionFilters(category: ExceptionCategory): FieldFilter[] {
   switch (category) {
@@ -43,19 +37,18 @@ function exceptionFilters(category: ExceptionCategory): FieldFilter[] {
   }
 }
 
-export function useUnassignedShipments(limit = DEFAULT_LIMIT) {
-  return useQuery({
-    queryKey: ["shipment-list", "right-stack", "unassigned", { limit }],
-    queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(
-        SHIPMENTS_LINK,
-        0,
-        limit,
-        {
-          fieldFilters: UNASSIGNED_FILTERS,
-          extraSearchParams: { expandShipmentDetails: true },
-        },
-      ),
+export function useUnassignedShipments(pageSize = DEFAULT_LIMIT) {
+  return useInfiniteQuery({
+    queryKey: [...queries.shipment.listUnassigned._def, { pageSize }],
+    queryFn: ({ pageParam }) =>
+      apiService.shipmentService.listUnassigned({ limit: pageSize, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+      if (lastPage.next || lastPage.results.length === pageSize) {
+        return lastPageParam + pageSize;
+      }
+      return undefined;
+    },
     staleTime: 30_000,
   });
 }

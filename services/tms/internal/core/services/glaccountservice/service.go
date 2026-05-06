@@ -221,10 +221,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetGLAccountByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.repo.GetByID(ctx, repositories.GetGLAccountByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get gl account for delete", zap.Error(err))
 		return err

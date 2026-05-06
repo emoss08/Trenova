@@ -21,8 +21,7 @@ import (
 func NewMockInvoiceAdjustmentRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockInvoiceAdjustmentRepository {
+}) *MockInvoiceAdjustmentRepository {
 	mock := &MockInvoiceAdjustmentRepository{}
 	mock.Mock.Test(t)
 
@@ -165,8 +164,8 @@ func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Return(batch1 *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
-	_c.Call.Return(batch1, err)
+func (_c *MockInvoiceAdjustmentRepository_CreateBatch_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_CreateBatch_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -233,8 +232,8 @@ func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
-	_c.Call.Return(correctionGroup, err)
+func (_c *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call) Return(invoiceAdjustmentCorrectionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_CreateCorrectionGroup_Call {
+	_c.Call.Return(invoiceAdjustmentCorrectionGroup, err)
 	return _c
 }
 
@@ -301,8 +300,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Run(run func(ctx co
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByID_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByID_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -369,8 +368,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Run(run
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Return(batch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
-	_c.Call.Return(batch, err)
+func (_c *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_GetBatchByIdempotencyKey_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -437,8 +436,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByID_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentRepository_GetByID_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByID_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -505,8 +504,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Run(run func
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Return(adjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
-	_c.Call.Return(adjustment, err)
+func (_c *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_GetByIdempotencyKey_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -573,8 +572,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Run(run func(
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
-	_c.Call.Return(correctionGroup, err)
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call) Return(invoiceAdjustmentCorrectionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroup_Call {
+	_c.Call.Return(invoiceAdjustmentCorrectionGroup, err)
 	return _c
 }
 
@@ -641,8 +640,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) 
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
-	_c.Call.Return(correctionGroup, err)
+func (_c *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call) Return(invoiceAdjustmentCorrectionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_GetCorrectionGroupByRootInvoice_Call {
+	_c.Call.Return(invoiceAdjustmentCorrectionGroup, err)
 	return _c
 }
 
@@ -851,8 +850,8 @@ func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Run(run fun
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Return(operationsSummary *repositories.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
-	_c.Call.Return(operationsSummary, err)
+func (_c *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call) Return(invoiceAdjustmentOperationsSummary *repositories.InvoiceAdjustmentOperationsSummary, err error) *MockInvoiceAdjustmentRepository_GetOperationsSummary_Call {
+	_c.Call.Return(invoiceAdjustmentOperationsSummary, err)
 	return _c
 }
 
@@ -1305,8 +1304,8 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Return(adjustment1 *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
-	_c.Call.Return(adjustment1, err)
+func (_c *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call) Return(invoiceAdjustment *invoiceadjustment.InvoiceAdjustment, err error) *MockInvoiceAdjustmentRepository_UpdateAdjustment_Call {
+	_c.Call.Return(invoiceAdjustment, err)
 	return _c
 }
 
@@ -1373,8 +1372,8 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Run(run func(ctx con
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Return(batch1 *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
-	_c.Call.Return(batch1, err)
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatch_Call) Return(invoiceAdjustmentBatch *invoiceadjustment.InvoiceAdjustmentBatch, err error) *MockInvoiceAdjustmentRepository_UpdateBatch_Call {
+	_c.Call.Return(invoiceAdjustmentBatch, err)
 	return _c
 }
 
@@ -1441,8 +1440,8 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Run(run func(ctx
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Return(batchItem *invoiceadjustment.InvoiceAdjustmentBatchItem, err error) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
-	_c.Call.Return(batchItem, err)
+func (_c *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call) Return(invoiceAdjustmentBatchItem *invoiceadjustment.InvoiceAdjustmentBatchItem, err error) *MockInvoiceAdjustmentRepository_UpdateBatchItem_Call {
+	_c.Call.Return(invoiceAdjustmentBatchItem, err)
 	return _c
 }
 
@@ -1509,8 +1508,8 @@ func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Run(run fu
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Return(correctionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
-	_c.Call.Return(correctionGroup, err)
+func (_c *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call) Return(invoiceAdjustmentCorrectionGroup *invoiceadjustment.InvoiceAdjustmentCorrectionGroup, err error) *MockInvoiceAdjustmentRepository_UpdateCorrectionGroup_Call {
+	_c.Call.Return(invoiceAdjustmentCorrectionGroup, err)
 	return _c
 }
 

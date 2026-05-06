@@ -396,10 +396,7 @@ func (s *Service) Delete(
 		zap.String("userID", userID.String()),
 	)
 
-	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
-		ID:         req.ID,
-		TenantInfo: req.TenantInfo,
-	})
+	existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest(req))
 	if err != nil {
 		log.Error("failed to get fiscal year for delete", zap.Error(err))
 		return err
@@ -493,10 +490,7 @@ func (s *Service) Activate(
 	)
 
 	if s.db == nil {
-		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
+		existing, err := s.repo.GetByID(ctx, repositories.GetFiscalYearByIDRequest(req))
 		if err != nil {
 			log.Error("failed to get fiscal year", zap.Error(err))
 			return nil, err
@@ -538,10 +532,10 @@ func (s *Service) Activate(
 		ports.TxOptions{LockTimeout: fiscalYearLockTimeout},
 		func(txCtx context.Context, _ bun.Tx) error {
 			var txErr error
-			existing, txErr = s.repo.GetByIDForUpdate(txCtx, repositories.GetFiscalYearByIDRequest{
-				ID:         req.ID,
-				TenantInfo: req.TenantInfo,
-			})
+			existing, txErr = s.repo.GetByIDForUpdate(
+				txCtx,
+				repositories.GetFiscalYearByIDRequest(req),
+			)
 			if txErr != nil {
 				return txErr
 			}

@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	mock "github.com/stretchr/testify/mock"
 )
 

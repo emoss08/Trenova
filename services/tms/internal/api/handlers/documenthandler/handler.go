@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
@@ -628,7 +627,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.CreateSession(
 		c.Request.Context(),
-		&services.CreateSessionRequest{
+		&serviceports.CreateSessionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -718,7 +717,7 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 
 	targets, err := h.uploadService.GetPartUploadTargets(
 		c.Request.Context(),
-		&services.PartRequest{
+		&serviceports.PartRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -746,7 +745,7 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 
 	session, err := h.uploadService.Complete(
 		c.Request.Context(),
-		&services.CompletionRequest{
+		&serviceports.CompletionRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,
@@ -771,7 +770,7 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 		return
 	}
 
-	if err = h.uploadService.Cancel(c.Request.Context(), &services.CancelRequest{
+	if err = h.uploadService.Cancel(c.Request.Context(), &serviceports.CancelRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,

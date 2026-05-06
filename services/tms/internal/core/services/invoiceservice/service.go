@@ -878,25 +878,6 @@ func (s *Service) resolveAutoPost(cus *customer.Customer) bool {
 	return cus != nil && cus.BillingProfile != nil && cus.BillingProfile.AutoBill
 }
 
-func resolveEffectiveAutoPost(
-	control *tenant.BillingControl,
-	cus *customer.Customer,
-) bool {
-	if control == nil {
-		return false
-	}
-
-	if control.InvoicePostingMode != tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions {
-		return false
-	}
-
-	if cus == nil || cus.BillingProfile == nil {
-		return true
-	}
-
-	return cus.BillingProfile.AutoBill
-}
-
 func (s *Service) accountingPolicyService() *accountingcontrolpolicyservice.Service {
 	if s.accountingPolicy != nil {
 		return s.accountingPolicy

@@ -282,13 +282,12 @@ func valueSignature(value any) string {
 		return "nil"
 	}
 
-	switch value.(type) {
+	switch value := value.(type) {
 	case map[string]any:
-		return "map{" + envSignature(value.(map[string]any)) + "}"
+		return "map{" + envSignature(value) + "}"
 	case []any:
-		items := value.([]any)
-		itemSignatures := make([]string, len(items))
-		for i, item := range items {
+		itemSignatures := make([]string, len(value))
+		for i, item := range value {
 			itemSignatures[i] = valueSignature(item)
 		}
 		return "slice[" + strings.Join(itemSignatures, ",") + "]"

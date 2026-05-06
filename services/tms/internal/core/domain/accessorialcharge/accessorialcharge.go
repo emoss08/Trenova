@@ -58,7 +58,7 @@ func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&a.Amount,
 			validation.By(func(_ any) error {
 				if a.Amount.LessThanOrEqual(decimal.Zero) {
-					return errors.New("Amount must be greater than zero")
+					return errors.New("amount must be greater than zero")
 				}
 				return nil
 			}),

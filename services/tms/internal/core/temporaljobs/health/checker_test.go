@@ -6,24 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/worker"
 	"go.uber.org/zap"
 )
-
-type mockTemporalClient struct{}
-
-func (m *mockTemporalClient) Close() {}
-
-type fakeWorkerRegistry struct {
-	name      string
-	taskQueue string
-}
-
-func (f *fakeWorkerRegistry) GetName() string                          { return f.name }
-func (f *fakeWorkerRegistry) GetTaskQueue() string                     { return f.taskQueue }
-func (f *fakeWorkerRegistry) RegisterActivities(w worker.Worker) error { return nil }
-func (f *fakeWorkerRegistry) RegisterWorkflows(w worker.Worker) error  { return nil }
-func (f *fakeWorkerRegistry) GetWorkerOptions() worker.Options         { return worker.Options{} }
 
 func TestNewChecker(t *testing.T) {
 	t.Parallel()

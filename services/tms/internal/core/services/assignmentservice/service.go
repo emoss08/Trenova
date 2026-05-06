@@ -672,25 +672,6 @@ func firstPickupStop(move *shipment.ShipmentMove) (*shipment.Stop, error) {
 	return candidate, nil
 }
 
-func lastDeliveryStop(move *shipment.ShipmentMove) (*shipment.Stop, error) {
-	var candidate *shipment.Stop
-	for _, stop := range move.Stops {
-		if stop == nil || !stop.IsDestinationStop() {
-			continue
-		}
-		if candidate == nil || stop.Sequence > candidate.Sequence {
-			candidate = stop
-		}
-	}
-
-	if candidate == nil {
-		return nil, errortypes.NewBusinessError("Shipment move is missing a delivery stop").
-			WithParam("shipmentMoveId", move.ID.String())
-	}
-
-	return candidate, nil
-}
-
 func resolveDelayThresholdMinutes(control *tenant.ShipmentControl) int16 {
 	if control == nil || !control.AutoDelayShipments {
 		return shipmentstate.DisabledDelayThresholdMinutes

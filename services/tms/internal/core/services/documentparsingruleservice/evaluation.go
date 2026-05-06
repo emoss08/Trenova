@@ -9,6 +9,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentparsingrule"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type sectionOccurrence struct {
@@ -109,6 +111,7 @@ func evaluateVersion(
 		fmt.Sprintf("rule:%s", set.Name),
 		fmt.Sprintf("rule-version:%d", version.VersionNumber),
 	}
+	titleCaser := cases.Title(language.English)
 
 	for _, rule := range version.RuleDocument.Fields {
 		field, ok := evaluateFieldRule(rule, input.Pages, sections)
@@ -126,7 +129,7 @@ func evaluateVersion(
 		extracted := evaluateStopRule(rule, input.Pages, sections)
 		if len(extracted) == 0 {
 			if rule.Required {
-				missing = append(missing, strings.Title(rule.Role)+" Stop")
+				missing = append(missing, titleCaser.String(rule.Role)+" Stop")
 			}
 			continue
 		}

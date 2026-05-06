@@ -22,6 +22,11 @@ type ListShipmentsRequest struct {
 	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
 }
 
+type GetUnassignedShipmentsRequest struct {
+	Filter          *pagination.QueryOptions `json:"filter"`
+	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
+}
+
 type GetShipmentByIDRequest struct {
 	ID         pulid.ID              `json:"id"         form:"id"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
@@ -462,7 +467,7 @@ type ShipmentRepository interface {
 	) (*shipment.Shipment, error)
 	GetUnassigned(
 		ctx context.Context,
-		req *pagination.QueryOptions,
+		req *GetUnassignedShipmentsRequest,
 	) (*pagination.ListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,

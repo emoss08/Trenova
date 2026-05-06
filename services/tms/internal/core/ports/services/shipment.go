@@ -107,7 +107,7 @@ type ShipmentService interface {
 	) (*shipment.Shipment, error)
 	GetUnassigned(
 		ctx context.Context,
-		req *pagination.QueryOptions,
+		req *repositories.GetUnassignedShipmentsRequest,
 	) (*pagination.ListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,

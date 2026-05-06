@@ -266,6 +266,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
+// @Param expandShipmentDetails query bool false "Expand shipment details"
 // @Success 200 {object} pagination.Response[[]shipment.Shipment]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -282,7 +283,15 @@ func (h *Handler) getUnassignedShipments(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*shipment.Shipment], error) {
-			return h.service.GetUnassigned(c.Request.Context(), req)
+			return h.service.GetUnassigned(
+				c.Request.Context(),
+				&repositories.GetUnassignedShipmentsRequest{
+					Filter: req,
+					ShipmentOptions: repositories.ShipmentOptions{
+						ExpandShipmentDetails: helpers.QueryBool(c, "expandShipmentDetails"),
+					},
+				},
+			)
 		},
 	)
 }

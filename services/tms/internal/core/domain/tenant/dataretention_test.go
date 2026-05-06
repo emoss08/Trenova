@@ -1,6 +1,7 @@
 package tenant
 
 import (
+	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -44,7 +45,7 @@ func TestDataRetention_BeforeAppendModel(t *testing.T) {
 	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
 		t.Parallel()
 		dr := &DataRetention{}
-		err := dr.BeforeAppendModel(nil, (*bun.InsertQuery)(nil))
+		err := dr.BeforeAppendModel(context.TODO(), (*bun.InsertQuery)(nil))
 		require.NoError(t, err)
 		assert.False(t, dr.ID.IsNil())
 		assert.NotZero(t, dr.CreatedAt)
@@ -54,7 +55,7 @@ func TestDataRetention_BeforeAppendModel(t *testing.T) {
 		t.Parallel()
 		existingID := pulid.MustNew("dr_")
 		dr := &DataRetention{ID: existingID}
-		err := dr.BeforeAppendModel(nil, (*bun.InsertQuery)(nil))
+		err := dr.BeforeAppendModel(context.TODO(), (*bun.InsertQuery)(nil))
 		require.NoError(t, err)
 		assert.Equal(t, existingID, dr.ID)
 	})
@@ -62,7 +63,7 @@ func TestDataRetention_BeforeAppendModel(t *testing.T) {
 	t.Run("update sets UpdatedAt", func(t *testing.T) {
 		t.Parallel()
 		dr := &DataRetention{}
-		err := dr.BeforeAppendModel(nil, (*bun.UpdateQuery)(nil))
+		err := dr.BeforeAppendModel(context.TODO(), (*bun.UpdateQuery)(nil))
 		require.NoError(t, err)
 		assert.NotZero(t, dr.UpdatedAt)
 	})

@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
-	repositoryports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
@@ -19,8 +19,7 @@ import (
 func NewMockBankReceiptService(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *MockBankReceiptService {
+}) *MockBankReceiptService {
 	mock := &MockBankReceiptService{}
 	mock.Mock.Test(t)
 
@@ -100,8 +99,8 @@ func (_c *MockBankReceiptService_Get_Call) Run(run func(ctx context.Context, req
 	return _c
 }
 
-func (_c *MockBankReceiptService_Get_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Get_Call {
-	_c.Call.Return(receipt, err)
+func (_c *MockBankReceiptService_Get_Call) Return(bankReceipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Get_Call {
+	_c.Call.Return(bankReceipt, err)
 	return _c
 }
 
@@ -111,23 +110,23 @@ func (_c *MockBankReceiptService_Get_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // GetSummary provides a mock function for the type MockBankReceiptService
-func (_mock *MockBankReceiptService) GetSummary(ctx context.Context, tenantInfo pagination.TenantInfo, asOfDate int64) (*repositoryports.BankReceiptReconciliationSummary, error) {
+func (_mock *MockBankReceiptService) GetSummary(ctx context.Context, tenantInfo pagination.TenantInfo, asOfDate int64) (*repositories.BankReceiptReconciliationSummary, error) {
 	ret := _mock.Called(ctx, tenantInfo, asOfDate)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSummary")
 	}
 
-	var r0 *repositoryports.BankReceiptReconciliationSummary
+	var r0 *repositories.BankReceiptReconciliationSummary
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int64) (*repositoryports.BankReceiptReconciliationSummary, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int64) (*repositories.BankReceiptReconciliationSummary, error)); ok {
 		return returnFunc(ctx, tenantInfo, asOfDate)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int64) *repositoryports.BankReceiptReconciliationSummary); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int64) *repositories.BankReceiptReconciliationSummary); ok {
 		r0 = returnFunc(ctx, tenantInfo, asOfDate)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*repositoryports.BankReceiptReconciliationSummary)
+			r0 = ret.Get(0).(*repositories.BankReceiptReconciliationSummary)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, int64) error); ok {
@@ -174,12 +173,12 @@ func (_c *MockBankReceiptService_GetSummary_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockBankReceiptService_GetSummary_Call) Return(reconciliationSummary *repositoryports.BankReceiptReconciliationSummary, err error) *MockBankReceiptService_GetSummary_Call {
-	_c.Call.Return(reconciliationSummary, err)
+func (_c *MockBankReceiptService_GetSummary_Call) Return(bankReceiptReconciliationSummary *repositories.BankReceiptReconciliationSummary, err error) *MockBankReceiptService_GetSummary_Call {
+	_c.Call.Return(bankReceiptReconciliationSummary, err)
 	return _c
 }
 
-func (_c *MockBankReceiptService_GetSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, asOfDate int64) (*repositoryports.BankReceiptReconciliationSummary, error)) *MockBankReceiptService_GetSummary_Call {
+func (_c *MockBankReceiptService_GetSummary_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, asOfDate int64) (*repositories.BankReceiptReconciliationSummary, error)) *MockBankReceiptService_GetSummary_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -248,8 +247,8 @@ func (_c *MockBankReceiptService_Import_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MockBankReceiptService_Import_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Import_Call {
-	_c.Call.Return(receipt, err)
+func (_c *MockBankReceiptService_Import_Call) Return(bankReceipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Import_Call {
+	_c.Call.Return(bankReceipt, err)
 	return _c
 }
 
@@ -316,8 +315,8 @@ func (_c *MockBankReceiptService_ListExceptions_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockBankReceiptService_ListExceptions_Call) Return(receipts []*bankreceipt.BankReceipt, err error) *MockBankReceiptService_ListExceptions_Call {
-	_c.Call.Return(receipts, err)
+func (_c *MockBankReceiptService_ListExceptions_Call) Return(bankReceipts []*bankreceipt.BankReceipt, err error) *MockBankReceiptService_ListExceptions_Call {
+	_c.Call.Return(bankReceipts, err)
 	return _c
 }
 
@@ -390,8 +389,8 @@ func (_c *MockBankReceiptService_Match_Call) Run(run func(ctx context.Context, r
 	return _c
 }
 
-func (_c *MockBankReceiptService_Match_Call) Return(receipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Match_Call {
-	_c.Call.Return(receipt, err)
+func (_c *MockBankReceiptService_Match_Call) Return(bankReceipt *bankreceipt.BankReceipt, err error) *MockBankReceiptService_Match_Call {
+	_c.Call.Return(bankReceipt, err)
 	return _c
 }
 
@@ -458,8 +457,8 @@ func (_c *MockBankReceiptService_SuggestMatches_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockBankReceiptService_SuggestMatches_Call) Return(matchSuggestions []*services.BankReceiptMatchSuggestion, err error) *MockBankReceiptService_SuggestMatches_Call {
-	_c.Call.Return(matchSuggestions, err)
+func (_c *MockBankReceiptService_SuggestMatches_Call) Return(bankReceiptMatchSuggestions []*services.BankReceiptMatchSuggestion, err error) *MockBankReceiptService_SuggestMatches_Call {
+	_c.Call.Return(bankReceiptMatchSuggestions, err)
 	return _c
 }
 

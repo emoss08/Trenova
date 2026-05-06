@@ -5,6 +5,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,14 +69,16 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 			1,
 		))
 
-	result, err := repo.GetUnassigned(t.Context(), &pagination.QueryOptions{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: orgID,
-			BuID:  buID,
-		},
-		Pagination: pagination.Info{
-			Limit:  10,
-			Offset: 0,
+	result, err := repo.GetUnassigned(t.Context(), &repositories.GetUnassignedShipmentsRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: orgID,
+				BuID:  buID,
+			},
+			Pagination: pagination.Info{
+				Limit:  10,
+				Offset: 0,
+			},
 		},
 	})
 

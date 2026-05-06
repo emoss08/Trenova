@@ -291,10 +291,8 @@ func validateSplitRequest(req *repositories.SplitMoveRequest, move *shipment.Shi
 		}
 	}
 
-	newDeliveryDeadline := req.NewDeliveryTimes.ScheduledWindowStart
 	if req.NewDeliveryTimes.ScheduledWindowEnd != nil {
-		newDeliveryDeadline = *req.NewDeliveryTimes.ScheduledWindowEnd
-		if newDeliveryDeadline < req.NewDeliveryTimes.ScheduledWindowStart {
+		if *req.NewDeliveryTimes.ScheduledWindowEnd < req.NewDeliveryTimes.ScheduledWindowStart {
 			return errortypes.NewBusinessError(
 				"New delivery scheduled window end must be greater than or equal to the scheduled window start",
 			).WithParam("moveId", move.ID.String())

@@ -885,74 +885,6 @@ func (_c *MockShipmentService_Get_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
-// GetUnassigned provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) GetUnassigned(ctx context.Context, req *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUnassigned")
-	}
-
-	var r0 *pagination.ListResult[*shipment.Shipment]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *pagination.QueryOptions) *pagination.ListResult[*shipment.Shipment]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *pagination.QueryOptions) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockShipmentService_GetUnassigned_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnassigned'
-type MockShipmentService_GetUnassigned_Call struct {
-	*mock.Call
-}
-
-// GetUnassigned is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *pagination.QueryOptions
-func (_e *MockShipmentService_Expecter) GetUnassigned(ctx interface{}, req interface{}) *MockShipmentService_GetUnassigned_Call {
-	return &MockShipmentService_GetUnassigned_Call{Call: _e.mock.On("GetUnassigned", ctx, req)}
-}
-
-func (_c *MockShipmentService_GetUnassigned_Call) Run(run func(ctx context.Context, req *pagination.QueryOptions)) *MockShipmentService_GetUnassigned_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *pagination.QueryOptions
-		if args[1] != nil {
-			arg1 = args[1].(*pagination.QueryOptions)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockShipmentService_GetUnassigned_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentService_GetUnassigned_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockShipmentService_GetUnassigned_Call) RunAndReturn(run func(ctx context.Context, req *pagination.QueryOptions) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentService_GetUnassigned_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetAutoCancelableShipments provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) GetAutoCancelableShipments(ctx context.Context, req *repositories.GetAutoCancelableShipmentsRequest) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)
@@ -1295,6 +1227,74 @@ func (_c *MockShipmentService_GetUIPolicy_Call) Return(shipmentUIPolicy *service
 }
 
 func (_c *MockShipmentService_GetUIPolicy_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*services.ShipmentUIPolicy, error)) *MockShipmentService_GetUIPolicy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetUnassigned provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) GetUnassigned(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUnassigned")
+	}
+
+	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) *pagination.ListResult[*shipment.Shipment]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_GetUnassigned_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnassigned'
+type MockShipmentService_GetUnassigned_Call struct {
+	*mock.Call
+}
+
+// GetUnassigned is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetUnassignedShipmentsRequest
+func (_e *MockShipmentService_Expecter) GetUnassigned(ctx interface{}, req interface{}) *MockShipmentService_GetUnassigned_Call {
+	return &MockShipmentService_GetUnassigned_Call{Call: _e.mock.On("GetUnassigned", ctx, req)}
+}
+
+func (_c *MockShipmentService_GetUnassigned_Call) Run(run func(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest)) *MockShipmentService_GetUnassigned_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetUnassignedShipmentsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetUnassignedShipmentsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_GetUnassigned_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentService_GetUnassigned_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockShipmentService_GetUnassigned_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentService_GetUnassigned_Call {
 	_c.Call.Return(run)
 	return _c
 }

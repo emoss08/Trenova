@@ -85,7 +85,7 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 			validation.By(func(value any) error {
 				ids, _ := value.([]pulid.ID)
 				if len(ids) > MaxCommentMentions {
-					return errors.New("Mention count must be 20 or fewer")
+					return errors.New("mention count must be 20 or fewer")
 				}
 				return nil
 			}),

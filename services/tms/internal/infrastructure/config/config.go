@@ -46,7 +46,7 @@ type MetricsConfig struct {
 
 type TracingConfig struct {
 	Enabled      bool    `mapstructure:"enabled"`
-	Provider     string  `mapstructure:"provider"     validate:"required_if=Enabled true,oneof=jaeger zipkin otlp otlp-grpc stdout"`
+	Provider     string  `mapstructure:"provider"     validate:"required_if=Enabled true,oneof=jaeger otlp otlp-grpc stdout"`
 	Endpoint     string  `mapstructure:"endpoint"     validate:"required_if=Enabled true"`
 	ServiceName  string  `mapstructure:"serviceName"  validate:"required_if=Enabled true"`
 	SamplingRate float64 `mapstructure:"samplingRate" validate:"min=0,max=1"`

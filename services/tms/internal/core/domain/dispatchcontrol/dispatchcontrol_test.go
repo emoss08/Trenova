@@ -389,11 +389,6 @@ func TestServiceIncidentType_IsValid(t *testing.T) {
 	}
 }
 
-//go:fix inline
-func intPtr(v int) *int {
-	return new(v)
-}
-
 func TestServiceIncidentTypeFromString(t *testing.T) {
 	t.Parallel()
 

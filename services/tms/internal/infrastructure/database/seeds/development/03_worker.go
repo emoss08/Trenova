@@ -174,13 +174,6 @@ func (s *WorkerSeed) Run(ctx context.Context, tx bun.Tx) error {
 				worker.PTOTypePaternity,
 			}
 
-			ptoStatuses := []worker.PTOStatus{
-				worker.PTOStatusApproved,
-				worker.PTOStatusRequested,
-				worker.PTOStatusRejected,
-				worker.PTOStatusCancelled,
-			}
-
 			ptoReasons := []string{
 				"Family vacation",
 				"Not feeling well",
@@ -299,7 +292,7 @@ func (s *WorkerSeed) Run(ctx context.Context, tx bun.Tx) error {
 					) //nolint:gosec // deterministic seed data generation
 
 					roll := rng.Intn(100) //nolint:gosec // deterministic seed data generation
-					status := ptoStatuses[0]
+					var status worker.PTOStatus
 					switch {
 					case roll < 50:
 						status = worker.PTOStatusApproved

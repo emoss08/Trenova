@@ -115,7 +115,7 @@ func (s *GLAccountSeed) applyAccountingDefaults(
 		Column("id", "account_code").
 		Where("organization_id = ?", orgID).
 		Where("business_unit_id = ?", buID).
-		Where("account_code IN (?)", bun.In([]string{"1110", "6940"})).
+		Where("account_code IN (?)", bun.List([]string{"1110", "6940"})).
 		Scan(ctx, &rows); err != nil {
 		return err
 	}

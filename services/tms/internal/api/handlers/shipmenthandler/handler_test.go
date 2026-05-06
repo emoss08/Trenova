@@ -379,12 +379,16 @@ func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 
 	service := mocks.NewMockShipmentService(t)
 	service.EXPECT().
-		GetUnassigned(mock.Anything, mock.MatchedBy(func(req *pagination.QueryOptions) bool {
-			return req.TenantInfo.OrgID == testutil.TestOrgID &&
-				req.TenantInfo.BuID == testutil.TestBuID &&
-				req.Pagination.SafeLimit() == 10 &&
-				req.Pagination.SafeOffset() == 5
-		})).
+		GetUnassigned(
+			mock.Anything,
+			mock.MatchedBy(func(req *repositories.GetUnassignedShipmentsRequest) bool {
+				return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
+					req.Filter.TenantInfo.BuID == testutil.TestBuID &&
+					req.Filter.Pagination.SafeLimit() == 10 &&
+					req.Filter.Pagination.SafeOffset() == 5 &&
+					req.ShipmentOptions.ExpandShipmentDetails
+			}),
+		).
 		Return(&pagination.ListResult[*shipment.Shipment]{
 			Items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
 			Total: 1,
@@ -397,8 +401,9 @@ func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/shipments/unassigned/").
 		WithQuery(map[string]string{
-			"limit":  "10",
-			"offset": "5",
+			"limit":                 "10",
+			"offset":                "5",
+			"expandShipmentDetails": "true",
 		}).
 		WithDefaultAuthContext()
 

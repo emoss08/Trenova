@@ -321,8 +321,3 @@ func validShipment() *shipment.Shipment {
 func int16Ptr(value int16) *int16 {
 	return new(value)
 }
-
-//go:fix inline
-func pulidPtr(value pulid.ID) *pulid.ID {
-	return new(value)
-}

@@ -811,8 +811,3 @@ func TestComputedWithNilEntity(t *testing.T) {
 	_, err := r.ResolveComputed((*ShipmentEntity)(nil), "computeTotalDistance")
 	require.Error(t, err)
 }
-
-//go:fix inline
-func ptrFloat64(v float64) *float64 {
-	return new(v)
-}

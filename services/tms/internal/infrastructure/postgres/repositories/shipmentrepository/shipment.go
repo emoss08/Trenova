@@ -134,9 +134,9 @@ func (r *repository) GetByIDs(
 
 func (r *repository) GetUnassigned(
 	ctx context.Context,
-	req *pagination.QueryOptions,
+	req *repositories.GetUnassignedShipmentsRequest,
 ) (*pagination.ListResult[*shipment.Shipment], error) {
-	entities := make([]*shipment.Shipment, 0, req.Pagination.SafeLimit())
+	entities := make([]*shipment.Shipment, 0, req.Filter.Pagination.SafeLimit())
 	dba := r.db.DBForContext(ctx)
 
 	total, err := dba.
@@ -148,6 +148,12 @@ func (r *repository) GetUnassigned(
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if req.ShipmentOptions.ExpandShipmentDetails {
+		if err = r.hydrateMoves(ctx, entities); err != nil {
+			return nil, err
+		}
 	}
 
 	return &pagination.ListResult[*shipment.Shipment]{
