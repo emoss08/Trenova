@@ -24,8 +24,10 @@ import (
 var _ services.AnalyticsPageProvider = (*Provider)(nil)
 
 const laneHeatmapInclude = "laneHeatmap"
+const tomorrowsPickupsInclude = "tomorrowsPickups"
 const defaultLaneHeatmapWindowDays = 7
 const customerMixWindowDays = 30
+const defaultTomorrowsPickupsLimit = 20
 
 type ProviderParams struct {
 	fx.In
@@ -68,6 +70,14 @@ type tomorrowPickupRow struct {
 	HasPrimaryWorker  bool            `bun:"has_primary_worker"`
 }
 
+type tomorrowsPickupsRequest struct {
+	orgID  pulid.ID
+	buID   pulid.ID
+	tz     string
+	limit  int
+	offset int
+}
+
 func NewProvider(p ProviderParams) *Provider {
 	return &Provider{
 		l:           p.Logger.Named("analyticsprovider.shipment"),
@@ -87,6 +97,24 @@ func (p *Provider) GetAnalyticsData(
 	log := p.l.With(zap.String("operation", "GetAnalyticsData"), zap.Any("opts", opts))
 
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
+
+	if opts.Include == tomorrowsPickupsInclude {
+		tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
+			orgID:  opts.OrgID,
+			buID:   opts.BuID,
+			tz:     tz,
+			limit:  opts.Limit,
+			offset: opts.Offset,
+		})
+		if err != nil {
+			log.Error("failed to get tomorrow's pickups", zap.Error(err))
+			return nil, err
+		}
+
+		return services.AnalyticsData{
+			"tomorrowsPickups": tomorrowsPickups,
+		}, nil
+	}
 
 	laneHeatmap, err := p.getLaneHeatmap(ctx, opts.OrgID, opts.BuID, opts.WindowDays)
 	if err != nil {
@@ -142,7 +170,12 @@ func (p *Provider) GetAnalyticsData(
 		return nil, err
 	}
 
-	tomorrowsPickups, err := p.getTomorrowsPickups(ctx, opts.OrgID, opts.BuID, tz)
+	tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
+		orgID: opts.OrgID,
+		buID:  opts.BuID,
+		tz:    tz,
+		limit: defaultTomorrowsPickupsLimit,
+	})
 	if err != nil {
 		log.Error("failed to get tomorrow's pickups", zap.Error(err))
 		return nil, err
@@ -528,12 +561,16 @@ func (p *Provider) getCustomerMix(
 
 func (p *Provider) getTomorrowsPickups(
 	ctx context.Context,
-	orgID, buID pulid.ID,
-	tz string,
+	req tomorrowsPickupsRequest,
 ) (*TomorrowsPickupsCard, error) {
-	loc, err := time.LoadLocation(tz)
+	loc, err := time.LoadLocation(req.tz)
 	if err != nil {
-		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+		return nil, fmt.Errorf("load timezone %q: %w", req.tz, err)
+	}
+
+	limit := req.limit
+	if limit <= 0 {
+		limit = defaultTomorrowsPickupsLimit
 	}
 
 	now := time.Now().In(loc)
@@ -616,13 +653,15 @@ func (p *Provider) getTomorrowsPickups(
 			AND sp.status != ?
 			AND stp.scheduled_window_start >= ?
 			AND stp.scheduled_window_start < ?
-		ORDER BY stp.scheduled_window_start ASC, sp.pro_number ASC`,
+		ORDER BY stp.scheduled_window_start ASC, sp.pro_number ASC
+		LIMIT ?
+		OFFSET ?`,
 		shipment.AssignmentStatusCanceled,
 		shipment.StopStatusCanceled,
 		shipment.StopTypeDelivery,
 		shipment.StopTypeSplitDelivery,
-		orgID,
-		buID,
+		req.orgID,
+		req.buID,
 		shipment.StopTypePickup,
 		shipment.StopTypeSplitPickup,
 		shipment.StopStatusCanceled,
@@ -630,6 +669,8 @@ func (p *Provider) getTomorrowsPickups(
 		shipment.StatusCanceled,
 		tomorrowStart.Unix(),
 		tomorrowEnd.Unix(),
+		limit,
+		req.offset,
 	).Scan(ctx, &rows)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ export class AnalyticsService {
     const searchParams = new URLSearchParams();
     if (params.page) searchParams.set("page", String(params.page));
     if (params.limit) searchParams.set("limit", String(params.limit));
+    if (params.offset) searchParams.set("offset", String(params.offset));
     if (params?.endDate) searchParams.set("endDate", String(params.endDate));
     if (params?.startDate) searchParams.set("startDate", String(params.startDate));
     if (params?.timezone) searchParams.set("timezone", params.timezone);

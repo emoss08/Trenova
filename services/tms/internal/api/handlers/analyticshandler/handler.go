@@ -17,6 +17,7 @@ const (
 	minAnalyticsWindowDays     = 1
 	maxAnalyticsWindowDays     = 90
 	includeLaneHeatmap         = "laneHeatmap"
+	includeTomorrowsPickups    = "tomorrowsPickups"
 )
 
 type Params struct {
@@ -53,6 +54,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Param startDate query int false "Start date as Unix timestamp"
 // @Param endDate query int false "End date as Unix timestamp"
 // @Param limit query int false "Result limit"
+// @Param offset query int false "Result offset"
 // @Param timezone query string false "IANA timezone name"
 // @Param windowDays query int false "Rolling analytics window in days"
 // @Param include query string false "Optional analytics section to include"
@@ -83,6 +85,7 @@ func (h *Handler) get(c *gin.Context) {
 		UserID:     authCtx.UserID,
 		Page:       req.Page,
 		Limit:      req.Limit,
+		Offset:     req.Offset,
 		Timezone:   req.Timezone,
 		WindowDays: req.WindowDays,
 		Include:    req.Include,
@@ -123,8 +126,12 @@ func validateAnalyticsRequest(req *services.AnaltyicsRequest) error {
 		),
 		validation.Field(
 			&req.Include,
-			validation.In("", includeLaneHeatmap).
-				Error("Include must be laneHeatmap when provided"),
+			validation.In("", includeLaneHeatmap, includeTomorrowsPickups).
+				Error("Include must be laneHeatmap or tomorrowsPickups when provided"),
+		),
+		validation.Field(
+			&req.Offset,
+			validation.Min(0).Error("Offset must be at least 0"),
 		),
 	)
 

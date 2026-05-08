@@ -11,6 +11,7 @@ export const analyticsParamsSchema = z.object({
   startDate: z.number().optional(),
   endDate: z.number().optional(),
   limit: z.number().optional(),
+  offset: z.number().optional(),
   timezone: z.string().optional(),
   windowDays: z.number().optional(),
   include: z.string().optional(),

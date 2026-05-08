@@ -20,6 +20,7 @@ type AnaltyicsRequest struct {
 	StartDate  int64         `form:"startDate"  json:"startDate"`
 	EndDate    int64         `form:"endDate"    json:"endDate"`
 	Limit      int           `form:"limit"      json:"limit"`
+	Offset     int           `form:"offset"     json:"offset"`
 	Timezone   string        `form:"timezone"   json:"timezone"`
 	WindowDays int           `form:"windowDays" json:"windowDays"`
 	Include    string        `form:"include"    json:"include"`
@@ -38,6 +39,7 @@ type AnalyticsRequestOptions struct {
 	DateRange  *DateRange    `json:"dateRange,omitempty"`
 	Timezone   string        `json:"timezone"`
 	Limit      int           `json:"limit,omitempty"`
+	Offset     int           `json:"offset,omitempty"`
 	WindowDays int           `json:"windowDays,omitempty"`
 	Include    string        `json:"include,omitempty"`
 }

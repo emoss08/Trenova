@@ -180,7 +180,7 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	pickupStart := time.Date(2026, time.May, 8, 9, 30, 0, 0, time.UTC).Unix()
 
-	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.id AS shipment_id.*stp\.status != .*sm\.status != .*sp\.status != .*ORDER BY stp\.scheduled_window_start ASC`).
+	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.id AS shipment_id.*stp\.status != .*sm\.status != .*sp\.status != .*ORDER BY stp\.scheduled_window_start ASC.*LIMIT .*OFFSET`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"shipment_id",
 			"pro_number",
@@ -196,7 +196,13 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 			AddRow("sp_2", "PRO-1002", pickupStart+3600, "FreshHaul Foods", "COLD-SEA", "DC-PDX", "", shipment.StatusNew, false).
 			AddRow("sp_3", "PRO-1003", pickupStart+7200, "Range Logistics", "ATL", "CLT", "A. Romero", shipment.StatusPartiallyAssigned, true))
 
-	card, err := provider.getTomorrowsPickups(t.Context(), orgID, buID, "UTC")
+	card, err := provider.getTomorrowsPickups(t.Context(), tomorrowsPickupsRequest{
+		orgID:  orgID,
+		buID:   buID,
+		tz:     "UTC",
+		limit:  20,
+		offset: 0,
+	})
 
 	require.NoError(t, err)
 	require.NotNil(t, card)

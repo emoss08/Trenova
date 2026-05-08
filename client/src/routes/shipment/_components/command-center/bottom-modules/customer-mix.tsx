@@ -1,10 +1,18 @@
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
+import { TextShimmer } from "@/components/ui/text-shimmer";
+import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { cn } from "@/lib/utils";
+import { apiService } from "@/services/api";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
+import type React from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { ShipmentAnalyticsData } from "../../analytics/mock-data";
 
 type CustomerMixEntry = ShipmentAnalyticsData["customerMix"]["entries"][number];
 type TomorrowPickup = ShipmentAnalyticsData["tomorrowsPickups"]["pickups"][number];
+type TomorrowsPickupsCard = ShipmentAnalyticsData["tomorrowsPickups"];
 type PickupStatus = TomorrowPickup["status"];
 
 type CustomerMixProps = {
@@ -27,16 +35,21 @@ const SHARE_BAR_COLORS = [
   "var(--color-muted-foreground)",
 ];
 
+const PICKUPS_PAGE_SIZE = 20;
+
 export function CustomerMix({ customerMix, tomorrowsPickups }: CustomerMixProps) {
   return (
-    <section className="cc-module-card flex min-h-[260px] flex-col">
+    <CustomerMixSection>
       <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
         <header className="flex items-center justify-between border-b border-border px-2 py-1">
-          <TabsList variant="underline" className="bg-transparent p-0">
-            <TabsTab value="customers" className="h-7 px-2 text-[11px]">
+          <TabsList
+            variant="underline"
+            className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"
+          >
+            <TabsTab value="customers" className="h-6 px-2 text-[11px] hover:bg-transparent">
               Customers
             </TabsTab>
-            <TabsTab value="pickups" className="h-7 px-2 text-[11px]">
+            <TabsTab value="pickups" className="h-7 px-2 text-[11px] hover:bg-transparent">
               Tomorrow&apos;s pickups
             </TabsTab>
           </TabsList>
@@ -48,11 +61,15 @@ export function CustomerMix({ customerMix, tomorrowsPickups }: CustomerMixProps)
           <CustomersList entries={customerMix.entries} />
         </TabsPanel>
         <TabsPanel value="pickups" className="min-h-0 flex-1 overflow-y-auto">
-          <PickupsList pickups={tomorrowsPickups.pickups} />
+          <PickupsList initialData={tomorrowsPickups} />
         </TabsPanel>
       </Tabs>
-    </section>
+    </CustomerMixSection>
   );
+}
+
+function CustomerMixSection({ children }: { children: React.ReactNode }) {
+  return <section className="cc-module-card flex min-h-65 flex-col">{children}</section>;
 }
 
 function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
@@ -98,7 +115,75 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
   );
 }
 
-function PickupsList({ pickups }: { pickups: TomorrowPickup[] }) {
+function PickupsList({ initialData }: { initialData: TomorrowsPickupsCard }) {
+  const [, setSearchParams] = useQueryStates(searchParamsParser);
+  const observerTarget = useRef<HTMLLIElement>(null);
+
+  const query = useInfiniteQuery({
+    queryKey: [
+      "analytics",
+      "shipment-management",
+      "tomorrowsPickups",
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ],
+    queryFn: async ({ pageParam }) =>
+      apiService.analyticService.get({
+        page: "shipment-management",
+        include: "tomorrowsPickups",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        limit: PICKUPS_PAGE_SIZE,
+        offset: pageParam,
+      }),
+    initialPageParam: 0,
+    initialData: {
+      pageParams: [0],
+      pages: [
+        {
+          page: "shipment-management",
+          tomorrowsPickups: initialData,
+        },
+      ],
+    },
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      const pickups = (lastPage.tomorrowsPickups as TomorrowsPickupsCard | undefined)?.pickups;
+      if (pickups && pickups.length === PICKUPS_PAGE_SIZE) {
+        return lastPageParam + PICKUPS_PAGE_SIZE;
+      }
+
+      return undefined;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const pickups = useMemo(
+    () =>
+      query.data.pages.flatMap((page) => {
+        const card = page.tomorrowsPickups as TomorrowsPickupsCard | undefined;
+        return card?.pickups ?? [];
+      }),
+    [query.data.pages],
+  );
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) observer.observe(currentTarget);
+
+    return () => {
+      if (currentTarget) observer.unobserve(currentTarget);
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   if (pickups.length === 0) {
     return <EmptyState label="No pickups scheduled for tomorrow" />;
   }
@@ -109,30 +194,49 @@ function PickupsList({ pickups }: { pickups: TomorrowPickup[] }) {
         <li
           key={`${pickup.shipmentId}-${pickup.pickupWindowStart}`}
           className={cn(
-            "flex items-center gap-2 px-3 py-1.5",
+            "transition-colors hover:bg-muted",
             index < pickups.length - 1 && "border-b border-border/60",
           )}
         >
-          <span className="w-10 font-mono text-[11px] font-semibold tabular-nums">
-            {formatPickupTime(pickup.pickupWindowStart)}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-medium">{pickup.customer}</p>
-            <p className="truncate font-mono text-[9.5px] text-muted-foreground">
-              {pickup.origin} → {pickup.destination}
-            </p>
-          </div>
-          {pickup.status === "unassigned" || pickup.status === "tentative" ? (
-            <Badge variant={PICKUP_STATUS[pickup.status].variant}>
-              {PICKUP_STATUS[pickup.status].label}
-            </Badge>
-          ) : (
-            <span className="max-w-20 truncate font-mono text-[10px] text-muted-foreground">
-              {pickup.driver || PICKUP_STATUS[pickup.status].label}
+          <button
+            type="button"
+            className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left"
+            onClick={() =>
+              void setSearchParams({
+                panelType: "edit",
+                panelEntityId: pickup.shipmentId,
+              })
+            }
+          >
+            <span className="w-10 font-mono text-[11px] font-semibold tabular-nums">
+              {formatPickupTime(pickup.pickupWindowStart)}
             </span>
-          )}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[11px] font-medium">{pickup.customer}</p>
+              <p className="truncate font-mono text-[9.5px] text-muted-foreground">
+                {pickup.origin} → {pickup.destination}
+              </p>
+            </div>
+            {pickup.status === "unassigned" || pickup.status === "tentative" ? (
+              <Badge variant={PICKUP_STATUS[pickup.status].variant}>
+                {PICKUP_STATUS[pickup.status].label}
+              </Badge>
+            ) : (
+              <span className="max-w-20 truncate font-mono text-[10px] text-muted-foreground">
+                {pickup.driver || PICKUP_STATUS[pickup.status].label}
+              </span>
+            )}
+          </button>
         </li>
       ))}
+      {isFetchingNextPage && (
+        <li className="flex items-center justify-center py-3">
+          <TextShimmer className="font-mono text-[11px]" duration={1}>
+            Loading more...
+          </TextShimmer>
+        </li>
+      )}
+      {hasNextPage && <li ref={observerTarget} className="h-px" aria-hidden />}
     </ul>
   );
 }
