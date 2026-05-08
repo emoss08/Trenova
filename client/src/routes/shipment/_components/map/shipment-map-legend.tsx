@@ -11,15 +11,18 @@ export function ShipmentMapLegend({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-2 rounded-md border border-border bg-card/85 px-2 py-1 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm",
+        "pointer-events-none absolute bottom-3 left-3 z-10 flex items-center gap-1",
         className,
       )}
     >
       {ENTRIES.map((e) => (
-        <span key={e.label} className="inline-flex items-center gap-1">
+        <span
+          key={e.label}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background text-2xs p-1 font-table text-muted-foreground"
+        >
           <span
             aria-hidden
-            className="inline-block size-2 rounded-full"
+            className="inline-block size-2 rounded-full mb-0.5"
             style={{ background: e.color }}
           />
           {e.label}

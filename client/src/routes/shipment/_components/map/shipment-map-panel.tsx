@@ -23,8 +23,8 @@ import { ShipmentMapLegend } from "./shipment-map-legend";
 import { ShipmentRouteOverlay } from "./shipment-route-overlay";
 import { TrafficLayer } from "./traffic-layer";
 import { HighlightAutoPan } from "./use-highlight-pan";
-import { useMapUIState } from "./use-map-ui-state";
 import { useMapShipments } from "./use-map-shipments";
+import { useMapUIState } from "./use-map-ui-state";
 import { WeatherAlertLayer } from "./weather-alert-layer";
 import { WeatherRadarLayer } from "./weather-radar-layer";
 
@@ -246,7 +246,11 @@ export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNo
           fallbackRender={({ error }) => <MapErrorFallback error={error as Error} />}
           onReset={reset}
         >
-          <Suspense fallback={<LoadingSkeletonState description="Loading map component..." />}>
+          <Suspense
+            fallback={
+              <LoadingSkeletonState description="Loading map component..." className="h-full" />
+            }
+          >
             {children}
           </Suspense>
         </ErrorBoundary>

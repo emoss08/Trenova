@@ -5,6 +5,7 @@ import { AccountingControlService } from "./accounting-control";
 import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
 import { AuditService } from "./audit";
+import { ShipmentEventService } from "./shipment-event";
 import { BillingControlService } from "./billing-control";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
@@ -97,6 +98,7 @@ class APIService {
   public holdReasonService: HoldReasonService;
   public shipmentCommentService: ShipmentCommentService;
   public shipmentControlService: ShipmentControlService;
+  public shipmentEventService: ShipmentEventService;
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
   public invoiceAdjustmentControlService: InvoiceAdjustmentControlService;
@@ -163,6 +165,7 @@ class APIService {
     this.holdReasonService = new HoldReasonService();
     this.shipmentCommentService = new ShipmentCommentService();
     this.shipmentControlService = new ShipmentControlService();
+    this.shipmentEventService = new ShipmentEventService();
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
     this.invoiceAdjustmentControlService = new InvoiceAdjustmentControlService();

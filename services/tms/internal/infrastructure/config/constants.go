@@ -15,3 +15,11 @@ const (
 	RoutingProviderHERE    = RoutingProvider("here")
 	RoutingProviderPCMiler = RoutingProvider("pcmiler")
 )
+
+type PlatformMode string
+
+const (
+	PlatformModeCommunity  = PlatformMode("community")
+	PlatformModeCloud      = PlatformMode("cloud")
+	PlatformModeEnterprise = PlatformMode("enterprise")
+)

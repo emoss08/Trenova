@@ -130,11 +130,12 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 
 			billingControl := &tenant.BillingControl{
-				ID:             pulid.MustNew("bc_"),
-				OrganizationID: org.ID,
-				BusinessUnitID: bu.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
+				ID:                           pulid.MustNew("bc_"),
+				OrganizationID:               org.ID,
+				BusinessUnitID:               bu.ID,
+				BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
+				CreatedAt:                    now,
+				UpdatedAt:                    now,
 			}
 			if _, err := tx.NewInsert().Model(billingControl).Exec(ctx); err != nil {
 				return fmt.Errorf("create billing control: %w", err)

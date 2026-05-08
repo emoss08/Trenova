@@ -226,6 +226,26 @@ func TestLoad_ProductionWithValidConfig(t *testing.T) {
 	assert.True(t, cfg.Security.Session.Secure)
 }
 
+func TestLoad_CloudPlatformModeRequiresControlPlaneConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	configContent := validConfigYAML() + `
+platform:
+  mode: cloud
+  controlPlane:
+    enabled: true
+    endpoint: ""
+    apiKey: ""
+`
+	err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(configContent), 0o600)
+	require.NoError(t, err)
+
+	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
+
+	cfg, err := l.Load()
+	require.Nil(t, cfg)
+	require.ErrorContains(t, err, "platform.controlplane.endpoint is required")
+}
+
 func TestLoad_StagingWithEnvSpecificConfig(t *testing.T) {
 	tmpDir := t.TempDir()
 	configContent := validConfigYAML()

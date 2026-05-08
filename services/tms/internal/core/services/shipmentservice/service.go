@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -54,6 +55,7 @@ type Params struct {
 	Permissions         services.PermissionEngine
 	Validator           *Validator
 	AuditService        services.AuditService
+	EventService        services.ShipmentEventService
 	Realtime            services.RealtimeService
 	WorkflowStarter     services.WorkflowStarter
 	Coordinator         *shipmentstate.Coordinator
@@ -80,6 +82,7 @@ type service struct {
 	permissions         services.PermissionEngine
 	validator           *Validator
 	auditService        services.AuditService
+	eventService        services.ShipmentEventService
 	realtime            services.RealtimeService
 	workflowStarter     services.WorkflowStarter
 	coordinator         *shipmentstate.Coordinator
@@ -108,6 +111,7 @@ func New(p Params) services.ShipmentService {
 		permissions:         p.Permissions,
 		validator:           p.Validator,
 		auditService:        p.AuditService,
+		eventService:        p.EventService,
 		realtime:            p.Realtime,
 		workflowStarter:     p.WorkflowStarter,
 		coordinator:         p.Coordinator,
@@ -264,6 +268,12 @@ func (s *service) Create(
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
 
+	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentCreated(
+		tenantRefForShipment(createdEntity),
+		createdEntity,
+		auditActor,
+	))
+
 	return createdEntity, nil
 }
 
@@ -380,6 +390,8 @@ func (s *service) Update(
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
 
+	s.emitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
+
 	if updatedEntity.Status == shipment.StatusCompleted &&
 		s.customerRepo != nil &&
 		s.documentRepo != nil &&
@@ -493,6 +505,14 @@ func (s *service) TransferOwnership(
 	); err != nil {
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
+
+	s.recordShipmentEvent(ctx, shipmenteventservice.BuildOwnershipTransferred(
+		tenantRefForShipment(updatedEntity),
+		updatedEntity,
+		original.OwnerID,
+		req.OwnerID,
+		auditActor,
+	))
 
 	return updatedEntity, nil
 }
@@ -754,6 +774,13 @@ func (s *service) Cancel(
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
 
+	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentCanceled(
+		tenantRefForShipment(updatedEntity),
+		updatedEntity,
+		req.CancelReason,
+		auditActor,
+	))
+
 	return updatedEntity, nil
 }
 
@@ -819,6 +846,12 @@ func (s *service) Uncancel(
 	); err != nil {
 		log.Warn("failed to publish realtime invalidation", zap.Error(err))
 	}
+
+	s.recordShipmentEvent(ctx, shipmenteventservice.BuildShipmentUncanceled(
+		tenantRefForShipment(updatedEntity),
+		updatedEntity,
+		auditActor,
+	))
 
 	return updatedEntity, nil
 }

@@ -7,10 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.uber.org/zap"
 )
 
 func (s *service) advanceContinuityForCompletedMoves(
@@ -90,6 +92,41 @@ func (s *service) logShipmentAction(
 	}
 
 	return s.auditService.LogAction(params, opts...)
+}
+
+func (s *service) recordShipmentEvent(
+	ctx context.Context,
+	params *services.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record shipment event", zap.Error(err))
+	}
+}
+
+func (s *service) emitStatusChangeEvent(
+	ctx context.Context,
+	original, updated *shipment.Shipment,
+	actor services.AuditActor,
+) {
+	if original == nil || updated == nil || original.Status == updated.Status {
+		return
+	}
+	s.recordShipmentEvent(ctx, shipmenteventservice.BuildStatusChanged(
+		tenantRefForShipment(updated),
+		updated,
+		original.Status,
+		actor,
+	))
+}
+
+func tenantRefForShipment(entity shipmentTenantResource) shipmenteventservice.TenantRef {
+	return shipmenteventservice.TenantRef{
+		OrganizationID: entity.GetOrganizationID(),
+		BusinessUnitID: entity.GetBusinessUnitID(),
+	}
 }
 
 func (s *service) publishShipmentInvalidation(

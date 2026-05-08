@@ -32,8 +32,12 @@ export const commandCenterParser = {
   mode: parseAsStringLiteral(VIEW_MODES).withDefault("table"),
   expanded: parseAsString,
   page: parseAsInteger.withDefault(1),
+  size: parseAsInteger.withDefault(10),
   q: parseAsString.withDefault(""),
 };
+
+export const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+export type CommandCenterPageSize = (typeof PAGE_SIZE_OPTIONS)[number];
 
 export function useCommandCenterUrl() {
   return useQueryStates(commandCenterParser, {

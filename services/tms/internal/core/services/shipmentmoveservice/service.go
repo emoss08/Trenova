@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentavailabilityhelper"
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,6 +35,7 @@ type Params struct {
 	ContinuityRepo repositories.EquipmentContinuityRepository
 	Coordinator    *shipmentstate.Coordinator
 	Commercial     *shipmentcommercial.Calculator
+	EventService   portservices.ShipmentEventService
 }
 
 type service struct {
@@ -47,6 +49,7 @@ type service struct {
 	continuityRepo repositories.EquipmentContinuityRepository
 	coordinator    *shipmentstate.Coordinator
 	commercial     *shipmentcommercial.Calculator
+	eventService   portservices.ShipmentEventService
 }
 
 //nolint:gocritic // service constructor
@@ -62,6 +65,37 @@ func New(p Params) portservices.ShipmentMoveService {
 		continuityRepo: p.ContinuityRepo,
 		coordinator:    p.Coordinator,
 		commercial:     p.Commercial,
+		eventService:   p.EventService,
+	}
+}
+
+func (s *service) recordMoveEvent(
+	ctx context.Context,
+	params *portservices.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record move event", zap.Error(err))
+	}
+}
+
+func tenantRefForMoveTenant(tenantInfo pagination.TenantInfo) shipmenteventservice.TenantRef {
+	return shipmenteventservice.TenantRef{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+func actorForMoveTenant(tenantInfo pagination.TenantInfo) portservices.AuditActor {
+	if tenantInfo.UserID.IsNil() {
+		return portservices.AuditActor{}
+	}
+	return portservices.AuditActor{
+		PrincipalType: portservices.PrincipalTypeUser,
+		PrincipalID:   tenantInfo.UserID,
+		UserID:        tenantInfo.UserID,
 	}
 }
 
@@ -74,6 +108,7 @@ func (s *service) UpdateStatus(
 	}
 
 	var updatedMove *shipment.ShipmentMove
+	var previousStatus shipment.MoveStatus
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		move, err := s.repo.GetByID(txCtx, &repositories.GetMoveByIDRequest{
 			MoveID:            req.MoveID,
@@ -84,6 +119,7 @@ func (s *service) UpdateStatus(
 		if err != nil {
 			return err
 		}
+		previousStatus = move.Status
 
 		if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
 			return errortypes.NewBusinessError(
@@ -121,6 +157,15 @@ func (s *service) UpdateStatus(
 		return nil, err
 	}
 
+	if updatedMove != nil && previousStatus != updatedMove.Status {
+		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
+			tenantRefForMoveTenant(req.TenantInfo),
+			updatedMove,
+			previousStatus,
+			actorForMoveTenant(req.TenantInfo),
+		))
+	}
+
 	return updatedMove, nil
 }
 
@@ -142,6 +187,7 @@ func (s *service) BulkUpdateStatus(
 	}
 
 	var updatedMoves []*shipment.ShipmentMove
+	previousStatuses := make(map[pulid.ID]shipment.MoveStatus, len(req.MoveIDs))
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		shipmentIDs := make(map[pulid.ID]struct{}, len(req.MoveIDs))
 		seenTractors := make(map[pulid.ID]pulid.ID, len(req.MoveIDs))
@@ -157,6 +203,7 @@ func (s *service) BulkUpdateStatus(
 			if err != nil {
 				return err
 			}
+			previousStatuses[moveID] = move.Status
 
 			if !shipmentstate.CanTransitionMoveStatus(move.Status, req.Status) {
 				return errortypes.NewBusinessError(
@@ -207,7 +254,31 @@ func (s *service) BulkUpdateStatus(
 		return nil, err
 	}
 
+	s.emitBulkMoveStatusEvents(ctx, req.TenantInfo, updatedMoves, previousStatuses)
+
 	return updatedMoves, nil
+}
+
+func (s *service) emitBulkMoveStatusEvents(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moves []*shipment.ShipmentMove,
+	previousStatuses map[pulid.ID]shipment.MoveStatus,
+) {
+	tenantRef := tenantRefForMoveTenant(tenantInfo)
+	actor := actorForMoveTenant(tenantInfo)
+	for _, m := range moves {
+		if m == nil {
+			continue
+		}
+		previous, ok := previousStatuses[m.ID]
+		if !ok || previous == m.Status {
+			continue
+		}
+		s.recordMoveEvent(ctx, shipmenteventservice.BuildMoveStatusChanged(
+			tenantRef, m, previous, actor,
+		))
+	}
 }
 
 func (s *service) SplitMove(

@@ -55,6 +55,7 @@ export function UpcomingPTOContent({ pto }: { pto: WorkerPTO }) {
       }
     },
   });
+
   return (
     <>
       <UpcomingContentOuter>

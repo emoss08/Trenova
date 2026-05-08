@@ -229,6 +229,12 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("documentIntelligence.maxExtractedChars", 200000)
 	l.viper.SetDefault("documentIntelligence.reconcileBatchSize", 100)
 	l.viper.SetDefault("documentIntelligence.maxConcurrentActivities", 2)
+
+	// Platform defaults
+	l.viper.SetDefault("platform.mode", string(PlatformModeCommunity))
+	l.viper.SetDefault("platform.controlPlane.enabled", false)
+	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
+	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
 }
 
 // loadConfigFiles loads base and environment-specific config files
@@ -275,6 +281,28 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	if config.Logging.Output == "file" && config.Logging.File == nil {
 		return ErrLoggingOutputIsFileButFileConfigIsMissing
+	}
+
+	if config.Platform.GetMode() == PlatformModeCloud ||
+		config.Platform.GetMode() == PlatformModeEnterprise {
+		if !config.Platform.ControlPlane.Enabled {
+			return fmt.Errorf(
+				"platform.controlplane.enabled is required for %s platform mode",
+				config.Platform.GetMode(),
+			)
+		}
+		if config.Platform.ControlPlane.Endpoint == "" {
+			return fmt.Errorf(
+				"platform.controlplane.endpoint is required for %s platform mode",
+				config.Platform.GetMode(),
+			)
+		}
+		if config.Platform.ControlPlane.APIKey == "" {
+			return fmt.Errorf(
+				"platform.controlplane.apikey is required for %s platform mode",
+				config.Platform.GetMode(),
+			)
+		}
 	}
 
 	return nil

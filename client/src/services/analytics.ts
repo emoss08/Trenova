@@ -9,6 +9,8 @@ export class AnalyticsService {
     if (params?.endDate) searchParams.set("endDate", String(params.endDate));
     if (params?.startDate) searchParams.set("startDate", String(params.startDate));
     if (params?.timezone) searchParams.set("timezone", params.timezone);
+    if (params?.windowDays) searchParams.set("windowDays", String(params.windowDays));
+    if (params?.include) searchParams.set("include", params.include);
 
     const queryString = searchParams.toString();
 

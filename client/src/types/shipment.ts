@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { accessorialChargeMethodSchema, type AccessorialCharge } from "./accessorial-charge";
+import { defaultBillTypeSchema } from "./bill-type";
 import type { Commodity } from "./commodity";
 import { customerSchema } from "./customer";
 import { formulaTemplateSchema } from "./formula-template";
@@ -277,6 +278,7 @@ export const shipmentSchema = z.object({
   owner: userSchema.nullish(),
   formulaTemplate: formulaTemplateSchema.nullish(),
 });
+
 export type Shipment = z.infer<typeof shipmentSchema>;
 
 export const shipmentCreateSchema = shipmentBaseSchema.extend({
@@ -377,24 +379,44 @@ export const previousRatesResponseSchema = z.object({
 });
 export type PreviousRatesResponse = z.infer<typeof previousRatesResponseSchema>;
 
-export type GetPreviousRatesRequest = {
-  originLocationId: string;
-  destinationLocationId: string;
-  shipmentTypeId: string;
-  serviceTypeId: string;
-  customerId?: string;
-  excludeShipmentId?: string;
-};
+export const getPreviousRatesRequestSchema = z.object({
+  originLocationId: z.string().min(1, { error: "Origin Location is required" }),
+  destinationLocationId: z.string().min(1, { error: "Destination Location is required" }),
+  shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
+  serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
+  customerId: optionalStringSchema,
+  excludeShipmentId: optionalStringSchema,
+});
 
-export type BulkTransferToBillingResult = {
-  shipmentId: string;
-  success: boolean;
-  error?: string;
-};
+export type GetPreviousRatesRequest = z.infer<typeof getPreviousRatesRequestSchema>;
 
-export type BulkTransferToBillingResponse = {
-  results: BulkTransferToBillingResult[];
-  totalCount: number;
-  successCount: number;
-  errorCount: number;
-};
+const bulkTransferToBillingResultSchema = z.object({
+  shipmentId: z.string(),
+  success: z.boolean(),
+  error: optionalStringSchema,
+});
+
+export type BulkTransferToBillingResult = z.infer<typeof bulkTransferToBillingResultSchema>;
+
+export const bulkTransferToBillingResponseSchema = z.object({
+  results: z.array(bulkTransferToBillingResultSchema),
+  totalCount: z.number(),
+  successCount: z.number(),
+  errorCount: z.number(),
+});
+
+export type BulkTransferToBillingResponse = z.infer<typeof bulkTransferToBillingResponseSchema>;
+
+export const bulkTransferToBillingRequestSchema = z.object({
+  shipmentIds: z.array(z.string()).min(1, { error: "At least one Shipment ID is required" }),
+  billType: defaultBillTypeSchema,
+});
+
+export type BulkTransferToBillingRequest = z.infer<typeof bulkTransferToBillingRequestSchema>;
+
+export const transferToBillingRequestSchema = z.object({
+  shipmentId: z.string().min(1, { error: "Shipment ID is required" }),
+  billType: defaultBillTypeSchema,
+});
+
+export type TransferToBillingRequest = z.infer<typeof transferToBillingRequestSchema>;

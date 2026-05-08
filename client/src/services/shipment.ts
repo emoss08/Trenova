@@ -1,20 +1,22 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
-import { createLimitOffsetResponse } from "@/types/server";
 import {
   loadingOptimizationResultSchema,
   type LoadingOptimizationRequest,
   type LoadingOptimizationResult,
 } from "@/types/loading-optimization";
+import { createLimitOffsetResponse } from "@/types/server";
 import {
+  bulkTransferToBillingResponseSchema,
   duplicateShipmentResponseSchema,
   previousRatesResponseSchema,
+  shipmentBillingReadinessSchema,
   shipmentCreateSchema,
   shipmentSchema,
-  shipmentBillingReadinessSchema,
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
   shipmentUpdateSchema,
+  type BulkTransferToBillingRequest,
   type BulkTransferToBillingResponse,
   type DuplicateShipmentRequest,
   type DuplicateShipmentResponse,
@@ -150,15 +152,19 @@ export class ShipmentService {
     const response = await api.post(`/shipments/${shipmentId}/transfer-to-billing/`, {
       billType: billType ?? "Invoice",
     });
+
     return response;
   }
 
-  public async bulkTransferToBilling(shipmentIds: string[], billType?: string) {
+  public async bulkTransferToBilling(req: BulkTransferToBillingRequest) {
+    if (req.billType === undefined) {
+    }
     const response = await api.post<BulkTransferToBillingResponse>(
       "/shipments/bulk-transfer-to-billing/",
-      { shipmentIds, billType: billType ?? "Invoice" },
+      { req },
     );
-    return response;
+
+    return safeParse(bulkTransferToBillingResponseSchema, response, "Bulk Transfer to Billing");
   }
 
   public async getBillingReadiness(shipmentId: Shipment["id"]) {

@@ -634,6 +634,39 @@ func (c *UpdateConfig) GetGitHubRepo() string {
 	return c.GitHubRepo
 }
 
+type PlatformConfig struct {
+	Mode         PlatformMode               `mapstructure:"mode"         validate:"omitempty,oneof=community cloud enterprise"`
+	ControlPlane PlatformControlPlaneConfig `mapstructure:"controlPlane"`
+}
+
+func (c *PlatformConfig) IsCloudBacked() bool {
+	return c.Mode == PlatformModeCloud || c.Mode == PlatformModeEnterprise
+}
+
+func (c *PlatformConfig) GetMode() PlatformMode {
+	if c.Mode == "" {
+		return PlatformModeCommunity
+	}
+
+	return c.Mode
+}
+
+type PlatformControlPlaneConfig struct {
+	Enabled         bool          `mapstructure:"enabled"`
+	Endpoint        string        `mapstructure:"endpoint"        validate:"omitempty,url,no_trailing_slash"`
+	APIKey          string        `mapstructure:"apiKey"`
+	Timeout         time.Duration `mapstructure:"timeout"`
+	FailOpenOnError bool          `mapstructure:"failOpenOnError"`
+}
+
+func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
+	if c.Timeout <= 0 {
+		return 5 * time.Second
+	}
+
+	return c.Timeout
+}
+
 type SystemConfig struct {
 	SystemUserPassword string `mapstructure:"systemUserPassword" validate:"required,min=1,max=100"`
 }
@@ -655,6 +688,7 @@ type Config struct {
 	Audit                AuditConfig                `mapstructure:"audit"`
 	Update               UpdateConfig               `mapstructure:"update"`
 	Twilio               TwilioConfig               `mapstructure:"twilio"`
+	Platform             PlatformConfig             `mapstructure:"platform"`
 }
 
 func (c *Config) GetCacheConfig() *CacheConfig { return &c.Cache }
@@ -676,6 +710,8 @@ func (c *Config) GetTwilioConfig() *TwilioConfig { return &c.Twilio }
 func (c *Config) GetAblyConfig() *AblyConfig { return &c.Ably }
 
 func (c *Config) GetSystemConfig() *SystemConfig { return &c.System }
+
+func (c *Config) GetPlatformConfig() *PlatformConfig { return &c.Platform }
 
 func (c *Config) GetDSN(password string) string {
 	escapedPassword := url.QueryEscape(password)

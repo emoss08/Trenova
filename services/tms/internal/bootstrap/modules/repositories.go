@@ -73,6 +73,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenteventrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentholdrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentimportchatrepository"
@@ -145,6 +146,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	shipmentadditionalchargerepository.New,
 	shipmentcommodityrepository.New,
 	shipmentcommentrepository.New,
+	shipmenteventrepository.New,
 	shipmentholdrepository.New,
 	shipmentimportchatrepository.New,
 	shipmentmoverepository.New,

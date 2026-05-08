@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -28,6 +29,7 @@ type Params struct {
 	ShipmentRepo repositories.ShipmentRepository
 	UserRepo     repositories.UserRepository
 	AuditService services.AuditService
+	EventService services.ShipmentEventService
 	Realtime     services.RealtimeService
 }
 
@@ -37,6 +39,7 @@ type service struct {
 	shipmentRepo repositories.ShipmentRepository
 	userRepo     repositories.UserRepository
 	auditService services.AuditService
+	eventService services.ShipmentEventService
 	realtime     services.RealtimeService
 }
 
@@ -47,6 +50,7 @@ func New(p Params) services.ShipmentCommentService {
 		shipmentRepo: p.ShipmentRepo,
 		userRepo:     p.UserRepo,
 		auditService: p.AuditService,
+		eventService: p.EventService,
 		realtime:     p.Realtime,
 	}
 }
@@ -160,6 +164,14 @@ func (s *service) Create(
 		"Shipment comment created",
 	)
 	s.publishCommentInvalidation(ctx, created, auditActor, "created", created)
+	s.recordCommentEvent(ctx, shipmenteventservice.BuildCommentPosted(
+		shipmenteventservice.TenantRef{
+			OrganizationID: created.OrganizationID,
+			BusinessUnitID: created.BusinessUnitID,
+		},
+		created,
+		auditActor,
+	))
 
 	return created, nil
 }
@@ -440,6 +452,18 @@ func (s *service) logCommentAction(
 
 	if err := s.auditService.LogAction(params, opts...); err != nil {
 		s.l.Error("failed to log shipment comment action", zap.Error(err))
+	}
+}
+
+func (s *service) recordCommentEvent(
+	ctx context.Context,
+	params *services.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record shipment comment event", zap.Error(err))
 	}
 }
 

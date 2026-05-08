@@ -24,14 +24,7 @@ const COUNT_CLASS: Record<NonNullable<Props["countTone"]>, string> = {
   success: "bg-success/15 text-success",
 };
 
-export function ModuleCard({
-  id,
-  title,
-  count,
-  countTone = "muted",
-  rightSlot,
-  children,
-}: Props) {
+export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, children }: Props) {
   const hide = useRightStackStore.use.hide();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -45,11 +38,7 @@ export function ModuleCard({
   } as React.CSSProperties;
 
   return (
-    <section
-      ref={setNodeRef}
-      style={style}
-      className="cc-module-card flex min-h-0 flex-1 flex-col"
-    >
+    <section ref={setNodeRef} style={style} className="cc-module-card flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between gap-2 border-b border-border px-2 py-1">
         <div className="flex min-w-0 items-center gap-1">
           <button
@@ -65,7 +54,7 @@ export function ModuleCard({
           {typeof count === "number" && (
             <span
               className={cn(
-                "font-table inline-flex min-w-[18px] justify-center rounded px-1 text-[9px] tabular-nums",
+                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-[9px] tabular-nums",
                 COUNT_CLASS[countTone],
               )}
             >
@@ -86,7 +75,7 @@ export function ModuleCard({
         </div>
       </header>
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col">{children}</div>
+        <div className="flex flex-col px-3 py-1">{children}</div>
       </ScrollArea>
     </section>
   );

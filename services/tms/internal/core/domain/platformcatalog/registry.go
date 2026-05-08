@@ -1,8 +1,8 @@
 package platformcatalog
 
 import (
+	"errors"
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
 
@@ -54,8 +54,8 @@ func (r *Registry) ListProducts() []Product {
 
 func (r *Registry) ListFeatures() []Feature {
 	features := make([]Feature, 0, len(r.features))
-	for _, feature := range r.features {
-		features = append(features, feature)
+	for key := range r.features {
+		features = append(features, r.features[key])
 	}
 	slices.SortFunc(features, func(a, b Feature) int {
 		return strings.Compare(string(a.Key), string(b.Key))
@@ -90,8 +90,9 @@ func (r *Registry) GetMeter(key MeterKey) (Meter, bool) {
 }
 
 func (r *Registry) FeaturesByProduct(productKey ProductKey) []Feature {
-	features := make([]Feature, 0)
-	for _, feature := range r.features {
+	features := make([]Feature, 0, len(r.features))
+	for key := range r.features {
+		feature := r.features[key]
 		if feature.ProductKey == productKey {
 			features = append(features, feature)
 		}
@@ -103,62 +104,15 @@ func (r *Registry) FeaturesByProduct(productKey ProductKey) []Feature {
 }
 
 func (r *Registry) Validate() error {
-	for key, product := range r.products {
-		if key == "" {
-			return fmt.Errorf("platform catalog product key is required")
-		}
-		for _, featureKey := range product.Features {
-			feature, ok := r.features[featureKey]
-			if !ok {
-				return fmt.Errorf("platform catalog product %q references missing feature %q", key, featureKey)
-			}
-			if feature.ProductKey != key {
-				return fmt.Errorf(
-					"platform catalog product %q references feature %q owned by product %q",
-					key,
-					featureKey,
-					feature.ProductKey,
-				)
-			}
-		}
+	if err := r.validateProducts(); err != nil {
+		return err
 	}
 
-	for key, feature := range r.features {
-		if _, ok := r.products[feature.ProductKey]; !ok {
-			return fmt.Errorf("platform catalog feature %q references missing product %q", key, feature.ProductKey)
-		}
-		for _, requiredKey := range feature.RequiresFeatures {
-			if requiredKey == key {
-				return fmt.Errorf("platform catalog feature %q cannot require itself", key)
-			}
-			if _, ok := r.features[requiredKey]; !ok {
-				return fmt.Errorf("platform catalog feature %q requires missing feature %q", key, requiredKey)
-			}
-		}
-		for _, meterKey := range feature.Meters {
-			meter, ok := r.meters[meterKey]
-			if !ok {
-				return fmt.Errorf("platform catalog feature %q references missing meter %q", key, meterKey)
-			}
-			if meter.FeatureKey != "" && meter.FeatureKey != key {
-				return fmt.Errorf("platform catalog feature %q references meter %q owned by feature %q", key, meterKey, meter.FeatureKey)
-			}
-		}
+	if err := r.validateFeatures(); err != nil {
+		return err
 	}
 
-	for key, meter := range r.meters {
-		if _, ok := r.products[meter.ProductKey]; !ok {
-			return fmt.Errorf("platform catalog meter %q references missing product %q", key, meter.ProductKey)
-		}
-		if meter.FeatureKey == "" {
-			continue
-		}
-		if _, ok := r.features[meter.FeatureKey]; !ok {
-			return fmt.Errorf("platform catalog meter %q references missing feature %q", key, meter.FeatureKey)
-		}
-	}
-
-	return nil
+	return r.validateMeters()
 }
 
 func (r *Registry) registerProvider(provider CatalogProvider) error {
@@ -169,7 +123,9 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 		r.products[product.Key] = product
 	}
 
-	for _, feature := range provider.Features() {
+	providerFeatures := provider.Features()
+	for i := range providerFeatures {
+		feature := providerFeatures[i]
 		if _, exists := r.features[feature.Key]; exists {
 			return fmt.Errorf("platform catalog duplicate feature %q", feature.Key)
 		}
@@ -186,6 +142,129 @@ func (r *Registry) registerProvider(provider CatalogProvider) error {
 	return nil
 }
 
-func (r *Registry) CloneMaps() (map[ProductKey]Product, map[FeatureKey]Feature, map[MeterKey]Meter) {
-	return maps.Clone(r.products), maps.Clone(r.features), maps.Clone(r.meters)
+func (r *Registry) validateProducts() error {
+	for key, product := range r.products {
+		if key == "" {
+			return errors.New("platform catalog product key is required")
+		}
+
+		if err := r.validateProductFeatures(key, product.Features); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateProductFeatures(productKey ProductKey, featureKeys []FeatureKey) error {
+	for _, featureKey := range featureKeys {
+		feature, ok := r.features[featureKey]
+		if !ok {
+			return fmt.Errorf(
+				"platform catalog product %q references missing feature %q",
+				productKey,
+				featureKey,
+			)
+		}
+		if feature.ProductKey != productKey {
+			return fmt.Errorf(
+				"platform catalog product %q references feature %q owned by product %q",
+				productKey,
+				featureKey,
+				feature.ProductKey,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateFeatures() error {
+	for key := range r.features {
+		feature := r.features[key]
+		if _, ok := r.products[feature.ProductKey]; !ok {
+			return fmt.Errorf(
+				"platform catalog feature %q references missing product %q",
+				key,
+				feature.ProductKey,
+			)
+		}
+
+		if err := r.validateRequiredFeatures(key, feature.RequiresFeatures); err != nil {
+			return err
+		}
+
+		if err := r.validateFeatureMeters(key, feature.Meters); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateRequiredFeatures(
+	featureKey FeatureKey,
+	requiredKeys []FeatureKey,
+) error {
+	for _, requiredKey := range requiredKeys {
+		if requiredKey == featureKey {
+			return fmt.Errorf("platform catalog feature %q cannot require itself", featureKey)
+		}
+		if _, ok := r.features[requiredKey]; !ok {
+			return fmt.Errorf(
+				"platform catalog feature %q requires missing feature %q",
+				featureKey,
+				requiredKey,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateFeatureMeters(featureKey FeatureKey, meterKeys []MeterKey) error {
+	for _, meterKey := range meterKeys {
+		meter, ok := r.meters[meterKey]
+		if !ok {
+			return fmt.Errorf(
+				"platform catalog feature %q references missing meter %q",
+				featureKey,
+				meterKey,
+			)
+		}
+		if meter.FeatureKey != "" && meter.FeatureKey != featureKey {
+			return fmt.Errorf(
+				"platform catalog feature %q references meter %q owned by feature %q",
+				featureKey,
+				meterKey,
+				meter.FeatureKey,
+			)
+		}
+	}
+
+	return nil
+}
+
+func (r *Registry) validateMeters() error {
+	for key, meter := range r.meters {
+		if _, ok := r.products[meter.ProductKey]; !ok {
+			return fmt.Errorf(
+				"platform catalog meter %q references missing product %q",
+				key,
+				meter.ProductKey,
+			)
+		}
+		if meter.FeatureKey == "" {
+			continue
+		}
+		if _, ok := r.features[meter.FeatureKey]; !ok {
+			return fmt.Errorf(
+				"platform catalog meter %q references missing feature %q",
+				key,
+				meter.FeatureKey,
+			)
+		}
+	}
+
+	return nil
 }

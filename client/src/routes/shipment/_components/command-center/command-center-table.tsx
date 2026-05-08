@@ -1,7 +1,23 @@
 "use no memo";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { fetchData } from "@/hooks/data-table/use-data-table-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
@@ -12,11 +28,7 @@ import {
 } from "@/lib/data-table";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type {
-  FieldFilter,
-  FilterItem,
-  SortField,
-} from "@/types/data-table";
+import type { FieldFilter, FilterItem, SortField } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
@@ -30,32 +42,26 @@ import {
   type Table as TanstackTable,
   type VisibilityState,
 } from "@tanstack/react-table";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  LayoutGridIcon,
-  TableIcon,
-} from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, LayoutGridIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ExpandedRow } from "./expanded-row";
 import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
 import { TimelinePlaceholder } from "./timeline-placeholder";
-import { useCommandCenterUrl, type CommandCenterViewMode } from "./url-state";
+import {
+  PAGE_SIZE_OPTIONS,
+  useCommandCenterUrl,
+  type CommandCenterPageSize,
+  type CommandCenterViewMode,
+} from "./url-state";
 
-const DataTableSearch = lazy(
-  () => import("@/components/data-table/data-table-search"),
-);
+const DataTableSearch = lazy(() => import("@/components/data-table/data-table-search"));
 const DataTableFilterBuilder = lazy(
   () => import("@/components/data-table/data-table-filter-builder"),
 );
-const DataTableSortBuilder = lazy(
-  () => import("@/components/data-table/data-table-sort-builder"),
-);
-const DataTableViewOptions = lazy(
-  () => import("@/components/data-table/data-table-view-options"),
-);
+const DataTableSortBuilder = lazy(() => import("@/components/data-table/data-table-sort-builder"));
+const DataTableViewOptions = lazy(() => import("@/components/data-table/data-table-view-options"));
 const DataTableConfigManager = lazy(
   () => import("@/components/data-table/data-table-config-manager"),
 );
@@ -74,7 +80,6 @@ function SearchSkeleton() {
 }
 
 const SHIPMENTS_LINK = "/shipments/";
-const PAGE_SIZE = 25;
 const QUERY_KEY = "shipment-list";
 const RESOURCE_NAME = "Shipment";
 
@@ -83,19 +88,16 @@ type CommandCenterTableProps = {
   mandatoryFieldFilters: FieldFilter[];
 };
 
-export function CommandCenterTable({
-  columns,
-  mandatoryFieldFilters,
-}: CommandCenterTableProps) {
-  const [{ mode: viewMode, expanded: expandedId, page, q: query }, setUrl] =
+export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCenterTableProps) {
+  const [{ mode: viewMode, expanded: expandedId, page, size: pageSize, q: query }, setUrl] =
     useCommandCenterUrl();
   const pageIndex = Math.max(0, page - 1);
-  const setQuery = (next: string) =>
-    void setUrl({ q: next.length === 0 ? null : next, page: 1 });
+  const setQuery = (next: string) => void setUrl({ q: next.length === 0 ? null : next, page: 1 });
   const setPageIndex = (next: number) => void setUrl({ page: next + 1 });
+  const setPageSize = (next: CommandCenterPageSize) =>
+    void setUrl({ size: next === 10 ? null : next, page: 1 });
   const setViewMode = (next: CommandCenterViewMode) => void setUrl({ mode: next });
-  const toggleExpandedId = (id: string) =>
-    void setUrl({ expanded: expandedId === id ? null : id });
+  const toggleExpandedId = (id: string) => void setUrl({ expanded: expandedId === id ? null : id });
 
   const highlightId = useCommandCenterStore.use.highlightId();
   const setHighlightId = useCommandCenterStore.use.setHighlightId();
@@ -122,42 +124,33 @@ export function CommandCenterTable({
     [mandatoryFieldFilters, userFieldFilters],
   );
 
-  // Reset to page 1 whenever the filter/sort/view inputs change so we never
-  // land on an out-of-range page after refining the result set.
   useEffect(() => {
     void setUrl({ page: 1 });
   }, [mergedFieldFilters, userFilterGroups, sort, query, setUrl]);
-
-  const totalShipmentCount = useTotalShipmentCount();
 
   const dataQuery = useQuery({
     queryKey: [
       QUERY_KEY,
       "command-center",
-      { pageIndex, pageSize: PAGE_SIZE },
+      { pageIndex, pageSize },
       mergedFieldFilters,
       userFilterGroups,
       sort,
       query,
     ],
     queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(
-        SHIPMENTS_LINK,
-        pageIndex,
-        PAGE_SIZE,
-        {
-          query,
-          fieldFilters: mergedFieldFilters,
-          filterGroups: userFilterGroups,
-          sort,
-          extraSearchParams: { expandShipmentDetails: true },
-        },
-      ),
+      fetchData<Shipment & Record<string, unknown>>(SHIPMENTS_LINK, pageIndex, pageSize, {
+        query,
+        fieldFilters: mergedFieldFilters,
+        filterGroups: userFilterGroups,
+        sort,
+        extraSearchParams: { expandShipmentDetails: true },
+      }),
     placeholderData: (prev) => prev,
   });
 
   const totalCount = dataQuery.data?.count ?? 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
 
   const sortingState = useMemo<SortingState>(
@@ -179,7 +172,6 @@ export function CommandCenterTable({
     getRowId: (row) => row.id ?? "",
   });
 
-  // ── default-config bootstrap (one-shot) ────────────────────────────────
   const { data: defaultConfig } = useQuery({
     ...queries.tableConfiguration.default(RESOURCE_NAME),
     retry: false,
@@ -190,9 +182,7 @@ export function CommandCenterTable({
   const handleApplyConfig = useMemo(
     () => (config: TableConfig) => {
       const fieldFilters = config.fieldFilters ?? [];
-      const filterGroups = (config.filterGroups ?? []).filter(
-        (g) => g.filters?.length > 0,
-      );
+      const filterGroups = (config.filterGroups ?? []).filter((g) => g.filters?.length > 0);
       const fromFields = initializeFilterItemsFromFieldFilters(fieldFilters, columns);
       const fromGroups = initializeFilterItemsFromFilterGroups(filterGroups, columns);
       setFilterItems([...fromFields, ...fromGroups]);
@@ -224,11 +214,11 @@ export function CommandCenterTable({
       filterGroups: userFilterGroups,
       joinOperator: "and",
       sort,
-      pageSize: PAGE_SIZE,
+      pageSize,
       columnVisibility: visibility,
       columnOrder: table.getState().columnOrder,
     };
-  }, [userFieldFilters, userFilterGroups, sort, table]);
+  }, [userFieldFilters, userFilterGroups, sort, pageSize, table]);
 
   const handleRowClick = (row: Row<Shipment>) => {
     if (row.original.id) toggleExpandedId(row.original.id);
@@ -272,11 +262,7 @@ export function CommandCenterTable({
 
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
-          <DataTableSearch
-            value={query}
-            onChange={setQuery}
-            placeholder="Search shipments..."
-          />
+          <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
         </Suspense>
         <Suspense fallback={<ToolbarButtonSkeleton />}>
           <DataTableFilterBuilder
@@ -295,7 +281,7 @@ export function CommandCenterTable({
         <div className="mx-1 h-4 w-px bg-border" />
         <FilterChipRow />
         <p className="ml-auto shrink-0 font-table text-[10.5px] text-muted-foreground tabular-nums">
-          {totalCount} of {totalShipmentCount ?? "—"} results
+          {rows.length} of {totalCount} results
         </p>
         <Suspense fallback={<ToolbarButtonSkeleton />}>
           <DataTableViewOptions table={table as unknown as TanstackTable<unknown>} />
@@ -303,39 +289,36 @@ export function CommandCenterTable({
       </div>
 
       <div className="cc-table-scroll relative">
-        <table className="cc-table">
+        <Table>
           <colgroup>
             {table.getVisibleFlatColumns().map((col) => (
               <col key={col.id} style={{ width: `${col.getSize()}px` }} />
             ))}
           </colgroup>
-          <thead>
+          <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id}>
+              <TableRow key={hg.id}>
                 {hg.headers.map((header) => (
-                  <th
+                  <TableHead
                     key={header.id}
-                    className="cc-th"
+                    className="bg-muted"
                     style={{ width: `${header.getSize()}px` }}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
+                  </TableHead>
                 ))}
-              </tr>
+              </TableRow>
             ))}
-          </thead>
-          <tbody>
+          </TableHeader>
+          <TableBody>
             {table.getRowModel().rows.length === 0 && !dataQuery.isLoading ? (
-              <tr>
-                <td
-                  colSpan={table.getVisibleFlatColumns().length}
-                  className="px-3 py-12 text-center text-sm text-muted-foreground"
-                >
+              <TableRow>
+                <TableCell colSpan={table.getVisibleFlatColumns().length}>
                   No shipments match the current view.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               table.getRowModel().rows.map((row) => {
                 const isExpanded = expandedId === row.original.id;
@@ -354,8 +337,8 @@ export function CommandCenterTable({
                 );
               })
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
         {dataQuery.isFetching && (
           <div className="pointer-events-none absolute top-2 right-2 inline-flex items-center gap-1 rounded bg-background/70 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
             <Spinner className="size-3" />
@@ -369,6 +352,8 @@ export function CommandCenterTable({
         pageIndex={pageIndex}
         totalPages={totalPages}
         rowCount={rows.length}
+        pageSize={pageSize as CommandCenterPageSize}
+        onPageSizeChange={setPageSize}
         onPrev={() => setPageIndex(Math.max(0, pageIndex - 1))}
         onNext={() => setPageIndex(Math.min(totalPages - 1, pageIndex + 1))}
       />
@@ -481,6 +466,8 @@ function CommandCenterFooter({
   pageIndex,
   totalPages,
   rowCount,
+  pageSize,
+  onPageSizeChange,
   onPrev,
   onNext,
 }: {
@@ -488,6 +475,8 @@ function CommandCenterFooter({
   pageIndex: number;
   totalPages: number;
   rowCount: number;
+  pageSize: CommandCenterPageSize;
+  onPageSizeChange: (size: CommandCenterPageSize) => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
@@ -496,7 +485,28 @@ function CommandCenterFooter({
       <p className="font-table tabular-nums">
         {rowCount} rows · page {pageIndex + 1} of {totalPages} · {totalCount} total
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span>Rows</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(value) => onPageSizeChange(Number(value) as CommandCenterPageSize)}
+          >
+            <SelectTrigger className="h-6 w-[58px] py-0 text-[11px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)} className="text-[11px]">
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon-xs"
@@ -518,19 +528,9 @@ function CommandCenterFooter({
         >
           <ChevronRightIcon className="size-3.5" />
         </Button>
+        </div>
       </div>
     </div>
   );
 }
 
-function useTotalShipmentCount(): number | undefined {
-  const query = useQuery({
-    queryKey: [QUERY_KEY, "command-center", "total"],
-    queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(SHIPMENTS_LINK, 0, 1, {
-        fieldFilters: [],
-      }),
-    staleTime: 60_000,
-  });
-  return query.data?.count;
-}

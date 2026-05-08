@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -43,6 +44,7 @@ type Params struct {
 	ShipmentValidator   *shipmentservice.Validator
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
+	EventService        portservices.ShipmentEventService
 }
 
 type service struct {
@@ -61,6 +63,7 @@ type service struct {
 	shipmentValidator   *shipmentservice.Validator
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
+	eventService        portservices.ShipmentEventService
 }
 
 func New(p Params) portservices.AssignmentService {
@@ -80,6 +83,66 @@ func New(p Params) portservices.AssignmentService {
 		shipmentValidator:   p.ShipmentValidator,
 		coordinator:         p.Coordinator,
 		commercial:          p.Commercial,
+		eventService:        p.EventService,
+	}
+}
+
+func (s *service) recordAssignmentEvent(
+	ctx context.Context,
+	params *portservices.RecordShipmentEventParams,
+) {
+	if params == nil {
+		return
+	}
+
+	if err := s.eventService.Record(ctx, params); err != nil {
+		s.l.Warn("failed to record assignment event", zap.Error(err))
+	}
+}
+
+func tenantRefForTenant(tenantInfo pagination.TenantInfo) shipmenteventservice.TenantRef {
+	return shipmenteventservice.TenantRef{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+func actorFromTenant(tenantInfo pagination.TenantInfo) portservices.AuditActor {
+	if tenantInfo.UserID.IsNil() {
+		return portservices.AuditActor{}
+	}
+	return portservices.AuditActor{
+		PrincipalType: portservices.PrincipalTypeUser,
+		PrincipalID:   tenantInfo.UserID,
+		UserID:        tenantInfo.UserID,
+	}
+}
+
+func assignmentEventRef(
+	assignment *shipment.Assignment,
+) (shipmenteventservice.AssignmentRef, bool) {
+	if assignment == nil || assignment.ShipmentMove == nil {
+		return shipmenteventservice.AssignmentRef{}, false
+	}
+	return shipmenteventservice.AssignmentRef{
+		ShipmentID:   assignment.ShipmentMove.ShipmentID,
+		MoveID:       assignment.ShipmentMoveID,
+		AssignmentID: assignment.ID,
+	}, true
+}
+
+func driverDisplayName(assignment *shipment.Assignment) string {
+	if assignment == nil || assignment.PrimaryWorker == nil {
+		return "(unknown)"
+	}
+	w := assignment.PrimaryWorker
+	switch {
+	case w.FirstName != "" && w.LastName != "":
+		return w.FirstName + " " + w.LastName
+	case w.LastName != "":
+		return w.LastName
+	default:
+		return w.FirstName
 	}
 }
 
@@ -105,7 +168,7 @@ func (s *service) AssignToMove(
 		return nil, multiErr
 	}
 
-	return s.upsertAssignment(
+	result, err := s.upsertAssignment(
 		ctx,
 		req.TenantInfo,
 		req.ShipmentMoveID,
@@ -130,6 +193,21 @@ func (s *service) AssignToMove(
 			return s.repo.Create(txCtx, entity)
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	if ref, ok := assignmentEventRef(result); ok {
+		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverAssigned(
+			tenantRefForTenant(req.TenantInfo),
+			ref,
+			result,
+			driverDisplayName(result),
+			actorFromTenant(req.TenantInfo),
+		))
+	}
+
+	return result, nil
 }
 
 func (s *service) Reassign(
@@ -140,7 +218,7 @@ func (s *service) Reassign(
 		return nil, multiErr
 	}
 
-	return s.upsertAssignment(
+	result, err := s.upsertAssignment(
 		ctx,
 		req.TenantInfo,
 		req.ShipmentMoveID,
@@ -164,6 +242,21 @@ func (s *service) Reassign(
 			return s.repo.Update(txCtx, entity)
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	if ref, ok := assignmentEventRef(result); ok {
+		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverReassigned(
+			tenantRefForTenant(req.TenantInfo),
+			ref,
+			result,
+			driverDisplayName(result),
+			actorFromTenant(req.TenantInfo),
+		))
+	}
+
+	return result, nil
 }
 
 func (s *service) Unassign(
@@ -173,6 +266,28 @@ func (s *service) Unassign(
 	if multiErr := req.Validate(); multiErr != nil {
 		return multiErr
 	}
+
+	ref, err := s.unassignWithinTx(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	if ref != nil {
+		s.recordAssignmentEvent(ctx, shipmenteventservice.BuildDriverUnassigned(
+			tenantRefForTenant(req.TenantInfo),
+			*ref,
+			actorFromTenant(req.TenantInfo),
+		))
+	}
+
+	return nil
+}
+
+func (s *service) unassignWithinTx(
+	ctx context.Context,
+	req *repositories.UnassignShipmentMoveRequest,
+) (*shipmenteventservice.AssignmentRef, error) {
+	var ref *shipmenteventservice.AssignmentRef
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		move, err := s.repo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
@@ -214,6 +329,11 @@ func (s *service) Unassign(
 		if _, err = s.repo.Unassign(txCtx, existing); err != nil {
 			return err
 		}
+		ref = &shipmenteventservice.AssignmentRef{
+			ShipmentID:   move.ShipmentID,
+			MoveID:       req.ShipmentMoveID,
+			AssignmentID: existing.ID,
+		}
 		updatedShipment := cloneShipment(original)
 		targetMove := findMove(updatedShipment, req.ShipmentMoveID)
 		if targetMove == nil {
@@ -250,13 +370,13 @@ func (s *service) Unassign(
 		return err
 	})
 	if err != nil {
-		return dberror.MapRetryableTransactionError(
+		return nil, dberror.MapRetryableTransactionError(
 			err,
 			"Assignment is busy. Retry the request.",
 		)
 	}
 
-	return nil
+	return ref, nil
 }
 
 func (s *service) CheckWorkerCompliance(
@@ -314,7 +434,13 @@ func (s *service) CheckWorkerCompliance(
 	runWorkerComplianceChecks(primaryWorker, dc, hasHazmatCommodities, "primaryWorker", multiErr)
 
 	if secondaryWorker != nil {
-		runWorkerComplianceChecks(secondaryWorker, dc, hasHazmatCommodities, "secondaryWorker", multiErr)
+		runWorkerComplianceChecks(
+			secondaryWorker,
+			dc,
+			hasHazmatCommodities,
+			"secondaryWorker",
+			multiErr,
+		)
 	}
 
 	if multiErr.HasErrors() {
@@ -516,11 +642,14 @@ func (s *service) validateTrailerContinuity(
 		return err
 	}
 
-	effective, err := s.continuityRepo.GetEffectiveCurrent(ctx, repositories.GetCurrentEquipmentContinuityRequest{
-		TenantInfo:    tenantInfo,
-		EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
-		EquipmentID:   *candidate.TrailerID,
-	})
+	effective, err := s.continuityRepo.GetEffectiveCurrent(
+		ctx,
+		repositories.GetCurrentEquipmentContinuityRequest{
+			TenantInfo:    tenantInfo,
+			EquipmentType: equipmentcontinuity.EquipmentTypeTrailer,
+			EquipmentID:   *candidate.TrailerID,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -531,7 +660,12 @@ func (s *service) validateTrailerContinuity(
 		return nil
 	}
 
-	trailerEntity, locationEntity, err := s.resolveTrailerContinuityMessageParts(ctx, tenantInfo, *candidate.TrailerID, effective.CurrentLocationID)
+	trailerEntity, locationEntity, err := s.resolveTrailerContinuityMessageParts(
+		ctx,
+		tenantInfo,
+		*candidate.TrailerID,
+		effective.CurrentLocationID,
+	)
 	if err != nil {
 		return err
 	}

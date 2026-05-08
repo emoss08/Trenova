@@ -1,12 +1,15 @@
 import { DataTableLazyComponent, LazyComponent } from "@/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
-import { RightStack } from "./_components/command-center/right-stack";
 import { ShipmentMapPanelBoundary } from "./_components/map/shipment-map-panel";
 
 const Table = lazy(() => import("./_components/shipment-table"));
 const ShipmentAnalytics = lazy(() => import("./_components/analytics/shipment-analytics"));
 const ShipmentMapPanel = lazy(() => import("./_components/map/shipment-map-panel"));
+const RightStack = lazy(() => import("./_components/command-center/right-stack"));
+const BottomModules = lazy(
+  () => import("./_components/command-center/bottom-modules"),
+);
 
 export function ShipmentsPage() {
   return (
@@ -24,14 +27,6 @@ export function ShipmentsPage() {
           <ShipmentMapPanelBoundary>
             <ShipmentMapPanel />
           </ShipmentMapPanelBoundary>
-          {/*
-            Pin the right-stack column to the same clamp() height as the
-            map so the grid row doesn't stretch when content is tall. The
-            aside inside uses flex-1 / min-h-0 to keep its modules within
-            this box. We deliberately allow visible overflow so the
-            floating "Add panel" chip (positioned at -top-7) can sit above
-            the stack the way the design specifies.
-          */}
           <div className="relative h-[clamp(420px,calc(100vh-380px),540px)] min-h-0">
             <LazyComponent>
               <RightStack />
@@ -41,6 +36,9 @@ export function ShipmentsPage() {
         <DataTableLazyComponent>
           <Table />
         </DataTableLazyComponent>
+        <LazyComponent>
+          <BottomModules />
+        </LazyComponent>
       </div>
     </PageLayout>
   );

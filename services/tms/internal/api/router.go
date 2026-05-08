@@ -58,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
@@ -65,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
@@ -121,6 +123,7 @@ type RouterParams struct {
 	TrailerHandler                  *trailerhandler.Handler
 	WorkerHandler                   *workerhandler.Handler
 	PermissionHandler               *permissionhandler.Handler
+	PlatformCatalogHandler          *platformcataloghandler.Handler
 	RealtimeHandler                 *realtimehandler.Handler
 	RoleHandler                     *rolehandler.Handler
 	RoleAssignmentHandler           *roleassignmenthandler.Handler
@@ -138,6 +141,7 @@ type RouterParams struct {
 	ShipmentControlHandler          *shipmentcontrolhandler.Handler
 	ShipmentMoveHandler             *shipmentmovehandler.Handler
 	ShipmentHandler                 *shipmenthandler.Handler
+	ShipmentEventHandler            *shipmenteventhandler.Handler
 	ShipmentTypeHandler             *shipmenttypehandler.Handler
 	HazardousMaterialHandler        *hazardousmaterialhandler.Handler
 	HazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
@@ -204,6 +208,7 @@ type Router struct {
 	shipmentControlHandler          *shipmentcontrolhandler.Handler
 	shipmentMoveHandler             *shipmentmovehandler.Handler
 	shipmentHandler                 *shipmenthandler.Handler
+	shipmentEventHandler            *shipmenteventhandler.Handler
 	equipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
 	equipmentTypeHandler            *equipmenttypehandler.Handler
 	fleetCodeHandler                *fleetcodehandler.Handler
@@ -211,6 +216,7 @@ type Router struct {
 	trailerHandler                  *trailerhandler.Handler
 	workerHandler                   *workerhandler.Handler
 	permissionHandler               *permissionhandler.Handler
+	platformCatalogHandler          *platformcataloghandler.Handler
 	realtimeHandler                 *realtimehandler.Handler
 	roleHandler                     *rolehandler.Handler
 	roleAssignmentHandler           *roleassignmenthandler.Handler
@@ -291,6 +297,7 @@ func NewRouter(p RouterParams) *Router {
 		shipmentControlHandler:          p.ShipmentControlHandler,
 		shipmentMoveHandler:             p.ShipmentMoveHandler,
 		shipmentHandler:                 p.ShipmentHandler,
+		shipmentEventHandler:            p.ShipmentEventHandler,
 		equipmentManufacturerHandler:    p.EquipmentManufacturerHandler,
 		equipmentTypeHandler:            p.EquipmentTypeHandler,
 		fleetCodeHandler:                p.FleetCodeHandler,
@@ -298,6 +305,7 @@ func NewRouter(p RouterParams) *Router {
 		trailerHandler:                  p.TrailerHandler,
 		workerHandler:                   p.WorkerHandler,
 		permissionHandler:               p.PermissionHandler,
+		platformCatalogHandler:          p.PlatformCatalogHandler,
 		realtimeHandler:                 p.RealtimeHandler,
 		roleHandler:                     p.RoleHandler,
 		roleAssignmentHandler:           p.RoleAssignmentHandler,
@@ -427,6 +435,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.trailerHandler.RegisterRoutes(protected)
 	r.workerHandler.RegisterRoutes(protected)
 	r.permissionHandler.RegisterRoutes(protected)
+	r.platformCatalogHandler.RegisterRoutes(protected)
 	r.realtimeHandler.RegisterRoutes(protected)
 	r.roleHandler.RegisterRoutes(protected)
 	r.roleAssignmentHandler.RegisterRoutes(protected)
@@ -442,6 +451,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.shipmentControlHandler.RegisterRoutes(protected)
 	r.shipmentMoveHandler.RegisterRoutes(protected)
 	r.shipmentHandler.RegisterRoutes(protected)
+	r.shipmentEventHandler.RegisterRoutes(protected)
 	r.shipmentTypeHandler.RegisterRoutes(protected)
 	r.hazardousMaterialHandler.RegisterRoutes(protected)
 	r.hazmatSegregationRuleHandler.RegisterRoutes(protected)

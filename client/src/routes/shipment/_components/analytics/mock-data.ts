@@ -23,7 +23,42 @@ export type ShipmentAnalyticsData = {
   detentionAlerts: {
     count: number;
   };
+  customerMix: {
+    windowDays: number;
+    entries: {
+      customerId: string;
+      name: string;
+      revenue: number;
+      share: number;
+      loads: number;
+      trend: number;
+    }[];
+  };
+  tomorrowsPickups: {
+    date: string;
+    pickups: {
+      shipmentId: string;
+      proNumber: string;
+      pickupWindowStart: number;
+      customer: string;
+      origin: string;
+      destination: string;
+      driver: string;
+      status: "scheduled" | "confirmed" | "tentative" | "unassigned";
+    }[];
+  };
+  laneHeatmap: {
+    windowDays: number;
+    cells: {
+      origin: Region;
+      destination: Region;
+      count: number;
+    }[];
+    total: number;
+  };
 };
+
+export type Region = "West" | "Midwest" | "South" | "Northeast";
 
 export const defaultAnalyticsData: ShipmentAnalyticsData = {
   activeShipments: {
@@ -49,5 +84,18 @@ export const defaultAnalyticsData: ShipmentAnalyticsData = {
   },
   detentionAlerts: {
     count: 0,
+  },
+  customerMix: {
+    windowDays: 30,
+    entries: [],
+  },
+  tomorrowsPickups: {
+    date: "",
+    pickups: [],
+  },
+  laneHeatmap: {
+    windowDays: 7,
+    cells: [],
+    total: 0,
   },
 };

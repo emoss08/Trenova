@@ -2,6 +2,7 @@ package api
 
 import (
 	permissiondomain "github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
@@ -72,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentholdservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
@@ -82,6 +85,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/core/services/usstateservice"
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
@@ -89,6 +93,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
+	"github.com/emoss08/trenova/internal/infrastructure/controlplane"
 	"github.com/emoss08/trenova/pkg/seqgen"
 
 	"go.uber.org/fx"
@@ -113,6 +118,22 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	roleservice.New,
 	permissiondomain.NewRegistry,
 	permissiondomain.NewRouteRegistry,
+	fx.Annotate(
+		platformcatalog.NewStaticProvider,
+		fx.ResultTags(`group:"platform_catalog_providers"`),
+		fx.As(new(platformcatalog.CatalogProvider)),
+	),
+	platformcatalog.NewRegistry,
+	entitlementservice.NewLocalEntitlementProvider,
+	usageservice.NewNoopUsageProvider,
+	fx.Annotate(
+		controlplane.NewHTTPControlPlaneClient,
+		fx.As(new(controlplane.Client)),
+	),
+	controlplane.NewCloudEntitlementProvider,
+	controlplane.NewCloudUsageProvider,
+	SelectEntitlementProvider,
+	SelectUsageProvider,
 	roleassignmentservice.New,
 	usstateservice.New,
 	shipmentstate.NewCoordinator,
@@ -142,6 +163,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	sequenceconfigservice.New,
 	shipmentcontrolservice.New,
 	shipmentcommentservice.New,
+	shipmenteventservice.New,
 	shipmentholdservice.New,
 	shipmentmoveservice.New,
 	shipmentservice.New,

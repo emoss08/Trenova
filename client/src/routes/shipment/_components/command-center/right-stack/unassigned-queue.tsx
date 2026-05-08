@@ -102,7 +102,7 @@ export function UnassignedQueue() {
         </span>
       }
     >
-      <div className="flex flex-col gap-1.5 p-2">
+      <div className="flex flex-col gap-1.5">
         {isLoading && (
           <div className="flex items-center gap-2 text-[10.5px] text-muted-foreground">
             <Spinner className="size-3" /> Loading…
@@ -119,6 +119,7 @@ export function UnassignedQueue() {
           const revenue = parseDecimal(s.totalChargeAmount as unknown as string);
           const miles = getTotalMiles(s);
           const priority = priorityFor(s);
+
           return (
             <button
               key={s.id}

@@ -12,6 +12,8 @@ export const analyticsParamsSchema = z.object({
   endDate: z.number().optional(),
   limit: z.number().optional(),
   timezone: z.string().optional(),
+  windowDays: z.number().optional(),
+  include: z.string().optional(),
 });
 
 export type AnalyticsParams = z.infer<typeof analyticsParamsSchema>;

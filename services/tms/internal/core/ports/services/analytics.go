@@ -16,11 +16,13 @@ const (
 )
 
 type AnaltyicsRequest struct {
-	Page      AnalyticsPage `form:"page"      json:"page"`
-	StartDate int64         `form:"startDate" json:"startDate"`
-	EndDate   int64         `form:"endDate"   json:"endDate"`
-	Limit     int           `form:"limit"     json:"limit"`
-	Timezone  string        `form:"timezone"  json:"timezone"`
+	Page       AnalyticsPage `form:"page"       json:"page"`
+	StartDate  int64         `form:"startDate"  json:"startDate"`
+	EndDate    int64         `form:"endDate"    json:"endDate"`
+	Limit      int           `form:"limit"      json:"limit"`
+	Timezone   string        `form:"timezone"   json:"timezone"`
+	WindowDays int           `form:"windowDays" json:"windowDays"`
+	Include    string        `form:"include"    json:"include"`
 }
 
 type DateRange struct {
@@ -29,13 +31,15 @@ type DateRange struct {
 }
 
 type AnalyticsRequestOptions struct {
-	OrgID     pulid.ID      `json:"organizationId"`
-	BuID      pulid.ID      `json:"businessUnitId"`
-	UserID    pulid.ID      `json:"userId"`
-	Page      AnalyticsPage `json:"page"`
-	DateRange *DateRange    `json:"dateRange,omitempty"`
-	Timezone  string        `json:"timezone"`
-	Limit     int           `json:"limit,omitempty"`
+	OrgID      pulid.ID      `json:"organizationId"`
+	BuID       pulid.ID      `json:"businessUnitId"`
+	UserID     pulid.ID      `json:"userId"`
+	Page       AnalyticsPage `json:"page"`
+	DateRange  *DateRange    `json:"dateRange,omitempty"`
+	Timezone   string        `json:"timezone"`
+	Limit      int           `json:"limit,omitempty"`
+	WindowDays int           `json:"windowDays,omitempty"`
+	Include    string        `json:"include,omitempty"`
 }
 
 type AnalyticsData map[string]any

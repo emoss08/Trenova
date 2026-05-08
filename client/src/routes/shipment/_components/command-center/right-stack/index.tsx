@@ -24,11 +24,7 @@ import {
 import { PlusIcon } from "lucide-react";
 import { ExceptionsInbox } from "./exceptions-inbox";
 import { HosWatchPlaceholder } from "./hos-watch-placeholder";
-import {
-  ALL_MODULES,
-  useRightStackStore,
-  type RightStackModuleId,
-} from "./right-stack-store";
+import { ALL_MODULES, useRightStackStore, type RightStackModuleId } from "./right-stack-store";
 import { UnassignedQueue } from "./unassigned-queue";
 
 const MODULE_LABEL: Record<RightStackModuleId, string> = {
@@ -43,7 +39,7 @@ const RENDERERS: Record<RightStackModuleId, () => React.ReactElement> = {
   hos: HosWatchPlaceholder,
 };
 
-export function RightStack() {
+export default function RightStack() {
   const order = useRightStackStore.use.order();
   const hidden = useRightStackStore.use.hidden();
   const show = useRightStackStore.use.show();
@@ -80,11 +76,7 @@ export function RightStack() {
           />
           <DropdownMenuContent align="center" className="min-w-[180px]">
             {ALL_MODULES.map((id) => (
-              <DropdownMenuItem
-                key={id}
-                title={MODULE_LABEL[id]}
-                onClick={() => show(id)}
-              />
+              <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -107,11 +99,7 @@ export function RightStack() {
             />
             <DropdownMenuContent align="end" className="min-w-[160px]">
               {hidden.map((id) => (
-                <DropdownMenuItem
-                  key={id}
-                  title={MODULE_LABEL[id]}
-                  onClick={() => show(id)}
-                />
+                <DropdownMenuItem key={id} title={MODULE_LABEL[id]} onClick={() => show(id)} />
               ))}
             </DropdownMenuContent>
           </DropdownMenu>

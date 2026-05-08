@@ -61,6 +61,10 @@ func (p *StaticProvider) Products() []Product {
 }
 
 func (p *StaticProvider) Features() []Feature {
+	return append(tmsFeatures(), platformFeatures()...)
+}
+
+func tmsFeatures() []Feature {
 	return []Feature{
 		{
 			Key:         FeatureCoreTMS,
@@ -104,6 +108,11 @@ func (p *StaticProvider) Features() []Feature {
 			RequiresFeatures: []FeatureKey{FeatureCoreTMS},
 			Meters:           []MeterKey{MeterDocumentUploads},
 		},
+	}
+}
+
+func platformFeatures() []Feature {
+	return []Feature{
 		{
 			Key:              FeatureDocumentIntelligence,
 			ProductKey:       ProductDocumentIntelligence,

@@ -7,27 +7,27 @@ type FeatureKey string
 type MeterKey string
 
 type Product struct {
-	Key         ProductKey `json:"key"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
+	Key         ProductKey   `json:"key"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
 	Features    []FeatureKey `json:"features"`
 }
 
 type Feature struct {
-	Key              FeatureKey     `json:"key"`
-	ProductKey       ProductKey     `json:"productKey"`
-	Name             string         `json:"name"`
-	Description      string         `json:"description"`
-	RequiresFeatures []FeatureKey   `json:"requiresFeatures"`
-	Routes           []RouteRef     `json:"routes"`
+	Key              FeatureKey      `json:"key"`
+	ProductKey       ProductKey      `json:"productKey"`
+	Name             string          `json:"name"`
+	Description      string          `json:"description"`
+	RequiresFeatures []FeatureKey    `json:"requiresFeatures"`
+	Routes           []RouteRef      `json:"routes"`
 	Permissions      []PermissionRef `json:"permissions"`
 	Meters           []MeterKey      `json:"meters"`
 }
 
 type Meter struct {
 	Key         MeterKey   `json:"key"`
-	ProductKey ProductKey `json:"productKey"`
-	FeatureKey FeatureKey `json:"featureKey,omitempty"`
+	ProductKey  ProductKey `json:"productKey"`
+	FeatureKey  FeatureKey `json:"featureKey,omitempty"`
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Unit        string     `json:"unit"`

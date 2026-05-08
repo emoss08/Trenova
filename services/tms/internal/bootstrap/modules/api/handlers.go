@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/platformcataloghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/realtimehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
@@ -63,6 +64,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
@@ -95,6 +97,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	invoicehandler.New,
 	workerhandler.New,
 	permissionhandler.New,
+	platformcataloghandler.New,
 	realtimehandler.New,
 	rolehandler.New,
 	roleassignmenthandler.New,
@@ -117,6 +120,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	servicetypehandler.New,
 	sequenceconfighandler.New,
 	shipmentcontrolhandler.New,
+	shipmenteventhandler.New,
 	shipmentmovehandler.New,
 	shipmenthandler.New,
 	shipmenttypehandler.New,

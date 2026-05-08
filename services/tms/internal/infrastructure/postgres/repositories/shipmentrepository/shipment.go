@@ -142,8 +142,9 @@ func (r *repository) GetUnassigned(
 	total, err := dba.
 		NewSelect().
 		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return unassignedFilterQuery(sq, dba, req)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentScopeTenant(sq, req.Filter.TenantInfo).
+				Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew)
 		}).
 		ScanAndCount(ctx)
 	if err != nil {
@@ -160,36 +161,6 @@ func (r *repository) GetUnassigned(
 		Items: entities,
 		Total: total,
 	}, nil
-}
-
-func (r *repository) hydrateMoves(
-	ctx context.Context,
-	shipments []*shipment.Shipment,
-) error {
-	for _, entity := range shipments {
-		if entity == nil || entity.ID.IsNil() {
-			continue
-		}
-
-		moves, err := r.moveRepository.GetMovesByShipmentID(
-			ctx,
-			&repositories.GetMovesByShipmentIDRequest{
-				ShipmentID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-				ExpandMoveDetails: true,
-			},
-		)
-		if err != nil {
-			return err
-		}
-
-		entity.Moves = moves
-	}
-
-	return nil
 }
 
 func (r *repository) GetPreviousRates(

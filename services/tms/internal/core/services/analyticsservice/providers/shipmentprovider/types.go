@@ -34,3 +34,54 @@ type ReadyToDispatchCard struct {
 type DetentionAlertsCard struct {
 	Count int `json:"count"`
 }
+
+type CustomerMixEntry struct {
+	CustomerID string  `json:"customerId"`
+	Name       string  `json:"name"`
+	Revenue    float64 `json:"revenue"`
+	Share      float64 `json:"share"`
+	Loads      int     `json:"loads"`
+	Trend      float64 `json:"trend"`
+}
+
+type CustomerMixCard struct {
+	WindowDays int                 `json:"windowDays"`
+	Entries    []*CustomerMixEntry `json:"entries"`
+}
+
+type TomorrowPickupStatus string
+
+const (
+	TomorrowPickupStatusScheduled  TomorrowPickupStatus = "scheduled"
+	TomorrowPickupStatusConfirmed  TomorrowPickupStatus = "confirmed"
+	TomorrowPickupStatusTentative  TomorrowPickupStatus = "tentative"
+	TomorrowPickupStatusUnassigned TomorrowPickupStatus = "unassigned"
+)
+
+type TomorrowPickup struct {
+	ShipmentID        string               `json:"shipmentId"`
+	ProNumber         string               `json:"proNumber"`
+	PickupWindowStart int64                `json:"pickupWindowStart"`
+	Customer          string               `json:"customer"`
+	Origin            string               `json:"origin"`
+	Destination       string               `json:"destination"`
+	Driver            string               `json:"driver"`
+	Status            TomorrowPickupStatus `json:"status"`
+}
+
+type TomorrowsPickupsCard struct {
+	Date    string            `json:"date"`
+	Pickups []*TomorrowPickup `json:"pickups"`
+}
+
+type LaneHeatmapCell struct {
+	Origin      string `json:"origin"`
+	Destination string `json:"destination"`
+	Count       int    `json:"count"`
+}
+
+type LaneHeatmapCard struct {
+	WindowDays int                `json:"windowDays"`
+	Cells      []*LaneHeatmapCell `json:"cells"`
+	Total      int                `json:"total"`
+}
