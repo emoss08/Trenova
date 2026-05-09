@@ -1,13 +1,18 @@
+import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
+import { UploadPanel } from "@/components/documents/upload-panel";
 import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { api } from "@/lib/api";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CommandCenterTable } from "./command-center/command-center-table";
+import type { ShipmentDocumentUploadContext } from "./command-center/expanded-row/document-stack";
 import { buildShipmentRowActions } from "./command-center/row-actions";
 import { getMandatoryFieldFilters } from "./command-center/saved-views";
 import { useCommandCenterUrl } from "./command-center/url-state";
@@ -25,6 +30,11 @@ export default function ShipmentTable() {
   const [transferOwnershipShipmentId, setTransferOwnershipShipmentId] = useState<string | null>(
     null,
   );
+  const [uploadShipment, setUploadShipment] = useState<Shipment | null>(null);
+  const [uploadDocumentType, setUploadDocumentType] = useState<ShipmentDocumentUploadContext | null>(
+    null,
+  );
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const [{ view: selectedView, chips }] = useCommandCenterUrl();
@@ -33,6 +43,16 @@ export default function ShipmentTable() {
   // ?panelType=edit&panelEntityId=<id> still open the shipment editor.
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { panelType, panelEntityId } = searchParams;
+  const uploadShipmentId = uploadShipment?.id ?? "";
+  const uploadDocumentsQueryKey = useMemo(
+    () => ["documents", "shipment", uploadShipmentId] as const,
+    [uploadShipmentId],
+  );
+  const uploadMetadata = useMemo((): Record<string, string> => {
+    if (!uploadDocumentType) return {};
+    return { documentTypeId: uploadDocumentType.documentTypeId };
+  }, [uploadDocumentType]);
+  const uploadBillingReadinessQuery = queries.shipment.billingReadiness(uploadShipmentId);
 
   const isPanelOpen = panelType === "edit";
 
@@ -80,6 +100,30 @@ export default function ShipmentTable() {
     },
   });
 
+  const {
+    uploads,
+    uploadFiles,
+    cancelUpload,
+    retryUpload,
+    removeUpload,
+    clearCompleted,
+    isUploading,
+  } = useDocumentUpload({
+    resourceId: uploadShipmentId,
+    resourceType: "shipment",
+    uploadMetadata,
+    invalidateQueryKey: uploadDocumentsQueryKey,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: uploadBillingReadinessQuery.queryKey,
+      });
+      toast.success("Document uploaded successfully");
+    },
+    onError: (error) => {
+      toast.error(`Upload failed: ${error.message}`);
+    },
+  });
+
   const handleEdit = useCallback(
     (row: Row<Shipment>) => {
       const id = row.original.id;
@@ -88,6 +132,55 @@ export default function ShipmentTable() {
     },
     [setSearchParams],
   );
+
+  const handleUploadDocument = useCallback(
+    (shipment: Shipment, context?: ShipmentDocumentUploadContext) => {
+      if (!shipment.id) return;
+
+      if (isUploading && uploadShipmentId && uploadShipmentId !== shipment.id) {
+        setIsUploadOpen(true);
+        toast.warning("Finish the current shipment upload before starting another.");
+        return;
+      }
+
+      setUploadShipment(shipment);
+      setUploadDocumentType(context ?? null);
+      setIsUploadOpen(true);
+    },
+    [isUploading, uploadShipmentId],
+  );
+
+  const handleFilesSelected = useCallback(
+    (files: File[]) => {
+      if (!uploadShipmentId) return;
+      uploadFiles(files);
+    },
+    [uploadFiles, uploadShipmentId],
+  );
+
+  const handleFilesRejected = useCallback((rejectedFiles: RejectedFile[]) => {
+    rejectedFiles.forEach(({ file, reason }) => {
+      if (reason === "size") {
+        toast.error(`File too large: ${file.name}`, {
+          description: `Maximum file size is 50MB. This file is ${formatFileSize(file.size)}.`,
+        });
+      }
+    });
+  }, []);
+
+  const handleUploadClose = useCallback(() => {
+    setIsUploadOpen(false);
+    if (!isUploading) {
+      setUploadShipment(null);
+      setUploadDocumentType(null);
+    }
+  }, [isUploading]);
+
+  useEffect(() => {
+    if (isUploadOpen || isUploading) return;
+    setUploadShipment(null);
+    setUploadDocumentType(null);
+  }, [isUploadOpen, isUploading]);
 
   const handleTransferToBilling = useCallback(
     (row: Row<Shipment>) => transferToBillingMutation(row.original.id || ""),
@@ -155,12 +248,33 @@ export default function ShipmentTable() {
 
   return (
     <>
-      <CommandCenterTable columns={columns} mandatoryFieldFilters={mandatoryFieldFilters} />
+      <CommandCenterTable
+        columns={columns}
+        mandatoryFieldFilters={mandatoryFieldFilters}
+        onUploadDocument={handleUploadDocument}
+      />
       <ShipmentPanel
         open={isPanelOpen}
         onOpenChange={handlePanelOpenChange}
         mode="edit"
         row={panelRow ?? null}
+      />
+      <UploadPanel
+        isOpen={isUploadOpen}
+        onClose={handleUploadClose}
+        uploads={uploads}
+        onFilesSelected={handleFilesSelected}
+        onFilesRejected={handleFilesRejected}
+        onCancel={cancelUpload}
+        onRetry={retryUpload}
+        onRemove={removeUpload}
+        onClearCompleted={clearCompleted}
+        disabled={!uploadShipmentId}
+        description={
+          uploadDocumentType
+            ? `This upload will be classified as ${uploadDocumentType.documentTypeName}.`
+            : undefined
+        }
       />
       {duplicateShipmentId && (
         <ShipmentDuplicateDialog

@@ -40,10 +40,6 @@ function priorityFor(s: Shipment): {
   return { label: "LOW", tone: "muted" };
 }
 
-function equipCode(s: Shipment): string {
-  return s.moves?.[0]?.assignment?.trailer?.equipmentType?.code ?? "—";
-}
-
 const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {
   danger: "bg-destructive/12 text-destructive",
   warning: "bg-warning/15 text-warning",
@@ -144,8 +140,7 @@ export function UnassignedQueue() {
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
-                <span className="truncate">{s.customer?.name ?? "—"}</span>
-                <span className="shrink-0 font-table tabular-nums">{equipCode(s)}</span>
+                <span className="truncate">{s.customer?.name ?? "No Customer Found"}</span>
               </div>
               <div className="flex items-baseline justify-between gap-2 font-table tabular-nums">
                 <span className="truncate text-[9.5px] text-muted-foreground">

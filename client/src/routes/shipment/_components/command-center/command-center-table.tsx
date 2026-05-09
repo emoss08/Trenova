@@ -45,6 +45,7 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon, LayoutGridIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ExpandedRow } from "./expanded-row";
+import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
 import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
@@ -86,9 +87,14 @@ const RESOURCE_NAME = "Shipment";
 type CommandCenterTableProps = {
   columns: ColumnDef<Shipment>[];
   mandatoryFieldFilters: FieldFilter[];
+  onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 };
 
-export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCenterTableProps) {
+export function CommandCenterTable({
+  columns,
+  mandatoryFieldFilters,
+  onUploadDocument,
+}: CommandCenterTableProps) {
   const [{ mode: viewMode, expanded: expandedId, page, size: pageSize, q: query }, setUrl] =
     useCommandCenterUrl();
   const pageIndex = Math.max(0, page - 1);
@@ -239,7 +245,7 @@ export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCe
 
   if (viewMode === "timeline") {
     return (
-      <section className="cc-card">
+      <section className="flex flex-col rounded-md border border-border bg-card">
         <SavedViewsBar rightSlot={rightSlot} />
         <div className="p-4">
           <TimelinePlaceholder />
@@ -257,7 +263,7 @@ export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCe
   }
 
   return (
-    <section className="cc-card overflow-hidden">
+    <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
       <SavedViewsBar rightSlot={rightSlot} />
 
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
@@ -288,7 +294,7 @@ export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCe
         </Suspense>
       </div>
 
-      <div className="cc-table-scroll relative">
+      <div className="relative overflow-x-auto">
         <Table>
           <colgroup>
             {table.getVisibleFlatColumns().map((col) => (
@@ -333,6 +339,7 @@ export function CommandCenterTable({ columns, mandatoryFieldFilters }: CommandCe
                     onClick={() => handleRowClick(row)}
                     onMouseEnter={() => row.original.id && setHighlightId(row.original.id)}
                     onMouseLeave={() => setHighlightId(null)}
+                    onUploadDocument={onUploadDocument}
                   />
                 );
               })
@@ -422,6 +429,7 @@ function RowFragment({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  onUploadDocument,
 }: {
   row: Row<Shipment>;
   isExpanded: boolean;
@@ -429,30 +437,31 @@ function RowFragment({
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
   return (
     <>
       <tr
         className={cn(
-          "cc-row group/row",
-          isExpanded && "cc-row-expanded",
-          isHighlighted && "cc-row-highlighted",
+          "group/row h-9 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/30",
+          isExpanded && "bg-brand/10 hover:bg-brand/20 outline-1 outline-brand -outline-offset-1",
+          isHighlighted && "bg-muted/50",
         )}
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         {row.getVisibleCells().map((cell) => (
-          <td key={cell.id} className="cc-td">
+          <td key={cell.id} className="px-2.5 py-1.5 text-[11.5px] align-middle">
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>
         ))}
       </tr>
       {isExpanded && (
-        <tr className="cc-row-expansion">
+        <tr className="border-b border-border bg-muted">
           <td colSpan={row.getVisibleCells().length} className="p-0">
             <div className="cc-fade-in">
-              <ExpandedRow shipment={row.original} />
+              <ExpandedRow shipment={row.original} onUploadDocument={onUploadDocument} />
             </div>
           </td>
         </tr>
@@ -507,30 +516,29 @@ function CommandCenterFooter({
           </Select>
         </div>
         <div className="flex items-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Previous page"
-          disabled={pageIndex === 0}
-          onClick={onPrev}
-        >
-          <ChevronLeftIcon className="size-3.5" />
-        </Button>
-        <span className="font-table tabular-nums">
-          {pageIndex + 1} / {totalPages}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="Next page"
-          disabled={pageIndex >= totalPages - 1}
-          onClick={onNext}
-        >
-          <ChevronRightIcon className="size-3.5" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Previous page"
+            disabled={pageIndex === 0}
+            onClick={onPrev}
+          >
+            <ChevronLeftIcon className="size-3.5" />
+          </Button>
+          <span className="font-table tabular-nums">
+            {pageIndex + 1} / {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label="Next page"
+            disabled={pageIndex >= totalPages - 1}
+            onClick={onNext}
+          >
+            <ChevronRightIcon className="size-3.5" />
+          </Button>
         </div>
       </div>
     </div>
   );
 }
-

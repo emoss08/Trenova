@@ -164,7 +164,6 @@ export default function KpiRail() {
         value={String(merged.activeShipments.count)}
         delta={merged.activeShipments.changeFromYesterday}
         deltaTone="success"
-        sub={`${breakdown.inTransit} in-transit · ${breakdown.atRisk} at-risk · ${merged.unassigned.count} unassigned`}
         sparkData={activeSparkline}
         sparkColor="var(--brand)"
         icon={<TruckIcon {...ICON_PROPS} />}

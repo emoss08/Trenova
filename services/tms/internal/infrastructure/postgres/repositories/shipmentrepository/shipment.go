@@ -141,7 +141,8 @@ func (r *repository) GetUnassigned(
 	unassignedPredicate := dba.NewSelect().
 		TableExpr(`"shipment_moves" AS "sm"`).
 		ColumnExpr("1").
-		Join(`JOIN "assignments" AS "a" ON a.shipment_move_id = sm.id`).
+		Join(`JOIN "assignments" AS "a"`).
+		JoinOn("a.shipment_move_id = sm.id").
 		JoinOn("a.organization_id = sm.organization_id").
 		JoinOn("a.business_unit_id = sm.business_unit_id").
 		JoinOn("a.archived_at IS NULL").
@@ -154,6 +155,7 @@ func (r *repository) GetUnassigned(
 	total, err := dba.
 		NewSelect().
 		Model(&entities).
+		Relation("Customer").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ShipmentScopeTenant(sq, req.Filter.TenantInfo).
 				Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).

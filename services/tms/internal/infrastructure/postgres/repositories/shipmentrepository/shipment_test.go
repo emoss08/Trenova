@@ -42,7 +42,7 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	shipmentID := pulid.MustNew("shp_")
 
-	unassignedPredicate := `(?s)NOT EXISTS .*FROM "shipment_moves" AS "sm".*JOIN "assignments" AS "a".*a\.shipment_move_id = sm\.id.*a\.organization_id = sm\.organization_id.*a\.business_unit_id = sm\.business_unit_id.*a\.archived_at IS NULL.*sm\.shipment_id = sp\.id.*sm\.organization_id = sp\.organization_id.*sm\.business_unit_id = sp\.business_unit_id`
+	unassignedPredicate := `(?s)NOT EXISTS .*FROM "shipment_moves" AS "sm".*JOIN "assignments" AS "a" ON \(a\.shipment_move_id = sm\.id\) AND \(a\.organization_id = sm\.organization_id\) AND \(a\.business_unit_id = sm\.business_unit_id\) AND \(a\.archived_at IS NULL\).*sm\.shipment_id = sp\.id.*sm\.organization_id = sp\.organization_id.*sm\.business_unit_id = sp\.business_unit_id`
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipments" AS "sp".*sp\.organization_id = .*sp\.business_unit_id = .*` + unassignedPredicate).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))

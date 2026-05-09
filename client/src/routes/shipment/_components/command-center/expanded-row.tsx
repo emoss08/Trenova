@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Shipment, Stop, StopType } from "@/types/shipment";
 import {
   AlertTriangleIcon,
@@ -7,8 +7,8 @@ import {
   MapPinIcon,
   MessageSquareIcon,
   PlusIcon,
-  UploadIcon,
 } from "lucide-react";
+import { DocumentsBlock, type ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
 
 const STOP_KIND: Record<StopType, string> = {
   Pickup: "PICKUP",
@@ -103,7 +103,7 @@ function RouteTimeline({ stops }: { stops: Stop[] }) {
     <div className="relative pl-4">
       <div
         aria-hidden
-        className="absolute top-2 bottom-2 left-[5px] bg-border"
+        className="absolute top-2 bottom-2 left-1.25 bg-border"
         style={{ width: "1.5px" }}
       />
       {stops.map((stop, i) => {
@@ -165,11 +165,14 @@ function FinancialsBlock({ shipment }: { shipment: Shipment }) {
       {rows.map((row) => (
         <div
           key={row.label}
-          className={`flex items-center justify-between py-[3px] ${row.bold ? "mt-1 border-t border-border pt-2" : ""}`}
+          className={cn(
+            "flex items-center justify-between py-0.75",
+            row.bold ? "mt-1 border-t border-border pt-2" : "",
+          )}
         >
           <dt className="text-muted-foreground">{row.label}</dt>
           <dd
-            className={`font-table tabular-nums ${row.bold ? "font-semibold" : "font-medium"}`}
+            className={cn("font-table tabular-nums", row.bold ? "font-semibold" : "font-medium")}
             style={row.tone ? { color: row.tone } : undefined}
           >
             {row.value}
@@ -177,53 +180,6 @@ function FinancialsBlock({ shipment }: { shipment: Shipment }) {
         </div>
       ))}
     </dl>
-  );
-}
-
-function DocumentsBlock({ shipment }: { shipment: Shipment }) {
-  const docRows: { label: string; value: string; tone: "ok" | "missing" | "warn" }[] = [
-    {
-      label: "BOL",
-      value: shipment.bol ? `${shipment.bol}.pdf` : "—",
-      tone: shipment.bol ? "ok" : "missing",
-    },
-    {
-      label: "PRO",
-      value: shipment.proNumber ?? "—",
-      tone: shipment.proNumber ? "ok" : "missing",
-    },
-    {
-      label: "POD",
-      value: shipment.actualDeliveryDate ? "Received" : "Pending",
-      tone: shipment.actualDeliveryDate ? "ok" : "warn",
-    },
-    {
-      label: "Customer invoice",
-      value: shipment.billedAt ? "Issued" : "—",
-      tone: shipment.billedAt ? "ok" : "missing",
-    },
-  ];
-
-  const tone = (t: "ok" | "missing" | "warn") =>
-    t === "ok" ? "text-success" : t === "warn" ? "text-warning" : "text-muted-foreground";
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-col gap-1 text-[11px]">
-        {docRows.map((d) => (
-          <div key={d.label} className="flex items-center justify-between">
-            <span className="text-muted-foreground">{d.label}</span>
-            <span className={`font-table text-[10.5px] tabular-nums ${tone(d.tone)}`}>
-              {d.value}
-            </span>
-          </div>
-        ))}
-      </div>
-      <Button variant="outline" size="xs" className="w-full justify-center">
-        <UploadIcon className="size-3" />
-        Upload
-      </Button>
-    </div>
   );
 }
 
@@ -255,8 +211,8 @@ function QuickActionsBlock() {
       <h5 className="cc-label mt-1">Comments · 0</h5>
       <div className="rounded border border-border bg-muted/40 p-2 text-[10.5px] leading-snug text-muted-foreground">
         <p>
-          No comments yet. Use{" "}
-          <span className="font-table text-foreground">@mentions</span> to ping a teammate.
+          No comments yet. Use <span className="font-table text-foreground">@mentions</span> to ping
+          a teammate.
         </p>
         <button
           type="button"
@@ -270,8 +226,15 @@ function QuickActionsBlock() {
   );
 }
 
-export function ExpandedRow({ shipment }: { shipment: Shipment }) {
+export function ExpandedRow({
+  shipment,
+  onUploadDocument,
+}: {
+  shipment: Shipment;
+  onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
+}) {
   const stops = shipment.moves?.flatMap((m) => m.stops ?? []) ?? [];
+
   return (
     <div className="grid grid-cols-1 gap-5 px-4 py-3 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
       <section className="min-w-0">
@@ -284,7 +247,7 @@ export function ExpandedRow({ shipment }: { shipment: Shipment }) {
       </section>
       <section className="min-w-0">
         <h4 className="cc-label mb-1.5">Documents</h4>
-        <DocumentsBlock shipment={shipment} />
+        <DocumentsBlock shipment={shipment} onUpload={onUploadDocument} />
       </section>
       <section className="min-w-0">
         <h4 className="cc-label mb-1.5">Quick actions</h4>

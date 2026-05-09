@@ -1,3 +1,4 @@
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type React from "react";
 import type { Tone } from "../mock-data";
@@ -32,32 +33,39 @@ export function KpiWatchlist({ label, items, icon, info, span = 3 }: KpiWatchlis
           </span>
         }
       />
-      <div className="mt-0.5 flex flex-col gap-[3px]">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            className={cn(
-              "flex items-center justify-between gap-2 rounded-sm px-1.5 py-[3px]",
-              index === 0 && "bg-foreground/[0.04]",
-            )}
-          >
-            <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-              <span
-                aria-hidden
-                className="size-[5px] shrink-0 rounded-full"
-                style={{ background: toneVar(item.tone) }}
-              />
-              <span className="truncate font-mono text-[11px] text-foreground">{item.who}</span>
-            </span>
-            <span
-              className="shrink-0 font-mono text-[10.5px] tabular-nums"
-              style={{ color: toneVar(item.tone) }}
+      <ScrollArea
+        className="-mr-1 min-h-0 flex-1"
+        viewportClassName="pr-1"
+        type="hover"
+        maskHeight={16}
+      >
+        <div className="flex flex-col gap-[3px]">
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className={cn(
+                "flex items-center justify-between gap-2 rounded-sm px-1.5 py-[3px]",
+                index === 0 && "bg-foreground/[0.04]",
+              )}
             >
-              {item.meta}
-            </span>
-          </div>
-        ))}
-      </div>
+              <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                <span
+                  aria-hidden
+                  className="size-[5px] shrink-0 rounded-full"
+                  style={{ background: toneVar(item.tone) }}
+                />
+                <span className="truncate font-mono text-[11px] text-foreground">{item.who}</span>
+              </span>
+              <span
+                className="shrink-0 font-mono text-[10.5px] tabular-nums"
+                style={{ color: toneVar(item.tone) }}
+              >
+                {item.meta}
+              </span>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
     </KpiCard>
   );
 }
