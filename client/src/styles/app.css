@@ -272,6 +272,11 @@
 
 /* ─── Shipments Command Center utilities (Phase 1) ─────────────────────── */
 
+:root {
+  --kpi-h: 110px;
+  --kpi-h-sm: 86px;
+}
+
 .cc-label {
   font-size: 10px;
   font-weight: 600;

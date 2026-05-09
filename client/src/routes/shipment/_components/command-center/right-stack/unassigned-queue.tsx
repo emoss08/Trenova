@@ -97,7 +97,7 @@ export function UnassignedQueue() {
       count={totalCount}
       countTone="warning"
       rightSlot={
-        <span className="font-table hidden text-[9.5px] tabular-nums text-muted-foreground sm:inline">
+        <span className="hidden font-table text-[9.5px] text-muted-foreground tabular-nums sm:inline">
           {formatCurrency(pendingRevenue)} waiting
         </span>
       }
@@ -128,9 +128,9 @@ export function UnassignedQueue() {
               className="flex flex-col gap-1 rounded border border-border bg-muted/30 px-2 py-1.5 text-left transition-colors hover:border-foreground/20 hover:bg-muted/60"
             >
               <div className="flex items-center justify-between gap-1.5">
-                <div className="flex items-center gap-1 min-w-0">
+                <div className="flex min-w-0 items-center gap-1">
                   <GripVerticalIcon className="size-2.5 shrink-0 text-muted-foreground" />
-                  <span className="font-table truncate text-[10.5px] font-semibold tabular-nums">
+                  <span className="truncate font-table text-[10.5px] font-semibold tabular-nums">
                     {origin} → {dest}
                   </span>
                 </div>
@@ -145,10 +145,10 @@ export function UnassignedQueue() {
               </div>
               <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
                 <span className="truncate">{s.customer?.name ?? "—"}</span>
-                <span className="font-table shrink-0 tabular-nums">{equipCode(s)}</span>
+                <span className="shrink-0 font-table tabular-nums">{equipCode(s)}</span>
               </div>
               <div className="flex items-baseline justify-between gap-2 font-table tabular-nums">
-                <span className="text-[9.5px] text-muted-foreground truncate">
+                <span className="truncate text-[9.5px] text-muted-foreground">
                   pickup {pickupDisplay(s)}
                 </span>
                 <span className="text-[10.5px] font-semibold">

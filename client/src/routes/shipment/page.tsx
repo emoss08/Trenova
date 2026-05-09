@@ -4,7 +4,7 @@ import { lazy } from "react";
 import { ShipmentMapPanelBoundary } from "./_components/map/shipment-map-panel";
 
 const Table = lazy(() => import("./_components/shipment-table"));
-const ShipmentAnalytics = lazy(() => import("./_components/analytics/shipment-analytics"));
+const ShipmentAnalytics = lazy(() => import("./_components/analytics/kpi/kpi-rail"));
 const ShipmentMapPanel = lazy(() => import("./_components/map/shipment-map-panel"));
 const RightStack = lazy(() => import("./_components/command-center/right-stack"));
 const BottomModules = lazy(

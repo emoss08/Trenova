@@ -156,14 +156,14 @@ export function ExceptionsInbox() {
             >
               <Icon className="size-3" />
             </span>
-            <div className="flex flex-1 flex-col gap-0.5 min-w-0">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[11px] font-semibold truncate">{it.title}</span>
-                <span className="font-table shrink-0 text-[9.5px] tabular-nums text-muted-foreground">
+                <span className="truncate text-[11px] font-semibold">{it.title}</span>
+                <span className="shrink-0 font-table text-[9.5px] text-muted-foreground tabular-nums">
                   {it.time}
                 </span>
               </div>
-              <p className="font-table text-[10px] tabular-nums text-muted-foreground truncate">
+              <p className="truncate font-table text-[10px] text-muted-foreground tabular-nums">
                 {it.body}
               </p>
               <div className="mt-0.5 flex items-center gap-1">

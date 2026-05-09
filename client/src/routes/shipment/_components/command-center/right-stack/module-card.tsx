@@ -50,11 +50,11 @@ export function ModuleCard({ id, title, count, countTone = "muted", rightSlot, c
           >
             <GripVerticalIcon className="size-3" />
           </button>
-          <h3 className="cc-label text-foreground truncate">{title}</h3>
+          <h3 className="cc-label truncate text-foreground">{title}</h3>
           {typeof count === "number" && (
             <span
               className={cn(
-                "font-table inline-flex min-w-4.5 justify-center rounded px-1 text-[9px] tabular-nums",
+                "inline-flex min-w-4.5 justify-center rounded px-1 font-table text-[9px] tabular-nums",
                 COUNT_CLASS[countTone],
               )}
             >

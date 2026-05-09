@@ -1,6 +1,10 @@
 import { analytics } from "@/lib/queries/analytics";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import type { ShipmentAnalyticsData } from "../../analytics/mock-data";
+import {
+  type DeepPartial,
+  type ShipmentAnalyticsData,
+  mergeShipmentAnalyticsWithDefaults,
+} from "../../analytics/mock-data";
 import { ActivityFeed } from "./activity-feed";
 import { CustomerMix } from "./customer-mix";
 import { LaneHeatmap } from "./lane-heatmap";
@@ -16,7 +20,9 @@ export default function BottomModules() {
 
 function ShipmentAnalyticsModules() {
   const { data } = useSuspenseQuery(analytics.get("shipment-management"));
-  const shipmentAnalytics = data as ShipmentAnalyticsData;
+  const shipmentAnalytics = mergeShipmentAnalyticsWithDefaults(
+    data as DeepPartial<ShipmentAnalyticsData>,
+  );
 
   return (
     <>
