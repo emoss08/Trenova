@@ -1060,6 +1060,7 @@ func newIntegrationShipmentService(
 		Permissions:     mocks.NewMockPermissionEngine(t),
 		Validator:       validator,
 		AuditService:    audit,
+		EventService:    noopShipmentEventService{},
 		Coordinator:     newStateCoordinator(),
 		Commercial:      commercial,
 		Realtime:        realtime,

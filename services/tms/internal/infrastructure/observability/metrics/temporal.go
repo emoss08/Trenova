@@ -1,3 +1,4 @@
+//revive:disable-next-line:var-naming
 package metrics
 
 import (
@@ -146,7 +147,7 @@ func (m *Temporal) RecordActivityExecution(
 		return
 	}
 
-	status := "success" //nolint:goconst // no need to check this.
+	status := metricStatusSuccess
 	if err != nil {
 		status = "error"
 		m.activityErrors.WithLabelValues(activityType, classifyError(err)).Inc()
@@ -161,7 +162,7 @@ func (m *Temporal) RecordWorkflowExecution(workflowType string, duration float64
 		return
 	}
 
-	status := "success"
+	status := metricStatusSuccess
 	if err != nil {
 		status = "error"
 		m.workflowErrors.WithLabelValues(workflowType, classifyError(err)).Inc()

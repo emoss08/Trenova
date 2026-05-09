@@ -1,7 +1,9 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package documentparsingruleservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"slices"
@@ -315,7 +317,12 @@ func (s *Service) PublishVersion(
 
 	var updated *documentparsingrule.RuleVersion
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if txErr := s.repo.ArchivePublishedVersions(txCtx, set.ID, tenantInfo.OrgID, tenantInfo.BuID); txErr != nil {
+		if txErr := s.repo.ArchivePublishedVersions(
+			txCtx,
+			set.ID,
+			tenantInfo.OrgID,
+			tenantInfo.BuID,
+		); txErr != nil {
 			return txErr
 		}
 
@@ -608,7 +615,10 @@ func (s *Service) validateFixturesAgainstVersion(
 			})
 			continue
 		}
-		if assertionErr := validateFixtureAssertions(analysis, fixture.Assertions); assertionErr != nil {
+		if assertionErr := validateFixtureAssertions(
+			analysis,
+			fixture.Assertions,
+		); assertionErr != nil {
 			failures = append(failures, map[string]any{
 				"fixtureId": fixture.ID.String(),
 				"name":      fixture.Name,
@@ -629,6 +639,7 @@ func (s *Service) validateFixturesAgainstVersion(
 	return summary, nil
 }
 
+//nolint:unparam // signature is kept for local workflow consistency
 func (s *Service) logAudit(
 	ctx context.Context,
 	current any,
@@ -718,7 +729,7 @@ func validateFixtureAssertions(
 	assertions documentparsingrule.FixtureAssertions,
 ) error {
 	if analysis == nil {
-		return fmt.Errorf("analysis is empty")
+		return errors.New("analysis is empty")
 	}
 	for key, expected := range assertions.ExpectedFields {
 		if err := validateFieldAssertion(

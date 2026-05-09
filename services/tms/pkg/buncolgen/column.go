@@ -1,3 +1,4 @@
+//nolint:gocritic // value-shaped domain/codegen APIs are intentionally stable
 package buncolgen
 
 import (
@@ -74,7 +75,7 @@ func assertValidIdentifier(s, label string) {
 		panic("buncolgen: " + label + " must not be empty")
 	}
 	for _, r := range s {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') && r != '_' {
 			panic(
 				"buncolgen: " + label + " contains invalid character '" + string(
 					r,

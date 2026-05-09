@@ -33,46 +33,46 @@ type RatingDetail struct {
 type Shipment struct {
 	bun.BaseModel `json:"-" bun:"table:shipments,alias:sp"`
 
-	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ServiceTypeID        pulid.ID            `json:"serviceTypeId"        bun:"service_type_id,type:VARCHAR(100),notnull"`
-	ShipmentTypeID       pulid.ID            `json:"shipmentTypeId"       bun:"shipment_type_id,type:VARCHAR(100),nullzero"`
-	CustomerID           pulid.ID            `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
-	TractorTypeID        pulid.ID            `json:"tractorTypeId"        bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
-	TrailerTypeID        pulid.ID            `json:"trailerTypeId"        bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
-	OwnerID              pulid.ID            `json:"ownerId"              bun:"owner_id,type:VARCHAR(100),nullzero"`
-	EnteredByID          pulid.ID            `json:"enteredById"          bun:"entered_by_id,type:VARCHAR(100),nullzero"`
-	CanceledByID         pulid.ID            `json:"canceledById"         bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	FormulaTemplateID    pulid.ID            `json:"formulaTemplateId"    bun:"formula_template_id,type:VARCHAR(100)"`
-	ConsolidationGroupID pulid.ID            `json:"consolidationGroupId" bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
-	Status               Status              `json:"status"               bun:"status,type:shipment_status_enum,notnull,default:'New'"`
-	ProNumber            string              `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),notnull"`
-	BOL                  string              `json:"bol"                  bun:"bol,type:VARCHAR(100),nullzero"`
-	CancelReason         string              `json:"cancelReason"         bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	OtherChargeAmount    decimal.NullDecimal `json:"otherChargeAmount"    bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	FreightChargeAmount  decimal.NullDecimal `json:"freightChargeAmount"  bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	BaseRate             decimal.NullDecimal `json:"baseRate"             bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
-	TotalChargeAmount    decimal.NullDecimal `json:"totalChargeAmount"    bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	Pieces               *int64              `json:"pieces"               bun:"pieces,type:INTEGER,nullzero"`
-	Weight               *int64              `json:"weight"               bun:"weight,type:INTEGER,nullzero"`
-	TemperatureMin       *int16              `json:"temperatureMin"       bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
-	TemperatureMax       *int16              `json:"temperatureMax"       bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
-	ActualDeliveryDate   *int64              `json:"actualDeliveryDate"   bun:"actual_delivery_date,type:BIGINT,nullzero"`
-	ActualShipDate       *int64              `json:"actualShipDate"       bun:"actual_ship_date,type:BIGINT,nullzero"`
-	CanceledAt           *int64              `json:"canceledAt"           bun:"canceled_at,type:BIGINT,nullzero"`
-	BillingTransferStatus BillingTransferStatus `json:"billingTransferStatus" bun:"billing_transfer_status,type:VARCHAR(50),nullzero"`
-	TransferredToBillingAt *int64             `json:"transferredToBillingAt" bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
-	MarkedReadyToBillAt    *int64             `json:"markedReadyToBillAt"    bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
-	BilledAt               *int64             `json:"billedAt"               bun:"billed_at,type:BIGINT,nullzero"`
-	RatingUnit           int64               `json:"ratingUnit"           bun:"rating_unit,type:INTEGER,notnull,default:1"`
-	RatingDetail         *RatingDetail       `json:"ratingDetail"         bun:"rating_detail,type:JSONB,nullzero"`
-	SourceDocumentID     string              `json:"sourceDocumentId,omitempty" bun:"-"`
-	SearchVector         string              `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                 string              `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
-	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                     pulid.ID              `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID         pulid.ID              `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID         pulid.ID              `json:"organizationId"             bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ServiceTypeID          pulid.ID              `json:"serviceTypeId"              bun:"service_type_id,type:VARCHAR(100),notnull"`
+	ShipmentTypeID         pulid.ID              `json:"shipmentTypeId"             bun:"shipment_type_id,type:VARCHAR(100),nullzero"`
+	CustomerID             pulid.ID              `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),notnull"`
+	TractorTypeID          pulid.ID              `json:"tractorTypeId"              bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
+	TrailerTypeID          pulid.ID              `json:"trailerTypeId"              bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
+	OwnerID                pulid.ID              `json:"ownerId"                    bun:"owner_id,type:VARCHAR(100),nullzero"`
+	EnteredByID            pulid.ID              `json:"enteredById"                bun:"entered_by_id,type:VARCHAR(100),nullzero"`
+	CanceledByID           pulid.ID              `json:"canceledById"               bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	FormulaTemplateID      pulid.ID              `json:"formulaTemplateId"          bun:"formula_template_id,type:VARCHAR(100)"`
+	ConsolidationGroupID   pulid.ID              `json:"consolidationGroupId"       bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
+	Status                 Status                `json:"status"                     bun:"status,type:shipment_status_enum,notnull,default:'New'"`
+	ProNumber              string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"`
+	BOL                    string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"`
+	CancelReason           string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	OtherChargeAmount      decimal.NullDecimal   `json:"otherChargeAmount"          bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	FreightChargeAmount    decimal.NullDecimal   `json:"freightChargeAmount"        bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	BaseRate               decimal.NullDecimal   `json:"baseRate"                   bun:"base_rate,type:NUMERIC(19,4),notnull,default:0"`
+	TotalChargeAmount      decimal.NullDecimal   `json:"totalChargeAmount"          bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	Pieces                 *int64                `json:"pieces"                     bun:"pieces,type:INTEGER,nullzero"`
+	Weight                 *int64                `json:"weight"                     bun:"weight,type:INTEGER,nullzero"`
+	TemperatureMin         *int16                `json:"temperatureMin"             bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax         *int16                `json:"temperatureMax"             bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
+	ActualDeliveryDate     *int64                `json:"actualDeliveryDate"         bun:"actual_delivery_date,type:BIGINT,nullzero"`
+	ActualShipDate         *int64                `json:"actualShipDate"             bun:"actual_ship_date,type:BIGINT,nullzero"`
+	CanceledAt             *int64                `json:"canceledAt"                 bun:"canceled_at,type:BIGINT,nullzero"`
+	BillingTransferStatus  BillingTransferStatus `json:"billingTransferStatus"      bun:"billing_transfer_status,type:VARCHAR(50),nullzero"`
+	TransferredToBillingAt *int64                `json:"transferredToBillingAt"     bun:"transferred_to_billing_at,type:BIGINT,nullzero"`
+	MarkedReadyToBillAt    *int64                `json:"markedReadyToBillAt"        bun:"marked_ready_to_bill_at,type:BIGINT,nullzero"`
+	BilledAt               *int64                `json:"billedAt"                   bun:"billed_at,type:BIGINT,nullzero"`
+	RatingUnit             int64                 `json:"ratingUnit"                 bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	RatingDetail           *RatingDetail         `json:"ratingDetail"               bun:"rating_detail,type:JSONB,nullzero"`
+	SourceDocumentID       string                `json:"sourceDocumentId,omitempty" bun:"-"`
+	SearchVector           string                `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                   string                `json:"-"                          bun:"rank,type:VARCHAR(100),scanonly"`
+	Version                int64                 `json:"version"                    bun:"version,type:BIGINT"`
+	CreatedAt              int64                 `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64                 `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit      *tenant.BusinessUnit             `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization      *tenant.Organization             `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`

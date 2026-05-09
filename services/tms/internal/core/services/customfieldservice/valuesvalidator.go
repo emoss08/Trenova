@@ -194,7 +194,11 @@ func (v *ValuesValidator) validateNumber(
 	case int64:
 		num = float64(n)
 	default:
-		multiErr.Add(fieldPath, errortypes.ErrInvalid, fmt.Sprintf("%s must be a number", def.Label))
+		multiErr.Add(
+			fieldPath,
+			errortypes.ErrInvalid,
+			fmt.Sprintf("%s must be a number", def.Label),
+		)
 		return
 	}
 
@@ -229,7 +233,11 @@ func (v *ValuesValidator) validateDate(
 	case string:
 		if _, parseErr := time.Parse(time.RFC3339, d); parseErr != nil {
 			if _, dateErr := time.Parse("2006-01-02", d); dateErr != nil {
-				multiErr.Add(fieldPath, errortypes.ErrInvalid, "Invalid date format. Use ISO 8601 format (e.g., 2024-01-15 or 2024-01-15T10:30:00Z)")
+				multiErr.Add(
+					fieldPath,
+					errortypes.ErrInvalid,
+					"Invalid date format. Use ISO 8601 format (e.g., 2024-01-15 or 2024-01-15T10:30:00Z)",
+				)
 			}
 		}
 	case float64:
@@ -241,7 +249,11 @@ func (v *ValuesValidator) validateDate(
 			multiErr.Add(fieldPath, errortypes.ErrInvalid, "Invalid timestamp")
 		}
 	default:
-		multiErr.Add(fieldPath, errortypes.ErrInvalid, "Date must be a string (ISO 8601) or unix timestamp")
+		multiErr.Add(
+			fieldPath,
+			errortypes.ErrInvalid,
+			"Date must be a string (ISO 8601) or unix timestamp",
+		)
 	}
 }
 

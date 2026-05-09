@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package minio
 
 import (
@@ -6,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -267,7 +269,7 @@ func (c *Client) GetMultipartUploadPartURL(
 	params *storage.MultipartUploadPartURLParams,
 ) (string, error) {
 	reqParams := make(url.Values)
-	reqParams.Set("partNumber", fmt.Sprintf("%d", params.PartNumber))
+	reqParams.Set("partNumber", strconv.Itoa(params.PartNumber))
 	reqParams.Set("uploadId", params.UploadID)
 
 	client := c.client

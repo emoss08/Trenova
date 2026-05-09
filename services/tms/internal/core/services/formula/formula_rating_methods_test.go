@@ -252,12 +252,12 @@ func TestRatingMethod_PerPound(t *testing.T) {
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(0.08))
 	weight := int64(25000)
 	shipment := &RatingMethodShipment{
-		ID:        "SP_PERPOUND",
-		ProNumber: "PRO-PERPOUND-001",
-		Weight:    &weight,
-		BaseRate:  &freightRate,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
+		ID:          "SP_PERPOUND",
+		ProNumber:   "PRO-PERPOUND-001",
+		Weight:      &weight,
+		BaseRate:    &freightRate,
+		Moves:       []*RatingMethodMove{},
+		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
 	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
@@ -287,12 +287,12 @@ func TestRatingMethod_PerPallet(t *testing.T) {
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(85.00))
 	pieces := int64(12)
 	shipment := &RatingMethodShipment{
-		ID:        "SP_PERPALLET",
-		ProNumber: "PRO-PERPALLET-001",
-		Pieces:    &pieces,
-		BaseRate:  &freightRate,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
+		ID:          "SP_PERPALLET",
+		ProNumber:   "PRO-PERPALLET-001",
+		Pieces:      &pieces,
+		BaseRate:    &freightRate,
+		Moves:       []*RatingMethodMove{},
+		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
 	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
@@ -324,7 +324,7 @@ func TestRatingMethod_PerLinearFoot(t *testing.T) {
 		ID:        "SP_PERLINEARFOOT",
 		ProNumber: "PRO-PERLINEARFOOT-001",
 		BaseRate:  &freightRate,
-		Moves:               []*RatingMethodMove{},
+		Moves:     []*RatingMethodMove{},
 		Commodities: []*RatingMethodShipmentCommodity{
 			{
 				ID:     "SC_001",
@@ -401,12 +401,12 @@ func TestRatingMethod_PerCWT(t *testing.T) {
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(15.00))
 	weight := int64(25000)
 	shipment := &RatingMethodShipment{
-		ID:        "SP_PERCWT",
-		ProNumber: "PRO-PERCWT-001",
-		Weight:    &weight,
-		BaseRate:  &freightRate,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
+		ID:          "SP_PERCWT",
+		ProNumber:   "PRO-PERCWT-001",
+		Weight:      &weight,
+		BaseRate:    &freightRate,
+		Moves:       []*RatingMethodMove{},
+		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
 	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{
@@ -484,11 +484,11 @@ func TestRatingMethod_RatingUnitMultiplier(t *testing.T) {
 
 	freightRate := decimal.NewNullDecimal(decimal.NewFromFloat(150.00))
 	shipment := &RatingMethodShipment{
-		ID:        "SP_RATINGUNIT",
-		ProNumber: "PRO-RATINGUNIT-001",
-		BaseRate:  &freightRate,
-		Moves:               []*RatingMethodMove{},
-		Commodities:         []*RatingMethodShipmentCommodity{},
+		ID:          "SP_RATINGUNIT",
+		ProNumber:   "PRO-RATINGUNIT-001",
+		BaseRate:    &freightRate,
+		Moves:       []*RatingMethodMove{},
+		Commodities: []*RatingMethodShipmentCommodity{},
 	}
 
 	result, err := eng.Evaluate(&formulatemplatetypes.EvaluationRequest{

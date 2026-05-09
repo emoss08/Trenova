@@ -1,3 +1,4 @@
+//nolint:funlen,gocritic // existing legacy workflow/API shape is intentionally kept stable
 package assignmentservice
 
 import (
@@ -362,7 +363,11 @@ func (s *service) unassignWithinTx(
 			return err
 		}
 
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(txCtx, original, updatedShipment); multiErr != nil {
+		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
+			txCtx,
+			original,
+			updatedShipment,
+		); multiErr != nil {
 			return multiErr
 		}
 
@@ -503,7 +508,7 @@ func (s *service) shipmentMoveHasHazmat(
 	return false, nil
 }
 
-func (s *service) upsertAssignment(
+func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	moveID pulid.ID,
@@ -593,7 +598,11 @@ func (s *service) upsertAssignment(
 			return err
 		}
 
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(txCtx, original, updatedShipment); multiErr != nil {
+		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
+			txCtx,
+			original,
+			updatedShipment,
+		); multiErr != nil {
 			return multiErr
 		}
 
@@ -730,6 +739,7 @@ func (s *service) ensureNoDispatchHold(
 }
 
 func ensureAssignableMove(move *shipment.ShipmentMove) error {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch move.Status {
 	case shipment.MoveStatusCompleted:
 		return errortypes.NewBusinessError("Completed shipment moves cannot be assigned")
@@ -793,6 +803,7 @@ func firstPickupStop(move *shipment.ShipmentMove) (*shipment.Stop, error) {
 		if stop == nil || !stop.IsOriginStop() {
 			continue
 		}
+
 		if candidate == nil || stop.Sequence < candidate.Sequence {
 			candidate = stop
 		}

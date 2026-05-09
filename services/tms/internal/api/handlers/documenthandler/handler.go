@@ -1,7 +1,6 @@
 package documenthandler
 
 import (
-	//nolint:depguard // SSE event encoding
 	"net/http"
 
 	"github.com/bytedance/sonic"
@@ -72,6 +71,7 @@ func NewTestHandler(
 	}
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/documents")
 	api.POST(

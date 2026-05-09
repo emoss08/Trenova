@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package engine
 
 import (
@@ -242,6 +243,7 @@ func mergeVariables(env map[string]any, variables map[string]any) {
 	}
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func mergeMapValues(existing, incoming any) (map[string]any, bool) {
 	existingMap, ok := existing.(map[string]any)
 	if !ok {

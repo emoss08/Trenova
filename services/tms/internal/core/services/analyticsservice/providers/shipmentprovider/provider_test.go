@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,7 +20,122 @@ import (
 	"go.uber.org/zap"
 )
 
-func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockShipmentControlRepository) {
+func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
+	t.Parallel()
+
+	provider, mockDB, dispatchRepo := newTestProvider(t)
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	target := 96.5
+
+	mockDB.ExpectQuery(`(?s)WITH shipment_lanes AS .*SELECT origin_state, destination_state, COUNT\(\*\)::int AS count`).
+		WillReturnRows(sqlmock.NewRows([]string{"origin_state", "destination_state", "count"}))
+	mockDB.ExpectQuery(`(?s)SELECT COUNT\(\*\) FILTER .* AS total_active.*FROM shipments sp`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"total_active",
+			"created_today",
+			"created_yesterday",
+			"in_transit",
+			"at_risk",
+			"loading",
+			"done",
+		}).AddRow(8, 3, 1, 4, 1, 2, 1))
+	mockDB.ExpectQuery(`(?s)SELECT EXTRACT\(HOUR FROM TO_TIMESTAMP\(sp\.created_at\).*COUNT\(\*\)::float8 AS value`).
+		WillReturnRows(sqlmock.NewRows([]string{"hr", "value"}).AddRow(9, 2.0))
+	mockDB.ExpectQuery(`(?s)WITH revenue AS .*SELECT revenue\.amount, revenue\.yesterday_amount, mileage\.miles`).
+		WillReturnRows(sqlmock.NewRows([]string{"amount", "yesterday_amount", "miles"}).
+			AddRow(1200.0, 1000.0, 600.0))
+	mockDB.ExpectQuery(`(?s)SELECT EXTRACT\(HOUR FROM TO_TIMESTAMP\(sp\.actual_delivery_date\).*SUM\(sp\.total_charge_amount\).* AS value`).
+		WillReturnRows(sqlmock.NewRows([]string{"hr", "value"}).AddRow(10, 1200.0))
+	mockDB.ExpectQuery(`(?s)SELECT COUNT\(\*\) FILTER .* AS total.*FROM stops stp`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"total",
+			"on_time",
+			"yesterday_total",
+			"yesterday_on_time",
+			"seven_day_total",
+			"seven_day_on_time",
+		}).AddRow(10, 9, 8, 7, 70, 63))
+
+	dispatchRepo.EXPECT().
+		GetByOrgID(t.Context(), repositories.GetDispatchControlRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		}).
+		Return(&dispatchcontrol.DispatchControl{ServiceFailureTarget: &target}, nil).
+		Once()
+
+	mockDB.ExpectQuery(`(?s)SELECT COALESCE\(SUM\(sm\.distance\) FILTER .* AS total_miles.*FROM shipment_moves sm`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"total_miles",
+			"empty_miles",
+			"yesterday_total_miles",
+			"yesterday_empty_miles",
+		}).AddRow(1000.0, 100.0, 900.0, 120.0))
+	mockDB.ExpectQuery(`(?s)WITH risky_shipments AS .*active_weather AS`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"count",
+			"created_today",
+			"created_yesterday",
+			"eta_slip",
+			"weather",
+			"reefer",
+		}).AddRow(2, 1, 0, 2, 1, 1))
+	mockDB.ExpectQuery(`(?s)WITH unassigned_shipments AS`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"count",
+			"created_today",
+			"created_yesterday",
+			"revenue_waiting",
+		}).AddRow(3, 1, 2, 2500.0))
+	mockDB.ExpectQuery(`(?s)WITH active_shipments AS .*shipment_assignments AS`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"count",
+			"created_today",
+			"created_yesterday",
+			"unassigned",
+			"driver_ready",
+		}).AddRow(4, 2, 1, 3, 4))
+	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.pro_number AS shipment_id.*ORDER BY dwell_seconds DESC.*LIMIT 10`).
+		WillReturnRows(sqlmock.NewRows([]string{"shipment_id", "customer", "dwell_seconds"}))
+	mockDB.ExpectQuery(`(?s)WITH customer_revenue AS .*ORDER BY revenue DESC\s+LIMIT 5`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"customer_id",
+			"name",
+			"revenue",
+			"loads",
+			"previous_revenue",
+			"total_revenue",
+		}))
+	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.id AS shipment_id.*ORDER BY stp\.scheduled_window_start ASC.*LIMIT .*OFFSET`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"shipment_id",
+			"pro_number",
+			"pickup_window_start",
+			"customer",
+			"origin",
+			"destination",
+			"driver",
+			"shipment_status",
+			"has_primary_worker",
+		}))
+
+	data, err := provider.GetAnalyticsData(t.Context(), &services.AnalyticsRequestOptions{
+		OrgID:    orgID,
+		BuID:     buID,
+		Timezone: "UTC",
+	})
+
+	require.NoError(t, err)
+	assert.Contains(t, data, "revenueToday")
+	assert.Contains(t, data, "activeShipments")
+	assert.Contains(t, data, "detentionWatchlist")
+	assert.NotContains(t, data, "tenderAccept")
+	assert.NotContains(t, data, "hosNearLimit")
+	assert.NotContains(t, data, "detentionAlerts")
+	require.NoError(t, mockDB.ExpectationsWereMet())
+}
+
+func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockDispatchControlRepository) {
 	t.Helper()
 
 	db, mockDB, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
@@ -31,62 +147,36 @@ func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockShipm
 		require.NoError(t, bunDB.Close())
 	})
 
-	controlRepo := mocks.NewMockShipmentControlRepository(t)
+	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
 
 	return &Provider{
-		l:           zap.NewNop(),
-		db:          postgres.NewTestConnection(bunDB),
-		controlRepo: controlRepo,
-	}, mockDB, controlRepo
+		l:            zap.NewNop(),
+		db:           postgres.NewTestConnection(bunDB),
+		dispatchRepo: dispatchRepo,
+	}, mockDB, dispatchRepo
 }
 
-func TestGetDetentionAlerts_ReturnsZeroWhenTrackingDisabled(t *testing.T) {
+func TestGetDetentionWatchlist_ReturnsRowsWithToneThresholds(t *testing.T) {
 	t.Parallel()
 
-	provider, mockDB, controlRepo := newTestProvider(t)
+	provider, mockDB, _ := newTestProvider(t)
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	controlRepo.EXPECT().
-		Get(t.Context(), repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		}).
-		Return(&tenant.ShipmentControl{TrackDetentionTime: false}, nil).
-		Once()
+	mockDB.ExpectQuery(`(?s)SELECT\s+sp\.pro_number AS shipment_id.*ORDER BY dwell_seconds DESC.*LIMIT 10`).
+		WillReturnRows(sqlmock.NewRows([]string{"shipment_id", "customer", "dwell_seconds"}).
+			AddRow("SHP-1001", "Acme Manufacturing", int64(4*60*60+1)).
+			AddRow("SHP-1002", "FreshHaul Foods", int64(2*60*60+30*60)))
 
-	card, err := provider.getDetentionAlerts(t.Context(), orgID, buID)
+	card, err := provider.getDetentionWatchlist(t.Context(), orgID, buID)
 
 	require.NoError(t, err)
 	require.NotNil(t, card)
-	assert.Equal(t, 0, card.Count)
-	require.NoError(t, mockDB.ExpectationsWereMet())
-}
-
-func TestGetDetentionAlerts_UsesShipmentControlThreshold(t *testing.T) {
-	t.Parallel()
-
-	provider, mockDB, controlRepo := newTestProvider(t)
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-
-	controlRepo.EXPECT().
-		Get(t.Context(), repositories.GetShipmentControlRequest{
-			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
-		}).
-		Return(&tenant.ShipmentControl{
-			TrackDetentionTime: true,
-			DetentionThreshold: ptrInt16(45),
-		}, nil).
-		Once()
-
-	mockDB.ExpectQuery(`SELECT count\(\*\) FROM stops stp.*\(stp\.actual_departure - stp\.actual_arrival\) > .*2700.*`).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
-
-	card, err := provider.getDetentionAlerts(t.Context(), orgID, buID)
-
-	require.NoError(t, err)
-	require.NotNil(t, card)
-	assert.Equal(t, 3, card.Count)
+	require.Len(t, card.Items, 2)
+	assert.Equal(t, "danger", card.Items[0].Tone)
+	assert.Equal(t, "warning", card.Items[1].Tone)
+	assert.Equal(t, "4h 00m", card.Items[0].DwellLabel)
+	assert.Equal(t, "2h 30m", card.Items[1].DwellLabel)
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }
 
@@ -214,9 +304,4 @@ func TestGetTomorrowsPickups_ReturnsPickupRowsWithStatusMapping(t *testing.T) {
 	assert.Equal(t, "TERM-LA", card.Pickups[0].Origin)
 	assert.Equal(t, "DC-CHI", card.Pickups[0].Destination)
 	require.NoError(t, mockDB.ExpectationsWereMet())
-}
-
-//go:fix inline
-func ptrInt16(v int16) *int16 {
-	return &v
 }

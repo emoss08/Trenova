@@ -1,6 +1,7 @@
 package bunmarshal
 
 import (
+	"errors"
 	"fmt"
 	"maps"
 	"reflect"
@@ -10,14 +11,16 @@ import (
 )
 
 // UnmarshalMap decodes a snake_case Bun-shaped map into a struct that uses JSON tags.
+//
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func UnmarshalMap(input map[string]any, target any) error {
 	if target == nil {
-		return fmt.Errorf("target is required")
+		return errors.New("target is required")
 	}
 
 	targetType := reflect.TypeOf(target)
 	if targetType.Kind() != reflect.Pointer || targetType.Elem().Kind() != reflect.Struct {
-		return fmt.Errorf("target must be a pointer to struct")
+		return errors.New("target must be a pointer to struct")
 	}
 
 	translated := translateMap(input, targetType.Elem())

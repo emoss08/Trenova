@@ -138,14 +138,30 @@ func (r *repository) GetUnassigned(
 ) (*pagination.ListResult[*shipment.Shipment], error) {
 	entities := make([]*shipment.Shipment, 0, req.Filter.Pagination.SafeLimit())
 	dba := r.db.DBForContext(ctx)
+	unassignedPredicate := dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm"`).
+		ColumnExpr("1").
+		Join(`JOIN "assignments" AS "a" ON a.shipment_move_id = sm.id`).
+		JoinOn("a.organization_id = sm.organization_id").
+		JoinOn("a.business_unit_id = sm.business_unit_id").
+		JoinOn("a.archived_at IS NULL").
+		JoinOn("a.status != ?", shipment.AssignmentStatusCanceled).
+		Where("sm.shipment_id = sp.id").
+		Where("sm.organization_id = sp.organization_id").
+		Where("sm.business_unit_id = sp.business_unit_id").
+		Where("sm.status != ?", shipment.MoveStatusCanceled)
 
 	total, err := dba.
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.ShipmentScopeTenant(sq, req.Filter.TenantInfo).
-				Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew)
+				Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).
+				Where("NOT EXISTS (?)", unassignedPredicate)
 		}).
+		Order(buncolgen.ShipmentColumns.CreatedAt.OrderDesc()).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, err

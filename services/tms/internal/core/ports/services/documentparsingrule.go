@@ -123,20 +123,79 @@ type DocumentParsingRuleRuntime interface {
 }
 
 type DocumentParsingRuleAdminService interface {
-	ListRuleSets(ctx context.Context, tenantInfo pagination.TenantInfo, documentKind string) ([]*documentparsingrule.RuleSet, error)
-	GetRuleSet(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) (*documentparsingrule.RuleSet, error)
-	CreateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet, userID pulid.ID) (*documentparsingrule.RuleSet, error)
-	UpdateRuleSet(ctx context.Context, entity *documentparsingrule.RuleSet, userID pulid.ID) (*documentparsingrule.RuleSet, error)
-	DeleteRuleSet(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) error
+	ListRuleSets(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		documentKind string,
+	) ([]*documentparsingrule.RuleSet, error)
+	GetRuleSet(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentparsingrule.RuleSet, error)
+	CreateRuleSet(
+		ctx context.Context,
+		entity *documentparsingrule.RuleSet,
+		userID pulid.ID,
+	) (*documentparsingrule.RuleSet, error)
+	UpdateRuleSet(
+		ctx context.Context,
+		entity *documentparsingrule.RuleSet,
+		userID pulid.ID,
+	) (*documentparsingrule.RuleSet, error)
+	DeleteRuleSet(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		userID pulid.ID,
+	) error
 
-	ListVersions(ctx context.Context, ruleSetID pulid.ID, tenantInfo pagination.TenantInfo) ([]*documentparsingrule.RuleVersion, error)
-	GetVersion(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) (*documentparsingrule.RuleVersion, error)
-	CreateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion, userID pulid.ID) (*documentparsingrule.RuleVersion, error)
-	UpdateVersion(ctx context.Context, entity *documentparsingrule.RuleVersion, userID pulid.ID) (*documentparsingrule.RuleVersion, error)
-	PublishVersion(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) (*documentparsingrule.RuleVersion, error)
+	ListVersions(
+		ctx context.Context,
+		ruleSetID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*documentparsingrule.RuleVersion, error)
+	GetVersion(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentparsingrule.RuleVersion, error)
+	CreateVersion(
+		ctx context.Context,
+		entity *documentparsingrule.RuleVersion,
+		userID pulid.ID,
+	) (*documentparsingrule.RuleVersion, error)
+	UpdateVersion(
+		ctx context.Context,
+		entity *documentparsingrule.RuleVersion,
+		userID pulid.ID,
+	) (*documentparsingrule.RuleVersion, error)
+	PublishVersion(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		userID pulid.ID,
+	) (*documentparsingrule.RuleVersion, error)
 
-	ListFixtures(ctx context.Context, ruleSetID pulid.ID, tenantInfo pagination.TenantInfo) ([]*documentparsingrule.Fixture, error)
-	GetFixture(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo) (*documentparsingrule.Fixture, error)
-	SaveFixture(ctx context.Context, entity *documentparsingrule.Fixture, userID pulid.ID) (*documentparsingrule.Fixture, error)
-	DeleteFixture(ctx context.Context, id pulid.ID, tenantInfo pagination.TenantInfo, userID pulid.ID) error
+	ListFixtures(
+		ctx context.Context,
+		ruleSetID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) ([]*documentparsingrule.Fixture, error)
+	GetFixture(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*documentparsingrule.Fixture, error)
+	SaveFixture(
+		ctx context.Context,
+		entity *documentparsingrule.Fixture,
+		userID pulid.ID,
+	) (*documentparsingrule.Fixture, error)
+	DeleteFixture(
+		ctx context.Context,
+		id pulid.ID,
+		tenantInfo pagination.TenantInfo,
+		userID pulid.ID,
+	) error
 }

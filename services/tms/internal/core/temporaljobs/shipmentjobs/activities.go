@@ -87,15 +87,19 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 	}
 
 	if len(duplicated) > 0 {
-		if publishErr := realtimeinvalidation.Publish(ctx, a.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: payload.OrganizationID,
-			BusinessUnitID: payload.BusinessUnitID,
-			ActorUserID:    payload.RequestedBy,
-			ActorType:      services.PrincipalTypeUser,
-			ActorID:        payload.RequestedBy,
-			Resource:       "shipments",
-			Action:         "bulk_created",
-		}); publishErr != nil {
+		if publishErr := realtimeinvalidation.Publish(
+			ctx,
+			a.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: payload.OrganizationID,
+				BusinessUnitID: payload.BusinessUnitID,
+				ActorUserID:    payload.RequestedBy,
+				ActorType:      services.PrincipalTypeUser,
+				ActorID:        payload.RequestedBy,
+				Resource:       "shipments",
+				Action:         "bulk_created",
+			},
+		); publishErr != nil {
 			a.logger.Warn(
 				"failed to publish duplicated shipment invalidation",
 				zap.Error(publishErr),
@@ -135,14 +139,18 @@ func (a *Activities) AutoDelayShipmentsActivity(
 	for _, entity := range delayedShipments {
 		shipmentIDs = append(shipmentIDs, entity.ID)
 
-		if publishErr := realtimeinvalidation.Publish(ctx, a.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: entity.OrganizationID,
-			BusinessUnitID: entity.BusinessUnitID,
-			Resource:       "shipments",
-			Action:         "delayed",
-			RecordID:       entity.ID,
-			Entity:         entity,
-		}); publishErr != nil {
+		if publishErr := realtimeinvalidation.Publish(
+			ctx,
+			a.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+				Resource:       "shipments",
+				Action:         "delayed",
+				RecordID:       entity.ID,
+				Entity:         entity,
+			},
+		); publishErr != nil {
 			a.logger.Warn("failed to publish shipment delay invalidation", zap.Error(publishErr))
 		}
 	}
@@ -173,12 +181,16 @@ func (a *Activities) AutoCancelShipmentsActivity(
 
 	if len(canceledShipments) > 0 {
 		for _, tenantInfo := range uniqueShipmentTenants(canceledShipments) {
-			if publishErr := realtimeinvalidation.Publish(ctx, a.realtime, &realtimeinvalidation.PublishParams{
-				OrganizationID: tenantInfo.OrgID,
-				BusinessUnitID: tenantInfo.BuID,
-				Resource:       "shipments",
-				Action:         "bulk_canceled",
-			}); publishErr != nil {
+			if publishErr := realtimeinvalidation.Publish(
+				ctx,
+				a.realtime,
+				&realtimeinvalidation.PublishParams{
+					OrganizationID: tenantInfo.OrgID,
+					BusinessUnitID: tenantInfo.BuID,
+					Resource:       "shipments",
+					Action:         "bulk_canceled",
+				},
+			); publishErr != nil {
 				a.logger.Warn(
 					"failed to publish shipment auto cancel invalidation",
 					zap.Error(publishErr),

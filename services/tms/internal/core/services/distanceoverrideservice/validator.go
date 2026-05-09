@@ -246,7 +246,7 @@ func createUniqueRouteRule(
 					errortypes.ErrSystemError,
 					"Failed to validate distance override route uniqueness",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if count > 0 {

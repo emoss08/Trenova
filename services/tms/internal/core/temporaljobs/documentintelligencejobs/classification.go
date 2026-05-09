@@ -185,7 +185,12 @@ func scoreBillOfLading(
 		score += 0.1
 		signals = append(signals, "bol reference")
 	}
-	if stringutils.ContainsAny(corpus, "rate confirmation", "load confirmation", "carrier load confirmation") {
+	if stringutils.ContainsAny(
+		corpus,
+		"rate confirmation",
+		"load confirmation",
+		"carrier load confirmation",
+	) {
 		score -= 0.25
 	}
 	if len(features.SignatureSignals) > 0 {
@@ -215,7 +220,12 @@ func scoreProofOfDelivery(
 	score := 0.0
 	signals := make([]string, 0, 4)
 
-	if stringutils.ContainsAny(corpus, "proof of delivery", "delivery receipt", "received in good order") {
+	if stringutils.ContainsAny(
+		corpus,
+		"proof of delivery",
+		"delivery receipt",
+		"received in good order",
+	) {
 		score += 0.7
 		signals = append(signals, "proof of delivery phrase")
 	}
@@ -281,7 +291,14 @@ func extractDocumentFeatures(
 		}
 	}
 
-	if stringutils.ContainsAny(corpus, "line haul", "flat rate", "fuel surcharge", "amount due", "total due") {
+	if stringutils.ContainsAny(
+		corpus,
+		"line haul",
+		"flat rate",
+		"fuel surcharge",
+		"amount due",
+		"total due",
+	) {
 		features.MoneySignals = append(features.MoneySignals, "billing terms")
 	}
 	if stringutils.ContainsAny(corpus, "pickup", "delivery", "shipper", "receiver", "consignee") {
@@ -290,7 +307,12 @@ func extractDocumentFeatures(
 	if stringutils.ContainsAny(corpus, "signature", "received in good order", "proof of delivery") {
 		features.SignatureSignals = append(features.SignatureSignals, "signature language")
 	}
-	if stringutils.ContainsAny(corpus, "load confirmation", "subject to the terms", "contract addendum") {
+	if stringutils.ContainsAny(
+		corpus,
+		"load confirmation",
+		"subject to the terms",
+		"contract addendum",
+	) {
 		features.TermsSignals = append(features.TermsSignals, "carrier contract terms")
 	}
 
@@ -392,7 +414,8 @@ func detectProviderFingerprint(
 		}
 	}
 
-	if len(features.TermsSignals) > 0 && stringutils.ContainsAny(corpus, "load confirmation", "carrier load") {
+	if len(features.TermsSignals) > 0 &&
+		stringutils.ContainsAny(corpus, "load confirmation", "carrier load") {
 		return &ProviderFingerprint{
 			Provider:   "GenericBrokerLoadConfirmation",
 			KindHint:   kindRateConfirmation,

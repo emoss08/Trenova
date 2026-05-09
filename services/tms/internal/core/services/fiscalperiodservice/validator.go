@@ -66,6 +66,7 @@ func (v *Validator) ValidateUpdate(
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (v *Validator) ValidateClose(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
@@ -87,11 +88,16 @@ func (v *Validator) ValidateClose(
 		}
 
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add("reconciliation", errortypes.ErrSystemError, "Failed to load accounting control")
+		multiErr.Add(
+			"reconciliation",
+			errortypes.ErrSystemError,
+			"Failed to load accounting control",
+		)
 		return multiErr
 	}
 
-	if !control.RequireReconciliationToClose || control.ReconciliationMode == tenant.ReconciliationModeDisabled {
+	if !control.RequireReconciliationToClose ||
+		control.ReconciliationMode == tenant.ReconciliationModeDisabled {
 		return nil
 	}
 
@@ -107,7 +113,11 @@ func (v *Validator) ValidateClose(
 	)
 	if err != nil {
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add("reconciliation", errortypes.ErrSystemError, "Failed to validate reconciliation discrepancies")
+		multiErr.Add(
+			"reconciliation",
+			errortypes.ErrSystemError,
+			"Failed to validate reconciliation discrepancies",
+		)
 		return multiErr
 	}
 
@@ -119,7 +129,10 @@ func (v *Validator) ValidateClose(
 	multiErr.Add(
 		"reconciliation",
 		errortypes.ErrInvalidOperation,
-		fmt.Sprintf("Cannot close fiscal period while %d posted invoice reconciliation discrepancies remain unresolved", count),
+		fmt.Sprintf(
+			"Cannot close fiscal period while %d posted invoice reconciliation discrepancies remain unresolved",
+			count,
+		),
 	)
 	return multiErr
 }
@@ -142,11 +155,22 @@ func (v *Validator) validateAccountingCloseBlockers(
 		  AND requested_fiscal_period_id = ?
 		  AND status IN ('PendingApproval', 'Approved')
 	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingManualCount); err != nil {
-		multiErr.Add("accounting", errortypes.ErrSystemError, "Failed to validate manual journal close blockers")
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrSystemError,
+			"Failed to validate manual journal close blockers",
+		)
 		return
 	}
 	if pendingManualCount > 0 {
-		multiErr.Add("accounting", errortypes.ErrInvalidOperation, fmt.Sprintf("Cannot close fiscal period while %d manual journal requests are pending posting or approval", pendingManualCount))
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrInvalidOperation,
+			fmt.Sprintf(
+				"Cannot close fiscal period while %d manual journal requests are pending posting or approval",
+				pendingManualCount,
+			),
+		)
 	}
 
 	var pendingSourceCount int
@@ -162,10 +186,21 @@ func (v *Validator) validateAccountingCloseBlockers(
 		  AND jb.fiscal_period_id = ?
 		  AND js.status <> 'Posted'
 	`, entity.OrganizationID, entity.BusinessUnitID, entity.ID).Scan(ctx, &pendingSourceCount); err != nil {
-		multiErr.Add("accounting", errortypes.ErrSystemError, "Failed to validate journal source close blockers")
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrSystemError,
+			"Failed to validate journal source close blockers",
+		)
 		return
 	}
 	if pendingSourceCount > 0 {
-		multiErr.Add("accounting", errortypes.ErrInvalidOperation, fmt.Sprintf("Cannot close fiscal period while %d accounting sources remain unposted", pendingSourceCount))
+		multiErr.Add(
+			"accounting",
+			errortypes.ErrInvalidOperation,
+			fmt.Sprintf(
+				"Cannot close fiscal period while %d accounting sources remain unposted",
+				pendingSourceCount,
+			),
+		)
 	}
 }

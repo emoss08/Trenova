@@ -93,7 +93,10 @@ type Client interface {
 	GetPresignedURL(ctx context.Context, params *PresignedURLParams) (string, error)
 	GetPresignedUploadURL(ctx context.Context, params *PresignedUploadURLParams) (string, error)
 	InitiateMultipartUpload(ctx context.Context, params *MultipartUploadParams) (string, error)
-	GetMultipartUploadPartURL(ctx context.Context, params *MultipartUploadPartURLParams) (string, error)
+	GetMultipartUploadPartURL(
+		ctx context.Context,
+		params *MultipartUploadPartURLParams,
+	) (string, error)
 	CompleteMultipartUpload(ctx context.Context, params *CompleteMultipartUploadParams) error
 	AbortMultipartUpload(ctx context.Context, params *AbortMultipartUploadParams) error
 	ListMultipartUploadParts(

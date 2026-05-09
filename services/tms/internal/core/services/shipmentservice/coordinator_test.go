@@ -142,6 +142,7 @@ func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -248,6 +249,7 @@ func TestServiceUpdate_DerivesAuthoritativeStatusesBeforePersist(t *testing.T) {
 		auditService: auditService,
 		commercial:   newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:     realtime,
+		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -377,6 +379,7 @@ func TestServiceUpdate_AdvancesContinuityWhenMoveBecomesCompleted(t *testing.T) 
 		auditService:   auditService,
 		commercial:     newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:       realtime,
+		eventService:   noopShipmentEventService{},
 		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -473,6 +476,7 @@ func TestServiceUpdate_RejectsMoveTransitionToInTransitWhenEquipmentActiveElsewh
 		auditService:   mocks.NewMockAuditService(t),
 		commercial:     newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:       mocks.NewMockRealtimeService(t),
+		eventService:   noopShipmentEventService{},
 		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -598,6 +602,7 @@ func TestServiceUpdate_RejectsActualArrivalWhenTractorAndWorkerOverlapPersistedW
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -712,6 +717,7 @@ func TestServiceUpdate_RejectsTwoMovesGoingInTransitWithSameTrailerInPayload(t *
 		auditService:   mocks.NewMockAuditService(t),
 		commercial:     newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:       mocks.NewMockRealtimeService(t),
+		eventService:   noopShipmentEventService{},
 		coordinator:    shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -805,6 +811,7 @@ func TestServiceUpdate_PreservesAssignedStateWhenPayloadSendsNew(t *testing.T) {
 		auditService: auditService,
 		commercial:   newTestCommercialCalculator(formula, mocks.NewMockAccessorialChargeRepository(t)),
 		realtime:     realtime,
+		eventService: noopShipmentEventService{},
 		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -857,6 +864,7 @@ func TestServiceUpdate_RejectsDirectInvoiceFromCompleted(t *testing.T) {
 		controlRepo:  controlRepo,
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 	userID := pulid.MustNew("usr_")

@@ -81,6 +81,7 @@ func TestServiceTransferOwnership_SucceedsForCurrentOwner(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: audit,
 		realtime:     realtime,
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -153,6 +154,7 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: audit,
 		realtime:     realtime,
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -182,6 +184,7 @@ func TestServiceTransferOwnership_RejectsAPIKeyActor(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -244,8 +247,9 @@ func TestServiceCreate_RejectsDuplicateBOLBeforePersist(t *testing.T) {
 			formula,
 			mocks.NewMockAccessorialChargeRepository(t),
 		),
-		realtime:    mocks.NewMockRealtimeService(t),
-		coordinator: newStateCoordinator(),
+		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
 	}
 
 	created, err := svc.Create(t.Context(), entity, &services.RequestActor{

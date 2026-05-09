@@ -47,7 +47,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	subs.DELETE("/:id", h.deleteSubscription)
 	subs.PATCH("/:id/pause", h.pauseSubscription)
 	subs.PATCH("/:id/resume", h.resumeSubscription)
-
 }
 
 func (h *Handler) listAllowlistedTables(c *gin.Context) {
@@ -75,9 +74,12 @@ func (h *Handler) listSubscriptions(c *gin.Context) {
 		req,
 		h.eh,
 		func() (*pagination.ListResult[*tablechangealert.TCASubscription], error) {
-			return h.service.ListSubscriptions(c.Request.Context(), &repositories.ListTCASubscriptionsRequest{
-				Filter: req,
-			})
+			return h.service.ListSubscriptions(
+				c.Request.Context(),
+				&repositories.ListTCASubscriptionsRequest{
+					Filter: req,
+				},
+			)
 		},
 	)
 }

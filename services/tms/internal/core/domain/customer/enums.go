@@ -75,7 +75,13 @@ const (
 type InvoiceAdjustmentSupportingDocumentPolicy string
 
 const (
-	InvoiceAdjustmentSupportingDocumentPolicyInherit  = InvoiceAdjustmentSupportingDocumentPolicy("Inherit")
-	InvoiceAdjustmentSupportingDocumentPolicyRequired = InvoiceAdjustmentSupportingDocumentPolicy("Required")
-	InvoiceAdjustmentSupportingDocumentPolicyOptional = InvoiceAdjustmentSupportingDocumentPolicy("Optional")
+	InvoiceAdjustmentSupportingDocumentPolicyInherit = InvoiceAdjustmentSupportingDocumentPolicy(
+		"Inherit",
+	)
+	InvoiceAdjustmentSupportingDocumentPolicyRequired = InvoiceAdjustmentSupportingDocumentPolicy(
+		"Required",
+	)
+	InvoiceAdjustmentSupportingDocumentPolicyOptional = InvoiceAdjustmentSupportingDocumentPolicy(
+		"Optional",
+	)
 )

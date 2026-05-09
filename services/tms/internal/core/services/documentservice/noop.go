@@ -18,7 +18,7 @@ func (noopDocumentContentService) GetContent(
 	pulid.ID,
 	pagination.TenantInfo,
 ) (*documentcontent.Content, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 }
 
 func (noopDocumentContentService) GetShipmentDraft(
@@ -26,7 +26,7 @@ func (noopDocumentContentService) GetShipmentDraft(
 	pulid.ID,
 	pagination.TenantInfo,
 ) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-	return nil, nil
+	return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 }
 
 func (noopDocumentContentService) SearchDocuments(

@@ -92,7 +92,8 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 				}, nil
 			},
 		},
-		coordinator: newStateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
 	}
 
 	resp, err := svc.Duplicate(t.Context(), req)
@@ -111,6 +112,7 @@ func TestServiceDuplicate_RejectsInvalidRequest(t *testing.T) {
 		repo:         mocks.NewMockShipmentRepository(t),
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -131,6 +133,7 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 		repo:            mocks.NewMockShipmentRepository(t),
 		validator:       NewTestValidator(t),
 		auditService:    mocks.NewMockAuditService(t),
+		eventService:    noopShipmentEventService{},
 		coordinator:     newStateCoordinator(),
 		workflowStarter: disabledWorkflowStarter{},
 	}

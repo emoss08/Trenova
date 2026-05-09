@@ -127,7 +127,11 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "EquipmentManufacturer", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EquipmentManufacturer",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -248,7 +252,11 @@ func (r *repository) BulkUpdateStatus(
 		return nil, err
 	}
 
-	if err = dberror.CheckBulkRowsAffected(results, "EquipmentManufacturer", req.EquipmentManufacturerIDs); err != nil {
+	if err = dberror.CheckBulkRowsAffected(
+		results,
+		"EquipmentManufacturer",
+		req.EquipmentManufacturerIDs,
+	); err != nil {
 		return nil, err
 	}
 

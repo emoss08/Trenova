@@ -2,6 +2,7 @@ package locationrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/geofence"
@@ -101,7 +102,7 @@ func applyLocationGeofence(
 	switch entity.GeofenceType {
 	case geofence.TypeAuto, geofence.TypeCircle:
 		if entity.Longitude == nil || entity.Latitude == nil || entity.GeofenceRadiusMeters == nil {
-			return fmt.Errorf("circle geofences require longitude, latitude, and radius")
+			return errors.New("circle geofences require longitude, latitude, and radius")
 		}
 
 		expression, args := postgis.CirclePolygonExpression(

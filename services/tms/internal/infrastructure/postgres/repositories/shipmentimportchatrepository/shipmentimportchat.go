@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package shipmentimportchatrepository
 
 import (
@@ -96,7 +97,11 @@ func (r *repository) UpdateConversation(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(result, "ShipmentImportConversation", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"ShipmentImportConversation",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

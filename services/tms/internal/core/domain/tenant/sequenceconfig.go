@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -121,7 +122,7 @@ func (s *LocationCodeStrategy) Validate() error {
 		)
 	}
 	if len(strategy.Components) == 0 {
-		return fmt.Errorf("at least one location code component is required")
+		return errors.New("at least one location code component is required")
 	}
 	for _, component := range strategy.Components {
 		if !isAllowedLocationCodeComponent(component) {
@@ -129,7 +130,7 @@ func (s *LocationCodeStrategy) Validate() error {
 		}
 	}
 	if strings.TrimSpace(strategy.FallbackPrefix) == "" {
-		return fmt.Errorf("fallback prefix is required")
+		return errors.New("fallback prefix is required")
 	}
 	parts := len(strategy.Components) + 1
 	length := len(strategy.Separator)*(parts-1) +
@@ -141,7 +142,7 @@ func (s *LocationCodeStrategy) Validate() error {
 
 	fallback := strings.TrimSpace(strategy.FallbackPrefix)
 	if stringutils.NormalizeIdentifier(fallback) == "" {
-		return fmt.Errorf("fallback prefix must contain letters or digits")
+		return errors.New("fallback prefix must contain letters or digits")
 	}
 	if len([]rune(fallback)) > MaxLocationCodeLength {
 		return fmt.Errorf("location code format cannot exceed %d characters", MaxLocationCodeLength)

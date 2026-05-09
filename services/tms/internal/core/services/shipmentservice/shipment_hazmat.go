@@ -85,6 +85,7 @@ func addHazmatConflictsToMultiError(multiErr *errortypes.MultiError, conflicts [
 	}
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func evaluateHazmatConflicts(
 	candidates []hazmatCommodityCandidate,
 	hazmatCommodities map[pulid.ID]*commodity.Commodity,
@@ -129,7 +130,11 @@ func evaluateShipmentHazmatConflicts(
 	hazmatCommodities map[pulid.ID]*commodity.Commodity,
 	rules []*hazmatsegregationrule.HazmatSegregationRule,
 ) []hazmatConflict {
-	return evaluateHazmatConflicts(hazmatCandidatesFromShipmentCommodities(commodities), hazmatCommodities, rules)
+	return evaluateHazmatConflicts(
+		hazmatCandidatesFromShipmentCommodities(commodities),
+		hazmatCommodities,
+		rules,
+	)
 }
 
 func hazmatCandidatesFromCommodityIDs(commodityIDs []pulid.ID) []hazmatCommodityCandidate {

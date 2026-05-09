@@ -92,6 +92,7 @@ func (r *repository) Terminate(
 	err := r.db.WithTx(
 		ctx,
 		ports.TxOptions{ReadOnly: false},
+		//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 		func(txCtx context.Context, tx bun.Tx) error {
 			var currentPID int64
 			if err := tx.NewRaw(`SELECT pg_backend_pid()`).Scan(txCtx, &currentPID); err != nil {
@@ -104,7 +105,8 @@ func (r *repository) Terminate(
 			}
 
 			var currentDatabase string
-			if err := tx.NewRaw(`SELECT current_database()`).Scan(txCtx, &currentDatabase); err != nil {
+			if err := tx.NewRaw(`SELECT current_database()`).
+				Scan(txCtx, &currentDatabase); err != nil {
 				return fmt.Errorf("get current database: %w", err)
 			}
 
@@ -124,7 +126,8 @@ func (r *repository) Terminate(
 				)
 			}
 
-			if err := tx.NewRaw(`SELECT pg_terminate_backend(?)`, pid).Scan(txCtx, &result.Terminated); err != nil {
+			if err := tx.NewRaw(`SELECT pg_terminate_backend(?)`, pid).
+				Scan(txCtx, &result.Terminated); err != nil {
 				return fmt.Errorf("terminate database session: %w", err)
 			}
 

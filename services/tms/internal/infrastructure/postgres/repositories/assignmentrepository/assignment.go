@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package assignmentrepository
 
 import (
@@ -184,7 +185,7 @@ func (r *repository) getAssignmentByMoveID(
 		Scan(ctx)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 		return nil, err
 	}
@@ -216,7 +217,7 @@ func (r *repository) findInProgressAssignment(
 
 	if err := query.Scan(ctx); err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 		return nil, err
 	}
@@ -258,7 +259,7 @@ func (r *repository) findNearestActualEvent(
 
 	if err := query.OrderExpr(order).Limit(1).Scan(ctx, event); err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 		return nil, err
 	}
@@ -298,7 +299,7 @@ func (r *repository) findOverlappingActualWindow(
 
 	if err := query.OrderExpr("MIN(event.timestamp) DESC").Limit(1).Scan(ctx, window); err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 		return nil, err
 	}

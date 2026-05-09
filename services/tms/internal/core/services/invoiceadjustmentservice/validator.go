@@ -19,7 +19,10 @@ func NewValidator(_ ValidatorParams) *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateRequest(_ context.Context, req *services.InvoiceAdjustmentRequest) *errortypes.MultiError {
+func (v *Validator) ValidateRequest(
+	_ context.Context,
+	req *services.InvoiceAdjustmentRequest,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Adjustment request is required")

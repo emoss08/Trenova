@@ -76,6 +76,7 @@ func TestServiceCalculateTotals_UsesFormulaTemplateAndNestedAdditionalCharges(t 
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -102,6 +103,7 @@ func TestServiceCalculateTotals_RejectsMissingFormulaTemplateID(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -125,6 +127,7 @@ func TestServiceCalculateTotals_RejectsNilShipment(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -189,6 +192,7 @@ func TestServiceCalculateTotals_CalculatesPerUnitAndPercentageCharges(t *testing
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -247,6 +251,7 @@ func TestServiceCalculateTotals_UsesAdditionalChargeOverridesForFormulaOtherChar
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -295,6 +300,7 @@ func TestServiceCalculateTotals_PropagatesFormulaErrors(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -363,6 +369,7 @@ func TestServiceCalculateTotals_UsesCommodityRollupsInFormula(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		commercial:   newTestCommercialCalculator(formula, accessorialRepo),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -453,6 +460,7 @@ func TestServiceCalculateTotals_HydratesCommodityDetailsBeforeFormula(t *testing
 		validator:     NewTestValidator(t),
 		auditService:  mocks.NewMockAuditService(t),
 		commercial:    newTestCommercialCalculator(formula, accessorialRepo),
+		eventService:  noopShipmentEventService{},
 		coordinator:   newStateCoordinator(),
 	}
 

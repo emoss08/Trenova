@@ -35,6 +35,7 @@ func TestCreate_DerivesFromHoldReasonAuditsAndPublishes(t *testing.T) {
 		ShipmentRepo:   shipmentRepo,
 		HoldReasonRepo: holdReasonRepo,
 		AuditService:   audit,
+		EventService:   noopShipmentEventService{},
 		Realtime:       realtime,
 	})
 
@@ -99,6 +100,7 @@ func TestUpdate_RejectsReleasedHold(t *testing.T) {
 		ShipmentRepo:   shipmentRepo,
 		HoldReasonRepo: holdReasonRepo,
 		AuditService:   audit,
+		EventService:   noopShipmentEventService{},
 		Realtime:       realtime,
 	})
 
@@ -130,6 +132,7 @@ func TestRelease_SetsReleasedFieldsAuditsAndPublishes(t *testing.T) {
 		ShipmentRepo:   shipmentRepo,
 		HoldReasonRepo: holdReasonRepo,
 		AuditService:   audit,
+		EventService:   noopShipmentEventService{},
 		Realtime:       realtime,
 	})
 

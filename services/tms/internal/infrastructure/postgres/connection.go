@@ -162,6 +162,7 @@ func (c *Connection) DBForContext(ctx context.Context) bun.IDB {
 	return c.db
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (c *Connection) WithTx(
 	ctx context.Context,
 	opts ports.TxOptions,

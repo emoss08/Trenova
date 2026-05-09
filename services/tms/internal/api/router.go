@@ -1,3 +1,4 @@
+//revive:disable-next-line:var-naming
 package api
 
 import (
@@ -178,7 +179,7 @@ type RouterParams struct {
 	WorkerPTOHandler                *workerptohandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
 	AnalyticsHandler                *analyticshandler.Handler
-	ApiKeyHandler                   *apikeyhandler.Handler
+	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
 	TableChangeAlertHandler         *tablechangealerthandler.Handler
 	NotificationHandler             *notificationhandler.Handler
 	DocumentPacketRuleHandler       *documentpacketrulehandler.Handler
@@ -415,6 +416,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.versionHandler.RegisterPublicRoutes(rg)
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())

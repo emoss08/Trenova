@@ -20,7 +20,7 @@ import (
 type Params struct {
 	fx.In
 
-	ApiKeyService        *apikeyservice.Service
+	ApiKeyService        *apikeyservice.Service //nolint:revive // field name follows existing handler wiring
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }

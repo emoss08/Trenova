@@ -55,6 +55,7 @@ func (s *Service) GetIncomeStatement(
 
 	for _, balance := range balances {
 		line := toStatementLine(balance, statementAmount(balance))
+		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch balance.AccountCategory {
 		case accounttype.CategoryRevenue:
 			revenue.Lines = append(revenue.Lines, line)

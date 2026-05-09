@@ -41,7 +41,7 @@ func createHazmatSegregationRule(
 					errortypes.ErrInvalid,
 					"Unable to load shipment control",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if !control.CheckHazmatSegregation || len(entity.Commodities) < 2 {
@@ -66,7 +66,7 @@ func createHazmatSegregationRule(
 					errortypes.ErrInvalid,
 					"Unable to load commodity hazmat data",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			hazmatCommodities := mapHazmatCommodities(commodities)
@@ -84,7 +84,7 @@ func createHazmatSegregationRule(
 					errortypes.ErrInvalid,
 					"Unable to load hazmat segregation rules",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			addHazmatConflictsToMultiError(

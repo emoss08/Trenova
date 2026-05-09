@@ -259,6 +259,7 @@ func newIntegrationService(
 		Repo:         moveRepo,
 		ShipmentRepo: shipmentRepo,
 		ControlRepo:  controlRepo,
+		EventService: noopShipmentEventService{},
 		Commercial:   commercial,
 		Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	})

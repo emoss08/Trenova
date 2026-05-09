@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package equipmentcontinuityrepository
 
 import (
@@ -49,7 +50,7 @@ func (r *repository) GetCurrent(
 		Scan(ctx)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 		return nil, err
 	}
@@ -57,6 +58,7 @@ func (r *repository) GetCurrent(
 	return entity, nil
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) GetEffectiveCurrent(
 	ctx context.Context,
 	req repositories.GetCurrentEquipmentContinuityRequest,
@@ -82,19 +84,19 @@ func (r *repository) GetEffectiveCurrent(
 			return entity, nil
 		}
 		if entity.PreviousContinuityID.IsNil() {
-			return nil, nil
+			return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 		}
 
 		entity, err = r.GetByID(ctx, entity.PreviousContinuityID)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
-				return nil, nil
+				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 			}
 			return nil, err
 		}
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 }
 
 func (r *repository) GetByID(

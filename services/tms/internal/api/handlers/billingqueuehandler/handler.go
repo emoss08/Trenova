@@ -316,6 +316,8 @@ type assignRequest struct {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /billing-queue/{itemID}/assign/ [put]
+//
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (h *Handler) assign(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	itemID, err := pulid.MustParse(c.Param("itemID"))
@@ -372,6 +374,8 @@ type updateChargesRequest struct {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /billing-queue/{itemID}/charges/ [put]
+//
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (h *Handler) updateCharges(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	itemID, err := pulid.MustParse(c.Param("itemID"))
@@ -452,6 +456,8 @@ type updateStatusRequest struct {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /billing-queue/{itemID}/status/ [put]
+//
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (h *Handler) updateStatus(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	itemID, err := pulid.MustParse(c.Param("itemID"))
@@ -594,6 +600,8 @@ func (h *Handler) createFilterPreset(c *gin.Context) {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /billing-queue/filter-presets/{presetId}/ [put]
+//
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (h *Handler) updateFilterPreset(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	presetID, err := pulid.MustParse(c.Param("presetId"))

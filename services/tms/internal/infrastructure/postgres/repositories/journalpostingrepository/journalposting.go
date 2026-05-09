@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package journalpostingrepository
 
 import (
@@ -136,6 +137,7 @@ type lineAggregate struct {
 	net         int64
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *repository) CreatePosting(
 	ctx context.Context,
 	params repositories.CreateJournalPostingParams,

@@ -89,6 +89,7 @@ func createStatusConsistencyRule() validationframework.TenantedRule[*fiscalyear.
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
+			//nolint:exhaustive // only actionable enum states require explicit handling here
 			switch entity.Status {
 			case fiscalyear.StatusClosed:
 				if entity.ClosedAt == nil {
@@ -157,7 +158,7 @@ func createCurrentYearRule(
 					errortypes.ErrSystemError,
 					"Failed to check current year uniqueness",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if count > 0 {
@@ -205,7 +206,7 @@ func createOverlappingYearsRule(
 					errortypes.ErrSystemError,
 					"Failed to check for overlapping fiscal years",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if count > 0 {

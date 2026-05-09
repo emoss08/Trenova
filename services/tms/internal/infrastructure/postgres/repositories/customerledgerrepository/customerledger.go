@@ -54,7 +54,24 @@ func (r *repository) AppendEntries(ctx context.Context, entries []*customerledge
 		if entry == nil {
 			continue
 		}
-		records = append(records, &entryRecord{ID: entry.ID.String(), OrganizationID: entry.OrganizationID.String(), BusinessUnitID: entry.BusinessUnitID.String(), CustomerID: entry.CustomerID.String(), SourceObjectType: entry.SourceObjectType, SourceObjectID: entry.SourceObjectID, SourceEventType: entry.SourceEventType, RelatedInvoiceID: entry.RelatedInvoiceID.String(), DocumentNumber: entry.DocumentNumber, TransactionDate: entry.TransactionDate, LineNumber: entry.LineNumber, AmountMinor: entry.AmountMinor, CreatedByID: entry.CreatedByID.String()})
+		records = append(
+			records,
+			&entryRecord{
+				ID:               entry.ID.String(),
+				OrganizationID:   entry.OrganizationID.String(),
+				BusinessUnitID:   entry.BusinessUnitID.String(),
+				CustomerID:       entry.CustomerID.String(),
+				SourceObjectType: entry.SourceObjectType,
+				SourceObjectID:   entry.SourceObjectID,
+				SourceEventType:  entry.SourceEventType,
+				RelatedInvoiceID: entry.RelatedInvoiceID.String(),
+				DocumentNumber:   entry.DocumentNumber,
+				TransactionDate:  entry.TransactionDate,
+				LineNumber:       entry.LineNumber,
+				AmountMinor:      entry.AmountMinor,
+				CreatedByID:      entry.CreatedByID.String(),
+			},
+		)
 	}
 	if len(records) == 0 {
 		return nil

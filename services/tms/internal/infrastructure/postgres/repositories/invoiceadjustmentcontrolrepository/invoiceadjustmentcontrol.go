@@ -76,7 +76,11 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(result, "InvoiceAdjustmentControl", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"InvoiceAdjustmentControl",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

@@ -34,12 +34,19 @@ func New(p Params) repositories.NotificationRepository {
 	}
 }
 
-func (r *repository) userOrGlobalFilter(q *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
+func (r *repository) userOrGlobalFilter(
+	q *bun.SelectQuery,
+	tenantInfo pagination.TenantInfo,
+) *bun.SelectQuery {
 	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
 			WhereGroup(" OR ", func(inner *bun.SelectQuery) *bun.SelectQuery {
 				return inner.
-					Where("notif.target_user_id = ? AND notif.business_unit_id = ?", tenantInfo.UserID, tenantInfo.BuID).
+					Where(
+						"notif.target_user_id = ? AND notif.business_unit_id = ?",
+						tenantInfo.UserID,
+						tenantInfo.BuID,
+					).
 					WhereOr("notif.channel = ?", notification.ChannelGlobal)
 			})
 	})

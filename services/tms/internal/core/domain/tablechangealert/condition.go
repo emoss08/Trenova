@@ -36,6 +36,7 @@ func ValidConditionOperator(s string) bool {
 }
 
 func IsUnaryOperator(op ConditionOperator) bool {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch op {
 	case OpIsNull, OpIsNotNull, OpChanged:
 		return true

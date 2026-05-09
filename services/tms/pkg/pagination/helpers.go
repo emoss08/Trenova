@@ -79,8 +79,13 @@ func List[T any](
 	c.JSON(http.StatusOK, Response[[]T]{
 		Count:   result.Total,
 		Results: result.Items,
-		Next:    GetNextPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset(), result.Total),
-		Prev:    GetPreviousPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset()),
+		Next: GetNextPageURL(
+			c,
+			opts.Pagination.SafeLimit(),
+			opts.Pagination.SafeOffset(),
+			result.Total,
+		),
+		Prev: GetPreviousPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset()),
 	})
 }
 
@@ -104,8 +109,13 @@ func SelectOptions[T any](
 	c.JSON(http.StatusOK, Response[[]T]{
 		Count:   result.Total,
 		Results: result.Items,
-		Next:    GetNextPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset(), result.Total),
-		Prev:    GetPreviousPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset()),
+		Next: GetNextPageURL(
+			c,
+			req.Pagination.SafeLimit(),
+			req.Pagination.SafeOffset(),
+			result.Total,
+		),
+		Prev: GetPreviousPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset()),
 	})
 }
 

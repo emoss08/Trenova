@@ -156,7 +156,8 @@ func validateStopChronology(ctx stopRuleContext) {
 		)
 	}
 
-	if ctx.stop.ScheduledWindowEnd != nil && *ctx.stop.ScheduledWindowEnd < ctx.stop.ScheduledWindowStart {
+	if ctx.stop.ScheduledWindowEnd != nil &&
+		*ctx.stop.ScheduledWindowEnd < ctx.stop.ScheduledWindowStart {
 		addStopValidationError(
 			ctx,
 			"scheduledWindowEnd",

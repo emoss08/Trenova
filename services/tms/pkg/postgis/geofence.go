@@ -1,6 +1,8 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package postgis
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/paulmach/orb"
@@ -29,7 +31,7 @@ func NormalizeVertices(vertices []Vertex) []Vertex {
 func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
 	normalized := NormalizeVertices(vertices)
 	if len(normalized) < 4 {
-		return nil, fmt.Errorf("rectangle geofences require four corners")
+		return nil, errors.New("rectangle geofences require four corners")
 	}
 
 	minLon, maxLon := normalized[0].Longitude, normalized[0].Longitude
@@ -51,7 +53,7 @@ func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
 	}
 
 	if minLon == maxLon || minLat == maxLat {
-		return nil, fmt.Errorf("rectangle geofences require a non-zero width and height")
+		return nil, errors.New("rectangle geofences require a non-zero width and height")
 	}
 
 	return &Geometry{
@@ -70,7 +72,7 @@ func RectangleGeometry(vertices []Vertex) (*Geometry, error) {
 func PolygonGeometry(vertices []Vertex) (*Geometry, error) {
 	normalized := NormalizeVertices(vertices)
 	if len(normalized) < 3 {
-		return nil, fmt.Errorf("drawn geofences require at least three points")
+		return nil, errors.New("drawn geofences require at least three points")
 	}
 
 	ring := make(orb.Ring, 0, len(normalized)+1)

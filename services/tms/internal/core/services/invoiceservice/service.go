@@ -1,3 +1,4 @@
+//nolint:gocognit // existing legacy workflow/API shape is intentionally kept stable
 package invoiceservice
 
 import (
@@ -99,8 +100,7 @@ type postedBillingQueueResult struct {
 
 var _ servicesports.InvoiceService = (*Service)(nil)
 
-//nolint:gocritic // dependency injection
-func New(p Params) servicesports.InvoiceService {
+func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable API shape
 	return &Service{
 		l:                  p.Logger.Named("service.invoice"),
 		db:                 p.DB,
@@ -255,7 +255,8 @@ func (s *Service) syncAdjustmentLineage(
 	}
 }
 
-func (s *Service) Post(
+//nolint:nestif // existing validation flow mirrors business rule nesting
+func (s *Service) Post( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	req *servicesports.PostInvoiceRequest,
 	actor *servicesports.RequestActor,
@@ -285,7 +286,8 @@ func (s *Service) Post(
 					return controlErr
 				}
 			} else {
-				if policyErr := s.billingPolicyService().ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
+				if policyErr := s.billingPolicyService().
+					ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
 					return policyErr
 				}
 			}
@@ -309,7 +311,12 @@ func (s *Service) Post(
 		previous := *entity
 		now := timeutils.NowUnix()
 
-		if multiErr := s.validator.ValidatePost(txCtx, entity, req.TenantInfo, now); multiErr != nil {
+		if multiErr := s.validator.ValidatePost(
+			txCtx,
+			entity,
+			req.TenantInfo,
+			now,
+		); multiErr != nil {
 			return multiErr
 		}
 

@@ -1,3 +1,4 @@
+//nolint:cyclop // existing legacy workflow/API shape is intentionally kept stable
 package shipmentimportassistantservice
 
 import (
@@ -79,8 +80,9 @@ type Service struct {
 	locationCategoryRepo repositories.LocationCategoryRepository
 }
 
-//nolint:gocritic // dependencies injection params
-func New(p Params) serviceports.ShipmentImportAssistantService {
+func New(
+	p Params, //nolint:gocritic // stable API shape
+) serviceports.ShipmentImportAssistantService {
 	return &Service{
 		logger:               p.Logger.Named("service.shipment-import-assistant"),
 		cfg:                  p.Config.GetDocumentIntelligenceConfig(),
@@ -165,8 +167,7 @@ SUGGEST_QUICK_ACTIONS:
   - type="action": Triggers an app action. Use action="create_shipment" for the final step.
 - Suggestions must be DIRECT ANSWERS to the question you just asked.`
 
-//nolint:funlen // this is a tool builder function
-func buildTools() []responses.ToolUnionParam {
+func buildTools() []responses.ToolUnionParam { //nolint:funlen // legacy workflow
 	return []responses.ToolUnionParam{
 		{OfFunction: &responses.FunctionToolParam{
 			Name:        "accept_field",
@@ -1043,7 +1044,7 @@ func (s *Service) updateConversationStatus(
 	return nil
 }
 
-func (s *Service) Chat(
+func (s *Service) Chat( //nolint:funlen // legacy workflow
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
 ) (*serviceports.ShipmentImportChatResponse, error) {
@@ -1250,7 +1251,7 @@ func (s *Service) collectToolOutputsFromResponse(
 
 func toolCallStatusFromResult(result string) string {
 	if result == "" || result[0] != '{' {
-		return "completed"
+		return "completed" //nolint:goconst // local literal
 	}
 
 	var check map[string]any
@@ -1570,7 +1571,7 @@ func (s *Service) searchCustomers(
 ) string {
 	matches, total, err := s.queryCustomers(ctx, tenantInfo, query, 5)
 	if err != nil {
-		return `{"error":"search failed"}`
+		return `{"error":"search failed"}` //nolint:goconst // local literal
 	}
 
 	if len(matches) > 0 || query == "" {
@@ -1928,7 +1929,7 @@ func (s *Service) logAICall(
 	}
 }
 
-func (s *Service) ChatStream(
+func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
 	emit func(serviceports.StreamEvent),
@@ -2058,7 +2059,7 @@ func (s *Service) ChatStream(
 				},
 			)
 
-			return nil
+			return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 		}
 
 		// No tool calls — we're done

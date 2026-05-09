@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package fiscalperiodrepository
 
 import (
@@ -133,7 +134,11 @@ func (r *repository) Create(
 		zap.String("fiscalYearId", entity.FiscalYearID.String()),
 	)
 
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error("failed to create fiscal period", zap.Error(err))
 		return nil, err
 	}

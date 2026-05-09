@@ -35,6 +35,7 @@ func New(p Params) repositories.OrganizationRepository {
 	}
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetOrganizationByIDRequest,

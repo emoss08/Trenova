@@ -57,7 +57,11 @@ func (r *repository) List(
 		zap.Any("request", req),
 	)
 
-	entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0, req.Filter.Pagination.SafeLimit())
+	entities := make(
+		[]*hazmatsegregationrule.HazmatSegregationRule,
+		0,
+		req.Filter.Pagination.SafeLimit(),
+	)
 	total, err := r.db.DB().
 		NewSelect().
 		Model(&entities).
@@ -161,7 +165,11 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "HazmatSegregationRule", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"HazmatSegregationRule",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

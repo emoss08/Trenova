@@ -88,6 +88,7 @@ func New(p Params) *Service {
 	}
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) CreateSession(
 	ctx context.Context,
 	req *services.CreateSessionRequest,
@@ -155,7 +156,8 @@ func (s *Service) CreateSession(
 		session.DocumentTypeID = &docTypeID
 	}
 
-	if session.DocumentTypeID == nil && processingProfile == document.ProcessingProfileRateConfirmationImport {
+	if session.DocumentTypeID == nil &&
+		processingProfile == document.ProcessingProfileRateConfirmationImport {
 		dt, dtErr := s.docTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
 			Code:       "RATECONF",
 			TenantInfo: req.TenantInfo,

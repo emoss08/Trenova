@@ -61,14 +61,17 @@ func (h *Handler) get(c *gin.Context) {
 		return
 	}
 
-	result, err := h.service.GetAlertDetail(c.Request.Context(), &serviceports.GetWeatherAlertDetailRequest{
-		ID: alertID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  ac.OrganizationID,
-			BuID:   ac.BusinessUnitID,
-			UserID: ac.UserID,
+	result, err := h.service.GetAlertDetail(
+		c.Request.Context(),
+		&serviceports.GetWeatherAlertDetailRequest{
+			ID: alertID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  ac.OrganizationID,
+				BuID:   ac.BusinessUnitID,
+				UserID: ac.UserID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

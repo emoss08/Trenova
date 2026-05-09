@@ -147,10 +147,15 @@ func (a *Activities) generateThumbnail(
 		logger.Warn("Thumbnail generation failed", "error", err)
 
 		if errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
-			return nil, a.failure(payload, "thumbnail generation failed: %v", err), temporaltype.NewDataIntegrityError(
-				"PDF has no pages for thumbnail generation",
-				map[string]any{"documentId": payload.DocumentID.String()},
-			).ToTemporalError()
+			return nil, a.failure(
+					payload,
+					"thumbnail generation failed: %v",
+					err,
+				), temporaltype.NewDataIntegrityError(
+					"PDF has no pages for thumbnail generation",
+					map[string]any{"documentId": payload.DocumentID.String()},
+				).
+					ToTemporalError()
 		}
 
 		return nil, a.failure(payload, "thumbnail generation failed: %v", err), a.retryable(

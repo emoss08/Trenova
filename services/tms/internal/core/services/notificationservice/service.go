@@ -51,13 +51,16 @@ func (s *Service) Create(
 		buID = *created.BusinessUnitID
 	}
 
-	pubErr := s.realtime.PublishResourceInvalidation(ctx, &servicesport.PublishResourceInvalidationRequest{
-		OrganizationID: created.OrganizationID,
-		BusinessUnitID: buID,
-		Resource:       "notifications",
-		Action:         "created",
-		Entity:         created,
-	})
+	pubErr := s.realtime.PublishResourceInvalidation(
+		ctx,
+		&servicesport.PublishResourceInvalidationRequest{
+			OrganizationID: created.OrganizationID,
+			BusinessUnitID: buID,
+			Resource:       "notifications",
+			Action:         "created",
+			Entity:         created,
+		},
+	)
 	if pubErr != nil {
 		log.Warn("failed to publish realtime notification", zap.Error(pubErr))
 	}

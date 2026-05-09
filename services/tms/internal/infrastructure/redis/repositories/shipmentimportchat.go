@@ -44,7 +44,12 @@ func (r *shipmentImportChatCacheRepository) GetHistory(
 	tenantInfo pagination.TenantInfo,
 ) (*shipmentimportchat.HistorySnapshot, error) {
 	entity := new(shipmentimportchat.HistorySnapshot)
-	if err := redishelpers.GetJSON(ctx, r.client, r.key(documentID, tenantInfo), entity); err != nil {
+	if err := redishelpers.GetJSON(
+		ctx,
+		r.client,
+		r.key(documentID, tenantInfo),
+		entity,
+	); err != nil {
 		return nil, err
 	}
 
@@ -61,7 +66,13 @@ func (r *shipmentImportChatCacheRepository) SetHistory(
 		return err
 	}
 
-	return redishelpers.SetJSON(ctx, r.client, r.key(documentID, tenantInfo), snapshot, shipmentImportChatCacheTTL)
+	return redishelpers.SetJSON(
+		ctx,
+		r.client,
+		r.key(documentID, tenantInfo),
+		snapshot,
+		shipmentImportChatCacheTTL,
+	)
 }
 
 func (r *shipmentImportChatCacheRepository) DeleteHistory(
@@ -76,7 +87,12 @@ func (r *shipmentImportChatCacheRepository) key(
 	documentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) string {
-	return fmt.Sprintf("cache:shipment-import-chat:%s:%s:%s", tenantInfo.OrgID, tenantInfo.BuID, documentID)
+	return fmt.Sprintf(
+		"cache:shipment-import-chat:%s:%s:%s",
+		tenantInfo.OrgID,
+		tenantInfo.BuID,
+		documentID,
+	)
 }
 
 var _ ports.ShipmentImportChatCacheRepository = (*shipmentImportChatCacheRepository)(nil)

@@ -65,8 +65,10 @@ type Location struct {
 
 func (l *Location) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(l,
-		validation.Field(&l.Code,
-			validation.Length(0, tenant.MaxLocationCodeLength).Error("Code must be 32 characters or less"),
+		validation.Field(
+			&l.Code,
+			validation.Length(0, tenant.MaxLocationCodeLength).
+				Error("Code must be 32 characters or less"),
 		),
 		validation.Field(&l.Name,
 			validation.Required.Error("Name is required"),

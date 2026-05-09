@@ -16,30 +16,30 @@ import (
 type Payment struct {
 	bun.BaseModel `bun:"table:customer_payments,alias:cp" json:"-"`
 
-	ID                   pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID           pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),notnull"`
-	PaymentDate          int64    `json:"paymentDate" bun:"payment_date,type:BIGINT,notnull"`
-	AccountingDate       int64    `json:"accountingDate" bun:"accounting_date,type:BIGINT,notnull"`
-	AmountMinor          int64    `json:"amountMinor" bun:"amount_minor,type:BIGINT,notnull"`
-	AppliedAmountMinor   int64    `json:"appliedAmountMinor" bun:"applied_amount_minor,type:BIGINT,notnull,default:0"`
+	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	CustomerID           pulid.ID `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
+	PaymentDate          int64    `json:"paymentDate"          bun:"payment_date,type:BIGINT,notnull"`
+	AccountingDate       int64    `json:"accountingDate"       bun:"accounting_date,type:BIGINT,notnull"`
+	AmountMinor          int64    `json:"amountMinor"          bun:"amount_minor,type:BIGINT,notnull"`
+	AppliedAmountMinor   int64    `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull,default:0"`
 	UnappliedAmountMinor int64    `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull,default:0"`
-	Status               Status   `json:"status" bun:"status,type:VARCHAR(50),notnull"`
-	PaymentMethod        Method   `json:"paymentMethod" bun:"payment_method,type:VARCHAR(50),notnull"`
-	ReferenceNumber      string   `json:"referenceNumber" bun:"reference_number,type:VARCHAR(100),nullzero"`
-	Memo                 string   `json:"memo" bun:"memo,type:TEXT,nullzero"`
-	CurrencyCode         string   `json:"currencyCode" bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	PostedBatchID        pulid.ID `json:"postedBatchId" bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
-	ReversalBatchID      pulid.ID `json:"reversalBatchId" bun:"reversal_batch_id,type:VARCHAR(100),nullzero"`
-	ReversedByID         pulid.ID `json:"reversedById" bun:"reversed_by_id,type:VARCHAR(100),nullzero"`
-	ReversedAt           *int64   `json:"reversedAt" bun:"reversed_at,type:BIGINT,nullzero"`
-	ReversalReason       string   `json:"reversalReason" bun:"reversal_reason,type:TEXT,nullzero"`
-	CreatedByID          pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),notnull"`
-	UpdatedByID          pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64    `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt            int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Status               Status   `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
+	PaymentMethod        Method   `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),notnull"`
+	ReferenceNumber      string   `json:"referenceNumber"      bun:"reference_number,type:VARCHAR(100),nullzero"`
+	Memo                 string   `json:"memo"                 bun:"memo,type:TEXT,nullzero"`
+	CurrencyCode         string   `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	PostedBatchID        pulid.ID `json:"postedBatchId"        bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
+	ReversalBatchID      pulid.ID `json:"reversalBatchId"      bun:"reversal_batch_id,type:VARCHAR(100),nullzero"`
+	ReversedByID         pulid.ID `json:"reversedById"         bun:"reversed_by_id,type:VARCHAR(100),nullzero"`
+	ReversedAt           *int64   `json:"reversedAt"           bun:"reversed_at,type:BIGINT,nullzero"`
+	ReversalReason       string   `json:"reversalReason"       bun:"reversal_reason,type:TEXT,nullzero"`
+	CreatedByID          pulid.ID `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
+	UpdatedByID          pulid.ID `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Applications []*Application `json:"applications,omitempty" bun:"rel:has-many,join:id=customer_payment_id"`
 }
@@ -47,16 +47,16 @@ type Payment struct {
 type Application struct {
 	bun.BaseModel `bun:"table:customer_payment_applications,alias:cpa" json:"-"`
 
-	ID                  pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerPaymentID   pulid.ID `json:"customerPaymentId" bun:"customer_payment_id,type:VARCHAR(100),notnull"`
-	InvoiceID           pulid.ID `json:"invoiceId" bun:"invoice_id,type:VARCHAR(100),notnull"`
-	AppliedAmountMinor  int64    `json:"appliedAmountMinor" bun:"applied_amount_minor,type:BIGINT,notnull"`
+	ID                  pulid.ID `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	CustomerPaymentID   pulid.ID `json:"customerPaymentId"   bun:"customer_payment_id,type:VARCHAR(100),notnull"`
+	InvoiceID           pulid.ID `json:"invoiceId"           bun:"invoice_id,type:VARCHAR(100),notnull"`
+	AppliedAmountMinor  int64    `json:"appliedAmountMinor"  bun:"applied_amount_minor,type:BIGINT,notnull"`
 	ShortPayAmountMinor int64    `json:"shortPayAmountMinor" bun:"short_pay_amount_minor,type:BIGINT,notnull,default:0"`
-	LineNumber          int      `json:"lineNumber" bun:"line_number,type:INTEGER,notnull"`
-	CreatedAt           int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64    `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	LineNumber          int      `json:"lineNumber"          bun:"line_number,type:INTEGER,notnull"`
+	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (p *Payment) Validate(multiErr *errortypes.MultiError) {
@@ -76,14 +76,22 @@ func (p *Payment) Validate(multiErr *errortypes.MultiError) {
 	}
 
 	if p.AmountMinor <= 0 {
-		multiErr.Add("amountMinor", errortypes.ErrInvalid, "Payment amount must be greater than zero")
+		multiErr.Add(
+			"amountMinor",
+			errortypes.ErrInvalid,
+			"Payment amount must be greater than zero",
+		)
 	}
 	if !p.PaymentMethod.IsValid() {
 		multiErr.Add("paymentMethod", errortypes.ErrInvalid, "Payment method is invalid")
 	}
 	for idx, app := range p.Applications {
 		if app == nil {
-			multiErr.Add("applications", errortypes.ErrInvalid, "Payment applications must not contain null values")
+			multiErr.Add(
+				"applications",
+				errortypes.ErrInvalid,
+				"Payment applications must not contain null values",
+			)
 			continue
 		}
 		app.Validate(multiErr.WithIndex("applications", idx))
@@ -101,13 +109,25 @@ func (a *Application) Validate(multiErr *errortypes.MultiError) {
 		}
 	}
 	if a.AppliedAmountMinor < 0 {
-		multiErr.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount cannot be negative")
+		multiErr.Add(
+			"appliedAmountMinor",
+			errortypes.ErrInvalid,
+			"Applied amount cannot be negative",
+		)
 	}
 	if a.ShortPayAmountMinor < 0 {
-		multiErr.Add("shortPayAmountMinor", errortypes.ErrInvalid, "Short-pay amount cannot be negative")
+		multiErr.Add(
+			"shortPayAmountMinor",
+			errortypes.ErrInvalid,
+			"Short-pay amount cannot be negative",
+		)
 	}
 	if a.AppliedAmountMinor+a.ShortPayAmountMinor <= 0 {
-		multiErr.Add("appliedAmountMinor", errortypes.ErrInvalid, "Applied amount plus short-pay amount must be greater than zero")
+		multiErr.Add(
+			"appliedAmountMinor",
+			errortypes.ErrInvalid,
+			"Applied amount plus short-pay amount must be greater than zero",
+		)
 	}
 }
 

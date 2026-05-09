@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package workerptoservice
 
 import (

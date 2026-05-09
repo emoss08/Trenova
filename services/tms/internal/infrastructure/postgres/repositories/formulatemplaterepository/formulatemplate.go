@@ -228,7 +228,11 @@ func (r *repository) BulkUpdateStatus(
 		return nil, err
 	}
 
-	if err = dberror.CheckBulkRowsAffected(results, "FormulaTemplate", req.TemplateIDs); err != nil {
+	if err = dberror.CheckBulkRowsAffected(
+		results,
+		"FormulaTemplate",
+		req.TemplateIDs,
+	); err != nil {
 		return nil, err
 	}
 
@@ -278,7 +282,11 @@ func (r *repository) BulkDuplicate(
 		return nil, err
 	}
 
-	if err = dberror.CheckBulkRowsAffected(results, "FormulaTemplate", req.TemplateIDs); err != nil {
+	if err = dberror.CheckBulkRowsAffected(
+		results,
+		"FormulaTemplate",
+		req.TemplateIDs,
+	); err != nil {
 		return nil, err
 	}
 

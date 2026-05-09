@@ -15,7 +15,7 @@ func NormalizeLoginSlug(value string) string {
 	normalized = nonSlugCharsRE.ReplaceAllString(normalized, "-")
 	normalized = strings.Trim(normalized, "-")
 	if normalized == "" {
-		normalized = "organization"
+		normalized = "organization" //nolint:goconst // local repeated literal is clearer than widening API constants
 	}
 	if len(normalized) > LoginSlugMaxLength {
 		normalized = strings.Trim(normalized[:LoginSlugMaxLength], "-")

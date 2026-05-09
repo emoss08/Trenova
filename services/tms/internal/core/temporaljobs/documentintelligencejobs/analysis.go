@@ -27,7 +27,10 @@ func analyzeDocument(
 		Conflicts:            []*ReviewConflict{},
 		Fields:               make(map[string]*ReviewField),
 		Stops:                []*IntelligenceStop{},
-		RawExcerpt:           stringutils.TruncateAndTrim(strings.ReplaceAll(stringutils.Truncate(text, rawExcerptPreTruncateLen), "\r", ""), rawExcerptMaxLen),
+		RawExcerpt: stringutils.TruncateAndTrim(
+			strings.ReplaceAll(stringutils.Truncate(text, rawExcerptPreTruncateLen), "\r", ""),
+			rawExcerptMaxLen,
+		),
 	}
 
 	required := requiredFieldsForKind(classification.Kind)
@@ -70,10 +73,16 @@ func finalizeAnalysis(
 	}
 	if classification.Kind == kindRateConfirmation {
 		if !hasStopRole(analysis.Stops, stopRolePickup) {
-			analysis.MissingFields = sliceutils.AppendIfMissing(analysis.MissingFields, "Pickup Stop")
+			analysis.MissingFields = sliceutils.AppendIfMissing(
+				analysis.MissingFields,
+				"Pickup Stop",
+			)
 		}
 		if !hasStopRole(analysis.Stops, stopRoleDelivery) {
-			analysis.MissingFields = sliceutils.AppendIfMissing(analysis.MissingFields, "Delivery Stop")
+			analysis.MissingFields = sliceutils.AppendIfMissing(
+				analysis.MissingFields,
+				"Delivery Stop",
+			)
 		}
 	}
 

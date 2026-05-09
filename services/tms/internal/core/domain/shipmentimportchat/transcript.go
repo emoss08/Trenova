@@ -1,10 +1,7 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package shipmentimportchat
 
-import (
-	"encoding/json"
-
-	"github.com/bytedance/sonic"
-)
+import "github.com/bytedance/sonic"
 
 type HistoryAction struct {
 	Type     string         `json:"type"`
@@ -21,10 +18,10 @@ type TurnPayload struct {
 }
 
 type EncodedTurnPayload struct {
-	ContextJSON     json.RawMessage
-	SuggestionsJSON json.RawMessage
-	ToolCallsJSON   json.RawMessage
-	ActionsJSON     json.RawMessage
+	ContextJSON     rawJSON
+	SuggestionsJSON rawJSON
+	ToolCallsJSON   rawJSON
+	ActionsJSON     rawJSON
 }
 
 func (p TurnPayload) Encode() EncodedTurnPayload {
@@ -56,7 +53,7 @@ func DecodeTurnPayload(turn *Turn) TurnPayload {
 	return payload
 }
 
-func encodeJSON(value any, fallback json.RawMessage) json.RawMessage {
+func encodeJSON(value any, fallback rawJSON) rawJSON {
 	data, err := sonic.Marshal(value)
 	if err != nil {
 		return fallback
@@ -65,10 +62,10 @@ func encodeJSON(value any, fallback json.RawMessage) json.RawMessage {
 	return data
 }
 
-func decodeJSON(raw json.RawMessage, target any) error {
+func decodeJSON(raw rawJSON, target any) error {
 	if len(raw) == 0 {
 		return nil
 	}
 
-	return json.Unmarshal(raw, target)
+	return sonic.Unmarshal(raw, target)
 }

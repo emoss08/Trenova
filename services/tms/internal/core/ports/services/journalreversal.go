@@ -35,11 +35,34 @@ type CancelJournalReversalRequest struct {
 }
 
 type JournalReversalService interface {
-	List(ctx context.Context, req *repositories.ListJournalReversalsRequest) (*pagination.ListResult[*journalreversal.Reversal], error)
+	List(
+		ctx context.Context,
+		req *repositories.ListJournalReversalsRequest,
+	) (*pagination.ListResult[*journalreversal.Reversal], error)
 	Get(ctx context.Context, req *GetJournalReversalRequest) (*journalreversal.Reversal, error)
-	Create(ctx context.Context, req *CreateJournalReversalRequest, actor *RequestActor) (*journalreversal.Reversal, error)
-	Approve(ctx context.Context, req *GetJournalReversalRequest, actor *RequestActor) (*journalreversal.Reversal, error)
-	Reject(ctx context.Context, req *RejectJournalReversalRequest, actor *RequestActor) (*journalreversal.Reversal, error)
-	Cancel(ctx context.Context, req *CancelJournalReversalRequest, actor *RequestActor) (*journalreversal.Reversal, error)
-	Post(ctx context.Context, req *GetJournalReversalRequest, actor *RequestActor) (*journalreversal.Reversal, error)
+	Create(
+		ctx context.Context,
+		req *CreateJournalReversalRequest,
+		actor *RequestActor,
+	) (*journalreversal.Reversal, error)
+	Approve(
+		ctx context.Context,
+		req *GetJournalReversalRequest,
+		actor *RequestActor,
+	) (*journalreversal.Reversal, error)
+	Reject(
+		ctx context.Context,
+		req *RejectJournalReversalRequest,
+		actor *RequestActor,
+	) (*journalreversal.Reversal, error)
+	Cancel(
+		ctx context.Context,
+		req *CancelJournalReversalRequest,
+		actor *RequestActor,
+	) (*journalreversal.Reversal, error)
+	Post(
+		ctx context.Context,
+		req *GetJournalReversalRequest,
+		actor *RequestActor,
+	) (*journalreversal.Reversal, error)
 }

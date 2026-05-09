@@ -2,12 +2,13 @@ package shipmentimportchat
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
+
+type rawJSON []byte
 
 type ConversationStatus string
 
@@ -36,43 +37,43 @@ const (
 type Conversation struct {
 	bun.BaseModel `bun:"table:shipment_import_chat_conversations,alias:sicc" json:"-"`
 
-	ID                     pulid.ID                 `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID                 `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID                 `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	DocumentID             pulid.ID                 `json:"documentId"           bun:"document_id,type:VARCHAR(100),notnull"`
-	UserID                 pulid.ID                 `json:"userId"               bun:"user_id,type:VARCHAR(100),notnull"`
+	ID                     pulid.ID                 `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID         pulid.ID                 `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID         pulid.ID                 `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	DocumentID             pulid.ID                 `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull"`
+	UserID                 pulid.ID                 `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull"`
 	ExternalConversationID string                   `json:"externalConversationId" bun:"external_conversation_id,type:VARCHAR(255),nullzero"`
-	Status                 ConversationStatus       `json:"status"               bun:"status,type:VARCHAR(32),notnull,default:'Active'"`
-	StatusReason           ConversationStatusReason `json:"statusReason"         bun:"status_reason,type:VARCHAR(64),nullzero"`
-	TurnCount              int                      `json:"turnCount"            bun:"turn_count,type:INTEGER,notnull,default:0"`
-	LastMessageAt          *int64                   `json:"lastMessageAt"        bun:"last_message_at,type:BIGINT,nullzero"`
-	Version                int64                    `json:"version"              bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt              int64                    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64                    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Status                 ConversationStatus       `json:"status"                 bun:"status,type:VARCHAR(32),notnull,default:'Active'"`
+	StatusReason           ConversationStatusReason `json:"statusReason"           bun:"status_reason,type:VARCHAR(64),nullzero"`
+	TurnCount              int                      `json:"turnCount"              bun:"turn_count,type:INTEGER,notnull,default:0"`
+	LastMessageAt          *int64                   `json:"lastMessageAt"          bun:"last_message_at,type:BIGINT,nullzero"`
+	Version                int64                    `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt              int64                    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt              int64                    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 type Turn struct {
 	bun.BaseModel `bun:"table:shipment_import_chat_turns,alias:sict" json:"-"`
 
-	ID                     pulid.ID         `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	ConversationID         pulid.ID         `json:"conversationId"       bun:"conversation_id,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID         `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID         `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	DocumentID             pulid.ID         `json:"documentId"           bun:"document_id,type:VARCHAR(100),notnull"`
-	UserID                 pulid.ID         `json:"userId"               bun:"user_id,type:VARCHAR(100),notnull"`
-	TurnIndex              int              `json:"turnIndex"            bun:"turn_index,type:INTEGER,notnull"`
-	UserMessage            string           `json:"userMessage"          bun:"user_message,type:TEXT,notnull"`
-	AssistantMessage       string           `json:"assistantMessage"     bun:"assistant_message,type:TEXT,notnull"`
-	RequestConversationID  string           `json:"requestConversationId" bun:"request_conversation_id,type:VARCHAR(255),nullzero"`
+	ID                     pulid.ID         `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
+	ConversationID         pulid.ID         `json:"conversationId"         bun:"conversation_id,type:VARCHAR(100),notnull"`
+	OrganizationID         pulid.ID         `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID         pulid.ID         `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	DocumentID             pulid.ID         `json:"documentId"             bun:"document_id,type:VARCHAR(100),notnull"`
+	UserID                 pulid.ID         `json:"userId"                 bun:"user_id,type:VARCHAR(100),notnull"`
+	TurnIndex              int              `json:"turnIndex"              bun:"turn_index,type:INTEGER,notnull"`
+	UserMessage            string           `json:"userMessage"            bun:"user_message,type:TEXT,notnull"`
+	AssistantMessage       string           `json:"assistantMessage"       bun:"assistant_message,type:TEXT,notnull"`
+	RequestConversationID  string           `json:"requestConversationId"  bun:"request_conversation_id,type:VARCHAR(255),nullzero"`
 	ResponseConversationID string           `json:"responseConversationId" bun:"response_conversation_id,type:VARCHAR(255),nullzero"`
-	Model                  string           `json:"model"                bun:"model,type:VARCHAR(100),nullzero"`
-	ResultStatus           TurnResultStatus `json:"resultStatus"         bun:"result_status,type:VARCHAR(32),notnull,default:'Completed'"`
-	ErrorMessage           string           `json:"errorMessage"         bun:"error_message,type:TEXT,nullzero"`
-	ContextJSON            json.RawMessage  `json:"contextJson"          bun:"context_json,type:JSONB,notnull,default:'{}'::jsonb"`
-	SuggestionsJSON        json.RawMessage  `json:"suggestionsJson"      bun:"suggestions_json,type:JSONB,notnull,default:'[]'::jsonb"`
-	ToolCallsJSON          json.RawMessage  `json:"toolCallsJson"        bun:"tool_calls_json,type:JSONB,notnull,default:'[]'::jsonb"`
-	ActionsJSON            json.RawMessage  `json:"actionsJson"          bun:"actions_json,type:JSONB,notnull,default:'[]'::jsonb"`
-	CreatedAt              int64            `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Model                  string           `json:"model"                  bun:"model,type:VARCHAR(100),nullzero"`
+	ResultStatus           TurnResultStatus `json:"resultStatus"           bun:"result_status,type:VARCHAR(32),notnull,default:'Completed'"`
+	ErrorMessage           string           `json:"errorMessage"           bun:"error_message,type:TEXT,nullzero"`
+	ContextJSON            rawJSON          `json:"contextJson"            bun:"context_json,type:JSONB,notnull,default:'{}'::jsonb"`
+	SuggestionsJSON        rawJSON          `json:"suggestionsJson"        bun:"suggestions_json,type:JSONB,notnull,default:'[]'::jsonb"`
+	ToolCallsJSON          rawJSON          `json:"toolCallsJson"          bun:"tool_calls_json,type:JSONB,notnull,default:'[]'::jsonb"`
+	ActionsJSON            rawJSON          `json:"actionsJson"            bun:"actions_json,type:JSONB,notnull,default:'[]'::jsonb"`
+	CreatedAt              int64            `json:"createdAt"              bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 type HistorySnapshot struct {

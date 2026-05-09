@@ -78,11 +78,15 @@ func (s *Service) ValidateManualPeriodClose(control *tenant.AccountingControl) e
 	}
 
 	if control.PeriodCloseMode == tenant.PeriodCloseModeSystemScheduled {
-		return errortypes.NewBusinessError("Fiscal periods configured for system-scheduled close cannot be closed manually")
+		return errortypes.NewBusinessError(
+			"Fiscal periods configured for system-scheduled close cannot be closed manually",
+		)
 	}
 
 	if control.RequirePeriodCloseApproval {
-		return errortypes.NewBusinessError("Fiscal period close approval is required before the period can be closed manually")
+		return errortypes.NewBusinessError(
+			"Fiscal period close approval is required before the period can be closed manually",
+		)
 	}
 
 	return nil

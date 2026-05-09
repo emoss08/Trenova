@@ -110,7 +110,8 @@ func TestUpdateStatus_RecomputesShipmentState(t *testing.T) {
 			Formula:         formula,
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -155,7 +156,8 @@ func TestBulkUpdateStatus_RejectsInvalidTransition(t *testing.T) {
 			Formula:         mocks.NewMockFormulaCalculator(t),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.BulkUpdateStatus(t.Context(), &repositories.BulkUpdateMoveStatusRequest{
@@ -216,7 +218,8 @@ func TestSplitMove_RejectsNonSimpleMove(t *testing.T) {
 			Formula:         mocks.NewMockFormulaCalculator(t),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	response, err := svc.SplitMove(t.Context(), &repositories.SplitMoveRequest{
@@ -337,7 +340,8 @@ func TestSplitMove_RecomputesShipmentState(t *testing.T) {
 			Formula:         formula,
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	response, err := svc.SplitMove(t.Context(), &repositories.SplitMoveRequest{
@@ -457,7 +461,8 @@ func TestUpdateStatus_RecomputesDelayedShipmentStateUsingControlThreshold(t *tes
 			Formula:         formula,
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 }),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 }),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -569,7 +574,8 @@ func TestUpdateStatus_DoesNotAutoDelayShipmentWhenToggleDisabled(t *testing.T) {
 			Formula:         formula,
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 }),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 }),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -643,7 +649,8 @@ func TestUpdateStatus_RejectsTrailerAlreadyInProgressOnAnotherMove(t *testing.T)
 			Formula:         mocks.NewMockFormulaCalculator(t),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -713,7 +720,8 @@ func TestUpdateStatus_RejectsTractorAlreadyInProgressOnAnotherMove(t *testing.T)
 			Formula:         mocks.NewMockFormulaCalculator(t),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -856,7 +864,8 @@ func TestUpdateStatus_AdvancesEquipmentContinuityOnCompletion(t *testing.T) {
 			Formula:         formula,
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{
@@ -911,7 +920,8 @@ func TestUpdateStatus_RejectsDeliveryBlockingHold(t *testing.T) {
 			Formula:         mocks.NewMockFormulaCalculator(t),
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
-		coordinator: shipmentstateCoordinator(),
+		eventService: noopShipmentEventService{},
+		coordinator:  shipmentstateCoordinator(),
 	}
 
 	entity, err := svc.UpdateStatus(t.Context(), &repositories.UpdateMoveStatusRequest{

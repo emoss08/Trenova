@@ -702,6 +702,7 @@ func (r *Registry) registerCommodityResources() {
 	})
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *Registry) registerAccountingResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceGeneralLedgerAccount.String(),
@@ -936,7 +937,6 @@ func (r *Registry) registerComplianceResources() {
 		Operations:         GetAllOperations(),
 		DefaultSensitivity: SensitivityInternal,
 	})
-
 }
 
 func (r *Registry) registerReferenceDataResources() {

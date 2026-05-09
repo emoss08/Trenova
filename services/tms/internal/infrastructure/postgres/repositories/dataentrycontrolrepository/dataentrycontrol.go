@@ -68,7 +68,11 @@ func (r *repository) Create(
 		zap.String("orgId", entity.OrganizationID.String()),
 	)
 
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error("failed to create data entry control", zap.Error(err))
 		return nil, err
 	}
@@ -100,7 +104,11 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	if err = dberror.CheckRowsAffected(results, "DataEntryControl", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"DataEntryControl",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

@@ -48,20 +48,26 @@ type ShipmentHold struct {
 	CreatedByID       *pulid.ID               `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	ReleasedByID      *pulid.ID               `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero"`
 
-	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty"   bun:"rel:belongs-to,join:hold_reason_id=id,join:organization_id=organization_id"`
-	CreatedBy    *tenant.User           `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id"`
-	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty"   bun:"rel:belongs-to,join:released_by_id=id"`
-	Shipment     *Shipment              `json:"-"                      bun:"rel:belongs-to,join:shipment_id=id"`
-	BusinessUnit *tenant.BusinessUnit   `json:"-"                      bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization   `json:"-"                      bun:"rel:belongs-to,join:organization_id=id"`
+	HoldReason   *holdreason.HoldReason `json:"holdReason,omitempty" bun:"rel:belongs-to,join:hold_reason_id=id,join:organization_id=organization_id"`
+	CreatedBy    *tenant.User           `json:"createdBy,omitempty"  bun:"rel:belongs-to,join:created_by_id=id"`
+	ReleasedBy   *tenant.User           `json:"releasedBy,omitempty" bun:"rel:belongs-to,join:released_by_id=id"`
+	Shipment     *Shipment              `json:"-"                    bun:"rel:belongs-to,join:shipment_id=id"`
+	BusinessUnit *tenant.BusinessUnit   `json:"-"                    bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization   `json:"-"                    bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		h,
 		validation.Field(&h.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(&h.OrganizationID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&h.BusinessUnitID, validation.Required.Error("Business unit ID is required")),
+		validation.Field(
+			&h.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&h.BusinessUnitID,
+			validation.Required.Error("Business unit ID is required"),
+		),
 		validation.Field(&h.Type,
 			validation.Required.Error("Hold type is required"),
 			validation.In(
@@ -79,7 +85,8 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 				holdreason.HoldSeverityBlocking,
 			).Error("Invalid hold severity"),
 		),
-		validation.Field(&h.Source,
+		validation.Field(
+			&h.Source,
 			validation.Required.Error("Source is required"),
 			validation.In(HoldSourceUser, HoldSourceRule, HoldSourceAPI, HoldSourceELD, HoldSourceEDI).
 				Error("Invalid hold source"),
@@ -103,7 +110,8 @@ func (h *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&h.BlocksDispatch,
 			validation.By(func(_ any) error {
-				if h.Severity == holdreason.HoldSeverityBlocking && !(h.BlocksDispatch || h.BlocksDelivery || h.BlocksBilling) {
+				if h.Severity == holdreason.HoldSeverityBlocking &&
+					(!h.BlocksDispatch && !h.BlocksDelivery && !h.BlocksBilling) {
 					return errors.New("blocking holds must block dispatch, delivery, or billing")
 				}
 				return nil

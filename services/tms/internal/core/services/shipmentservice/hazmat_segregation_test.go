@@ -378,6 +378,7 @@ func TestHazmatSegregationValidationAndServiceStayAligned(t *testing.T) {
 		commodityRepo:  commodityRepo,
 		hazmatRuleRepo: ruleRepo,
 		validator:      v,
+		eventService:   noopShipmentEventService{},
 		coordinator:    newStateCoordinator(),
 	}
 

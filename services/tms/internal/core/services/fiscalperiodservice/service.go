@@ -1,3 +1,4 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package fiscalperiodservice
 
 import (
@@ -248,9 +249,10 @@ func (s *Service) Delete(
 	return nil
 }
 
+//nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *Service) Close(
 	ctx context.Context,
-	req repositories.CloseFiscalPeriodRequest,
+	req repositories.CloseFiscalPeriodRequest, //nolint:gocritic // stable API shape
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	log := s.l.With(

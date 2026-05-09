@@ -61,7 +61,10 @@ type reversalRecord struct {
 	UpdatedAt               int64    `bun:"updated_at"`
 }
 
-func (r *repository) List(ctx context.Context, req *repositories.ListJournalReversalsRequest) (*pagination.ListResult[*journalreversal.Reversal], error) {
+func (r *repository) List(
+	ctx context.Context,
+	req *repositories.ListJournalReversalsRequest,
+) (*pagination.ListResult[*journalreversal.Reversal], error) {
 	records := make([]*reversalRecord, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -82,7 +85,10 @@ func (r *repository) List(ctx context.Context, req *repositories.ListJournalReve
 	return &pagination.ListResult[*journalreversal.Reversal]{Items: items, Total: total}, nil
 }
 
-func (r *repository) GetByID(ctx context.Context, req repositories.GetJournalReversalByIDRequest) (*journalreversal.Reversal, error) {
+func (r *repository) GetByID(
+	ctx context.Context,
+	req repositories.GetJournalReversalByIDRequest,
+) (*journalreversal.Reversal, error) {
 	rec := new(reversalRecord)
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -97,17 +103,32 @@ func (r *repository) GetByID(ctx context.Context, req repositories.GetJournalRev
 	return mapReversal(rec), nil
 }
 
-func (r *repository) Create(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+func (r *repository) Create(
+	ctx context.Context,
+	entity *journalreversal.Reversal,
+) (*journalreversal.Reversal, error) {
 	if entity.ID.IsNil() {
 		entity.ID = pulid.MustNew("jrev_")
 	}
 	if _, err := r.db.DBForContext(ctx).NewInsert().Model(toRecord(entity)).Exec(ctx); err != nil {
 		return nil, err
 	}
-	return r.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}})
+	return r.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		},
+	)
 }
 
-func (r *repository) Update(ctx context.Context, entity *journalreversal.Reversal) (*journalreversal.Reversal, error) {
+func (r *repository) Update(
+	ctx context.Context,
+	entity *journalreversal.Reversal,
+) (*journalreversal.Reversal, error) {
 	_, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(toRecord(entity)).
@@ -135,7 +156,16 @@ func (r *repository) Update(ctx context.Context, entity *journalreversal.Reversa
 	if err != nil {
 		return nil, err
 	}
-	return r.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: entity.ID, TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}})
+	return r.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{
+			ID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		},
+	)
 }
 
 func toRecord(entity *journalreversal.Reversal) *reversalRecord {

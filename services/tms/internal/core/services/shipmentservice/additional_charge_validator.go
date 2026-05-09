@@ -42,7 +42,7 @@ func createAdditionalChargeValidationRule(
 					errortypes.ErrInvalid,
 					"Unable to load shipment control policy",
 				)
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			seenChargeIDs := make(map[pulid.ID]string, len(entity.AdditionalCharges))

@@ -33,11 +33,12 @@ func TestServiceCheckForDuplicateBOLs_SkipsLookupWhenDisabled(t *testing.T) {
 	}, nil).Once()
 
 	svc := &service{
-		l:           zap.NewNop(),
-		repo:        repo,
-		controlRepo: controlRepo,
-		validator:   NewTestValidator(t),
-		coordinator: newStateCoordinator(),
+		l:            zap.NewNop(),
+		repo:         repo,
+		controlRepo:  controlRepo,
+		validator:    NewTestValidator(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
 	}
 
 	err := svc.CheckForDuplicateBOLs(t.Context(), &repositories.DuplicateBOLCheckRequest{
@@ -82,11 +83,12 @@ func TestServiceCheckForDuplicateBOLs_ReturnsDuplicateError(t *testing.T) {
 		Once()
 
 	svc := &service{
-		l:           zap.NewNop(),
-		repo:        repo,
-		controlRepo: controlRepo,
-		validator:   NewTestValidator(t),
-		coordinator: newStateCoordinator(),
+		l:            zap.NewNop(),
+		repo:         repo,
+		controlRepo:  controlRepo,
+		validator:    NewTestValidator(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
 	}
 
 	err := svc.CheckForDuplicateBOLs(t.Context(), &repositories.DuplicateBOLCheckRequest{
@@ -115,11 +117,12 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 		Once()
 
 	svc := &service{
-		l:           zap.NewNop(),
-		repo:        repo,
-		controlRepo: mocks.NewMockShipmentControlRepository(t),
-		validator:   NewTestValidator(t),
-		coordinator: newStateCoordinator(),
+		l:            zap.NewNop(),
+		repo:         repo,
+		controlRepo:  mocks.NewMockShipmentControlRepository(t),
+		validator:    NewTestValidator(t),
+		eventService: noopShipmentEventService{},
+		coordinator:  newStateCoordinator(),
 	}
 
 	err := svc.checkDuplicateBOLsWithControl(

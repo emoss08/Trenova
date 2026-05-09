@@ -1,3 +1,4 @@
+//nolint:cyclop // existing legacy workflow/API shape is intentionally kept stable
 package documentservice
 
 import (
@@ -140,6 +141,7 @@ func (s *Service) ListVersions(
 	})
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *Service) RestoreVersion(
 	ctx context.Context,
 	documentID pulid.ID,
@@ -179,7 +181,11 @@ func (s *Service) RestoreVersion(
 		s.deleteSearchProjection(ctx, current)
 	}
 	contentText := ""
-	if content, contentErr := s.documentIntelligence.GetContent(ctx, target.ID, tenantInfo); contentErr == nil &&
+	if content, contentErr := s.documentIntelligence.GetContent(
+		ctx,
+		target.ID,
+		tenantInfo,
+	); contentErr == nil &&
 		content != nil {
 		contentText = content.ContentText
 	}
@@ -204,7 +210,7 @@ func (s *Service) RestoreVersion(
 	})
 }
 
-func (s *Service) GetPacketSummary(
+func (s *Service) GetPacketSummary( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
 	resourceType, resourceID string,
 	tenantInfo pagination.TenantInfo,
@@ -374,7 +380,7 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	var shipmentID pulid.ID
-	if resourceType == "shipment" {
+	if resourceType == "shipment" { //nolint:goconst // local literal
 		shipmentID, err = pulid.MustParse(resourceID)
 		if err != nil {
 			return nil, errortypes.NewValidationError(
@@ -421,7 +427,11 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	contentText := ""
-	if content, contentErr := s.documentIntelligence.GetContent(ctx, updated.ID, tenantInfo); contentErr == nil &&
+	if content, contentErr := s.documentIntelligence.GetContent(
+		ctx,
+		updated.ID,
+		tenantInfo,
+	); contentErr == nil &&
 		content != nil {
 		contentText = content.ContentText
 	}

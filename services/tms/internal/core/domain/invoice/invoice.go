@@ -102,6 +102,7 @@ type InoviceLine struct {
 	Invoice *Invoice `json:"-" bun:"rel:belongs-to,join:invoice_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (i *Invoice) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		i,

@@ -144,6 +144,7 @@ func (r *repository) Create(
 	})
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) Update(
 	ctx context.Context,
 	entity *shipment.ShipmentComment,
@@ -169,11 +170,22 @@ func (r *repository) Update(
 		if err != nil {
 			return fmt.Errorf("update shipment comment: %w", err)
 		}
-		if err := dberror.CheckRowsAffected(result, "Shipment comment", entity.ID.String()); err != nil {
+		if err := dberror.CheckRowsAffected(
+			result,
+			"Shipment comment",
+			entity.ID.String(),
+		); err != nil {
 			return err
 		}
 
-		if err := r.deleteMentions(txCtx, tx, entity.ID, entity.ShipmentID, entity.OrganizationID, entity.BusinessUnitID); err != nil {
+		if err := r.deleteMentions(
+			txCtx,
+			tx,
+			entity.ID,
+			entity.ShipmentID,
+			entity.OrganizationID,
+			entity.BusinessUnitID,
+		); err != nil {
 			return err
 		}
 		if err := r.replaceMentions(txCtx, tx, entity); err != nil {

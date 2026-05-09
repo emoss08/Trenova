@@ -1,3 +1,4 @@
+//nolint:gocyclo // existing legacy workflow/API shape is intentionally kept stable
 package sequenceconfigservice
 
 import (
@@ -17,7 +18,7 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateUpdate(
+func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy workflow
 	_ context.Context,
 	doc *tenant.SequenceConfigDocument,
 ) *errortypes.MultiError {
@@ -60,7 +61,11 @@ func (v *Validator) ValidateUpdate(
 		if _, ok := requiredTypeSet[cfg.SequenceType]; !ok {
 			cfgErr.Add("sequenceType", errortypes.ErrInvalid, "Invalid sequence type")
 		} else if seenTypes[cfg.SequenceType] {
-			cfgErr.Add("sequenceType", errortypes.ErrDuplicate, "Sequence type can only appear once")
+			cfgErr.Add(
+				"sequenceType",
+				errortypes.ErrDuplicate,
+				"Sequence type can only appear once",
+			)
 		} else {
 			seenTypes[cfg.SequenceType] = true
 		}
@@ -100,7 +105,11 @@ func (v *Validator) ValidateUpdate(
 					"Separator character is required when separators are enabled",
 				)
 			} else if !slices.Contains([]string{"-", "_", "/", "."}, cfg.SeparatorChar) {
-				cfgErr.Add("separatorChar", errortypes.ErrInvalid, "Separator must be one of '-', '_', '/', '.'")
+				cfgErr.Add(
+					"separatorChar",
+					errortypes.ErrInvalid,
+					"Separator must be one of '-', '_', '/', '.'",
+				)
 			}
 		} else {
 			cfg.SeparatorChar = ""
@@ -116,7 +125,9 @@ func (v *Validator) ValidateUpdate(
 			cfg.CustomFormat = ""
 		}
 		if cfg.SequenceType == tenant.SequenceTypeLocationCode {
-			cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(cfg.LocationCodeStrategy)
+			cfg.LocationCodeStrategy = tenant.EffectiveLocationCodeStrategy(
+				cfg.LocationCodeStrategy,
+			)
 			if err := cfg.LocationCodeStrategy.Validate(); err != nil {
 				cfgErr.Add(
 					"locationCodeStrategy",
@@ -130,7 +141,11 @@ func (v *Validator) ValidateUpdate(
 	}
 
 	sort.Slice(requiredTypes, func(i, j int) bool {
-		return tenant.SequenceTypeSortOrder(requiredTypes[i]) < tenant.SequenceTypeSortOrder(requiredTypes[j])
+		return tenant.SequenceTypeSortOrder(
+			requiredTypes[i],
+		) < tenant.SequenceTypeSortOrder(
+			requiredTypes[j],
+		)
 	})
 
 	for _, requiredType := range requiredTypes {

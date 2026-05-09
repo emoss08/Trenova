@@ -54,19 +54,35 @@ func createTransferAutomationRule() validationframework.TenantedRule[*tenant.Bil
 		) error {
 			if entity.BillingQueueTransferMode == tenant.BillingQueueTransferModeManualOnly {
 				if entity.BillingQueueTransferSchedule != "" {
-					multiErr.Add("billingQueueTransferSchedule", errortypes.ErrInvalidOperation, "Billing queue transfer schedule must be empty when transfer mode is ManualOnly")
+					multiErr.Add(
+						"billingQueueTransferSchedule",
+						errortypes.ErrInvalidOperation,
+						"Billing queue transfer schedule must be empty when transfer mode is ManualOnly",
+					)
 				}
 				if entity.BillingQueueTransferBatchSize != 0 {
-					multiErr.Add("billingQueueTransferBatchSize", errortypes.ErrInvalidOperation, "Billing queue transfer batch size must be empty when transfer mode is ManualOnly")
+					multiErr.Add(
+						"billingQueueTransferBatchSize",
+						errortypes.ErrInvalidOperation,
+						"Billing queue transfer batch size must be empty when transfer mode is ManualOnly",
+					)
 				}
 				return nil
 			}
 
 			if entity.BillingQueueTransferSchedule == "" {
-				multiErr.Add("billingQueueTransferSchedule", errortypes.ErrRequired, "Billing queue transfer schedule is required when transfer mode is AutomaticWhenReady")
+				multiErr.Add(
+					"billingQueueTransferSchedule",
+					errortypes.ErrRequired,
+					"Billing queue transfer schedule is required when transfer mode is AutomaticWhenReady",
+				)
 			}
 			if entity.BillingQueueTransferBatchSize < 1 {
-				multiErr.Add("billingQueueTransferBatchSize", errortypes.ErrInvalid, "Billing queue transfer batch size must be at least 1 when transfer mode is AutomaticWhenReady")
+				multiErr.Add(
+					"billingQueueTransferBatchSize",
+					errortypes.ErrInvalid,
+					"Billing queue transfer batch size must be at least 1 when transfer mode is AutomaticWhenReady",
+				)
 			}
 
 			return nil
@@ -86,18 +102,34 @@ func createInvoiceAutomationRule() validationframework.TenantedRule[*tenant.Bill
 		) error {
 			if entity.InvoiceDraftCreationMode == tenant.InvoiceDraftCreationModeManualOnly {
 				if entity.AutoInvoiceBatchSize != 0 {
-					multiErr.Add("autoInvoiceBatchSize", errortypes.ErrInvalidOperation, "Auto invoice batch size must be empty when invoice draft creation mode is ManualOnly")
+					multiErr.Add(
+						"autoInvoiceBatchSize",
+						errortypes.ErrInvalidOperation,
+						"Auto invoice batch size must be empty when invoice draft creation mode is ManualOnly",
+					)
 				}
 				if entity.NotifyOnAutoInvoiceCreation {
-					multiErr.Add("notifyOnAutoInvoiceCreation", errortypes.ErrInvalidOperation, "Auto invoice creation notifications must be disabled when invoice draft creation mode is ManualOnly")
+					multiErr.Add(
+						"notifyOnAutoInvoiceCreation",
+						errortypes.ErrInvalidOperation,
+						"Auto invoice creation notifications must be disabled when invoice draft creation mode is ManualOnly",
+					)
 				}
 			} else if entity.AutoInvoiceBatchSize < 1 {
-				multiErr.Add("autoInvoiceBatchSize", errortypes.ErrInvalid, "Auto invoice batch size must be at least 1 when invoice draft creation mode is AutomaticWhenTransferred")
+				multiErr.Add(
+					"autoInvoiceBatchSize",
+					errortypes.ErrInvalid,
+					"Auto invoice batch size must be at least 1 when invoice draft creation mode is AutomaticWhenTransferred",
+				)
 			}
 
 			if entity.InvoicePostingMode == tenant.InvoicePostingModeAutomaticWhenNoBlockingExceptions &&
 				entity.InvoiceDraftCreationMode != tenant.InvoiceDraftCreationModeAutomaticWhenTransferred {
-				multiErr.Add("invoicePostingMode", errortypes.ErrInvalidOperation, "Automatic invoice posting requires invoice draft creation mode AutomaticWhenTransferred")
+				multiErr.Add(
+					"invoicePostingMode",
+					errortypes.ErrInvalidOperation,
+					"Automatic invoice posting requires invoice draft creation mode AutomaticWhenTransferred",
+				)
 			}
 
 			return nil
@@ -115,12 +147,17 @@ func createRequirementEnforcementRule() validationframework.TenantedRule[*tenant
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
+			//nolint:exhaustive // only actionable enum states require explicit handling here
 			switch entity.ShipmentBillingRequirementEnforcement {
 			case tenant.EnforcementLevelIgnore, tenant.EnforcementLevelWarn:
 				return nil
 			case tenant.EnforcementLevelRequireReview:
 				if entity.BillingExceptionDisposition == "" {
-					multiErr.Add("billingExceptionDisposition", errortypes.ErrRequired, "Billing exception disposition is required when billing requirement enforcement is RequireReview")
+					multiErr.Add(
+						"billingExceptionDisposition",
+						errortypes.ErrRequired,
+						"Billing exception disposition is required when billing requirement enforcement is RequireReview",
+					)
 				}
 			}
 
@@ -141,24 +178,44 @@ func createRateValidationRule() validationframework.TenantedRule[*tenant.Billing
 		) error {
 			if entity.RateValidationEnforcement == tenant.EnforcementLevelIgnore {
 				if !entity.RateVarianceTolerancePercent.IsZero() {
-					multiErr.Add("rateVarianceTolerancePercent", errortypes.ErrInvalidOperation, "Rate variance tolerance percent must be zero when rate validation enforcement is Ignore")
+					multiErr.Add(
+						"rateVarianceTolerancePercent",
+						errortypes.ErrInvalidOperation,
+						"Rate variance tolerance percent must be zero when rate validation enforcement is Ignore",
+					)
 				}
 				if entity.RateVarianceAutoResolutionMode != tenant.RateVarianceAutoResolutionModeDisabled {
-					multiErr.Add("rateVarianceAutoResolutionMode", errortypes.ErrInvalidOperation, "Rate variance auto resolution mode must be Disabled when rate validation enforcement is Ignore")
+					multiErr.Add(
+						"rateVarianceAutoResolutionMode",
+						errortypes.ErrInvalidOperation,
+						"Rate variance auto resolution mode must be Disabled when rate validation enforcement is Ignore",
+					)
 				}
 				return nil
 			}
 
 			if entity.RateVarianceTolerancePercent.IsNegative() {
-				multiErr.Add("rateVarianceTolerancePercent", errortypes.ErrInvalid, "Rate variance tolerance percent must not be negative")
+				multiErr.Add(
+					"rateVarianceTolerancePercent",
+					errortypes.ErrInvalid,
+					"Rate variance tolerance percent must not be negative",
+				)
 			}
 
 			if entity.RateVarianceAutoResolutionMode == tenant.RateVarianceAutoResolutionModeBypassReviewWithinTolerance {
 				if entity.RateValidationEnforcement != tenant.EnforcementLevelRequireReview {
-					multiErr.Add("rateVarianceAutoResolutionMode", errortypes.ErrInvalidOperation, "BypassReviewWithinTolerance requires rate validation enforcement RequireReview")
+					multiErr.Add(
+						"rateVarianceAutoResolutionMode",
+						errortypes.ErrInvalidOperation,
+						"BypassReviewWithinTolerance requires rate validation enforcement RequireReview",
+					)
 				}
 				if !entity.RateVarianceTolerancePercent.GreaterThan(decimal.Zero) {
-					multiErr.Add("rateVarianceTolerancePercent", errortypes.ErrInvalidOperation, "Rate variance tolerance percent must be greater than zero when bypass review within tolerance is enabled")
+					multiErr.Add(
+						"rateVarianceTolerancePercent",
+						errortypes.ErrInvalidOperation,
+						"Rate variance tolerance percent must be greater than zero when bypass review within tolerance is enabled",
+					)
 				}
 			}
 

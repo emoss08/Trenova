@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package shipmentservice
 
 import (
@@ -104,7 +105,11 @@ func validateResourceActualTimeline(
 			)
 		}
 
-		if previous := findPayloadNeighbor(payloadTimeline[event.key], event, repositories.ActualTimelineDirectionPrevious); previous != nil {
+		if previous := findPayloadNeighbor(
+			payloadTimeline[event.key],
+			event,
+			repositories.ActualTimelineDirectionPrevious,
+		); previous != nil {
 			addTimelineConflict(
 				multiErr,
 				event,
@@ -114,7 +119,11 @@ func validateResourceActualTimeline(
 			)
 		}
 
-		if next := findPayloadNeighbor(payloadTimeline[event.key], event, repositories.ActualTimelineDirectionNext); next != nil {
+		if next := findPayloadNeighbor(
+			payloadTimeline[event.key],
+			event,
+			repositories.ActualTimelineDirectionNext,
+		); next != nil {
 			addTimelineConflict(
 				multiErr,
 				event,
@@ -288,7 +297,9 @@ func collectStopEvents(
 	return events
 }
 
-func buildPayloadTimeline(events []*resourceTimelineEvent) map[resourceTimelineKey][]*resourceTimelineEvent {
+func buildPayloadTimeline(
+	events []*resourceTimelineEvent,
+) map[resourceTimelineKey][]*resourceTimelineEvent {
 	byResource := make(map[resourceTimelineKey][]*resourceTimelineEvent)
 
 	for _, event := range events {
@@ -315,7 +326,9 @@ func buildPayloadTimeline(events []*resourceTimelineEvent) map[resourceTimelineK
 	return byResource
 }
 
-func buildPayloadWindows(entity *shipment.Shipment) map[resourceTimelineKey][]*resourceTimelineWindow {
+func buildPayloadWindows(
+	entity *shipment.Shipment,
+) map[resourceTimelineKey][]*resourceTimelineWindow {
 	byResource := make(map[resourceTimelineKey][]*resourceTimelineWindow)
 
 	for moveIndex, move := range entity.Moves {
@@ -325,10 +338,22 @@ func buildPayloadWindows(entity *shipment.Shipment) map[resourceTimelineKey][]*r
 
 		keys := make([]resourceTimelineKey, 0, 2)
 		if move.Assignment.TractorID != nil {
-			keys = append(keys, resourceTimelineKey{kind: resourceTimelineKindTractor, id: *move.Assignment.TractorID})
+			keys = append(
+				keys,
+				resourceTimelineKey{
+					kind: resourceTimelineKindTractor,
+					id:   *move.Assignment.TractorID,
+				},
+			)
 		}
 		if move.Assignment.PrimaryWorkerID != nil {
-			keys = append(keys, resourceTimelineKey{kind: resourceTimelineKindPrimaryWorker, id: *move.Assignment.PrimaryWorkerID})
+			keys = append(
+				keys,
+				resourceTimelineKey{
+					kind: resourceTimelineKindPrimaryWorker,
+					id:   *move.Assignment.PrimaryWorkerID,
+				},
+			)
 		}
 
 		for stopIndex, stop := range move.Stops {
@@ -437,7 +462,13 @@ func validateExternalTimelineEvent(
 		return err
 	}
 	if previous != nil && previous.Timestamp >= event.timestamp {
-		addTimelineConflict(multiErr, event, "previous", resourceActualField(previous.EventType), previous.Timestamp)
+		addTimelineConflict(
+			multiErr,
+			event,
+			"previous",
+			resourceActualField(previous.EventType),
+			previous.Timestamp,
+		)
 	}
 
 	req.Direction = repositories.ActualTimelineDirectionNext
@@ -446,7 +477,13 @@ func validateExternalTimelineEvent(
 		return err
 	}
 	if next != nil && next.Timestamp <= event.timestamp {
-		addTimelineConflict(multiErr, event, "next", resourceActualField(next.EventType), next.Timestamp)
+		addTimelineConflict(
+			multiErr,
+			event,
+			"next",
+			resourceActualField(next.EventType),
+			next.Timestamp,
+		)
 	}
 
 	overlap, err := findOverlappingExternalTimelineWindow(
@@ -481,7 +518,7 @@ func findNearestExternalTimelineEvent(
 	case resourceTimelineKindPrimaryWorker:
 		return assignmentRepo.FindNearestActualEventByPrimaryWorkerID(ctx, req, key.id)
 	default:
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 }
 
@@ -497,7 +534,7 @@ func findOverlappingExternalTimelineWindow(
 	case resourceTimelineKindPrimaryWorker:
 		return assignmentRepo.FindOverlappingActualWindowByPrimaryWorkerID(ctx, req, key.id)
 	default:
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 }
 

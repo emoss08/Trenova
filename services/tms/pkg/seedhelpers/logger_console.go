@@ -1,3 +1,4 @@
+//nolint:goprintffuncname // logger method names are fixed by the existing logger interface
 package seedhelpers
 
 import (

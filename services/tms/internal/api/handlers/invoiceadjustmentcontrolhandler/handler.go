@@ -41,12 +41,18 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/invoice-adjustment-controls")
 	api.GET(
 		"/",
-		h.pm.RequirePermission(permission.ResourceInvoiceAdjustmentControl.String(), permission.OpRead),
+		h.pm.RequirePermission(
+			permission.ResourceInvoiceAdjustmentControl.String(),
+			permission.OpRead,
+		),
 		h.get,
 	)
 	api.PUT(
 		"/",
-		h.pm.RequirePermission(permission.ResourceInvoiceAdjustmentControl.String(), permission.OpUpdate),
+		h.pm.RequirePermission(
+			permission.ResourceInvoiceAdjustmentControl.String(),
+			permission.OpUpdate,
+		),
 		h.update,
 	)
 }
@@ -54,13 +60,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *Handler) get(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	entity, err := h.service.Get(c.Request.Context(), repositories.GetInvoiceAdjustmentControlRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	entity, err := h.service.Get(
+		c.Request.Context(),
+		repositories.GetInvoiceAdjustmentControlRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

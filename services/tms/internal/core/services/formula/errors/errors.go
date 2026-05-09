@@ -1,3 +1,4 @@
+//nolint:revive // package name is part of the existing import path
 package errors
 
 import (

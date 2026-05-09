@@ -565,6 +565,7 @@ func normalizeOperationFilterValue(value any) any {
 	}
 }
 
+//nolint:cyclop // existing business workflow intentionally has several domain branches
 func toOperationString(value any) (string, bool) {
 	switch v := value.(type) {
 	case permission.Operation:

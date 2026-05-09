@@ -1,3 +1,4 @@
+//revive:disable-next-line:var-naming
 package metrics
 
 import (
@@ -88,7 +89,11 @@ func NewDocument(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	return m
 }
 
-func (m *Document) RecordExtraction(status string, sourceKind documentcontent.SourceKind, reason string) {
+func (m *Document) RecordExtraction(
+	status string,
+	sourceKind documentcontent.SourceKind,
+	reason string,
+) {
 	m.ifEnabled(func() {
 		if sourceKind == "" {
 			sourceKind = documentcontent.SourceKind(UnknownValue)
@@ -123,9 +128,9 @@ func (m *Document) RecordTypeAssociation(outcome, kind string) {
 
 func (m *Document) RecordSearchProjectionSync(success bool) {
 	m.ifEnabled(func() {
-		status := "success"
+		status := metricStatusSuccess
 		if !success {
-			status = "failure"
+			status = metricStatusFailure
 		}
 		m.searchProjectionSync.WithLabelValues(status).Inc()
 	})
@@ -145,9 +150,9 @@ func (m *Document) RecordSearchQuery(backend, outcome string) {
 
 func (m *Document) RecordReconciliationQueue(success bool) {
 	m.ifEnabled(func() {
-		status := "success"
+		status := metricStatusSuccess
 		if !success {
-			status = "failure"
+			status = metricStatusFailure
 		}
 		m.reconciliationQueueTotal.WithLabelValues(status).Inc()
 	})
@@ -161,9 +166,9 @@ func (m *Document) RecordAIOutcome(operation string, success bool, outcome strin
 		if outcome == "" {
 			outcome = UnknownValue
 		}
-		status := "success"
+		status := metricStatusSuccess
 		if !success {
-			status = "failure"
+			status = metricStatusFailure
 		}
 		m.aiOutcomeTotal.WithLabelValues(operation, status, outcome).Inc()
 	})

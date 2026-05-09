@@ -50,26 +50,98 @@ func SequenceTypeSortOrder(sequenceType SequenceType) int {
 func DefaultSequenceFormat(sequenceType SequenceType) (*SequenceFormat, error) {
 	switch sequenceType {
 	case SequenceTypeProNumber:
-		return &SequenceFormat{Type: sequenceType, Prefix: "S", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 4, IncludeRandomDigits: true, RandomDigitsCount: 6}, nil
+		return &SequenceFormat{
+			Type:                sequenceType,
+			Prefix:              "S",
+			IncludeYear:         true,
+			YearDigits:          2,
+			IncludeMonth:        true,
+			SequenceDigits:      4,
+			IncludeRandomDigits: true,
+			RandomDigitsCount:   6,
+		}, nil
 	case SequenceTypeConsolidation:
-		return &SequenceFormat{Type: sequenceType, Prefix: "C", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 5}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "C",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 5,
+		}, nil
 	case SequenceTypeInvoice:
-		return &SequenceFormat{Type: sequenceType, Prefix: "INV", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "INV",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeCreditMemo:
-		return &SequenceFormat{Type: sequenceType, Prefix: "CM", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "CM",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeDebitMemo:
-		return &SequenceFormat{Type: sequenceType, Prefix: "DM", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "DM",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeWorkOrder:
-		return &SequenceFormat{Type: sequenceType, Prefix: "WO", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "WO",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeJournalBatch:
-		return &SequenceFormat{Type: sequenceType, Prefix: "JB", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "JB",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeJournalEntry:
-		return &SequenceFormat{Type: sequenceType, Prefix: "JE", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "JE",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeManualJournalRequest:
-		return &SequenceFormat{Type: sequenceType, Prefix: "MJR", IncludeYear: true, YearDigits: 2, IncludeMonth: true, SequenceDigits: 6}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         "MJR",
+			IncludeYear:    true,
+			YearDigits:     2,
+			IncludeMonth:   true,
+			SequenceDigits: 6,
+		}, nil
 	case SequenceTypeLocationCode:
 		strategy := DefaultLocationCodeStrategy()
-		return &SequenceFormat{Type: sequenceType, Prefix: strategy.FallbackPrefix, YearDigits: 2, SequenceDigits: int(strategy.SequenceDigits), UseSeparators: strategy.Separator != "", SeparatorChar: strategy.Separator}, nil
+		return &SequenceFormat{
+			Type:           sequenceType,
+			Prefix:         strategy.FallbackPrefix,
+			YearDigits:     2,
+			SequenceDigits: int(strategy.SequenceDigits),
+			UseSeparators:  strategy.Separator != "",
+			SeparatorChar:  strategy.Separator,
+		}, nil
 	default:
 		return nil, fmt.Errorf("invalid sequence type: %s", sequenceType)
 	}
@@ -82,20 +154,22 @@ func DefaultSequenceConfig(orgID, buID pulid.ID, sequenceType SequenceType) *Seq
 	}
 
 	cfg := &SequenceConfig{
-		ID:                      pulid.MustNew("sqcfg_"),
-		OrganizationID:          orgID,
-		BusinessUnitID:          buID,
-		SequenceType:            sequenceType,
-		Prefix:                  format.Prefix,
-		IncludeYear:             format.IncludeYear,
-		YearDigits:              int16(format.YearDigits),
-		IncludeMonth:            format.IncludeMonth,
-		IncludeWeekNumber:       format.IncludeWeekNumber,
-		IncludeDay:              format.IncludeDay,
-		SequenceDigits:          int16(format.SequenceDigits),
-		IncludeLocationCode:     format.IncludeLocationCode,
-		IncludeRandomDigits:     format.IncludeRandomDigits,
-		RandomDigitsCount:       int16(format.RandomDigitsCount),
+		ID:                  pulid.MustNew("sqcfg_"),
+		OrganizationID:      orgID,
+		BusinessUnitID:      buID,
+		SequenceType:        sequenceType,
+		Prefix:              format.Prefix,
+		IncludeYear:         format.IncludeYear,
+		YearDigits:          int16(format.YearDigits), //nolint:gosec // bounded conversion
+		IncludeMonth:        format.IncludeMonth,
+		IncludeWeekNumber:   format.IncludeWeekNumber,
+		IncludeDay:          format.IncludeDay,
+		SequenceDigits:      int16(format.SequenceDigits), //nolint:gosec // bounded conversion
+		IncludeLocationCode: format.IncludeLocationCode,
+		IncludeRandomDigits: format.IncludeRandomDigits,
+		RandomDigitsCount: int16( //nolint:gosec // bounded conversion
+			format.RandomDigitsCount,
+		),
 		IncludeCheckDigit:       format.IncludeCheckDigit,
 		IncludeBusinessUnitCode: format.IncludeBusinessUnitCode,
 		UseSeparators:           format.UseSeparators,

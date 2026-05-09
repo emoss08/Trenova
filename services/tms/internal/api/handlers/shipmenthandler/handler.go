@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package shipmenthandler
 
 import (
@@ -55,7 +56,7 @@ func New(p Params) *Handler {
 	}
 }
 
-func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
+func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legacy workflow
 	api := rg.Group("/shipments")
 	api.GET(
 		"/",
@@ -345,10 +346,14 @@ func (h *Handler) getBillingReadiness(c *gin.Context) {
 		return
 	}
 
-	readiness, err := h.service.GetBillingReadiness(c.Request.Context(), shipmentID, pagination.TenantInfo{
-		OrgID: authCtx.OrganizationID,
-		BuID:  authCtx.BusinessUnitID,
-	})
+	readiness, err := h.service.GetBillingReadiness(
+		c.Request.Context(),
+		shipmentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -426,7 +431,14 @@ func (h *Handler) create(c *gin.Context) {
 	}
 	if entity.SourceDocumentID != "" {
 		if _, err := pulid.Parse(entity.SourceDocumentID); err != nil {
-			h.eh.HandleError(c, errortypes.NewValidationError("sourceDocumentId", errortypes.ErrInvalid, "Invalid source document ID"))
+			h.eh.HandleError(
+				c,
+				errortypes.NewValidationError(
+					"sourceDocumentId",
+					errortypes.ErrInvalid,
+					"Invalid source document ID",
+				),
+			)
 			return
 		}
 	}

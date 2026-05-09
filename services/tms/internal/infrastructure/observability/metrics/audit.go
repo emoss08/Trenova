@@ -1,8 +1,14 @@
+//revive:disable-next-line:var-naming
 package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+)
+
+const (
+	metricStatusFailure = "failure"
+	metricStatusSuccess = "success"
 )
 
 type Audit struct {
@@ -117,18 +123,18 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 }
 
 func (m *Audit) RecordBufferPush() {
-	m.ifEnabled(func() { m.bufferPushTotal.WithLabelValues("success").Inc() })
+	m.ifEnabled(func() { m.bufferPushTotal.WithLabelValues(metricStatusSuccess).Inc() })
 }
 
 func (m *Audit) RecordBufferPushFailure() {
-	m.ifEnabled(func() { m.bufferPushTotal.WithLabelValues("failure").Inc() })
+	m.ifEnabled(func() { m.bufferPushTotal.WithLabelValues(metricStatusFailure).Inc() })
 }
 
 func (m *Audit) RecordBufferFlush(success bool, duration float64, batchSize int) {
 	m.ifEnabled(func() {
-		status := "success"
+		status := metricStatusSuccess
 		if !success {
-			status = "failure"
+			status = metricStatusFailure
 		}
 		m.bufferFlushTotal.WithLabelValues(status).Inc()
 		m.flushDuration.Observe(duration)
@@ -146,9 +152,9 @@ func (m *Audit) RecordDLQPush(count int) {
 
 func (m *Audit) RecordDLQRetry(success bool) {
 	m.ifEnabled(func() {
-		status := "success"
+		status := metricStatusSuccess
 		if !success {
-			status = "failure"
+			status = metricStatusFailure
 		}
 		m.dlqRetryTotal.WithLabelValues(status).Inc()
 	})

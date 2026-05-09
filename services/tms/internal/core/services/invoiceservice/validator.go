@@ -111,14 +111,23 @@ func (v *Validator) validatePostingPeriodPolicy(
 		return
 	}
 
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch period.Status {
 	case fiscalperiod.StatusLocked:
 		if control.LockedPeriodPostingPolicy == tenant.LockedPeriodPostingPolicyBlockSubledgerAllowManualJe {
-			multiErr.Add("postedAt", errortypes.ErrInvalidOperation, "Invoice posting is blocked because the accounting period is locked")
+			multiErr.Add(
+				"postedAt",
+				errortypes.ErrInvalidOperation,
+				"Invoice posting is blocked because the accounting period is locked",
+			)
 		}
 	case fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed:
 		if control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyRequireReopen {
-			multiErr.Add("postedAt", errortypes.ErrInvalidOperation, "Invoice posting is blocked because the accounting period is closed and must be reopened")
+			multiErr.Add(
+				"postedAt",
+				errortypes.ErrInvalidOperation,
+				"Invoice posting is blocked because the accounting period is closed and must be reopened",
+			)
 		}
 	}
 }
@@ -151,7 +160,11 @@ func (v *Validator) validatePostingReconciliation(
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
-		multiErr.Add("shipmentId", errortypes.ErrSystemError, "Failed to load shipment for reconciliation")
+		multiErr.Add(
+			"shipmentId",
+			errortypes.ErrSystemError,
+			"Failed to load shipment for reconciliation",
+		)
 		return
 	}
 
@@ -162,7 +175,11 @@ func (v *Validator) validatePostingReconciliation(
 	}
 
 	if control.ReconciliationMode == tenant.ReconciliationModeBlockPosting {
-		multiErr.Add("totalAmount", errortypes.ErrInvalidOperation, "Invoice posting is blocked because the invoice total exceeds the reconciliation tolerance")
+		multiErr.Add(
+			"totalAmount",
+			errortypes.ErrInvalidOperation,
+			"Invoice posting is blocked because the invoice total exceeds the reconciliation tolerance",
+		)
 		return
 	}
 

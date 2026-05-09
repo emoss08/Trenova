@@ -66,7 +66,7 @@ func (g *Geometry) Value() (driver.Value, error) {
 
 func (g *Geometry) GeoJSON() (map[string]any, error) {
 	if g == nil || g.Geometry == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 
 	raw, err := sonic.Marshal(geojson.NewGeometry(g.Geometry))

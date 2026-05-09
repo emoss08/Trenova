@@ -55,18 +55,23 @@ type Activity struct {
 	WeatherAlertID pulid.ID       `json:"weatherAlertId" bun:"weather_alert_id,type:VARCHAR(100),notnull"`
 	ActivityType   ActivityType   `json:"activityType"   bun:"activity_type,type:VARCHAR(50),notnull"`
 	Timestamp      int64          `json:"timestamp"      bun:"timestamp,type:BIGINT,notnull"`
-	Details        map[string]any `json:"details"       bun:"details,type:jsonb,nullzero"`
+	Details        map[string]any `json:"details"        bun:"details,type:jsonb,nullzero"`
 	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64          `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (w *WeatherAlert) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(w,
+	err := validation.ValidateStruct(
+		w,
 		validation.Field(&w.OrganizationID, validation.Required),
 		validation.Field(&w.BusinessUnitID, validation.Required),
 		validation.Field(&w.NWSID, validation.Required),
 		validation.Field(&w.Event, validation.Required),
-		validation.Field(&w.AlertCategory, validation.Required, validation.By(ValidateAlertCategory)),
+		validation.Field(
+			&w.AlertCategory,
+			validation.Required,
+			validation.By(ValidateAlertCategory),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

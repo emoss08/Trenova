@@ -127,14 +127,21 @@ func (r *repository) Create(
 	)
 
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		if _, insertErr := r.db.DBForContext(c).NewInsert().Model(entity).Returning("*").Exec(c); insertErr != nil {
+		if _, insertErr := r.db.DBForContext(c).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(c); insertErr != nil {
 			log.Error("failed to create distance override", zap.Error(insertErr))
 			return insertErr
 		}
 
 		if len(entity.IntermediateStops) > 0 {
 			entity.NormalizeIntermediateStops()
-			if _, insertErr := r.db.DBForContext(c).NewInsert().Model(&entity.IntermediateStops).Exec(c); insertErr != nil {
+			if _, insertErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(&entity.IntermediateStops).
+				Exec(c); insertErr != nil {
 				log.Error("failed to create distance override stops", zap.Error(insertErr))
 				return insertErr
 			}
@@ -177,7 +184,11 @@ func (r *repository) Update(
 			return updateErr
 		}
 
-		if checkErr := dberror.CheckRowsAffected(results, "DistanceOverride", entity.ID.String()); checkErr != nil {
+		if checkErr := dberror.CheckRowsAffected(
+			results,
+			"DistanceOverride",
+			entity.ID.String(),
+		); checkErr != nil {
 			return checkErr
 		}
 
@@ -195,7 +206,10 @@ func (r *repository) Update(
 
 		if len(entity.IntermediateStops) > 0 {
 			entity.NormalizeIntermediateStops()
-			if _, insertErr := r.db.DBForContext(c).NewInsert().Model(&entity.IntermediateStops).Exec(c); insertErr != nil {
+			if _, insertErr := r.db.DBForContext(c).
+				NewInsert().
+				Model(&entity.IntermediateStops).
+				Exec(c); insertErr != nil {
 				log.Error("failed to insert distance override stops", zap.Error(insertErr))
 				return insertErr
 			}

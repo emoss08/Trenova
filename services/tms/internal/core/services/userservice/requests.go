@@ -57,10 +57,18 @@ func (r *ChangeMyPasswordRequest) Validate() error {
 		me.Add("confirmPassword", errortypes.ErrRequired, "Password confirmation is required")
 	}
 	if r.NewPassword != "" && r.ConfirmPassword != "" && r.NewPassword != r.ConfirmPassword {
-		me.Add("confirmPassword", errortypes.ErrInvalid, "Password confirmation must match the new password")
+		me.Add(
+			"confirmPassword",
+			errortypes.ErrInvalid,
+			"Password confirmation must match the new password",
+		)
 	}
 	if r.CurrentPassword != "" && r.NewPassword != "" && r.CurrentPassword == r.NewPassword {
-		me.Add("newPassword", errortypes.ErrInvalid, "New password must be different from the current password")
+		me.Add(
+			"newPassword",
+			errortypes.ErrInvalid,
+			"New password must be different from the current password",
+		)
 	}
 
 	if me.HasErrors() {

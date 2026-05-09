@@ -32,6 +32,7 @@ func (s Status) CanReject() bool {
 }
 
 func (s Status) CanCancel() bool {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch s {
 	case StatusDraft, StatusPendingApproval, StatusApproved:
 		return true

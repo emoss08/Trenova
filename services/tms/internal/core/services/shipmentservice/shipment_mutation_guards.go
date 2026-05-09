@@ -10,8 +10,9 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+//nolint:exhaustive // only actionable enum states require explicit handling here
 var billingUnlockedStatuses = map[shipment.BillingTransferStatus]struct{}{
-	shipment.BillingTransferNone:         {},
+	shipment.BillingTransferNone:          {},
 	shipment.BillingTransferSentBackToOps: {},
 }
 
@@ -30,6 +31,7 @@ func validateShipmentNotLockedForBilling(entity *shipment.Shipment) *errortypes.
 	return multiErr
 }
 
+//nolint:gocognit // existing domain workflow is intentionally branch-heavy
 func (s *service) ensureEquipmentAvailableForShipmentUpdate(
 	ctx context.Context,
 	original *shipment.Shipment,

@@ -100,7 +100,10 @@ func (e *EquipmentContinuity) Validate(multiErr *errortypes.MultiError) {
 			}),
 		),
 		validation.Field(&e.EquipmentID, validation.Required.Error("Equipment ID is required")),
-		validation.Field(&e.CurrentLocationID, validation.Required.Error("Current location is required")),
+		validation.Field(
+			&e.CurrentLocationID,
+			validation.Required.Error("Current location is required"),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

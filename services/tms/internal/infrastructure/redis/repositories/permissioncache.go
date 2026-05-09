@@ -52,7 +52,12 @@ func (r *permissionCacheRepository) Get(
 	)
 
 	perms := new(repositories.CachedPermissions)
-	if err := redishelpers.GetJSON(ctx, r.client, r.getPermissionKey(userID, orgID), perms); err != nil {
+	if err := redishelpers.GetJSON(
+		ctx,
+		r.client,
+		r.getPermissionKey(userID, orgID),
+		perms,
+	); err != nil {
 		if errors.Is(err, redis.Nil) {
 			return nil, nil //nolint:nilnil // nil is valid for redis.Nil
 		}
@@ -76,7 +81,13 @@ func (r *permissionCacheRepository) Set(
 		zap.String("orgID", orgID.String()),
 	)
 
-	if err := redishelpers.SetJSON(ctx, r.client, r.getPermissionKey(userID, orgID), perms, ttl); err != nil {
+	if err := redishelpers.SetJSON(
+		ctx,
+		r.client,
+		r.getPermissionKey(userID, orgID),
+		perms,
+		ttl,
+	); err != nil {
 		log.Error("failed to set permissions in cache", zap.Error(err))
 		return err
 	}

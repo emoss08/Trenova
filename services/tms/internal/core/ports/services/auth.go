@@ -14,8 +14,8 @@ import (
 )
 
 type LoginRequest struct {
-	EmailAddress     string `json:"emailAddress" binding:"required,email"`
-	Password         string `json:"password"     binding:"required"`
+	EmailAddress     string `json:"emailAddress"               binding:"required,email"`
+	Password         string `json:"password"                   binding:"required"`
 	OrganizationSlug string `json:"organizationSlug,omitempty"`
 }
 

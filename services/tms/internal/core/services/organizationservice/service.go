@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package organizationservice
 
 import (
@@ -339,6 +340,7 @@ func (s *service) GetMicrosoftSSOConfig(
 	return mapMicrosoftSSOConfig(entity), nil
 }
 
+//nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *service) UpsertMicrosoftSSOConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -464,6 +466,7 @@ func (s *service) GetOktaSSOConfig(
 	return mapOktaSSOConfig(entity), nil
 }
 
+//nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *service) UpsertOktaSSOConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

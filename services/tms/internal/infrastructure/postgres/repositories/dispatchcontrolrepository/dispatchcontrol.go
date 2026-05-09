@@ -66,7 +66,11 @@ func (r *repository) Create(
 		zap.String("orgId", entity.OrganizationID.String()),
 	)
 
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error("failed to create dispatch control", zap.Error(err))
 		return nil, err
 	}

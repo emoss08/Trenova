@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package weatheralertservice
 
 import (
@@ -80,7 +81,8 @@ func New(p Params) *Service {
 func (s *Service) PollNWSAlerts(ctx context.Context) error {
 	tenants, err := s.repo.ListTenants(ctx)
 	if err != nil {
-		return errortypes.NewBusinessError("failed to list tenants for weather alerts").WithInternal(err)
+		return errortypes.NewBusinessError("failed to list tenants for weather alerts").
+			WithInternal(err)
 	}
 
 	if len(tenants) == 0 {
@@ -96,13 +98,15 @@ func (s *Service) PollNWSAlerts(ctx context.Context) error {
 		for _, alert := range alerts {
 			entity := cloneAlertForTenant(alert, tenantInfo)
 			if _, err = s.repo.UpsertAlert(ctx, entity); err != nil {
-				return errortypes.NewBusinessError("failed to upsert weather alert").WithInternal(err)
+				return errortypes.NewBusinessError("failed to upsert weather alert").
+					WithInternal(err)
 			}
 		}
 	}
 
 	if _, err = s.repo.ExpireStaleAlerts(ctx); err != nil {
-		return errortypes.NewBusinessError("failed to expire stale weather alerts").WithInternal(err)
+		return errortypes.NewBusinessError("failed to expire stale weather alerts").
+			WithInternal(err)
 	}
 
 	return nil
@@ -114,7 +118,8 @@ func (s *Service) GetActiveAlerts(
 ) (*serviceports.WeatherAlertFeatureCollection, error) {
 	alerts, err := s.repo.GetActiveAlerts(ctx, tenantInfo)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to retrieve active weather alerts").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to retrieve active weather alerts").
+			WithInternal(err)
 	}
 
 	features := make([]*serviceports.WeatherAlertFeature, 0, len(alerts))
@@ -170,7 +175,8 @@ func (s *Service) GetAlertDetail(
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to retrieve weather alert activities").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to retrieve weather alert activities").
+			WithInternal(err)
 	}
 
 	feature, err := toFeature(alert)
@@ -184,10 +190,12 @@ func (s *Service) GetAlertDetail(
 	}, nil
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.WeatherAlert, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, nwsAlertsURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, nwsAlertsURL, http.NoBody)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to build NWS weather alerts request").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to build NWS weather alerts request").
+			WithInternal(err)
 	}
 
 	req.Header.Set("User-Agent", nwsUserAgent)
@@ -195,7 +203,8 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to fetch NWS weather alerts").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to fetch NWS weather alerts").
+			WithInternal(err)
 	}
 	defer resp.Body.Close()
 
@@ -207,7 +216,8 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 
 	payload := new(nwsActiveAlertsResponse)
 	if err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(payload); err != nil {
-		return nil, errortypes.NewBusinessError("failed to decode NWS weather alerts response").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to decode NWS weather alerts response").
+			WithInternal(err)
 	}
 
 	alerts := make([]*weatheralert.WeatherAlert, 0, len(payload.Features))
@@ -219,7 +229,8 @@ func (s *Service) fetchActiveAlerts(ctx context.Context) ([]*weatheralert.Weathe
 
 		geometry, err := parseGeometry(feature.Geometry)
 		if err != nil {
-			return nil, errortypes.NewBusinessError("failed to parse NWS weather alert geometry").WithInternal(err)
+			return nil, errortypes.NewBusinessError("failed to parse NWS weather alert geometry").
+				WithInternal(err)
 		}
 
 		effective, err := parseNWSTime(feature.Properties.Effective)
@@ -370,7 +381,7 @@ func parseGeometry(raw map[string]any) (*postgis.Geometry, error) {
 func parseNWSTime(value string) (*int64, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 
 	parsed, err := time.Parse(time.RFC3339, value)
@@ -389,7 +400,8 @@ func toFeature(alert *weatheralert.WeatherAlert) (*serviceports.WeatherAlertFeat
 
 	geometry, err := alert.Geometry.GeoJSON()
 	if err != nil {
-		return nil, errortypes.NewBusinessError("failed to convert weather alert geometry").WithInternal(err)
+		return nil, errortypes.NewBusinessError("failed to convert weather alert geometry").
+			WithInternal(err)
 	}
 
 	return &serviceports.WeatherAlertFeature{

@@ -35,6 +35,7 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
 		AuditService: audit,
+		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
 	})
 
@@ -117,6 +118,7 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
 		AuditService: audit,
+		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
 	})
 
@@ -154,6 +156,7 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
 		AuditService: audit,
+		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
 	})
 
@@ -221,6 +224,7 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 		ShipmentRepo: shipmentRepo,
 		UserRepo:     userRepo,
 		AuditService: audit,
+		EventService: noopShipmentEventService{},
 		Realtime:     realtime,
 	})
 

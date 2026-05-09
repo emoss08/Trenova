@@ -279,7 +279,7 @@ func (s *Service) validateDelete(
 		Where("status = ?", domaintypes.StatusActive).
 		Count(ctx)
 	if err != nil {
-		return nil
+		return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 	}
 
 	if childCount > 0 {

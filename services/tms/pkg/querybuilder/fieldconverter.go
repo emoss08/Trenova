@@ -51,7 +51,6 @@ func extractFieldsFromType(t reflect.Type) map[string]string {
 	fieldMap := make(map[string]string)
 
 	for field := range t.Fields() {
-
 		if !field.IsExported() {
 			continue
 		}

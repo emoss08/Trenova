@@ -50,6 +50,7 @@ func (s *Service) ListBlocked(ctx context.Context) ([]*system.DatabaseSessionCha
 	return rows, nil
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *Service) TerminateSession(
 	ctx context.Context,
 	pid int64,
@@ -63,10 +64,14 @@ func (s *Service) TerminateSession(
 
 	s.recordAction("terminate", "success")
 	if err := s.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceAuditLog,
-		ResourceID:     strconv.FormatInt(pid, 10),
-		Operation:      permission.OpUpdate,
-		CurrentState:   map[string]any{"pid": pid, "terminated": result.Terminated, "message": result.Message},
+		Resource:   permission.ResourceAuditLog,
+		ResourceID: strconv.FormatInt(pid, 10),
+		Operation:  permission.OpUpdate,
+		CurrentState: map[string]any{
+			"pid":        pid,
+			"terminated": result.Terminated,
+			"message":    result.Message,
+		},
 		PreviousState:  nil,
 		UserID:         userID,
 		OrganizationID: orgID,

@@ -371,4 +371,3 @@ func pulidPtrString(p *pulid.ID) string {
 	}
 	return p.String()
 }
-

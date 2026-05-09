@@ -20,16 +20,16 @@ type BankReceiptExceptionAging struct {
 }
 
 type BankReceiptReconciliationSummary struct {
-	AsOfDate              int64                    `json:"asOfDate"`
-	ImportedCount         int64                    `json:"importedCount"`
-	ImportedAmount        int64                    `json:"importedAmount"`
-	MatchedCount          int64                    `json:"matchedCount"`
-	MatchedAmount         int64                    `json:"matchedAmount"`
-	ExceptionCount        int64                    `json:"exceptionCount"`
-	ExceptionAmount       int64                    `json:"exceptionAmount"`
-	ActiveWorkItemCount   int64                    `json:"activeWorkItemCount"`
-	AssignedWorkItemCount int64                    `json:"assignedWorkItemCount"`
-	InReviewWorkItemCount int64                    `json:"inReviewWorkItemCount"`
+	AsOfDate              int64                     `json:"asOfDate"`
+	ImportedCount         int64                     `json:"importedCount"`
+	ImportedAmount        int64                     `json:"importedAmount"`
+	MatchedCount          int64                     `json:"matchedCount"`
+	MatchedAmount         int64                     `json:"matchedAmount"`
+	ExceptionCount        int64                     `json:"exceptionCount"`
+	ExceptionAmount       int64                     `json:"exceptionAmount"`
+	ActiveWorkItemCount   int64                     `json:"activeWorkItemCount"`
+	AssignedWorkItemCount int64                     `json:"assignedWorkItemCount"`
+	InReviewWorkItemCount int64                     `json:"inReviewWorkItemCount"`
 	ExceptionAging        BankReceiptExceptionAging `json:"exceptionAging"`
 }
 

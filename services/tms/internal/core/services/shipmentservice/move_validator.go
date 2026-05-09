@@ -81,7 +81,8 @@ func validateMoveIdentifiers(ctx moveRuleContext) {
 		return
 	}
 
-	if !ctx.shipmentID.IsNil() && !ctx.move.ShipmentID.IsNil() && ctx.move.ShipmentID != ctx.shipmentID {
+	if !ctx.shipmentID.IsNil() && !ctx.move.ShipmentID.IsNil() &&
+		ctx.move.ShipmentID != ctx.shipmentID {
 		ctx.multiErr.Add(
 			moveFieldPath(ctx.moveIndex, "shipmentId"),
 			errortypes.ErrInvalid,

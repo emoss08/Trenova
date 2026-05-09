@@ -1,9 +1,9 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package invoiceservice
 
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
@@ -16,12 +16,14 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (s *Service) createInvoiceJournalPosting(
+func (s *Service) createInvoiceJournalPosting( //nolint:cyclop // legacy workflow
 	ctx context.Context,
 	entity *invoice.Invoice,
 	actor *servicesports.RequestActor,
 ) error {
-	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil || entity == nil || actor == nil {
+	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil ||
+		entity == nil ||
+		actor == nil {
 		return nil
 	}
 
@@ -42,17 +44,33 @@ func (s *Service) createInvoiceJournalPosting(
 		return err
 	}
 
-	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return err
 	}
-	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return err
 	}
 
 	now := *entity.PostedAt
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(accountingControl, actor.UserID, now)
+	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(
+		accountingControl,
+		actor.UserID,
+		now,
+	)
 	amount := entity.TotalAmountMinor
 	if amount < 0 {
 		amount = -amount
@@ -68,7 +86,11 @@ func (s *Service) createInvoiceJournalPosting(
 		creditAccountID = accountingControl.DefaultARAccountID
 	}
 	if debitAccountID.IsNil() || creditAccountID.IsNil() {
-		return errortypes.NewValidationError("accountingControl", errortypes.ErrRequired, "Default AR and revenue accounts are required for invoice posting")
+		return errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"Default AR and revenue accounts are required for invoice posting",
+		)
 	}
 
 	batchID := pulid.MustNew("jb_")
@@ -144,9 +166,11 @@ func (s *Service) createInvoiceJournalPosting(
 		return nil
 	}
 	ledgerAmount := entity.TotalAmountMinor
-	if entity.BillType == billingqueue.BillTypeCreditMemo {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
+	switch entity.BillType {
+	case billingqueue.BillTypeCreditMemo:
 		ledgerAmount = -amount
-	} else if entity.BillType == billingqueue.BillTypeDebitMemo {
+	case billingqueue.BillTypeDebitMemo:
 		ledgerAmount = amount
 	}
 	return s.customerLedgerRepo.AppendEntries(ctx, []*customerledger.Entry{{
@@ -170,28 +194,37 @@ func (s *Service) resolveInvoicePostingPeriod(
 	entity *invoice.Invoice,
 	accountingControl *tenant.AccountingControl,
 ) (*fiscalperiod.FiscalPeriod, int64, error) {
-	period, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-		Date:  *entity.PostedAt,
-	})
+	period, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(
+		ctx,
+		repositories.GetPeriodByDateRequest{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+			Date:  *entity.PostedAt,
+		},
+	)
 	if err != nil {
 		return nil, 0, err
 	}
 
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch period.Status {
 	case fiscalperiod.StatusOpen, fiscalperiod.StatusLocked:
 		return period, *entity.PostedAt, nil
 	case fiscalperiod.StatusClosed, fiscalperiod.StatusPermanentlyClosed:
 		if accountingControl.ClosedPeriodPostingPolicy != tenant.ClosedPeriodPostingPolicyPostToNextOpen {
-			return nil, 0, errortypes.NewBusinessError("Invoice posting cannot create ledger output in a closed period; reopen the period first")
+			return nil, 0, errortypes.NewBusinessError(
+				"Invoice posting cannot create ledger output in a closed period; reopen the period first",
+			)
 		}
 
-		periods, listErr := s.validator.fiscalPeriodRepo.ListByFiscalYearID(ctx, repositories.ListByFiscalYearIDRequest{
-			FiscalYearID: period.FiscalYearID,
-			OrgID:        entity.OrganizationID,
-			BuID:         entity.BusinessUnitID,
-		})
+		periods, listErr := s.validator.fiscalPeriodRepo.ListByFiscalYearID(
+			ctx,
+			repositories.ListByFiscalYearIDRequest{
+				FiscalYearID: period.FiscalYearID,
+				OrgID:        entity.OrganizationID,
+				BuID:         entity.BusinessUnitID,
+			},
+		)
 		if listErr != nil {
 			return nil, 0, listErr
 		}
@@ -199,17 +232,23 @@ func (s *Service) resolveInvoicePostingPeriod(
 			if candidate == nil || candidate.PeriodNumber <= period.PeriodNumber {
 				continue
 			}
-			if candidate.Status == fiscalperiod.StatusOpen || candidate.Status == fiscalperiod.StatusLocked {
+			if candidate.Status == fiscalperiod.StatusOpen ||
+				candidate.Status == fiscalperiod.StatusLocked {
 				return candidate, candidate.StartDate, nil
 			}
 		}
-		return nil, 0, errortypes.NewBusinessError("No next open fiscal period is available for invoice ledger posting")
+		return nil, 0, errortypes.NewBusinessError(
+			"No next open fiscal period is available for invoice ledger posting",
+		)
 	default:
-		return nil, 0, errortypes.NewBusinessError("Invoice posting cannot create ledger output in an inactive fiscal period")
+		return nil, 0, errortypes.NewBusinessError(
+			"Invoice posting cannot create ledger output in an inactive fiscal period",
+		)
 	}
 }
 
 func invoicePostingSourceEvent(billType billingqueue.BillType) tenant.JournalSourceEventType {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch billType {
 	case billingqueue.BillTypeCreditMemo:
 		return tenant.JournalSourceEventCreditMemoPosted
@@ -220,11 +259,11 @@ func invoicePostingSourceEvent(billType billingqueue.BillType) tenant.JournalSou
 	}
 }
 
-func invoicePostingWorkflow(
+func invoicePostingWorkflow( //nolint:gocritic // stable workflow tuple
 	accountingControl *tenant.AccountingControl,
 	userID pulid.ID,
 	now int64,
-) (entryStatus string, batchStatus string, postedAt *int64, postedByID pulid.ID, requiresApproval bool, isApproved bool, approvedByID pulid.ID, approvedAt *int64) {
+) (entryStatus, batchStatus string, postedAt *int64, postedByID pulid.ID, requiresApproval, isApproved bool, approvedByID pulid.ID, approvedAt *int64) {
 	entryStatus = "Posted"
 	batchStatus = "Posted"
 	postedAt = &now
@@ -235,7 +274,7 @@ func invoicePostingWorkflow(
 	approvedAt = &now
 
 	if accountingControl.JournalPostingMode != tenant.JournalPostingModeManual {
-		return
+		return entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt
 	}
 
 	entryStatus = "Pending"
@@ -247,16 +286,9 @@ func invoicePostingWorkflow(
 	if !requiresApproval {
 		entryStatus = "Approved"
 		batchStatus = "Approved"
-		return
+		return entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt
 	}
 	approvedByID = pulid.Nil
 	approvedAt = nil
-	return
-}
-
-func shouldAutoPostInvoiceSource(control *tenant.AccountingControl, event tenant.JournalSourceEventType) bool {
-	if control == nil {
-		return false
-	}
-	return slices.Contains(control.AutoPostSourceEvents, event)
+	return entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt
 }

@@ -31,6 +31,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{fiscalRepo: p.FiscalRepo, glAccountRepo: p.GLAccountRepo}
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (v *Validator) ValidateDraftUpsert(
 	ctx context.Context,
 	entity *manualjournal.Request,
@@ -41,9 +42,14 @@ func (v *Validator) ValidateDraftUpsert(
 			entity.CurrencyCode = accountingControl.FunctionalCurrencyCode
 		}
 
-		if accountingControl.CurrencyMode == tenant.CurrencyModeSingleCurrency && entity.CurrencyCode != accountingControl.FunctionalCurrencyCode {
+		if accountingControl.CurrencyMode == tenant.CurrencyModeSingleCurrency &&
+			entity.CurrencyCode != accountingControl.FunctionalCurrencyCode {
 			multiErr := errortypes.NewMultiError()
-			multiErr.Add("currencyCode", errortypes.ErrInvalid, "Manual journal currency must match the tenant functional currency")
+			multiErr.Add(
+				"currencyCode",
+				errortypes.ErrInvalid,
+				"Manual journal currency must match the tenant functional currency",
+			)
 			return multiErr
 		}
 	}
@@ -61,15 +67,25 @@ func (v *Validator) ValidateDraftUpsert(
 		Date:  entity.AccountingDate,
 	})
 	if err != nil {
-		multiErr.Add("accountingDate", errortypes.ErrInvalid, "Accounting date must fall within a fiscal period")
+		multiErr.Add(
+			"accountingDate",
+			errortypes.ErrInvalid,
+			"Accounting date must fall within a fiscal period",
+		)
 		return multiErr
 	}
 
 	entity.RequestedFiscalYearID = period.FiscalYearID
 	entity.RequestedFiscalPeriodID = period.ID
 
-	if accountingControl != nil && accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyAdjustmentOnly && period.PeriodType != fiscalperiod.PeriodTypeAdjusting {
-		multiErr.Add("accountingDate", errortypes.ErrInvalid, "Manual journals are restricted to adjusting periods by accounting policy")
+	if accountingControl != nil &&
+		accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyAdjustmentOnly &&
+		period.PeriodType != fiscalperiod.PeriodTypeAdjusting {
+		multiErr.Add(
+			"accountingDate",
+			errortypes.ErrInvalid,
+			"Manual journals are restricted to adjusting periods by accounting policy",
+		)
 	}
 
 	if len(entity.Lines) == 0 {
@@ -82,7 +98,11 @@ func (v *Validator) ValidateDraftUpsert(
 		GLAccountIDs: accountIDs,
 	})
 	if glErr != nil {
-		multiErr.Add("lines", errortypes.ErrInvalid, "Failed to validate GL accounts for manual journal lines")
+		multiErr.Add(
+			"lines",
+			errortypes.ErrInvalid,
+			"Failed to validate GL accounts for manual journal lines",
+		)
 		return multiErr
 	}
 
@@ -90,10 +110,18 @@ func (v *Validator) ValidateDraftUpsert(
 	for _, account := range accounts {
 		accountMap[account.ID] = struct{}{}
 		if account.Status != domaintypes.StatusActive {
-			multiErr.Add("lines", errortypes.ErrInvalid, "Manual journal lines require active GL accounts")
+			multiErr.Add(
+				"lines",
+				errortypes.ErrInvalid,
+				"Manual journal lines require active GL accounts",
+			)
 		}
 		if !account.AllowManualJE {
-			multiErr.Add("lines", errortypes.ErrInvalid, "Selected GL account does not allow manual journal entries")
+			multiErr.Add(
+				"lines",
+				errortypes.ErrInvalid,
+				"Selected GL account does not allow manual journal entries",
+			)
 		}
 	}
 
@@ -102,26 +130,43 @@ func (v *Validator) ValidateDraftUpsert(
 			continue
 		}
 		if _, ok := accountMap[line.GLAccountID]; !ok {
-			multiErr.WithIndex("lines", idx).Add("glAccountId", errortypes.ErrInvalid, "GL account was not found for this tenant")
+			multiErr.WithIndex("lines", idx).
+				Add("glAccountId", errortypes.ErrInvalid, "GL account was not found for this tenant")
 		}
 	}
 
 	return multiErrOrNil(multiErr)
 }
 
-func (v *Validator) ValidateSubmit(entity *manualjournal.Request, accountingControl *tenant.AccountingControl) *errortypes.MultiError {
+func (v *Validator) ValidateSubmit(
+	entity *manualjournal.Request,
+	accountingControl *tenant.AccountingControl,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 	if !entity.Status.CanSubmit() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only draft manual journals can be submitted")
 	}
-	if accountingControl != nil && accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {
-		multiErr.Add("status", errortypes.ErrInvalid, "Manual journal entries are disabled by accounting policy")
+	if accountingControl != nil &&
+		accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {
+		multiErr.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Manual journal entries are disabled by accounting policy",
+		)
 	}
 	if len(entity.Lines) < 2 {
-		multiErr.Add("lines", errortypes.ErrInvalid, "Manual journals require at least two lines before submission")
+		multiErr.Add(
+			"lines",
+			errortypes.ErrInvalid,
+			"Manual journals require at least two lines before submission",
+		)
 	}
 	if !entity.IsBalanced() {
-		multiErr.Add("lines", errortypes.ErrInvalid, "Manual journal must be balanced before submission")
+		multiErr.Add(
+			"lines",
+			errortypes.ErrInvalid,
+			"Manual journal must be balanced before submission",
+		)
 	}
 	return multiErrOrNil(multiErr)
 }
@@ -135,7 +180,10 @@ func (v *Validator) ValidateApprove(entity *manualjournal.Request) *errortypes.M
 	return me
 }
 
-func (v *Validator) ValidateReject(reason string, entity *manualjournal.Request) *errortypes.MultiError {
+func (v *Validator) ValidateReject(
+	reason string,
+	entity *manualjournal.Request,
+) *errortypes.MultiError {
 	me := v.ValidateApprove(entity)
 	if strings.TrimSpace(reason) == "" {
 		if me == nil {
@@ -155,10 +203,17 @@ func (v *Validator) ValidatePost(entity *manualjournal.Request) *errortypes.Mult
 	return me
 }
 
-func (v *Validator) ValidateCancel(entity *manualjournal.Request, reason string) *errortypes.MultiError {
+func (v *Validator) ValidateCancel(
+	entity *manualjournal.Request,
+	reason string,
+) *errortypes.MultiError {
 	me := errortypes.NewMultiError()
 	if !entity.Status.CanCancel() {
-		me.Add("status", errortypes.ErrInvalid, "Manual journal cannot be cancelled from its current status")
+		me.Add(
+			"status",
+			errortypes.ErrInvalid,
+			"Manual journal cannot be cancelled from its current status",
+		)
 	}
 	if strings.TrimSpace(reason) == "" {
 		me.Add("reason", errortypes.ErrRequired, "Cancel reason is required")

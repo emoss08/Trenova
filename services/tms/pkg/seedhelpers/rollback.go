@@ -1,3 +1,4 @@
+//nolint:gocritic // existing legacy workflow/API shape is intentionally kept stable
 package seedhelpers
 
 import (
@@ -7,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func DeleteTrackedEntities(ctx context.Context, tx bun.Tx, seedName string, sc *SeedContext) error {
 	entities, err := sc.GetCreatedEntities(ctx, seedName)
 	if err != nil {

@@ -50,8 +50,10 @@ func InvoiceAdjustmentBatchWorkflow(
 			PrincipalID:    payload.PrincipalID,
 			APIKeyID:       payload.APIKeyID,
 		}
-		if err := workflow.ExecuteActivity(ctx, a.ProcessBatchItemActivity, itemPayload).Get(ctx, nil); err != nil {
-			workflow.GetLogger(ctx).Error("Invoice adjustment batch item failed", "batchId", payload.BatchID.String(), "itemId", itemID.String(), "error", err)
+		if err := workflow.ExecuteActivity(ctx, a.ProcessBatchItemActivity, itemPayload).
+			Get(ctx, nil); err != nil {
+			workflow.GetLogger(ctx).
+				Error("Invoice adjustment batch item failed", "batchId", payload.BatchID.String(), "itemId", itemID.String(), "error", err)
 			return err
 		}
 	}

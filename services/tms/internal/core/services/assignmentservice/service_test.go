@@ -133,6 +133,7 @@ func TestAssignToMove_DerivesAssignedStatusesThroughShipmentCoordinator(t *testi
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -175,6 +176,7 @@ func TestAssignToMove_RejectsCompletedMove(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
@@ -230,6 +232,7 @@ func TestAssignToMove_RejectsDispatchBlockingHold(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
@@ -350,6 +353,7 @@ func TestAssignToMove_RejectsTrailerContinuityMismatch(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
@@ -475,6 +479,7 @@ func TestAssignToMove_DoesNotAdvanceTrailerContinuityBeforeCompletion(t *testing
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -585,6 +590,7 @@ func TestUnassign_ClearsAssignmentAndDerivesUnassignedStatuses(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	}
 
@@ -636,6 +642,7 @@ func TestUnassign_RejectsMissingAssignment(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 
@@ -678,6 +685,7 @@ func TestUnassign_RejectsProgressedMove(t *testing.T) {
 			AccessorialRepo: mocks.NewMockAccessorialChargeRepository(t),
 		}),
 		shipmentValidator: shipmentservice.NewTestValidator(t),
+		eventService:      noopShipmentEventService{},
 		coordinator:       shipmentstate.NewCoordinator(),
 	}
 

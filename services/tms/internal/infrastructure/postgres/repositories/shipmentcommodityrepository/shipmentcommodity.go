@@ -60,7 +60,12 @@ func (r *repository) SyncForShipment(
 				return err
 			}
 		case existingCommodities[shipmentCommodity.ID] != nil:
-			if err = r.updateCommodity(ctx, tx, shipmentCommodity, existingCommodities[shipmentCommodity.ID]); err != nil {
+			if err = r.updateCommodity(
+				ctx,
+				tx,
+				shipmentCommodity,
+				existingCommodities[shipmentCommodity.ID],
+			); err != nil {
 				return err
 			}
 			updatedCommodityIDs[shipmentCommodity.ID] = struct{}{}

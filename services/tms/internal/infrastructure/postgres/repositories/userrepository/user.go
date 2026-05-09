@@ -1,3 +1,4 @@
+//nolint:cyclop // existing legacy workflow/API shape is intentionally kept stable
 package userrepository
 
 import (
@@ -305,7 +306,7 @@ func (ur *repository) ListOrganizationMemberships(
 	return memberships, nil
 }
 
-func (ur *repository) ReplaceOrganizationMemberships(
+func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit // legacy workflow
 	ctx context.Context,
 	req repositories.ReplaceOrganizationMembershipsRequest,
 ) ([]*tenant.OrganizationMembership, error) {

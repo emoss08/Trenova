@@ -131,13 +131,14 @@ func Validate(fields Fields, params ValidateParams) {
 }
 
 func Polygon(fields Fields) (*postgis.Geometry, error) {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch fields.GeofenceType {
 	case TypeRectangle:
 		return postgis.RectangleGeometry(fields.GeofenceVertices)
 	case TypeDraw:
 		return postgis.PolygonGeometry(fields.GeofenceVertices)
 	default:
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 }
 

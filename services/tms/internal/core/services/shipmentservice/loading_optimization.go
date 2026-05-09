@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package shipmentservice
 
 import (
@@ -114,14 +115,30 @@ func buildLoadingPlan(p *loadPlanParams) *repositories.LoadingOptimizationResult
 
 	totalLinearFeet, totalWeight := computeTotals(placements)
 	hazmatZones := evaluateHazmatZones(placements, p.commodityByID, p.rules)
-	warnings := generateWarnings(placements, p.commodityByID, totalLinearFeet, totalWeight, p.trailerLength, p.maxWeight, hazmatZones)
+	warnings := generateWarnings(
+		placements,
+		p.commodityByID,
+		totalLinearFeet,
+		totalWeight,
+		p.trailerLength,
+		p.maxWeight,
+		hazmatZones,
+	)
 	axleWeights := computeAxleWeights(placements)
 	stopDividers := computeStopDividers(placements, p.stops)
 
 	linearFeetUtil := safePercent(totalLinearFeet, p.trailerLength)
 	weightUtil := safePercent(float64(totalWeight), float64(p.maxWeight))
 	score, grade := computeUtilizationScore(linearFeetUtil, weightUtil)
-	recommendations := generateRecommendations(placements, axleWeights, hazmatZones, totalLinearFeet, totalWeight, p.trailerLength, p.maxWeight)
+	recommendations := generateRecommendations(
+		placements,
+		axleWeights,
+		hazmatZones,
+		totalLinearFeet,
+		totalWeight,
+		p.trailerLength,
+		p.maxWeight,
+	)
 
 	return &repositories.LoadingOptimizationResult{
 		TrailerLengthFeet: p.trailerLength,
@@ -292,7 +309,8 @@ func placeCommodities(
 					continue
 				}
 				rule := findMatchingHazmatRule(rules, cand.commodity, other.commodity)
-				if rule != nil && rule.SegregationType == hazmatsegregationrule.SegregationTypeSeparated {
+				if rule != nil &&
+					rule.SegregationType == hazmatsegregationrule.SegregationTypeSeparated {
 					otherPos := max(trailerLength-other.lengthFt, cursor)
 					placements = append(placements, buildPlacement(other, otherPos))
 					separatedPairs[other.commodity.ID] = true
@@ -317,7 +335,8 @@ func adjustForHazmatDistance(
 			continue
 		}
 		rule := findMatchingHazmatRuleByClass(rules, cand.commodity, existing.HazmatClass)
-		if rule == nil || rule.SegregationType != hazmatsegregationrule.SegregationTypeDistance || rule.MinimumDistance == nil {
+		if rule == nil || rule.SegregationType != hazmatsegregationrule.SegregationTypeDistance ||
+			rule.MinimumDistance == nil {
 			continue
 		}
 
@@ -356,7 +375,10 @@ func buildPlacement(cand placementCandidate, position float64) repositories.Comm
 
 // --- Stop Dividers ---
 
-func computeStopDividers(placements []repositories.CommodityPlacement, stops []repositories.StopInfo) []repositories.StopDivider {
+func computeStopDividers(
+	placements []repositories.CommodityPlacement,
+	stops []repositories.StopInfo,
+) []repositories.StopDivider {
 	if len(stops) == 0 {
 		return nil
 	}
@@ -496,7 +518,9 @@ func evaluateHazmatZones(
 	return zones
 }
 
-func filterHazmatPlacements(placements []repositories.CommodityPlacement) []repositories.CommodityPlacement {
+func filterHazmatPlacements(
+	placements []repositories.CommodityPlacement,
+) []repositories.CommodityPlacement {
 	result := make([]repositories.CommodityPlacement, 0)
 	for _, p := range placements {
 		if p.IsHazmat {
@@ -517,7 +541,10 @@ func distanceBetweenPlacements(a, b repositories.CommodityPlacement) float64 {
 	return max(dist, 0)
 }
 
-func hasBarrierBetween(placements []repositories.CommodityPlacement, a, b repositories.CommodityPlacement) bool {
+func hasBarrierBetween(
+	placements []repositories.CommodityPlacement,
+	a, b repositories.CommodityPlacement,
+) bool {
 	for _, p := range placements {
 		if p.IsHazmat || p.CommodityID == a.CommodityID || p.CommodityID == b.CommodityID {
 			continue
@@ -546,16 +573,24 @@ func generateWarnings(
 
 	if totalWeight > maxWeight {
 		warnings = append(warnings, repositories.LoadingWarning{
-			Type:     "overweight",
-			Message:  fmt.Sprintf("Total weight %s lbs exceeds maximum %s lbs", intutils.FormatWithCommas(totalWeight), intutils.FormatWithCommas(maxWeight)),
+			Type: "overweight",
+			Message: fmt.Sprintf(
+				"Total weight %s lbs exceeds maximum %s lbs",
+				intutils.FormatWithCommas(totalWeight),
+				intutils.FormatWithCommas(maxWeight),
+			),
 			Severity: "error",
 		})
 	}
 
 	if totalLinearFeet > trailerLength {
 		warnings = append(warnings, repositories.LoadingWarning{
-			Type:     "over_length",
-			Message:  fmt.Sprintf("Total linear feet %.1f exceeds trailer capacity %.1f ft", totalLinearFeet, trailerLength),
+			Type: "over_length",
+			Message: fmt.Sprintf(
+				"Total linear feet %.1f exceeds trailer capacity %.1f ft",
+				totalLinearFeet,
+				trailerLength,
+			),
 			Severity: "error",
 		})
 	}
@@ -581,7 +616,9 @@ func generateWarnings(
 	return warnings
 }
 
-func checkTemperatureConflicts(placements []repositories.CommodityPlacement) []repositories.LoadingWarning {
+func checkTemperatureConflicts(
+	placements []repositories.CommodityPlacement,
+) []repositories.LoadingWarning {
 	var warnings []repositories.LoadingWarning
 
 	for i := range placements {
@@ -601,8 +638,12 @@ func checkTemperatureConflicts(placements []repositories.CommodityPlacement) []r
 					Type: "temperature_conflict",
 					Message: fmt.Sprintf(
 						"%s (%d\u2013%d\u00b0F) and %s (%d\u2013%d\u00b0F) have incompatible temperature ranges and are placed adjacent",
-						a.CommodityName, *a.MinTemp, *a.MaxTemp,
-						b.CommodityName, *b.MinTemp, *b.MaxTemp,
+						a.CommodityName,
+						*a.MinTemp,
+						*a.MaxTemp,
+						b.CommodityName,
+						*b.MinTemp,
+						*b.MaxTemp,
 					),
 					Severity:     "warning",
 					CommodityIDs: []string{a.CommodityID.String(), b.CommodityID.String()},
@@ -614,7 +655,9 @@ func checkTemperatureConflicts(placements []repositories.CommodityPlacement) []r
 	return warnings
 }
 
-func checkFragileStacking(placements []repositories.CommodityPlacement) []repositories.LoadingWarning {
+func checkFragileStacking(
+	placements []repositories.CommodityPlacement,
+) []repositories.LoadingWarning {
 	var warnings []repositories.LoadingWarning
 
 	for i := range placements {
@@ -630,10 +673,15 @@ func checkFragileStacking(placements []repositories.CommodityPlacement) []reposi
 						Type: "fragile_stacking",
 						Message: fmt.Sprintf(
 							"Fragile item %q is adjacent to heavy non-stackable item %q (%s lbs) \u2014 risk of damage during transit",
-							placements[i].CommodityName, placements[j].CommodityName, intutils.FormatWithCommas(placements[j].Weight),
+							placements[i].CommodityName,
+							placements[j].CommodityName,
+							intutils.FormatWithCommas(placements[j].Weight),
 						),
-						Severity:     "warning",
-						CommodityIDs: []string{placements[i].CommodityID.String(), placements[j].CommodityID.String()},
+						Severity: "warning",
+						CommodityIDs: []string{
+							placements[i].CommodityID.String(),
+							placements[j].CommodityID.String(),
+						},
 					})
 				}
 			}
@@ -643,7 +691,10 @@ func checkFragileStacking(placements []repositories.CommodityPlacement) []reposi
 	return warnings
 }
 
-func checkEstimatedLengths(placements []repositories.CommodityPlacement, commodityByID map[pulid.ID]*commodity.Commodity) []repositories.LoadingWarning {
+func checkEstimatedLengths(
+	placements []repositories.CommodityPlacement,
+	commodityByID map[pulid.ID]*commodity.Commodity,
+) []repositories.LoadingWarning {
 	var warnings []repositories.LoadingWarning
 
 	for _, p := range placements {
@@ -655,8 +706,11 @@ func checkEstimatedLengths(placements []repositories.CommodityPlacement, commodi
 			name = com.Name
 		}
 		warnings = append(warnings, repositories.LoadingWarning{
-			Type:         "missing_linear_feet",
-			Message:      fmt.Sprintf("Linear feet per unit not configured for %q \u2014 using estimated length", name),
+			Type: "missing_linear_feet",
+			Message: fmt.Sprintf(
+				"Linear feet per unit not configured for %q \u2014 using estimated length",
+				name,
+			),
 			Severity:     "info",
 			CommodityIDs: []string{p.CommodityID.String()},
 		})
@@ -685,8 +739,20 @@ func computeAxleWeights(placements []repositories.CommodityPlacement) []reposito
 
 	return []repositories.AxleWeight{
 		{Axle: "steer", Weight: 0, Limit: steerAxleLimitLbs, Percentage: 0, Compliant: true},
-		{Axle: "drive", Weight: driveW, Limit: driveAxleLimitLbs, Percentage: safePercent(float64(driveW), float64(driveAxleLimitLbs)), Compliant: driveW <= driveAxleLimitLbs},
-		{Axle: "trailer", Weight: trailerW, Limit: trailerAxleLimitLbs, Percentage: safePercent(float64(trailerW), float64(trailerAxleLimitLbs)), Compliant: trailerW <= trailerAxleLimitLbs},
+		{
+			Axle:       "drive",
+			Weight:     driveW,
+			Limit:      driveAxleLimitLbs,
+			Percentage: safePercent(float64(driveW), float64(driveAxleLimitLbs)),
+			Compliant:  driveW <= driveAxleLimitLbs,
+		},
+		{
+			Axle:       "trailer",
+			Weight:     trailerW,
+			Limit:      trailerAxleLimitLbs,
+			Percentage: safePercent(float64(trailerW), float64(trailerAxleLimitLbs)),
+			Compliant:  trailerW <= trailerAxleLimitLbs,
+		},
 	}
 }
 
@@ -734,7 +800,10 @@ func generateRecommendations(
 	return recs
 }
 
-func checkOverweight(placements []repositories.CommodityPlacement, totalWeight, maxWeight int64) []repositories.LoadingRecommendation {
+func checkOverweight(
+	placements []repositories.CommodityPlacement,
+	totalWeight, maxWeight int64,
+) []repositories.LoadingRecommendation {
 	if totalWeight <= maxWeight {
 		return nil
 	}
@@ -748,14 +817,19 @@ func checkOverweight(placements []repositories.CommodityPlacement, totalWeight, 
 		Title:    "Shipment exceeds weight limit",
 		Description: fmt.Sprintf(
 			"Remove %q (%s lbs) to reduce weight by %s lbs, or split into multiple trailers.",
-			heaviest.CommodityName, intutils.FormatWithCommas(heaviest.Weight), intutils.FormatWithCommas(excess),
+			heaviest.CommodityName,
+			intutils.FormatWithCommas(heaviest.Weight),
+			intutils.FormatWithCommas(excess),
 		),
 		Impact:       "Prevents DOT overweight fine ($1,000\u2013$16,000+)",
 		CommodityIDs: []string{heaviest.CommodityID.String()},
 	}}
 }
 
-func checkOverLength(placements []repositories.CommodityPlacement, totalLinearFeet, trailerLength float64) []repositories.LoadingRecommendation {
+func checkOverLength(
+	placements []repositories.CommodityPlacement,
+	totalLinearFeet, trailerLength float64,
+) []repositories.LoadingRecommendation {
 	if totalLinearFeet <= trailerLength {
 		return nil
 	}
@@ -775,7 +849,9 @@ func checkOverLength(placements []repositories.CommodityPlacement, totalLinearFe
 	}}
 }
 
-func checkAxleViolations(axleWeights []repositories.AxleWeight) []repositories.LoadingRecommendation {
+func checkAxleViolations(
+	axleWeights []repositories.AxleWeight,
+) []repositories.LoadingRecommendation {
 	var recs []repositories.LoadingRecommendation
 
 	for _, aw := range axleWeights {
@@ -789,7 +865,12 @@ func checkAxleViolations(axleWeights []repositories.AxleWeight) []repositories.L
 			Title:    fmt.Sprintf("%s axle overweight", stringutils.CapitalizeFirst(aw.Axle)),
 			Description: fmt.Sprintf(
 				"%s axle at %s lbs exceeds %s lb limit by %s lbs. Shift heavy items toward the opposite end of the trailer.",
-				stringutils.CapitalizeFirst(aw.Axle), intutils.FormatWithCommas(aw.Weight), intutils.FormatWithCommas(aw.Limit), intutils.FormatWithCommas(excess),
+				stringutils.CapitalizeFirst(
+					aw.Axle,
+				),
+				intutils.FormatWithCommas(aw.Weight),
+				intutils.FormatWithCommas(aw.Limit),
+				intutils.FormatWithCommas(excess),
 			),
 			Impact: "Prevents weigh station fine and improves vehicle handling",
 		})
@@ -798,7 +879,9 @@ func checkAxleViolations(axleWeights []repositories.AxleWeight) []repositories.L
 	return recs
 }
 
-func checkHazmatViolations(hazmatZones []repositories.HazmatZoneResult) []repositories.LoadingRecommendation {
+func checkHazmatViolations(
+	hazmatZones []repositories.HazmatZoneResult,
+) []repositories.LoadingRecommendation {
 	var recs []repositories.LoadingRecommendation
 
 	for _, zone := range hazmatZones {
@@ -827,7 +910,10 @@ func checkHazmatViolations(hazmatZones []repositories.HazmatZoneResult) []reposi
 	return recs
 }
 
-func checkWeightBalance(axleWeights []repositories.AxleWeight, totalWeight int64) []repositories.LoadingRecommendation {
+func checkWeightBalance(
+	axleWeights []repositories.AxleWeight,
+	totalWeight int64,
+) []repositories.LoadingRecommendation {
 	if len(axleWeights) < 3 || totalWeight == 0 {
 		return nil
 	}
@@ -841,27 +927,34 @@ func checkWeightBalance(axleWeights []repositories.AxleWeight, totalWeight int64
 
 	switch {
 	case ratio > 0.65:
-		return []repositories.LoadingRecommendation{{
-			Type:        "reorder",
-			Priority:    "suggested",
-			Title:       "Weight is front-heavy",
-			Description: "Most cargo weight is near the nose. Move heavier items toward the rear to improve axle balance and tire wear.",
-			Impact:      "Improves fuel efficiency and tire longevity",
-		}}
+		return []repositories.LoadingRecommendation{
+			{
+				Type:        "reorder",
+				Priority:    "suggested",
+				Title:       "Weight is front-heavy",
+				Description: "Most cargo weight is near the nose. Move heavier items toward the rear to improve axle balance and tire wear.",
+				Impact:      "Improves fuel efficiency and tire longevity",
+			},
+		}
 	case ratio < 0.35:
-		return []repositories.LoadingRecommendation{{
-			Type:        "reorder",
-			Priority:    "suggested",
-			Title:       "Weight is rear-heavy",
-			Description: "Most cargo weight is near the doors. Move heavier items toward the nose to improve traction on the drive axle.",
-			Impact:      "Improves traction and braking performance",
-		}}
+		return []repositories.LoadingRecommendation{
+			{
+				Type:        "reorder",
+				Priority:    "suggested",
+				Title:       "Weight is rear-heavy",
+				Description: "Most cargo weight is near the doors. Move heavier items toward the nose to improve traction on the drive axle.",
+				Impact:      "Improves traction and braking performance",
+			},
+		}
 	default:
 		return nil
 	}
 }
 
-func checkUtilization(totalWeight, maxWeight int64, totalLinearFeet, trailerLength float64) []repositories.LoadingRecommendation {
+func checkUtilization(
+	totalWeight, maxWeight int64,
+	totalLinearFeet, trailerLength float64,
+) []repositories.LoadingRecommendation {
 	if totalWeight == 0 || maxWeight == 0 {
 		return nil
 	}
@@ -870,19 +963,27 @@ func checkUtilization(totalWeight, maxWeight int64, totalLinearFeet, trailerLeng
 	linearUtil := safePercent(totalLinearFeet, trailerLength)
 
 	if weightUtil < 50 && linearUtil < 50 {
-		return []repositories.LoadingRecommendation{{
-			Type:        "mode_change",
-			Priority:    "optimization",
-			Title:       "Trailer underutilized",
-			Description: fmt.Sprintf("Only %.0f%% of weight and %.0f%% of space used. Consider consolidating with another shipment or switching to LTL.", weightUtil, linearUtil),
-			Impact:      "Potential cost savings through consolidation",
-		}}
+		return []repositories.LoadingRecommendation{
+			{
+				Type:     "mode_change",
+				Priority: "optimization",
+				Title:    "Trailer underutilized",
+				Description: fmt.Sprintf(
+					"Only %.0f%% of weight and %.0f%% of space used. Consider consolidating with another shipment or switching to LTL.",
+					weightUtil,
+					linearUtil,
+				),
+				Impact: "Potential cost savings through consolidation",
+			},
+		}
 	}
 
 	return nil
 }
 
-func checkMissingDimensions(placements []repositories.CommodityPlacement) []repositories.LoadingRecommendation {
+func checkMissingDimensions(
+	placements []repositories.CommodityPlacement,
+) []repositories.LoadingRecommendation {
 	var names []string
 	var ids []string
 
@@ -946,7 +1047,9 @@ func findLongest(placements []repositories.CommodityPlacement) repositories.Comm
 	return longest
 }
 
-func computeTotals(placements []repositories.CommodityPlacement) (totalLinearFeet float64, totalWeight int64) {
+func computeTotals(
+	placements []repositories.CommodityPlacement,
+) (totalLinearFeet float64, totalWeight int64) {
 	for _, p := range placements {
 		end := p.PositionFeet + p.LengthFeet
 		totalLinearFeet = max(totalLinearFeet, end)

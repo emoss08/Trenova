@@ -165,11 +165,14 @@ func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
 
 func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		redirectURL, err := h.service.StartSSOLogin(c.Request.Context(), services.StartSSOLoginRequest{
-			Provider:         provider,
-			OrganizationSlug: c.Param("slug"),
-			ReturnTo:         c.Query("returnTo"),
-		})
+		redirectURL, err := h.service.StartSSOLogin(
+			c.Request.Context(),
+			services.StartSSOLoginRequest{
+				Provider:         provider,
+				OrganizationSlug: c.Param("slug"),
+				ReturnTo:         c.Query("returnTo"),
+			},
+		)
 		if err != nil {
 			h.eh.HandleError(c, err)
 			return
@@ -241,11 +244,19 @@ func parseSSOProvider(raw string) (tenant.SSOProvider, error) {
 	case "okta":
 		return tenant.SSOProviderOkta, nil
 	default:
-		return "", errortypes.NewValidationError("provider", errortypes.ErrInvalid, "Unsupported SSO provider")
+		return "", errortypes.NewValidationError(
+			"provider",
+			errortypes.ErrInvalid,
+			"Unsupported SSO provider",
+		)
 	}
 }
 
-func (h *Handler) redirectSSOError(c *gin.Context, loginState *repositories.SSOLoginState, callbackErr error) {
+func (h *Handler) redirectSSOError(
+	c *gin.Context,
+	loginState *repositories.SSOLoginState,
+	callbackErr error,
+) {
 	h.l.Warn("sso callback failed", zap.Error(callbackErr))
 
 	loginPath := "/login"
@@ -257,7 +268,10 @@ func (h *Handler) redirectSSOError(c *gin.Context, loginState *repositories.SSOL
 
 	origin := h.cfg.Server.CORS.AllowedOrigins[0]
 	if loginState != nil {
-		if returnURL, err := url.Parse(loginState.ReturnTo); err == nil && returnURL.Scheme != "" && returnURL.Host != "" {
+		if returnURL, err := url.Parse(
+			loginState.ReturnTo,
+		); err == nil && returnURL.Scheme != "" &&
+			returnURL.Host != "" {
 			origin = returnURL.Scheme + "://" + returnURL.Host
 		}
 	}

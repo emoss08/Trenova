@@ -83,6 +83,7 @@ func TestServiceCancel_Success(t *testing.T) {
 		validator:      NewTestValidator(t),
 		auditService:   audit,
 		realtime:       realtime,
+		eventService:   noopShipmentEventService{},
 		coordinator:    newStateCoordinator(),
 	}
 
@@ -120,6 +121,7 @@ func TestServiceCancel_RejectsAlreadyCanceledShipment(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -181,6 +183,7 @@ func TestServiceUncancel_Success(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: audit,
 		realtime:     realtime,
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 
@@ -217,6 +220,7 @@ func TestServiceUncancel_RejectsNonCanceledShipment(t *testing.T) {
 		validator:    NewTestValidator(t),
 		auditService: mocks.NewMockAuditService(t),
 		realtime:     mocks.NewMockRealtimeService(t),
+		eventService: noopShipmentEventService{},
 		coordinator:  newStateCoordinator(),
 	}
 

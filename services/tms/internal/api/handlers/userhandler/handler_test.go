@@ -13,8 +13,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
-	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/userservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -143,9 +143,9 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 				},
 			},
 			Storage: config.StorageConfig{
-				MaxFileSize:         5 * 1024 * 1024,
-				PresignedURLExpiry:  15 * time.Minute,
-				AllowedMIMETypes:    []string{"image/jpeg", "image/png", "image/webp"},
+				MaxFileSize:        5 * 1024 * 1024,
+				PresignedURLExpiry: 15 * time.Minute,
+				AllowedMIMETypes:   []string{"image/jpeg", "image/png", "image/webp"},
 			},
 		}
 	}

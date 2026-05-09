@@ -103,7 +103,11 @@ func NewDocumentCacheRepository(p DocumentCacheRepositoryParams) corerepos.Docum
 	}
 }
 
-func newSyncedCacheBase(client *redis.Client, logger *zap.Logger, component string) *syncedCacheBase {
+func newSyncedCacheBase(
+	client *redis.Client,
+	logger *zap.Logger,
+	component string,
+) *syncedCacheBase {
 	return &syncedCacheBase{
 		client: client,
 		logger: logger.Named("redis." + component),
@@ -121,17 +125,26 @@ func (r *workerCacheRepository) GetByID(
 	entity, err := getCachedEntity[worker.Worker](
 		ctx,
 		r.syncedCacheBase,
-		buildScopedKeys(workerCachePrefix, req.ID.String(), req.TenantInfo.OrgID.String(), req.TenantInfo.BuID.String()),
+		buildScopedKeys(
+			workerCachePrefix,
+			req.ID.String(),
+			req.TenantInfo.OrgID.String(),
+			req.TenantInfo.BuID.String(),
+		),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if entity.OrganizationID != req.TenantInfo.OrgID || entity.BusinessUnitID != req.TenantInfo.BuID {
+	if entity.OrganizationID != req.TenantInfo.OrgID ||
+		entity.BusinessUnitID != req.TenantInfo.BuID {
 		return nil, corerepos.ErrCacheMiss
 	}
 
 	if req.IncludeState {
-		state, stateErr := r.usStateRepo.GetByID(ctx, corerepos.GetUsStateByIDRequest{StateID: entity.StateID})
+		state, stateErr := r.usStateRepo.GetByID(
+			ctx,
+			corerepos.GetUsStateByIDRequest{StateID: entity.StateID},
+		)
 		if stateErr != nil {
 			return nil, corerepos.ErrCacheMiss
 		}
@@ -152,16 +165,25 @@ func (r *customerCacheRepository) GetByID(
 	entity, err := getCachedEntity[customer.Customer](
 		ctx,
 		r.syncedCacheBase,
-		buildScopedKeys(customerCachePrefix, req.ID.String(), req.TenantInfo.OrgID.String(), req.TenantInfo.BuID.String()),
+		buildScopedKeys(
+			customerCachePrefix,
+			req.ID.String(),
+			req.TenantInfo.OrgID.String(),
+			req.TenantInfo.BuID.String(),
+		),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if entity.OrganizationID != req.TenantInfo.OrgID || entity.BusinessUnitID != req.TenantInfo.BuID {
+	if entity.OrganizationID != req.TenantInfo.OrgID ||
+		entity.BusinessUnitID != req.TenantInfo.BuID {
 		return nil, corerepos.ErrCacheMiss
 	}
 
-	state, stateErr := r.usStateRepo.GetByID(ctx, corerepos.GetUsStateByIDRequest{StateID: entity.StateID})
+	state, stateErr := r.usStateRepo.GetByID(
+		ctx,
+		corerepos.GetUsStateByIDRequest{StateID: entity.StateID},
+	)
 	if stateErr != nil {
 		return nil, corerepos.ErrCacheMiss
 	}
@@ -181,12 +203,18 @@ func (r *shipmentCacheRepository) GetByID(
 	entity, err := getCachedEntity[shipment.Shipment](
 		ctx,
 		r.syncedCacheBase,
-		buildScopedKeys(shipmentCachePrefix, req.ID.String(), req.TenantInfo.OrgID.String(), req.TenantInfo.BuID.String()),
+		buildScopedKeys(
+			shipmentCachePrefix,
+			req.ID.String(),
+			req.TenantInfo.OrgID.String(),
+			req.TenantInfo.BuID.String(),
+		),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if entity.OrganizationID != req.TenantInfo.OrgID || entity.BusinessUnitID != req.TenantInfo.BuID {
+	if entity.OrganizationID != req.TenantInfo.OrgID ||
+		entity.BusinessUnitID != req.TenantInfo.BuID {
 		return nil, corerepos.ErrCacheMiss
 	}
 
@@ -200,12 +228,18 @@ func (r *documentCacheRepository) GetByID(
 	entity, err := getCachedEntity[document.Document](
 		ctx,
 		r.syncedCacheBase,
-		buildScopedKeys(documentCachePrefix, req.ID.String(), req.TenantInfo.OrgID.String(), req.TenantInfo.BuID.String()),
+		buildScopedKeys(
+			documentCachePrefix,
+			req.ID.String(),
+			req.TenantInfo.OrgID.String(),
+			req.TenantInfo.BuID.String(),
+		),
 	)
 	if err != nil {
 		return nil, err
 	}
-	if entity.OrganizationID != req.TenantInfo.OrgID || entity.BusinessUnitID != req.TenantInfo.BuID {
+	if entity.OrganizationID != req.TenantInfo.OrgID ||
+		entity.BusinessUnitID != req.TenantInfo.BuID {
 		return nil, corerepos.ErrCacheMiss
 	}
 
@@ -230,7 +264,11 @@ func getCachedEntity[T any](
 
 		entity := new(T)
 		if err := bunmarshal.UnmarshalMap(raw, entity); err != nil {
-			base.logger.Warn("failed to decode cached entity", zap.String("key", key), zap.Error(err))
+			base.logger.Warn(
+				"failed to decode cached entity",
+				zap.String("key", key),
+				zap.Error(err),
+			)
 			lastErr = corerepos.ErrCacheMiss
 			continue
 		}

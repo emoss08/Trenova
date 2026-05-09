@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package customerservice
 
 import (
@@ -67,7 +68,11 @@ func (s *Service) Get(
 		return entity, nil
 	}
 	if !errors.Is(err, repositories.ErrCacheMiss) {
-		s.l.Warn("failed to load customer from cache", zap.Error(err), zap.String("customerID", req.ID.String()))
+		s.l.Warn(
+			"failed to load customer from cache",
+			zap.Error(err),
+			zap.String("customerID", req.ID.String()),
+		)
 	}
 
 	return s.repo.GetByID(ctx, req)

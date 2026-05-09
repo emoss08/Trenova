@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
@@ -52,7 +53,7 @@ type Entry struct {
 
 func (e *Entry) Validate() error {
 	if e.PrincipalType == "" && e.UserID.IsNotNil() {
-		e.PrincipalType = "session_user"
+		e.PrincipalType = "session_user" //nolint:goconst // local repeated literal is clearer than widening API constants
 	}
 
 	if e.PrincipalID.IsNil() && e.UserID.IsNotNil() {
@@ -96,23 +97,23 @@ func (e *Entry) Validate() error {
 	switch e.PrincipalType {
 	case "session_user":
 		if e.UserID.IsNil() {
-			return fmt.Errorf("user audit entries require a user ID")
+			return errors.New("user audit entries require a user ID")
 		}
 		if e.APIKeyID.IsNotNil() {
-			return fmt.Errorf("user audit entries cannot include an api key ID")
+			return errors.New("user audit entries cannot include an api key ID")
 		}
 		if e.PrincipalID != e.UserID {
-			return fmt.Errorf("user audit entries must use user ID as principal ID")
+			return errors.New("user audit entries must use user ID as principal ID")
 		}
 	case "api_key":
 		if e.APIKeyID.IsNil() {
-			return fmt.Errorf("api key audit entries require an api key ID")
+			return errors.New("api key audit entries require an api key ID")
 		}
 		if e.UserID.IsNotNil() {
-			return fmt.Errorf("api key audit entries cannot include a user ID")
+			return errors.New("api key audit entries cannot include a user ID")
 		}
 		if e.PrincipalID != e.APIKeyID {
-			return fmt.Errorf("api key audit entries must use api key ID as principal ID")
+			return errors.New("api key audit entries must use api key ID as principal ID")
 		}
 	default:
 		return fmt.Errorf("unsupported principal type %q", e.PrincipalType)

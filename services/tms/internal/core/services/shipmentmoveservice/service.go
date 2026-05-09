@@ -139,7 +139,12 @@ func (s *service) UpdateStatus(
 				return err
 			}
 		}
-		if err = s.ensureNoDeliveryHold(txCtx, move.ShipmentID, req.TenantInfo, req.Status); err != nil {
+		if err = s.ensureNoDeliveryHold(
+			txCtx,
+			move.ShipmentID,
+			req.TenantInfo,
+			req.Status,
+		); err != nil {
 			return err
 		}
 
@@ -147,7 +152,12 @@ func (s *service) UpdateStatus(
 		if err != nil {
 			return err
 		}
-		if err = s.advanceEquipmentContinuityForMove(txCtx, req.TenantInfo, updatedMove, req.Status); err != nil {
+		if err = s.advanceEquipmentContinuityForMove(
+			txCtx,
+			req.TenantInfo,
+			updatedMove,
+			req.Status,
+		); err != nil {
 			return err
 		}
 
@@ -169,6 +179,7 @@ func (s *service) UpdateStatus(
 	return updatedMove, nil
 }
 
+//nolint:gocognit // existing domain workflow is intentionally branch-heavy
 func (s *service) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateMoveStatusRequest,
@@ -224,7 +235,12 @@ func (s *service) BulkUpdateStatus(
 			); err != nil {
 				return err
 			}
-			if err = s.ensureNoDeliveryHold(txCtx, move.ShipmentID, req.TenantInfo, req.Status); err != nil {
+			if err = s.ensureNoDeliveryHold(
+				txCtx,
+				move.ShipmentID,
+				req.TenantInfo,
+				req.Status,
+			); err != nil {
 				return err
 			}
 
@@ -237,7 +253,12 @@ func (s *service) BulkUpdateStatus(
 			return err
 		}
 		for _, updatedMove := range updatedMoves {
-			if err = s.advanceEquipmentContinuityForMove(txCtx, req.TenantInfo, updatedMove, req.Status); err != nil {
+			if err = s.advanceEquipmentContinuityForMove(
+				txCtx,
+				req.TenantInfo,
+				updatedMove,
+				req.Status,
+			); err != nil {
 				return err
 			}
 		}

@@ -26,8 +26,8 @@ type ARAgingBucketTotals struct {
 }
 
 type ARCustomerAgingRow struct {
-	CustomerID   pulid.ID          `json:"customerId"`
-	CustomerName string            `json:"customerName"`
+	CustomerID   pulid.ID            `json:"customerId"`
+	CustomerName string              `json:"customerName"`
 	Buckets      ARAgingBucketTotals `json:"buckets"`
 }
 

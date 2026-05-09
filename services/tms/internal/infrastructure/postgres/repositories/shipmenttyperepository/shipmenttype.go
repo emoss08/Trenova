@@ -231,7 +231,11 @@ func (r *repository) BulkUpdateStatus(
 		return nil, err
 	}
 
-	if err = dberror.CheckBulkRowsAffected(results, "ShipmentType", req.ShipmentTypeIDs); err != nil {
+	if err = dberror.CheckBulkRowsAffected(
+		results,
+		"ShipmentType",
+		req.ShipmentTypeIDs,
+	); err != nil {
 		return nil, err
 	}
 

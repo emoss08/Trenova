@@ -2,7 +2,6 @@ package globalsearchservice
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -448,8 +447,6 @@ func stringValue(document map[string]any, key string) string {
 	switch typed := value.(type) {
 	case string:
 		return typed
-	case json.RawMessage:
-		return stringutils.DecodeByteString(typed)
 	case []byte:
 		return stringutils.DecodeByteString(typed)
 	default:

@@ -75,7 +75,11 @@ func (r *repository) CreateRuleSet(
 	ctx context.Context,
 	entity *documentparsingrule.RuleSet,
 ) (*documentparsingrule.RuleSet, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -97,7 +101,11 @@ func (r *repository) UpdateRuleSet(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(result, "DocumentParsingRuleSet", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"DocumentParsingRuleSet",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -182,7 +190,11 @@ func (r *repository) CreateVersion(
 	entity *documentparsingrule.RuleVersion,
 ) (*documentparsingrule.RuleVersion, error) {
 	if entity.VersionNumber > 0 {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		if _, err := r.db.DBForContext(ctx).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(ctx); err != nil {
 			return nil, r.mapCreateVersionError(err)
 		}
 		return entity, nil
@@ -243,7 +255,11 @@ func (r *repository) UpdateVersion(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(result, "DocumentParsingRuleVersion", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"DocumentParsingRuleVersion",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -436,7 +452,11 @@ func (r *repository) CreateFixture(
 	ctx context.Context,
 	entity *documentparsingrule.Fixture,
 ) (*documentparsingrule.Fixture, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -458,7 +478,11 @@ func (r *repository) UpdateFixture(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(result, "DocumentParsingRuleFixture", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		result,
+		"DocumentParsingRuleFixture",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	return entity, nil

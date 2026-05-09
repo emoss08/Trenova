@@ -312,6 +312,7 @@ func (r *repository) UpdateStatus(
 	})
 }
 
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (r *repository) BulkUpdateStatus(
 	ctx context.Context,
 	req *repositories.BulkUpdateMoveStatusRequest,
@@ -350,7 +351,11 @@ func (r *repository) BulkUpdateStatus(
 				return fmt.Errorf("bulk update shipment move status %s: %w", move.ID, err)
 			}
 
-			if err = dberror.CheckRowsAffected(results, "Shipment move", move.ID.String()); err != nil {
+			if err = dberror.CheckRowsAffected(
+				results,
+				"Shipment move",
+				move.ID.String(),
+			); err != nil {
 				return err
 			}
 
@@ -913,7 +918,11 @@ func (r *repository) loadMoveWithDetails(
 		return nil, dberror.HandleNotFoundError(err, "Shipment move")
 	}
 
-	if err = r.hydrateActiveAssignments(ctx, tenantInfo, []*shipment.ShipmentMove{entity}); err != nil {
+	if err = r.hydrateActiveAssignments(
+		ctx,
+		tenantInfo,
+		[]*shipment.ShipmentMove{entity},
+	); err != nil {
 		return nil, err
 	}
 

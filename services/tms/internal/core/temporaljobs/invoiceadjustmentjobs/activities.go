@@ -143,8 +143,11 @@ func (a *Activities) refreshBatchProgress(
 		if item == nil {
 			continue
 		}
+		//nolint:exhaustive // only actionable enum states require explicit handling here
 		switch item.Status {
-		case invoiceadjustment.BatchItemStatusExecuted, invoiceadjustment.BatchItemStatusPendingApproval, invoiceadjustment.BatchItemStatusRejected:
+		case invoiceadjustment.BatchItemStatusExecuted,
+			invoiceadjustment.BatchItemStatusPendingApproval,
+			invoiceadjustment.BatchItemStatusRejected:
 			processed++
 			succeeded++
 		case invoiceadjustment.BatchItemStatusFailed:
@@ -172,7 +175,10 @@ func (a *Activities) refreshBatchProgress(
 	return a.repo.UpdateBatch(ctx, batch)
 }
 
-func decodeRequestPayload(payload map[string]any, req *servicesports.InvoiceAdjustmentRequest) error {
+func decodeRequestPayload(
+	payload map[string]any,
+	req *servicesports.InvoiceAdjustmentRequest,
+) error {
 	raw, err := sonic.Marshal(payload)
 	if err != nil {
 		return err
@@ -180,7 +186,10 @@ func decodeRequestPayload(payload map[string]any, req *servicesports.InvoiceAdju
 	return sonic.Unmarshal(raw, req)
 }
 
-func findBatchItem(items []*invoiceadjustment.InvoiceAdjustmentBatchItem, itemID pulid.ID) *invoiceadjustment.InvoiceAdjustmentBatchItem {
+func findBatchItem(
+	items []*invoiceadjustment.InvoiceAdjustmentBatchItem,
+	itemID pulid.ID,
+) *invoiceadjustment.InvoiceAdjustmentBatchItem {
 	for _, item := range items {
 		if item != nil && item.ID == itemID {
 			return item
@@ -190,8 +199,12 @@ func findBatchItem(items []*invoiceadjustment.InvoiceAdjustmentBatchItem, itemID
 }
 
 func isTerminalBatchItemStatus(status invoiceadjustment.BatchItemStatus) bool {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch status {
-	case invoiceadjustment.BatchItemStatusExecuted, invoiceadjustment.BatchItemStatusPendingApproval, invoiceadjustment.BatchItemStatusRejected, invoiceadjustment.BatchItemStatusFailed:
+	case invoiceadjustment.BatchItemStatusExecuted,
+		invoiceadjustment.BatchItemStatusPendingApproval,
+		invoiceadjustment.BatchItemStatusRejected,
+		invoiceadjustment.BatchItemStatusFailed:
 		return true
 	default:
 		return false

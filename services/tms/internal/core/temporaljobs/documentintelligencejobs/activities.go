@@ -464,7 +464,12 @@ func (a *Activities) maybeApplyAsyncAIEnqueueFailure(
 	if !p.EnqueueAsyncAI {
 		return nil
 	}
-	if err := a.startAIExtractionWorkflow(ctx, p.Document, p.Payload.UserID, p.Timestamp); err != nil {
+	if err := a.startAIExtractionWorkflow(
+		ctx,
+		p.Document,
+		p.Payload.UserID,
+		p.Timestamp,
+	); err != nil {
 		a.logger.Warn(
 			"failed to start async AI extraction workflow",
 			zap.String("documentId", p.Document.ID.String()),

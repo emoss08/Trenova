@@ -634,7 +634,11 @@ func validateMySettingsFields(raw map[string]any) error {
 
 	for _, field := range []string{"name", "username", "emailAddress"} {
 		if _, ok := raw[field]; ok {
-			me.Add(field, errortypes.ErrInvalidOperation, "This field can only be changed by an administrator")
+			me.Add(
+				field,
+				errortypes.ErrInvalidOperation,
+				"This field can only be changed by an administrator",
+			)
 		}
 	}
 

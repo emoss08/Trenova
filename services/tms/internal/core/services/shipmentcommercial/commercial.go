@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package shipmentcommercial
 
 import (
@@ -83,8 +84,8 @@ func (c *Calculator) CalculateTotals(
 
 	return &repositories.ShipmentTotalsResponse{
 		FreightChargeAmount: baseCharge,
-		OtherChargeAmount: otherChargeAmount,
-		TotalChargeAmount: baseCharge.Add(otherChargeAmount),
+		OtherChargeAmount:   otherChargeAmount,
+		TotalChargeAmount:   baseCharge.Add(otherChargeAmount),
 	}, nil
 }
 
@@ -122,7 +123,10 @@ func (c *Calculator) calculateCommercialTotals(
 		return decimal.Zero, decimal.Zero, nil, err
 	}
 
-	return baseCharge, CalculateAdditionalCharges(entity.AdditionalCharges, baseCharge), ratingDetail, nil
+	return baseCharge, CalculateAdditionalCharges(
+		entity.AdditionalCharges,
+		baseCharge,
+	), ratingDetail, nil
 }
 
 func calculateAdditionalCharge(
@@ -267,6 +271,7 @@ func detentionUnits(
 	totalExcessSeconds int64,
 	detainedStopCount int16,
 ) int16 {
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch rateUnit {
 	case accessorialcharge.RateUnitHour:
 		return int16(math.Ceil(float64(totalExcessSeconds) / 3600))

@@ -495,43 +495,6 @@ func TestResolveInvoicePostingPeriodUsesNextOpenPeriod(t *testing.T) {
 	assert.Equal(t, int64(1_700_001_000), date)
 }
 
-func TestShouldAutoPostInvoiceSource(t *testing.T) {
-	t.Parallel()
-
-	assert.False(t, shouldAutoPostInvoiceSource(nil, tenant.JournalSourceEventInvoicePosted))
-	assert.False(
-		t,
-		shouldAutoPostInvoiceSource(
-			&tenant.AccountingControl{JournalPostingMode: tenant.JournalPostingModeManual},
-			tenant.JournalSourceEventInvoicePosted,
-		),
-	)
-	assert.True(
-		t,
-		shouldAutoPostInvoiceSource(
-			&tenant.AccountingControl{
-				JournalPostingMode: tenant.JournalPostingModeAutomatic,
-				AutoPostSourceEvents: []tenant.JournalSourceEventType{
-					tenant.JournalSourceEventInvoicePosted,
-				},
-			},
-			tenant.JournalSourceEventInvoicePosted,
-		),
-	)
-	assert.False(
-		t,
-		shouldAutoPostInvoiceSource(
-			&tenant.AccountingControl{
-				JournalPostingMode: tenant.JournalPostingModeAutomatic,
-				AutoPostSourceEvents: []tenant.JournalSourceEventType{
-					tenant.JournalSourceEventCustomerPaymentPosted,
-				},
-			},
-			tenant.JournalSourceEventInvoicePosted,
-		),
-	)
-}
-
 func int64Ptr(v int64) *int64 {
 	return &v
 }

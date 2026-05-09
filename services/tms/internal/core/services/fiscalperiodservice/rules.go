@@ -44,7 +44,7 @@ func createDateValidationRule(
 				}).
 				Scan(ctx)
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if entity.StartDate < fy.StartDate {

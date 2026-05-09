@@ -1,3 +1,4 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package shipmentservice
 
 import (
@@ -89,8 +90,7 @@ type service struct {
 	commercial          *shipmentcommercial.Calculator
 }
 
-//nolint:gocritic // service constructor
-func New(p Params) services.ShipmentService {
+func New(p Params) services.ShipmentService { //nolint:gocritic // stable API shape
 	return &service{
 		l:                   p.Logger.Named("service.shipment"),
 		repo:                p.Repo,
@@ -277,7 +277,7 @@ func (s *service) Create(
 	return createdEntity, nil
 }
 
-func (s *service) Update(
+func (s *service) Update( //nolint:cyclop // legacy workflow
 	ctx context.Context,
 	entity *shipment.Shipment,
 	actor *services.RequestActor,

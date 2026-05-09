@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package invoiceadjustmentservice
 
 import (
@@ -78,6 +79,7 @@ func (s *Service) createReplacementDraftInvoice(
 	return created, nil
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) createWriteOffJournalEntry(
 	ctx context.Context,
 	adjustment *invoiceadjustment.InvoiceAdjustment,
@@ -150,6 +152,7 @@ func (s *Service) createWriteOffJournalEntry(
 	approvedAt := &now
 	approvedByID := actor.UserID
 
+	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch accountingControl.JournalPostingMode {
 	case tenant.JournalPostingModeManual:
 		if accountingControl.ManualJournalEntryPolicy == tenant.ManualJournalEntryPolicyDisallow {

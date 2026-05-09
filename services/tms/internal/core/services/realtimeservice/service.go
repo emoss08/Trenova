@@ -36,7 +36,9 @@ func New(p Params) services.RealtimeService {
 	}
 }
 
-func (s *Service) CreateTokenRequest(req *services.CreateRealtimeTokenRequest) (*services.RealtimeTokenRequest, error) {
+func (s *Service) CreateTokenRequest(
+	req *services.CreateRealtimeTokenRequest,
+) (*services.RealtimeTokenRequest, error) {
 	if req == nil {
 		return nil, errortypes.NewBusinessError("realtime token request is required")
 	}

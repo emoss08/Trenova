@@ -310,10 +310,11 @@ func (a *Activities) tryAutoMarkShipmentReadyToInvoice(
 
 	shipmentID, err := pulid.MustParse(resourceID)
 	if err != nil {
-		activity.GetLogger(ctx).Warn("failed to parse shipment id for auto-mark after upload finalization",
-			"resourceId", resourceID,
-			"error", err,
-		)
+		activity.GetLogger(ctx).
+			Warn("failed to parse shipment id for auto-mark after upload finalization",
+				"resourceId", resourceID,
+				"error", err,
+			)
 		return
 	}
 
@@ -323,10 +324,11 @@ func (a *Activities) tryAutoMarkShipmentReadyToInvoice(
 		tenantInfo,
 		userID,
 	); err != nil {
-		activity.GetLogger(ctx).Warn("failed to auto-mark shipment ready to invoice after upload finalization",
-			"shipmentId", shipmentID.String(),
-			"error", err,
-		)
+		activity.GetLogger(ctx).
+			Warn("failed to auto-mark shipment ready to invoice after upload finalization",
+				"shipmentId", shipmentID.String(),
+				"error", err,
+			)
 	}
 }
 

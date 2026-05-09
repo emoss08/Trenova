@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package fiscalyearservice
 
 import (
@@ -165,6 +166,7 @@ func (s *Service) ensureBootstrapCurrentFiscalYear(
 	return createdFY, nil
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) bootstrapCurrentCalendarFiscalYear(
 	ctx context.Context,
 	orgID pulid.ID,
@@ -479,6 +481,7 @@ func (s *Service) Close(
 	return closedEntity, nil
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *Service) Activate(
 	ctx context.Context,
 	req repositories.ActivateFiscalYearRequest,
@@ -540,10 +543,13 @@ func (s *Service) Activate(
 				return txErr
 			}
 
-			if _, txErr = s.repo.GetCurrentFiscalYearForUpdate(txCtx, repositories.GetCurrentFiscalYearRequest{
-				OrgID: req.TenantInfo.OrgID,
-				BuID:  req.TenantInfo.BuID,
-			}); txErr != nil &&
+			if _, txErr = s.repo.GetCurrentFiscalYearForUpdate(
+				txCtx,
+				repositories.GetCurrentFiscalYearRequest{
+					OrgID: req.TenantInfo.OrgID,
+					BuID:  req.TenantInfo.BuID,
+				},
+			); txErr != nil &&
 				!errortypes.IsNotFoundError(txErr) {
 				return txErr
 			}

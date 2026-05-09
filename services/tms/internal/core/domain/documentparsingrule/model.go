@@ -1,3 +1,4 @@
+//nolint:gocritic // value-shaped domain/codegen APIs are intentionally stable
 package documentparsingrule
 
 import (
@@ -44,7 +45,11 @@ type RuleSet struct {
 func (r *RuleSet) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		r,
-		validation.Field(&r.Name, validation.Required.Error("Name is required"), validation.Length(1, 255)),
+		validation.Field(
+			&r.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 255),
+		),
 		validation.Field(
 			&r.DocumentKind,
 			validation.Required.Error("Document kind is required"),
@@ -112,16 +117,21 @@ func (r *RuleVersion) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		r,
 		validation.Field(&r.RuleSetID, validation.Required.Error("Rule set is required")),
-		validation.Field(&r.VersionNumber, validation.Min(1).Error("Version number must be greater than zero")),
+		validation.Field(
+			&r.VersionNumber,
+			validation.Min(1).Error("Version number must be greater than zero"),
+		),
 		validation.Field(
 			&r.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(VersionStatusDraft, VersionStatusPublished, VersionStatusArchived).Error("Status must be valid"),
+			validation.In(VersionStatusDraft, VersionStatusPublished, VersionStatusArchived).
+				Error("Status must be valid"),
 		),
 		validation.Field(
 			&r.ParserMode,
 			validation.Required.Error("Parser mode is required"),
-			validation.In(ParserModeMergeWithBase, ParserModeOverrideBase).Error("Parser mode must be valid"),
+			validation.In(ParserModeMergeWithBase, ParserModeOverrideBase).
+				Error("Parser mode must be valid"),
 		),
 	)
 	if err != nil {
@@ -195,7 +205,11 @@ func (f *Fixture) Validate(multiErr *errortypes.MultiError) {
 	err := validation.ValidateStruct(
 		f,
 		validation.Field(&f.RuleSetID, validation.Required.Error("Rule set is required")),
-		validation.Field(&f.Name, validation.Required.Error("Name is required"), validation.Length(1, 255)),
+		validation.Field(
+			&f.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 255),
+		),
 		validation.Field(&f.TextSnapshot, validation.Required.Error("Text snapshot is required")),
 	)
 	if err != nil {
@@ -390,7 +404,14 @@ type StopFieldRule struct {
 
 func (s StopFieldRule) Validate() error {
 	switch strings.TrimSpace(s.FieldKey) {
-	case "name", "addressLine1", "addressLine2", "city", "state", "postalCode", "date", "timeWindow":
+	case "name",
+		"addressLine1",
+		"addressLine2",
+		"city",
+		"state",
+		"postalCode",
+		"date",
+		"timeWindow":
 	default:
 		return fmt.Errorf("unsupported stop field key %q", s.FieldKey)
 	}
@@ -433,12 +454,20 @@ func (f FixtureFieldAssertion) Validate(fieldKey string) error {
 		return nil
 	case FixtureFieldAssertionOperatorEquals:
 		if strings.TrimSpace(f.Value) == "" {
-			return fmt.Errorf("field assertion for %q with operator %q requires a value", fieldKey, f.Operator)
+			return fmt.Errorf(
+				"field assertion for %q with operator %q requires a value",
+				fieldKey,
+				f.Operator,
+			)
 		}
 		return nil
 	case FixtureFieldAssertionOperatorMatchesRegex:
 		if strings.TrimSpace(f.Pattern) == "" {
-			return fmt.Errorf("field assertion for %q with operator %q requires a pattern", fieldKey, f.Operator)
+			return fmt.Errorf(
+				"field assertion for %q with operator %q requires a pattern",
+				fieldKey,
+				f.Operator,
+			)
 		}
 		if _, err := regexp.Compile(f.Pattern); err != nil {
 			return fmt.Errorf("field assertion for %q has invalid regex: %w", fieldKey, err)
@@ -446,7 +475,11 @@ func (f FixtureFieldAssertion) Validate(fieldKey string) error {
 		return nil
 	case FixtureFieldAssertionOperatorOneOf:
 		if len(f.Values) == 0 {
-			return fmt.Errorf("field assertion for %q with operator %q requires values", fieldKey, f.Operator)
+			return fmt.Errorf(
+				"field assertion for %q with operator %q requires values",
+				fieldKey,
+				f.Operator,
+			)
 		}
 		return nil
 	default:

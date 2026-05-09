@@ -77,7 +77,11 @@ type StreamEvent struct {
 type ShipmentImportAssistantService interface {
 	Chat(ctx context.Context, req *ShipmentImportChatRequest) (*ShipmentImportChatResponse, error)
 	ChatStream(ctx context.Context, req *ShipmentImportChatRequest, emit func(StreamEvent)) error
-	GetHistory(ctx context.Context, documentID string, tenantInfo pagination.TenantInfo) (*ShipmentImportChatHistoryResponse, error)
+	GetHistory(
+		ctx context.Context,
+		documentID string,
+		tenantInfo pagination.TenantInfo,
+	) (*ShipmentImportChatHistoryResponse, error)
 	ArchiveHistory(ctx context.Context, documentID string, tenantInfo pagination.TenantInfo) error
 	CompleteHistory(ctx context.Context, documentID string, tenantInfo pagination.TenantInfo) error
 }

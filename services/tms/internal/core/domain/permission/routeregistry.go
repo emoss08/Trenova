@@ -818,7 +818,6 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 		DisplayName: "Document Parsing Rules",
 		Category:    "Organization",
 	})
-
 }
 
 func (rr *RouteRegistry) registerReportingRoutes() {

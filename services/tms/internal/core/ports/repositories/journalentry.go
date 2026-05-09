@@ -34,7 +34,10 @@ type MarkJournalEntryReversedRequest struct {
 }
 
 type JournalEntryRepository interface {
-	List(ctx context.Context, req *ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.Entry], error)
+	List(
+		ctx context.Context,
+		req *ListJournalEntriesRequest,
+	) (*pagination.ListResult[*journalentry.Entry], error)
 	GetByID(ctx context.Context, req GetJournalEntryByIDRequest) (*journalentry.Entry, error)
 	MarkReversed(ctx context.Context, req MarkJournalEntryReversedRequest) error
 }

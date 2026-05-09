@@ -41,7 +41,13 @@ func NewUsStateCacheRepository(p UsStateCacheRepositoryParams) repositories.UsSt
 func (r *usStateCacheRepository) Set(ctx context.Context, states []*usstate.UsState) error {
 	log := r.l.With(zap.String("operation", "Set"))
 
-	if err := redishelpers.SetJSON(ctx, r.client, stateKeyPrefix, states, defaultStateTTL); err != nil {
+	if err := redishelpers.SetJSON(
+		ctx,
+		r.client,
+		stateKeyPrefix,
+		states,
+		defaultStateTTL,
+	); err != nil {
 		log.Error("failed to set states in cache", zap.Error(err))
 		return err
 	}

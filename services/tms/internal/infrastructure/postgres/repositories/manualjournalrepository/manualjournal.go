@@ -48,7 +48,11 @@ func (r *repository) List(
 		Offset(req.Filter.Pagination.SafeOffset())
 
 	if req.Filter.Query != "" {
-		query = query.Where("(mjr.request_number ILIKE ? OR mjr.description ILIKE ?)", "%"+req.Filter.Query+"%", "%"+req.Filter.Query+"%")
+		query = query.Where(
+			"(mjr.request_number ILIKE ? OR mjr.description ILIKE ?)",
+			"%"+req.Filter.Query+"%",
+			"%"+req.Filter.Query+"%",
+		)
 	}
 
 	total, err := query.ScanAndCount(ctx)
@@ -102,8 +106,11 @@ func (r *repository) Create(
 	}
 
 	return r.GetByID(ctx, repositories.GetManualJournalByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 	})
 }
 
@@ -147,7 +154,11 @@ func (r *repository) Update(
 	if err != nil {
 		return nil, fmt.Errorf("update manual journal request: %w", err)
 	}
-	if err = dberror.CheckRowsAffected(res, "ManualJournalRequest", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		res,
+		"ManualJournalRequest",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 
@@ -163,15 +174,21 @@ func (r *repository) Update(
 		}
 
 		if len(entity.Lines) > 0 {
-			if _, err = r.db.DBForContext(ctx).NewInsert().Model(&entity.Lines).Exec(ctx); err != nil {
+			if _, err = r.db.DBForContext(ctx).
+				NewInsert().
+				Model(&entity.Lines).
+				Exec(ctx); err != nil {
 				return nil, fmt.Errorf("insert manual journal request lines: %w", err)
 			}
 		}
 	}
 
 	return r.GetByID(ctx, repositories.GetManualJournalByIDRequest{
-		ID:         entity.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		ID: entity.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
 	})
 }
 

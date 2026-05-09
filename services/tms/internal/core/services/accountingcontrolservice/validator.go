@@ -1,3 +1,4 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package accountingcontrolservice
 
 import (
@@ -33,7 +34,9 @@ func NewValidator(p ValidatorParams) *Validator {
 	if p.DB != nil {
 		builder.
 			WithUniquenessChecker(
-				validationframework.NewBunUniquenessCheckerLazy(func() bun.IDB { return p.DB.DB() }),
+				validationframework.NewBunUniquenessCheckerLazy(
+					func() bun.IDB { return p.DB.DB() },
+				),
 			).
 			WithReferenceChecker(
 				validationframework.NewBunReferenceCheckerLazy(func() bun.IDB { return p.DB.DB() }),
@@ -98,7 +101,9 @@ func addGLAccountReferenceChecks(
 }
 
 func createAccountingBasisRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("accounting_basis").
+	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+		"accounting_basis",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -114,20 +119,38 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 
 			validRevenuePolicies := entity.AccountingBasis.ValidRevenueRecognitionPolicies()
 			if !slices.Contains(validRevenuePolicies, entity.RevenueRecognitionPolicy) {
-				multiErr.Add("revenueRecognitionPolicy", errortypes.ErrInvalidOperation, fmt.Sprintf("Accounting basis %s does not allow revenue recognition policy %s", entity.AccountingBasis, entity.RevenueRecognitionPolicy))
+				multiErr.Add(
+					"revenueRecognitionPolicy",
+					errortypes.ErrInvalidOperation,
+					fmt.Sprintf(
+						"Accounting basis %s does not allow revenue recognition policy %s",
+						entity.AccountingBasis,
+						entity.RevenueRecognitionPolicy,
+					),
+				)
 			}
 
 			validExpensePolicies := entity.AccountingBasis.ValidExpenseRecognitionPolicies()
 			if !slices.Contains(validExpensePolicies, entity.ExpenseRecognitionPolicy) {
-				multiErr.Add("expenseRecognitionPolicy", errortypes.ErrInvalidOperation, fmt.Sprintf("Accounting basis %s does not allow expense recognition policy %s", entity.AccountingBasis, entity.ExpenseRecognitionPolicy))
+				multiErr.Add(
+					"expenseRecognitionPolicy",
+					errortypes.ErrInvalidOperation,
+					fmt.Sprintf(
+						"Accounting basis %s does not allow expense recognition policy %s",
+						entity.AccountingBasis,
+						entity.ExpenseRecognitionPolicy,
+					),
+				)
 			}
 
 			return nil
 		})
 }
 
-func createJournalPostingRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("journal_posting").
+func createJournalPostingRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] { //nolint:gocognit // legacy workflow
+	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+		"journal_posting",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -139,23 +162,42 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 		) error {
 			if entity.JournalPostingMode == accountingcontrol.JournalPostingModeManual {
 				if len(entity.AutoPostSourceEvents) > 0 {
-					multiErr.Add("autoPostSourceEvents", errortypes.ErrInvalidOperation, "Auto-post source events must be empty when journal posting mode is Manual")
+					multiErr.Add(
+						"autoPostSourceEvents",
+						errortypes.ErrInvalidOperation,
+						"Auto-post source events must be empty when journal posting mode is Manual",
+					)
 				}
 				return nil
 			}
 
 			if len(entity.AutoPostSourceEvents) == 0 {
-				multiErr.Add("autoPostSourceEvents", errortypes.ErrRequired, "At least one auto-post source event is required when journal posting mode is Automatic")
+				multiErr.Add(
+					"autoPostSourceEvents",
+					errortypes.ErrRequired,
+					"At least one auto-post source event is required when journal posting mode is Automatic",
+				)
 			}
 
-			seen := make(map[accountingcontrol.JournalSourceEventType]struct{}, len(entity.AutoPostSourceEvents))
+			seen := make(
+				map[accountingcontrol.JournalSourceEventType]struct{},
+				len(entity.AutoPostSourceEvents),
+			)
 			for i, event := range entity.AutoPostSourceEvents {
 				if !event.IsValid() {
-					multiErr.Add(fmt.Sprintf("autoPostSourceEvents[%d]", i), errortypes.ErrInvalid, "Invalid journal source event")
+					multiErr.Add(
+						fmt.Sprintf("autoPostSourceEvents[%d]", i),
+						errortypes.ErrInvalid,
+						"Invalid journal source event",
+					)
 					continue
 				}
 				if _, ok := seen[event]; ok {
-					multiErr.Add(fmt.Sprintf("autoPostSourceEvents[%d]", i), errortypes.ErrDuplicate, "Duplicate journal source event")
+					multiErr.Add(
+						fmt.Sprintf("autoPostSourceEvents[%d]", i),
+						errortypes.ErrDuplicate,
+						"Duplicate journal source event",
+					)
 				}
 				seen[event] = struct{}{}
 			}
@@ -169,18 +211,31 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 					accountingcontrol.JournalSourceEventDebitMemoPosted,
 				)
 			case accountingcontrol.RevenueRecognitionOnCashReceipt:
-				requiredEvents = append(requiredEvents, accountingcontrol.JournalSourceEventCustomerPaymentPosted)
+				requiredEvents = append(
+					requiredEvents,
+					accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+				)
 			}
 			switch entity.ExpenseRecognitionPolicy {
 			case accountingcontrol.ExpenseRecognitionOnVendorBillPost:
-				requiredEvents = append(requiredEvents, accountingcontrol.JournalSourceEventVendorBillPosted)
+				requiredEvents = append(
+					requiredEvents,
+					accountingcontrol.JournalSourceEventVendorBillPosted,
+				)
 			case accountingcontrol.ExpenseRecognitionOnCashDisbursement:
-				requiredEvents = append(requiredEvents, accountingcontrol.JournalSourceEventVendorPaymentPosted)
+				requiredEvents = append(
+					requiredEvents,
+					accountingcontrol.JournalSourceEventVendorPaymentPosted,
+				)
 			}
 
 			for _, requiredEvent := range requiredEvents {
 				if !slices.Contains(entity.AutoPostSourceEvents, requiredEvent) {
-					multiErr.Add("autoPostSourceEvents", errortypes.ErrInvalidOperation, fmt.Sprintf("Auto-post source events must include %s", requiredEvent))
+					multiErr.Add(
+						"autoPostSourceEvents",
+						errortypes.ErrInvalidOperation,
+						fmt.Sprintf("Auto-post source events must include %s", requiredEvent),
+					)
 				}
 			}
 
@@ -191,26 +246,69 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 					accountingcontrol.JournalSourceEventDebitMemoPosted,
 				} {
 					if slices.Contains(entity.AutoPostSourceEvents, blockedEvent) {
-						multiErr.Add("autoPostSourceEvents", errortypes.ErrInvalidOperation, fmt.Sprintf("Auto-post source events must not include %s when revenue recognition is OnCashReceipt", blockedEvent))
+						multiErr.Add(
+							"autoPostSourceEvents",
+							errortypes.ErrInvalidOperation,
+							fmt.Sprintf(
+								"Auto-post source events must not include %s when revenue recognition is OnCashReceipt",
+								blockedEvent,
+							),
+						)
 					}
 				}
 			}
 
-			requireGLAccount(multiErr, entity.DefaultRevenueAccountID, "defaultRevenueAccountId", "Default revenue account is required when journal posting mode is Automatic")
-			if slices.Contains(entity.AutoPostSourceEvents, accountingcontrol.JournalSourceEventCustomerPaymentPosted) || entity.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
-				requireGLAccount(multiErr, entity.DefaultCashAccountID, "defaultCashAccountId", "Default cash account is required when customer payment posting is enabled")
-				requireGLAccount(multiErr, entity.DefaultUnappliedCashAccountID, "defaultUnappliedCashAccountId", "Default unapplied cash account is required when customer payment posting is enabled")
+			requireGLAccount(
+				multiErr,
+				entity.DefaultRevenueAccountID,
+				"defaultRevenueAccountId",
+				"Default revenue account is required when journal posting mode is Automatic",
+			)
+			if slices.Contains(
+				entity.AutoPostSourceEvents,
+				accountingcontrol.JournalSourceEventCustomerPaymentPosted,
+			) ||
+				entity.RevenueRecognitionPolicy == accountingcontrol.RevenueRecognitionOnCashReceipt {
+				requireGLAccount(
+					multiErr,
+					entity.DefaultCashAccountID,
+					"defaultCashAccountId",
+					"Default cash account is required when customer payment posting is enabled",
+				)
+				requireGLAccount(
+					multiErr,
+					entity.DefaultUnappliedCashAccountID,
+					"defaultUnappliedCashAccountId",
+					"Default unapplied cash account is required when customer payment posting is enabled",
+				)
 			}
-			requireGLAccount(multiErr, entity.DefaultExpenseAccountID, "defaultExpenseAccountId", "Default expense account is required when journal posting mode is Automatic")
-			requireGLAccount(multiErr, entity.DefaultARAccountID, "defaultArAccountId", "Default AR account is required when journal posting mode is Automatic")
-			requireGLAccount(multiErr, entity.DefaultAPAccountID, "defaultApAccountId", "Default AP account is required when journal posting mode is Automatic")
+			requireGLAccount(
+				multiErr,
+				entity.DefaultExpenseAccountID,
+				"defaultExpenseAccountId",
+				"Default expense account is required when journal posting mode is Automatic",
+			)
+			requireGLAccount(
+				multiErr,
+				entity.DefaultARAccountID,
+				"defaultArAccountId",
+				"Default AR account is required when journal posting mode is Automatic",
+			)
+			requireGLAccount(
+				multiErr,
+				entity.DefaultAPAccountID,
+				"defaultApAccountId",
+				"Default AP account is required when journal posting mode is Automatic",
+			)
 
 			return nil
 		})
 }
 
 func createManualJournalEntryRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("manual_journal_entry").
+	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+		"manual_journal_entry",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -222,7 +320,11 @@ func createManualJournalEntryRule() validationframework.TenantedRule[*accounting
 		) error {
 			if entity.ManualJournalEntryPolicy == accountingcontrol.ManualJournalEntryPolicyDisallow &&
 				entity.RequireManualJEApproval {
-				multiErr.Add("requireManualJeApproval", errortypes.ErrInvalidOperation, "Manual journal entry approval must be disabled when manual journal entries are disallowed")
+				multiErr.Add(
+					"requireManualJeApproval",
+					errortypes.ErrInvalidOperation,
+					"Manual journal entry approval must be disabled when manual journal entries are disallowed",
+				)
 			}
 
 			return nil
@@ -240,32 +342,65 @@ func createCurrencyRule() validationframework.TenantedRule[*accountingcontrol.Ac
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if _, err := currency.ParseISO(strings.ToUpper(entity.FunctionalCurrencyCode)); err != nil {
-				multiErr.Add("functionalCurrencyCode", errortypes.ErrInvalid, fmt.Sprintf("Unrecognized ISO 4217 currency code: %q", entity.FunctionalCurrencyCode))
+			if _, err := currency.ParseISO(
+				strings.ToUpper(entity.FunctionalCurrencyCode),
+			); err != nil {
+				multiErr.Add(
+					"functionalCurrencyCode",
+					errortypes.ErrInvalid,
+					fmt.Sprintf(
+						"Unrecognized ISO 4217 currency code: %q",
+						entity.FunctionalCurrencyCode,
+					),
+				)
 			}
 
 			if entity.CurrencyMode == accountingcontrol.CurrencyModeSingleCurrency {
 				if !entity.RealizedFXGainAccountID.IsNil() {
-					multiErr.Add("realizedFxGainAccountId", errortypes.ErrInvalidOperation, "Realized FX gain account must be empty when currency mode is SingleCurrency")
+					multiErr.Add(
+						"realizedFxGainAccountId",
+						errortypes.ErrInvalidOperation,
+						"Realized FX gain account must be empty when currency mode is SingleCurrency",
+					)
 				}
 				if !entity.RealizedFXLossAccountID.IsNil() {
-					multiErr.Add("realizedFxLossAccountId", errortypes.ErrInvalidOperation, "Realized FX loss account must be empty when currency mode is SingleCurrency")
+					multiErr.Add(
+						"realizedFxLossAccountId",
+						errortypes.ErrInvalidOperation,
+						"Realized FX loss account must be empty when currency mode is SingleCurrency",
+					)
 				}
 				if entity.ExchangeRateOverridePolicy != accountingcontrol.ExchangeRateOverrideDisallow {
-					multiErr.Add("exchangeRateOverridePolicy", errortypes.ErrInvalidOperation, "Exchange rate override policy must be Disallow when currency mode is SingleCurrency")
+					multiErr.Add(
+						"exchangeRateOverridePolicy",
+						errortypes.ErrInvalidOperation,
+						"Exchange rate override policy must be Disallow when currency mode is SingleCurrency",
+					)
 				}
 				return nil
 			}
 
-			requireGLAccount(multiErr, entity.RealizedFXGainAccountID, "realizedFxGainAccountId", "Realized FX gain account is required when currency mode is MultiCurrency")
-			requireGLAccount(multiErr, entity.RealizedFXLossAccountID, "realizedFxLossAccountId", "Realized FX loss account is required when currency mode is MultiCurrency")
+			requireGLAccount(
+				multiErr,
+				entity.RealizedFXGainAccountID,
+				"realizedFxGainAccountId",
+				"Realized FX gain account is required when currency mode is MultiCurrency",
+			)
+			requireGLAccount(
+				multiErr,
+				entity.RealizedFXLossAccountID,
+				"realizedFxLossAccountId",
+				"Realized FX loss account is required when currency mode is MultiCurrency",
+			)
 
 			return nil
 		})
 }
 
 func createReconciliationRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("reconciliation").
+	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+		"reconciliation",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -278,16 +413,30 @@ func createReconciliationRule() validationframework.TenantedRule[*accountingcont
 			switch entity.ReconciliationMode {
 			case accountingcontrol.ReconciliationModeDisabled:
 				if !entity.ReconciliationToleranceAmount.IsZero() {
-					multiErr.Add("reconciliationToleranceAmount", errortypes.ErrInvalidOperation, "Reconciliation tolerance amount must be zero when reconciliation mode is Disabled")
+					multiErr.Add(
+						"reconciliationToleranceAmount",
+						errortypes.ErrInvalidOperation,
+						"Reconciliation tolerance amount must be zero when reconciliation mode is Disabled",
+					)
 				}
-			case accountingcontrol.ReconciliationModeWarnOnly, accountingcontrol.ReconciliationModeBlockPosting:
+			case accountingcontrol.ReconciliationModeWarnOnly,
+				accountingcontrol.ReconciliationModeBlockPosting:
 				if !entity.ReconciliationToleranceAmount.GreaterThan(decimal.Zero) {
-					multiErr.Add("reconciliationToleranceAmount", errortypes.ErrInvalidOperation, "Reconciliation tolerance amount must be greater than zero when reconciliation mode is enabled")
+					multiErr.Add(
+						"reconciliationToleranceAmount",
+						errortypes.ErrInvalidOperation,
+						"Reconciliation tolerance amount must be greater than zero when reconciliation mode is enabled",
+					)
 				}
 			}
 
-			if entity.RequireReconciliationToClose && entity.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
-				multiErr.Add("requireReconciliationToClose", errortypes.ErrInvalidOperation, "Require reconciliation to close cannot be enabled when reconciliation mode is Disabled")
+			if entity.RequireReconciliationToClose &&
+				entity.ReconciliationMode == accountingcontrol.ReconciliationModeDisabled {
+				multiErr.Add(
+					"requireReconciliationToClose",
+					errortypes.ErrInvalidOperation,
+					"Require reconciliation to close cannot be enabled when reconciliation mode is Disabled",
+				)
 			}
 
 			return nil
@@ -295,7 +444,9 @@ func createReconciliationRule() validationframework.TenantedRule[*accountingcont
 }
 
 func createPeriodCloseRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("period_close").
+	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+		"period_close",
+	).
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -307,7 +458,11 @@ func createPeriodCloseRule() validationframework.TenantedRule[*accountingcontrol
 		) error {
 			if entity.PeriodCloseMode == accountingcontrol.PeriodCloseModeSystemScheduled &&
 				entity.RequirePeriodCloseApproval {
-				multiErr.Add("requirePeriodCloseApproval", errortypes.ErrInvalidOperation, "Period close approval must be disabled when period close mode is SystemScheduled")
+				multiErr.Add(
+					"requirePeriodCloseApproval",
+					errortypes.ErrInvalidOperation,
+					"Period close approval must be disabled when period close mode is SystemScheduled",
+				)
 			}
 
 			return nil

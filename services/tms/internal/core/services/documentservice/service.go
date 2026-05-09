@@ -1,8 +1,10 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package documentservice
 
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -79,8 +81,7 @@ type Service struct {
 	thumbnailGenerator   *thumbnailservice.Generator
 }
 
-//nolint:gocritic // dependency injection param
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // stable API shape
 	workflowStarter := p.WorkflowStarter
 	if workflowStarter == nil {
 		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
@@ -283,7 +284,7 @@ func (s *Service) Upload(
 		FileSize:           req.File.Size,
 		FileType:           contentType,
 		StoragePath:        storagePath,
-		ChecksumSHA256:     fmt.Sprintf("%x", hasher.Sum(nil)),
+		ChecksumSHA256:     hex.EncodeToString(hasher.Sum(nil)),
 		StorageVersionID:   fileInfo.VersionID,
 		PreviewStoragePath: "",
 		Status:             document.StatusActive,
@@ -544,9 +545,14 @@ func (s *Service) Delete(
 
 	if doc.LineageID.IsNil() {
 		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if txErr := s.detachUploadSessionsForDocuments(txCtx, []pulid.ID{doc.ID}, req.TenantInfo); txErr != nil {
+			if txErr := s.detachUploadSessionsForDocuments(
+				txCtx,
+				[]pulid.ID{doc.ID},
+				req.TenantInfo,
+			); txErr != nil {
 				log.Error("failed to clear upload session document reference", zap.Error(txErr))
-				return errortypes.NewDatabaseError("Failed to detach upload sessions from document").WithInternal(txErr)
+				return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
+					WithInternal(txErr)
 			}
 			return s.repo.Delete(txCtx, req)
 		}); err != nil {
@@ -579,9 +585,14 @@ func (s *Service) Delete(
 	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		versionIDs := documentIDs(versions)
 		lineageIDs := []pulid.ID{doc.LineageID}
-		if txErr := s.detachUploadSessionsForDocuments(txCtx, versionIDs, req.TenantInfo); txErr != nil {
+		if txErr := s.detachUploadSessionsForDocuments(
+			txCtx,
+			versionIDs,
+			req.TenantInfo,
+		); txErr != nil {
 			log.Error("failed to clear upload session document reference", zap.Error(txErr))
-			return errortypes.NewDatabaseError("Failed to detach upload sessions from document").WithInternal(txErr)
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from document").
+				WithInternal(txErr)
 		}
 
 		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{
@@ -622,7 +633,7 @@ type BulkDeleteResult struct {
 	Errors       []error
 }
 
-func (s *Service) BulkDelete(
+func (s *Service) BulkDelete( //nolint:gocognit // legacy workflow
 	ctx context.Context,
 	req *BulkDeleteRequest,
 ) (*BulkDeleteResult, error) {
@@ -653,9 +664,17 @@ func (s *Service) BulkDelete(
 		func(doc *document.Document) bool { return doc.LineageID.IsNil() },
 	) {
 		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			if txErr := s.detachUploadSessionsForDocuments(txCtx, documentIDs(docs), req.TenantInfo); txErr != nil {
-				log.Error("failed to clear upload session document references during bulk delete", zap.Error(txErr))
-				return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").WithInternal(txErr)
+			if txErr := s.detachUploadSessionsForDocuments(
+				txCtx,
+				documentIDs(docs),
+				req.TenantInfo,
+			); txErr != nil {
+				log.Error(
+					"failed to clear upload session document references during bulk delete",
+					zap.Error(txErr),
+				)
+				return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
+					WithInternal(txErr)
 			}
 			return s.repo.BulkDelete(txCtx, repositories.BulkDeleteDocumentRequest{
 				IDs:        req.IDs,
@@ -714,9 +733,17 @@ func (s *Service) BulkDelete(
 	}
 
 	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if txErr := s.detachUploadSessionsForDocuments(txCtx, docIDs, req.TenantInfo); txErr != nil {
-			log.Error("failed to clear upload session document references during bulk delete", zap.Error(txErr))
-			return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").WithInternal(txErr)
+		if txErr := s.detachUploadSessionsForDocuments(
+			txCtx,
+			docIDs,
+			req.TenantInfo,
+		); txErr != nil {
+			log.Error(
+				"failed to clear upload session document references during bulk delete",
+				zap.Error(txErr),
+			)
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").
+				WithInternal(txErr)
 		}
 
 		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{

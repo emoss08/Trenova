@@ -286,12 +286,18 @@ func (s *InvoiceAdjustmentSnapshot) BeforeAppendModel(_ context.Context, query b
 	return nil
 }
 
-func (g *InvoiceAdjustmentCorrectionGroup) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (g *InvoiceAdjustmentCorrectionGroup) BeforeAppendModel(
+	_ context.Context,
+	query bun.Query,
+) error {
 	beforeAppendIDModel(query, &g.ID, "icg_", &g.CreatedAt, &g.UpdatedAt)
 	return nil
 }
 
-func (e *InvoiceAdjustmentReconciliationException) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (e *InvoiceAdjustmentReconciliationException) BeforeAppendModel(
+	_ context.Context,
+	query bun.Query,
+) error {
 	beforeAppendIDModel(query, &e.ID, "irex_", &e.CreatedAt, &e.UpdatedAt)
 	return nil
 }
@@ -306,7 +312,10 @@ func (b *InvoiceAdjustmentBatchItem) BeforeAppendModel(_ context.Context, query 
 	return nil
 }
 
-func (d *InvoiceAdjustmentDocumentReference) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (d *InvoiceAdjustmentDocumentReference) BeforeAppendModel(
+	_ context.Context,
+	query bun.Query,
+) error {
 	beforeAppendIDModel(query, &d.ID, "iadjr_", &d.CreatedAt, &d.UpdatedAt)
 	return nil
 }

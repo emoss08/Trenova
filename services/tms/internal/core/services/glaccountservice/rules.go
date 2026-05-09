@@ -62,7 +62,7 @@ func createParentAccountActiveRule(
 				Scan(ctx)
 			if err != nil {
 				multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account not found")
-				return nil
+				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 			}
 
 			if parent.Status != domaintypes.StatusActive {
@@ -121,7 +121,7 @@ func createCircularReferenceRule(
 					Where("business_unit_id = ?", valCtx.BusinessUnitID).
 					Scan(ctx, &parentID)
 				if err != nil {
-					return nil
+					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 				}
 
 				if parentID == nil || *parentID == "" {

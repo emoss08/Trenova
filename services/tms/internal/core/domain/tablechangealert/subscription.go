@@ -50,12 +50,17 @@ type TCASubscription struct {
 }
 
 func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
-	err := validation.ValidateStruct(s,
+	err := validation.ValidateStruct(
+		s,
 		validation.Field(&s.Name, validation.Required, validation.Length(1, 255)),
 		validation.Field(&s.TableName, validation.Required, validation.Length(1, 100)),
 		validation.Field(&s.EventTypes, validation.Required, validation.Length(1, 3)),
 		validation.Field(&s.ConditionMatch, validation.Required, validation.In("all", "any")),
-		validation.Field(&s.Priority, validation.Required, validation.In("critical", "high", "medium", "low")),
+		validation.Field(
+			&s.Priority,
+			validation.Required,
+			validation.In("critical", "high", "medium", "low"),
+		),
 		validation.Field(&s.CustomTitle, validation.Length(0, 500)),
 		validation.Field(&s.CustomMessage, validation.Length(0, 5000)),
 		validation.Field(&s.Topic, validation.Length(0, 100)),
@@ -80,10 +85,18 @@ func (s *TCASubscription) Validate(multiErr *errortypes.MultiError) {
 	for i, cond := range s.Conditions {
 		prefix := fmt.Sprintf("conditions[%d]", i)
 		if !ValidConditionOperator(string(cond.Operator)) {
-			multiErr.Add(prefix+".operator", errortypes.ErrInvalid, "Invalid condition operator: "+string(cond.Operator))
+			multiErr.Add(
+				prefix+".operator",
+				errortypes.ErrInvalid,
+				"Invalid condition operator: "+string(cond.Operator),
+			)
 		}
 		if !IsUnaryOperator(cond.Operator) && cond.Value == nil {
-			multiErr.Add(prefix+".value", errortypes.ErrRequired, "Value is required for operator: "+string(cond.Operator))
+			multiErr.Add(
+				prefix+".value",
+				errortypes.ErrRequired,
+				"Value is required for operator: "+string(cond.Operator),
+			)
 		}
 	}
 }

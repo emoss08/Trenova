@@ -1,3 +1,4 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package trailerservice
 
 import (
@@ -72,7 +73,7 @@ type Service struct {
 	commercial                *shipmentcommercial.Calculator
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // stable API shape
 	return &Service{
 		l:                         p.Logger.Named("service.trailer"),
 		db:                        p.DB,
@@ -383,7 +384,7 @@ func (s *Service) BulkUpdateStatus(
 	return entities, nil
 }
 
-func (s *Service) Locate(
+func (s *Service) Locate( //nolint:gocognit // legacy workflow
 	ctx context.Context,
 	req *repositories.LocateTrailerRequest,
 	actor *services.RequestActor,
@@ -480,10 +481,19 @@ func (s *Service) Locate(
 			return multiErr
 		}
 
-		if err = s.commercial.Recalculate(txCtx, updatedShipment, control, actorUserID); err != nil {
+		if err = s.commercial.Recalculate(
+			txCtx,
+			updatedShipment,
+			control,
+			actorUserID,
+		); err != nil {
 			return err
 		}
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(txCtx, previousShipment, updatedShipment); multiErr != nil {
+		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
+			txCtx,
+			previousShipment,
+			updatedShipment,
+		); multiErr != nil {
 			return multiErr
 		}
 		if _, err = s.shipmentRepo.Update(txCtx, updatedShipment); err != nil {

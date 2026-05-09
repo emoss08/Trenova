@@ -458,4 +458,3 @@ func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
 	}
 	return strings.TrimSpace(field.Value) != ""
 }
-

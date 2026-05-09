@@ -1,3 +1,4 @@
+//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package journalreversalservice
 
 import (
@@ -47,27 +48,63 @@ type Service struct {
 	auditService        serviceports.AuditService
 }
 
-func New(p Params) *Service {
-	return &Service{l: p.Logger.Named("service.journal-reversal"), db: p.DB, journalEntryRepo: p.JournalEntryRepo, journalReversalRepo: p.JournalReversalRepo, journalPostingRepo: p.JournalPostingRepo, accountingRepo: p.AccountingRepo, sequenceGenerator: p.SequenceGenerator, validator: p.Validator, auditService: p.AuditService}
+func New(p Params) *Service { //nolint:gocritic // stable API shape
+	return &Service{
+		l:                   p.Logger.Named("service.journal-reversal"),
+		db:                  p.DB,
+		journalEntryRepo:    p.JournalEntryRepo,
+		journalReversalRepo: p.JournalReversalRepo,
+		journalPostingRepo:  p.JournalPostingRepo,
+		accountingRepo:      p.AccountingRepo,
+		sequenceGenerator:   p.SequenceGenerator,
+		validator:           p.Validator,
+		auditService:        p.AuditService,
+	}
 }
 
-func (s *Service) List(ctx context.Context, req *repositories.ListJournalReversalsRequest) (*pagination.ListResult[*journalreversal.Reversal], error) {
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListJournalReversalsRequest,
+) (*pagination.ListResult[*journalreversal.Reversal], error) {
 	return s.journalReversalRepo.List(ctx, req)
 }
-func (s *Service) Get(ctx context.Context, req *serviceports.GetJournalReversalRequest) (*journalreversal.Reversal, error) {
-	return s.journalReversalRepo.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo})
+
+func (s *Service) Get(
+	ctx context.Context,
+	req *serviceports.GetJournalReversalRequest,
+) (*journalreversal.Reversal, error) {
+	return s.journalReversalRepo.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+	)
 }
 
-func (s *Service) Create(ctx context.Context, req *serviceports.CreateJournalReversalRequest, actor *serviceports.RequestActor) (*journalreversal.Reversal, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	req *serviceports.CreateJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
 	}
-	entry, err := s.journalEntryRepo.GetByID(ctx, repositories.GetJournalEntryByIDRequest{ID: req.OriginalJournalEntryID, TenantInfo: req.TenantInfo})
+	entry, err := s.journalEntryRepo.GetByID(
+		ctx,
+		repositories.GetJournalEntryByIDRequest{
+			ID:         req.OriginalJournalEntryID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	if me := s.validator.ValidateCreate(ctx, entry, req.RequestedAccountingDate, req.ReasonCode, req.ReasonText); me != nil {
+	if me := s.validator.ValidateCreate(
+		ctx,
+		entry,
+		req.RequestedAccountingDate,
+		req.ReasonCode,
+		req.ReasonText,
+	); me != nil {
 		return nil, me
 	}
 	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
@@ -75,14 +112,36 @@ func (s *Service) Create(ctx context.Context, req *serviceports.CreateJournalRev
 		return nil, err
 	}
 	if control.JournalReversalPolicy == tenant.JournalReversalPolicyDisallow {
-		return nil, errortypes.NewBusinessError("Journal reversals are disabled by accounting policy")
+		return nil, errortypes.NewBusinessError(
+			"Journal reversals are disabled by accounting policy",
+		)
 	}
-	period, postingDate, me := s.validator.ResolvePostingPeriod(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.RequestedAccountingDate, control)
+	period, postingDate, me := s.validator.ResolvePostingPeriod(
+		ctx,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		req.RequestedAccountingDate,
+		control,
+	)
 	if me != nil {
 		return nil, me
 	}
 	now := timeutils.NowUnix()
-	entity := &journalreversal.Reversal{ID: pulid.MustNew("jrev_"), OrganizationID: req.TenantInfo.OrgID, BusinessUnitID: req.TenantInfo.BuID, OriginalJournalEntryID: req.OriginalJournalEntryID, Status: journalreversal.StatusApproved, RequestedAccountingDate: postingDate, ResolvedFiscalYearID: period.FiscalYearID, ResolvedFiscalPeriodID: period.ID, ReasonCode: req.ReasonCode, ReasonText: req.ReasonText, RequestedByID: userID, ApprovedByID: userID, ApprovedAt: &now}
+	entity := &journalreversal.Reversal{
+		ID:                      pulid.MustNew("jrev_"),
+		OrganizationID:          req.TenantInfo.OrgID,
+		BusinessUnitID:          req.TenantInfo.BuID,
+		OriginalJournalEntryID:  req.OriginalJournalEntryID,
+		Status:                  journalreversal.StatusApproved,
+		RequestedAccountingDate: postingDate,
+		ResolvedFiscalYearID:    period.FiscalYearID,
+		ResolvedFiscalPeriodID:  period.ID,
+		ReasonCode:              req.ReasonCode,
+		ReasonText:              req.ReasonText,
+		RequestedByID:           userID,
+		ApprovedByID:            userID,
+		ApprovedAt:              &now,
+	}
 	if control.RequireManualJEApproval {
 		entity.Status = journalreversal.StatusPendingApproval
 		entity.ApprovedByID = pulid.Nil
@@ -96,12 +155,19 @@ func (s *Service) Create(ctx context.Context, req *serviceports.CreateJournalRev
 	return created, nil
 }
 
-func (s *Service) Approve(ctx context.Context, req *serviceports.GetJournalReversalRequest, actor *serviceports.RequestActor) (*journalreversal.Reversal, error) {
+func (s *Service) Approve(
+	ctx context.Context,
+	req *serviceports.GetJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.journalReversalRepo.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo})
+	entity, err := s.journalReversalRepo.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -121,12 +187,19 @@ func (s *Service) Approve(ctx context.Context, req *serviceports.GetJournalRever
 	return updated, nil
 }
 
-func (s *Service) Reject(ctx context.Context, req *serviceports.RejectJournalReversalRequest, actor *serviceports.RequestActor) (*journalreversal.Reversal, error) {
+func (s *Service) Reject(
+	ctx context.Context,
+	req *serviceports.RejectJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.journalReversalRepo.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo})
+	entity, err := s.journalReversalRepo.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -147,12 +220,19 @@ func (s *Service) Reject(ctx context.Context, req *serviceports.RejectJournalRev
 	return updated, nil
 }
 
-func (s *Service) Cancel(ctx context.Context, req *serviceports.CancelJournalReversalRequest, actor *serviceports.RequestActor) (*journalreversal.Reversal, error) {
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *serviceports.CancelJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.journalReversalRepo.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo})
+	entity, err := s.journalReversalRepo.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -173,30 +253,56 @@ func (s *Service) Cancel(ctx context.Context, req *serviceports.CancelJournalRev
 	return updated, nil
 }
 
-func (s *Service) Post(ctx context.Context, req *serviceports.GetJournalReversalRequest, actor *serviceports.RequestActor) (*journalreversal.Reversal, error) {
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+func (s *Service) Post(
+	ctx context.Context,
+	req *serviceports.GetJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
 	}
-	entity, err := s.journalReversalRepo.GetByID(ctx, repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo})
+	entity, err := s.journalReversalRepo.GetByID(
+		ctx,
+		repositories.GetJournalReversalByIDRequest{ID: req.ReversalID, TenantInfo: req.TenantInfo},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if me := s.validator.ValidatePost(entity); me != nil {
 		return nil, me
 	}
-	originalEntry, err := s.journalEntryRepo.GetByID(ctx, repositories.GetJournalEntryByIDRequest{ID: entity.OriginalJournalEntryID, TenantInfo: req.TenantInfo})
+	originalEntry, err := s.journalEntryRepo.GetByID(
+		ctx,
+		repositories.GetJournalEntryByIDRequest{
+			ID:         entity.OriginalJournalEntryID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if !originalEntry.ReversedByID.IsNil() {
 		return nil, errortypes.NewBusinessError("Journal entry has already been reversed")
 	}
-	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
-	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(ctx, entity.OrganizationID, entity.BusinessUnitID, "", "")
+	entryNumber, err := s.sequenceGenerator.GenerateJournalEntryNumber(
+		ctx,
+		entity.OrganizationID,
+		entity.BusinessUnitID,
+		"",
+		"",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -209,14 +315,84 @@ func (s *Service) Post(ctx context.Context, req *serviceports.GetJournalReversal
 		if line == nil {
 			continue
 		}
-		lines = append(lines, repositories.JournalPostingLine{ID: pulid.MustNew("jel_"), GLAccountID: line.GLAccountID, LineNumber: line.LineNumber, Description: line.Description, DebitAmount: line.CreditAmount, CreditAmount: line.DebitAmount, NetAmount: -line.NetAmount, CustomerID: line.CustomerID, LocationID: line.LocationID})
+		lines = append(
+			lines,
+			repositories.JournalPostingLine{
+				ID:           pulid.MustNew("jel_"),
+				GLAccountID:  line.GLAccountID,
+				LineNumber:   line.LineNumber,
+				Description:  line.Description,
+				DebitAmount:  line.CreditAmount,
+				CreditAmount: line.DebitAmount,
+				NetAmount:    -line.NetAmount,
+				CustomerID:   line.CustomerID,
+				LocationID:   line.LocationID,
+			},
+		)
 	}
 	original := *entity
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if err := s.journalPostingRepo.CreatePosting(txCtx, repositories.CreateJournalPostingParams{BatchID: batchID, OrganizationID: entity.OrganizationID, BusinessUnitID: entity.BusinessUnitID, BatchNumber: batchNumber, BatchType: "Reversal", BatchStatus: "Posted", BatchDescription: "Journal reversal", FiscalYearID: entity.ResolvedFiscalYearID, FiscalPeriodID: entity.ResolvedFiscalPeriodID, AccountingDate: entity.RequestedAccountingDate, PostedAt: &now, PostedByID: userID, CreatedByID: userID, UpdatedByID: userID, EntryID: reversalEntryID, EntryNumber: entryNumber, EntryType: "Reversal", EntryStatus: "Posted", ReferenceNumber: originalEntry.EntryNumber, ReferenceType: "JournalReversal", ReferenceID: entity.ID.String(), EntryDescription: originalEntry.Description, TotalDebit: originalEntry.TotalCredit, TotalCredit: originalEntry.TotalDebit, IsPosted: true, IsAutoGenerated: true, IsReversal: true, ReversalOfID: originalEntry.ID, ReversalDate: &now, ReversalReason: entity.ReasonText, RequiresApproval: false, IsApproved: true, ApprovedByID: userID, ApprovedAt: &now, SourceID: sourceID, SourceObjectType: "JournalEntry", SourceObjectID: originalEntry.ID.String(), SourceEventType: "JournalReversalCreated", SourceStatus: "Posted", SourceDocumentNumber: originalEntry.EntryNumber, SourceIdempotencyKey: "journal-reversal:" + entity.ID.String(), Lines: lines}); err != nil {
+		if err := s.journalPostingRepo.CreatePosting(
+			txCtx,
+			repositories.CreateJournalPostingParams{
+				BatchID:              batchID,
+				OrganizationID:       entity.OrganizationID,
+				BusinessUnitID:       entity.BusinessUnitID,
+				BatchNumber:          batchNumber,
+				BatchType:            "Reversal",
+				BatchStatus:          "Posted",
+				BatchDescription:     "Journal reversal",
+				FiscalYearID:         entity.ResolvedFiscalYearID,
+				FiscalPeriodID:       entity.ResolvedFiscalPeriodID,
+				AccountingDate:       entity.RequestedAccountingDate,
+				PostedAt:             &now,
+				PostedByID:           userID,
+				CreatedByID:          userID,
+				UpdatedByID:          userID,
+				EntryID:              reversalEntryID,
+				EntryNumber:          entryNumber,
+				EntryType:            "Reversal",
+				EntryStatus:          "Posted",
+				ReferenceNumber:      originalEntry.EntryNumber,
+				ReferenceType:        "JournalReversal",
+				ReferenceID:          entity.ID.String(),
+				EntryDescription:     originalEntry.Description,
+				TotalDebit:           originalEntry.TotalCredit,
+				TotalCredit:          originalEntry.TotalDebit,
+				IsPosted:             true,
+				IsAutoGenerated:      true,
+				IsReversal:           true,
+				ReversalOfID:         originalEntry.ID,
+				ReversalDate:         &now,
+				ReversalReason:       entity.ReasonText,
+				RequiresApproval:     false,
+				IsApproved:           true,
+				ApprovedByID:         userID,
+				ApprovedAt:           &now,
+				SourceID:             sourceID,
+				SourceObjectType:     "JournalEntry",
+				SourceObjectID:       originalEntry.ID.String(),
+				SourceEventType:      "JournalReversalCreated",
+				SourceStatus:         "Posted",
+				SourceDocumentNumber: originalEntry.EntryNumber,
+				SourceIdempotencyKey: "journal-reversal:" + entity.ID.String(),
+				Lines:                lines,
+			},
+		); err != nil {
 			return err
 		}
-		if err := s.journalEntryRepo.MarkReversed(txCtx, repositories.MarkJournalEntryReversedRequest{OriginalEntryID: originalEntry.ID, ReversalEntryID: reversalEntryID, OrganizationID: entity.OrganizationID, BusinessUnitID: entity.BusinessUnitID, ReversalDate: entity.RequestedAccountingDate, ReversalReason: entity.ReasonText, UpdatedByID: userID}); err != nil {
+		if err := s.journalEntryRepo.MarkReversed(
+			txCtx,
+			repositories.MarkJournalEntryReversedRequest{
+				OriginalEntryID: originalEntry.ID,
+				ReversalEntryID: reversalEntryID,
+				OrganizationID:  entity.OrganizationID,
+				BusinessUnitID:  entity.BusinessUnitID,
+				ReversalDate:    entity.RequestedAccountingDate,
+				ReversalReason:  entity.ReasonText,
+				UpdatedByID:     userID,
+			},
+		); err != nil {
 			return err
 		}
 		entity.Status = journalreversal.StatusPosted
@@ -240,13 +416,29 @@ func (s *Service) Post(ctx context.Context, req *serviceports.GetJournalReversal
 
 func requireUser(actor *serviceports.RequestActor) (pulid.ID, error) {
 	if actor == nil || actor.UserID.IsNil() {
-		return pulid.Nil, errortypes.NewAuthorizationError("Journal reversal actions require an authenticated user")
+		return pulid.Nil, errortypes.NewAuthorizationError(
+			"Journal reversal actions require an authenticated user",
+		)
 	}
 	return actor.UserID, nil
 }
 
-func (s *Service) logAudit(op permission.Operation, current *journalreversal.Reversal, previous *journalreversal.Reversal, userID pulid.ID, comment string) {
-	params := &serviceports.LogActionParams{Resource: permission.ResourceJournalReversal, ResourceID: current.ID.String(), Operation: op, UserID: userID, CurrentState: jsonutils.MustToJSON(current), OrganizationID: current.OrganizationID, BusinessUnitID: current.BusinessUnitID}
+func (s *Service) logAudit(
+	op permission.Operation,
+	current *journalreversal.Reversal,
+	previous *journalreversal.Reversal,
+	userID pulid.ID,
+	comment string,
+) {
+	params := &serviceports.LogActionParams{
+		Resource:       permission.ResourceJournalReversal,
+		ResourceID:     current.ID.String(),
+		Operation:      op,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(current),
+		OrganizationID: current.OrganizationID,
+		BusinessUnitID: current.BusinessUnitID,
+	}
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
@@ -255,6 +447,10 @@ func (s *Service) logAudit(op permission.Operation, current *journalreversal.Rev
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
 	if err := s.auditService.LogAction(params, options...); err != nil {
-		s.l.Error("failed to log journal reversal audit action", zap.Error(err), zap.String("reversalId", current.ID.String()))
+		s.l.Error(
+			"failed to log journal reversal audit action",
+			zap.Error(err),
+			zap.String("reversalId", current.ID.String()),
+		)
 	}
 }

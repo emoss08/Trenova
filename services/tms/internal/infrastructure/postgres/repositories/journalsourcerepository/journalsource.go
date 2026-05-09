@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package journalsourcerepository
 
 import (
@@ -45,15 +46,26 @@ type sourceRecord struct {
 	JournalEntryID       string `bun:"journal_entry_id"`
 }
 
-func (r *repository) GetByObject(ctx context.Context, req repositories.GetJournalSourceByObjectRequest) (*journalsource.Source, error) {
+func (r *repository) GetByObject(
+	ctx context.Context,
+	req repositories.GetJournalSourceByObjectRequest,
+) (*journalsource.Source, error) {
 	return r.getByObjectQuery(ctx, req, "")
 }
 
-func (r *repository) GetByObjectAndEvent(ctx context.Context, req repositories.GetJournalSourceByObjectRequest, sourceEventType string) (*journalsource.Source, error) {
+func (r *repository) GetByObjectAndEvent(
+	ctx context.Context,
+	req repositories.GetJournalSourceByObjectRequest,
+	sourceEventType string,
+) (*journalsource.Source, error) {
 	return r.getByObjectQuery(ctx, req, sourceEventType)
 }
 
-func (r *repository) getByObjectQuery(ctx context.Context, req repositories.GetJournalSourceByObjectRequest, sourceEventType string) (*journalsource.Source, error) {
+func (r *repository) getByObjectQuery(
+	ctx context.Context,
+	req repositories.GetJournalSourceByObjectRequest,
+	sourceEventType string,
+) (*journalsource.Source, error) {
 	rec := new(sourceRecord)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
@@ -71,5 +83,17 @@ func (r *repository) getByObjectQuery(ctx context.Context, req repositories.GetJ
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "JournalSource")
 	}
-	return &journalsource.Source{ID: pulid.ID(rec.ID), OrganizationID: pulid.ID(rec.OrganizationID), BusinessUnitID: pulid.ID(rec.BusinessUnitID), SourceObjectType: rec.SourceObjectType, SourceObjectID: rec.SourceObjectID, SourceEventType: rec.SourceEventType, SourceDocumentNumber: rec.SourceDocumentNumber, Status: rec.Status, IdempotencyKey: rec.IdempotencyKey, JournalBatchID: pulid.ID(rec.JournalBatchID), JournalEntryID: pulid.ID(rec.JournalEntryID)}, nil
+	return &journalsource.Source{
+		ID:                   pulid.ID(rec.ID),
+		OrganizationID:       pulid.ID(rec.OrganizationID),
+		BusinessUnitID:       pulid.ID(rec.BusinessUnitID),
+		SourceObjectType:     rec.SourceObjectType,
+		SourceObjectID:       rec.SourceObjectID,
+		SourceEventType:      rec.SourceEventType,
+		SourceDocumentNumber: rec.SourceDocumentNumber,
+		Status:               rec.Status,
+		IdempotencyKey:       rec.IdempotencyKey,
+		JournalBatchID:       pulid.ID(rec.JournalBatchID),
+		JournalEntryID:       pulid.ID(rec.JournalEntryID),
+	}, nil
 }

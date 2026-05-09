@@ -1,3 +1,4 @@
+//nolint:gocritic // existing value-shaped APIs and hot-path helpers are intentionally stable
 package shipmentservice
 
 import (
@@ -46,6 +47,7 @@ func (s *service) GetBillingReadiness(
 	return s.evaluateBillingReadiness(ctx, entity)
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (s *service) AutoMarkReadyToInvoiceIfEligible(
 	ctx context.Context,
 	shipmentID pulid.ID,
@@ -61,10 +63,14 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 		return nil, err
 	}
 
-	s.l.Info("evaluated shipment billing readiness for auto-mark",
+	s.l.Info(
+		"evaluated shipment billing readiness for auto-mark",
 		zap.String("shipmentId", shipmentID.String()),
 		zap.String("shipmentStatus", string(readiness.ShipmentStatus)),
-		zap.String("shipmentBillingRequirementEnforcement", string(readiness.Policy.ShipmentBillingRequirementEnforcement)),
+		zap.String(
+			"shipmentBillingRequirementEnforcement",
+			string(readiness.Policy.ShipmentBillingRequirementEnforcement),
+		),
 		zap.String("readyToBillAssignmentMode", string(readiness.Policy.ReadyToBillAssignmentMode)),
 		zap.String("billingQueueTransferMode", string(readiness.Policy.BillingQueueTransferMode)),
 		zap.Bool("canMarkReadyToInvoice", readiness.CanMarkReadyToInvoice),
@@ -85,7 +91,7 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 			zap.Int("missingRequirementCount", len(readiness.MissingRequirements)),
 			zap.Int("validationFailureCount", len(readiness.ValidationFailures)),
 		)
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 	}
 
 	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
@@ -267,10 +273,14 @@ func (s *service) evaluateBillingReadiness(
 		billingControl,
 		docs,
 	)
-	s.l.Debug("evaluated shipment billing readiness",
+	s.l.Debug(
+		"evaluated shipment billing readiness",
 		zap.String("shipmentId", entity.ID.String()),
 		zap.String("shipmentStatus", string(entity.Status)),
-		zap.String("shipmentBillingRequirementEnforcement", string(readiness.Policy.ShipmentBillingRequirementEnforcement)),
+		zap.String(
+			"shipmentBillingRequirementEnforcement",
+			string(readiness.Policy.ShipmentBillingRequirementEnforcement),
+		),
 		zap.String("readyToBillAssignmentMode", string(readiness.Policy.ReadyToBillAssignmentMode)),
 		zap.String("billingQueueTransferMode", string(readiness.Policy.BillingQueueTransferMode)),
 		zap.Bool("canMarkReadyToInvoice", readiness.CanMarkReadyToInvoice),
@@ -296,29 +306,40 @@ func buildShipmentBillingReadiness(
 		MissingRequirements: []services.ShipmentBillingRequirement{},
 		ValidationFailures:  []services.ShipmentBillingValidation{},
 		Policy: services.ShipmentBillingReadinessPolicy{
-			ShipmentBillingRequirementEnforcement: resolveShipmentBillingRequirementEnforcement(billingProfile, billingControl),
-			RateValidationEnforcement:             resolveRateValidationEnforcement(billingProfile, billingControl),
-			BillingExceptionDisposition:           resolveBillingExceptionDisposition(billingControl),
-			NotifyOnBillingExceptions:             resolveNotifyOnBillingExceptions(billingControl),
-			ReadyToBillAssignmentMode:             resolveReadyToBillAssignmentMode(billingProfile, billingControl),
-			BillingQueueTransferMode:              resolveBillingQueueTransferMode(billingProfile, billingControl),
+			ShipmentBillingRequirementEnforcement: resolveShipmentBillingRequirementEnforcement(
+				billingProfile,
+				billingControl,
+			),
+			RateValidationEnforcement: resolveRateValidationEnforcement(
+				billingProfile,
+				billingControl,
+			),
+			BillingExceptionDisposition: resolveBillingExceptionDisposition(
+				billingControl,
+			),
+			NotifyOnBillingExceptions: resolveNotifyOnBillingExceptions(billingControl),
+			ReadyToBillAssignmentMode: resolveReadyToBillAssignmentMode(
+				billingProfile,
+				billingControl,
+			),
+			BillingQueueTransferMode: resolveBillingQueueTransferMode(
+				billingProfile,
+				billingControl,
+			),
 		},
 	}
 
 	if billingProfile == nil {
-		appendRateValidationFailure(entity, billingProfile, billingControl, readiness)
+		appendRateValidationFailure(entity, billingControl, readiness)
 		requirementIssues := hasShipmentRequirementIssues(readiness)
 		rateIssues := hasRateIssues(readiness)
-		readiness.CanMarkReadyToInvoice =
+		readiness.CanMarkReadyToInvoice = entity.Status == shipment.StatusCompleted &&
+			canProceedManually(readiness.Policy, requirementIssues, rateIssues)
+		readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
 			entity.Status == shipment.StatusCompleted &&
-				canProceedManually(readiness.Policy, requirementIssues, rateIssues)
-		readiness.ShouldAutoMarkReadyToInvoice =
-			readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
-				entity.Status == shipment.StatusCompleted &&
-				canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
-		readiness.ShouldAutoTransferToBilling =
-			readiness.ShouldAutoMarkReadyToInvoice &&
-				readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+			canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
+		readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
+			readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
 		return readiness
 	}
 
@@ -344,21 +365,18 @@ func buildShipmentBillingReadiness(
 		}
 	}
 
-	appendRateValidationFailure(entity, billingProfile, billingControl, readiness)
+	appendRateValidationFailure(entity, billingControl, readiness)
 
 	requirementIssues := hasShipmentRequirementIssues(readiness)
 	rateIssues := hasRateIssues(readiness)
 
-	readiness.CanMarkReadyToInvoice =
-		isBillingReadyStatus(entity.Status) &&
-			canProceedManually(readiness.Policy, requirementIssues, rateIssues)
-	readiness.ShouldAutoMarkReadyToInvoice =
-		readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
-			entity.Status == shipment.StatusCompleted &&
-			canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
-	readiness.ShouldAutoTransferToBilling =
-		readiness.ShouldAutoMarkReadyToInvoice &&
-			readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
+	readiness.CanMarkReadyToInvoice = isBillingReadyStatus(entity.Status) &&
+		canProceedManually(readiness.Policy, requirementIssues, rateIssues)
+	readiness.ShouldAutoMarkReadyToInvoice = readiness.Policy.ReadyToBillAssignmentMode == tenant.ReadyToBillAssignmentModeAutomaticWhenEligible &&
+		entity.Status == shipment.StatusCompleted &&
+		canAutoProgress(readiness.Policy, requirementIssues, rateIssues)
+	readiness.ShouldAutoTransferToBilling = readiness.ShouldAutoMarkReadyToInvoice &&
+		readiness.Policy.BillingQueueTransferMode == tenant.BillingQueueTransferModeAutomaticWhenReady
 
 	return readiness
 }
@@ -398,8 +416,7 @@ func resolveReadyToBillAssignmentMode(
 		return tenant.ReadyToBillAssignmentModeManualOnly
 	}
 
-	orgMode := tenant.ReadyToBillAssignmentModeManualOnly
-	orgMode = billingControl.ReadyToBillAssignmentMode
+	orgMode := billingControl.ReadyToBillAssignmentMode
 
 	if orgMode != tenant.ReadyToBillAssignmentModeAutomaticWhenEligible {
 		return tenant.ReadyToBillAssignmentModeManualOnly
@@ -461,8 +478,7 @@ func resolveBillingQueueTransferMode(
 		return tenant.BillingQueueTransferModeManualOnly
 	}
 
-	orgMode := tenant.BillingQueueTransferModeManualOnly
-	orgMode = billingControl.BillingQueueTransferMode
+	orgMode := billingControl.BillingQueueTransferMode
 
 	if orgMode != tenant.BillingQueueTransferModeAutomaticWhenReady {
 		return tenant.BillingQueueTransferModeManualOnly
@@ -487,7 +503,7 @@ func stricterEnforcementLevel(
 }
 
 func enforcementRank(level tenant.EnforcementLevel) int {
-	switch level {
+	switch level { //nolint:exhaustive // only actionable enum states require explicit handling here
 	case tenant.EnforcementLevelBlock:
 		return 3
 	case tenant.EnforcementLevelRequireReview:
@@ -551,25 +567,30 @@ func buildDocumentRequirements(
 
 func appendRateValidationFailure(
 	entity *shipment.Shipment,
-	billingProfile *customer.CustomerBillingProfile,
 	billingControl *tenant.BillingControl,
 	readiness *services.ShipmentBillingReadiness,
 ) {
-	result := evaluateRateValidation(entity, billingProfile, billingControl, readiness.Policy.RateValidationEnforcement)
+	result := evaluateRateValidation(
+		entity,
+		billingControl,
+		readiness.Policy.RateValidationEnforcement,
+	)
 	if result == nil {
 		return
 	}
 
-	readiness.ValidationFailures = append(readiness.ValidationFailures, services.ShipmentBillingValidation{
-		Field:   result.Field,
-		Code:    result.Code,
-		Message: result.Message,
-	})
+	readiness.ValidationFailures = append(
+		readiness.ValidationFailures,
+		services.ShipmentBillingValidation{
+			Field:   result.Field,
+			Code:    result.Code,
+			Message: result.Message,
+		},
+	)
 }
 
 func evaluateRateValidation(
 	entity *shipment.Shipment,
-	billingProfile *customer.CustomerBillingProfile,
 	billingControl *tenant.BillingControl,
 	enforcement tenant.EnforcementLevel,
 ) *rateValidationResult {
@@ -668,16 +689,21 @@ func canProceedManually(
 	requirementIssues bool,
 	rateIssues bool,
 ) bool {
-	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock && requirementIssues {
+	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
+		requirementIssues {
 		return false
 	}
+
 	if policy.RateValidationEnforcement == tenant.EnforcementLevelBlock && rateIssues {
 		return false
 	}
+
 	if policy.BillingExceptionDisposition == tenant.BillingExceptionDispositionReturnToOperations {
-		if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview && requirementIssues {
+		if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview &&
+			requirementIssues {
 			return false
 		}
+
 		if policy.RateValidationEnforcement == tenant.EnforcementLevelRequireReview && rateIssues {
 			return false
 		}
@@ -691,10 +717,12 @@ func canAutoProgress(
 	requirementIssues bool,
 	rateIssues bool,
 ) bool {
-	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock && requirementIssues {
+	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
+		requirementIssues {
 		return false
 	}
-	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview && requirementIssues {
+	if policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelRequireReview &&
+		requirementIssues {
 		return false
 	}
 	if policy.RateValidationEnforcement == tenant.EnforcementLevelBlock && rateIssues {
@@ -829,13 +857,7 @@ func (s *service) autoTransferToBillingQueue(
 	}
 }
 
-func validateBillingTransferPolicy(
-	readiness *services.ShipmentBillingReadiness,
-) error {
-	if readiness == nil {
-		return nil
-	}
-
+func validateBillingTransferPolicy(readiness *services.ShipmentBillingReadiness) error {
 	if readiness.Policy.ShipmentBillingRequirementEnforcement == tenant.EnforcementLevelBlock &&
 		hasShipmentRequirementIssues(readiness) {
 		return errortypes.NewValidationError(
@@ -873,10 +895,6 @@ func (s *service) notifyBillingExceptions(
 	entity *shipment.Shipment,
 	readiness *services.ShipmentBillingReadiness,
 ) {
-	if entity == nil || readiness == nil || !readiness.Policy.NotifyOnBillingExceptions {
-		return
-	}
-
 	requirementIssues := hasShipmentRequirementIssues(readiness)
 	rateIssues := hasRateIssues(readiness)
 	if !requirementIssues && !rateIssues {

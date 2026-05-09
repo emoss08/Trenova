@@ -38,26 +38,118 @@ func New(p Params) *Handler {
 	}
 }
 
+//nolint:funlen // existing workflow or route registration is intentionally kept together
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/document-parsing-rules")
-	api.GET("/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.listRuleSets)
-	api.POST("/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpCreate), h.createRuleSet)
-	api.GET("/:ruleSetID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.getRuleSet)
-	api.PUT("/:ruleSetID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpUpdate), h.updateRuleSet)
-	api.DELETE("/:ruleSetID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpDelete), h.deleteRuleSet)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.listRuleSets,
+	)
+	api.POST(
+		"/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpCreate,
+		),
+		h.createRuleSet,
+	)
+	api.GET(
+		"/:ruleSetID/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.getRuleSet,
+	)
+	api.PUT(
+		"/:ruleSetID/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpUpdate,
+		),
+		h.updateRuleSet,
+	)
+	api.DELETE(
+		"/:ruleSetID/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpDelete,
+		),
+		h.deleteRuleSet,
+	)
 
-	api.GET("/:ruleSetID/versions/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.listVersions)
-	api.POST("/:ruleSetID/versions/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpCreate), h.createVersion)
-	api.GET("/versions/:versionID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.getVersion)
-	api.PUT("/versions/:versionID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpUpdate), h.updateVersion)
-	api.POST("/versions/:versionID/publish/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpActivate), h.publishVersion)
-	api.POST("/versions/:versionID/simulate/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.simulateVersion)
+	api.GET(
+		"/:ruleSetID/versions/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.listVersions,
+	)
+	api.POST(
+		"/:ruleSetID/versions/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpCreate,
+		),
+		h.createVersion,
+	)
+	api.GET(
+		"/versions/:versionID/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.getVersion,
+	)
+	api.PUT(
+		"/versions/:versionID/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpUpdate,
+		),
+		h.updateVersion,
+	)
+	api.POST(
+		"/versions/:versionID/publish/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpActivate,
+		),
+		h.publishVersion,
+	)
+	api.POST(
+		"/versions/:versionID/simulate/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.simulateVersion,
+	)
 
-	api.GET("/:ruleSetID/fixtures/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.listFixtures)
-	api.POST("/:ruleSetID/fixtures/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpCreate), h.saveFixture)
-	api.GET("/fixtures/:fixtureID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead), h.getFixture)
-	api.PUT("/fixtures/:fixtureID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpUpdate), h.saveFixture)
-	api.DELETE("/fixtures/:fixtureID/", h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpDelete), h.deleteFixture)
+	api.GET(
+		"/:ruleSetID/fixtures/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.listFixtures,
+	)
+	api.POST(
+		"/:ruleSetID/fixtures/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpCreate,
+		),
+		h.saveFixture,
+	)
+	api.GET(
+		"/fixtures/:fixtureID/",
+		h.pm.RequirePermission(permission.ResourceDocumentParsingRule.String(), permission.OpRead),
+		h.getFixture,
+	)
+	api.PUT(
+		"/fixtures/:fixtureID/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpUpdate,
+		),
+		h.saveFixture,
+	)
+	api.DELETE(
+		"/fixtures/:fixtureID/",
+		h.pm.RequirePermission(
+			permission.ResourceDocumentParsingRule.String(),
+			permission.OpDelete,
+		),
+		h.deleteFixture,
+	)
 }
 
 func (h *Handler) listRuleSets(c *gin.Context) {
@@ -262,18 +354,21 @@ func (h *Handler) simulateVersion(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	result, err := h.service.SimulateVersion(c.Request.Context(), &serviceports.DocumentParsingSimulationRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	result, err := h.service.SimulateVersion(
+		c.Request.Context(),
+		&serviceports.DocumentParsingSimulationRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			VersionID:           versionID,
+			FileName:            req.FileName,
+			Text:                req.Text,
+			Pages:               req.Pages,
+			ProviderFingerprint: req.ProviderFingerprint,
+			Baseline:            req.Baseline,
 		},
-		VersionID:           versionID,
-		FileName:            req.FileName,
-		Text:                req.Text,
-		Pages:               req.Pages,
-		ProviderFingerprint: req.ProviderFingerprint,
-		Baseline:            req.Baseline,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
