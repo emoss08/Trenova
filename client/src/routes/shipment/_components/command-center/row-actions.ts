@@ -17,6 +17,8 @@ export type ShipmentRowActionHandlers = {
   onUncancel: (row: Row<Shipment>) => void;
   onTransferOwnership: (row: Row<Shipment>) => void;
   onTransferToBilling: (row: Row<Shipment>) => void;
+  onSendEDI: (row: Row<Shipment>) => void;
+  canSendEDI: boolean;
 };
 
 export function buildShipmentRowActions(
@@ -56,6 +58,13 @@ export function buildShipmentRowActions(
       icon: ArrowRightLeftIcon,
       onClick: handlers.onTransferOwnership,
       hidden: (row) => row.original.status === "Canceled",
+    },
+    {
+      id: "send-edi-load-tender",
+      label: "Send EDI Load Tender",
+      icon: SendIcon,
+      onClick: handlers.onSendEDI,
+      hidden: (row) => !handlers.canSendEDI || row.original.status === "Canceled",
     },
     {
       id: "transfer-to-billing",

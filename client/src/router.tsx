@@ -107,6 +107,30 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/edi/partners",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIPartnersPage } = await import("@/routes/edi/page");
+              return { Component: EDIPartnersPage };
+            },
+          },
+          {
+            path: "/edi/transfers/inbound",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIInboundTransfersPage } = await import("@/routes/edi/page");
+              return { Component: EDIInboundTransfersPage };
+            },
+          },
+          {
+            path: "/edi/transfers/outbound",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIOutboundTransfersPage } = await import("@/routes/edi/page");
+              return { Component: EDIOutboundTransfersPage };
+            },
+          },
+          {
             path: "/billing/queue",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.BillingQueue)),
             async lazy() {

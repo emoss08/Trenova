@@ -38,6 +38,17 @@ func (m *mockOrganizationRepo) GetByID(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) SelectOptions(
+	ctx context.Context,
+	req *repositories.SelectOrganizationOptionsRequest,
+) (*pagination.ListResult[*tenant.Organization], error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*pagination.ListResult[*tenant.Organization]), args.Error(1)
+}
+
 func (m *mockOrganizationRepo) GetByLoginSlug(
 	ctx context.Context,
 	loginSlug string,

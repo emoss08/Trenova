@@ -256,6 +256,7 @@ func (rr *RouteRegistry) hasPermission(
 
 func (rr *RouteRegistry) registerAll() {
 	rr.registerAdministrationRoutes()
+	rr.registerEDIRoutes()
 	rr.registerEquipmentRoutes()
 	rr.registerWorkerRoutes()
 	rr.registerOperationsRoutes()
@@ -266,6 +267,38 @@ func (rr *RouteRegistry) registerAll() {
 	rr.registerHoldReasonRoutes()
 	rr.registerAccountingRoutes()
 	rr.registerReportingRoutes()
+}
+
+func (rr *RouteRegistry) registerEDIRoutes() {
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/edi/partners",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceEDI, Operation: OpRead},
+		},
+		DisplayName: "EDI Partners",
+		Category:    "EDI",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/edi/transfers/inbound",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceEDI, Operation: OpRead},
+		},
+		DisplayName: "EDI Inbound Transfers",
+		Category:    "EDI",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/edi/transfers/outbound",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceEDI, Operation: OpRead},
+		},
+		DisplayName: "EDI Outbound Transfers",
+		Category:    "EDI",
+	})
 }
 
 //nolint:funlen // this is for the purpose of registering the routes

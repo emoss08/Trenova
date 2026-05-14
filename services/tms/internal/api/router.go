@@ -34,8 +34,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
@@ -147,6 +149,7 @@ type RouterParams struct {
 	HazardousMaterialHandler        *hazardousmaterialhandler.Handler
 	HazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
+	EDIHandler                      *edihandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
@@ -177,6 +180,7 @@ type RouterParams struct {
 	DocumentControlHandler          *documentcontrolhandler.Handler
 	DocumentParsingRuleHandler      *documentparsingrulehandler.Handler
 	WorkerPTOHandler                *workerptohandler.Handler
+	ExchangeRateHandler             *exchangeratehandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
 	AnalyticsHandler                *analyticshandler.Handler
 	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
@@ -234,6 +238,7 @@ type Router struct {
 	hazardousMaterialHandler        *hazardousmaterialhandler.Handler
 	hazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
+	ediHandler                      *edihandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
@@ -264,6 +269,7 @@ type Router struct {
 	documentControlHandler          *documentcontrolhandler.Handler
 	documentParsingRuleHandler      *documentparsingrulehandler.Handler
 	workerPTOHandler                *workerptohandler.Handler
+	exchangeRateHandler             *exchangeratehandler.Handler
 	distanceOverrideHandler         *distanceoverridehandler.Handler
 	analyticsHandler                *analyticshandler.Handler
 	apiKeyHandler                   *apikeyhandler.Handler
@@ -323,6 +329,7 @@ func NewRouter(p RouterParams) *Router {
 		hazardousMaterialHandler:        p.HazardousMaterialHandler,
 		hazmatSegregationRuleHandler:    p.HazmatSegregationRuleHandler,
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
+		ediHandler:                      p.EDIHandler,
 		commodityHandler:                p.CommodityHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
@@ -353,6 +360,7 @@ func NewRouter(p RouterParams) *Router {
 		documentControlHandler:          p.DocumentControlHandler,
 		documentParsingRuleHandler:      p.DocumentParsingRuleHandler,
 		workerPTOHandler:                p.WorkerPTOHandler,
+		exchangeRateHandler:             p.ExchangeRateHandler,
 		distanceOverrideHandler:         p.DistanceOverrideHandler,
 		analyticsHandler:                p.AnalyticsHandler,
 		apiKeyHandler:                   p.ApiKeyHandler,
@@ -458,6 +466,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.hazardousMaterialHandler.RegisterRoutes(protected)
 	r.hazmatSegregationRuleHandler.RegisterRoutes(protected)
 	r.dotHazmatReferenceHandler.RegisterRoutes(protected)
+	r.ediHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)
@@ -489,6 +498,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentControlHandler.RegisterRoutes(protected)
 	r.documentParsingRuleHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
+	r.exchangeRateHandler.RegisterRoutes(protected)
 	r.workerPTOHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)
 	r.apiKeyHandler.RegisterRoutes(protected)

@@ -181,6 +181,74 @@ func (_c *MockIntegrationRepository_ListByTenant_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// ListEnabledByType provides a mock function for the type MockIntegrationRepository
+func (_mock *MockIntegrationRepository) ListEnabledByType(ctx context.Context, typ integration.Type) ([]*integration.Integration, error) {
+	ret := _mock.Called(ctx, typ)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEnabledByType")
+	}
+
+	var r0 []*integration.Integration
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, integration.Type) ([]*integration.Integration, error)); ok {
+		return returnFunc(ctx, typ)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, integration.Type) []*integration.Integration); ok {
+		r0 = returnFunc(ctx, typ)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*integration.Integration)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, integration.Type) error); ok {
+		r1 = returnFunc(ctx, typ)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockIntegrationRepository_ListEnabledByType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEnabledByType'
+type MockIntegrationRepository_ListEnabledByType_Call struct {
+	*mock.Call
+}
+
+// ListEnabledByType is a helper method to define mock.On call
+//   - ctx context.Context
+//   - typ integration.Type
+func (_e *MockIntegrationRepository_Expecter) ListEnabledByType(ctx interface{}, typ interface{}) *MockIntegrationRepository_ListEnabledByType_Call {
+	return &MockIntegrationRepository_ListEnabledByType_Call{Call: _e.mock.On("ListEnabledByType", ctx, typ)}
+}
+
+func (_c *MockIntegrationRepository_ListEnabledByType_Call) Run(run func(ctx context.Context, typ integration.Type)) *MockIntegrationRepository_ListEnabledByType_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 integration.Type
+		if args[1] != nil {
+			arg1 = args[1].(integration.Type)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockIntegrationRepository_ListEnabledByType_Call) Return(integrations []*integration.Integration, err error) *MockIntegrationRepository_ListEnabledByType_Call {
+	_c.Call.Return(integrations, err)
+	return _c
+}
+
+func (_c *MockIntegrationRepository_ListEnabledByType_Call) RunAndReturn(run func(ctx context.Context, typ integration.Type) ([]*integration.Integration, error)) *MockIntegrationRepository_ListEnabledByType_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Upsert provides a mock function for the type MockIntegrationRepository
 func (_mock *MockIntegrationRepository) Upsert(ctx context.Context, entity *integration.Integration) (*integration.Integration, error) {
 	ret := _mock.Called(ctx, entity)

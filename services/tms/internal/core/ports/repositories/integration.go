@@ -12,6 +12,10 @@ type IntegrationRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*integration.Integration, error)
+	ListEnabledByType(
+		ctx context.Context,
+		typ integration.Type,
+	) ([]*integration.Integration, error)
 	GetByType(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

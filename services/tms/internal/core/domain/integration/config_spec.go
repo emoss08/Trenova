@@ -88,4 +88,17 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 			},
 		},
 	},
+	TypeExchangeRateAPI: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Free tier includes 1,500 API requests/month. Visit https://www.exchangerate-api.com/ to get your key.",
+			},
+		},
+		SupportsTestConnect: true,
+	},
 }

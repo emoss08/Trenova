@@ -13,6 +13,7 @@ const (
 	ResourceCustomFieldDefinition Resource = "custom_field_definition"
 	ResourceSequenceConfig        Resource = "sequence_config"
 	ResourceIntegration           Resource = "integration"
+	ResourceEDI                   Resource = "edi"
 	ResourceAPIKey                Resource = "api_key"
 	ResourceDataEntryControl      Resource = "data_entry_control"
 

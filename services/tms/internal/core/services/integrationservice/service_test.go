@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const expectedCatalogItems = 5
+
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
 	listByTenantErr    error
@@ -20,6 +22,13 @@ func (s *stubIntegrationRepo) ListByTenant(
 	_ pagination.TenantInfo,
 ) ([]*integration.Integration, error) {
 	return s.listByTenantResult, s.listByTenantErr
+}
+
+func (s *stubIntegrationRepo) ListEnabledByType(
+	_ context.Context,
+	_ integration.Type,
+) ([]*integration.Integration, error) {
+	return nil, nil
 }
 
 func (s *stubIntegrationRepo) GetByType(
@@ -59,7 +68,7 @@ func TestListCatalogIncludesBackendCardMetadata(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 4)
+	require.Len(t, resp.Items, expectedCatalogItems)
 
 	samsara := resp.Items[0]
 	require.Equal(t, integration.TypeSamsara, samsara.Type)
@@ -98,7 +107,7 @@ func TestListCatalogSamsaraConfiguredFalseWithoutToken(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 4)
+	require.Len(t, resp.Items, expectedCatalogItems)
 	require.False(t, resp.Items[0].Configured)
 	require.Equal(t, "needs_setup", string(resp.Items[0].Status.Configuration))
 }
@@ -114,9 +123,10 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 
 	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 4)
+	require.Len(t, resp.Items, expectedCatalogItems)
 	require.Equal(t, integration.TypeSamsara, resp.Items[0].Type)
 	require.Equal(t, integration.TypeGoogleMaps, resp.Items[1].Type)
 	require.Equal(t, integration.TypeOpenWeatherMap, resp.Items[2].Type)
 	require.Equal(t, integration.TypeOpenAI, resp.Items[3].Type)
+	require.Equal(t, integration.TypeExchangeRateAPI, resp.Items[4].Type)
 }

@@ -74,6 +74,7 @@ export const Resource = {
   TableConfiguration: "table_configuration",
   SequenceConfig: "sequence_config",
   Integration: "integration",
+  EDI: "edi",
   EquipmentType: "equipment_type",
   EquipmentManufacturer: "equipment_manufacturer",
   Trailer: "trailer",

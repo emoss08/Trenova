@@ -30,6 +30,8 @@ type WorkflowDefinition struct {
 	Description string
 }
 
+const ApproveLoadTenderTransferWorkflowName = "ApproveLoadTenderTransferWorkflow"
+
 var DefaultRetryPolicy = &temporal.RetryPolicy{
 	InitialInterval:    time.Second,
 	BackoffCoefficient: 2.0,

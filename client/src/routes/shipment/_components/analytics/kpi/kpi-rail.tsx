@@ -145,7 +145,7 @@ export default function KpiRail() {
   const breakdown = merged.activeShipments.breakdown;
 
   return (
-    <div className="grid grid-cols-12 gap-2 px-4 pt-1 pb-3">
+    <div className="grid grid-cols-12 gap-2 pt-1 pb-3">
       <KpiHero
         label="Revenue today"
         value={`$${formatCompact(merged.revenueToday.total)}`}

@@ -24,6 +24,7 @@ import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
+import { ExchangeRateAPIIntegrationModal } from "./exchangerateapi/exchange-rate-api-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -58,6 +59,7 @@ export function IntegrationCatalogCard() {
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
   const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
+  const [isExchangeRateAPIModalOpen, setIsExchangeRateAPIModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -133,13 +135,16 @@ export function IntegrationCatalogCard() {
       case "OpenWeatherMap":
         setIsOpenWeatherMapModalOpen(true);
         break;
+      case "ExchangeRateAPI":
+        setIsExchangeRateAPIModalOpen(true);
+        break;
       default:
         break;
     }
   };
 
   const hasModal = (type: string) =>
-    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI" || type === "OpenWeatherMap";
+    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI" || type === "OpenWeatherMap" || type === "ExchangeRateAPI";
 
   return (
     <>
@@ -148,7 +153,7 @@ export function IntegrationCatalogCard() {
           <IntegrationMarketplaceHeader />
           <div className="mt-4 flex flex-row items-center gap-1.5">
             <div className="flex shrink-0 flex-row items-center gap-0 text-center text-sm">
-              <div className="flex h-8 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 border-input bg-muted px-1 font-medium text-muted-foreground focus:z-10">
+              <div className="flex h-7 items-center gap-1 rounded-s-lg rounded-e-none border border-r-0 border-input bg-muted px-1 font-medium text-muted-foreground focus:z-10">
                 Sort By
               </div>
               <Select
@@ -312,6 +317,10 @@ export function IntegrationCatalogCard() {
       <OpenWeatherMapIntegrationModal
         open={isOpenWeatherMapModalOpen}
         onOpenChange={setIsOpenWeatherMapModalOpen}
+      />
+      <ExchangeRateAPIIntegrationModal
+        open={isExchangeRateAPIModalOpen}
+        onOpenChange={setIsExchangeRateAPIModalOpen}
       />
     </>
   );

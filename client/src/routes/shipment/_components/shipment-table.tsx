@@ -5,6 +5,8 @@ import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { api } from "@/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
+import { usePermissionStore } from "@/stores/permission-store";
+import { Operation, Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
@@ -19,6 +21,7 @@ import { useCommandCenterUrl } from "./command-center/url-state";
 import { ShipmentCancelDialog } from "./shipment-cancel-dialog";
 import { getColumns } from "./shipment-columns";
 import { ShipmentDuplicateDialog } from "./shipment-duplicate-dialog";
+import { ShipmentSendEDIDialog } from "./shipment-send-edi-dialog";
 import { ShipmentPanel } from "./shipment-panel";
 import { ShipmentTransferOwnershipDialog } from "./shipment-transfer-ownership-dialog";
 
@@ -29,6 +32,10 @@ export default function ShipmentTable() {
   const [cancelShipmentId, setCancelShipmentId] = useState<string | null>(null);
   const [transferOwnershipShipmentId, setTransferOwnershipShipmentId] = useState<string | null>(
     null,
+  );
+  const [ediShipmentId, setEDIShipmentId] = useState<string | null>(null);
+  const canSendEDI = usePermissionStore((state) =>
+    state.hasPermission(Resource.EDI, Operation.Create),
   );
   const [uploadShipment, setUploadShipment] = useState<Shipment | null>(null);
   const [uploadDocumentType, setUploadDocumentType] = useState<ShipmentDocumentUploadContext | null>(
@@ -206,6 +213,7 @@ export default function ShipmentTable() {
     (row: Row<Shipment>) => setTransferOwnershipShipmentId(row.original.id || ""),
     [],
   );
+  const handleSendEDI = useCallback((row: Row<Shipment>) => setEDIShipmentId(row.original.id || ""), []);
 
   const rowActions = useMemo(
     () =>
@@ -216,6 +224,8 @@ export default function ShipmentTable() {
         onUncancel: handleUncancel,
         onTransferOwnership: handleTransferOwnership,
         onTransferToBilling: handleTransferToBilling,
+        onSendEDI: handleSendEDI,
+        canSendEDI,
       }),
     [
       handleEdit,
@@ -224,6 +234,8 @@ export default function ShipmentTable() {
       handleUncancel,
       handleTransferOwnership,
       handleTransferToBilling,
+      handleSendEDI,
+      canSendEDI,
     ],
   );
 
@@ -244,6 +256,9 @@ export default function ShipmentTable() {
 
   const handleTransferOwnershipOpenChange = useCallback((open: boolean) => {
     if (!open) setTransferOwnershipShipmentId(null);
+  }, []);
+  const handleEDIOpenChange = useCallback((open: boolean) => {
+    if (!open) setEDIShipmentId(null);
   }, []);
 
   return (
@@ -295,6 +310,13 @@ export default function ShipmentTable() {
           open={!!transferOwnershipShipmentId}
           onOpenChange={handleTransferOwnershipOpenChange}
           shipmentId={transferOwnershipShipmentId}
+        />
+      )}
+      {ediShipmentId && (
+        <ShipmentSendEDIDialog
+          open={!!ediShipmentId}
+          onOpenChange={handleEDIOpenChange}
+          shipmentId={ediShipmentId}
         />
       )}
     </>

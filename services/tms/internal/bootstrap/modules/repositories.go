@@ -38,9 +38,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edirepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentcontinuityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/exchangeraterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
@@ -158,6 +160,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	hazardousmaterialrepository.New,
 	hazmatsegregationrulerepository.New,
 	dothazmatreferencerepository.New,
+	edirepository.New,
+	edirepository.NewTransferRepository,
 	commodityrepository.New,
 	customerpaymentrepository.New,
 	customerledgerrepository.New,
@@ -185,6 +189,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	billingcontrolrepository.New,
 	billingqueuerepository.New,
 	distanceoverriderepository.New,
+	exchangeraterepository.New,
 	tcasubscriptionrepository.New,
 	tcaallowlistrepository.New,
 	notificationrepository.New,

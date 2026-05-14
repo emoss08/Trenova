@@ -7,7 +7,8 @@ const (
 	TypeSamsara        = Type("Samsara")
 	TypeHERE           = Type("HERE")
 	TypeOpenAI         = Type("OpenAI")
-	TypeOpenWeatherMap = Type("OpenWeatherMap")
+	TypeOpenWeatherMap  = Type("OpenWeatherMap")
+	TypeExchangeRateAPI = Type("ExchangeRateAPI")
 	// TypePCMiler    Type = "PCMiler"
 	// TypeMotive     Type = "Motive"
 )
@@ -20,4 +21,5 @@ const (
 	CategoryTelematics             = Category("Telematics")
 	CategoryArtificialIntelligence = Category("ArtificialIntelligence")
 	CategoryWeather                = Category("Weather")
+	CategoryFinancialData          = Category("FinancialData")
 )

@@ -14,8 +14,18 @@ type GetOrganizationByIDRequest struct {
 	IncludeBU    bool `json:"includeBu"`
 }
 
+type SelectOrganizationOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest
+	Scope              string `json:"scope"`
+	ExcludeCurrent     bool   `json:"excludeCurrent"`
+}
+
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
+	SelectOptions(
+		ctx context.Context,
+		req *SelectOrganizationOptionsRequest,
+	) (*pagination.ListResult[*tenant.Organization], error)
 	GetByLoginSlug(ctx context.Context, loginSlug string) (*tenant.Organization, error)
 	ListLoginSlugsByPrefix(ctx context.Context, prefix string) ([]string, error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)

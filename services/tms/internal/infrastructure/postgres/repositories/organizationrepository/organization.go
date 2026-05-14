@@ -2,11 +2,13 @@ package organizationrepository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -82,6 +84,49 @@ func (r *repository) GetByID(
 	}
 
 	return org, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.SelectOrganizationOptionsRequest,
+) (*pagination.ListResult[*tenant.Organization], error) {
+	entities := make([]*tenant.Organization, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column("id", "business_unit_id", "name", "scac_code", "city", "state_id", "logo_url").
+		Where("org.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+
+	if req.Scope != "business-unit" {
+		query = query.Where("org.id = ?", req.SelectQueryRequest.TenantInfo.OrgID)
+	}
+	if req.ExcludeCurrent {
+		query = query.Where("org.id <> ?", req.SelectQueryRequest.TenantInfo.OrgID)
+	}
+
+	search := strings.TrimSpace(req.SelectQueryRequest.Query)
+	if search != "" {
+		term := "%" + strings.ToLower(search) + "%"
+		query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereOr("lower(org.name) LIKE ?", term).
+				WhereOr("lower(org.scac_code) LIKE ?", term).
+				WhereOr("lower(org.city) LIKE ?", term)
+		})
+	}
+
+	total, err := query.
+		Order("org.name ASC").
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*tenant.Organization]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func (r *repository) GetByLoginSlug(

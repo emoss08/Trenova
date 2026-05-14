@@ -317,6 +317,15 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceEDI.String(),
+		DisplayName:        "EDI",
+		Description:        "EDI partner setup, mapping profiles, and load tender transfers",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceAPIKey.String(),
 		DisplayName:        "API Key",
 		Description:        "API key creation, rotation, revocation, and permission management",

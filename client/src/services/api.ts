@@ -1,16 +1,21 @@
 import { AccessorialChargeService } from "./accessorial-charge";
-import { AssignmentService } from "./assignment";
-import { AccountTypeService } from "./account-type";
 import { AccountingControlService } from "./accounting-control";
+import { AccountingReportService } from "./accounting-report";
+import { AccountTypeService } from "./account-type";
 import { AnalyticsService } from "./analytics";
 import { APIKeyService } from "./api-key";
+import { ARService } from "./ar";
+import { AssignmentService } from "./assignment";
 import { AuditService } from "./audit";
-import { ShipmentEventService } from "./shipment-event";
+import { BankReceiptService } from "./bank-receipt";
+import { BankReceiptBatchService } from "./bank-receipt-batch";
+import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
 import { BillingControlService } from "./billing-control";
 import { BillingQueueService } from "./billing-queue";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
 import { CustomerService } from "./customer";
+import { CustomerPaymentService } from "./customer-payment";
 import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
 import { DispatchControlService } from "./dispatch-control";
@@ -20,31 +25,28 @@ import { DocumentControlService } from "./document-control";
 import { DocumentOperationsService } from "./document-operations";
 import { DocumentPacketRuleService } from "./document-packet-rule";
 import { DocumentParsingRuleService } from "./document-parsing-rule";
-import { AccountingReportService } from "./accounting-report";
-import { ARService } from "./ar";
-import { BankReceiptService } from "./bank-receipt";
-import { BankReceiptBatchService } from "./bank-receipt-batch";
-import { BankReceiptWorkItemService } from "./bank-receipt-work-item";
-import { CustomerPaymentService } from "./customer-payment";
-import { JournalEntryService } from "./journal-entry";
-import { JournalReversalService } from "./journal-reversal";
-import { ManualJournalService } from "./manual-journal";
+import { EDIService } from "./edi";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
+import { ExchangeRateService } from "./exchange-rate";
 import { FiscalPeriodService } from "./fiscal-period";
 import { FiscalYearService } from "./fiscal-year";
 import { FleetCodeService } from "./fleet-code";
 import { FormulaTemplateService } from "./formula-template";
-import { GoogleMapsService } from "./google-maps";
 import { GlobalSearchService } from "./global-search";
+import { GoogleMapsService } from "./google-maps";
 import { HazardousMaterialService } from "./hazardous-material";
 import { HazmatSegregationRuleService } from "./hazmat-segregation-rule";
 import { HoldReasonService } from "./hold-reason";
 import { IntegrationService } from "./integration";
-import { InvoiceAdjustmentControlService } from "./invoice-adjustment-control";
-import { InvoiceAdjustmentService } from "./invoice-adjustment";
 import { InvoiceService } from "./invoice";
+import { InvoiceAdjustmentService } from "./invoice-adjustment";
+import { InvoiceAdjustmentControlService } from "./invoice-adjustment-control";
+import { JournalEntryService } from "./journal-entry";
+import { JournalReversalService } from "./journal-reversal";
 import { LocationService } from "./location";
+import { ManualJournalService } from "./manual-journal";
+import { NotificationService } from "./notification";
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
 import { RealtimeService } from "./realtime";
@@ -53,8 +55,8 @@ import { ServiceTypeService } from "./service-type";
 import { ShipmentService } from "./shipment";
 import { ShipmentCommentService } from "./shipment-comment";
 import { ShipmentControlService } from "./shipment-control";
+import { ShipmentEventService } from "./shipment-event";
 import { ShipmentTypeService } from "./shipment-type";
-import { NotificationService } from "./notification";
 import { TableChangeAlertService } from "./table-change-alert";
 import { TableConfigurationService } from "./table-configuration";
 import { TractorService } from "./tractor";
@@ -109,6 +111,7 @@ class APIService {
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
   public realtimeService: RealtimeService;
+  public exchangeRateService: ExchangeRateService;
   public integrationService: IntegrationService;
   public analyticService: AnalyticsService;
   public auditService: AuditService;
@@ -130,6 +133,7 @@ class APIService {
   public bankReceiptWorkItemService: BankReceiptWorkItemService;
   public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
+  public ediService: EDIService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -176,6 +180,7 @@ class APIService {
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();
     this.realtimeService = new RealtimeService();
+    this.exchangeRateService = new ExchangeRateService();
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();
     this.analyticService = new AnalyticsService();
@@ -197,6 +202,7 @@ class APIService {
     this.bankReceiptWorkItemService = new BankReceiptWorkItemService();
     this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
+    this.ediService = new EDIService();
   }
 }
 

@@ -60,6 +60,10 @@ type OrganizationService interface {
 		ctx context.Context,
 		req repositories.GetOrganizationByIDRequest,
 	) (*tenant.Organization, error)
+	SelectOptions(
+		ctx context.Context,
+		req *repositories.SelectOrganizationOptionsRequest,
+	) (*pagination.ListResult[*tenant.Organization], error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
 	UploadLogo(
 		ctx context.Context,

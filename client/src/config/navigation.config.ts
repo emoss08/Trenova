@@ -4,6 +4,7 @@ import {
   BarChart3Icon,
   CalculatorIcon,
   ContainerIcon,
+  FileSlidersIcon,
   HomeIcon,
   Package,
   ReceiptTextIcon,
@@ -253,6 +254,34 @@ const billingModule: NavModule = {
   ],
 };
 
+const ediModule: NavModule = {
+  id: "edi",
+  label: "EDI",
+  icon: FileSlidersIcon,
+  description: "Internal partner exchange and load tender workflow",
+  basePath: "/edi/partners",
+  navigation: [
+    {
+      id: "edi-partners",
+      label: "Partners",
+      path: "/edi/partners",
+      resource: Resource.EDI,
+    },
+    {
+      id: "edi-inbound",
+      label: "Inbound Transfers",
+      path: "/edi/transfers/inbound",
+      resource: Resource.EDI,
+    },
+    {
+      id: "edi-outbound",
+      label: "Outbound Transfers",
+      path: "/edi/transfers/outbound",
+      resource: Resource.EDI,
+    },
+  ],
+};
+
 const accountingModule: NavModule = {
   id: "accounting",
   label: "Accounting Management",
@@ -399,6 +428,7 @@ export const navigationConfig: NavigationConfig = {
     dispatchModule,
     equipmentModule,
     billingModule,
+    ediModule,
     reportsModule,
     accountingModule,
     adminModule,
@@ -665,7 +695,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "operations",
     label: "Operations",
-    moduleIds: ["shipment", "dispatch", "fleet"],
+    moduleIds: ["shipment", "dispatch", "fleet", "edi"],
   },
   {
     id: "financial",

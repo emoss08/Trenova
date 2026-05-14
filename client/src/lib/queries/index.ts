@@ -17,6 +17,7 @@ import { dataEntryControl } from "./data-entry-control";
 import { documentControl } from "./document-control";
 import { documentParsingRule } from "./document-parsing-rule";
 import { dispatchControl } from "./dispatch-control";
+import { edi } from "./edi";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { integration } from "./integration";
@@ -36,6 +37,7 @@ import { user, userOrganization } from "./user";
 import { weatherAlert } from "./weather-alert";
 import { weatherRadar } from "./weather-radar";
 import { worker } from "./worker";
+import { exchangeRate } from "./exchange-rate";
 
 export const queries = mergeQueryKeys(
   accountingControl,
@@ -51,6 +53,7 @@ export const queries = mergeQueryKeys(
   billingQueue,
   dataEntryControl,
   dispatchControl,
+  edi,
   documentControl,
   documentParsingRule,
   userOrganization,
@@ -76,4 +79,5 @@ export const queries = mergeQueryKeys(
   tableChangeAlert,
   weatherAlert,
   weatherRadar,
+  exchangeRate,
 );

@@ -48,6 +48,7 @@ export type BaseEndpoint =
   | "/fiscal-periods/"
   | "/location-categories/"
   | "/locations/"
+  | "/organizations/"
   | "/document-types/"
   | "/documents/"
   | "/hold-reasons/"
@@ -69,7 +70,10 @@ export type BaseEndpoint =
   | "/accounting/bank-receipts/"
   | "/accounting/bank-receipt-batches/"
   | "/accounting/bank-receipt-batches/select-options/sources/"
-  | "/accounting/bank-receipt-work-items/";
+  | "/accounting/bank-receipt-work-items/"
+  | "/edi/partners/"
+  | "/edi/transfers/inbound/"
+  | "/edi/transfers/outbound/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

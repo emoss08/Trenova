@@ -126,6 +126,41 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          25,
 		PrimaryActionLabel: "View Integration",
 	},
+	{
+		Type:          integration.TypeExchangeRateAPI,
+		Name:          "ExchangeRate-API",
+		Description:   "Real-time and historical exchange rate data for multi-currency accounting, invoicing, and financial operations. Supports 160+ currencies with daily automatic updates.",
+		Category:      integration.CategoryFinancialData,
+		CategoryLabel: "Financial Data",
+		LogoURL:       "/integrations/logos/exchangerateapi.webp",
+		LogoLightURL:  "/integrations/logos/exchangerateapi.webp",
+		LogoDarkURL:   "/integrations/logos/exchangerateapi.webp",
+		DocsURL:       "https://www.exchangerate-api.com/docs",
+		WebsiteURL:    "https://www.exchangerate-api.com/",
+		Color:         "#1a73e8",
+		GlowFrom:      "#1a73e8",
+		GlowTo:        "#4285f4",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://www.exchangerate-api.com/docs",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://www.exchangerate-api.com/",
+			},
+			{
+				Kind:  CatalogLinkKindAPI,
+				Label: "API Reference",
+				URL:   "https://www.exchangerate-api.com/docs/overview",
+			},
+		},
+		Featured:           false,
+		SortOrder:          40,
+		PrimaryActionLabel: "View Integration",
+	},
 }
 
 type CatalogLinkKind string

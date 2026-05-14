@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -314,6 +315,74 @@ func (_c *MockOrganizationRepository_ListLoginSlugsByPrefix_Call) Return(strings
 }
 
 func (_c *MockOrganizationRepository_ListLoginSlugsByPrefix_Call) RunAndReturn(run func(ctx context.Context, prefix string) ([]string, error)) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SelectOptions provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) SelectOptions(ctx context.Context, req *repositories.SelectOrganizationOptionsRequest) (*pagination.ListResult[*tenant.Organization], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectOptions")
+	}
+
+	var r0 *pagination.ListResult[*tenant.Organization]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SelectOrganizationOptionsRequest) (*pagination.ListResult[*tenant.Organization], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SelectOrganizationOptionsRequest) *pagination.ListResult[*tenant.Organization]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*tenant.Organization])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SelectOrganizationOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_SelectOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectOptions'
+type MockOrganizationRepository_SelectOptions_Call struct {
+	*mock.Call
+}
+
+// SelectOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SelectOrganizationOptionsRequest
+func (_e *MockOrganizationRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockOrganizationRepository_SelectOptions_Call {
+	return &MockOrganizationRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
+}
+
+func (_c *MockOrganizationRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *repositories.SelectOrganizationOptionsRequest)) *MockOrganizationRepository_SelectOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SelectOrganizationOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SelectOrganizationOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*tenant.Organization], err error) *MockOrganizationRepository_SelectOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SelectOrganizationOptionsRequest) (*pagination.ListResult[*tenant.Organization], error)) *MockOrganizationRepository_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

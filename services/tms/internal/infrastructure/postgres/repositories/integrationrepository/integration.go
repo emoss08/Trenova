@@ -54,6 +54,23 @@ func (r *repository) ListByTenant(
 	return entities, nil
 }
 
+func (r *repository) ListEnabledByType(
+	ctx context.Context,
+	typ integration.Type,
+) ([]*integration.Integration, error) {
+	entities := make([]*integration.Integration, 0)
+
+	if err := r.db.DB().NewSelect().
+		Model(&entities).
+		Where("integ.type = ?", typ).
+		Where("integ.enabled = ?", true).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) GetByType(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

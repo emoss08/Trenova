@@ -61,6 +61,17 @@ export const organizationSettingsSchema = z.object({
 
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
+export type OrganizationSelectOption = {
+  id: string;
+  name: string;
+  scacCode?: string | null;
+  city?: string | null;
+  state?: {
+    name?: string | null;
+    abbreviation?: string | null;
+  } | null;
+};
+
 export const organizationLogoUrlResponseSchema = z.object({
   url: z.string(),
 });

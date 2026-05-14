@@ -32,8 +32,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
@@ -128,6 +130,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	hazardousmaterialhandler.New,
 	hazmatsegregationrulehandler.New,
 	dothazmatreferencehandler.New,
+	edihandler.New,
 	commodityhandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,
@@ -156,6 +159,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documentparsingrulehandler.New,
 	workerptohandler.New,
 	distanceoverridehandler.New,
+	exchangeratehandler.New,
 	analyticshandler.New,
 	apikeyhandler.New,
 	tablechangealerthandler.New,

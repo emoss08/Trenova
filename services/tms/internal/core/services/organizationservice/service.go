@@ -69,6 +69,13 @@ func (s *service) GetByID(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *service) SelectOptions(
+	ctx context.Context,
+	req *repositories.SelectOrganizationOptionsRequest,
+) (*pagination.ListResult[*tenant.Organization], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
 func (s *service) Update(
 	ctx context.Context,
 	entity *tenant.Organization,

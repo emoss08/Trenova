@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -38,6 +39,10 @@ func RegisterEntities() []any {
 		&accessorialcharge.AccessorialCharge{},
 		&servicetype.ServiceType{},
 		&distanceoverride.DistanceOverride{},
+		&edi.EDIPartner{},
+		&edi.EDIMappingProfile{},
+		&edi.EDIMappingProfileItem{},
+		&edi.EDITransfer{},
 		&audit.Entry{},
 		&shipment.Assignment{},
 		&shipment.Stop{},

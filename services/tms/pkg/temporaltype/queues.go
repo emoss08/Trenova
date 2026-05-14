@@ -14,6 +14,7 @@ const (
 	TaskQueueUpload               TaskQueue = "upload-queue"
 	TaskQueueSMS                  TaskQueue = "sms-queue"
 	TaskQueueFiscal               TaskQueue = "fiscal-queue"
+	TaskQueueEDI                  TaskQueue = "edi-queue"
 )
 
 func (t TaskQueue) String() string {
@@ -28,3 +29,4 @@ const SMSTaskQueue = string(TaskQueueSMS)
 const FiscalTaskQueue = string(TaskQueueFiscal)
 const IntegrationTaskQueue = string(TaskQueueIntegration)
 const WeatherAlertTaskQueue = string(TaskQueueWeatherAlert)
+const EDITaskQueue = string(TaskQueueEDI)

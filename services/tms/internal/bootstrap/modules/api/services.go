@@ -40,9 +40,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/core/services/fleetcodeservice"
@@ -172,6 +174,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazardousmaterialservice.New,
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
+	ediservice.New,
 	commodityservice.New,
 	fx.Annotate(
 		customerpaymentservice.New,
@@ -217,6 +220,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documentpacketruleservice.New,
 	workerptoservice.New,
 	distanceoverrideservice.New,
+	exchangerateservice.New,
 	apikeyservice.New,
 	notificationservice.New,
 	openaidocumentservice.New,

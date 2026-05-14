@@ -157,8 +157,6 @@ export class ShipmentService {
   }
 
   public async bulkTransferToBilling(req: BulkTransferToBillingRequest) {
-    if (req.billType === undefined) {
-    }
     const response = await api.post<BulkTransferToBillingResponse>(
       "/shipments/bulk-transfer-to-billing/",
       { req },

@@ -2301,6 +2301,7 @@ var SequenceConfigColumns = struct {
 	SeparatorChar           Column // "separator_char" → qualified: "sqcfg.separator_char"
 	AllowCustomFormat       Column // "allow_custom_format" → qualified: "sqcfg.allow_custom_format"
 	CustomFormat            Column // "custom_format" → qualified: "sqcfg.custom_format"
+	LocationCodeStrategy    Column // "location_code_strategy" → qualified: "sqcfg.location_code_strategy"
 	Version                 Column // "version" → qualified: "sqcfg.version"
 	CreatedAt               Column // "created_at" → qualified: "sqcfg.created_at"
 	UpdatedAt               Column // "updated_at" → qualified: "sqcfg.updated_at"
@@ -2325,6 +2326,7 @@ var SequenceConfigColumns = struct {
 	SeparatorChar:           NewColumn("separator_char", "sqcfg"),
 	AllowCustomFormat:       NewColumn("allow_custom_format", "sqcfg"),
 	CustomFormat:            NewColumn("custom_format", "sqcfg"),
+	LocationCodeStrategy:    NewColumn("location_code_strategy", "sqcfg"),
 	Version:                 NewColumn("version", "sqcfg"),
 	CreatedAt:               NewColumn("created_at", "sqcfg"),
 	UpdatedAt:               NewColumn("updated_at", "sqcfg"),
@@ -2355,6 +2357,7 @@ var SequenceConfigFieldMap = map[string]string{
 	"separatorChar":           "separator_char",
 	"allowCustomFormat":       "allow_custom_format",
 	"customFormat":            "custom_format",
+	"locationCodeStrategy":    "location_code_strategy",
 	"version":                 "version",
 	"createdAt":               "created_at",
 	"updatedAt":               "updated_at",
@@ -2383,6 +2386,7 @@ var SequenceConfigInsertableColumns = []string{
 	"separator_char",
 	"allow_custom_format",
 	"custom_format",
+	"location_code_strategy",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2458,6 +2462,7 @@ var SequenceConfigFilter = struct {
 	SeparatorChar           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "separatorChar" → DB: "separator_char"
 	AllowCustomFormat       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowCustomFormat" → DB: "allow_custom_format"
 	CustomFormat            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customFormat" → DB: "custom_format"
+	LocationCodeStrategy    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "locationCodeStrategy" → DB: "location_code_strategy"
 	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2521,6 +2526,9 @@ var SequenceConfigFilter = struct {
 	},
 	CustomFormat: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("customFormat", op, value)
+	},
+	LocationCodeStrategy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("locationCodeStrategy", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

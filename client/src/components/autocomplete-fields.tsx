@@ -16,6 +16,7 @@ import type { GLAccount } from "@/types/gl-account";
 import type { HazardousMaterial } from "@/types/hazardous-material";
 import type { Location } from "@/types/location";
 import type { LocationCategory } from "@/types/location-category";
+import type { OrganizationSelectOption } from "@/types/organization";
 import type { API_ENDPOINTS } from "@/types/server";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
@@ -373,6 +374,33 @@ export function LocationAutocompleteField<T extends FieldValues>({
           <span className="w-full truncate text-2xs text-muted-foreground">
             {formatLocation(option)}
           </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function OrganizationAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<OrganizationSelectOption, T>) {
+  return (
+    <AutocompleteField<OrganizationSelectOption, T>
+      link="/organizations/select-options/"
+      selectedValueLink="/organizations/"
+      initialLimit={50}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) =>
+        option.scacCode ? `${option.scacCode} - ${option.name}` : option.name
+      }
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.scacCode ? `${option.scacCode} - ${option.name}` : option.name}</span>
+          {option.city && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.city}
+            </span>
+          )}
         </div>
       )}
       {...props}
