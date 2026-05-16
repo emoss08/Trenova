@@ -18,8 +18,8 @@ export function useSwitchOrganization() {
     mutationFn: (data: SwitchOrganizationRequest) =>
       apiService.userService.switchOrganization(data),
     resourceName: "Organization",
-    onSuccess: (response) => {
-      setUser(response.user);
+    onSuccess: (user) => {
+      setUser(user);
 
       queryClient.clear();
 

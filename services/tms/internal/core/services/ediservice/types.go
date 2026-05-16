@@ -36,6 +36,35 @@ type CreateInternalPartnerPairRequest struct {
 	TargetSettings        map[string]any        `json:"targetSettings"`
 }
 
+type CreateEDIConnectionRequest struct {
+	TenantInfo           pagination.TenantInfo       `json:"-"`
+	TargetOrganizationID pulid.ID                    `json:"targetOrganizationId"`
+	Method               edi.ConnectionMethod        `json:"method"`
+	Capabilities         edi.ConnectionCapabilities  `json:"capabilities"`
+	SourcePartnerConfig  edi.ConnectionPartnerConfig `json:"sourcePartnerConfig"`
+	TargetPartnerConfig  edi.ConnectionPartnerConfig `json:"targetPartnerConfig"`
+}
+
+type EDIConnectionActionRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	ConnectionID pulid.ID              `json:"-"`
+	Reason       string                `json:"reason"`
+}
+
+type UpsertEDICommunicationProfileRequest struct {
+	TenantInfo      pagination.TenantInfo `json:"-"`
+	ProfileID       pulid.ID              `json:"-"`
+	EDIConnectionID pulid.ID              `json:"ediConnectionId"`
+	EDIPartnerID    pulid.ID              `json:"ediPartnerId"`
+	Method          edi.ConnectionMethod  `json:"method"`
+	Status          string                `json:"status"`
+	Name            string                `json:"name"`
+	Description     string                `json:"description"`
+	Config          map[string]any        `json:"config"`
+	Secrets         map[string]string     `json:"secrets"`
+	Version         int64                 `json:"version"`
+}
+
 type ApproveTransferRequest struct {
 	TenantInfo pagination.TenantInfo        `json:"-"`
 	TransferID pulid.ID                     `json:"-"`
@@ -51,6 +80,74 @@ type RejectTransferRequest struct {
 type CancelTransferRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	TransferID pulid.ID              `json:"-"`
+}
+
+type ExpireTransferRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	TransferID pulid.ID              `json:"-"`
+}
+
+type TransferChangeActionRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ChangeID   pulid.ID              `json:"-"`
+	Reason     string                `json:"reason"`
+}
+
+type PreviewEDIDocumentRequest struct {
+	TenantInfo               pagination.TenantInfo  `json:"-"`
+	PartnerDocumentProfileID pulid.ID               `json:"partnerDocumentProfileId"`
+	EDIPartnerID             pulid.ID               `json:"ediPartnerId"`
+	ShipmentID               pulid.ID               `json:"shipmentId"`
+	TransferID               pulid.ID               `json:"transferId"`
+	Payload                  *edi.LoadTenderPayload `json:"payload"`
+}
+
+type GenerateEDIDocumentRequest struct {
+	TenantInfo               pagination.TenantInfo  `json:"-"`
+	PartnerDocumentProfileID pulid.ID               `json:"partnerDocumentProfileId"`
+	EDIPartnerID             pulid.ID               `json:"ediPartnerId"`
+	ShipmentID               pulid.ID               `json:"shipmentId"`
+	TransferID               pulid.ID               `json:"transferId"`
+	Payload                  *edi.LoadTenderPayload `json:"payload"`
+	GeneratedByID            pulid.ID               `json:"-"`
+}
+
+type UpsertEDIPartnerDocumentProfileRequest struct {
+	TenantInfo         pagination.TenantInfo    `json:"-"`
+	ProfileID          pulid.ID                 `json:"-"`
+	EDIPartnerID       pulid.ID                 `json:"ediPartnerId"`
+	TemplateID         pulid.ID                 `json:"templateId"`
+	TemplateVersionID  pulid.ID                 `json:"templateVersionId"`
+	Name               string                   `json:"name"`
+	Status             edi.DocumentStatus       `json:"status"`
+	X12VersionOverride string                   `json:"x12VersionOverride"`
+	FunctionalGroupID  string                   `json:"functionalGroupId"`
+	Envelope           edi.X12EnvelopeSettings  `json:"envelope"`
+	Acknowledgment     edi.AcknowledgmentConfig `json:"acknowledgment"`
+	ValidationMode     edi.ValidationMode       `json:"validationMode"`
+	PartnerSettings    map[string]any           `json:"partnerSettings"`
+	Version            int64                    `json:"version"`
+}
+
+type EDIDiagnostic struct {
+	Severity        edi.ValidationSeverity `json:"severity"`
+	Code            string                 `json:"code"`
+	SegmentID       string                 `json:"segmentId"`
+	ElementPosition int                    `json:"elementPosition"`
+	Path            string                 `json:"path"`
+	Message         string                 `json:"message"`
+}
+
+type EDIDocumentPreview struct {
+	RawX12                   string                         `json:"rawX12"`
+	SegmentCount             int64                          `json:"segmentCount"`
+	X12Version               string                         `json:"x12Version"`
+	InterchangeControlNumber string                         `json:"interchangeControlNumber"`
+	GroupControlNumber       string                         `json:"groupControlNumber"`
+	TransactionControlNumber string                         `json:"transactionControlNumber"`
+	Diagnostics              []EDIDiagnostic                `json:"diagnostics"`
+	Profile                  *edi.EDIPartnerDocumentProfile `json:"profile"`
+	TemplateVersion          *edi.EDITemplateVersion        `json:"templateVersion"`
 }
 
 type MappingPreview struct {

@@ -24,6 +24,499 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// EDICommunicationProfile — table "edi_communication_profiles", alias "ecp"
+// ---------------------------------------------------------------------------
+
+// EDICommunicationProfileTable holds the table name, alias, and primary key columns
+// for the "edi_communication_profiles" table. The alias "ecp" is used in all generated
+// SQL fragments (e.g. "ecp.id = ?").
+var EDICommunicationProfileTable = TableInfo{
+	Name:       "edi_communication_profiles",
+	Alias:      "ecp",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// EDICommunicationProfileColumns provides type-safe column references for the "edi_communication_profiles" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDICommunicationProfileColumns.ID.String())
+//	// SELECT ecp.id FROM edi_communication_profiles AS ecp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDICommunicationProfileColumns.ID.Eq(), id)           // WHERE ecp.id = ?
+//	q.Order(EDICommunicationProfileColumns.CreatedAt.OrderDesc())  // ORDER BY ecp.created_at DESC
+var EDICommunicationProfileColumns = struct {
+	ID               Column // "id" → qualified: "ecp.id"
+	BusinessUnitID   Column // "business_unit_id" → qualified: "ecp.business_unit_id"
+	OrganizationID   Column // "organization_id" → qualified: "ecp.organization_id"
+	EDIConnectionID  Column // "edi_connection_id" → qualified: "ecp.edi_connection_id"
+	EDIPartnerID     Column // "edi_partner_id" → qualified: "ecp.edi_partner_id"
+	Method           Column // "method" → qualified: "ecp.method"
+	Status           Column // "status" → qualified: "ecp.status"
+	Name             Column // "name" → qualified: "ecp.name"
+	Description      Column // "description" → qualified: "ecp.description"
+	Config           Column // "config" → qualified: "ecp.config"
+	EncryptedSecrets Column // "encrypted_secrets" → qualified: "ecp.encrypted_secrets"
+	SearchVector     Column // "search_vector" → qualified: "ecp.search_vector"
+	Rank             Column // "rank" → qualified: "ecp.rank"
+	Version          Column // "version" → qualified: "ecp.version"
+	CreatedAt        Column // "created_at" → qualified: "ecp.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "ecp.updated_at"
+}{
+	ID:               NewColumn("id", "ecp"),
+	BusinessUnitID:   NewColumn("business_unit_id", "ecp"),
+	OrganizationID:   NewColumn("organization_id", "ecp"),
+	EDIConnectionID:  NewColumn("edi_connection_id", "ecp"),
+	EDIPartnerID:     NewColumn("edi_partner_id", "ecp"),
+	Method:           NewColumn("method", "ecp"),
+	Status:           NewColumn("status", "ecp"),
+	Name:             NewColumn("name", "ecp"),
+	Description:      NewColumn("description", "ecp"),
+	Config:           NewColumn("config", "ecp"),
+	EncryptedSecrets: NewColumn("encrypted_secrets", "ecp"),
+	SearchVector:     NewColumn("search_vector", "ecp"),
+	Rank:             NewColumn("rank", "ecp"),
+	Version:          NewColumn("version", "ecp"),
+	CreatedAt:        NewColumn("created_at", "ecp"),
+	UpdatedAt:        NewColumn("updated_at", "ecp"),
+}
+
+// EDICommunicationProfileFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDICommunicationProfile.GetStaticFieldMap().
+var EDICommunicationProfileFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"ediConnectionId": "edi_connection_id",
+	"ediPartnerId":    "edi_partner_id",
+	"method":          "method",
+	"status":          "status",
+	"name":            "name",
+	"description":     "description",
+	"config":          "config",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// EDICommunicationProfileInsertableColumns lists column names suitable for INSERT statements on the "edi_communication_profiles" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDICommunicationProfileInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"edi_connection_id",
+	"edi_partner_id",
+	"method",
+	"status",
+	"name",
+	"description",
+	"config",
+	"encrypted_secrets",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// EDICommunicationProfileRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDICommunicationProfileRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var EDICommunicationProfileRelations = struct {
+	BusinessUnit string
+	Organization string
+	Connection   string
+	Partner      string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+	Connection:   "Connection",
+	Partner:      "Partner",
+}
+
+// EDICommunicationProfileScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ecp.organization_id = ? AND ecp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EDICommunicationProfileScopeTenant(sq, ti).
+//		Where(buncolgen.EDICommunicationProfileColumns.ID.Eq(), id)
+func EDICommunicationProfileScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EDICommunicationProfileColumns.OrganizationID, EDICommunicationProfileColumns.BusinessUnitID, ti)
+}
+
+// EDICommunicationProfileScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EDICommunicationProfileScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EDICommunicationProfileColumns.ID.In(), bun.List(ids))
+//	})
+func EDICommunicationProfileScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EDICommunicationProfileColumns.OrganizationID, EDICommunicationProfileColumns.BusinessUnitID, ti)
+}
+
+// EDICommunicationProfileScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EDICommunicationProfileScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EDICommunicationProfileColumns.ID.Eq(), id)
+//	})
+func EDICommunicationProfileScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EDICommunicationProfileColumns.OrganizationID, EDICommunicationProfileColumns.BusinessUnitID, ti)
+}
+
+// EDICommunicationProfileApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EDICommunicationProfileApplyTenant(tenantInfo))
+func EDICommunicationProfileApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EDICommunicationProfileColumns.OrganizationID, EDICommunicationProfileColumns.BusinessUnitID, ti)
+}
+
+// EDICommunicationProfileFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_communication_profiles" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDICommunicationProfileFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDICommunicationProfileFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	EDIConnectionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
+	EDIPartnerID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	Method          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Name            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Config          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "config" → DB: "config"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	EDIConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediConnectionId", op, value)
+	},
+	EDIPartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediPartnerId", op, value)
+	},
+	Method: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("method", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Config: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("config", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDIConnection — table "edi_connections", alias "ec"
+// ---------------------------------------------------------------------------
+
+// EDIConnectionTable holds the table name, alias, and primary key columns
+// for the "edi_connections" table. The alias "ec" is used in all generated
+// SQL fragments (e.g. "ec.id = ?").
+var EDIConnectionTable = TableInfo{
+	Name:       "edi_connections",
+	Alias:      "ec",
+	PrimaryKey: []string{"id"},
+}
+
+// EDIConnectionColumns provides type-safe column references for the "edi_connections" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDIConnectionColumns.ID.String())
+//	// SELECT ec.id FROM edi_connections AS ec
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDIConnectionColumns.ID.Eq(), id)           // WHERE ec.id = ?
+//	q.Order(EDIConnectionColumns.CreatedAt.OrderDesc())  // ORDER BY ec.created_at DESC
+var EDIConnectionColumns = struct {
+	ID                   Column // "id" → qualified: "ec.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "ec.business_unit_id"
+	SourceOrganizationID Column // "source_organization_id" → qualified: "ec.source_organization_id"
+	TargetOrganizationID Column // "target_organization_id" → qualified: "ec.target_organization_id"
+	SourcePartnerID      Column // "source_partner_id" → qualified: "ec.source_partner_id"
+	TargetPartnerID      Column // "target_partner_id" → qualified: "ec.target_partner_id"
+	Method               Column // "method" → qualified: "ec.method"
+	Status               Column // "status" → qualified: "ec.status"
+	Capabilities         Column // "capabilities" → qualified: "ec.capabilities"
+	SourcePartnerConfig  Column // "source_partner_config" → qualified: "ec.source_partner_config"
+	TargetPartnerConfig  Column // "target_partner_config" → qualified: "ec.target_partner_config"
+	RequestedByID        Column // "requested_by_id" → qualified: "ec.requested_by_id"
+	RequestedAt          Column // "requested_at" → qualified: "ec.requested_at"
+	AcceptedByID         Column // "accepted_by_id" → qualified: "ec.accepted_by_id"
+	AcceptedAt           Column // "accepted_at" → qualified: "ec.accepted_at"
+	RejectedByID         Column // "rejected_by_id" → qualified: "ec.rejected_by_id"
+	RejectedAt           Column // "rejected_at" → qualified: "ec.rejected_at"
+	RejectionReason      Column // "rejection_reason" → qualified: "ec.rejection_reason"
+	SuspendedByID        Column // "suspended_by_id" → qualified: "ec.suspended_by_id"
+	SuspendedAt          Column // "suspended_at" → qualified: "ec.suspended_at"
+	RevokedByID          Column // "revoked_by_id" → qualified: "ec.revoked_by_id"
+	RevokedAt            Column // "revoked_at" → qualified: "ec.revoked_at"
+	Version              Column // "version" → qualified: "ec.version"
+	CreatedAt            Column // "created_at" → qualified: "ec.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "ec.updated_at"
+}{
+	ID:                   NewColumn("id", "ec"),
+	BusinessUnitID:       NewColumn("business_unit_id", "ec"),
+	SourceOrganizationID: NewColumn("source_organization_id", "ec"),
+	TargetOrganizationID: NewColumn("target_organization_id", "ec"),
+	SourcePartnerID:      NewColumn("source_partner_id", "ec"),
+	TargetPartnerID:      NewColumn("target_partner_id", "ec"),
+	Method:               NewColumn("method", "ec"),
+	Status:               NewColumn("status", "ec"),
+	Capabilities:         NewColumn("capabilities", "ec"),
+	SourcePartnerConfig:  NewColumn("source_partner_config", "ec"),
+	TargetPartnerConfig:  NewColumn("target_partner_config", "ec"),
+	RequestedByID:        NewColumn("requested_by_id", "ec"),
+	RequestedAt:          NewColumn("requested_at", "ec"),
+	AcceptedByID:         NewColumn("accepted_by_id", "ec"),
+	AcceptedAt:           NewColumn("accepted_at", "ec"),
+	RejectedByID:         NewColumn("rejected_by_id", "ec"),
+	RejectedAt:           NewColumn("rejected_at", "ec"),
+	RejectionReason:      NewColumn("rejection_reason", "ec"),
+	SuspendedByID:        NewColumn("suspended_by_id", "ec"),
+	SuspendedAt:          NewColumn("suspended_at", "ec"),
+	RevokedByID:          NewColumn("revoked_by_id", "ec"),
+	RevokedAt:            NewColumn("revoked_at", "ec"),
+	Version:              NewColumn("version", "ec"),
+	CreatedAt:            NewColumn("created_at", "ec"),
+	UpdatedAt:            NewColumn("updated_at", "ec"),
+}
+
+// EDIConnectionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDIConnection.GetStaticFieldMap().
+var EDIConnectionFieldMap = map[string]string{
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"sourceOrganizationId": "source_organization_id",
+	"targetOrganizationId": "target_organization_id",
+	"sourcePartnerId":      "source_partner_id",
+	"targetPartnerId":      "target_partner_id",
+	"method":               "method",
+	"status":               "status",
+	"capabilities":         "capabilities",
+	"sourcePartnerConfig":  "source_partner_config",
+	"targetPartnerConfig":  "target_partner_config",
+	"requestedById":        "requested_by_id",
+	"requestedAt":          "requested_at",
+	"acceptedById":         "accepted_by_id",
+	"acceptedAt":           "accepted_at",
+	"rejectedById":         "rejected_by_id",
+	"rejectedAt":           "rejected_at",
+	"rejectionReason":      "rejection_reason",
+	"suspendedById":        "suspended_by_id",
+	"suspendedAt":          "suspended_at",
+	"revokedById":          "revoked_by_id",
+	"revokedAt":            "revoked_at",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// EDIConnectionInsertableColumns lists column names suitable for INSERT statements on the "edi_connections" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDIConnectionInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"source_organization_id",
+	"target_organization_id",
+	"source_partner_id",
+	"target_partner_id",
+	"method",
+	"status",
+	"capabilities",
+	"source_partner_config",
+	"target_partner_config",
+	"requested_by_id",
+	"requested_at",
+	"accepted_by_id",
+	"accepted_at",
+	"rejected_by_id",
+	"rejected_at",
+	"rejection_reason",
+	"suspended_by_id",
+	"suspended_at",
+	"revoked_by_id",
+	"revoked_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// EDIConnectionRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDIConnectionRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var EDIConnectionRelations = struct {
+	BusinessUnit       string
+	SourceOrganization string
+	TargetOrganization string
+	SourcePartner      string
+	TargetPartner      string
+}{
+	BusinessUnit:       "BusinessUnit",
+	SourceOrganization: "SourceOrganization",
+	TargetOrganization: "TargetOrganization",
+	SourcePartner:      "SourcePartner",
+	TargetPartner:      "TargetPartner",
+}
+
+// EDIConnectionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_connections" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDIConnectionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDIConnectionFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	SourceOrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceOrganizationId" → DB: "source_organization_id"
+	TargetOrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetOrganizationId" → DB: "target_organization_id"
+	SourcePartnerID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourcePartnerId" → DB: "source_partner_id"
+	TargetPartnerID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetPartnerId" → DB: "target_partner_id"
+	Method               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Capabilities         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "capabilities" → DB: "capabilities"
+	SourcePartnerConfig  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourcePartnerConfig" → DB: "source_partner_config"
+	TargetPartnerConfig  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetPartnerConfig" → DB: "target_partner_config"
+	RequestedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	RequestedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedAt" → DB: "requested_at"
+	AcceptedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acceptedById" → DB: "accepted_by_id"
+	AcceptedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acceptedAt" → DB: "accepted_at"
+	RejectedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectedById" → DB: "rejected_by_id"
+	RejectedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectedAt" → DB: "rejected_at"
+	RejectionReason      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rejectionReason" → DB: "rejection_reason"
+	SuspendedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suspendedById" → DB: "suspended_by_id"
+	SuspendedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suspendedAt" → DB: "suspended_at"
+	RevokedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedById" → DB: "revoked_by_id"
+	RevokedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedAt" → DB: "revoked_at"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	SourceOrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceOrganizationId", op, value)
+	},
+	TargetOrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetOrganizationId", op, value)
+	},
+	SourcePartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourcePartnerId", op, value)
+	},
+	TargetPartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetPartnerId", op, value)
+	},
+	Method: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("method", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Capabilities: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("capabilities", op, value)
+	},
+	SourcePartnerConfig: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourcePartnerConfig", op, value)
+	},
+	TargetPartnerConfig: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetPartnerConfig", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedById", op, value)
+	},
+	RequestedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedAt", op, value)
+	},
+	AcceptedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("acceptedById", op, value)
+	},
+	AcceptedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("acceptedAt", op, value)
+	},
+	RejectedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectedById", op, value)
+	},
+	RejectedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectedAt", op, value)
+	},
+	RejectionReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rejectionReason", op, value)
+	},
+	SuspendedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("suspendedById", op, value)
+	},
+	SuspendedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("suspendedAt", op, value)
+	},
+	RevokedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("revokedById", op, value)
+	},
+	RevokedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("revokedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EDIMappingProfile — table "edi_mapping_profiles", alias "emp"
 // ---------------------------------------------------------------------------
 
@@ -464,6 +957,7 @@ var EDIPartnerColumns = struct {
 	Name                       Column // "name" → qualified: "ep.name"
 	Description                Column // "description" → qualified: "ep.description"
 	InternalOrganizationID     Column // "internal_organization_id" → qualified: "ep.internal_organization_id"
+	EDIConnectionID            Column // "edi_connection_id" → qualified: "ep.edi_connection_id"
 	CustomerID                 Column // "customer_id" → qualified: "ep.customer_id"
 	DefaultTransportID         Column // "default_transport_id" → qualified: "ep.default_transport_id"
 	DefaultMappingProfileID    Column // "default_mapping_profile_id" → qualified: "ep.default_mapping_profile_id"
@@ -491,6 +985,7 @@ var EDIPartnerColumns = struct {
 	Name:                       NewColumn("name", "ep"),
 	Description:                NewColumn("description", "ep"),
 	InternalOrganizationID:     NewColumn("internal_organization_id", "ep"),
+	EDIConnectionID:            NewColumn("edi_connection_id", "ep"),
 	CustomerID:                 NewColumn("customer_id", "ep"),
 	DefaultTransportID:         NewColumn("default_transport_id", "ep"),
 	DefaultMappingProfileID:    NewColumn("default_mapping_profile_id", "ep"),
@@ -524,6 +1019,7 @@ var EDIPartnerFieldMap = map[string]string{
 	"name":                       "name",
 	"description":                "description",
 	"internalOrganizationId":     "internal_organization_id",
+	"ediConnectionId":            "edi_connection_id",
 	"customerId":                 "customer_id",
 	"defaultTransportId":         "default_transport_id",
 	"defaultMappingProfileId":    "default_mapping_profile_id",
@@ -553,6 +1049,7 @@ var EDIPartnerInsertableColumns = []string{
 	"name",
 	"description",
 	"internal_organization_id",
+	"edi_connection_id",
 	"customer_id",
 	"default_transport_id",
 	"default_mapping_profile_id",
@@ -580,6 +1077,8 @@ var EDIPartnerRelations = struct {
 	Organization         string
 	InternalOrganization string
 	Customer             string
+	Connection           string
+	DefaultTransport     string
 	MappingProfile       string
 	MappingEntries       string
 }{
@@ -587,6 +1086,8 @@ var EDIPartnerRelations = struct {
 	Organization:         "Organization",
 	InternalOrganization: "InternalOrganization",
 	Customer:             "Customer",
+	Connection:           "Connection",
+	DefaultTransport:     "DefaultTransport",
 	MappingProfile:       "MappingProfile",
 	MappingEntries:       "MappingEntries",
 }
@@ -650,6 +1151,7 @@ var EDIPartnerFilter = struct {
 	Name                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
 	Description                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	InternalOrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "internalOrganizationId" → DB: "internal_organization_id"
+	EDIConnectionID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
 	CustomerID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
 	DefaultTransportID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultTransportId" → DB: "default_transport_id"
 	DefaultMappingProfileID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultMappingProfileId" → DB: "default_mapping_profile_id"
@@ -692,6 +1194,9 @@ var EDIPartnerFilter = struct {
 	},
 	InternalOrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("internalOrganizationId", op, value)
+	},
+	EDIConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediConnectionId", op, value)
 	},
 	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("customerId", op, value)
@@ -1025,6 +1530,394 @@ var EDITransferFilter = struct {
 	},
 	CanceledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("canceledAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ShipmentLink — table "edi_shipment_links", alias "esl"
+// ---------------------------------------------------------------------------
+
+// ShipmentLinkTable holds the table name, alias, and primary key columns
+// for the "edi_shipment_links" table. The alias "esl" is used in all generated
+// SQL fragments (e.g. "esl.id = ?").
+var ShipmentLinkTable = TableInfo{
+	Name:       "edi_shipment_links",
+	Alias:      "esl",
+	PrimaryKey: []string{"id", "business_unit_id"},
+}
+
+// ShipmentLinkColumns provides type-safe column references for the "edi_shipment_links" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ShipmentLinkColumns.ID.String())
+//	// SELECT esl.id FROM edi_shipment_links AS esl
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ShipmentLinkColumns.ID.Eq(), id)           // WHERE esl.id = ?
+//	q.Order(ShipmentLinkColumns.CreatedAt.OrderDesc())  // ORDER BY esl.created_at DESC
+var ShipmentLinkColumns = struct {
+	ID                   Column // "id" → qualified: "esl.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "esl.business_unit_id"
+	SourceOrganizationID Column // "source_organization_id" → qualified: "esl.source_organization_id"
+	TargetOrganizationID Column // "target_organization_id" → qualified: "esl.target_organization_id"
+	SourceShipmentID     Column // "source_shipment_id" → qualified: "esl.source_shipment_id"
+	TargetShipmentID     Column // "target_shipment_id" → qualified: "esl.target_shipment_id"
+	TenderTransferID     Column // "tender_transfer_id" → qualified: "esl.tender_transfer_id"
+	OriginatingMessageID Column // "originating_message_id" → qualified: "esl.originating_message_id"
+	SyncPolicy           Column // "sync_policy" → qualified: "esl.sync_policy"
+	FieldOwnership       Column // "field_ownership" → qualified: "esl.field_ownership"
+	Status               Column // "status" → qualified: "esl.status"
+	Version              Column // "version" → qualified: "esl.version"
+	CreatedAt            Column // "created_at" → qualified: "esl.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "esl.updated_at"
+}{
+	ID:                   NewColumn("id", "esl"),
+	BusinessUnitID:       NewColumn("business_unit_id", "esl"),
+	SourceOrganizationID: NewColumn("source_organization_id", "esl"),
+	TargetOrganizationID: NewColumn("target_organization_id", "esl"),
+	SourceShipmentID:     NewColumn("source_shipment_id", "esl"),
+	TargetShipmentID:     NewColumn("target_shipment_id", "esl"),
+	TenderTransferID:     NewColumn("tender_transfer_id", "esl"),
+	OriginatingMessageID: NewColumn("originating_message_id", "esl"),
+	SyncPolicy:           NewColumn("sync_policy", "esl"),
+	FieldOwnership:       NewColumn("field_ownership", "esl"),
+	Status:               NewColumn("status", "esl"),
+	Version:              NewColumn("version", "esl"),
+	CreatedAt:            NewColumn("created_at", "esl"),
+	UpdatedAt:            NewColumn("updated_at", "esl"),
+}
+
+// ShipmentLinkFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ShipmentLink.GetStaticFieldMap().
+var ShipmentLinkFieldMap = map[string]string{
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"sourceOrganizationId": "source_organization_id",
+	"targetOrganizationId": "target_organization_id",
+	"sourceShipmentId":     "source_shipment_id",
+	"targetShipmentId":     "target_shipment_id",
+	"tenderTransferId":     "tender_transfer_id",
+	"originatingMessageId": "originating_message_id",
+	"syncPolicy":           "sync_policy",
+	"fieldOwnership":       "field_ownership",
+	"status":               "status",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// ShipmentLinkInsertableColumns lists column names suitable for INSERT statements on the "edi_shipment_links" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ShipmentLinkInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"source_organization_id",
+	"target_organization_id",
+	"source_shipment_id",
+	"target_shipment_id",
+	"tender_transfer_id",
+	"originating_message_id",
+	"sync_policy",
+	"field_ownership",
+	"status",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ShipmentLinkFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_shipment_links" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ShipmentLinkFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ShipmentLinkFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	SourceOrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceOrganizationId" → DB: "source_organization_id"
+	TargetOrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetOrganizationId" → DB: "target_organization_id"
+	SourceShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceShipmentId" → DB: "source_shipment_id"
+	TargetShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetShipmentId" → DB: "target_shipment_id"
+	TenderTransferID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderTransferId" → DB: "tender_transfer_id"
+	OriginatingMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originatingMessageId" → DB: "originating_message_id"
+	SyncPolicy           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncPolicy" → DB: "sync_policy"
+	FieldOwnership       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fieldOwnership" → DB: "field_ownership"
+	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	SourceOrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceOrganizationId", op, value)
+	},
+	TargetOrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetOrganizationId", op, value)
+	},
+	SourceShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceShipmentId", op, value)
+	},
+	TargetShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetShipmentId", op, value)
+	},
+	TenderTransferID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tenderTransferId", op, value)
+	},
+	OriginatingMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("originatingMessageId", op, value)
+	},
+	SyncPolicy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncPolicy", op, value)
+	},
+	FieldOwnership: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fieldOwnership", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// TransferChange — table "edi_transfer_changes", alias "etc"
+// ---------------------------------------------------------------------------
+
+// TransferChangeTable holds the table name, alias, and primary key columns
+// for the "edi_transfer_changes" table. The alias "etc" is used in all generated
+// SQL fragments (e.g. "etc.id = ?").
+var TransferChangeTable = TableInfo{
+	Name:       "edi_transfer_changes",
+	Alias:      "etc",
+	PrimaryKey: []string{"id", "business_unit_id"},
+}
+
+// TransferChangeColumns provides type-safe column references for the "edi_transfer_changes" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(TransferChangeColumns.ID.String())
+//	// SELECT etc.id FROM edi_transfer_changes AS etc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(TransferChangeColumns.ID.Eq(), id)           // WHERE etc.id = ?
+//	q.Order(TransferChangeColumns.CreatedAt.OrderDesc())  // ORDER BY etc.created_at DESC
+var TransferChangeColumns = struct {
+	ID                    Column // "id" → qualified: "etc.id"
+	BusinessUnitID        Column // "business_unit_id" → qualified: "etc.business_unit_id"
+	ShipmentLinkID        Column // "shipment_link_id" → qualified: "etc.shipment_link_id"
+	Direction             Column // "direction" → qualified: "etc.direction"
+	ChangeType            Column // "change_type" → qualified: "etc.change_type"
+	Status                Column // "status" → qualified: "etc.status"
+	ConflictStatus        Column // "conflict_status" → qualified: "etc.conflict_status"
+	ConflictReason        Column // "conflict_reason" → qualified: "etc.conflict_reason"
+	IdempotencyKey        Column // "idempotency_key" → qualified: "etc.idempotency_key"
+	SourceShipmentVersion Column // "source_shipment_version" → qualified: "etc.source_shipment_version"
+	TargetShipmentVersion Column // "target_shipment_version" → qualified: "etc.target_shipment_version"
+	Payload               Column // "payload" → qualified: "etc.payload"
+	Diff                  Column // "diff" → qualified: "etc.diff"
+	ReviewedByID          Column // "reviewed_by_id" → qualified: "etc.reviewed_by_id"
+	ReviewedAt            Column // "reviewed_at" → qualified: "etc.reviewed_at"
+	AppliedByID           Column // "applied_by_id" → qualified: "etc.applied_by_id"
+	AppliedAt             Column // "applied_at" → qualified: "etc.applied_at"
+	FailureReason         Column // "failure_reason" → qualified: "etc.failure_reason"
+	SearchVector          Column // "search_vector" → qualified: "etc.search_vector"
+	Rank                  Column // "rank" → qualified: "etc.rank"
+	Version               Column // "version" → qualified: "etc.version"
+	CreatedAt             Column // "created_at" → qualified: "etc.created_at"
+	UpdatedAt             Column // "updated_at" → qualified: "etc.updated_at"
+}{
+	ID:                    NewColumn("id", "etc"),
+	BusinessUnitID:        NewColumn("business_unit_id", "etc"),
+	ShipmentLinkID:        NewColumn("shipment_link_id", "etc"),
+	Direction:             NewColumn("direction", "etc"),
+	ChangeType:            NewColumn("change_type", "etc"),
+	Status:                NewColumn("status", "etc"),
+	ConflictStatus:        NewColumn("conflict_status", "etc"),
+	ConflictReason:        NewColumn("conflict_reason", "etc"),
+	IdempotencyKey:        NewColumn("idempotency_key", "etc"),
+	SourceShipmentVersion: NewColumn("source_shipment_version", "etc"),
+	TargetShipmentVersion: NewColumn("target_shipment_version", "etc"),
+	Payload:               NewColumn("payload", "etc"),
+	Diff:                  NewColumn("diff", "etc"),
+	ReviewedByID:          NewColumn("reviewed_by_id", "etc"),
+	ReviewedAt:            NewColumn("reviewed_at", "etc"),
+	AppliedByID:           NewColumn("applied_by_id", "etc"),
+	AppliedAt:             NewColumn("applied_at", "etc"),
+	FailureReason:         NewColumn("failure_reason", "etc"),
+	SearchVector:          NewColumn("search_vector", "etc"),
+	Rank:                  NewColumn("rank", "etc"),
+	Version:               NewColumn("version", "etc"),
+	CreatedAt:             NewColumn("created_at", "etc"),
+	UpdatedAt:             NewColumn("updated_at", "etc"),
+}
+
+// TransferChangeFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by TransferChange.GetStaticFieldMap().
+var TransferChangeFieldMap = map[string]string{
+	"id":                    "id",
+	"businessUnitId":        "business_unit_id",
+	"shipmentLinkId":        "shipment_link_id",
+	"direction":             "direction",
+	"changeType":            "change_type",
+	"status":                "status",
+	"conflictStatus":        "conflict_status",
+	"conflictReason":        "conflict_reason",
+	"idempotencyKey":        "idempotency_key",
+	"sourceShipmentVersion": "source_shipment_version",
+	"targetShipmentVersion": "target_shipment_version",
+	"payload":               "payload",
+	"diff":                  "diff",
+	"reviewedById":          "reviewed_by_id",
+	"reviewedAt":            "reviewed_at",
+	"appliedById":           "applied_by_id",
+	"appliedAt":             "applied_at",
+	"failureReason":         "failure_reason",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
+}
+
+// TransferChangeInsertableColumns lists column names suitable for INSERT statements on the "edi_transfer_changes" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var TransferChangeInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"shipment_link_id",
+	"direction",
+	"change_type",
+	"status",
+	"conflict_status",
+	"conflict_reason",
+	"idempotency_key",
+	"source_shipment_version",
+	"target_shipment_version",
+	"payload",
+	"diff",
+	"reviewed_by_id",
+	"reviewed_at",
+	"applied_by_id",
+	"applied_at",
+	"failure_reason",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// TransferChangeFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_transfer_changes" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	TransferChangeFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var TransferChangeFilter = struct {
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	ShipmentLinkID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentLinkId" → DB: "shipment_link_id"
+	Direction             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	ChangeType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "changeType" → DB: "change_type"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ConflictStatus        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "conflictStatus" → DB: "conflict_status"
+	ConflictReason        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "conflictReason" → DB: "conflict_reason"
+	IdempotencyKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "idempotencyKey" → DB: "idempotency_key"
+	SourceShipmentVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceShipmentVersion" → DB: "source_shipment_version"
+	TargetShipmentVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetShipmentVersion" → DB: "target_shipment_version"
+	Payload               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
+	Diff                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "diff" → DB: "diff"
+	ReviewedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedById" → DB: "reviewed_by_id"
+	ReviewedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reviewedAt" → DB: "reviewed_at"
+	AppliedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedById" → DB: "applied_by_id"
+	AppliedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedAt" → DB: "applied_at"
+	FailureReason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureReason" → DB: "failure_reason"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	ShipmentLinkID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentLinkId", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	ChangeType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("changeType", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	ConflictStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("conflictStatus", op, value)
+	},
+	ConflictReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("conflictReason", op, value)
+	},
+	IdempotencyKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("idempotencyKey", op, value)
+	},
+	SourceShipmentVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceShipmentVersion", op, value)
+	},
+	TargetShipmentVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetShipmentVersion", op, value)
+	},
+	Payload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payload", op, value)
+	},
+	Diff: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("diff", op, value)
+	},
+	ReviewedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reviewedById", op, value)
+	},
+	ReviewedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reviewedAt", op, value)
+	},
+	AppliedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedById", op, value)
+	},
+	AppliedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appliedAt", op, value)
+	},
+	FailureReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureReason", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

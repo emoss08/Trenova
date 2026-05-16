@@ -108,74 +108,6 @@ func (_c *MockEDIPartnerRepository_Create_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
-// CreateInternalPair provides a mock function for the type MockEDIPartnerRepository
-func (_mock *MockEDIPartnerRepository) CreateInternalPair(ctx context.Context, req *repositories.CreateInternalPartnerPairRequest) (*edi.InternalPartnerPair, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateInternalPair")
-	}
-
-	var r0 *edi.InternalPartnerPair
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateInternalPartnerPairRequest) (*edi.InternalPartnerPair, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateInternalPartnerPairRequest) *edi.InternalPartnerPair); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*edi.InternalPartnerPair)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CreateInternalPartnerPairRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockEDIPartnerRepository_CreateInternalPair_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateInternalPair'
-type MockEDIPartnerRepository_CreateInternalPair_Call struct {
-	*mock.Call
-}
-
-// CreateInternalPair is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.CreateInternalPartnerPairRequest
-func (_e *MockEDIPartnerRepository_Expecter) CreateInternalPair(ctx interface{}, req interface{}) *MockEDIPartnerRepository_CreateInternalPair_Call {
-	return &MockEDIPartnerRepository_CreateInternalPair_Call{Call: _e.mock.On("CreateInternalPair", ctx, req)}
-}
-
-func (_c *MockEDIPartnerRepository_CreateInternalPair_Call) Run(run func(ctx context.Context, req *repositories.CreateInternalPartnerPairRequest)) *MockEDIPartnerRepository_CreateInternalPair_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.CreateInternalPartnerPairRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.CreateInternalPartnerPairRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_CreateInternalPair_Call) Return(internalPartnerPair *edi.InternalPartnerPair, err error) *MockEDIPartnerRepository_CreateInternalPair_Call {
-	_c.Call.Return(internalPartnerPair, err)
-	return _c
-}
-
-func (_c *MockEDIPartnerRepository_CreateInternalPair_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CreateInternalPartnerPairRequest) (*edi.InternalPartnerPair, error)) *MockEDIPartnerRepository_CreateInternalPair_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // DeleteMappingItem provides a mock function for the type MockEDIPartnerRepository
 func (_mock *MockEDIPartnerRepository) DeleteMappingItem(ctx context.Context, req repositories.DeleteMappingItemRequest) error {
 	ret := _mock.Called(ctx, req)
@@ -229,6 +161,63 @@ func (_c *MockEDIPartnerRepository_DeleteMappingItem_Call) Return(err error) *Mo
 }
 
 func (_c *MockEDIPartnerRepository_DeleteMappingItem_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteMappingItemRequest) error) *MockEDIPartnerRepository_DeleteMappingItem_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteMappingProfileItem provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) DeleteMappingProfileItem(ctx context.Context, req repositories.DeleteMappingProfileItemRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteMappingProfileItem")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteMappingProfileItemRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDIPartnerRepository_DeleteMappingProfileItem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteMappingProfileItem'
+type MockEDIPartnerRepository_DeleteMappingProfileItem_Call struct {
+	*mock.Call
+}
+
+// DeleteMappingProfileItem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.DeleteMappingProfileItemRequest
+func (_e *MockEDIPartnerRepository_Expecter) DeleteMappingProfileItem(ctx interface{}, req interface{}) *MockEDIPartnerRepository_DeleteMappingProfileItem_Call {
+	return &MockEDIPartnerRepository_DeleteMappingProfileItem_Call{Call: _e.mock.On("DeleteMappingProfileItem", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_DeleteMappingProfileItem_Call) Run(run func(ctx context.Context, req repositories.DeleteMappingProfileItemRequest)) *MockEDIPartnerRepository_DeleteMappingProfileItem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.DeleteMappingProfileItemRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.DeleteMappingProfileItemRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_DeleteMappingProfileItem_Call) Return(err error) *MockEDIPartnerRepository_DeleteMappingProfileItem_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_DeleteMappingProfileItem_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteMappingProfileItemRequest) error) *MockEDIPartnerRepository_DeleteMappingProfileItem_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -437,6 +426,74 @@ func (_c *MockEDIPartnerRepository_GetMappingProfile_Call) RunAndReturn(run func
 	return _c
 }
 
+// GetMappingProfileByID provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) GetMappingProfileByID(ctx context.Context, req repositories.GetMappingProfileByIDRequest) (*edi.EDIMappingProfile, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMappingProfileByID")
+	}
+
+	var r0 *edi.EDIMappingProfile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetMappingProfileByIDRequest) (*edi.EDIMappingProfile, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetMappingProfileByIDRequest) *edi.EDIMappingProfile); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMappingProfile)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetMappingProfileByIDRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_GetMappingProfileByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMappingProfileByID'
+type MockEDIPartnerRepository_GetMappingProfileByID_Call struct {
+	*mock.Call
+}
+
+// GetMappingProfileByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetMappingProfileByIDRequest
+func (_e *MockEDIPartnerRepository_Expecter) GetMappingProfileByID(ctx interface{}, req interface{}) *MockEDIPartnerRepository_GetMappingProfileByID_Call {
+	return &MockEDIPartnerRepository_GetMappingProfileByID_Call{Call: _e.mock.On("GetMappingProfileByID", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_GetMappingProfileByID_Call) Run(run func(ctx context.Context, req repositories.GetMappingProfileByIDRequest)) *MockEDIPartnerRepository_GetMappingProfileByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetMappingProfileByIDRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetMappingProfileByIDRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_GetMappingProfileByID_Call) Return(eDIMappingProfile *edi.EDIMappingProfile, err error) *MockEDIPartnerRepository_GetMappingProfileByID_Call {
+	_c.Call.Return(eDIMappingProfile, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_GetMappingProfileByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetMappingProfileByIDRequest) (*edi.EDIMappingProfile, error)) *MockEDIPartnerRepository_GetMappingProfileByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetReciprocalInternalPartner provides a mock function for the type MockEDIPartnerRepository
 func (_mock *MockEDIPartnerRepository) GetReciprocalInternalPartner(ctx context.Context, req repositories.GetReciprocalInternalPartnerRequest) (*edi.EDIPartner, error) {
 	ret := _mock.Called(ctx, req)
@@ -573,6 +630,74 @@ func (_c *MockEDIPartnerRepository_List_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// ListMappingProfiles provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) ListMappingProfiles(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMappingProfiles")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIMappingProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) *pagination.ListResult[*edi.EDIMappingProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIMappingProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_ListMappingProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMappingProfiles'
+type MockEDIPartnerRepository_ListMappingProfiles_Call struct {
+	*mock.Call
+}
+
+// ListMappingProfiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIMappingProfilesRequest
+func (_e *MockEDIPartnerRepository_Expecter) ListMappingProfiles(ctx interface{}, req interface{}) *MockEDIPartnerRepository_ListMappingProfiles_Call {
+	return &MockEDIPartnerRepository_ListMappingProfiles_Call{Call: _e.mock.On("ListMappingProfiles", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_ListMappingProfiles_Call) Run(run func(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest)) *MockEDIPartnerRepository_ListMappingProfiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIMappingProfilesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIMappingProfilesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListMappingProfiles_Call) Return(listResult *pagination.ListResult[*edi.EDIMappingProfile], err error) *MockEDIPartnerRepository_ListMappingProfiles_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_ListMappingProfiles_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error)) *MockEDIPartnerRepository_ListMappingProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveMappingItems provides a mock function for the type MockEDIPartnerRepository
 func (_mock *MockEDIPartnerRepository) SaveMappingItems(ctx context.Context, req *repositories.SaveMappingItemsRequest) ([]*edi.EDIMappingProfileItem, error) {
 	ret := _mock.Called(ctx, req)
@@ -637,6 +762,74 @@ func (_c *MockEDIPartnerRepository_SaveMappingItems_Call) Return(eDIMappingProfi
 }
 
 func (_c *MockEDIPartnerRepository_SaveMappingItems_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SaveMappingItemsRequest) ([]*edi.EDIMappingProfileItem, error)) *MockEDIPartnerRepository_SaveMappingItems_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveMappingProfileItems provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) SaveMappingProfileItems(ctx context.Context, req *repositories.SaveMappingProfileItemsRequest) ([]*edi.EDIMappingProfileItem, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveMappingProfileItems")
+	}
+
+	var r0 []*edi.EDIMappingProfileItem
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SaveMappingProfileItemsRequest) ([]*edi.EDIMappingProfileItem, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.SaveMappingProfileItemsRequest) []*edi.EDIMappingProfileItem); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDIMappingProfileItem)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.SaveMappingProfileItemsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_SaveMappingProfileItems_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveMappingProfileItems'
+type MockEDIPartnerRepository_SaveMappingProfileItems_Call struct {
+	*mock.Call
+}
+
+// SaveMappingProfileItems is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.SaveMappingProfileItemsRequest
+func (_e *MockEDIPartnerRepository_Expecter) SaveMappingProfileItems(ctx interface{}, req interface{}) *MockEDIPartnerRepository_SaveMappingProfileItems_Call {
+	return &MockEDIPartnerRepository_SaveMappingProfileItems_Call{Call: _e.mock.On("SaveMappingProfileItems", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_SaveMappingProfileItems_Call) Run(run func(ctx context.Context, req *repositories.SaveMappingProfileItemsRequest)) *MockEDIPartnerRepository_SaveMappingProfileItems_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.SaveMappingProfileItemsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.SaveMappingProfileItemsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_SaveMappingProfileItems_Call) Return(eDIMappingProfileItems []*edi.EDIMappingProfileItem, err error) *MockEDIPartnerRepository_SaveMappingProfileItems_Call {
+	_c.Call.Return(eDIMappingProfileItems, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_SaveMappingProfileItems_Call) RunAndReturn(run func(ctx context.Context, req *repositories.SaveMappingProfileItemsRequest) ([]*edi.EDIMappingProfileItem, error)) *MockEDIPartnerRepository_SaveMappingProfileItems_Call {
 	_c.Call.Return(run)
 	return _c
 }

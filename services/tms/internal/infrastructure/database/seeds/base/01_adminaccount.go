@@ -22,6 +22,12 @@ type AdminAccountSeed struct {
 	seedhelpers.BaseSeed
 }
 
+const (
+	coreAdminUsername           = "admin"
+	logisticsAdminUsername      = "admin-logistics"
+	transportationAdminUsername = "admin-transport"
+)
+
 // NewAdminAccountSeed creates a new AdminAccount seed
 func NewAdminAccountSeed() *AdminAccountSeed {
 	seed := &AdminAccountSeed{}
@@ -117,109 +123,24 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				return err
 			}
 
-			accountingControl := &tenant.AccountingControl{
-				ID:             pulid.MustNew("ac_"),
-				OrganizationID: org.ID,
-				BusinessUnitID: bu.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-
-			if _, err := tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create accounting control: %w", err)
-			}
-
-			billingControl := &tenant.BillingControl{
-				ID:                           pulid.MustNew("bc_"),
-				OrganizationID:               org.ID,
-				BusinessUnitID:               bu.ID,
-				BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
-				CreatedAt:                    now,
-				UpdatedAt:                    now,
-			}
-			if _, err := tx.NewInsert().Model(billingControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create billing control: %w", err)
-			}
-			if err := sc.TrackCreated(ctx, "billing_controls", billingControl.ID, s.Name()); err != nil {
-				return err
-			}
-
-			invoiceAdjustmentControl := &tenant.InvoiceAdjustmentControl{
-				ID:                                  pulid.MustNew("iac_"),
-				OrganizationID:                      org.ID,
-				BusinessUnitID:                      bu.ID,
-				StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
-				WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
-				CreatedAt:                           now,
-				UpdatedAt:                           now,
-			}
-			if _, err := tx.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create invoice adjustment control: %w", err)
-			}
-			if err := sc.TrackCreated(ctx, "invoice_adjustment_controls", invoiceAdjustmentControl.ID, s.Name()); err != nil {
-				return err
-			}
-
-			dispatchControl := &dispatchcontrol.DispatchControl{
-				ID:             pulid.MustNew("dc_"),
-				OrganizationID: org.ID,
-				BusinessUnitID: bu.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-			if _, err := tx.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create dispatch control: %w", err)
-			}
-
-			if err := sc.TrackCreated(ctx, "dispatch_controls", dispatchControl.ID, s.Name()); err != nil {
-				return err
-			}
-
-			shipmentControl := &tenant.ShipmentControl{
-				ID:             pulid.MustNew("sc_"),
-				OrganizationID: org.ID,
-				BusinessUnitID: bu.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-			}
-			if _, err := tx.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create shipment control: %w", err)
-			}
-			if err := sc.TrackCreated(ctx, "shipment_controls", shipmentControl.ID, s.Name()); err != nil {
-				return err
-			}
-
-			documentControl := tenant.NewDefaultDocumentControl(org.ID, bu.ID)
-			if _, err := tx.NewInsert().Model(documentControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create document control: %w", err)
-			}
-			if err := sc.TrackCreated(ctx, "document_controls", documentControl.ID, s.Name()); err != nil {
-				return err
-			}
-
-			dataEntryControl := &dataentrycontrol.DataEntryControl{
-				ID:             pulid.MustNew("dec_"),
-				OrganizationID: org.ID,
-				BusinessUnitID: bu.ID,
-				CreatedAt:      now,
-				UpdatedAt:      now,
-				CodeCase:       dataentrycontrol.CaseFormatUpper,
-				NameCase:       dataentrycontrol.CaseFormatTitleCase,
-				EmailCase:      dataentrycontrol.CaseFormatLower,
-				CityCase:       dataentrycontrol.CaseFormatTitleCase,
-			}
-			if _, err := tx.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
-				return fmt.Errorf("create data entry control: %w", err)
-			}
-			if err := sc.TrackCreated(ctx, "data_entry_controls", dataEntryControl.ID, s.Name()); err != nil {
-				return err
+			orgs := []*tenant.Organization{org, org2}
+			for _, seedOrg := range orgs {
+				err = s.createOrganizationControls(ctx, organizationControlSeedParams{
+					tx:  tx,
+					sc:  sc,
+					org: seedOrg,
+					now: now,
+				})
+				if err != nil {
+					return fmt.Errorf("create control files for org %s: %w", seedOrg.Name, err)
+				}
 			}
 
 			adminUser, err := sc.CreateUser(ctx, tx, &seedhelpers.UserOptions{
 				OrganizationID:     org.ID,
 				BusinessUnitID:     bu.ID,
 				Name:               "System Administrator",
-				Username:           "admin",
+				Username:           coreAdminUsername,
 				Email:              "admin@trenova.app",
 				Password:           "admin123!",
 				Status:             domaintypes.StatusActive,
@@ -259,6 +180,28 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 			}
 			if err := sc.TrackCreated(ctx, "organization_memberships", membership2.ID, s.Name()); err != nil {
 				return err
+			}
+
+			orgAdminUsers := []organizationAdminUserSeedParams{
+				{
+					org:         org,
+					grantedByID: adminUser.ID,
+					name:        "Trenova Logistics Administrator",
+					username:    logisticsAdminUsername,
+					email:       "admin.logistics@trenova.app",
+				},
+				{
+					org:         org2,
+					grantedByID: adminUser.ID,
+					name:        "Trenova Transportation Administrator",
+					username:    transportationAdminUsername,
+					email:       "admin.transport@trenova.app",
+				},
+			}
+			for _, params := range orgAdminUsers {
+				if err := s.createOrganizationAdminUser(ctx, tx, sc, params); err != nil {
+					return err
+				}
 			}
 
 			year := int16(time.Unix(now, 0).Year())
@@ -470,4 +413,169 @@ func (s *AdminAccountSeed) Down(ctx context.Context, tx bun.Tx) error {
 
 func (s *AdminAccountSeed) CanRollback() bool {
 	return true
+}
+
+type organizationControlSeedParams struct {
+	tx  bun.Tx
+	sc  *seedhelpers.SeedContext
+	org *tenant.Organization
+	now int64
+}
+
+type organizationAdminUserSeedParams struct {
+	org         *tenant.Organization
+	grantedByID pulid.ID
+	name        string
+	username    string
+	email       string
+}
+
+func (s *AdminAccountSeed) createOrganizationControls(
+	ctx context.Context,
+	params organizationControlSeedParams,
+) error {
+	accountingControl := &tenant.AccountingControl{
+		ID:             pulid.MustNew("ac_"),
+		OrganizationID: params.org.ID,
+		BusinessUnitID: params.org.BusinessUnitID,
+		CreatedAt:      params.now,
+		UpdatedAt:      params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create accounting control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "accounting_controls", accountingControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	billingControl := &tenant.BillingControl{
+		ID:                           pulid.MustNew("bc_"),
+		OrganizationID:               params.org.ID,
+		BusinessUnitID:               params.org.BusinessUnitID,
+		BillingQueueTransferSchedule: tenant.TransferScheduleContinuous,
+		CreatedAt:                    params.now,
+		UpdatedAt:                    params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(billingControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create billing control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "billing_controls", billingControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	invoiceAdjustmentControl := &tenant.InvoiceAdjustmentControl{
+		ID:                                  pulid.MustNew("iac_"),
+		OrganizationID:                      params.org.ID,
+		BusinessUnitID:                      params.org.BusinessUnitID,
+		StandardAdjustmentApprovalThreshold: decimal.NewFromFloat(0.01),
+		WriteOffApprovalThreshold:           decimal.NewFromFloat(0.01),
+		CreatedAt:                           params.now,
+		UpdatedAt:                           params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(invoiceAdjustmentControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create invoice adjustment control: %w", err)
+	}
+	if err := params.sc.TrackCreated(
+		ctx,
+		"invoice_adjustment_controls",
+		invoiceAdjustmentControl.ID,
+		s.Name(),
+	); err != nil {
+		return err
+	}
+
+	dispatchControl := &dispatchcontrol.DispatchControl{
+		ID:             pulid.MustNew("dc_"),
+		OrganizationID: params.org.ID,
+		BusinessUnitID: params.org.BusinessUnitID,
+		CreatedAt:      params.now,
+		UpdatedAt:      params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(dispatchControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create dispatch control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "dispatch_controls", dispatchControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	shipmentControl := &tenant.ShipmentControl{
+		ID:             pulid.MustNew("sc_"),
+		OrganizationID: params.org.ID,
+		BusinessUnitID: params.org.BusinessUnitID,
+		CreatedAt:      params.now,
+		UpdatedAt:      params.now,
+	}
+	if _, err := params.tx.NewInsert().Model(shipmentControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create shipment control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "shipment_controls", shipmentControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	documentControl := tenant.NewDefaultDocumentControl(params.org.ID, params.org.BusinessUnitID)
+	if _, err := params.tx.NewInsert().Model(documentControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create document control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "document_controls", documentControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	dataEntryControl := &dataentrycontrol.DataEntryControl{
+		ID:             pulid.MustNew("dec_"),
+		OrganizationID: params.org.ID,
+		BusinessUnitID: params.org.BusinessUnitID,
+		CreatedAt:      params.now,
+		UpdatedAt:      params.now,
+		CodeCase:       dataentrycontrol.CaseFormatUpper,
+		NameCase:       dataentrycontrol.CaseFormatTitleCase,
+		EmailCase:      dataentrycontrol.CaseFormatLower,
+		CityCase:       dataentrycontrol.CaseFormatTitleCase,
+	}
+	if _, err := params.tx.NewInsert().Model(dataEntryControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create data entry control: %w", err)
+	}
+	if err := params.sc.TrackCreated(ctx, "data_entry_controls", dataEntryControl.ID, s.Name()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *AdminAccountSeed) createOrganizationAdminUser(
+	ctx context.Context,
+	tx bun.Tx,
+	sc *seedhelpers.SeedContext,
+	params organizationAdminUserSeedParams,
+) error {
+	adminUser, err := sc.CreateUser(ctx, tx, &seedhelpers.UserOptions{
+		OrganizationID:     params.org.ID,
+		BusinessUnitID:     params.org.BusinessUnitID,
+		Name:               params.name,
+		Username:           params.username,
+		Email:              params.email,
+		Password:           "admin123!",
+		Status:             domaintypes.StatusActive,
+		Timezone:           "America/Los_Angeles",
+		MustChangePassword: false,
+	}, s.Name())
+	if err != nil {
+		return fmt.Errorf("create organization admin user %s: %w", params.username, err)
+	}
+
+	membership := &tenant.OrganizationMembership{
+		BusinessUnitID: params.org.BusinessUnitID,
+		UserID:         adminUser.ID,
+		JoinedAt:       timeutils.NowUnix(),
+		OrganizationID: params.org.ID,
+		GrantedByID:    params.grantedByID,
+		IsDefault:      true,
+	}
+	if _, err = tx.NewInsert().Model(membership).Exec(ctx); err != nil {
+		return fmt.Errorf("create organization admin membership %s: %w", params.username, err)
+	}
+	if err := sc.TrackCreated(ctx, "organization_memberships", membership.ID, s.Name()); err != nil {
+		return err
+	}
+
+	return nil
 }

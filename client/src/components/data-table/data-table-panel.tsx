@@ -6,10 +6,11 @@ import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 const PANEL_SIZES = {
-  sm: 400,
-  md: 500,
-  lg: 650,
-  xl: 800,
+  sm: "400px",
+  md: "500px",
+  lg: "650px",
+  xl: "800px",
+  "2xl": "min(calc(100vw - 2rem), 88rem)",
 } as const;
 
 export type PanelSize = keyof typeof PANEL_SIZES;

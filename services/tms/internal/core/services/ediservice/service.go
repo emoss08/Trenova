@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,37 +35,61 @@ import (
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	PartnerRepo     repositories.EDIPartnerRepository
-	TransferRepo    repositories.EDILoadTenderTransferRepository
-	ShipmentSvc     services.ShipmentService
-	WorkflowStarter services.WorkflowStarter
-	AuditService    services.AuditService
-	Validator       *Validator
-	DB              coreports.DBConnection
+	Logger              *zap.Logger
+	PartnerRepo         repositories.EDIPartnerRepository
+	ConnectionRepo      repositories.EDIConnectionRepository
+	ProfileRepo         repositories.EDICommunicationProfileRepository
+	TransferRepo        repositories.EDILoadTenderTransferRepository
+	DocumentRepo        repositories.EDIDocumentRepository
+	ShipmentLinkRepo    repositories.EDIShipmentLinkRepository
+	TransferChangeRepo  repositories.EDITransferChangeRepository
+	ShipmentCommentRepo repositories.ShipmentCommentRepository
+	UserRepo            repositories.UserRepository
+	ShipmentSvc         services.ShipmentService
+	WorkflowStarter     services.WorkflowStarter
+	AuditService        services.AuditService
+	Encryption          *encryptionservice.Service
+	Validator           *Validator
+	DB                  coreports.DBConnection
 }
 
 type Service struct {
-	l               *zap.Logger
-	partnerRepo     repositories.EDIPartnerRepository
-	transferRepo    repositories.EDILoadTenderTransferRepository
-	shipmentSvc     services.ShipmentService
-	workflowStarter services.WorkflowStarter
-	auditService    services.AuditService
-	validator       *Validator
-	db              coreports.DBConnection
+	l                   *zap.Logger
+	partnerRepo         repositories.EDIPartnerRepository
+	connectionRepo      repositories.EDIConnectionRepository
+	profileRepo         repositories.EDICommunicationProfileRepository
+	transferRepo        repositories.EDILoadTenderTransferRepository
+	documentRepo        repositories.EDIDocumentRepository
+	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
+	transferChangeRepo  repositories.EDITransferChangeRepository
+	shipmentCommentRepo repositories.ShipmentCommentRepository
+	userRepo            repositories.UserRepository
+	shipmentSvc         services.ShipmentService
+	workflowStarter     services.WorkflowStarter
+	auditService        services.AuditService
+	encryption          *encryptionservice.Service
+	validator           *Validator
+	db                  coreports.DBConnection
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:               p.Logger.Named("service.edi"),
-		partnerRepo:     p.PartnerRepo,
-		transferRepo:    p.TransferRepo,
-		shipmentSvc:     p.ShipmentSvc,
-		workflowStarter: p.WorkflowStarter,
-		auditService:    p.AuditService,
-		validator:       p.Validator,
-		db:              p.DB,
+		l:                   p.Logger.Named("service.edi"),
+		partnerRepo:         p.PartnerRepo,
+		connectionRepo:      p.ConnectionRepo,
+		profileRepo:         p.ProfileRepo,
+		transferRepo:        p.TransferRepo,
+		documentRepo:        p.DocumentRepo,
+		shipmentLinkRepo:    p.ShipmentLinkRepo,
+		transferChangeRepo:  p.TransferChangeRepo,
+		shipmentCommentRepo: p.ShipmentCommentRepo,
+		userRepo:            p.UserRepo,
+		shipmentSvc:         p.ShipmentSvc,
+		workflowStarter:     p.WorkflowStarter,
+		auditService:        p.AuditService,
+		encryption:          p.Encryption,
+		validator:           p.Validator,
+		db:                  p.DB,
 	}
 }
 
@@ -157,58 +182,7 @@ func (s *Service) CreateInternalPartnerPair(
 		)
 	}
 
-	sourcePartner := buildInternalPairPartner(
-		req,
-		req.TenantInfo.OrgID,
-		req.TargetOrganizationID,
-		true,
-	)
-	targetPartner := buildInternalPairPartner(
-		req,
-		req.TargetOrganizationID,
-		req.TenantInfo.OrgID,
-		false,
-	)
-
-	if multiErr := s.validator.ValidatePartner(sourcePartner); multiErr != nil {
-		return nil, multiErr
-	}
-	if multiErr := s.validator.ValidatePartner(targetPartner); multiErr != nil {
-		return nil, multiErr
-	}
-
-	pair, err := s.partnerRepo.CreateInternalPair(
-		ctx,
-		&repositories.CreateInternalPartnerPairRequest{
-			SourcePartner:        sourcePartner,
-			TargetPartner:        targetPartner,
-			SourceOrganizationID: req.TenantInfo.OrgID,
-			TargetOrganizationID: req.TargetOrganizationID,
-			BusinessUnitID:       req.TenantInfo.BuID,
-			TenantInfo:           req.TenantInfo,
-		},
-	)
-	if err != nil {
-		return nil, mapEDIPartnerConstraint(err)
-	}
-
-	s.logAction(
-		pair.SourcePartner,
-		actor,
-		permission.OpCreate,
-		nil,
-		pair.SourcePartner,
-		"EDI internal partner pair source created",
-	)
-	s.logAction(
-		pair.TargetPartner,
-		actor,
-		permission.OpCreate,
-		nil,
-		pair.TargetPartner,
-		"EDI internal partner pair target created",
-	)
-	return pair, nil
+	return s.CreateInternalPartnerPairViaConnection(ctx, req, actor)
 }
 
 func (s *Service) GetMappingProfile(
@@ -216,6 +190,20 @@ func (s *Service) GetMappingProfile(
 	req repositories.GetMappingProfileRequest,
 ) (*edi.EDIMappingProfile, error) {
 	return s.partnerRepo.GetMappingProfile(ctx, req)
+}
+
+func (s *Service) ListMappingProfiles(
+	ctx context.Context,
+	req *repositories.ListEDIMappingProfilesRequest,
+) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	return s.partnerRepo.ListMappingProfiles(ctx, req)
+}
+
+func (s *Service) GetMappingProfileByID(
+	ctx context.Context,
+	req repositories.GetMappingProfileByIDRequest,
+) (*edi.EDIMappingProfile, error) {
+	return s.partnerRepo.GetMappingProfileByID(ctx, req)
 }
 
 func (s *Service) SaveMappingProfile(
@@ -229,11 +217,29 @@ func (s *Service) SaveMappingProfile(
 	return s.partnerRepo.SaveMappingItems(ctx, req)
 }
 
+func (s *Service) SaveMappingProfileItems(
+	ctx context.Context,
+	req *repositories.SaveMappingProfileItemsRequest,
+) ([]*edi.EDIMappingProfileItem, error) {
+	if multiErr := s.validator.ValidateMappingItems(req.Items); multiErr != nil {
+		return nil, multiErr
+	}
+
+	return s.partnerRepo.SaveMappingProfileItems(ctx, req)
+}
+
 func (s *Service) DeleteMappingItem(
 	ctx context.Context,
 	req repositories.DeleteMappingItemRequest,
 ) error {
 	return s.partnerRepo.DeleteMappingItem(ctx, req)
+}
+
+func (s *Service) DeleteMappingProfileItem(
+	ctx context.Context,
+	req repositories.DeleteMappingProfileItemRequest,
+) error {
+	return s.partnerRepo.DeleteMappingProfileItem(ctx, req)
 }
 
 func (s *Service) SubmitLoadTender(
@@ -268,6 +274,29 @@ func (s *Service) SubmitLoadTender(
 		)
 	}
 
+	connection, err := s.connectionRepo.GetActiveConnectionForPartner(
+		ctx,
+		repositories.GetActiveEDIConnectionForPartnerRequest{
+			PartnerID:  sourcePartner.ID,
+			TenantInfo: req.TenantInfo,
+			Method:     edi.ConnectionMethodInternal,
+		},
+	)
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"EDI partner does not have an active internal EDI connection",
+		)
+	}
+	if !connection.Capabilities.LoadTenderOutbound {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"EDI connection is not enabled for outbound load tenders",
+		)
+	}
+
 	sourceShipment, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         req.SourceShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -288,6 +317,55 @@ func (s *Service) SubmitLoadTender(
 		},
 	)
 	if err != nil {
+		return nil, err
+	}
+	if !targetPartner.EnabledForInbound {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"Target EDI partner is not enabled for inbound transfers",
+		)
+	}
+	if !connection.Capabilities.LoadTenderInbound {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"EDI connection is not enabled for inbound load tenders",
+		)
+	}
+	if _, err = s.profileRepo.GetActiveProfileByPartner(
+		ctx,
+		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+			PartnerID:  sourcePartner.ID,
+			TenantInfo: req.TenantInfo,
+			Method:     edi.ConnectionMethodInternal,
+		},
+	); err != nil {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"EDI partner does not have an active internal communication profile",
+		)
+	}
+	if _, err = s.profileRepo.GetActiveProfileByPartner(
+		ctx,
+		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
+			PartnerID: targetPartner.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: targetPartner.OrganizationID,
+				BuID:  targetPartner.BusinessUnitID,
+			},
+			Method: edi.ConnectionMethodInternal,
+		},
+	); err != nil {
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrInvalidOperation,
+			"Target EDI partner does not have an active internal communication profile",
+		)
+	}
+
+	if err = validateTenderEligibility(sourceShipment); err != nil {
 		return nil, err
 	}
 
@@ -316,7 +394,45 @@ func (s *Service) SubmitLoadTender(
 		SubmittedByID:        actor.UserID,
 	}
 
-	created, err := s.transferRepo.CreateTransfer(ctx, entity)
+	var created *edi.EDITransfer
+	if s.db == nil {
+		created, err = s.transferRepo.CreateTransfer(ctx, entity)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			lockedShipment, err := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
+			if err != nil {
+				return err
+			}
+			if err = validateTenderEligibility(lockedShipment); err != nil {
+				return err
+			}
+
+			created, err = s.transferRepo.CreateTransfer(txCtx, entity)
+			if err != nil {
+				return err
+			}
+
+			if err = s.setShipmentTenderStatus(
+				txCtx,
+				req.SourceShipmentID,
+				req.TenantInfo,
+				shipment.TenderStatusTendered,
+			); err != nil {
+				return err
+			}
+
+			return s.createSystemShipmentComment(
+				txCtx,
+				req.SourceShipmentID,
+				req.TenantInfo,
+				"EDI load tender submitted.",
+				map[string]any{"transferId": created.ID},
+			)
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -374,6 +490,14 @@ func (s *Service) ApproveTransfer(
 	req *ApproveTransferRequest,
 	actor *services.RequestActor,
 ) (*edi.EDITransfer, error) {
+	if actor == nil || actor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"approver",
+			errortypes.ErrRequired,
+			"Approving user is required",
+		)
+	}
+
 	var original *edi.EDITransfer
 	var updated *edi.EDITransfer
 	var preview *MappingPreview
@@ -579,7 +703,10 @@ func (s *Service) ProcessLoadTenderApproval(
 		}
 
 		switch transfer.Status {
-		case edi.TransferStatusRejected, edi.TransferStatusCanceled, edi.TransferStatusFailed:
+		case edi.TransferStatusRejected,
+			edi.TransferStatusExpired,
+			edi.TransferStatusCanceled,
+			edi.TransferStatusFailed:
 			processingErr = temporal.NewNonRetryableApplicationError(
 				"EDI transfer is no longer approval eligible",
 				"TransferNotApprovalEligible",
@@ -631,6 +758,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			transfer,
 			payload.TenantInfo.BuID,
 			preview.All,
+			payload.Actor.UserID,
 		)
 		if err != nil {
 			processingErr = err
@@ -649,8 +777,62 @@ func (s *Service) ProcessLoadTenderApproval(
 		transfer.MappingSnapshot = preview.All
 		transfer.ProcessedAt = &now
 
+		if err = s.setShipmentTenderStatus(
+			txCtx,
+			transfer.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: transfer.SourceOrganizationID,
+				BuID:  transfer.SourceBusinessUnitID,
+			},
+			shipment.TenderStatusAccepted,
+		); err != nil {
+			return err
+		}
+
 		updated, err := s.transferRepo.UpdateTransfer(txCtx, transfer)
 		if err != nil {
+			return err
+		}
+
+		link, err := s.shipmentLinkRepo.CreateShipmentLink(txCtx, &edi.ShipmentLink{
+			BusinessUnitID:       transfer.SourceBusinessUnitID,
+			SourceOrganizationID: transfer.SourceOrganizationID,
+			TargetOrganizationID: transfer.TargetOrganizationID,
+			SourceShipmentID:     transfer.SourceShipmentID,
+			TargetShipmentID:     createdShipment.ID,
+			TenderTransferID:     transfer.ID,
+			SyncPolicy:           edi.ShipmentSyncPolicyAutoOperational,
+			FieldOwnership:       edi.DefaultShipmentFieldOwnership(),
+			Status:               edi.ShipmentLinkStatusActive,
+		})
+		if err != nil {
+			return err
+		}
+
+		sourceTenant := pagination.TenantInfo{
+			OrgID: transfer.SourceOrganizationID,
+			BuID:  transfer.SourceBusinessUnitID,
+		}
+		targetTenant := pagination.TenantInfo{
+			OrgID: transfer.TargetOrganizationID,
+			BuID:  transfer.TargetBusinessUnitID,
+		}
+		if err = s.createSystemShipmentComment(
+			txCtx,
+			transfer.SourceShipmentID,
+			sourceTenant,
+			"EDI load tender accepted by receiving organization.",
+			map[string]any{"transferId": transfer.ID, "shipmentLinkId": link.ID},
+		); err != nil {
+			return err
+		}
+		if err = s.createSystemShipmentComment(
+			txCtx,
+			createdShipment.ID,
+			targetTenant,
+			"Shipment created from accepted EDI load tender.",
+			map[string]any{"transferId": transfer.ID, "shipmentLinkId": link.ID},
+		); err != nil {
 			return err
 		}
 
@@ -698,30 +880,63 @@ func (s *Service) RejectTransfer(
 		)
 	}
 
-	transfer, err := s.transferRepo.GetTransferByID(ctx, repositories.GetEDITransferByIDRequest{
-		ID:         req.TransferID,
-		TenantInfo: req.TenantInfo,
-		Direction:  "inbound",
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !transfer.Status.IsActionable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"EDI transfer cannot be rejected while finalized or processing",
+	var original edi.EDITransfer
+	var updated *edi.EDITransfer
+	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		transfer, err := s.transferRepo.GetTransferForUpdate(
+			txCtx,
+			repositories.GetEDITransferForUpdateRequest{
+				ID:         req.TransferID,
+				TenantInfo: req.TenantInfo,
+				Direction:  "inbound",
+			},
 		)
-	}
+		if err != nil {
+			return err
+		}
+		if !transfer.Status.IsActionable() {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalidOperation,
+				"EDI transfer cannot be rejected while finalized or processing",
+			)
+		}
 
-	now := timeutils.NowUnix()
-	original := *transfer
-	transfer.Status = edi.TransferStatusRejected
-	transfer.RejectionReason = reason
-	transfer.RejectedByID = actor.UserID
-	transfer.RejectedAt = &now
+		now := timeutils.NowUnix()
+		original = *transfer
+		transfer.Status = edi.TransferStatusRejected
+		transfer.RejectionReason = reason
+		transfer.RejectedByID = actor.UserID
+		transfer.RejectedAt = &now
 
-	updated, err := s.transferRepo.UpdateTransfer(ctx, transfer)
+		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
+		if err != nil {
+			return err
+		}
+
+		if err = s.setShipmentTenderStatus(
+			txCtx,
+			transfer.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: transfer.SourceOrganizationID,
+				BuID:  transfer.SourceBusinessUnitID,
+			},
+			shipment.TenderStatusRejected,
+		); err != nil {
+			return err
+		}
+
+		return s.createSystemShipmentComment(
+			txCtx,
+			transfer.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: transfer.SourceOrganizationID,
+				BuID:  transfer.SourceBusinessUnitID,
+			},
+			"EDI load tender rejected: "+reason,
+			map[string]any{"transferId": transfer.ID},
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -735,35 +950,287 @@ func (s *Service) CancelTransfer(
 	req *CancelTransferRequest,
 	actor *services.RequestActor,
 ) (*edi.EDITransfer, error) {
-	transfer, err := s.transferRepo.GetTransferByID(ctx, repositories.GetEDITransferByIDRequest{
-		ID:         req.TransferID,
-		TenantInfo: req.TenantInfo,
-		Direction:  "outbound",
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !transfer.Status.IsActionable() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"EDI transfer cannot be canceled while finalized or processing",
+	var original edi.EDITransfer
+	var updated *edi.EDITransfer
+	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		transfer, err := s.transferRepo.GetTransferForUpdate(
+			txCtx,
+			repositories.GetEDITransferForUpdateRequest{
+				ID:         req.TransferID,
+				TenantInfo: req.TenantInfo,
+				Direction:  "outbound",
+			},
 		)
-	}
+		if err != nil {
+			return err
+		}
+		if !transfer.Status.IsActionable() {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalidOperation,
+				"EDI transfer cannot be canceled while finalized or processing",
+			)
+		}
 
-	now := timeutils.NowUnix()
-	original := *transfer
-	transfer.Status = edi.TransferStatusCanceled
-	transfer.CanceledByID = actor.UserID
-	transfer.CanceledAt = &now
+		now := timeutils.NowUnix()
+		original = *transfer
+		transfer.Status = edi.TransferStatusCanceled
+		transfer.CanceledByID = actor.UserID
+		transfer.CanceledAt = &now
 
-	updated, err := s.transferRepo.UpdateTransfer(ctx, transfer)
+		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
+		if err != nil {
+			return err
+		}
+
+		if err = s.setShipmentTenderStatus(
+			txCtx,
+			transfer.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: transfer.SourceOrganizationID,
+				BuID:  transfer.SourceBusinessUnitID,
+			},
+			shipment.TenderStatusCanceled,
+		); err != nil {
+			return err
+		}
+
+		return s.createSystemShipmentComment(
+			txCtx,
+			transfer.SourceShipmentID,
+			pagination.TenantInfo{
+				OrgID: transfer.SourceOrganizationID,
+				BuID:  transfer.SourceBusinessUnitID,
+			},
+			"EDI load tender canceled.",
+			map[string]any{"transferId": transfer.ID},
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender canceled")
 	return updated, nil
+}
+
+func (s *Service) ExpireTransfer(
+	ctx context.Context,
+	req *ExpireTransferRequest,
+	actor *services.RequestActor,
+) (*edi.EDITransfer, error) {
+	var original edi.EDITransfer
+	var updated *edi.EDITransfer
+	err := s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		transfer, err := s.transferRepo.GetTransferForUpdate(
+			txCtx,
+			repositories.GetEDITransferForUpdateRequest{
+				ID:         req.TransferID,
+				TenantInfo: req.TenantInfo,
+				Direction:  "",
+			},
+		)
+		if err != nil {
+			return err
+		}
+		if !transfer.Status.IsActionable() {
+			return errortypes.NewValidationError(
+				"status",
+				errortypes.ErrInvalidOperation,
+				"EDI transfer cannot be expired while finalized or processing",
+			)
+		}
+
+		now := timeutils.NowUnix()
+		original = *transfer
+		transfer.Status = edi.TransferStatusExpired
+		transfer.ProcessedAt = &now
+
+		updated, err = s.transferRepo.UpdateTransfer(txCtx, transfer)
+		if err != nil {
+			return err
+		}
+
+		sourceTenant := pagination.TenantInfo{
+			OrgID: transfer.SourceOrganizationID,
+			BuID:  transfer.SourceBusinessUnitID,
+		}
+		if err = s.setShipmentTenderStatus(
+			txCtx,
+			transfer.SourceShipmentID,
+			sourceTenant,
+			shipment.TenderStatusExpired,
+		); err != nil {
+			return err
+		}
+
+		return s.createSystemShipmentComment(
+			txCtx,
+			transfer.SourceShipmentID,
+			sourceTenant,
+			"EDI load tender expired.",
+			map[string]any{"transferId": transfer.ID},
+		)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender expired")
+	return updated, nil
+}
+
+func (s *Service) ListShipmentLinks(
+	ctx context.Context,
+	req *repositories.ListEDIShipmentLinksRequest,
+) (*pagination.ListResult[*edi.ShipmentLink], error) {
+	return s.shipmentLinkRepo.ListShipmentLinks(ctx, req)
+}
+
+func (s *Service) GetShipmentLink(
+	ctx context.Context,
+	req repositories.GetEDIShipmentLinkByIDRequest,
+) (*edi.ShipmentLink, error) {
+	return s.shipmentLinkRepo.GetShipmentLinkByID(ctx, req)
+}
+
+func (s *Service) ListTransferChanges(
+	ctx context.Context,
+	req *repositories.ListEDITransferChangesRequest,
+) (*pagination.ListResult[*edi.TransferChange], error) {
+	return s.transferChangeRepo.ListTransferChanges(ctx, req)
+}
+
+func (s *Service) GetTransferChange(
+	ctx context.Context,
+	req repositories.GetEDITransferChangeByIDRequest,
+) (*edi.TransferChange, error) {
+	return s.transferChangeRepo.GetTransferChangeByID(ctx, req)
+}
+
+func (s *Service) ApplyTransferChange(
+	ctx context.Context,
+	req *TransferChangeActionRequest,
+	actor *services.RequestActor,
+) (*edi.TransferChange, error) {
+	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusApplied)
+}
+
+func (s *Service) RejectTransferChange(
+	ctx context.Context,
+	req *TransferChangeActionRequest,
+	actor *services.RequestActor,
+) (*edi.TransferChange, error) {
+	return s.reviewTransferChange(ctx, req, actor, edi.TransferChangeStatusRejected)
+}
+
+func (s *Service) reviewTransferChange(
+	ctx context.Context,
+	req *TransferChangeActionRequest,
+	actor *services.RequestActor,
+	status edi.TransferChangeStatus,
+) (*edi.TransferChange, error) {
+	if actor == nil || actor.UserID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"userId",
+			errortypes.ErrRequired,
+			"Reviewing user is required",
+		)
+	}
+
+	change, err := s.transferChangeRepo.GetTransferChangeByID(
+		ctx,
+		repositories.GetEDITransferChangeByIDRequest{
+			ID:         req.ChangeID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if change.Status != edi.TransferChangeStatusPendingReview {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"EDI transfer change has already been reviewed",
+		)
+	}
+
+	now := timeutils.NowUnix()
+	original := *change
+	change.Status = status
+	change.ReviewedByID = actor.UserID
+	change.ReviewedAt = &now
+	if status == edi.TransferChangeStatusApplied {
+		change.AppliedByID = actor.UserID
+		change.AppliedAt = &now
+	}
+	if strings.TrimSpace(req.Reason) != "" {
+		change.FailureReason = strings.TrimSpace(req.Reason)
+	}
+
+	updated, err := s.transferChangeRepo.UpdateTransferChange(ctx, change)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.commentTransferChangeReview(ctx, req.TenantInfo, updated); err != nil {
+		return nil, err
+	}
+
+	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI transfer change reviewed")
+	return updated, nil
+}
+
+func (s *Service) commentTransferChangeReview(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	change *edi.TransferChange,
+) error {
+	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
+		ctx,
+		repositories.GetEDIShipmentLinkByIDRequest{
+			ID:         change.ShipmentLinkID,
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	comment := fmt.Sprintf("EDI transfer change %s was %s.", change.ChangeType, change.Status)
+	metadata := map[string]any{
+		"shipmentLinkId":   change.ShipmentLinkID,
+		"transferChangeId": change.ID,
+		"changeType":       change.ChangeType,
+		"status":           change.Status,
+	}
+
+	sourceTenant := pagination.TenantInfo{
+		OrgID: link.SourceOrganizationID,
+		BuID:  link.BusinessUnitID,
+	}
+	if err = s.createSystemShipmentComment(
+		ctx,
+		link.SourceShipmentID,
+		sourceTenant,
+		comment,
+		metadata,
+	); err != nil {
+		return err
+	}
+
+	targetTenant := pagination.TenantInfo{
+		OrgID: link.TargetOrganizationID,
+		BuID:  link.BusinessUnitID,
+	}
+	return s.createSystemShipmentComment(
+		ctx,
+		link.TargetShipmentID,
+		targetTenant,
+		comment,
+		metadata,
+	)
 }
 
 func (s *Service) buildMappingPreview(
@@ -788,6 +1255,7 @@ func (s *Service) buildMappingPreview(
 	}
 
 	index := mappingIndex(items)
+	sourceLabels := sourceLabelIndex(payload)
 	for _, item := range overrides {
 		if item == nil {
 			continue
@@ -804,11 +1272,12 @@ func (s *Service) buildMappingPreview(
 		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
 		for _, sourceID := range ids {
 			resolution := edi.MappingResolution{
-				EntityType: entityType,
-				SourceID:   sourceID,
+				EntityType:  entityType,
+				SourceID:    sourceID,
+				SourceLabel: sourceLabels[entityType][sourceID],
 			}
 			if item := index[entityType][sourceID]; item != nil && item.TargetID.IsNotNil() {
-				resolution.SourceLabel = item.SourceLabel
+				resolution.SourceLabel = firstNonEmpty(item.SourceLabel, resolution.SourceLabel)
 				resolution.TargetID = item.TargetID
 				resolution.TargetLabel = item.TargetLabel
 				resolution.Resolved = true
@@ -838,6 +1307,7 @@ func (s *Service) buildTargetShipment(
 	transfer *edi.EDITransfer,
 	businessUnitID pulid.ID,
 	resolutions []edi.MappingResolution,
+	approverID pulid.ID,
 ) (*shipment.Shipment, error) {
 	mappings := resolutionIndex(resolutions)
 	payload := transfer.TenderPayload
@@ -872,8 +1342,11 @@ func (s *Service) buildTargetShipment(
 			payload.ShipmentTypeID,
 		),
 		CustomerID:          customerID,
+		EnteredByID:         approverID,
 		FormulaTemplateID:   formulaTemplateID,
 		Status:              shipment.StatusNew,
+		TenderStatus:        tenderStatusPtr(shipment.TenderStatusAccepted),
+		EntryMethod:         shipment.EntryMethodEDI,
 		BOL:                 payload.BOL,
 		Pieces:              payload.Pieces,
 		Weight:              payload.Weight,
@@ -961,55 +1434,6 @@ func (s *Service) buildTargetShipment(
 	return target, nil
 }
 
-func buildInternalPairPartner(
-	req *CreateInternalPartnerPairRequest,
-	organizationID pulid.ID,
-	internalOrganizationID pulid.ID,
-	sourceFacing bool,
-) *edi.EDIPartner {
-	code := req.TargetCode
-	name := req.TargetName
-	description := req.TargetDescription
-	contactName := req.TargetContactName
-	contactEmail := req.TargetContactEmail
-	contactPhone := req.TargetContactPhone
-	enabledInbound := req.TargetEnabledInbound
-	enabledOutbound := req.TargetEnabledOutbound
-	settings := req.TargetSettings
-	if sourceFacing {
-		code = req.SourceCode
-		name = req.SourceName
-		description = req.SourceDescription
-		contactName = req.SourceContactName
-		contactEmail = req.SourceContactEmail
-		contactPhone = req.SourceContactPhone
-		enabledInbound = req.SourceEnabledInbound
-		enabledOutbound = req.SourceEnabledOutbound
-		settings = req.SourceSettings
-	}
-	if settings == nil {
-		settings = map[string]any{}
-	}
-
-	return &edi.EDIPartner{
-		BusinessUnitID:         req.TenantInfo.BuID,
-		OrganizationID:         organizationID,
-		Kind:                   edi.PartnerKindInternal,
-		Status:                 domaintypes.StatusActive,
-		Code:                   strings.TrimSpace(code),
-		Name:                   strings.TrimSpace(name),
-		Description:            strings.TrimSpace(description),
-		InternalOrganizationID: internalOrganizationID,
-		Country:                "US",
-		ContactName:            strings.TrimSpace(contactName),
-		ContactEmail:           strings.TrimSpace(contactEmail),
-		ContactPhone:           strings.TrimSpace(contactPhone),
-		EnabledForInbound:      enabledInbound,
-		EnabledForOutbound:     enabledOutbound,
-		Settings:               settings,
-	}
-}
-
 func mapEDIPartnerConstraint(err error) error {
 	if !dberror.IsUniqueConstraintViolation(err) {
 		return err
@@ -1027,6 +1451,42 @@ func mapEDIPartnerConstraint(err error) error {
 			errortypes.ErrDuplicate,
 			"An internal EDI partner already exists for this target organization",
 		)
+	default:
+		return err
+	}
+
+	return multiErr
+}
+
+func mapEDIConnectionConstraint(err error) error {
+	if !dberror.IsUniqueConstraintViolation(err) {
+		return err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	switch dberror.ExtractConstraintName(err) {
+	case "idx_edi_connections_internal_open":
+		multiErr.Add(
+			"targetOrganizationId",
+			errortypes.ErrDuplicate,
+			"An open internal EDI connection already exists for these organizations",
+		)
+	default:
+		return err
+	}
+
+	return multiErr
+}
+
+func mapEDICommunicationProfileConstraint(err error) error {
+	if !dberror.IsUniqueConstraintViolation(err) {
+		return err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	switch dberror.ExtractConstraintName(err) {
+	case "idx_edi_communication_profiles_name_org":
+		multiErr.Add("name", errortypes.ErrDuplicate, "EDI communication profile with this name already exists")
 	default:
 		return err
 	}
@@ -1070,6 +1530,115 @@ func (s *Service) logAction(
 	if err := s.auditService.LogAction(params, auditservice.WithComment(comment)); err != nil {
 		s.l.Warn("failed to log EDI audit action", zap.Error(err))
 	}
+}
+
+func validateTenderEligibility(entity *shipment.Shipment) error {
+	if entity == nil {
+		return errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Shipment is required",
+		)
+	}
+
+	eligibleTenderStatus := entity.TenderStatus == nil ||
+		*entity.TenderStatus == shipment.TenderStatusRejected ||
+		*entity.TenderStatus == shipment.TenderStatusExpired ||
+		*entity.TenderStatus == shipment.TenderStatusCanceled
+	if entity.Status == shipment.StatusNew && eligibleTenderStatus {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"shipmentId",
+		errortypes.ErrInvalidOperation,
+		"Only New shipments without an active or accepted tender can be tendered.",
+	)
+}
+
+func (s *Service) lockShipment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*shipment.Shipment, error) {
+	entity := new(shipment.Shipment)
+	err := s.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("sp.id = ?", shipmentID).
+		Where("sp.organization_id = ?", tenantInfo.OrgID).
+		Where("sp.business_unit_id = ?", tenantInfo.BuID).
+		For("UPDATE").
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Shipment")
+	}
+
+	return entity, nil
+}
+
+func (s *Service) setShipmentTenderStatus(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	status shipment.TenderStatus,
+) error {
+	results, err := s.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*shipment.Shipment)(nil)).
+		Set("tender_status = ?", status).
+		Set("version = version + 1").
+		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Where("id = ?", shipmentID).
+		Where("organization_id = ?", tenantInfo.OrgID).
+		Where("business_unit_id = ?", tenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, "Shipment", shipmentID.String())
+}
+
+func (s *Service) createSystemShipmentComment(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	comment string,
+	metadata map[string]any,
+) error {
+	if s.shipmentCommentRepo == nil || s.userRepo == nil {
+		return nil
+	}
+
+	systemUser, err := s.userRepo.GetSystemUser(ctx, "id")
+	if err != nil {
+		return err
+	}
+
+	if metadata == nil {
+		metadata = map[string]any{}
+	}
+	metadata["source"] = "edi"
+
+	_, err = s.shipmentCommentRepo.Create(ctx, &shipment.ShipmentComment{
+		ShipmentID:       shipmentID,
+		OrganizationID:   tenantInfo.OrgID,
+		BusinessUnitID:   tenantInfo.BuID,
+		UserID:           systemUser.ID,
+		Comment:          comment,
+		Type:             shipment.CommentTypeStatusUpdate,
+		Visibility:       shipment.CommentVisibilityOperations,
+		Priority:         shipment.CommentPriorityNormal,
+		Source:           shipment.CommentSourceSystem,
+		Metadata:         metadata,
+		MentionedUserIDs: []pulid.ID{},
+	})
+	return err
+}
+
+func tenderStatusPtr(status shipment.TenderStatus) *shipment.TenderStatus {
+	return &status
 }
 
 func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {

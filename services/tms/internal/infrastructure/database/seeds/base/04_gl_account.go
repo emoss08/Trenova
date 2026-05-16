@@ -41,58 +41,71 @@ func (s *GLAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 		s.Name(),
 		nil,
 		func(ctx context.Context, tx bun.Tx, sc *seedhelpers.SeedContext) error {
-			org, err := sc.GetOrganization("default_org")
-			if err != nil {
-				org, err = sc.GetDefaultOrganization(ctx)
+			var orgs []tenant.Organization
+			if err := tx.NewSelect().Model(&orgs).Order("created_at ASC").Scan(ctx); err != nil {
+				return fmt.Errorf("get organizations: %w", err)
+			}
+
+			if len(orgs) == 0 {
+				return fmt.Errorf("no organizations found")
+			}
+
+			var createdOrgCount int
+			var totalAccountCount int
+			for i := range orgs {
+				org := &orgs[i]
+
+				count, err := tx.NewSelect().
+					Model((*accounttype.AccountType)(nil)).
+					Where("organization_id = ?", org.ID).
+					Where("business_unit_id = ?", org.BusinessUnitID).
+					Count(ctx)
 				if err != nil {
-					return fmt.Errorf("get default organization: %w", err)
+					return fmt.Errorf("check existing account types for org %s: %w", org.Name, err)
 				}
+
+				if count > 0 {
+					continue
+				}
+
+				accountTypeIDs, err := s.createDefaultAccountTypes(
+					ctx,
+					tx,
+					sc,
+					org.ID,
+					org.BusinessUnitID,
+				)
+				if err != nil {
+					return fmt.Errorf("create default account types for org %s: %w", org.Name, err)
+				}
+
+				accountCount, err := s.createDefaultCOA(
+					ctx,
+					tx,
+					sc,
+					org.ID,
+					org.BusinessUnitID,
+					accountTypeIDs,
+				)
+				if err != nil {
+					return fmt.Errorf("create default COA for org %s: %w", org.Name, err)
+				}
+
+				if err = s.applyAccountingDefaults(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
+					return fmt.Errorf("apply accounting control defaults for org %s: %w", org.Name, err)
+				}
+
+				totalAccountCount += accountCount
+				createdOrgCount++
 			}
 
-			count, err := tx.NewSelect().
-				Model((*accounttype.AccountType)(nil)).
-				Where("organization_id = ?", org.ID).
-				Where("business_unit_id = ?", org.BusinessUnitID).
-				Count(ctx)
-			if err != nil {
-				return fmt.Errorf("check existing account types: %w", err)
+			if totalAccountCount > 0 {
+				seedhelpers.LogSuccess(
+					"Created GL account fixtures",
+					fmt.Sprintf("- Created default account types for %d organizations", createdOrgCount),
+					fmt.Sprintf("- Created %d GL accounts for trucking operations", totalAccountCount),
+				)
 			}
-
-			if count > 0 {
-				return nil
-			}
-
-			accountTypeIDs, err := s.createDefaultAccountTypes(
-				ctx,
-				tx,
-				sc,
-				org.ID,
-				org.BusinessUnitID,
-			)
-			if err != nil {
-				return fmt.Errorf("create default account types: %w", err)
-			}
-
-			accountCount, err := s.createDefaultCOA(
-				ctx,
-				tx,
-				sc,
-				org.ID,
-				org.BusinessUnitID,
-				accountTypeIDs,
-			)
-			if err != nil {
-				return fmt.Errorf("create default COA: %w", err)
-			}
-			if err = s.applyAccountingDefaults(ctx, tx, org.ID, org.BusinessUnitID); err != nil {
-				return fmt.Errorf("apply accounting control defaults: %w", err)
-			}
-
-			seedhelpers.LogSuccess(
-				"Created GL account fixtures",
-				"- Created 6 default account types",
-				fmt.Sprintf("- Created %d GL accounts for trucking operations", accountCount),
-			)
 
 			return nil
 		},
@@ -232,7 +245,7 @@ func (s *GLAccountSeed) createDefaultAccountTypes(
 		return nil, fmt.Errorf("insert account types: %w", err)
 	}
 
-	accountTypeMap := make(map[accounttype.Category]pulid.ID)
+	accountTypeMap := make(map[accounttype.Category]pulid.ID, len(accountTypes))
 	for i := range accountTypes {
 		at := &accountTypes[i]
 		accountTypeMap[at.Category] = at.ID
@@ -1326,9 +1339,8 @@ func (s *GLAccountSeed) createDefaultCOA(
 ) (int, error) {
 	coaData := getDefaultTruckingCOA()
 
-	accountsByCode := make(map[string]*glaccount.GLAccount)
-
-	var accounts []*glaccount.GLAccount
+	accountsByCode := make(map[string]*glaccount.GLAccount, len(coaData))
+	accounts := make([]*glaccount.GLAccount, 0, len(coaData))
 	for _, seed := range coaData {
 		account := &glaccount.GLAccount{
 			ID:             pulid.MustNew("gla_"),

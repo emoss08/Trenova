@@ -11,7 +11,7 @@ import {
 import { useDataTable } from "@/contexts/data-table-context";
 import type { RowAction } from "@/types/data-table";
 import type { Row } from "@tanstack/react-table";
-import { PencilIcon } from "lucide-react";
+import { EyeIcon, PencilIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface DataTableContextMenuProps<TData> {
@@ -32,7 +32,8 @@ function groupActions<TData>(actions: RowAction<TData>[]): ActionGroup<TData>[] 
 
   for (const action of actions) {
     const groupDef = action.group;
-    const key = groupDef == null ? "__default__" : typeof groupDef === "string" ? groupDef : groupDef.id;
+    const key =
+      groupDef == null ? "__default__" : typeof groupDef === "string" ? groupDef : groupDef.id;
     const label = groupDef != null && typeof groupDef === "object" ? groupDef.label : undefined;
 
     let group = groupMap.get(key);
@@ -52,35 +53,29 @@ export function DataTableContextMenu<TData>({
   row,
   actions = [],
 }: DataTableContextMenuProps<TData>) {
-  const { openPanelEdit, hasPanel, canUpdate } = useDataTable<TData, unknown>();
+  const { openPanelEdit, hasPanel, canOpenPanel, canUpdate } = useDataTable<TData, unknown>();
 
   const allActions: RowAction<TData>[] = [];
 
-  if (hasPanel && canUpdate) {
+  if (hasPanel && canOpenPanel) {
     allActions.push({
       id: "edit",
-      label: "Edit",
-      icon: PencilIcon,
+      label: canUpdate ? "Edit" : "View",
+      icon: canUpdate ? PencilIcon : EyeIcon,
       onClick: openPanelEdit,
     });
   }
 
   allActions.push(...actions);
 
-  const visibleActions = allActions.filter(
-    (action) => !action.hidden?.(row),
-  );
+  const visibleActions = allActions.filter((action) => !action.hidden?.(row));
 
   if (visibleActions.length === 0) {
     return <>{children}</>;
   }
 
-  const standardActions = visibleActions.filter(
-    (a) => a.variant !== "destructive",
-  );
-  const destructiveActions = visibleActions.filter(
-    (a) => a.variant === "destructive",
-  );
+  const standardActions = visibleActions.filter((a) => a.variant !== "destructive");
+  const destructiveActions = visibleActions.filter((a) => a.variant === "destructive");
 
   const standardGroups = groupActions(standardActions);
 

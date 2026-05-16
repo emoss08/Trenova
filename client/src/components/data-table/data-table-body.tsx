@@ -31,11 +31,11 @@ function DataTableRow<TData>({
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
 }) {
-  const { openPanelEdit, hasPanel, canUpdate } = useDataTable<TData, unknown>();
+  const { openPanelEdit, hasPanel, canOpenPanel } = useDataTable<TData, unknown>();
 
-  const isClickable = !!(onRowClick || (hasPanel && canUpdate));
+  const isClickable = !!(onRowClick || (hasPanel && canOpenPanel));
   const hasContextMenu =
-    (contextMenuActions && contextMenuActions.length > 0) || (hasPanel && canUpdate);
+    (contextMenuActions && contextMenuActions.length > 0) || (hasPanel && canOpenPanel);
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent<HTMLTableRowElement>) => {
@@ -55,11 +55,11 @@ function DataTableRow<TData>({
 
       if (onRowClick) {
         onRowClick(row);
-      } else if (hasPanel && canUpdate) {
+      } else if (hasPanel && canOpenPanel) {
         openPanelEdit(row);
       }
     },
-    [row, onRowClick, hasPanel, canUpdate, openPanelEdit, table],
+    [row, onRowClick, hasPanel, canOpenPanel, openPanelEdit, table],
   );
 
   const tableRow = (

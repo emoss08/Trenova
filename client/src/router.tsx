@@ -115,6 +115,30 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/edi/communication-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDICommunicationProfilesPage } = await import("@/routes/edi/page");
+              return { Component: EDICommunicationProfilesPage };
+            },
+          },
+          {
+            path: "/edi/mapping-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIMappingProfilesPage } = await import("@/routes/edi/page");
+              return { Component: EDIMappingProfilesPage };
+            },
+          },
+          {
+            path: "/edi/designer",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
+            async lazy() {
+              const { EDIDesignerPage } = await import("@/routes/edi/page");
+              return { Component: EDIDesignerPage };
+            },
+          },
+          {
             path: "/edi/transfers/inbound",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EDI)),
             async lazy() {

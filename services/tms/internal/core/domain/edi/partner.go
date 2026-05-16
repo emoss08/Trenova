@@ -28,6 +28,7 @@ type EDIPartner struct {
 	Name                       string             `json:"name"                       bun:"name,type:VARCHAR(200),notnull"`
 	Description                string             `json:"description"                bun:"description,type:TEXT,nullzero"`
 	InternalOrganizationID     pulid.ID           `json:"internalOrganizationId"     bun:"internal_organization_id,type:VARCHAR(100),nullzero"`
+	EDIConnectionID            pulid.ID           `json:"ediConnectionId"            bun:"edi_connection_id,type:VARCHAR(100),nullzero"`
 	CustomerID                 pulid.ID           `json:"customerId"                 bun:"customer_id,type:VARCHAR(100),nullzero"`
 	DefaultTransportID         pulid.ID           `json:"defaultTransportId"         bun:"default_transport_id,type:VARCHAR(100),nullzero"`
 	DefaultMappingProfileID    pulid.ID           `json:"defaultMappingProfileId"    bun:"default_mapping_profile_id,type:VARCHAR(100),nullzero"`
@@ -50,6 +51,8 @@ type EDIPartner struct {
 	Organization         *tenant.Organization     `json:"organization,omitempty"         bun:"rel:belongs-to,join:organization_id=id"`
 	InternalOrganization *tenant.Organization     `json:"internalOrganization,omitempty" bun:"rel:belongs-to,join:internal_organization_id=id"`
 	Customer             *customer.Customer       `json:"customer,omitempty"             bun:"rel:belongs-to,join:customer_id=id"`
+	Connection           *EDIConnection           `json:"connection,omitempty"           bun:"rel:belongs-to,join:edi_connection_id=id"`
+	DefaultTransport     *EDICommunicationProfile `json:"defaultTransport,omitempty"     bun:"rel:belongs-to,join:default_transport_id=id"`
 	MappingProfile       *EDIMappingProfile       `json:"mappingProfile,omitempty"       bun:"rel:has-one,join:id=edi_partner_id"`
 	MappingEntries       []*EDIMappingProfileItem `json:"mappingEntries,omitempty"       bun:"rel:has-many,join:id=edi_partner_id"`
 }

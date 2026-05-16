@@ -2,7 +2,11 @@ import { Badge, badgeVariants } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { BillingQueueStatus } from "@/types/billing-queue";
 import type { InvoiceStatus, SettlementStatus } from "@/types/invoice";
-import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
+import {
+  shipmentStatusSchema,
+  type ShipmentStatus,
+  type ShipmentTenderStatus,
+} from "@/types/shipment";
 import type { PTOStatus, PTOType } from "@/types/worker";
 import type { VariantProps } from "class-variance-authority";
 import { CheckCheckIcon, CheckIcon, ClockIcon, LockIcon, XIcon } from "lucide-react";
@@ -243,6 +247,48 @@ export function ShipmentStatusBadge({
       variant: "inactive",
       text: "Canceled",
       description: "Shipment has been terminated and will not be completed as originally planned.",
+    },
+  };
+
+  return (
+    <Badge
+      variant={statusAttributes[status].variant}
+      className={cn(className, "max-h-5 uppercase")}
+    >
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function ShipmentTenderStatusBadge({
+  status,
+  className,
+}: {
+  status?: ShipmentTenderStatus | null;
+  className?: string;
+}) {
+  if (!status) return null;
+
+  const statusAttributes: Record<ShipmentTenderStatus, BadgeAttrProps> = {
+    Tendered: {
+      variant: "info",
+      text: "Tendered",
+    },
+    Accepted: {
+      variant: "active",
+      text: "Accepted",
+    },
+    Rejected: {
+      variant: "inactive",
+      text: "Rejected",
+    },
+    Expired: {
+      variant: "orange",
+      text: "Expired",
+    },
+    Canceled: {
+      variant: "inactive",
+      text: "Canceled",
     },
   };
 

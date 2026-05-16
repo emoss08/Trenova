@@ -29,6 +29,7 @@ interface DataTablePanelContextType<TData = unknown> {
   openPanelEdit: (row: Row<TData>) => void;
   closePanel: () => void;
   hasPanel: boolean;
+  canOpenPanel: boolean;
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -38,14 +39,13 @@ interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
 }
 
 interface DataTableContextType<TData = unknown, TValue = unknown>
-  extends DataTableStateContextType,
+  extends
+    DataTableStateContextType,
     DataTableBaseContextType<TData, TValue>,
     DataTablePanelContextType<TData>,
     DataTablePermissionsContextType {}
 
-const DataTableContext = createContext<DataTableContextType<any, any> | null>(
-  null,
-);
+const DataTableContext = createContext<DataTableContextType<any, any> | null>(null);
 
 const noopFn = () => {};
 
@@ -72,6 +72,7 @@ export function DataTableProvider<TData, TValue>({
       openPanelEdit: props.openPanelEdit ?? noopFn,
       closePanel: props.closePanel ?? noopFn,
       hasPanel: props.hasPanel ?? false,
+      canOpenPanel: props.canOpenPanel ?? false,
       canCreate: props.canCreate ?? true,
       canUpdate: props.canUpdate ?? true,
       canExport: props.canExport ?? true,
@@ -89,6 +90,7 @@ export function DataTableProvider<TData, TValue>({
       props.openPanelEdit,
       props.closePanel,
       props.hasPanel,
+      props.canOpenPanel,
       props.canCreate,
       props.canUpdate,
       props.canExport,

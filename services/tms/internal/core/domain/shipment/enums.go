@@ -15,6 +15,23 @@ const (
 	StatusCanceled           = Status("Canceled")
 )
 
+type TenderStatus string
+
+const (
+	TenderStatusTendered = TenderStatus("Tendered")
+	TenderStatusAccepted = TenderStatus("Accepted")
+	TenderStatusRejected = TenderStatus("Rejected")
+	TenderStatusExpired  = TenderStatus("Expired")
+	TenderStatusCanceled = TenderStatus("Canceled")
+)
+
+type EntryMethod string
+
+const (
+	EntryMethodManual = EntryMethod("Manual")
+	EntryMethodEDI    = EntryMethod("EDI")
+)
+
 type BillingTransferStatus string
 
 const (

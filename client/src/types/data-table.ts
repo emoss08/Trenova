@@ -53,9 +53,7 @@ type SelectDockAction<TData> = BaseDockAction & {
   selectPlaceholder?: string;
 };
 
-export type DockAction<TData> =
-  | SimpleDockAction<TData>
-  | SelectDockAction<TData>;
+export type DockAction<TData> = SimpleDockAction<TData> | SelectDockAction<TData>;
 
 export type RowAction<TData> = {
   id: string;
@@ -80,6 +78,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
   link: API_ENDPOINTS;
+  detailLink?: API_ENDPOINTS;
   queryKey: string;
   resource?: string;
   TableModal?: React.ComponentType<TableSheetProps>;
@@ -98,6 +97,8 @@ export type DataTableProps<TData extends Record<string, any>> = {
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
   preferDetailRowForEdit?: boolean;
+  enableCreateAction?: boolean;
+  enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
 };
 
@@ -133,13 +134,7 @@ export const filterOperatorSchema = z.enum([
 
 export type FilterOperator = z.infer<typeof filterOperatorSchema>;
 
-export const filterVariantSchema = z.enum([
-  "text",
-  "number",
-  "select",
-  "date",
-  "boolean",
-]);
+export const filterVariantSchema = z.enum(["text", "number", "select", "date", "boolean"]);
 
 export type FilterVariant = z.infer<typeof filterVariantSchema>;
 

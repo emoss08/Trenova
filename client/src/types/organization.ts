@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { userSchema } from "./user";
 
 export const userOrganizationSchema = z.object({
   id: z.string().min(1, { error: "Organization ID is required" }),
@@ -22,9 +23,7 @@ export type SwitchOrganizationRequest = z.infer<
   typeof switchOrganizationRequestSchema
 >;
 
-export const switchOrganizationResponseSchema = z.object({
-  user: z.any(),
-});
+export const switchOrganizationResponseSchema = userSchema;
 
 export type SwitchOrganizationResponse = z.infer<
   typeof switchOrganizationResponseSchema

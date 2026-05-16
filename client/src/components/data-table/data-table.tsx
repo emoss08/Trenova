@@ -39,10 +39,7 @@ import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableDock } from "./data-table-dock";
-import {
-  DataTablePanelContent,
-  DataTablePanelWrapper,
-} from "./data-table-panel";
+import { DataTablePanelContent, DataTablePanelWrapper } from "./data-table-panel";
 import { createSelectionColumn } from "./data-table-selection-column";
 import { DataTableToolbar } from "./data-table-toolbar";
 
@@ -50,6 +47,7 @@ export function DataTable<TData extends Record<string, any>>({
   columns,
   name,
   link,
+  detailLink,
   queryKey,
   resource,
   enableRowSelection = false,
@@ -61,6 +59,8 @@ export function DataTable<TData extends Record<string, any>>({
   contextMenuActions,
   onRowClick,
   preferDetailRowForEdit = false,
+  enableCreateAction = true,
+  enableReadOnlyPanel = false,
   initialColumnVisibility,
 }: DataTableProps<TData>) {
   "use no memo";
@@ -69,16 +69,8 @@ export function DataTable<TData extends Record<string, any>>({
   const canUpdate = resource ? permissions.canUpdate : true;
   const canExport = resource ? permissions.canExport : true;
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
-  const {
-    pageIndex,
-    pageSize,
-    query,
-    fieldFilters,
-    filterGroups,
-    sort,
-    panelType,
-    panelEntityId,
-  } = searchParams;
+  const { pageIndex, pageSize, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
+    searchParams;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const defaultConfigAppliedRef = useRef(false);
 
@@ -99,8 +91,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   const resolvedAddRecordActions = useMemo(() => {
     const actions = [...addRecordActions];
-    const defaultOnClick =
-      onAddRecordProp ?? (hasPanel ? openPanelCreate : undefined);
+    const defaultOnClick = onAddRecordProp ?? (hasPanel ? openPanelCreate : undefined);
 
     if (defaultOnClick && !actions.some((action) => action.id === "default-create")) {
       actions.unshift({
@@ -111,8 +102,16 @@ export function DataTable<TData extends Record<string, any>>({
       });
     }
 
-    return canCreate ? actions : [];
-  }, [addRecordActions, canCreate, hasPanel, name, onAddRecordProp, openPanelCreate]);
+    return enableCreateAction && canCreate ? actions : [];
+  }, [
+    addRecordActions,
+    canCreate,
+    enableCreateAction,
+    hasPanel,
+    name,
+    onAddRecordProp,
+    openPanelCreate,
+  ]);
 
   const openPanelEdit = useCallback(
     (row: Row<TData>) => {
@@ -152,12 +151,8 @@ export function DataTable<TData extends Record<string, any>>({
   const debouncedFilters = useDebounce(filterItems, 300);
 
   useEffect(() => {
-    const singles = debouncedFilters.filter(
-      (f) => f.type === "filter",
-    ) as SingleFilterItem[];
-    const groups = debouncedFilters.filter(
-      (f) => f.type === "group",
-    ) as FilterGroupItem[];
+    const singles = debouncedFilters.filter((f) => f.type === "filter") as SingleFilterItem[];
+    const groups = debouncedFilters.filter((f) => f.type === "group") as FilterGroupItem[];
 
     const newFieldFilters = singles.map((f) => ({
       field: f.apiField,
@@ -256,9 +251,7 @@ export function DataTable<TData extends Record<string, any>>({
     },
     onPaginationChange: (updater) => {
       const newState =
-        typeof updater === "function"
-          ? updater({ pageIndex: pageIndex - 1, pageSize })
-          : updater;
+        typeof updater === "function" ? updater({ pageIndex: pageIndex - 1, pageSize }) : updater;
       handlePageChange(newState.pageIndex);
       if (newState.pageSize !== pageSize) {
         handlePageSizeChange(newState.pageSize);
@@ -269,18 +262,10 @@ export function DataTable<TData extends Record<string, any>>({
   const handleApplyConfig = useCallback(
     (config: TableConfig) => {
       const newFieldFilters = config.fieldFilters ?? [];
-      const newFilterGroups = (config.filterGroups ?? []).filter(
-        (g) => g.filters?.length > 0,
-      );
+      const newFilterGroups = (config.filterGroups ?? []).filter((g) => g.filters?.length > 0);
 
-      const filterItemsFromFields = initializeFilterItemsFromFieldFilters(
-        newFieldFilters,
-        columns,
-      );
-      const filterItemsFromGroups = initializeFilterItemsFromFilterGroups(
-        newFilterGroups,
-        columns,
-      );
+      const filterItemsFromFields = initializeFilterItemsFromFieldFilters(newFieldFilters, columns);
+      const filterItemsFromGroups = initializeFilterItemsFromFilterGroups(newFilterGroups, columns);
 
       void setSearchParams({
         fieldFilters: newFieldFilters,
@@ -343,11 +328,7 @@ export function DataTable<TData extends Record<string, any>>({
   const listRow = useMemo(() => {
     if (!panelEntityId || panelMode !== "edit") return null;
     const results = dataQuery.data?.results || [];
-    return (
-      results.find(
-        (row: TData) => (row as { id?: string }).id === panelEntityId,
-      ) ?? null
-    );
+    return results.find((row: TData) => (row as { id?: string }).id === panelEntityId) ?? null;
   }, [panelEntityId, panelMode, dataQuery.data?.results]);
 
   const extraParams = extraSearchParams
@@ -358,18 +339,13 @@ export function DataTable<TData extends Record<string, any>>({
     : "";
 
   const { data: detailRow } = useQuery({
-    queryKey: [queryKey, "detail", link, extraParams, panelEntityId],
-    queryFn: () => api.get<TData>(`${link}${panelEntityId}/${extraParams}`),
-    enabled:
-      !!panelEntityId &&
-      panelMode === "edit" &&
-      (preferDetailRowForEdit || !listRow),
+    queryKey: [queryKey, "detail", detailLink ?? link, extraParams, panelEntityId],
+    queryFn: () => api.get<TData>(`${detailLink ?? link}${panelEntityId}/${extraParams}`),
+    enabled: !!panelEntityId && panelMode === "edit" && (preferDetailRowForEdit || !listRow),
     staleTime: 0,
   });
 
-  const panelRow = preferDetailRowForEdit
-    ? detailRow ?? null
-    : listRow ?? detailRow ?? null;
+  const panelRow = preferDetailRowForEdit ? (detailRow ?? null) : (listRow ?? detailRow ?? null);
 
   const { columnSizeVars, totalSize } = useMemo(() => {
     const headers = table.getFlatHeaders();
@@ -377,8 +353,7 @@ export function DataTable<TData extends Record<string, any>>({
     let total = 0;
     for (const header of headers) {
       const size = header.getSize();
-      vars[`--col-${header.column.id.replace(".", "-")}-size`] =
-        `${size}px`;
+      vars[`--col-${header.column.id.replace(".", "-")}-size`] = `${size}px`;
       total += size;
     }
     return { columnSizeVars: vars, totalSize: total };
@@ -397,6 +372,7 @@ export function DataTable<TData extends Record<string, any>>({
       openPanelEdit={openPanelEdit}
       closePanel={closePanel}
       hasPanel={hasPanel}
+      canOpenPanel={canUpdate || enableReadOnlyPanel}
       canCreate={canCreate}
       canUpdate={canUpdate}
       canExport={canExport}
@@ -429,10 +405,7 @@ export function DataTable<TData extends Record<string, any>>({
             >
               <TableHeader className="sticky top-0 z-10 bg-muted backdrop-blur-sm">
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="hover:bg-transparent"
-                  >
+                  <TableRow key={headerGroup.id} className="hover:bg-transparent">
                     {headerGroup.headers.map((header) => {
                       const meta = header.column.columnDef.meta;
                       const isSortable = meta?.sortable !== false;
@@ -448,8 +421,7 @@ export function DataTable<TData extends Record<string, any>>({
                             <DataTableColumnHeader
                               column={header.column}
                               title={
-                                typeof header.column.columnDef.header ===
-                                "string"
+                                typeof header.column.columnDef.header === "string"
                                   ? header.column.columnDef.header
                                   : meta?.label || header.column.id
                               }
@@ -457,10 +429,7 @@ export function DataTable<TData extends Record<string, any>>({
                               onSort={handleSortChange}
                             />
                           ) : (
-                            flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )
+                            flexRender(header.column.columnDef.header, header.getContext())
                           )}
                         </TableHead>
                       );

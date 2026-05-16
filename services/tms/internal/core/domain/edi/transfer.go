@@ -14,9 +14,13 @@ type LoadTenderPayload struct {
 	BusinessUnitID           pulid.ID                         `json:"businessUnitId"`
 	OrganizationID           pulid.ID                         `json:"organizationId"`
 	ServiceTypeID            pulid.ID                         `json:"serviceTypeId"`
+	ServiceTypeLabel         string                           `json:"serviceTypeLabel,omitempty"`
 	ShipmentTypeID           pulid.ID                         `json:"shipmentTypeId,omitempty"`
+	ShipmentTypeLabel        string                           `json:"shipmentTypeLabel,omitempty"`
 	CustomerID               pulid.ID                         `json:"customerId"`
+	CustomerLabel            string                           `json:"customerLabel,omitempty"`
 	FormulaTemplateID        pulid.ID                         `json:"formulaTemplateId"`
+	FormulaTemplateLabel     string                           `json:"formulaTemplateLabel,omitempty"`
 	BOL                      string                           `json:"bol,omitempty"`
 	Pieces                   *int64                           `json:"pieces,omitempty"`
 	Weight                   *int64                           `json:"weight,omitempty"`
@@ -43,6 +47,14 @@ type LoadTenderMove struct {
 
 type LoadTenderStop struct {
 	LocationID           pulid.ID `json:"locationId"`
+	LocationLabel        string   `json:"locationLabel,omitempty"`
+	LocationName         string   `json:"locationName,omitempty"`
+	LocationCode         string   `json:"locationCode,omitempty"`
+	LocationAddressLine1 string   `json:"locationAddressLine1,omitempty"`
+	LocationAddressLine2 string   `json:"locationAddressLine2,omitempty"`
+	LocationCity         string   `json:"locationCity,omitempty"`
+	LocationStateCode    string   `json:"locationStateCode,omitempty"`
+	LocationPostalCode   string   `json:"locationPostalCode,omitempty"`
 	Type                 string   `json:"type"`
 	ScheduleType         string   `json:"scheduleType"`
 	Sequence             int64    `json:"sequence"`
@@ -54,16 +66,22 @@ type LoadTenderStop struct {
 }
 
 type LoadTenderCommodity struct {
-	CommodityID pulid.ID `json:"commodityId"`
-	Weight      int64    `json:"weight"`
-	Pieces      int64    `json:"pieces"`
+	CommodityID          pulid.ID `json:"commodityId"`
+	CommodityLabel       string   `json:"commodityLabel,omitempty"`
+	CommodityName        string   `json:"commodityName,omitempty"`
+	CommodityDescription string   `json:"commodityDescription,omitempty"`
+	Weight               int64    `json:"weight"`
+	Pieces               int64    `json:"pieces"`
 }
 
 type LoadTenderCharge struct {
-	AccessorialChargeID pulid.ID        `json:"accessorialChargeId"`
-	Method              string          `json:"method"`
-	Amount              decimal.Decimal `json:"amount"`
-	Unit                int16           `json:"unit"`
+	AccessorialChargeID    pulid.ID        `json:"accessorialChargeId"`
+	AccessorialLabel       string          `json:"accessorialLabel,omitempty"`
+	AccessorialCode        string          `json:"accessorialCode,omitempty"`
+	AccessorialDescription string          `json:"accessorialDescription,omitempty"`
+	Method                 string          `json:"method"`
+	Amount                 decimal.Decimal `json:"amount"`
+	Unit                   int16           `json:"unit"`
 }
 
 type MappingResolution struct {

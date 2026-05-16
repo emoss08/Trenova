@@ -82,6 +82,7 @@ import type { LocationGeofenceType } from "@/types/location";
 import type { CoreResponsibility, DataScope, FieldSensitivity, Operation } from "@/types/role";
 import type {
   MoveStatus,
+  ShipmentTenderStatus,
   ShipmentStatus,
   StopScheduleType,
   StopStatus,
@@ -139,6 +140,14 @@ export const shipmentStatusChoices = [
   { label: "Invoiced", value: "Invoiced", color: "#166534" },
   { label: "Canceled", value: "Canceled", color: "#b91c1c" },
 ] satisfies ReadonlyArray<GenericSelectOption<ShipmentStatus>>;
+
+export const shipmentTenderStatusChoices = [
+  { label: "Tendered", value: "Tendered", color: "#2563eb" },
+  { label: "Accepted", value: "Accepted", color: "#16a34a" },
+  { label: "Rejected", value: "Rejected", color: "#dc2626" },
+  { label: "Expired", value: "Expired", color: "#f97316" },
+  { label: "Canceled", value: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<GenericSelectOption<ShipmentTenderStatus>>;
 
 export const billTypeChoices = [
   { label: "Invoice", value: "Invoice", color: "#3b82f6" },

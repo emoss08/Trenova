@@ -72,6 +72,15 @@ export type BaseEndpoint =
   | "/accounting/bank-receipt-batches/select-options/sources/"
   | "/accounting/bank-receipt-work-items/"
   | "/edi/partners/"
+  | "/edi/communication-profiles/"
+  | "/edi/document-types/"
+  | "/edi/templates/"
+  | "/edi/document-profiles/"
+  | "/edi/documents/preview/"
+  | "/edi/documents/generate/"
+  | "/edi/messages/"
+  | "/edi/test-cases/"
+  | "/edi/transfers/"
   | "/edi/transfers/inbound/"
   | "/edi/transfers/outbound/";
 

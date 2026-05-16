@@ -1,0 +1,19 @@
+DROP TABLE IF EXISTS "edi_test_cases";
+DROP TABLE IF EXISTS "edi_message_validation_errors";
+DROP TABLE IF EXISTS "edi_messages";
+DROP TABLE IF EXISTS "edi_control_number_sequences";
+DROP TABLE IF EXISTS "edi_partner_document_profiles";
+DROP TABLE IF EXISTS "edi_template_segments";
+DROP TABLE IF EXISTS "edi_template_versions";
+DROP TABLE IF EXISTS "edi_templates";
+DROP TABLE IF EXISTS "edi_document_types";
+
+DROP TYPE IF EXISTS edi_control_number_kind_enum;
+DROP TYPE IF EXISTS edi_validation_severity_enum;
+DROP TYPE IF EXISTS edi_validation_mode_enum;
+DROP TYPE IF EXISTS edi_message_status_enum;
+DROP TYPE IF EXISTS edi_template_status_enum;
+DROP TYPE IF EXISTS edi_document_status_enum;
+DROP TYPE IF EXISTS edi_transaction_set_enum;
+DROP TYPE IF EXISTS edi_standard_enum;
+DROP TYPE IF EXISTS edi_document_direction_enum;

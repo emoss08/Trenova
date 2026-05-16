@@ -47,6 +47,41 @@ func NewTransferRepository(p Params) repositories.EDILoadTenderTransferRepositor
 	}
 }
 
+func NewConnectionRepository(p Params) repositories.EDIConnectionRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-connection-repository"),
+	}
+}
+
+func NewCommunicationProfileRepository(p Params) repositories.EDICommunicationProfileRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-communication-profile-repository"),
+	}
+}
+
+func NewShipmentLinkRepository(p Params) repositories.EDIShipmentLinkRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-shipment-link-repository"),
+	}
+}
+
+func NewTransferChangeRepository(p Params) repositories.EDITransferChangeRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-transfer-change-repository"),
+	}
+}
+
+func NewDocumentRepository(p Params) repositories.EDIDocumentRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-document-repository"),
+	}
+}
+
 func (r *repository) filterPartnersQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListEDIPartnersRequest,
@@ -60,6 +95,8 @@ func (r *repository) filterPartnersQuery(
 
 	return q.
 		Relation("InternalOrganization").
+		Relation("Connection").
+		Relation("DefaultTransport").
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		Order("ep.created_at DESC")
@@ -105,6 +142,8 @@ func (r *repository) SelectOptions(
 			"code",
 			"name",
 			"internal_organization_id",
+			"edi_connection_id",
+			"default_transport_id",
 			"enabled_for_inbound",
 			"enabled_for_outbound",
 		).
@@ -169,46 +208,6 @@ func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 	return entity, nil
 }
 
-func (r *repository) CreateInternalPair(
-	ctx context.Context,
-	req *repositories.CreateInternalPartnerPairRequest,
-) (*edi.InternalPartnerPair, error) {
-	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if err := r.ensureTargetOrganizationInBusinessUnit(c, req.TargetOrganizationID, req.BusinessUnitID); err != nil {
-			return err
-		}
-
-		if _, err := r.db.DBForContext(c).
-			NewInsert().
-			Model(req.SourcePartner).
-			Returning("*").
-			Exec(c); err != nil {
-			return err
-		}
-		if _, err := r.ensureMappingProfile(c, req.SourcePartner); err != nil {
-			return err
-		}
-
-		if _, err := r.db.DBForContext(c).
-			NewInsert().
-			Model(req.TargetPartner).
-			Returning("*").
-			Exec(c); err != nil {
-			return err
-		}
-		_, err := r.ensureMappingProfile(c, req.TargetPartner)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &edi.InternalPartnerPair{
-		SourcePartner: req.SourcePartner,
-		TargetPartner: req.TargetPartner,
-	}, nil
-}
-
 func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	ov := entity.Version
 	entity.Version++
@@ -225,6 +224,7 @@ func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 			"name",
 			"description",
 			"internal_organization_id",
+			"edi_connection_id",
 			"customer_id",
 			"default_transport_id",
 			"default_mapping_profile_id",
@@ -295,6 +295,53 @@ func (r *repository) GetMappingProfile(
 	return r.ensureMappingProfile(ctx, partner)
 }
 
+func (r *repository) ListMappingProfiles(
+	ctx context.Context,
+	req *repositories.ListEDIMappingProfilesRequest,
+) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	entities := make([]*edi.EDIMappingProfile, 0, req.Filter.Pagination.SafeLimit())
+	total, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Relation("Partner").
+		Relation("Entries").
+		Where("emp.organization_id = ?", req.Filter.TenantInfo.OrgID).
+		Where("emp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		Order("emp.created_at DESC").
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDIMappingProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (r *repository) GetMappingProfileByID(
+	ctx context.Context,
+	req repositories.GetMappingProfileByIDRequest,
+) (*edi.EDIMappingProfile, error) {
+	profile := new(edi.EDIMappingProfile)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(profile).
+		Relation("Partner").
+		Relation("Entries").
+		Where("emp.id = ?", req.ProfileID).
+		Where("emp.organization_id = ?", req.TenantInfo.OrgID).
+		Where("emp.business_unit_id = ?", req.TenantInfo.BuID).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDIMappingProfile")
+	}
+
+	return profile, nil
+}
+
 func (r *repository) SaveMappingItems(
 	ctx context.Context,
 	req *repositories.SaveMappingItemsRequest,
@@ -351,6 +398,26 @@ func (r *repository) SaveMappingItems(
 	return items, nil
 }
 
+func (r *repository) SaveMappingProfileItems(
+	ctx context.Context,
+	req *repositories.SaveMappingProfileItemsRequest,
+) ([]*edi.EDIMappingProfileItem, error) {
+	profile, err := r.GetMappingProfileByID(ctx, repositories.GetMappingProfileByIDRequest{
+		ProfileID:  req.ProfileID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return r.SaveMappingItems(ctx, &repositories.SaveMappingItemsRequest{
+		PartnerID:  profile.EDIPartnerID,
+		TenantInfo: req.TenantInfo,
+		ActorID:    req.ActorID,
+		Items:      req.Items,
+	})
+}
+
 func (r *repository) DeleteMappingItem(
 	ctx context.Context,
 	req repositories.DeleteMappingItemRequest,
@@ -360,6 +427,25 @@ func (r *repository) DeleteMappingItem(
 		Model((*edi.EDIMappingProfileItem)(nil)).
 		Where("id = ?", req.MappingItemID).
 		Where("edi_partner_id = ?", req.PartnerID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, "EDIMappingProfileItem", req.MappingItemID.String())
+}
+
+func (r *repository) DeleteMappingProfileItem(
+	ctx context.Context,
+	req repositories.DeleteMappingProfileItemRequest,
+) error {
+	results, err := r.db.DBForContext(ctx).
+		NewDelete().
+		Model((*edi.EDIMappingProfileItem)(nil)).
+		Where("id = ?", req.MappingItemID).
+		Where("mapping_profile_id = ?", req.ProfileID).
 		Where("organization_id = ?", req.TenantInfo.OrgID).
 		Where("business_unit_id = ?", req.TenantInfo.BuID).
 		Exec(ctx)

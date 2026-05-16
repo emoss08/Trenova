@@ -487,6 +487,8 @@ var ShipmentColumns = struct {
 	FormulaTemplateID      Column // "formula_template_id" → qualified: "sp.formula_template_id"
 	ConsolidationGroupID   Column // "consolidation_group_id" → qualified: "sp.consolidation_group_id"
 	Status                 Column // "status" → qualified: "sp.status"
+	TenderStatus           Column // "tender_status" → qualified: "sp.tender_status"
+	EntryMethod            Column // "entry_method" → qualified: "sp.entry_method"
 	ProNumber              Column // "pro_number" → qualified: "sp.pro_number"
 	BOL                    Column // "bol" → qualified: "sp.bol"
 	CancelReason           Column // "cancel_reason" → qualified: "sp.cancel_reason"
@@ -527,6 +529,8 @@ var ShipmentColumns = struct {
 	FormulaTemplateID:      NewColumn("formula_template_id", "sp"),
 	ConsolidationGroupID:   NewColumn("consolidation_group_id", "sp"),
 	Status:                 NewColumn("status", "sp"),
+	TenderStatus:           NewColumn("tender_status", "sp"),
+	EntryMethod:            NewColumn("entry_method", "sp"),
 	ProNumber:              NewColumn("pro_number", "sp"),
 	BOL:                    NewColumn("bol", "sp"),
 	CancelReason:           NewColumn("cancel_reason", "sp"),
@@ -573,6 +577,8 @@ var ShipmentFieldMap = map[string]string{
 	"formulaTemplateId":      "formula_template_id",
 	"consolidationGroupId":   "consolidation_group_id",
 	"status":                 "status",
+	"tenderStatus":           "tender_status",
+	"entryMethod":            "entry_method",
 	"proNumber":              "pro_number",
 	"bol":                    "bol",
 	"cancelReason":           "cancel_reason",
@@ -615,6 +621,8 @@ var ShipmentInsertableColumns = []string{
 	"formula_template_id",
 	"consolidation_group_id",
 	"status",
+	"tender_status",
+	"entry_method",
 	"pro_number",
 	"bol",
 	"cancel_reason",
@@ -743,6 +751,8 @@ var ShipmentFilter = struct {
 	FormulaTemplateID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateId" → DB: "formula_template_id"
 	ConsolidationGroupID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupId" → DB: "consolidation_group_id"
 	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	TenderStatus           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderStatus" → DB: "tender_status"
+	EntryMethod            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "entryMethod" → DB: "entry_method"
 	ProNumber              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
 	BOL                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bol" → DB: "bol"
 	CancelReason           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cancelReason" → DB: "cancel_reason"
@@ -808,6 +818,12 @@ var ShipmentFilter = struct {
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)
+	},
+	TenderStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tenderStatus", op, value)
+	},
+	EntryMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("entryMethod", op, value)
 	},
 	ProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("proNumber", op, value)

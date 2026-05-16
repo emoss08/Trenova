@@ -4,6 +4,20 @@ package edi
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDICommunicationProfile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDICommunicationProfileFieldMap] instead of parsing struct tags via reflection.
+func (e *EDICommunicationProfile) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDICommunicationProfileFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIConnection].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIConnectionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIConnection) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIConnectionFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMappingProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDIMappingProfileFieldMap] instead of parsing struct tags via reflection.
@@ -30,4 +44,18 @@ func (e *EDIPartner) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.EDITransferFieldMap] instead of parsing struct tags via reflection.
 func (e *EDITransfer) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDITransferFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [ShipmentLink].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ShipmentLinkFieldMap] instead of parsing struct tags via reflection.
+func (e *ShipmentLink) GetStaticFieldMap() map[string]string {
+	return buncolgen.ShipmentLinkFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TransferChange].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TransferChangeFieldMap] instead of parsing struct tags via reflection.
+func (e *TransferChange) GetStaticFieldMap() map[string]string {
+	return buncolgen.TransferChangeFieldMap
 }

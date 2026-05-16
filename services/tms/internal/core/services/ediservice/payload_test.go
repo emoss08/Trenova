@@ -4,8 +4,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/commodity"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -22,6 +29,19 @@ func TestBuildTenderPayload(t *testing.T) {
 		FormulaTemplateID: pulid.MustNew("ft_"),
 		BOL:               "BOL-123",
 		RatingUnit:        1,
+		Customer: &customer.Customer{
+			Code: "ACME",
+			Name: "Acme Logistics",
+		},
+		ServiceType: &servicetype.ServiceType{
+			Code: "FTL",
+		},
+		ShipmentType: &shipmenttype.ShipmentType{
+			Code: "DRY",
+		},
+		FormulaTemplate: &formulatemplate.FormulaTemplate{
+			Name: "Standard Freight",
+		},
 		Moves: []*shipment.ShipmentMove{
 			{
 				Loaded:   true,
@@ -33,6 +53,14 @@ func TestBuildTenderPayload(t *testing.T) {
 						ScheduleType:         shipment.StopScheduleTypeOpen,
 						Sequence:             0,
 						ScheduledWindowStart: 123,
+						Location: &location.Location{
+							Code:         "DAL",
+							Name:         "Dallas Terminal",
+							AddressLine1: "123 Main St",
+							City:         "Dallas",
+							PostalCode:   "75001",
+							State:        &usstate.UsState{Abbreviation: "TX"},
+						},
 					},
 				},
 			},
@@ -42,6 +70,10 @@ func TestBuildTenderPayload(t *testing.T) {
 				CommodityID: pulid.MustNew("cmd_"),
 				Pieces:      2,
 				Weight:      300,
+				Commodity: &commodity.Commodity{
+					Name:        "Palletized freight",
+					Description: "General freight",
+				},
 			},
 		},
 		AdditionalCharges: []*shipment.AdditionalCharge{
@@ -50,6 +82,10 @@ func TestBuildTenderPayload(t *testing.T) {
 				Method:              accessorialcharge.MethodFlat,
 				Amount:              decimal.NewFromInt(25),
 				Unit:                1,
+				AccessorialCharge: &accessorialcharge.AccessorialCharge{
+					Code:        "LFT",
+					Description: "Liftgate",
+				},
 			},
 		},
 	}
@@ -58,10 +94,20 @@ func TestBuildTenderPayload(t *testing.T) {
 
 	require.Equal(t, source.ID, payload.ShipmentID)
 	require.Equal(t, source.CustomerID, payload.CustomerID)
+	require.Equal(t, "ACME - Acme Logistics", payload.CustomerLabel)
+	require.Equal(t, "FTL", payload.ServiceTypeLabel)
+	require.Equal(t, "DRY", payload.ShipmentTypeLabel)
+	require.Equal(t, "Standard Freight", payload.FormulaTemplateLabel)
 	require.Len(t, payload.Moves, 1)
 	require.Len(t, payload.Moves[0].Stops, 1)
+	require.Equal(t, "DAL - Dallas Terminal", payload.Moves[0].Stops[0].LocationLabel)
+	require.Equal(t, "Dallas Terminal", payload.Moves[0].Stops[0].LocationName)
+	require.Equal(t, "DAL", payload.Moves[0].Stops[0].LocationCode)
+	require.Equal(t, "123 Main St, Dallas, TX, 75001", payload.Moves[0].Stops[0].AddressLine)
 	require.Len(t, payload.Commodities, 1)
+	require.Equal(t, "Palletized freight", payload.Commodities[0].CommodityLabel)
 	require.Len(t, payload.AdditionalCharges, 1)
+	require.Equal(t, "LFT - Liftgate", payload.AdditionalCharges[0].AccessorialLabel)
 	require.Contains(
 		t,
 		payload.RequiredMappingEntityIDs[edi.MappingEntityTypeCustomer],

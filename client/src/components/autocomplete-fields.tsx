@@ -8,6 +8,7 @@ import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
+import type { EDIPartner } from "@/types/edi";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import type { EquipmentType } from "@/types/equipment-type";
 import type { FleetCode } from "@/types/fleet-code";
@@ -397,8 +398,33 @@ export function OrganizationAutocompleteField<T extends FieldValues>({
         <div className="flex size-full flex-col items-start">
           <span>{option.scacCode ? `${option.scacCode} - ${option.name}` : option.name}</span>
           {option.city && (
+            <span className="w-full truncate text-2xs text-muted-foreground">{option.city}</span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EDIPartnerAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EDIPartner, T>) {
+  return (
+    <AutocompleteField<EDIPartner, T>
+      link="/edi/partners/select-options/"
+      selectedValueLink="/edi/partners/"
+      initialLimit={50}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>
+            {option.code} - {option.name}
+          </span>
+          {option.internalOrganization?.name && (
             <span className="w-full truncate text-2xs text-muted-foreground">
-              {option.city}
+              {option.internalOrganization.name}
             </span>
           )}
         </div>
@@ -607,9 +633,7 @@ export function FiscalYearAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span>{option.name}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
-            {option.year}
-          </span>
+          <span className="w-full truncate text-2xs text-muted-foreground">{option.year}</span>
         </div>
       )}
       {...props}

@@ -1,0 +1,220 @@
+package edi
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
+)
+
+const DefaultX12204Version = "004010"
+
+type AcknowledgmentConfig struct {
+	Expected           bool               `json:"expected"`
+	Type               AcknowledgmentType `json:"type"`
+	SLAInMinutes       int64              `json:"slaInMinutes"`
+	MissingAckSeverity ValidationSeverity `json:"missingAckSeverity"`
+}
+
+type X12EnvelopeSettings struct {
+	InterchangeSenderID       string `json:"interchangeSenderId"`
+	InterchangeReceiverID     string `json:"interchangeReceiverId"`
+	ApplicationSenderCode     string `json:"applicationSenderCode"`
+	ApplicationReceiverCode   string `json:"applicationReceiverCode"`
+	InterchangeUsageIndicator string `json:"interchangeUsageIndicator"`
+	ElementSeparator          string `json:"elementSeparator"`
+	SegmentTerminator         string `json:"segmentTerminator"`
+	ComponentSeparator        string `json:"componentSeparator"`
+	RepetitionSeparator       string `json:"repetitionSeparator"`
+}
+
+func DefaultX12EnvelopeSettings() X12EnvelopeSettings {
+	return X12EnvelopeSettings{
+		InterchangeSenderID:       "TRENOVA",
+		InterchangeReceiverID:     "PARTNER",
+		ApplicationSenderCode:     "TRENOVA",
+		ApplicationReceiverCode:   "PARTNER",
+		InterchangeUsageIndicator: "T",
+		ElementSeparator:          "*",
+		SegmentTerminator:         "~",
+		ComponentSeparator:        ">",
+		RepetitionSeparator:       "^",
+	}
+}
+
+type TemplateElementSource string
+
+const (
+	TemplateElementSourceConstant       = TemplateElementSource("constant")
+	TemplateElementSourceFieldPath      = TemplateElementSource("fieldPath")
+	TemplateElementSourcePartnerSetting = TemplateElementSource("partnerSetting")
+	TemplateElementSourceMapping        = TemplateElementSource("mapping")
+	TemplateElementSourceExpression     = TemplateElementSource("expression")
+	TemplateElementSourceRuntime        = TemplateElementSource("runtime")
+	TemplateElementSourceRepeat         = TemplateElementSource("repeat")
+)
+
+type TemplateValidationRule struct {
+	Required  bool   `json:"required"`
+	MaxLength int    `json:"maxLength"`
+	MinLength int    `json:"minLength"`
+	Code      string `json:"code"`
+	Message   string `json:"message"`
+}
+
+type TemplateElement struct {
+	Position                int                    `json:"position"`
+	Name                    string                 `json:"name"`
+	Source                  TemplateElementSource  `json:"source"`
+	Value                   string                 `json:"value"`
+	FieldPath               string                 `json:"fieldPath"`
+	PartnerSettingPath      string                 `json:"partnerSettingPath"`
+	MappingEntityType       MappingEntityType      `json:"mappingEntityType"`
+	MappingSourcePath       string                 `json:"mappingSourcePath"`
+	Expression              string                 `json:"expression"`
+	RuntimeKey              string                 `json:"runtimeKey"`
+	RepeatPath              string                 `json:"repeatPath"`
+	Default                 string                 `json:"default"`
+	Condition               string                 `json:"condition"`
+	Validation              TemplateValidationRule `json:"validation"`
+	ImplementationGuideNote string                 `json:"implementationGuideNote"`
+}
+
+type EDIDocumentType struct {
+	bun.BaseModel `json:"-" bun:"table:edi_document_types,alias:edt"`
+
+	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
+	Code           string            `json:"code"           bun:"code,type:VARCHAR(20),notnull"`
+	Name           string            `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
+	Standard       EDIStandard       `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
+	TransactionSet TransactionSet    `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
+	Direction      DocumentDirection `json:"direction"      bun:"direction,type:edi_document_direction_enum,notnull"`
+	DefaultVersion string            `json:"defaultVersion" bun:"default_version,type:VARCHAR(20),notnull"`
+	Status         DocumentStatus    `json:"status"         bun:"status,type:edi_document_status_enum,notnull"`
+	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+}
+
+func (d *EDIDocumentType) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if d.ID.IsNil() {
+			d.ID = pulid.MustNew("edidt_")
+		}
+		d.CreatedAt = now
+	case *bun.UpdateQuery:
+		d.UpdatedAt = now
+	}
+	return nil
+}
+
+type EDITemplate struct {
+	bun.BaseModel `json:"-" bun:"table:edi_templates,alias:et"`
+
+	ID             pulid.ID          `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID pulid.ID          `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	DocumentTypeID pulid.ID          `json:"documentTypeId" bun:"document_type_id,type:VARCHAR(100),notnull"`
+	Name           string            `json:"name"           bun:"name,type:VARCHAR(200),notnull"`
+	Description    string            `json:"description"    bun:"description,type:TEXT,nullzero"`
+	Direction      DocumentDirection `json:"direction"      bun:"direction,type:edi_document_direction_enum,notnull"`
+	Standard       EDIStandard       `json:"standard"       bun:"standard,type:edi_standard_enum,notnull"`
+	TransactionSet TransactionSet    `json:"transactionSet" bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
+	Status         TemplateStatus    `json:"status"         bun:"status,type:edi_template_status_enum,notnull"`
+	Version        int64             `json:"version"        bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt      int64             `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64             `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	DocumentType  *EDIDocumentType      `json:"documentType,omitempty"   bun:"rel:belongs-to,join:document_type_id=id"`
+	ActiveVersion *EDITemplateVersion   `json:"activeVersion,omitempty"  bun:"rel:has-one,join:id=template_id"`
+	Versions      []*EDITemplateVersion `json:"versions,omitempty"       bun:"rel:has-many,join:id=template_id"`
+}
+
+func (t *EDITemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if t.ID.IsNil() {
+			t.ID = pulid.MustNew("editpl_")
+		}
+		t.CreatedAt = now
+	case *bun.UpdateQuery:
+		t.UpdatedAt = now
+	}
+	return nil
+}
+
+type EDITemplateVersion struct {
+	bun.BaseModel `json:"-" bun:"table:edi_template_versions,alias:etv"`
+
+	ID                pulid.ID       `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID    pulid.ID       `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	TemplateID        pulid.ID       `json:"templateId"         bun:"template_id,type:VARCHAR(100),notnull"`
+	VersionNumber     int64          `json:"versionNumber"      bun:"version_number,type:BIGINT,notnull"`
+	X12Version        string         `json:"x12Version"         bun:"x12_version,type:VARCHAR(20),notnull"`
+	FunctionalGroupID string         `json:"functionalGroupId"  bun:"functional_group_id,type:VARCHAR(2),notnull"`
+	Status            TemplateStatus `json:"status"             bun:"status,type:edi_template_status_enum,notnull"`
+	IsActive          bool           `json:"isActive"           bun:"is_active,type:BOOLEAN,notnull,default:false"`
+	Notes             string         `json:"notes"              bun:"notes,type:TEXT,nullzero"`
+	Version           int64          `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt         int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	Template *EDITemplate          `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id"`
+	Segments []*EDITemplateSegment `json:"segments,omitempty" bun:"rel:has-many,join:id=template_version_id"`
+}
+
+func (v *EDITemplateVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if v.ID.IsNil() {
+			v.ID = pulid.MustNew("editv_")
+		}
+		v.CreatedAt = now
+	case *bun.UpdateQuery:
+		v.UpdatedAt = now
+	}
+	return nil
+}
+
+type EDITemplateSegment struct {
+	bun.BaseModel `json:"-" bun:"table:edi_template_segments,alias:ets"`
+
+	ID                pulid.ID          `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID          `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID    pulid.ID          `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	TemplateVersionID pulid.ID          `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),notnull"`
+	SegmentID         string            `json:"segmentId"         bun:"segment_id,type:VARCHAR(10),notnull"`
+	Name              string            `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
+	Sequence          int64             `json:"sequence"          bun:"sequence,type:BIGINT,notnull"`
+	LoopID            string            `json:"loopId"            bun:"loop_id,type:VARCHAR(50),nullzero"`
+	RepeatPath        string            `json:"repeatPath"        bun:"repeat_path,type:TEXT,nullzero"`
+	Condition         string            `json:"condition"         bun:"condition,type:TEXT,nullzero"`
+	Required          bool              `json:"required"          bun:"required,type:BOOLEAN,notnull,default:false"`
+	MaxUse            int64             `json:"maxUse"            bun:"max_use,type:BIGINT,notnull,default:1"`
+	Elements          []TemplateElement `json:"elements"          bun:"elements,type:JSONB,notnull,default:'[]'::jsonb"`
+	UsageNotes        string            `json:"usageNotes"        bun:"usage_notes,type:TEXT,nullzero"`
+	CreatedAt         int64             `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64             `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+}
+
+func (s *EDITemplateSegment) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	if s.Elements == nil {
+		s.Elements = []TemplateElement{}
+	}
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if s.ID.IsNil() {
+			s.ID = pulid.MustNew("edisg_")
+		}
+		s.CreatedAt = now
+	case *bun.UpdateQuery:
+		s.UpdatedAt = now
+	}
+	return nil
+}

@@ -268,6 +268,24 @@ const ediModule: NavModule = {
       resource: Resource.EDI,
     },
     {
+      id: "edi-communication-profiles",
+      label: "Communication Profiles",
+      path: "/edi/communication-profiles",
+      resource: Resource.EDI,
+    },
+    {
+      id: "edi-mapping-profiles",
+      label: "Mapping Profiles",
+      path: "/edi/mapping-profiles",
+      resource: Resource.EDI,
+    },
+    {
+      id: "edi-designer",
+      label: "204 Designer",
+      path: "/edi/designer",
+      resource: Resource.EDI,
+    },
+    {
       id: "edi-inbound",
       label: "Inbound Transfers",
       path: "/edi/transfers/inbound",

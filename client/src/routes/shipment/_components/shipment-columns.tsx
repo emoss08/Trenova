@@ -1,5 +1,5 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
-import { shipmentStatusChoices } from "@/lib/choices";
+import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
 import type { Customer } from "@/types/customer";
 import type { RowAction } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
@@ -40,6 +40,24 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       size: 160,
       minSize: 140,
       maxSize: 200,
+    },
+    {
+      id: "tenderStatus",
+      accessorKey: "tenderStatus",
+      header: "Tender",
+      cell: ({ row }) => row.original.tenderStatus ?? "—",
+      meta: {
+        apiField: "tenderStatus",
+        label: "Tender Status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: shipmentTenderStatusChoices,
+        defaultFilterOperator: "eq",
+      },
+      size: 130,
+      minSize: 120,
+      maxSize: 170,
     },
     {
       id: "proBol",

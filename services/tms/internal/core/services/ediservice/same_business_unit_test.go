@@ -66,6 +66,47 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		})).
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 
+	connectionRepo := mocks.NewMockEDIConnectionRepository(t)
+	connectionRepo.EXPECT().
+		GetActiveConnectionForPartner(mock.Anything, mock.MatchedBy(func(req repositories.GetActiveEDIConnectionForPartnerRequest) bool {
+			return req.PartnerID == sourcePartnerID &&
+				req.TenantInfo.OrgID == sourceOrgID &&
+				req.TenantInfo.BuID == buID &&
+				req.Method == edi.ConnectionMethodInternal
+		})).
+		Return(&edi.EDIConnection{
+			ID:                   pulid.MustNew("edic_"),
+			BusinessUnitID:       buID,
+			SourceOrganizationID: sourceOrgID,
+			TargetOrganizationID: targetOrgID,
+			SourcePartnerID:      sourcePartnerID,
+			TargetPartnerID:      targetPartnerID,
+			Method:               edi.ConnectionMethodInternal,
+			Status:               edi.ConnectionStatusActive,
+			Capabilities: edi.ConnectionCapabilities{
+				LoadTenderOutbound: true,
+				LoadTenderInbound:  true,
+			},
+		}, nil)
+
+	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	profileRepo.EXPECT().
+		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req repositories.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+			return req.PartnerID == sourcePartnerID &&
+				req.TenantInfo.OrgID == sourceOrgID &&
+				req.TenantInfo.BuID == buID &&
+				req.Method == edi.ConnectionMethodInternal
+		})).
+		Return(&edi.EDICommunicationProfile{ID: pulid.MustNew("edicp_")}, nil)
+	profileRepo.EXPECT().
+		GetActiveProfileByPartner(mock.Anything, mock.MatchedBy(func(req repositories.GetActiveEDICommunicationProfileByPartnerRequest) bool {
+			return req.PartnerID == targetPartnerID &&
+				req.TenantInfo.OrgID == targetOrgID &&
+				req.TenantInfo.BuID == buID &&
+				req.Method == edi.ConnectionMethodInternal
+		})).
+		Return(&edi.EDICommunicationProfile{ID: pulid.MustNew("edicp_")}, nil)
+
 	var createdTransfer *edi.EDITransfer
 	transferRepo := mocks.NewMockEDILoadTenderTransferRepository(t)
 	transferRepo.EXPECT().
@@ -87,6 +128,7 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 			ID:                sourceShipmentID,
 			BusinessUnitID:    buID,
 			OrganizationID:    sourceOrgID,
+			Status:            shipment.StatusNew,
 			ServiceTypeID:     pulid.MustNew("st_"),
 			CustomerID:        pulid.MustNew("cus_"),
 			FormulaTemplateID: pulid.MustNew("ft_"),
@@ -94,10 +136,12 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		}, nil)
 
 	service := &Service{
-		l:            zap.NewNop(),
-		partnerRepo:  partnerRepo,
-		transferRepo: transferRepo,
-		shipmentSvc:  shipmentSvc,
+		l:              zap.NewNop(),
+		partnerRepo:    partnerRepo,
+		connectionRepo: connectionRepo,
+		profileRepo:    profileRepo,
+		transferRepo:   transferRepo,
+		shipmentSvc:    shipmentSvc,
 	}
 
 	transfer, err := service.SubmitLoadTender(ctx, &SubmitLoadTenderRequest{

@@ -47,6 +47,8 @@ type Shipment struct {
 	FormulaTemplateID      pulid.ID              `json:"formulaTemplateId"          bun:"formula_template_id,type:VARCHAR(100)"`
 	ConsolidationGroupID   pulid.ID              `json:"consolidationGroupId"       bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
 	Status                 Status                `json:"status"                     bun:"status,type:shipment_status_enum,notnull,default:'New'"`
+	TenderStatus           *TenderStatus         `json:"tenderStatus"               bun:"tender_status,type:shipment_tender_status_enum,nullzero"`
+	EntryMethod            EntryMethod           `json:"entryMethod"                bun:"entry_method,type:shipment_entry_method_enum,notnull,default:'Manual'"`
 	ProNumber              string                `json:"proNumber"                  bun:"pro_number,type:VARCHAR(100),notnull"`
 	BOL                    string                `json:"bol"                        bun:"bol,type:VARCHAR(100),nullzero"`
 	CancelReason           string                `json:"cancelReason"               bun:"cancel_reason,type:VARCHAR(100),nullzero"`
@@ -111,6 +113,24 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 				StatusInvoiced,
 				StatusCanceled,
 			).Error("Status must be a valid status"),
+		),
+		validation.Field(
+			&s.EntryMethod,
+			validation.Required.Error("Entry method is required"),
+			validation.In(
+				EntryMethodManual,
+				EntryMethodEDI,
+			).Error("Entry method must be a valid entry method"),
+		),
+		validation.Field(
+			&s.TenderStatus,
+			validation.In(
+				TenderStatusTendered,
+				TenderStatusAccepted,
+				TenderStatusRejected,
+				TenderStatusExpired,
+				TenderStatusCanceled,
+			).Error("Tender status must be a valid tender status"),
 		),
 		validation.Field(
 			&s.FormulaTemplateID,
@@ -258,6 +278,9 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	switch query.(type) {
 	case *bun.InsertQuery:
+		if s.EntryMethod == "" {
+			s.EntryMethod = EntryMethodManual
+		}
 		if s.ID.IsNil() {
 			s.ID = pulid.MustNew("shp_")
 		}

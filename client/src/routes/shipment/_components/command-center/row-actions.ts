@@ -64,7 +64,14 @@ export function buildShipmentRowActions(
       label: "Send EDI Load Tender",
       icon: SendIcon,
       onClick: handlers.onSendEDI,
-      hidden: (row) => !handlers.canSendEDI || row.original.status === "Canceled",
+      hidden: (row) => {
+        const shipment = row.original;
+        const tenderStatus = shipment.tenderStatus;
+        const eligibleTenderStatus =
+          !tenderStatus || tenderStatus === "Rejected" || tenderStatus === "Expired" ||
+          tenderStatus === "Canceled";
+        return !handlers.canSendEDI || shipment.status !== "New" || !eligibleTenderStatus;
+      },
     },
     {
       id: "transfer-to-billing",

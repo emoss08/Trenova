@@ -31,6 +31,18 @@ export const shipmentStatusSchema = z.enum([
 ]);
 export type ShipmentStatus = z.infer<typeof shipmentStatusSchema>;
 
+export const shipmentTenderStatusSchema = z.enum([
+  "Tendered",
+  "Accepted",
+  "Rejected",
+  "Expired",
+  "Canceled",
+]);
+export type ShipmentTenderStatus = z.infer<typeof shipmentTenderStatusSchema>;
+
+export const shipmentEntryMethodSchema = z.enum(["Manual", "EDI"]);
+export type ShipmentEntryMethod = z.infer<typeof shipmentEntryMethodSchema>;
+
 export const shipmentBillingReadinessPolicySchema = z.object({
   shipmentBillingRequirementEnforcement: z.string(),
   rateValidationEnforcement: z.string(),
@@ -246,6 +258,8 @@ const shipmentBaseSchema = z.object({
   formulaTemplateId: z.string().min(1, { error: "Formula Template is required" }),
   consolidationGroupId: nullableStringSchema,
   status: shipmentStatusSchema.default("New"),
+  tenderStatus: shipmentTenderStatusSchema.nullable().optional(),
+  entryMethod: shipmentEntryMethodSchema.optional(),
   proNumber: optionalStringSchema,
   bol: nullableStringSchema,
   cancelReason: optionalStringSchema,
