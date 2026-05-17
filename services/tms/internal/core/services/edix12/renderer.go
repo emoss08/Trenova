@@ -397,11 +397,17 @@ func resolveStarlarkElementValue(
 		}
 	}
 
+	repeatValue := env["repeat"]
+	if repeatValue != nil {
+		starlarkCtx["repeat"] = repeatValue
+		starlarkCtx["item"] = repeatValue
+	}
+
 	result := edistarlark.Evaluate(ctx, edistarlark.EvalRequest{
 		Script:          element.StarlarkScript,
 		FunctionName:    element.StarlarkFunction,
 		Context:         starlarkCtx,
-		Item:            env["repeat"],
+		Item:            repeatValue,
 		SegmentID:       segment.SegmentID,
 		ElementPosition: element.Position,
 		Path:            sourcePath(element),
@@ -523,7 +529,7 @@ func filterDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) []Diag
 	if mode == edi.ValidationModeDisabled {
 		filtered := make([]Diagnostic, 0, len(diagnostics))
 		for _, diagnostic := range diagnostics {
-			if diagnostic.Code == "render_error" {
+			if diagnostic.Code == "render_error" || strings.HasPrefix(diagnostic.Code, "starlark_") {
 				filtered = append(filtered, diagnostic)
 			}
 		}
@@ -575,6 +581,14 @@ func unsupportedConditionDiagnostic(
 }
 
 func sourcePath(element *edi.TemplateElement) string {
+	if element.Source == edi.TemplateElementSourceStarlark {
+		functionName := strings.TrimSpace(element.StarlarkFunction)
+		if functionName == "" {
+			return "starlark:value"
+		}
+		return "starlark:" + functionName
+	}
+
 	path := stringutils.FirstNonEmpty(
 		element.FieldPath,
 		element.RepeatPath,
@@ -609,7 +623,7 @@ func suggestedFixForSource(source edi.TemplateElementSource) string {
 	case edi.TemplateElementSourceTransform:
 		return "Use a direct source until transform pipeline rendering is implemented."
 	case edi.TemplateElementSourceStarlark:
-		return "Use a direct source until the restricted Starlark runtime is implemented."
+		return "Check the Starlark script, function name, helper arguments, and available context fields."
 	default:
 		return ""
 	}

@@ -268,7 +268,7 @@ func suggestedFix(code string) string {
 	case "starlark_syntax_error":
 		return "Fix the Starlark script syntax before rendering this element."
 	case "starlark_runtime_error":
-		return "Check field paths, helper arguments, and function arity in the Starlark script."
+		return "Check the Starlark script, function name, helper arguments, and available context fields."
 	case "starlark_step_limit":
 		return "Reduce loop work or simplify the Starlark script."
 	case "starlark_timeout":

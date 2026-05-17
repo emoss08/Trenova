@@ -205,21 +205,47 @@ func TestRender204_StarlarkReadsShipmentContext(t *testing.T) {
 	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"*BOL-STARK")
 }
 
-func TestRender204_StarlarkRepeatItemRenders(t *testing.T) {
+func TestRender204_StarlarkRepeatValueRenders(t *testing.T) {
 	t.Parallel()
 
-	input := validRenderInput(edi.ValidationModeStrict)
-	input.Payload.Moves[0].Stops[0].LocationName = "Starlark Dock"
-	element := findElement(t, input, "N1", 1)
-	element.Source = edi.TemplateElementSourceStarlark
-	element.StarlarkScript = `def value(ctx, item):
-    return item["locationName"]`
+	tests := []struct {
+		name   string
+		script string
+	}{
+		{
+			name: "second function argument",
+			script: `def value(ctx, item):
+    return item["locationName"]`,
+		},
+		{
+			name: "ctx item alias",
+			script: `def value(ctx, item):
+    return ctx["item"]["locationName"]`,
+		},
+		{
+			name: "ctx repeat alias",
+			script: `def value(ctx, item):
+    return ctx["repeat"]["locationName"]`,
+		},
+	}
 
-	result, err := Render204(input)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	require.NoError(t, err)
-	require.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "N1*LD*Starlark Dock")
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Payload.Moves[0].Stops[0].LocationName = "Starlark Dock"
+			element := findElement(t, input, "N1", 1)
+			element.Source = edi.TemplateElementSourceStarlark
+			element.StarlarkScript = tt.script
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			assert.Contains(t, result.RawX12, "N1*LD*Starlark Dock")
+		})
+	}
 }
 
 func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {
@@ -242,14 +268,59 @@ func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {
 	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
 	assert.Equal(t, "L11", diagnostic.SegmentID)
 	assert.Equal(t, 1, diagnostic.ElementPosition)
-	assert.Equal(t, "explode", diagnostic.Path)
+	assert.Equal(t, "starlark:explode", diagnostic.Path)
+	assert.NotContains(t, diagnostic.Path, element.StarlarkScript)
 	assert.Contains(t, diagnostic.Message, "floating-point division by zero")
 	assert.Equal(
 		t,
-		"Check field paths, helper arguments, and function arity in the Starlark script.",
+		"Check the Starlark script, function name, helper arguments, and available context fields.",
 		diagnostic.SuggestedFix,
 	)
 	assert.False(t, strings.Contains(result.RawX12, "L11**BM*"))
+}
+
+func TestRender204_StarlarkDefaultFunctionDiagnosticUsesSafePath(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkScript = `def value(ctx):
+    return missing`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "starlark:value", diagnostic.Path)
+	assert.NotContains(t, diagnostic.Path, element.StarlarkScript)
+	assert.Equal(
+		t,
+		"Check the Starlark script, function name, helper arguments, and available context fields.",
+		diagnostic.SuggestedFix,
+	)
+}
+
+func TestRender204_DisabledValidationPreservesStarlarkDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeDisabled)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "explode"
+	element.StarlarkScript = `def explode(ctx):
+    return 1 / 0`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	assert.Equal(t, "starlark_runtime_error", result.Diagnostics[0].Code)
+	assert.Equal(t, "starlark:explode", result.Diagnostics[0].Path)
 }
 
 func TestRender204_StarlarkStepLimitDiagnosticPropagates(t *testing.T) {
@@ -273,7 +344,8 @@ func TestRender204_StarlarkStepLimitDiagnosticPropagates(t *testing.T) {
 	assert.Equal(t, "starlark_step_limit", diagnostic.Code)
 	assert.Equal(t, "L11", diagnostic.SegmentID)
 	assert.Equal(t, 1, diagnostic.ElementPosition)
-	assert.Equal(t, "loop", diagnostic.Path)
+	assert.Equal(t, "starlark:loop", diagnostic.Path)
+	assert.NotContains(t, diagnostic.Path, element.StarlarkScript)
 	assert.NotEmpty(t, diagnostic.Message)
 	assert.Equal(t, "Reduce loop work or simplify the Starlark script.", diagnostic.SuggestedFix)
 }
