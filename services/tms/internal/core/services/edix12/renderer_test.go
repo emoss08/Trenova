@@ -219,12 +219,12 @@ func TestRender204_StarlarkRepeatValueRenders(t *testing.T) {
 		},
 		{
 			name: "ctx item alias",
-			script: `def value(ctx, item):
+			script: `def value(ctx):
     return ctx["item"]["locationName"]`,
 		},
 		{
 			name: "ctx repeat alias",
-			script: `def value(ctx, item):
+			script: `def value(ctx):
     return ctx["repeat"]["locationName"]`,
 		},
 	}
@@ -246,6 +246,67 @@ func TestRender204_StarlarkRepeatValueRenders(t *testing.T) {
 			assert.Contains(t, result.RawX12, "N1*LD*Starlark Dock")
 		})
 	}
+}
+
+func TestRender204_StarlarkNoneFallsThroughToRequiredValidation(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "B2", 1)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return None`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+	assert.Equal(t, "required", diagnostic.Code)
+	assert.Equal(t, "B2", diagnostic.SegmentID)
+	assert.Equal(t, 2, diagnostic.ElementPosition)
+	assert.Equal(t, "starlark:value", diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, "Shipment Identification Number is required")
+}
+
+func TestRender204_StarlarkMaxLengthWarnsAndTruncates(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return "REFERENCE-TOO-LONG"`
+	element.Validation.MaxLength = 9
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityWarning, diagnostic.Severity)
+	assert.Equal(t, "max_length", diagnostic.Code)
+	assert.Equal(t, "L11", diagnostic.SegmentID)
+	assert.Equal(t, 1, diagnostic.ElementPosition)
+	assert.Contains(t, diagnostic.Message, "Reference Identification exceeds max length 9")
+	assert.Contains(t, result.RawX12, "L11*REFERENCE*BM")
+}
+
+func TestRender204_StarlarkValueSanitizesSeparators(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return "A*B~C>D"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*A B C D*BM~")
 }
 
 func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {
@@ -277,6 +338,55 @@ func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {
 		diagnostic.SuggestedFix,
 	)
 	assert.False(t, strings.Contains(result.RawX12, "L11**BM*"))
+}
+
+func TestRender204_StarlarkEmptyScriptReportsMissingDefaultFunction(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "starlark:value", diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, `required Starlark function "value" is not defined`)
+	assert.Equal(
+		t,
+		"Check the Starlark script, function name, helper arguments, and available context fields.",
+		diagnostic.SuggestedFix,
+	)
+}
+
+func TestRender204_StarlarkMissingCustomFunctionReportsConfiguredPath(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "map_bol"
+	element.StarlarkScript = `def value(ctx):
+    return "BOL-1"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "starlark:map_bol", diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, `required Starlark function "map_bol" is not defined`)
+	assert.Equal(
+		t,
+		"Check the Starlark script, function name, helper arguments, and available context fields.",
+		diagnostic.SuggestedFix,
+	)
 }
 
 func TestRender204_StarlarkDefaultFunctionDiagnosticUsesSafePath(t *testing.T) {

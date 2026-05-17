@@ -166,7 +166,7 @@ func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (
 	}
 
 	args := starlark.Tuple{ctxValue}
-	if req.Item != nil {
+	if req.Item != nil && callableAcceptsItem(fn) {
 		args = starlark.Tuple{ctxValue, itemValue}
 	}
 
@@ -206,6 +206,14 @@ func (e *Evaluator) newThread() *starlark.Thread {
 			thread.Cancel("execution step limit exceeded")
 		},
 	}
+}
+
+func callableAcceptsItem(fn starlark.Value) bool {
+	starlarkFn, ok := fn.(*starlark.Function)
+	if !ok {
+		return true
+	}
+	return starlarkFn.NumParams() >= 2 || starlarkFn.HasVarargs()
 }
 
 func resultWithDiagnostic(
