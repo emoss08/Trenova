@@ -128,32 +128,386 @@ func TestRender204_FiltersDiagnosticsByValidationMode(t *testing.T) {
 	}
 }
 
-func TestRender204_ReportsUnsupportedAdvancedRenderingFeatures(t *testing.T) {
+func TestRender204_SegmentPathConditionRendersWhenTruthy(t *testing.T) {
 	t.Parallel()
 
-	input := renderInput(edi.ValidationModeStrict)
-	input.Payload.ShipmentID = pulid.MustNew("shp_")
-	input.Payload.Moves = []edi.LoadTenderMove{
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.BOL = "BOL-1"
+	findSegment(t, input, "L11").Condition = "shipment.bol"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*BOL-1*BM")
+}
+
+func TestRender204_SegmentPathConditionSkipsWhenFalsey(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findSegment(t, input, "L11").Condition = "shipment.bol"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.NotContains(t, result.RawX12, "L11")
+}
+
+func TestRender204_NegatedPathConditionRendersWhenFalsey(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findSegment(t, input, "L11").Condition = "!shipment.bol"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11**BM")
+}
+
+func TestRender204_StringComparisonConditionsSupportQuotedEmptyValues(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		bol       string
+		condition string
+		wantRaw   string
+	}{
 		{
-			Sequence: 1,
-			Stops: []edi.LoadTenderStop{
-				{Type: "LD", Sequence: 1},
-			},
+			name:      "single quoted inequality",
+			bol:       "BOL-1",
+			condition: `shipment.bol != ''`,
+			wantRaw:   "L11*BOL-1*BM",
+		},
+		{
+			name:      "double quoted empty equality",
+			condition: `shipment.bol == ""`,
+			wantRaw:   "L11**BM",
 		},
 	}
-	for _, segment := range input.TemplateVersion.Segments {
-		if segment.SegmentID == "NTE" {
-			segment.Condition = "shipment.ratingDetail.note != ''"
-		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Payload.BOL = tt.bol
+			findSegment(t, input, "L11").Condition = tt.condition
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			assert.Contains(t, result.RawX12, tt.wantRaw)
+		})
 	}
+}
+
+func TestRender204_RepeatedSegmentConditionFiltersRepeatItems(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.Moves[0].Stops = []edi.LoadTenderStop{
+		{Type: "LD", Sequence: 1, LocationName: "Load Dock"},
+		{Type: "UL", Sequence: 2, LocationName: "Unload Dock"},
+	}
+	findSegment(t, input, "N1").Condition = `repeat.type == "LD"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "N1*LD*Load Dock")
+	assert.NotContains(t, result.RawX12, "N1*UL*Unload Dock")
+}
+
+func TestRender204_RepeatedSegmentConditionSkipsNonMatchingComparison(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findSegment(t, input, "N1").Condition = `repeat.type == "ZZ"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.NotContains(t, result.RawX12, "N1*")
+}
+
+func TestRender204_ElementConditionRendersAndBlanks(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		bol        string
+		wantRaw    string
+		notWantRaw string
+		condition  string
+	}{
+		{
+			name:       "renders when true",
+			bol:        "BOL-1",
+			wantRaw:    "L11*BOL-1*BM",
+			condition:  "shipment.bol",
+			notWantRaw: "L11**BM",
+		},
+		{
+			name:       "blanks when false",
+			wantRaw:    "L11**BM",
+			condition:  "shipment.bol",
+			notWantRaw: "L11*BOL-1*BM",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Payload.BOL = tt.bol
+			findElement(t, input, "L11", 0).Condition = tt.condition
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			assert.Contains(t, result.RawX12, tt.wantRaw)
+			assert.NotContains(t, result.RawX12, tt.notWantRaw)
+		})
+	}
+}
+
+func TestRender204_RequiredElementFalseConditionDoesNotValidateRequired(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "B2", 1)
+	element.Condition = "shipment.bol"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "B2***PP")
+}
+
+func TestRender204_InvalidConditionEmitsConditionError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		condition string
+	}{
+		{
+			name:      "invalid root",
+			condition: "unknown.bol",
+		},
+		{
+			name:      "unsupported boolean operator",
+			condition: `shipment.bol && partner.carrier.scac`,
+		},
+		{
+			name:      "unquoted comparison value",
+			condition: `shipment.bol == BOL-1`,
+		},
+		{
+			name:      "incomplete comparison",
+			condition: `shipment.bol ==`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			findSegment(t, input, "L11").Condition = tt.condition
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Len(t, result.Diagnostics, 1)
+			diagnostic := result.Diagnostics[0]
+			assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+			assert.Equal(t, "condition_error", diagnostic.Code)
+			assert.Equal(t, "L11", diagnostic.SegmentID)
+			assert.Equal(t, 0, diagnostic.ElementPosition)
+			assert.Equal(t, tt.condition, diagnostic.Path)
+			assert.Equal(t, conditionSuggestedFix, diagnostic.SuggestedFix)
+		})
+	}
+}
+
+func TestRender204_ElementConditionErrorIncludesElementPosition(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findElement(t, input, "L11", 0).Condition = "unknown.bol"
 
 	result, err := Render204(input)
 
 	require.NoError(t, err)
 	require.Len(t, result.Diagnostics, 1)
-	assert.Equal(t, "render_error", result.Diagnostics[0].Code)
-	assert.NotEmpty(t, result.Diagnostics[0].SuggestedFix)
-	assert.Contains(t, result.Diagnostics[0].Message, "not supported")
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, "condition_error", diagnostic.Code)
+	assert.Equal(t, "L11", diagnostic.SegmentID)
+	assert.Equal(t, 1, diagnostic.ElementPosition)
+	assert.Equal(t, "unknown.bol", diagnostic.Path)
+	assert.Contains(t, result.RawX12, "L11**BM")
+}
+
+func TestRender204_ConditionDiagnosticsRespectValidationMode(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		mode         edi.ValidationMode
+		wantSeverity edi.ValidationSeverity
+	}{
+		{
+			name:         "disabled preserves condition error",
+			mode:         edi.ValidationModeDisabled,
+			wantSeverity: edi.ValidationSeverityError,
+		},
+		{
+			name:         "warn only downgrades condition error",
+			mode:         edi.ValidationModeWarnOnly,
+			wantSeverity: edi.ValidationSeverityWarning,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(tt.mode)
+			findSegment(t, input, "L11").Condition = "unknown.bol"
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Len(t, result.Diagnostics, 1)
+			assert.Equal(t, "condition_error", result.Diagnostics[0].Code)
+			assert.Equal(t, tt.wantSeverity, result.Diagnostics[0].Severity)
+		})
+	}
+}
+
+func TestHasBlockingDiagnostics_BlocksStrictConditionDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := []Diagnostic{
+		{
+			Severity: edi.ValidationSeverityError,
+			Code:     "condition_error",
+		},
+	}
+
+	assert.True(t, HasBlockingDiagnostics(diagnostics, edi.ValidationModeStrict))
+	assert.False(t, HasBlockingDiagnostics(diagnostics, edi.ValidationModeWarnOnly))
+}
+
+func TestRender204_StarlarkSegmentCondition(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		condition   string
+		wantSegment bool
+	}{
+		{
+			name: "true includes segment",
+			condition: `starlark:def include(ctx):
+    return True`,
+			wantSegment: true,
+		},
+		{
+			name: "false skips segment",
+			condition: `starlark:def include(ctx):
+    return False`,
+			wantSegment: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Payload.BOL = "BOL-1"
+			findSegment(t, input, "L11").Condition = tt.condition
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			if tt.wantSegment {
+				assert.Contains(t, result.RawX12, "L11*BOL-1*BM")
+				return
+			}
+			assert.NotContains(t, result.RawX12, "L11")
+		})
+	}
+}
+
+func TestRender204_StarlarkRepeatConditionFiltersItems(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.Moves[0].Stops = []edi.LoadTenderStop{
+		{Type: "LD", Sequence: 1, LocationName: "Load Dock"},
+		{Type: "UL", Sequence: 2, LocationName: "Unload Dock"},
+	}
+	findSegment(t, input, "N1").Condition = `starlark:def include(ctx, item):
+    return item["type"] == "LD"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "N1*LD*Load Dock")
+	assert.NotContains(t, result.RawX12, "N1*UL*Unload Dock")
+}
+
+func TestRender204_StarlarkConditionRuntimeErrorEmitsConditionError(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findSegment(t, input, "L11").Condition = `starlark:def include(ctx):
+    return 1 / 0`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+	assert.Equal(t, "condition_error", diagnostic.Code)
+	assert.Equal(t, "L11", diagnostic.SegmentID)
+	assert.Equal(t, starlarkConditionPath(), diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, "floating-point division by zero")
+	assert.Equal(t, conditionSuggestedFix, diagnostic.SuggestedFix)
+}
+
+func TestRender204_StarlarkConditionStepLimitBlocksInStrictMode(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	findSegment(t, input, "L11").Condition = `starlark:def include(ctx):
+    while True:
+        pass`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	assert.Equal(t, "condition_error", result.Diagnostics[0].Code)
+	assert.Contains(t, result.Diagnostics[0].Message, "execution step limit exceeded")
+	assert.True(t, HasBlockingDiagnostics(result.Diagnostics, edi.ValidationModeStrict))
 }
 
 func TestRender204_StarlarkConstantScalarRenders(t *testing.T) {

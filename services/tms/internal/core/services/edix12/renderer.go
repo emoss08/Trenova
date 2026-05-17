@@ -70,12 +70,14 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 				input.Runtime,
 				repeatValue,
 			)
-			include, evalErr := evaluateCondition(segment.Condition)
-			if evalErr != nil {
-				diagnostics = append(
-					diagnostics,
-					unsupportedConditionDiagnostic(segment, 0, segment.Condition),
-				)
+			include, conditionDiagnostic := evaluateCondition(conditionEvalParams{
+				Context:   renderCtx,
+				Condition: segment.Condition,
+				Env:       env,
+				Segment:   segment,
+			})
+			if conditionDiagnostic != nil {
+				diagnostics = append(diagnostics, *conditionDiagnostic)
 				continue
 			}
 			if !include {
@@ -173,11 +175,15 @@ func resolveElement(
 	env map[string]any,
 ) (string, []Diagnostic) {
 	diagnostics := []Diagnostic{}
-	include, err := evaluateCondition(element.Condition)
-	if err != nil {
-		return "", []Diagnostic{
-			unsupportedConditionDiagnostic(segment, element.Position, element.Condition),
-		}
+	include, conditionDiagnostic := evaluateCondition(conditionEvalParams{
+		Context:   ctx,
+		Condition: element.Condition,
+		Env:       env,
+		Segment:   segment,
+		Element:   element,
+	})
+	if conditionDiagnostic != nil {
+		return "", []Diagnostic{*conditionDiagnostic}
 	}
 	if !include {
 		return "", diagnostics
@@ -518,13 +524,6 @@ func repeatValues(payload map[string]any, path string) []any {
 	return items
 }
 
-func evaluateCondition(condition string) (bool, error) {
-	if strings.TrimSpace(condition) == "" {
-		return true, nil
-	}
-	return false, fmt.Errorf("template conditions are not supported until Starlark condition rendering is available")
-}
-
 func valueToString(value any) string {
 	switch typed := value.(type) {
 	case nil:
@@ -595,7 +594,8 @@ func filterDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) []Diag
 		filtered := make([]Diagnostic, 0, len(diagnostics))
 		for _, diagnostic := range diagnostics {
 			if diagnostic.Code == "render_error" || strings.HasPrefix(diagnostic.Code, "starlark_") ||
-				strings.HasPrefix(diagnostic.Code, "transform_") {
+				strings.HasPrefix(diagnostic.Code, "transform_") ||
+				strings.HasPrefix(diagnostic.Code, "condition_") {
 				filtered = append(filtered, diagnostic)
 			}
 		}
@@ -629,21 +629,6 @@ func renderDiagnostic(params renderDiagnosticParams) Diagnostic {
 		Message:         params.Message,
 		SuggestedFix:    params.SuggestedFix,
 	}
-}
-
-func unsupportedConditionDiagnostic(
-	segment *edi.EDITemplateSegment,
-	position int,
-	condition string,
-) Diagnostic {
-	return renderDiagnostic(renderDiagnosticParams{
-		Segment:  segment,
-		Position: position,
-		Path:     condition,
-		Message:  "Template conditions are not supported until Starlark condition rendering is available",
-		SuggestedFix: "Remove this condition for now, or wait for Starlark condition support " +
-			"before using conditional EDI rendering.",
-	})
 }
 
 func sourcePath(element *edi.TemplateElement) string {
