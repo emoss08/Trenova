@@ -263,9 +263,9 @@ func starlarkConditionTruthy(value starlark.Value) (bool, error) {
 func joinStarlarkConditionMessages(diagnostics []edistarlark.Diagnostic) string {
 	messages := make([]string, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
-		messages = append(messages, diagnostic.Message)
+		messages = append(messages, fmt.Sprintf("[%s]: %s", diagnostic.Code, diagnostic.Message))
 	}
-	return strings.Join(messages, "; ")
+	return "Starlark condition failed " + strings.Join(messages, "; ")
 }
 
 func conditionDiagnosticPath(condition string) string {

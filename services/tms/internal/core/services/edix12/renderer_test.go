@@ -489,6 +489,7 @@ func TestRender204_StarlarkConditionRuntimeErrorEmitsConditionError(t *testing.T
 	assert.Equal(t, "condition_error", diagnostic.Code)
 	assert.Equal(t, "L11", diagnostic.SegmentID)
 	assert.Equal(t, starlarkConditionPath(), diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, "starlark_runtime_error")
 	assert.Contains(t, diagnostic.Message, "floating-point division by zero")
 	assert.Equal(t, conditionSuggestedFix, diagnostic.SuggestedFix)
 }
@@ -506,6 +507,7 @@ func TestRender204_StarlarkConditionStepLimitBlocksInStrictMode(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, result.Diagnostics, 1)
 	assert.Equal(t, "condition_error", result.Diagnostics[0].Code)
+	assert.Contains(t, result.Diagnostics[0].Message, "starlark_step_limit")
 	assert.Contains(t, result.Diagnostics[0].Message, "execution step limit exceeded")
 	assert.True(t, HasBlockingDiagnostics(result.Diagnostics, edi.ValidationModeStrict))
 }
