@@ -8,6 +8,7 @@ import (
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
@@ -117,15 +118,18 @@ func (r *repository) EnsureBase204Template(
 	template := new(edi.EDITemplate)
 	version := new(edi.EDITemplateVersion)
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		cols := buncolgen.EDITemplateColumns
+
 		err := r.db.DBForContext(c).
 			NewSelect().
 			Model(template).
-			Where("et.organization_id = ?", tenantInfo.OrgID).
-			Where("et.business_unit_id = ?", tenantInfo.BuID).
-			Where("et.standard = ?", edi.EDIStandardX12).
-			Where("et.transaction_set = ?", edi.TransactionSet204).
-			Where("et.direction = ?", edi.DocumentDirectionOutbound).
-			Where("et.name = ?", "Base X12 204 Outbound").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return buncolgen.EDITemplateScopeTenant(sq, tenantInfo).
+					Where(cols.Standard.Eq(), edi.EDIStandardX12).
+					Where(cols.TransactionSet.Eq(), edi.TransactionSet204).
+					Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+					Where(cols.Name.Eq(), "Base X12 204 Outbound")
+			}).
 			Limit(1).
 			Scan(c)
 		if err != nil && !dberror.IsNotFoundError(err) {
@@ -206,6 +210,7 @@ func (r *repository) ListPartnerDocumentProfiles(
 	req *repositories.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
+
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).

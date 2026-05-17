@@ -18,6 +18,20 @@ func (e *EDIConnection) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIConnectionFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIControlNumberSequence].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIControlNumberSequenceFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIControlNumberSequence) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIControlNumberSequenceFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIDocumentType].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIDocumentTypeFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIDocumentType) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIDocumentTypeFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMappingProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDIMappingProfileFieldMap] instead of parsing struct tags via reflection.
@@ -32,11 +46,60 @@ func (e *EDIMappingProfileItem) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIMappingProfileItemFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMessage].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIMessageFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIMessage) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIMessageFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMessageValidationError].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIMessageValidationErrorFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIMessageValidationError) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIMessageValidationErrorFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIPartner].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDIPartnerFieldMap] instead of parsing struct tags via reflection.
 func (e *EDIPartner) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIPartnerFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIPartnerDocumentProfile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIPartnerDocumentProfileFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIPartnerDocumentProfile) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIPartnerDocumentProfileFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITemplate].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITemplateFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITemplate) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITemplateFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITemplateSegment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITemplateSegmentFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITemplateSegment) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITemplateSegmentFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITemplateVersion].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITemplateVersionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITemplateVersion) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITemplateVersionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITestCase].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITestCaseFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITestCase) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITestCaseFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransfer].
