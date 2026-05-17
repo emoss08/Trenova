@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -85,13 +86,22 @@ func (e *Evaluator) Evaluate(ctx context.Context, req EvalRequest) EvalResult {
 		return result.result
 	case <-evalCtx.Done():
 		thread.Cancel("execution timed out")
-		result := <-done
-		if len(result.result.Diagnostics) == 0 {
-			result.result.Diagnostics = []Diagnostic{
-				diagnostic(req, "starlark_timeout", "Starlark execution timed out"),
+
+		select {
+		case result := <-done:
+			if len(result.result.Diagnostics) == 0 {
+				result.result.Diagnostics = []Diagnostic{
+					diagnostic(req, "starlark_timeout", "Starlark execution timed out"),
+				}
+			}
+			return result.result
+		case <-time.After(timeoutCancelGrace):
+			return EvalResult{
+				Diagnostics: []Diagnostic{
+					diagnostic(req, "starlark_timeout", "Starlark execution timed out"),
+				},
 			}
 		}
-		return result.result
 	}
 }
 

@@ -210,29 +210,36 @@ func (r *repository) ListPartnerDocumentProfiles(
 	req *repositories.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	entities := make([]*edi.EDIPartnerDocumentProfile, 0, req.Filter.Pagination.SafeLimit())
+	cols := buncolgen.EDIPartnerDocumentProfileColumns
+	rel := buncolgen.EDIPartnerDocumentProfileRelations
 
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Relation("Partner").
-		Relation("DocumentType").
-		Relation("Template").
-		Where("epdp.organization_id = ?", req.Filter.TenantInfo.OrgID).
-		Where("epdp.business_unit_id = ?", req.Filter.TenantInfo.BuID)
+		Relation(rel.Partner).
+		Relation(rel.DocumentType).
+		Relation(rel.Template).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
+		})
+
 	if req.TransactionSet != "" {
-		query = query.Where("epdp.transaction_set = ?", req.TransactionSet)
+		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
 	}
+
 	if req.Direction != "" {
-		query = query.Where("epdp.direction = ?", req.Direction)
+		query = query.Where(cols.Direction.Eq(), req.Direction)
 	}
+
 	total, err := query.
-		Order("epdp.created_at DESC").
+		Order(cols.CreatedAt.OrderDesc()).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, err
 	}
+
 	return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
 		Items: entities,
 		Total: total,
@@ -244,16 +251,20 @@ func (r *repository) GetPartnerDocumentProfileByID(
 	req repositories.GetEDIPartnerDocumentProfileByIDRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	entity := new(edi.EDIPartnerDocumentProfile)
+	cols := buncolgen.EDIPartnerDocumentProfileColumns
+	rel := buncolgen.EDIPartnerDocumentProfileRelations
+
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Relation("Partner").
-		Relation("DocumentType").
-		Relation("Template").
-		Relation("TemplateVersion").
-		Where("epdp.id = ?", req.ID).
-		Where("epdp.organization_id = ?", req.TenantInfo.OrgID).
-		Where("epdp.business_unit_id = ?", req.TenantInfo.BuID).
+		Relation(rel.Partner).
+		Relation(rel.DocumentType).
+		Relation(rel.Template).
+		Relation(rel.TemplateVersion).
+		Where(cols.ID.Eq(), req.ID).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.TenantInfo)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "EDIPartnerDocumentProfile")
@@ -266,17 +277,23 @@ func (r *repository) GetActivePartnerDocumentProfile(
 	req repositories.GetActiveEDIPartnerDocumentProfileRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	entity := new(edi.EDIPartnerDocumentProfile)
+	cols := buncolgen.EDIPartnerDocumentProfileColumns
+	rel := buncolgen.EDIPartnerDocumentProfileRelations
+
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Relation("DocumentType").
-		Relation("Template").
-		Where("epdp.edi_partner_id = ?", req.PartnerID).
-		Where("epdp.organization_id = ?", req.TenantInfo.OrgID).
-		Where("epdp.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("epdp.transaction_set = ?", req.TransactionSet).
-		Where("epdp.direction = ?", req.Direction).
-		Where("epdp.status = ?", edi.DocumentStatusActive).
+		Relation(rel.DocumentType).
+		Relation(rel.Template).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID).
+				Where(cols.TransactionSet.Eq(), req.TransactionSet).
+				Where(cols.Direction.Eq(), req.Direction).
+				Where(cols.Status.Eq(), edi.DocumentStatusActive)
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)(sq)
+		}).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -336,6 +353,7 @@ func (r *repository) AllocateControlNumbers(
 	req repositories.AllocateEDIControlNumbersRequest,
 ) (map[edi.ControlNumberKind]int64, error) {
 	allocated := make(map[edi.ControlNumberKind]int64, len(req.Kinds))
+
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 		for _, kind := range req.Kinds {
 			sequence := &edi.EDIControlNumberSequence{

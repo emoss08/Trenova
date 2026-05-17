@@ -2,6 +2,7 @@ package edistarlark
 
 import (
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -196,6 +197,80 @@ func TestEvaluate_ContextTimeoutCancelsExpensiveScript(t *testing.T) {
 	})
 
 	requireDiagnostic(t, result, "starlark_timeout")
+}
+
+func TestEvaluate_ContextTimeoutReturnsWhileHelperBlocked(t *testing.T) {
+	t.Parallel()
+
+	helperStarted := make(chan struct{})
+	releaseHelper := make(chan struct{})
+	helperExited := make(chan struct{})
+
+	var releaseOnce sync.Once
+	release := func() {
+		releaseOnce.Do(func() {
+			close(releaseHelper)
+		})
+	}
+	t.Cleanup(release)
+
+	evaluator := NewEvaluator(Options{
+		MaxExecutionSteps: 1_000_000,
+		Timeout:           20 * time.Millisecond,
+	})
+	evaluator.predeclared = approvedHelpers()
+	evaluator.predeclared["blocking_helper"] = starlark.NewBuiltin(
+		"blocking_helper",
+		func(_ *starlark.Thread, _ *starlark.Builtin, _ starlark.Tuple, _ []starlark.Tuple) (starlark.Value, error) {
+			close(helperStarted)
+			defer close(helperExited)
+
+			<-releaseHelper
+			return starlark.String("late result"), nil
+		},
+	)
+	evaluator.predeclared.Freeze()
+
+	resultCh := make(chan EvalResult, 1)
+	go func() {
+		resultCh <- evaluator.Evaluate(t.Context(), EvalRequest{
+			Script: `def value(ctx):
+    return blocking_helper()`,
+			Context: map[string]any{},
+		})
+	}()
+
+	select {
+	case <-helperStarted:
+	case result := <-resultCh:
+		t.Fatalf("Evaluate returned before blocking helper started: %+v", result.Diagnostics)
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("blocking helper did not start")
+	}
+
+	blockedAt := time.Now()
+	var result EvalResult
+	select {
+	case result = <-resultCh:
+	case <-time.After(100 * time.Millisecond):
+		t.Fatal("Evaluate did not return promptly after timeout")
+	}
+
+	requireDiagnostic(t, result, "starlark_timeout")
+	assert.Less(t, time.Since(blockedAt), 100*time.Millisecond)
+
+	select {
+	case <-helperExited:
+		t.Fatal("blocking helper exited before test released it")
+	default:
+	}
+
+	release()
+	select {
+	case <-helperExited:
+	case <-time.After(time.Second):
+		t.Fatal("blocking helper did not exit after release")
+	}
 }
 
 func TestEvaluate_DisallowsImportsAndUnapprovedNames(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 const (
 	DefaultMaxExecutionSteps = uint64(100_000)
 	DefaultTimeout           = 100 * time.Millisecond
+	timeoutCancelGrace       = 10 * time.Millisecond
 
 	defaultFunctionName = "value"
 	defaultFilename     = "edi_element.star"
