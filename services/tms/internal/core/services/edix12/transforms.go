@@ -2,6 +2,7 @@ package edix12
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -500,9 +501,9 @@ func (r *transformRuntime) evaluateConditional(when any, args map[string]any) (b
 	}
 	switch strings.TrimSpace(rule) {
 	case "", "truthy", "exists", "not_empty":
-		return !isEmptyTransformValue(when), nil
+		return isTruthyTransformValue(when), nil
 	case "empty":
-		return isEmptyTransformValue(when), nil
+		return !isTruthyTransformValue(when), nil
 	case "equals", "eq":
 		target, err := r.requiredStringArgAny(args, "value", "equals", "target")
 		if err != nil {
@@ -644,6 +645,25 @@ func (r *transformRuntime) resolveArgument(value any) any {
 
 func isEmptyTransformValue(value any) bool {
 	return strings.TrimSpace(valueToString(value)) == ""
+}
+
+func isTruthyTransformValue(value any) bool {
+	switch typed := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return typed
+	case string:
+		return strings.TrimSpace(typed) != ""
+	}
+
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice:
+		return reflected.Len() > 0
+	default:
+		return true
+	}
 }
 
 func intFromTransformValue(value any) (int, bool) {

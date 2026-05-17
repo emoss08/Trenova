@@ -195,6 +195,59 @@ func TestRender204_TransformPipelineRendersValues(t *testing.T) {
 	}
 }
 
+func TestRender204_TransformConditionalUsesRuntimeTruthiness(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		value any
+	}{
+		{
+			name:  "false bool",
+			value: false,
+		},
+		{
+			name:  "empty array",
+			value: [0]string{},
+		},
+		{
+			name:  "empty slice",
+			value: []any{},
+		},
+		{
+			name:  "empty map",
+			value: map[string]any{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Runtime["condition"] = tt.value
+			setTransform(
+				findElement(t, input, "L11", 0),
+				edi.TemplateElementBaseSource{Source: edi.TemplateElementSourceConstant},
+				edi.TemplateTransformStep{
+					Operation: "conditional",
+					Arguments: map[string]any{
+						"when": "$runtime.condition",
+						"then": "HAS",
+						"else": "NONE",
+					},
+				},
+			)
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			assert.Contains(t, result.RawX12, "L11*NONE*BM")
+		})
+	}
+}
+
 func TestRender204_TransformPipelineReportsConfigurationErrors(t *testing.T) {
 	t.Parallel()
 
