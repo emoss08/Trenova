@@ -1,6 +1,7 @@
 package ediservice
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
@@ -174,6 +176,234 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 	require.Equal(t, edi.TemplateStatusActive, updated.Status)
 }
 
+func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	documentTypeID := pulid.MustNew("edidt_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		}).
+		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
+	repo.EXPECT().
+		CreateTemplate(mock.Anything, mock.MatchedBy(func(req *repositories.CreateEDITemplateRequest) bool {
+			return req.Template.DocumentTypeID == documentTypeID &&
+				req.Template.Status == edi.TemplateStatusDraft &&
+				req.Version.Status == edi.TemplateStatusDraft
+		})).
+		Return(
+			&edi.EDITemplate{
+				ID:             pulid.MustNew("editpl_"),
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				DocumentTypeID: documentTypeID,
+				Status:         edi.TemplateStatusDraft,
+			},
+			&edi.EDITemplateVersion{
+				ID:             pulid.MustNew("editv_"),
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				Status:         edi.TemplateStatusDraft,
+			},
+			nil,
+		)
+
+	service := &Service{documentRepo: repo}
+	created, err := service.CreateTemplate(
+		t.Context(),
+		&CreateEDITemplateRequest{
+			TenantInfo:     tenantInfo,
+			DocumentTypeID: documentTypeID,
+			Name:           "Outbound 204",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, documentTypeID, created.DocumentTypeID)
+}
+
+func TestService_CreateTemplateRejectsMismatchedDocumentType(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	documentTypeID := pulid.MustNew("edidt_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		}).
+		Return([]*edi.EDIDocumentType{{ID: pulid.MustNew("edidt_")}}, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.CreateTemplate(
+		t.Context(),
+		&CreateEDITemplateRequest{
+			TenantInfo:     tenantInfo,
+			DocumentTypeID: documentTypeID,
+			Name:           "Outbound 204",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+		testActor(tenantInfo),
+	)
+
+	requireValidationError(t, err, "documentTypeId", errortypes.ErrInvalidReference)
+}
+
+func TestService_CreateTemplateReturnsDraftWithoutActiveVersion(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	documentTypeID := pulid.MustNew("edidt_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, mock.Anything).
+		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
+	repo.EXPECT().
+		CreateTemplate(mock.Anything, mock.Anything).
+		Return(
+			&edi.EDITemplate{
+				ID:             pulid.MustNew("editpl_"),
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				DocumentTypeID: documentTypeID,
+				Status:         edi.TemplateStatusDraft,
+			},
+			&edi.EDITemplateVersion{
+				ID:             pulid.MustNew("editv_"),
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				Status:         edi.TemplateStatusDraft,
+				IsActive:       false,
+			},
+			nil,
+		)
+
+	service := &Service{documentRepo: repo}
+	created, err := service.CreateTemplate(
+		t.Context(),
+		&CreateEDITemplateRequest{
+			TenantInfo:     tenantInfo,
+			DocumentTypeID: documentTypeID,
+			Name:           "Outbound 204",
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	require.Nil(t, created.ActiveVersion)
+}
+
+func TestService_CreateTemplateReturnsActiveVersionWhenRepositoryCreatesActiveVersion(
+	t *testing.T,
+) {
+	tenantInfo := testTenantInfo()
+	documentTypeID := pulid.MustNew("edidt_")
+	activeVersion := &edi.EDITemplateVersion{
+		ID:             pulid.MustNew("editv_"),
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		Status:         edi.TemplateStatusActive,
+		IsActive:       true,
+	}
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, mock.Anything).
+		Return([]*edi.EDIDocumentType{{ID: documentTypeID}}, nil)
+	repo.EXPECT().
+		CreateTemplate(mock.Anything, mock.Anything).
+		Return(
+			&edi.EDITemplate{
+				ID:             pulid.MustNew("editpl_"),
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				DocumentTypeID: documentTypeID,
+				Status:         edi.TemplateStatusActive,
+			},
+			activeVersion,
+			nil,
+		)
+
+	service := &Service{documentRepo: repo}
+	created, err := service.CreateTemplate(
+		t.Context(),
+		&CreateEDITemplateRequest{
+			TenantInfo:     tenantInfo,
+			DocumentTypeID: documentTypeID,
+			Name:           "Outbound 204",
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	require.Same(t, activeVersion, created.ActiveVersion)
+}
+
+func TestService_UpdateTemplateRejectsUnknownStatus(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	templateID := pulid.MustNew("editpl_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+			ID:         templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(&edi.EDITemplate{
+			ID:             templateID,
+			BusinessUnitID: tenantInfo.BuID,
+			OrganizationID: tenantInfo.OrgID,
+			Status:         edi.TemplateStatusDraft,
+		}, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.UpdateTemplate(
+		t.Context(),
+		&UpdateEDITemplateRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: templateID,
+			Status:     edi.TemplateStatus("Published"),
+		},
+		testActor(tenantInfo),
+	)
+
+	requireValidationError(t, err, "status", errortypes.ErrInvalid)
+}
+
+func TestService_UpdateTemplateRejectsArchivedTemplate(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	templateID := pulid.MustNew("editpl_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+			ID:         templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(&edi.EDITemplate{
+			ID:             templateID,
+			BusinessUnitID: tenantInfo.BuID,
+			OrganizationID: tenantInfo.OrgID,
+			Status:         edi.TemplateStatusArchived,
+		}, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.UpdateTemplate(
+		t.Context(),
+		&UpdateEDITemplateRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: templateID,
+			Name:       "New name",
+		},
+		testActor(tenantInfo),
+	)
+
+	requireValidationError(t, err, "status", errortypes.ErrInvalidOperation)
+}
+
 func TestValidateProfileTemplateVersionCompatibility(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -283,4 +513,39 @@ func requireDiagnosticCode(
 		}
 	}
 	require.Failf(t, "missing diagnostic code", "code %s not found in %#v", code, diagnostics)
+}
+
+func requireValidationError(
+	t *testing.T,
+	err error,
+	field string,
+	code errortypes.ErrorCode,
+) {
+	t.Helper()
+	require.Error(t, err)
+
+	var validationErr *errortypes.Error
+	if errors.As(err, &validationErr) {
+		require.Equal(t, field, validationErr.Field)
+		require.Equal(t, code, validationErr.Code)
+		return
+	}
+
+	var multiErr *errortypes.MultiError
+	if errors.As(err, &multiErr) {
+		for _, validationErr := range multiErr.Errors {
+			if validationErr.Field == field && validationErr.Code == code {
+				return
+			}
+		}
+	}
+
+	require.Failf(
+		t,
+		"missing validation error",
+		"field %s with code %s not found in %#v",
+		field,
+		code,
+		err,
+	)
 }

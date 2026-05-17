@@ -80,7 +80,11 @@ func (s *Service) CreateTemplate(
 	if err != nil {
 		return nil, err
 	}
-	created.ActiveVersion = createdVersion
+	if createdVersion != nil &&
+		createdVersion.Status == edi.TemplateStatusActive &&
+		createdVersion.IsActive {
+		created.ActiveVersion = createdVersion
+	}
 	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI template created")
 	return created, nil
 }
@@ -102,6 +106,16 @@ func (s *Service) UpdateTemplate(
 		TenantInfo: req.TenantInfo,
 	})
 	if err != nil {
+		return nil, err
+	}
+	if current.Status == edi.TemplateStatusArchived {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Archived templates cannot be edited",
+		)
+	}
+	if err = validateTemplateStatus(req.Status); err != nil {
 		return nil, err
 	}
 	original := *current
@@ -541,12 +555,55 @@ func (s *Service) validateTemplateCreateRequest(
 	if multiErr.HasErrors() {
 		return multiErr
 	}
-	_, err := s.documentRepo.ListDocumentTypes(ctx, repositories.ListEDIDocumentTypesRequest{
-		Standard:       req.Standard,
-		TransactionSet: req.TransactionSet,
-		Direction:      req.Direction,
-	})
-	return err
+	documentTypes, err := s.documentRepo.ListDocumentTypes(
+		ctx,
+		repositories.ListEDIDocumentTypesRequest{
+			Standard:       req.Standard,
+			TransactionSet: req.TransactionSet,
+			Direction:      req.Direction,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	if !documentTypesContainID(documentTypes, req.DocumentTypeID) {
+		return errortypes.NewValidationError(
+			"documentTypeId",
+			errortypes.ErrInvalidReference,
+			"Document type is not valid for the selected EDI standard, transaction set, and direction",
+		)
+	}
+	return nil
+}
+
+func validateTemplateStatus(status edi.TemplateStatus) error {
+	if status == "" {
+		return nil
+	}
+	switch status {
+	case edi.TemplateStatusDraft,
+		edi.TemplateStatusCertified,
+		edi.TemplateStatusActive,
+		edi.TemplateStatusDeprecated,
+		edi.TemplateStatusArchived,
+		edi.TemplateStatusSuperseded:
+		return nil
+	default:
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalid,
+			"Template status is invalid",
+		)
+	}
+}
+
+func documentTypesContainID(documentTypes []*edi.EDIDocumentType, documentTypeID pulid.ID) bool {
+	for _, documentType := range documentTypes {
+		if documentType != nil && documentType.ID == documentTypeID {
+			return true
+		}
+	}
+	return false
 }
 
 func cloneTemplateSegments(
