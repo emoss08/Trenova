@@ -693,12 +693,12 @@ func TestRender204_StarlarkEmptyScriptReportsMissingDefaultFunction(t *testing.T
 	require.NoError(t, err)
 	require.Len(t, result.Diagnostics, 1)
 	diagnostic := result.Diagnostics[0]
-	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "script_function_not_found", diagnostic.Code)
 	assert.Equal(t, "starlark:value", diagnostic.Path)
-	assert.Contains(t, diagnostic.Message, `required Starlark function "value" is not defined`)
+	assert.Contains(t, diagnostic.Message, "starlark function name is required")
 	assert.Equal(
 		t,
-		"Check the Starlark script, function name, helper arguments, and available context fields.",
+		"Define the referenced Starlark function in the inline script or template script libraries.",
 		diagnostic.SuggestedFix,
 	)
 }
@@ -719,12 +719,12 @@ func TestRender204_StarlarkMissingCustomFunctionReportsConfiguredPath(t *testing
 	require.NoError(t, err)
 	require.Len(t, result.Diagnostics, 1)
 	diagnostic := result.Diagnostics[0]
-	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "script_function_not_found", diagnostic.Code)
 	assert.Equal(t, "starlark:map_bol", diagnostic.Path)
 	assert.Contains(t, diagnostic.Message, `required Starlark function "map_bol" is not defined`)
 	assert.Equal(
 		t,
-		"Check the Starlark script, function name, helper arguments, and available context fields.",
+		"Define the referenced Starlark function in the inline script or template script libraries.",
 		diagnostic.SuggestedFix,
 	)
 }
@@ -798,6 +798,150 @@ func TestRender204_StarlarkStepLimitDiagnosticPropagates(t *testing.T) {
 	assert.NotContains(t, diagnostic.Path, element.StarlarkScript)
 	assert.NotEmpty(t, diagnostic.Message)
 	assert.Equal(t, "Reduce loop work or simplify the Starlark script.", diagnostic.SuggestedFix)
+}
+
+func TestRender204_StarlarkElementUsesLibraryFunction(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.BOL = "BOL-1"
+	input.TemplateVersion.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script: `def bol_ref(ctx):
+    return "LIB-" + ctx["shipment"]["bol"]`,
+		},
+	}
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "bol_ref"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*LIB-BOL-1*BM")
+}
+
+func TestRender204_InlineStarlarkCallsLibraryHelper(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.BOL = "BOL-1"
+	input.TemplateVersion.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script: `def prefix(value):
+    return "HELP-" + value`,
+		},
+	}
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkScript = `def value(ctx):
+    return prefix(ctx["shipment"]["bol"])`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*HELP-BOL-1*BM")
+}
+
+func TestRender204_LibraryBackedCondition(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.BOL = "BOL-1"
+	input.TemplateVersion.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "conditions",
+			Language: edi.ScriptLanguageStarlark,
+			Script: `def include_bol(ctx):
+    return ctx["shipment"]["bol"] != ""`,
+		},
+	}
+	findSegment(t, input, "L11").Condition = "starlark:include_bol"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*BOL-1*BM")
+}
+
+func TestRender204_RepeatLibraryConditionReceivesItem(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.Moves[0].Stops = []edi.LoadTenderStop{
+		{Type: "LD", Sequence: 1, LocationName: "Load Dock"},
+		{Type: "UL", Sequence: 2, LocationName: "Unload Dock"},
+	}
+	input.TemplateVersion.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "conditions",
+			Language: edi.ScriptLanguageStarlark,
+			Script: `def is_load(ctx, item):
+    return item["type"] == "LD"`,
+		},
+	}
+	findSegment(t, input, "N1").Condition = "starlark:is_load"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "N1*LD*Load Dock")
+	assert.NotContains(t, result.RawX12, "N1*UL*Unload Dock")
+}
+
+func TestRender204_MissingLibraryFunctionDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "missing_ref"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	assert.Equal(t, "script_function_not_found", result.Diagnostics[0].Code)
+	assert.Equal(t, "starlark:missing_ref", result.Diagnostics[0].Path)
+}
+
+func TestRender204_DuplicateLibraryFunctionsDiagnosticPropagates(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "ref"
+	input.TemplateVersion.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "a",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'a'",
+		},
+		{
+			Name:     "b",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'b'",
+		},
+	}
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	assert.Equal(t, "script_library_duplicate_function", result.Diagnostics[0].Code)
 }
 
 func TestHasBlockingDiagnostics_BlocksStrictStarlarkDiagnostics(t *testing.T) {

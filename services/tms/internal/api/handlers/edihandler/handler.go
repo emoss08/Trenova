@@ -245,6 +245,16 @@ func (h *Handler) registerTemplateRoutes(templates *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.replaceTemplateSegments,
 	)
+	templates.GET(
+		"/:templateID/versions/:versionID/script-libraries/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.listTemplateScriptLibraries,
+	)
+	templates.PUT(
+		"/:templateID/versions/:versionID/script-libraries/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.replaceTemplateScriptLibraries,
+	)
 	templates.POST(
 		"/:templateID/versions/:versionID/validate/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -1191,6 +1201,55 @@ func (h *Handler) replaceTemplateSegments(c *gin.Context) {
 	req.VersionID = versionID
 	req.TenantInfo = tenantInfoFromAuth(authCtx)
 	version, err := h.service.ReplaceDraftSegments(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, version)
+}
+
+func (h *Handler) listTemplateScriptLibraries(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	libraries, err := h.service.ListTemplateScriptLibraries(
+		c.Request.Context(),
+		repositories.ListEDITemplateScriptLibrariesRequest{
+			TemplateID: templateID,
+			VersionID:  versionID,
+			TenantInfo: tenantInfoFromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, libraries)
+}
+
+func (h *Handler) replaceTemplateScriptLibraries(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(ediservice.ReplaceEDITemplateScriptLibrariesRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TemplateID = templateID
+	req.VersionID = versionID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	version, err := h.service.ReplaceDraftScriptLibraries(
 		c.Request.Context(),
 		req,
 		actorutil.FromAuthContext(authCtx),

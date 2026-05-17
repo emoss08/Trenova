@@ -75,10 +75,19 @@ func (s *Service) CreateTemplate(
 			Template: template,
 			Version:  version,
 			Segments: segments,
+			ScriptLibraries: cloneTemplateScriptLibraries(
+				req.TenantInfo,
+				pulid.Nil,
+				edi.TemplateStatusDraft,
+				req.ScriptLibraries,
+			),
 		},
 	)
 	if err != nil {
 		return nil, err
+	}
+	if createdVersion != nil {
+		populateTemplateScriptLibraryFunctionNames(createdVersion.ScriptLibraries)
 	}
 	if createdVersion != nil &&
 		createdVersion.Status == edi.TemplateStatusActive &&
@@ -187,10 +196,24 @@ func (s *Service) CreateDraftVersion(
 		Notes:             strings.TrimSpace(req.Notes),
 	}
 	segments := cloneTemplateSegments(req.TenantInfo, draft.ID, source.Segments)
-	created, err := s.documentRepo.CreateTemplateVersion(ctx, draft, segments)
+	libraries := cloneTemplateScriptLibraries(
+		req.TenantInfo,
+		draft.ID,
+		edi.TemplateStatusDraft,
+		source.ScriptLibraries,
+	)
+	created, err := s.documentRepo.CreateTemplateVersion(
+		ctx,
+		&repositories.CreateEDITemplateVersionRequest{
+			Version:         draft,
+			Segments:        segments,
+			ScriptLibraries: libraries,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
+	populateTemplateScriptLibraryFunctionNames(created.ScriptLibraries)
 	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI draft version created")
 	return created, nil
 }
@@ -206,7 +229,12 @@ func (s *Service) GetTemplateVersion(
 	ctx context.Context,
 	req repositories.GetEDITemplateVersionByIDRequest,
 ) (*edi.EDITemplateVersion, error) {
-	return s.documentRepo.GetTemplateVersionByID(ctx, req)
+	version, err := s.documentRepo.GetTemplateVersionByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	populateTemplateScriptLibraryFunctionNames(version.ScriptLibraries)
+	return version, nil
 }
 
 func (s *Service) UpdateDraftVersion(
@@ -271,6 +299,64 @@ func (s *Service) ReplaceDraftSegments(
 		&original,
 		updated,
 		"EDI draft segments updated",
+	)
+	return updated, nil
+}
+
+func (s *Service) ListTemplateScriptLibraries(
+	ctx context.Context,
+	req repositories.ListEDITemplateScriptLibrariesRequest,
+) ([]*edi.EDITemplateScriptLibrary, error) {
+	libraries, err := s.documentRepo.ListTemplateScriptLibraries(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	populateTemplateScriptLibraryFunctionNames(libraries)
+	return libraries, nil
+}
+
+func (s *Service) ReplaceDraftScriptLibraries(
+	ctx context.Context,
+	req *ReplaceEDITemplateScriptLibrariesRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"scriptLibraries",
+			errortypes.ErrRequired,
+			"Script libraries request is required",
+		)
+	}
+	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	original := *version
+	version.Version = req.Version
+	libraries := cloneTemplateScriptLibraries(
+		req.TenantInfo,
+		version.ID,
+		edi.TemplateStatusDraft,
+		req.ScriptLibraries,
+	)
+	updated, err := s.documentRepo.ReplaceTemplateVersionScriptLibraries(
+		ctx,
+		repositories.ReplaceEDITemplateVersionScriptLibrariesRequest{
+			Version:         version,
+			ScriptLibraries: libraries,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	populateTemplateScriptLibraryFunctionNames(updated.ScriptLibraries)
+	s.logAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		&original,
+		updated,
+		"EDI draft script libraries updated",
 	)
 	return updated, nil
 }
@@ -627,6 +713,44 @@ func cloneTemplateSegments(
 	return segments
 }
 
+func cloneTemplateScriptLibraries(
+	tenantInfo pagination.TenantInfo,
+	versionID pulid.ID,
+	status edi.TemplateStatus,
+	source []*edi.EDITemplateScriptLibrary,
+) []*edi.EDITemplateScriptLibrary {
+	libraries := make([]*edi.EDITemplateScriptLibrary, 0, len(source))
+	for _, library := range source {
+		if library == nil {
+			continue
+		}
+		cloned := *library
+		cloned.ID = pulid.Nil
+		cloned.BusinessUnitID = tenantInfo.BuID
+		cloned.OrganizationID = tenantInfo.OrgID
+		cloned.TemplateVersionID = versionID
+		cloned.Status = status
+		cloned.Version = 0
+		cloned.FunctionNames = nil
+		libraries = append(libraries, &cloned)
+	}
+	return libraries
+}
+
+func populateTemplateScriptLibraryFunctionNames(libraries []*edi.EDITemplateScriptLibrary) {
+	for _, library := range libraries {
+		if library == nil {
+			continue
+		}
+		names, err := edistarlark.DiscoverFunctionNames(library.Script)
+		if err != nil {
+			library.FunctionNames = []string{}
+			continue
+		}
+		library.FunctionNames = names
+	}
+}
+
 func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	if version == nil {
@@ -644,6 +768,7 @@ func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12
 	}
 
 	diagnostics = append(diagnostics, validateTemplateMetadata(version)...)
+	diagnostics = append(diagnostics, validateTemplateScriptLibraries(version.ScriptLibraries)...)
 	if len(version.Segments) == 0 {
 		diagnostics = append(
 			diagnostics,
@@ -659,7 +784,9 @@ func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12
 		return diagnostics
 	}
 
-	return append(diagnostics, validateTemplateSegments(version.Segments)...)
+	return append(
+		diagnostics,
+		validateTemplateSegments(version.Segments, version.ScriptLibraries)...)
 }
 
 func validateTemplateMetadata(version *edi.EDITemplateVersion) []edix12.Diagnostic {
@@ -693,7 +820,10 @@ func validateTemplateMetadata(version *edi.EDITemplateVersion) []edix12.Diagnost
 	return diagnostics
 }
 
-func validateTemplateSegments(source []*edi.EDITemplateSegment) []edix12.Diagnostic {
+func validateTemplateSegments(
+	source []*edi.EDITemplateSegment,
+	libraries []*edi.EDITemplateScriptLibrary,
+) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	segments := append([]*edi.EDITemplateSegment{}, source...)
 	sort.SliceStable(segments, func(i, j int) bool {
@@ -739,7 +869,7 @@ func validateTemplateSegments(source []*edi.EDITemplateSegment) []edix12.Diagnos
 		if _, ok := requiredSegments[segment.SegmentID]; ok {
 			requiredSegments[segment.SegmentID] = true
 		}
-		diagnostics = append(diagnostics, validateTemplateSegment(segment)...)
+		diagnostics = append(diagnostics, validateTemplateSegment(segment, libraries)...)
 	}
 	for segmentID, found := range requiredSegments {
 		if found {
@@ -757,7 +887,10 @@ func validateTemplateSegments(source []*edi.EDITemplateSegment) []edix12.Diagnos
 	return diagnostics
 }
 
-func validateTemplateSegment(segment *edi.EDITemplateSegment) []edix12.Diagnostic {
+func validateTemplateSegment(
+	segment *edi.EDITemplateSegment,
+	libraries []*edi.EDITemplateScriptLibrary,
+) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	if strings.TrimSpace(segment.SegmentID) == "" {
 		diagnostics = append(
@@ -772,13 +905,13 @@ func validateTemplateSegment(segment *edi.EDITemplateSegment) []edix12.Diagnosti
 			),
 		)
 	}
-	if condition := edix12.ValidateConditionSyntax(segment.Condition); condition != nil {
-		condition.SegmentID = segment.SegmentID
-		diagnostics = append(diagnostics, *condition)
-	}
+	diagnostics = append(
+		diagnostics,
+		validateTemplateCondition(segment.Condition, segment, nil, libraries)...,
+	)
 	for idx := range segment.Elements {
 		element := &segment.Elements[idx]
-		diagnostics = append(diagnostics, validateTemplateElement(segment, element)...)
+		diagnostics = append(diagnostics, validateTemplateElement(segment, element, libraries)...)
 	}
 	return diagnostics
 }
@@ -786,6 +919,7 @@ func validateTemplateSegment(segment *edi.EDITemplateSegment) []edix12.Diagnosti
 func validateTemplateElement(
 	segment *edi.EDITemplateSegment,
 	element *edi.TemplateElement,
+	libraries []*edi.EDITemplateScriptLibrary,
 ) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	if element.Position <= 0 {
@@ -841,7 +975,7 @@ func validateTemplateElement(
 	case edi.TemplateElementSourceTransform:
 		diagnostics = append(diagnostics, validateTransformElement(segment, element)...)
 	case edi.TemplateElementSourceStarlark:
-		diagnostics = append(diagnostics, validateStarlarkElement(segment, element)...)
+		diagnostics = append(diagnostics, validateStarlarkElement(segment, element, libraries)...)
 	default:
 		diagnostics = append(
 			diagnostics,
@@ -855,11 +989,10 @@ func validateTemplateElement(
 			),
 		)
 	}
-	if condition := edix12.ValidateConditionSyntax(element.Condition); condition != nil {
-		condition.SegmentID = segment.SegmentID
-		condition.ElementPosition = element.Position
-		diagnostics = append(diagnostics, *condition)
-	}
+	diagnostics = append(
+		diagnostics,
+		validateTemplateCondition(element.Condition, segment, element, libraries)...,
+	)
 	return diagnostics
 }
 
@@ -923,44 +1056,221 @@ func validateTransformElement(
 	return diagnostics
 }
 
+func validateTemplateScriptLibraries(
+	libraries []*edi.EDITemplateScriptLibrary,
+) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	seenNames := make(map[string]string, len(libraries))
+	starlarkLibraries := make([]edistarlark.ScriptLibrary, 0, len(libraries))
+	for idx, library := range libraries {
+		path := fmt.Sprintf("scriptLibraries.%d", idx)
+		if library == nil {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				path,
+				"",
+				0,
+				"script_library_required",
+				"Script library is required",
+				"Remove empty library entries.",
+			))
+			continue
+		}
+
+		name := strings.TrimSpace(library.Name)
+		if name == "" {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				path+".name",
+				"",
+				0,
+				"script_library_name_required",
+				"Script library name is required",
+				"Set a unique library name.",
+			))
+		}
+		nameKey := strings.ToLower(name)
+		if previous, ok := seenNames[nameKey]; ok && nameKey != "" {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				path+".name",
+				"",
+				0,
+				"script_library_duplicate_name",
+				fmt.Sprintf(
+					"Script library name %q duplicates %q for this template version",
+					name,
+					previous,
+				),
+				"Use a unique library name for this template version.",
+			))
+		}
+		seenNames[nameKey] = name
+
+		if library.Language != edi.ScriptLanguageStarlark {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				path+".language",
+				"",
+				0,
+				"script_library_language_invalid",
+				"Script library language is invalid",
+				"Use Starlark.",
+			))
+		}
+		if strings.TrimSpace(library.Script) == "" {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				path+".script",
+				"",
+				0,
+				"script_library_required",
+				"Script library script is required",
+				"Add Starlark functions to this library.",
+			))
+			continue
+		}
+		starlarkLibraries = append(starlarkLibraries, edistarlark.ScriptLibrary{
+			Name:   name,
+			Script: library.Script,
+		})
+	}
+	for _, diagnostic := range edistarlark.ValidateLibraries(starlarkLibraries) {
+		diagnostics = append(diagnostics, starlarkTemplateDiagnostic(diagnostic))
+	}
+	return diagnostics
+}
+
 func validateStarlarkElement(
 	segment *edi.EDITemplateSegment,
 	element *edi.TemplateElement,
+	libraries []*edi.EDITemplateScriptLibrary,
 ) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
-	if strings.TrimSpace(element.StarlarkScript) == "" {
+	if strings.TrimSpace(element.StarlarkScript) == "" &&
+		strings.TrimSpace(element.StarlarkFunction) == "" {
 		diagnostics = append(
 			diagnostics,
 			templateDiagnostic(
-				"starlarkScript",
+				"starlarkFunction",
 				segment.SegmentID,
 				element.Position,
-				"starlark_script_required",
-				"Starlark script is required",
-				"Add the Starlark script.",
+				"script_function_not_found",
+				"Starlark function is required",
+				"Set a library function or add an inline Starlark script.",
 			),
 		)
+		return diagnostics
 	}
 	functionName := stringutils.FirstNonEmpty(strings.TrimSpace(element.StarlarkFunction), "value")
 	starlarkDiagnostics := edistarlark.ValidateScriptFunction(edistarlark.EvalRequest{
 		Script:       element.StarlarkScript,
 		FunctionName: functionName,
+		Libraries:    starlarkLibraries(libraries),
 		Context:      map[string]any{},
 		SegmentID:    segment.SegmentID,
 		Path:         "starlark:" + functionName,
 	})
-	if len(starlarkDiagnostics) > 0 {
-		diagnostics = append(diagnostics, edix12.Diagnostic{
-			Severity:        edi.ValidationSeverity(starlarkDiagnostics[0].Severity),
-			Code:            starlarkDiagnostics[0].Code,
-			SegmentID:       segment.SegmentID,
-			ElementPosition: element.Position,
-			Path:            starlarkDiagnostics[0].Path,
-			Message:         starlarkDiagnostics[0].Message,
-			SuggestedFix:    starlarkDiagnostics[0].SuggestedFix,
-		})
+	for _, diagnostic := range starlarkDiagnostics {
+		converted := starlarkTemplateDiagnostic(diagnostic)
+		converted.SegmentID = segment.SegmentID
+		converted.ElementPosition = element.Position
+		diagnostics = append(diagnostics, converted)
 	}
 	return diagnostics
+}
+
+func validateTemplateCondition(
+	condition string,
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+	libraries []*edi.EDITemplateScriptLibrary,
+) []edix12.Diagnostic {
+	condition = strings.TrimSpace(condition)
+	if condition == "" {
+		return nil
+	}
+	if !strings.HasPrefix(condition, "starlark:") {
+		if diagnostic := edix12.ValidateConditionSyntax(condition); diagnostic != nil {
+			diagnostic.SegmentID = segment.SegmentID
+			if element != nil {
+				diagnostic.ElementPosition = element.Position
+			}
+			return []edix12.Diagnostic{*diagnostic}
+		}
+		return nil
+	}
+
+	body := strings.TrimSpace(strings.TrimPrefix(condition, "starlark:"))
+	functionName := "include"
+	script := body
+	path := "condition:starlark:include"
+	if isFunctionReference(body) {
+		functionName = body
+		script = ""
+		path = "condition:starlark:" + functionName
+	}
+	starlarkDiagnostics := edistarlark.ValidateScriptFunction(edistarlark.EvalRequest{
+		Script:       script,
+		FunctionName: functionName,
+		Libraries:    starlarkLibraries(libraries),
+		Context:      map[string]any{},
+		SegmentID:    segment.SegmentID,
+		Path:         path,
+	})
+	diagnostics := make([]edix12.Diagnostic, 0, len(starlarkDiagnostics))
+	for _, diagnostic := range starlarkDiagnostics {
+		converted := starlarkTemplateDiagnostic(diagnostic)
+		converted.SegmentID = segment.SegmentID
+		if element != nil {
+			converted.ElementPosition = element.Position
+		}
+		diagnostics = append(diagnostics, converted)
+	}
+	return diagnostics
+}
+
+func starlarkLibraries(
+	source []*edi.EDITemplateScriptLibrary,
+) []edistarlark.ScriptLibrary {
+	libraries := make([]edistarlark.ScriptLibrary, 0, len(source))
+	for _, library := range source {
+		if library == nil || library.Language != edi.ScriptLanguageStarlark {
+			continue
+		}
+		libraries = append(libraries, edistarlark.ScriptLibrary{
+			Name:   library.Name,
+			Script: library.Script,
+		})
+	}
+	return libraries
+}
+
+func starlarkTemplateDiagnostic(diagnostic edistarlark.Diagnostic) edix12.Diagnostic {
+	return edix12.Diagnostic{
+		Severity:        edi.ValidationSeverity(diagnostic.Severity),
+		Code:            diagnostic.Code,
+		SegmentID:       diagnostic.SegmentID,
+		ElementPosition: diagnostic.ElementPosition,
+		Path:            diagnostic.Path,
+		Message:         diagnostic.Message,
+		SuggestedFix:    diagnostic.SuggestedFix,
+	}
+}
+
+func isFunctionReference(value string) bool {
+	if value == "" {
+		return false
+	}
+	for idx, char := range value {
+		if idx == 0 {
+			if char == '_' || char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' {
+				continue
+			}
+			return false
+		}
+		if char == '_' || char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' ||
+			char >= '0' && char <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func actorID(actor *services.RequestActor) pulid.ID {

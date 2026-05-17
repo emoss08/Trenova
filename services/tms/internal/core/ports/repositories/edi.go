@@ -184,9 +184,10 @@ type GetEDITemplateByIDRequest struct {
 }
 
 type CreateEDITemplateRequest struct {
-	Template *edi.EDITemplate          `json:"template"`
-	Version  *edi.EDITemplateVersion   `json:"version"`
-	Segments []*edi.EDITemplateSegment `json:"segments"`
+	Template        *edi.EDITemplate                `json:"template"`
+	Version         *edi.EDITemplateVersion         `json:"version"`
+	Segments        []*edi.EDITemplateSegment       `json:"segments"`
+	ScriptLibraries []*edi.EDITemplateScriptLibrary `json:"scriptLibraries"`
 }
 
 type GetActiveEDITemplateVersionRequest struct {
@@ -209,6 +210,23 @@ type GetEDITemplateVersionByIDRequest struct {
 type ReplaceEDITemplateVersionSegmentsRequest struct {
 	Version  *edi.EDITemplateVersion   `json:"version"`
 	Segments []*edi.EDITemplateSegment `json:"segments"`
+}
+
+type ListEDITemplateScriptLibrariesRequest struct {
+	TemplateID pulid.ID              `json:"templateId"`
+	VersionID  pulid.ID              `json:"versionId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type CreateEDITemplateVersionRequest struct {
+	Version         *edi.EDITemplateVersion         `json:"version"`
+	Segments        []*edi.EDITemplateSegment       `json:"segments"`
+	ScriptLibraries []*edi.EDITemplateScriptLibrary `json:"scriptLibraries"`
+}
+
+type ReplaceEDITemplateVersionScriptLibrariesRequest struct {
+	Version         *edi.EDITemplateVersion         `json:"version"`
+	ScriptLibraries []*edi.EDITemplateScriptLibrary `json:"scriptLibraries"`
 }
 
 type ActivateEDITemplateVersionRequest struct {
@@ -484,8 +502,7 @@ type EDITemplateRepository interface {
 	) (*edi.EDITemplateVersion, error)
 	CreateTemplateVersion(
 		ctx context.Context,
-		version *edi.EDITemplateVersion,
-		segments []*edi.EDITemplateSegment,
+		req *CreateEDITemplateVersionRequest,
 	) (*edi.EDITemplateVersion, error)
 	UpdateTemplateVersionMetadata(
 		ctx context.Context,
@@ -494,6 +511,14 @@ type EDITemplateRepository interface {
 	ReplaceTemplateVersionSegments(
 		ctx context.Context,
 		req ReplaceEDITemplateVersionSegmentsRequest,
+	) (*edi.EDITemplateVersion, error)
+	ListTemplateScriptLibraries(
+		ctx context.Context,
+		req ListEDITemplateScriptLibrariesRequest,
+	) ([]*edi.EDITemplateScriptLibrary, error)
+	ReplaceTemplateVersionScriptLibraries(
+		ctx context.Context,
+		req ReplaceEDITemplateVersionScriptLibrariesRequest,
 	) (*edi.EDITemplateVersion, error)
 	ActivateTemplateVersion(
 		ctx context.Context,

@@ -31,6 +31,7 @@ type conditionEvalParams struct {
 	Env       map[string]any
 	Segment   *edi.EDITemplateSegment
 	Element   *edi.TemplateElement
+	Libraries []edistarlark.ScriptLibrary
 }
 
 func evaluateCondition(params conditionEvalParams) (bool, *Diagnostic) {
@@ -293,18 +294,48 @@ func evaluateStarlarkCondition(params conditionEvalParams, condition string) (bo
 		starlarkCtx["item"] = repeatValue
 	}
 
+	script := strings.TrimSpace(strings.TrimPrefix(condition, starlarkConditionPrefix))
+	functionName := "include"
+	path := starlarkConditionPath()
+	if isStarlarkConditionFunctionReference(script) {
+		functionName = script
+		script = ""
+		path = "condition:starlark:" + functionName
+	}
+
 	result := edistarlark.Evaluate(params.Context, edistarlark.EvalRequest{
-		Script:       strings.TrimSpace(strings.TrimPrefix(condition, starlarkConditionPrefix)),
-		FunctionName: "include",
+		Script:       script,
+		FunctionName: functionName,
+		Libraries:    params.Libraries,
 		Context:      starlarkCtx,
 		Item:         repeatValue,
 		SegmentID:    params.Segment.SegmentID,
-		Path:         starlarkConditionPath(),
+		Path:         path,
 	})
 	if len(result.Diagnostics) > 0 {
 		return false, errors.New(joinStarlarkConditionMessages(result.Diagnostics))
 	}
 	return starlarkConditionTruthy(result.Raw)
+}
+
+func isStarlarkConditionFunctionReference(value string) bool {
+	if value == "" {
+		return false
+	}
+	for idx, char := range value {
+		if idx == 0 {
+			if char == '_' || char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' {
+				continue
+			}
+			return false
+		}
+		if char == '_' || char >= 'A' && char <= 'Z' || char >= 'a' && char <= 'z' ||
+			char >= '0' && char <= '9' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func starlarkConditionTruthy(value starlark.Value) (bool, error) {

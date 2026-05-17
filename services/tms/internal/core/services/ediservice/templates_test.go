@@ -53,7 +53,7 @@ func TestValidateTemplateVersionDefinition_CatchesDraftDefinitionErrors(t *testi
 	requireDiagnosticCode(t, diagnostics, "condition_error")
 	requireDiagnosticCode(t, diagnostics, "transform_base_source_required")
 	requireDiagnosticCode(t, diagnostics, "unsupported_transform_operation")
-	requireDiagnosticCode(t, diagnostics, "starlark_runtime_error")
+	requireDiagnosticCode(t, diagnostics, "script_function_not_found")
 }
 
 func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
@@ -174,6 +174,206 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, updated.IsActive)
 	require.Equal(t, edi.TemplateStatusActive, updated.Status)
+}
+
+func TestService_ReplaceDraftScriptLibrariesReplacesAuthoritatively(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetTemplateVersionByID(mock.Anything, mock.Anything).
+		Return(version, nil)
+	repo.EXPECT().
+		ReplaceTemplateVersionScriptLibraries(
+			mock.Anything,
+			mock.MatchedBy(func(req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) bool {
+				if req.Version.ID != version.ID || req.Version.Version != 7 {
+					return false
+				}
+				if len(req.ScriptLibraries) != 1 {
+					return false
+				}
+				library := req.ScriptLibraries[0]
+				return library.ID.IsNil() &&
+					library.TemplateVersionID == version.ID &&
+					library.OrganizationID == tenantInfo.OrgID &&
+					library.BusinessUnitID == tenantInfo.BuID &&
+					library.Status == edi.TemplateStatusDraft &&
+					library.Version == 0
+			}),
+		).
+		Return(version, nil)
+
+	service := &Service{documentRepo: repo}
+	updated, err := service.ReplaceDraftScriptLibraries(
+		t.Context(),
+		&ReplaceEDITemplateScriptLibrariesRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: version.TemplateID,
+			VersionID:  version.ID,
+			Version:    7,
+			ScriptLibraries: []*edi.EDITemplateScriptLibrary{
+				{
+					ID:       pulid.MustNew("edisl_"),
+					Name:     "refs",
+					Language: edi.ScriptLanguageStarlark,
+					Script:   "def ref(ctx):\n    return 'x'",
+					Status:   edi.TemplateStatusActive,
+					Version:  99,
+				},
+			},
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+	require.Same(t, version, updated)
+}
+
+func TestService_ReplaceDraftScriptLibrariesRejectsNonDraft(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	version.Status = edi.TemplateStatusCertified
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetTemplateVersionByID(mock.Anything, mock.Anything).
+		Return(version, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.ReplaceDraftScriptLibraries(
+		t.Context(),
+		&ReplaceEDITemplateScriptLibrariesRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: version.TemplateID,
+			VersionID:  version.ID,
+		},
+		testActor(tenantInfo),
+	)
+
+	requireValidationError(t, err, "status", errortypes.ErrInvalidOperation)
+}
+
+func TestService_CreateDraftVersionClonesScriptLibraries(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	source := validTemplateVersion(tenantInfo)
+	source.Status = edi.TemplateStatusActive
+	source.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			ID:       pulid.MustNew("edisl_"),
+			Name:     "refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'x'",
+			Status:   edi.TemplateStatusActive,
+		},
+	}
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetActiveTemplateVersion(mock.Anything, mock.Anything).
+		Return(source, nil)
+	repo.EXPECT().
+		ListTemplateVersions(mock.Anything, mock.Anything).
+		Return([]*edi.EDITemplateVersion{source}, nil)
+	repo.EXPECT().
+		CreateTemplateVersion(
+			mock.Anything,
+			mock.MatchedBy(func(req *repositories.CreateEDITemplateVersionRequest) bool {
+				if req.Version.Status != edi.TemplateStatusDraft || len(req.ScriptLibraries) != 1 {
+					return false
+				}
+				library := req.ScriptLibraries[0]
+				return library.ID.IsNil() &&
+					library.Name == "refs" &&
+					library.Status == edi.TemplateStatusDraft
+			}),
+		).
+		Return(&edi.EDITemplateVersion{Status: edi.TemplateStatusDraft}, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.CreateDraftVersion(
+		t.Context(),
+		&CreateEDITemplateDraftRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: source.TemplateID,
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
+}
+
+func TestValidateTemplateVersionDefinition_ValidatesScriptLibraries(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	version.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "Refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'x'",
+		},
+		{
+			Name:     "refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'y'",
+		},
+		{
+			Name:     "bad",
+			Language: edi.ScriptLanguage("Python"),
+			Script:   "def bad(ctx)\n    return 'z'",
+		},
+	}
+
+	diagnostics := validateTemplateVersionDefinition(version)
+
+	requireDiagnosticCode(t, diagnostics, "script_library_duplicate_name")
+	requireDiagnosticCode(t, diagnostics, "script_library_duplicate_function")
+	requireDiagnosticCode(t, diagnostics, "script_library_language_invalid")
+	requireDiagnosticCode(t, diagnostics, "script_library_syntax_error")
+}
+
+func TestValidateTemplateVersionDefinition_ValidatesLibraryReferences(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	version.Segments[5].Condition = "starlark:missing_condition"
+	version.Segments[8].Elements[1].Source = edi.TemplateElementSourceStarlark
+	version.Segments[8].Elements[1].StarlarkFunction = "missing_element"
+
+	diagnostics := validateTemplateVersionDefinition(version)
+
+	requireDiagnosticCode(t, diagnostics, "script_function_not_found")
+}
+
+func TestService_CertifyTemplateVersionAcceptsValidScriptLibraries(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	version.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "refs",
+			Language: edi.ScriptLanguageStarlark,
+			Script:   "def ref(ctx):\n    return 'x'",
+		},
+	}
+	version.Segments[8].Elements[1].Source = edi.TemplateElementSourceStarlark
+	version.Segments[8].Elements[1].StarlarkFunction = "ref"
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetTemplateVersionByID(mock.Anything, mock.Anything).
+		Return(version, nil)
+	repo.EXPECT().
+		UpdateTemplateVersionMetadata(mock.Anything, mock.Anything).
+		Return(version, nil)
+
+	service := &Service{documentRepo: repo}
+	_, err := service.CertifyTemplateVersion(
+		t.Context(),
+		&EDIActionNotesRequest{
+			TenantInfo: tenantInfo,
+			TemplateID: version.TemplateID,
+			VersionID:  version.ID,
+		},
+		testActor(tenantInfo),
+	)
+
+	require.NoError(t, err)
 }
 
 func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {

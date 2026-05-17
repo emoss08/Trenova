@@ -123,6 +123,12 @@ const (
 	TemplateStatusSuperseded = TemplateStatus("Superseded")
 )
 
+type ScriptLanguage string
+
+const (
+	ScriptLanguageStarlark = ScriptLanguage("Starlark")
+)
+
 type MessageStatus string
 
 const (

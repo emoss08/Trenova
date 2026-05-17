@@ -15,6 +15,13 @@ const (
 	defaultFilename     = "edi_element.star"
 )
 
+const (
+	DiagnosticCodeLibraryDuplicateFunction = "script_library_duplicate_function"
+	DiagnosticCodeLibrarySyntaxError       = "script_library_syntax_error"
+	DiagnosticCodeFunctionNotFound         = "script_function_not_found"
+	DiagnosticCodeFunctionNotCallable      = "script_function_not_callable"
+)
+
 type Options struct {
 	MaxExecutionSteps uint64
 	Timeout           time.Duration
@@ -28,11 +35,17 @@ type Evaluator struct {
 type EvalRequest struct {
 	Script          string
 	FunctionName    string
+	Libraries       []ScriptLibrary
 	Context         map[string]any
 	Item            any
 	SegmentID       string
 	ElementPosition int
 	Path            string
+}
+
+type ScriptLibrary struct {
+	Name   string
+	Script string
 }
 
 type EvalResult struct {

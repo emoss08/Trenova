@@ -80,6 +80,121 @@ func TestEvaluate_CoalesceAndDefaultFallbacks(t *testing.T) {
 	assert.Equal(t, "Acme|fallback", result.Value)
 }
 
+func TestEvaluate_LibraryOnlyCall(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "bol_value",
+		Libraries: []ScriptLibrary{
+			{
+				Name: "refs",
+				Script: `def bol_value(ctx):
+    return ctx["shipment"]["bol"]`,
+			},
+		},
+		Context: map[string]any{
+			"shipment": map[string]any{"bol": "BOL-1"},
+		},
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Equal(t, "BOL-1", result.Value)
+}
+
+func TestEvaluate_InlineScriptCallsLibraryHelper(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		Script: `def value(ctx):
+    return format_ref(ctx["shipment"]["bol"])`,
+		Libraries: []ScriptLibrary{
+			{
+				Name: "refs",
+				Script: `def format_ref(value):
+    return "REF-" + value`,
+			},
+		},
+		Context: map[string]any{
+			"shipment": map[string]any{"bol": "BOL-1"},
+		},
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Equal(t, "REF-BOL-1", result.Value)
+}
+
+func TestEvaluate_DuplicateLibraryFunctionsReturnDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "value",
+		Libraries: []ScriptLibrary{
+			{Name: "a", Script: "def value(ctx):\n    return 'a'"},
+			{Name: "b", Script: "def value(ctx):\n    return 'b'"},
+		},
+		Context: map[string]any{},
+	})
+
+	requireDiagnostic(t, result, DiagnosticCodeLibraryDuplicateFunction)
+	assert.Contains(t, result.Diagnostics[0].Message, `"value"`)
+}
+
+func TestEvaluate_LibrarySyntaxErrorReturnDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "value",
+		Libraries: []ScriptLibrary{
+			{Name: "bad", Script: "def value(ctx)\n    return 'bad'"},
+		},
+		Context: map[string]any{},
+	})
+
+	requireDiagnostic(t, result, DiagnosticCodeLibrarySyntaxError)
+}
+
+func TestEvaluate_LibraryFunctionWithItem(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "stop_name",
+		Libraries: []ScriptLibrary{
+			{
+				Name: "stops",
+				Script: `def stop_name(ctx, item):
+    return ctx["shipment"]["bol"] + ":" + item["locationName"]`,
+			},
+		},
+		Context: map[string]any{
+			"shipment": map[string]any{"bol": "BOL-1"},
+		},
+		Item: map[string]any{"locationName": "Chicago"},
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Equal(t, "BOL-1:Chicago", result.Value)
+}
+
+func TestEvaluate_DisallowsImportsFromLibraries(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "value",
+		Libraries: []ScriptLibrary{
+			{
+				Name: "bad",
+				Script: `load("secret.star", "secret")
+def value(ctx):
+    return secret`,
+			},
+		},
+		Context: map[string]any{},
+	})
+
+	requireDiagnostic(t, result, "starlark_runtime_error")
+	assert.Contains(t, result.Diagnostics[0].Message, "imports are disabled")
+}
+
 func TestEvaluate_ApprovedHelpers(t *testing.T) {
 	t.Parallel()
 

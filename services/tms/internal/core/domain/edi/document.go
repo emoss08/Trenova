@@ -203,9 +203,10 @@ type EDITemplateVersion struct {
 	CreatedAt          int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	Template      *EDITemplate          `json:"template,omitempty"      bun:"rel:belongs-to,join:template_id=id"`
-	SourceVersion *EDITemplateVersion   `json:"sourceVersion,omitempty" bun:"rel:belongs-to,join:source_version_id=id"`
-	Segments      []*EDITemplateSegment `json:"segments,omitempty"      bun:"rel:has-many,join:id=template_version_id"`
+	Template        *EDITemplate                `json:"template,omitempty"        bun:"rel:belongs-to,join:template_id=id"`
+	SourceVersion   *EDITemplateVersion         `json:"sourceVersion,omitempty"   bun:"rel:belongs-to,join:source_version_id=id"`
+	Segments        []*EDITemplateSegment       `json:"segments,omitempty"        bun:"rel:has-many,join:id=template_version_id"`
+	ScriptLibraries []*EDITemplateScriptLibrary `json:"scriptLibraries,omitempty" bun:"rel:has-many,join:id=template_version_id"`
 }
 
 func (v *EDITemplateVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
@@ -280,6 +281,40 @@ func (s *EDITemplateSegment) BeforeAppendModel(_ context.Context, query bun.Quer
 		s.CreatedAt = now
 	case *bun.UpdateQuery:
 		s.UpdatedAt = now
+	}
+	return nil
+}
+
+type EDITemplateScriptLibrary struct {
+	bun.BaseModel `json:"-" bun:"table:edi_template_script_libraries,alias:etsl"`
+
+	ID                pulid.ID       `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	TemplateVersionID pulid.ID       `json:"templateVersionId" bun:"template_version_id,type:VARCHAR(100),notnull"`
+	Name              string         `json:"name"              bun:"name,type:VARCHAR(200),notnull"`
+	Description       string         `json:"description"       bun:"description,type:TEXT,nullzero"`
+	Language          ScriptLanguage `json:"language"          bun:"language,type:edi_script_language_enum,notnull"`
+	Script            string         `json:"script"            bun:"script,type:TEXT,notnull"`
+	Status            TemplateStatus `json:"status"            bun:"status,type:edi_template_status_enum,notnull"`
+	Version           int64          `json:"version"           bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+
+	FunctionNames   []string            `json:"functionNames"             bun:"-"`
+	TemplateVersion *EDITemplateVersion `json:"templateVersion,omitempty" bun:"rel:belongs-to,join:template_version_id=id"`
+}
+
+func (l *EDITemplateScriptLibrary) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := timeutils.NowUnix()
+	switch query.(type) {
+	case *bun.InsertQuery:
+		if l.ID.IsNil() {
+			l.ID = pulid.MustNew("edisl_")
+		}
+		l.CreatedAt = now
+	case *bun.UpdateQuery:
+		l.UpdatedAt = now
 	}
 	return nil
 }

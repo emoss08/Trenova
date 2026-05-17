@@ -253,8 +253,8 @@ func (_c *MockEDITemplateRepository_CreateTemplate_Call) RunAndReturn(run func(c
 }
 
 // CreateTemplateVersion provides a mock function for the type MockEDITemplateRepository
-func (_mock *MockEDITemplateRepository) CreateTemplateVersion(ctx context.Context, version *edi.EDITemplateVersion, segments []*edi.EDITemplateSegment) (*edi.EDITemplateVersion, error) {
-	ret := _mock.Called(ctx, version, segments)
+func (_mock *MockEDITemplateRepository) CreateTemplateVersion(ctx context.Context, req *repositories.CreateEDITemplateVersionRequest) (*edi.EDITemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateTemplateVersion")
@@ -262,18 +262,18 @@ func (_mock *MockEDITemplateRepository) CreateTemplateVersion(ctx context.Contex
 
 	var r0 *edi.EDITemplateVersion
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITemplateVersion, []*edi.EDITemplateSegment) (*edi.EDITemplateVersion, error)); ok {
-		return returnFunc(ctx, version, segments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateEDITemplateVersionRequest) (*edi.EDITemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITemplateVersion, []*edi.EDITemplateSegment) *edi.EDITemplateVersion); ok {
-		r0 = returnFunc(ctx, version, segments)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateEDITemplateVersionRequest) *edi.EDITemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*edi.EDITemplateVersion)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDITemplateVersion, []*edi.EDITemplateSegment) error); ok {
-		r1 = returnFunc(ctx, version, segments)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CreateEDITemplateVersionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -287,30 +287,24 @@ type MockEDITemplateRepository_CreateTemplateVersion_Call struct {
 
 // CreateTemplateVersion is a helper method to define mock.On call
 //   - ctx context.Context
-//   - version *edi.EDITemplateVersion
-//   - segments []*edi.EDITemplateSegment
-func (_e *MockEDITemplateRepository_Expecter) CreateTemplateVersion(ctx interface{}, version interface{}, segments interface{}) *MockEDITemplateRepository_CreateTemplateVersion_Call {
-	return &MockEDITemplateRepository_CreateTemplateVersion_Call{Call: _e.mock.On("CreateTemplateVersion", ctx, version, segments)}
+//   - req *repositories.CreateEDITemplateVersionRequest
+func (_e *MockEDITemplateRepository_Expecter) CreateTemplateVersion(ctx interface{}, req interface{}) *MockEDITemplateRepository_CreateTemplateVersion_Call {
+	return &MockEDITemplateRepository_CreateTemplateVersion_Call{Call: _e.mock.On("CreateTemplateVersion", ctx, req)}
 }
 
-func (_c *MockEDITemplateRepository_CreateTemplateVersion_Call) Run(run func(ctx context.Context, version *edi.EDITemplateVersion, segments []*edi.EDITemplateSegment)) *MockEDITemplateRepository_CreateTemplateVersion_Call {
+func (_c *MockEDITemplateRepository_CreateTemplateVersion_Call) Run(run func(ctx context.Context, req *repositories.CreateEDITemplateVersionRequest)) *MockEDITemplateRepository_CreateTemplateVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *edi.EDITemplateVersion
+		var arg1 *repositories.CreateEDITemplateVersionRequest
 		if args[1] != nil {
-			arg1 = args[1].(*edi.EDITemplateVersion)
-		}
-		var arg2 []*edi.EDITemplateSegment
-		if args[2] != nil {
-			arg2 = args[2].([]*edi.EDITemplateSegment)
+			arg1 = args[1].(*repositories.CreateEDITemplateVersionRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -321,7 +315,7 @@ func (_c *MockEDITemplateRepository_CreateTemplateVersion_Call) Return(eDITempla
 	return _c
 }
 
-func (_c *MockEDITemplateRepository_CreateTemplateVersion_Call) RunAndReturn(run func(ctx context.Context, version *edi.EDITemplateVersion, segments []*edi.EDITemplateSegment) (*edi.EDITemplateVersion, error)) *MockEDITemplateRepository_CreateTemplateVersion_Call {
+func (_c *MockEDITemplateRepository_CreateTemplateVersion_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CreateEDITemplateVersionRequest) (*edi.EDITemplateVersion, error)) *MockEDITemplateRepository_CreateTemplateVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -606,6 +600,74 @@ func (_c *MockEDITemplateRepository_GetTemplateVersionByID_Call) RunAndReturn(ru
 	return _c
 }
 
+// ListTemplateScriptLibraries provides a mock function for the type MockEDITemplateRepository
+func (_mock *MockEDITemplateRepository) ListTemplateScriptLibraries(ctx context.Context, req repositories.ListEDITemplateScriptLibrariesRequest) ([]*edi.EDITemplateScriptLibrary, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListTemplateScriptLibraries")
+	}
+
+	var r0 []*edi.EDITemplateScriptLibrary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListEDITemplateScriptLibrariesRequest) ([]*edi.EDITemplateScriptLibrary, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListEDITemplateScriptLibrariesRequest) []*edi.EDITemplateScriptLibrary); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDITemplateScriptLibrary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListEDITemplateScriptLibrariesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITemplateRepository_ListTemplateScriptLibraries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTemplateScriptLibraries'
+type MockEDITemplateRepository_ListTemplateScriptLibraries_Call struct {
+	*mock.Call
+}
+
+// ListTemplateScriptLibraries is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListEDITemplateScriptLibrariesRequest
+func (_e *MockEDITemplateRepository_Expecter) ListTemplateScriptLibraries(ctx interface{}, req interface{}) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
+	return &MockEDITemplateRepository_ListTemplateScriptLibraries_Call{Call: _e.mock.On("ListTemplateScriptLibraries", ctx, req)}
+}
+
+func (_c *MockEDITemplateRepository_ListTemplateScriptLibraries_Call) Run(run func(ctx context.Context, req repositories.ListEDITemplateScriptLibrariesRequest)) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListEDITemplateScriptLibrariesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListEDITemplateScriptLibrariesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ListTemplateScriptLibraries_Call) Return(eDITemplateScriptLibrarys []*edi.EDITemplateScriptLibrary, err error) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
+	_c.Call.Return(eDITemplateScriptLibrarys, err)
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ListTemplateScriptLibraries_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListEDITemplateScriptLibrariesRequest) ([]*edi.EDITemplateScriptLibrary, error)) *MockEDITemplateRepository_ListTemplateScriptLibraries_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListTemplateVersions provides a mock function for the type MockEDITemplateRepository
 func (_mock *MockEDITemplateRepository) ListTemplateVersions(ctx context.Context, req repositories.ListEDITemplateVersionsRequest) ([]*edi.EDITemplateVersion, error) {
 	ret := _mock.Called(ctx, req)
@@ -738,6 +800,74 @@ func (_c *MockEDITemplateRepository_ListTemplates_Call) Return(listResult *pagin
 }
 
 func (_c *MockEDITemplateRepository_ListTemplates_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.ListResult[*edi.EDITemplate], error)) *MockEDITemplateRepository_ListTemplates_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReplaceTemplateVersionScriptLibraries provides a mock function for the type MockEDITemplateRepository
+func (_mock *MockEDITemplateRepository) ReplaceTemplateVersionScriptLibraries(ctx context.Context, req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) (*edi.EDITemplateVersion, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReplaceTemplateVersionScriptLibraries")
+	}
+
+	var r0 *edi.EDITemplateVersion
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) (*edi.EDITemplateVersion, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) *edi.EDITemplateVersion); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDITemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReplaceTemplateVersionScriptLibraries'
+type MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call struct {
+	*mock.Call
+}
+
+// ReplaceTemplateVersionScriptLibraries is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest
+func (_e *MockEDITemplateRepository_Expecter) ReplaceTemplateVersionScriptLibraries(ctx interface{}, req interface{}) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
+	return &MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call{Call: _e.mock.On("ReplaceTemplateVersionScriptLibraries", ctx, req)}
+}
+
+func (_c *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call) Run(run func(ctx context.Context, req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest)) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ReplaceEDITemplateVersionScriptLibrariesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ReplaceEDITemplateVersionScriptLibrariesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call) Return(eDITemplateVersion *edi.EDITemplateVersion, err error) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
+	_c.Call.Return(eDITemplateVersion, err)
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call) RunAndReturn(run func(ctx context.Context, req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest) (*edi.EDITemplateVersion, error)) *MockEDITemplateRepository_ReplaceTemplateVersionScriptLibraries_Call {
 	_c.Call.Return(run)
 	return _c
 }

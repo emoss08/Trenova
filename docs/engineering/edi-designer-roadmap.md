@@ -238,7 +238,18 @@ operational support are present where relevant.
 
 ### Stage 7: Script Libraries
 
-- Add reusable Starlark libraries scoped by tenant, transaction set, partner,
+- [x] Add backend template-version-owned reusable Starlark libraries for draft,
+  certified, active, superseded, and archived template versions.
+- [x] Clone script libraries into new draft versions and keep library statuses
+  aligned with template version lifecycle transitions.
+- [x] Support library-backed element Starlark functions, inline scripts calling
+  library helpers, and library-backed Starlark conditions.
+- [x] Validate template-version libraries for required fields, language,
+  duplicate names, duplicate functions, syntax, missing function references, and
+  callable references.
+- [x] Cover runtime, renderer, and service behavior for version-owned script
+  libraries with backend tests.
+- [ ] Add reusable Starlark libraries scoped by tenant, transaction set, partner,
   and global system templates.
 - Support library versions, imports from approved library references, dependency
   graphs, static validation, promotion workflow, and usage impact analysis.

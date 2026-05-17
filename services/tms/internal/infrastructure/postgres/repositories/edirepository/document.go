@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
@@ -109,7 +110,14 @@ func (r *repository) CreateTemplate(
 				return err
 			}
 		}
+		prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
+		if len(req.ScriptLibraries) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+				return err
+			}
+		}
 		req.Version.Segments = req.Segments
+		req.Version.ScriptLibraries = req.ScriptLibraries
 		return nil
 	})
 	if err != nil {
@@ -172,6 +180,9 @@ func (r *repository) GetTemplateVersionByID(
 		Relation("Segments", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("sequence ASC")
 		}).
+		Relation("ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("lower(name) ASC")
+		}).
 		Where("etv.id = ?", req.VersionID).
 		Where("etv.template_id = ?", req.TemplateID).
 		Where("etv.organization_id = ?", req.TenantInfo.OrgID).
@@ -194,6 +205,9 @@ func (r *repository) GetActiveTemplateVersion(
 		Relation("Segments", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("sequence ASC")
 		}).
+		Relation("ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("lower(name) ASC")
+		}).
 		Where("etv.template_id = ?", req.TemplateID).
 		Where("etv.organization_id = ?", req.TenantInfo.OrgID).
 		Where("etv.business_unit_id = ?", req.TenantInfo.BuID)
@@ -210,24 +224,31 @@ func (r *repository) GetActiveTemplateVersion(
 
 func (r *repository) CreateTemplateVersion(
 	ctx context.Context,
-	version *edi.EDITemplateVersion,
-	segments []*edi.EDITemplateSegment,
+	req *repositories.CreateEDITemplateVersionRequest,
 ) (*edi.EDITemplateVersion, error) {
+	version := req.Version
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
 		if _, err := r.db.DBForContext(c).NewInsert().Model(version).Returning("*").Exec(c); err != nil {
 			return err
 		}
-		for _, segment := range segments {
+		for _, segment := range req.Segments {
 			segment.TemplateVersionID = version.ID
 			segment.BusinessUnitID = version.BusinessUnitID
 			segment.OrganizationID = version.OrganizationID
 		}
-		if len(segments) > 0 {
-			if _, err := r.db.DBForContext(c).NewInsert().Model(&segments).Exec(c); err != nil {
+		if len(req.Segments) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
 				return err
 			}
 		}
-		version.Segments = segments
+		prepareTemplateScriptLibraries(version, req.ScriptLibraries)
+		if len(req.ScriptLibraries) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+				return err
+			}
+		}
+		version.Segments = req.Segments
+		version.ScriptLibraries = req.ScriptLibraries
 		return nil
 	})
 	if err != nil {
@@ -279,6 +300,11 @@ func (r *repository) UpdateTemplateVersionMetadata(
 	if err = dberror.CheckRowsAffected(results, "EDITemplateVersion", version.ID.String()); err != nil {
 		return nil, err
 	}
+	if version.Status != edi.TemplateStatusDraft {
+		if err = r.updateTemplateScriptLibraryStatus(ctx, version, version.Status); err != nil {
+			return nil, err
+		}
+	}
 	return version, nil
 }
 
@@ -310,6 +336,66 @@ func (r *repository) ReplaceTemplateVersionSegments(
 			}
 		}
 		req.Version.Segments = req.Segments
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return req.Version, nil
+}
+
+func (r *repository) ListTemplateScriptLibraries(
+	ctx context.Context,
+	req repositories.ListEDITemplateScriptLibrariesRequest,
+) ([]*edi.EDITemplateScriptLibrary, error) {
+	entities := make([]*edi.EDITemplateScriptLibrary, 0, 4)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where("etsl.template_version_id = ?", req.VersionID).
+		Where("etsl.organization_id = ?", req.TenantInfo.OrgID).
+		Where("etsl.business_unit_id = ?", req.TenantInfo.BuID).
+		Where(
+			`EXISTS (
+				SELECT 1 FROM edi_template_versions etv
+				WHERE etv.id = etsl.template_version_id
+					AND etv.template_id = ?
+					AND etv.organization_id = etsl.organization_id
+					AND etv.business_unit_id = etsl.business_unit_id
+			)`,
+			req.TemplateID,
+		).
+		Order("lower(etsl.name) ASC").
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *repository) ReplaceTemplateVersionScriptLibraries(
+	ctx context.Context,
+	req repositories.ReplaceEDITemplateVersionScriptLibrariesRequest,
+) (*edi.EDITemplateVersion, error) {
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if _, err := r.UpdateTemplateVersionMetadata(c, req.Version); err != nil {
+			return err
+		}
+		if _, err := r.db.DBForContext(c).
+			NewDelete().
+			Model((*edi.EDITemplateScriptLibrary)(nil)).
+			Where("template_version_id = ?", req.Version.ID).
+			Where("organization_id = ?", req.Version.OrganizationID).
+			Where("business_unit_id = ?", req.Version.BusinessUnitID).
+			Exec(c); err != nil {
+			return err
+		}
+		prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
+		if len(req.ScriptLibraries) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+				return err
+			}
+		}
+		req.Version.ScriptLibraries = req.ScriptLibraries
 		return nil
 	})
 	if err != nil {
@@ -378,6 +464,9 @@ func (r *repository) ActivateTemplateVersion(
 				Exec(c); err != nil {
 				return err
 			}
+			if err := r.updateTemplateScriptLibraryStatus(c, current, edi.TemplateStatusSuperseded); err != nil {
+				return err
+			}
 		}
 
 		version.Status = edi.TemplateStatusActive
@@ -401,6 +490,9 @@ func (r *repository) ActivateTemplateVersion(
 			).
 			Returning("*").
 			Exec(c); err != nil {
+			return err
+		}
+		if err := r.updateTemplateScriptLibraryStatus(c, version, edi.TemplateStatusActive); err != nil {
 			return err
 		}
 		return nil
@@ -455,12 +547,50 @@ func (r *repository) ArchiveTemplateVersion(
 			Exec(c); err != nil {
 			return err
 		}
+		if err := r.updateTemplateScriptLibraryStatus(c, version, edi.TemplateStatusArchived); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return version, nil
+}
+
+func prepareTemplateScriptLibraries(
+	version *edi.EDITemplateVersion,
+	libraries []*edi.EDITemplateScriptLibrary,
+) {
+	for _, library := range libraries {
+		if library == nil {
+			continue
+		}
+		library.ID = pulid.Nil
+		library.TemplateVersionID = version.ID
+		library.BusinessUnitID = version.BusinessUnitID
+		library.OrganizationID = version.OrganizationID
+		library.Status = version.Status
+		library.Version = 0
+	}
+}
+
+func (r *repository) updateTemplateScriptLibraryStatus(
+	ctx context.Context,
+	version *edi.EDITemplateVersion,
+	status edi.TemplateStatus,
+) error {
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDITemplateScriptLibrary)(nil)).
+		Set("status = ?", status).
+		Set("version = version + 1").
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Where("template_version_id = ?", version.ID).
+		Where("organization_id = ?", version.OrganizationID).
+		Where("business_unit_id = ?", version.BusinessUnitID).
+		Exec(ctx)
+	return err
 }
 
 func (r *repository) EnsureBase204Template(

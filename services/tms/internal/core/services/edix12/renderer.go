@@ -55,6 +55,7 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 	sort.SliceStable(segments, func(i, j int) bool {
 		return segments[i].Sequence < segments[j].Sequence
 	})
+	libraries := templateScriptLibraries(input.TemplateVersion.ScriptLibraries)
 
 	rendered := make([]string, 0, len(segments)+8)
 	diagnostics := make([]Diagnostic, 0)
@@ -75,6 +76,7 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 				Condition: segment.Condition,
 				Env:       env,
 				Segment:   segment,
+				Libraries: libraries,
 			})
 			if conditionDiagnostic != nil {
 				diagnostics = append(diagnostics, *conditionDiagnostic)
@@ -87,12 +89,13 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 			segmentHasValue := segment.Required
 			for i := range segment.Elements {
 				element := &segment.Elements[i]
-				value, elementDiagnostics := resolveElement(
-					renderCtx,
-					segment,
-					element,
-					env,
-				)
+				value, elementDiagnostics := resolveElement(elementResolveParams{
+					Context:   renderCtx,
+					Segment:   segment,
+					Element:   element,
+					Env:       env,
+					Libraries: libraries,
+				})
 				diagnostics = append(diagnostics, elementDiagnostics...)
 				if value != "" {
 					segmentHasValue = true
@@ -168,19 +171,23 @@ func HasBlockingDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) b
 	return false
 }
 
-func resolveElement(
-	ctx context.Context,
-	segment *edi.EDITemplateSegment,
-	element *edi.TemplateElement,
-	env map[string]any,
-) (string, []Diagnostic) {
+type elementResolveParams struct {
+	Context   context.Context
+	Segment   *edi.EDITemplateSegment
+	Element   *edi.TemplateElement
+	Env       map[string]any
+	Libraries []edistarlark.ScriptLibrary
+}
+
+func resolveElement(params elementResolveParams) (string, []Diagnostic) {
 	diagnostics := []Diagnostic{}
 	include, conditionDiagnostic := evaluateCondition(conditionEvalParams{
-		Context:   ctx,
-		Condition: element.Condition,
-		Env:       env,
-		Segment:   segment,
-		Element:   element,
+		Context:   params.Context,
+		Condition: params.Element.Condition,
+		Env:       params.Env,
+		Segment:   params.Segment,
+		Element:   params.Element,
+		Libraries: params.Libraries,
 	})
 	if conditionDiagnostic != nil {
 		return "", []Diagnostic{*conditionDiagnostic}
@@ -189,73 +196,69 @@ func resolveElement(
 		return "", diagnostics
 	}
 
-	rawValue, sourceDiagnostics, valueErr := resolveElementValue(ctx, segment, element, env)
+	rawValue, sourceDiagnostics, valueErr := resolveElementValue(params)
 	if len(sourceDiagnostics) > 0 {
 		return "", sourceDiagnostics
 	}
 
-	value := formatElementValue(segment, element, rawValue)
+	value := formatElementValue(params.Segment, params.Element, rawValue)
 	if valueErr != nil {
 		diagnostics = append(
 			diagnostics,
 			renderDiagnostic(renderDiagnosticParams{
-				Segment:      segment,
-				Position:     element.Position,
-				Path:         sourcePath(element),
+				Segment:      params.Segment,
+				Position:     params.Element.Position,
+				Path:         sourcePath(params.Element),
 				Message:      valueErr.Error(),
-				SuggestedFix: suggestedFixForSource(element.Source),
+				SuggestedFix: suggestedFixForSource(params.Element.Source),
 			}),
 		)
 	}
 	if value == "" {
-		value = element.Default
+		value = params.Element.Default
 	}
-	if element.Validation.Required && strings.TrimSpace(value) == "" {
+	if params.Element.Validation.Required && strings.TrimSpace(value) == "" {
 		diagnostics = append(diagnostics, Diagnostic{
 			Severity:        edi.ValidationSeverityError,
-			Code:            stringutils.FirstNonEmpty(element.Validation.Code, "required"),
-			SegmentID:       segment.SegmentID,
-			ElementPosition: element.Position,
-			Path:            sourcePath(element),
+			Code:            stringutils.FirstNonEmpty(params.Element.Validation.Code, "required"),
+			SegmentID:       params.Segment.SegmentID,
+			ElementPosition: params.Element.Position,
+			Path:            sourcePath(params.Element),
 			Message: stringutils.FirstNonEmpty(
-				element.Validation.Message,
-				element.Name+" is required",
+				params.Element.Validation.Message,
+				params.Element.Name+" is required",
 			),
 		})
 	}
-	if element.Validation.MaxLength > 0 && len(value) > element.Validation.MaxLength {
+	if params.Element.Validation.MaxLength > 0 && len(value) > params.Element.Validation.MaxLength {
 		diagnostics = append(diagnostics, Diagnostic{
 			Severity:        edi.ValidationSeverityWarning,
 			Code:            "max_length",
-			SegmentID:       segment.SegmentID,
-			ElementPosition: element.Position,
+			SegmentID:       params.Segment.SegmentID,
+			ElementPosition: params.Element.Position,
 			Message: fmt.Sprintf(
 				"%s exceeds max length %d",
-				element.Name,
-				element.Validation.MaxLength,
+				params.Element.Name,
+				params.Element.Validation.MaxLength,
 			),
 		})
-		value = value[:element.Validation.MaxLength]
+		value = value[:params.Element.Validation.MaxLength]
 	}
 	return value, diagnostics
 }
 
-func resolveElementValue(
-	ctx context.Context,
-	segment *edi.EDITemplateSegment,
-	element *edi.TemplateElement,
-	env map[string]any,
-) (any, []Diagnostic, error) {
+func resolveElementValue(params elementResolveParams) (any, []Diagnostic, error) {
+	element := params.Element
 	if isDirectElementSource(element.Source) {
-		value, _ := resolveDirectSource(elementDirectSource(element), env)
+		value, _ := resolveDirectSource(elementDirectSource(element), params.Env)
 		return value, nil, nil
 	}
 
 	switch element.Source {
 	case edi.TemplateElementSourceTransform:
-		return resolveTransformElementValue(segment, element, env)
+		return resolveTransformElementValue(params.Segment, element, params.Env)
 	case edi.TemplateElementSourceStarlark:
-		value, diagnostics := resolveStarlarkElementValue(ctx, segment, element, env)
+		value, diagnostics := resolveStarlarkElementValue(params)
 		return value, diagnostics, nil
 	default:
 		return "", nil, nil
@@ -444,49 +447,61 @@ func renderEnvironment(
 	}
 }
 
-func resolveStarlarkElementValue(
-	ctx context.Context,
-	segment *edi.EDITemplateSegment,
-	element *edi.TemplateElement,
-	env map[string]any,
-) (string, []Diagnostic) {
+func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnostic) {
 	starlarkCtx, err := edistarlark.BuildContext(
-		envMap(env, "shipment"),
-		envMap(env, "partner"),
-		envMap(env, "runtime"),
-		envMap(env, "mapping"),
+		envMap(params.Env, "shipment"),
+		envMap(params.Env, "partner"),
+		envMap(params.Env, "runtime"),
+		envMap(params.Env, "mapping"),
 	)
 	if err != nil {
 		return "", []Diagnostic{
 			renderDiagnostic(renderDiagnosticParams{
-				Segment:      segment,
-				Position:     element.Position,
-				Path:         sourcePath(element),
+				Segment:      params.Segment,
+				Position:     params.Element.Position,
+				Path:         sourcePath(params.Element),
 				Message:      err.Error(),
-				SuggestedFix: suggestedFixForSource(element.Source),
+				SuggestedFix: suggestedFixForSource(params.Element.Source),
 			}),
 		}
 	}
 
-	repeatValue := env["repeat"]
+	repeatValue := params.Env["repeat"]
 	if repeatValue != nil {
 		starlarkCtx["repeat"] = repeatValue
 		starlarkCtx["item"] = repeatValue
 	}
 
-	result := edistarlark.Evaluate(ctx, edistarlark.EvalRequest{
-		Script:          element.StarlarkScript,
-		FunctionName:    element.StarlarkFunction,
+	result := edistarlark.Evaluate(params.Context, edistarlark.EvalRequest{
+		Script:          params.Element.StarlarkScript,
+		FunctionName:    params.Element.StarlarkFunction,
+		Libraries:       params.Libraries,
 		Context:         starlarkCtx,
 		Item:            repeatValue,
-		SegmentID:       segment.SegmentID,
-		ElementPosition: element.Position,
-		Path:            sourcePath(element),
+		SegmentID:       params.Segment.SegmentID,
+		ElementPosition: params.Element.Position,
+		Path:            sourcePath(params.Element),
 	})
 	if len(result.Diagnostics) > 0 {
 		return "", starlarkDiagnostics(result.Diagnostics)
 	}
 	return result.Value, nil
+}
+
+func templateScriptLibraries(
+	source []*edi.EDITemplateScriptLibrary,
+) []edistarlark.ScriptLibrary {
+	libraries := make([]edistarlark.ScriptLibrary, 0, len(source))
+	for _, library := range source {
+		if library == nil {
+			continue
+		}
+		libraries = append(libraries, edistarlark.ScriptLibrary{
+			Name:   library.Name,
+			Script: library.Script,
+		})
+	}
+	return libraries
 }
 
 func starlarkDiagnostics(diagnostics []edistarlark.Diagnostic) []Diagnostic {
@@ -593,9 +608,11 @@ func filterDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) []Diag
 	if mode == edi.ValidationModeDisabled {
 		filtered := make([]Diagnostic, 0, len(diagnostics))
 		for _, diagnostic := range diagnostics {
-			if diagnostic.Code == "render_error" || strings.HasPrefix(diagnostic.Code, "starlark_") ||
+			if diagnostic.Code == "render_error" ||
+				strings.HasPrefix(diagnostic.Code, "starlark_") ||
 				strings.HasPrefix(diagnostic.Code, "transform_") ||
-				strings.HasPrefix(diagnostic.Code, "condition_") {
+				strings.HasPrefix(diagnostic.Code, "condition_") ||
+				strings.HasPrefix(diagnostic.Code, "script_") {
 				filtered = append(filtered, diagnostic)
 			}
 		}

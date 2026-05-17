@@ -131,17 +131,18 @@ type UpsertEDIPartnerDocumentProfileRequest struct {
 }
 
 type CreateEDITemplateRequest struct {
-	TenantInfo        pagination.TenantInfo     `json:"-"`
-	DocumentTypeID    pulid.ID                  `json:"documentTypeId"`
-	Name              string                    `json:"name"`
-	Description       string                    `json:"description"`
-	Direction         edi.DocumentDirection     `json:"direction"`
-	Standard          edi.EDIStandard           `json:"standard"`
-	TransactionSet    edi.TransactionSet        `json:"transactionSet"`
-	X12Version        string                    `json:"x12Version"`
-	FunctionalGroupID string                    `json:"functionalGroupId"`
-	Notes             string                    `json:"notes"`
-	Segments          []*edi.EDITemplateSegment `json:"segments"`
+	TenantInfo        pagination.TenantInfo           `json:"-"`
+	DocumentTypeID    pulid.ID                        `json:"documentTypeId"`
+	Name              string                          `json:"name"`
+	Description       string                          `json:"description"`
+	Direction         edi.DocumentDirection           `json:"direction"`
+	Standard          edi.EDIStandard                 `json:"standard"`
+	TransactionSet    edi.TransactionSet              `json:"transactionSet"`
+	X12Version        string                          `json:"x12Version"`
+	FunctionalGroupID string                          `json:"functionalGroupId"`
+	Notes             string                          `json:"notes"`
+	Segments          []*edi.EDITemplateSegment       `json:"segments"`
+	ScriptLibraries   []*edi.EDITemplateScriptLibrary `json:"scriptLibraries"`
 }
 
 type UpdateEDITemplateRequest struct {
@@ -176,6 +177,14 @@ type ReplaceEDITemplateSegmentsRequest struct {
 	VersionID  pulid.ID                  `json:"-"`
 	Segments   []*edi.EDITemplateSegment `json:"segments"`
 	Version    int64                     `json:"version"`
+}
+
+type ReplaceEDITemplateScriptLibrariesRequest struct {
+	TenantInfo      pagination.TenantInfo           `json:"-"`
+	TemplateID      pulid.ID                        `json:"-"`
+	VersionID       pulid.ID                        `json:"-"`
+	ScriptLibraries []*edi.EDITemplateScriptLibrary `json:"scriptLibraries"`
+	Version         int64                           `json:"version"`
 }
 
 type EDIActionNotesRequest struct {
