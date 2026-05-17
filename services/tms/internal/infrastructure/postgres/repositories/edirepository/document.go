@@ -2,15 +2,14 @@ package edirepository
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
@@ -60,6 +59,7 @@ func (r *repository) ListTemplates(
 	if err != nil {
 		return nil, err
 	}
+
 	return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
 }
 
@@ -128,14 +128,17 @@ func (r *repository) EnsureBase204Template(
 			Where("et.name = ?", "Base X12 204 Outbound").
 			Limit(1).
 			Scan(c)
-		if err != nil && err != sql.ErrNoRows {
+		if err != nil && !dberror.IsNotFoundError(err) {
 			return err
 		}
 		if err == nil {
-			existing, versionErr := r.GetActiveTemplateVersion(c, repositories.GetActiveEDITemplateVersionRequest{
-				TemplateID: template.ID,
-				TenantInfo: tenantInfo,
-			})
+			existing, versionErr := r.GetActiveTemplateVersion(
+				c,
+				repositories.GetActiveEDITemplateVersionRequest{
+					TemplateID: template.ID,
+					TenantInfo: tenantInfo,
+				},
+			)
 			if versionErr != nil {
 				return versionErr
 			}
@@ -152,7 +155,7 @@ func (r *repository) EnsureBase204Template(
 			return err
 		}
 		if len(documentTypes) == 0 {
-			return fmt.Errorf("x12 204 outbound document type is not seeded")
+			return errors.New("x12 204 outbound document type is not seeded")
 		}
 
 		template = &edi.EDITemplate{
@@ -185,7 +188,7 @@ func (r *repository) EnsureBase204Template(
 			return err
 		}
 
-		segments := base204TemplateSegments(tenantInfo, version.ID)
+		segments := editemplates.Base204Segments(tenantInfo, version.ID)
 		if _, err = r.db.DBForContext(c).NewInsert().Model(&segments).Exec(c); err != nil {
 			return err
 		}
@@ -225,7 +228,10 @@ func (r *repository) ListPartnerDocumentProfiles(
 	if err != nil {
 		return nil, err
 	}
-	return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{Items: entities, Total: total}, nil
+	return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func (r *repository) GetPartnerDocumentProfileByID(
@@ -479,6 +485,24 @@ func (r *repository) ListTestCases(
 	return &pagination.ListResult[*edi.EDITestCase]{Items: entities, Total: total}, nil
 }
 
+func (r *repository) GetTestCaseByID(
+	ctx context.Context,
+	req repositories.GetEDITestCaseByIDRequest,
+) (*edi.EDITestCase, error) {
+	entity := new(edi.EDITestCase)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("etc.id = ?", req.ID).
+		Where("etc.organization_id = ?", req.TenantInfo.OrgID).
+		Where("etc.business_unit_id = ?", req.TenantInfo.BuID).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITestCase")
+	}
+	return entity, nil
+}
+
 func (r *repository) CreateTestCase(
 	ctx context.Context,
 	entity *edi.EDITestCase,
@@ -487,158 +511,4 @@ func (r *repository) CreateTestCase(
 		return nil, err
 	}
 	return entity, nil
-}
-
-func base204TemplateSegments(
-	tenantInfo pagination.TenantInfo,
-	versionID pulid.ID,
-) []*edi.EDITemplateSegment {
-	segment := func(sequence int64, id, name, repeatPath string, required bool, elements []edi.TemplateElement) *edi.EDITemplateSegment {
-		return &edi.EDITemplateSegment{
-			BusinessUnitID:    tenantInfo.BuID,
-			OrganizationID:    tenantInfo.OrgID,
-			TemplateVersionID: versionID,
-			SegmentID:         id,
-			Name:              name,
-			Sequence:          sequence,
-			RepeatPath:        repeatPath,
-			Required:          required,
-			MaxUse:            1,
-			Elements:          elements,
-		}
-	}
-	el := func(position int, name string, source edi.TemplateElementSource, value string, required bool) edi.TemplateElement {
-		return edi.TemplateElement{
-			Position: position,
-			Name:     name,
-			Source:   source,
-			Value:    value,
-			Validation: edi.TemplateValidationRule{
-				Required: required,
-				Code:     "required",
-				Message:  name + " is required",
-			},
-		}
-	}
-	field := func(position int, name, path, fallback string, required bool) edi.TemplateElement {
-		element := el(position, name, edi.TemplateElementSourceFieldPath, "", required)
-		element.FieldPath = path
-		element.Default = fallback
-		return element
-	}
-	runtime := func(position int, name, key string, required bool) edi.TemplateElement {
-		element := el(position, name, edi.TemplateElementSourceRuntime, "", required)
-		element.RuntimeKey = key
-		return element
-	}
-	return []*edi.EDITemplateSegment{
-		segment(10, "ISA", "Interchange Control Header", "", true, []edi.TemplateElement{
-			el(1, "Authorization Information Qualifier", edi.TemplateElementSourceConstant, "00", true),
-			el(2, "Authorization Information", edi.TemplateElementSourceConstant, "          ", true),
-			el(3, "Security Information Qualifier", edi.TemplateElementSourceConstant, "00", true),
-			el(4, "Security Information", edi.TemplateElementSourceConstant, "          ", true),
-			el(5, "Interchange ID Qualifier", edi.TemplateElementSourceConstant, "ZZ", true),
-			runtime(6, "Interchange Sender ID", "interchangeSenderId", true),
-			el(7, "Interchange ID Qualifier", edi.TemplateElementSourceConstant, "ZZ", true),
-			runtime(8, "Interchange Receiver ID", "interchangeReceiverId", true),
-			runtime(9, "Interchange Date", "interchangeDate", true),
-			runtime(10, "Interchange Time", "interchangeTime", true),
-			runtime(11, "Repetition Separator", "repetitionSeparator", true),
-			el(12, "Interchange Control Version", edi.TemplateElementSourceConstant, "00401", true),
-			runtime(13, "Interchange Control Number", "isaControlNumber", true),
-			el(14, "Acknowledgment Requested", edi.TemplateElementSourceConstant, "0", true),
-			runtime(15, "Usage Indicator", "usageIndicator", true),
-			runtime(16, "Component Separator", "componentSeparator", true),
-		}),
-		segment(20, "GS", "Functional Group Header", "", true, []edi.TemplateElement{
-			runtime(1, "Functional Identifier Code", "functionalGroupId", true),
-			runtime(2, "Application Sender Code", "applicationSenderCode", true),
-			runtime(3, "Application Receiver Code", "applicationReceiverCode", true),
-			runtime(4, "Group Date", "groupDate", true),
-			runtime(5, "Group Time", "groupTime", true),
-			runtime(6, "Group Control Number", "groupControlNumber", true),
-			el(7, "Responsible Agency Code", edi.TemplateElementSourceConstant, "X", true),
-			runtime(8, "Version", "x12Version", true),
-		}),
-		segment(30, "ST", "Transaction Set Header", "", true, []edi.TemplateElement{
-			el(1, "Transaction Set Identifier", edi.TemplateElementSourceConstant, "204", true),
-			runtime(2, "Transaction Control Number", "transactionControlNumber", true),
-		}),
-		segment(40, "B2", "Beginning Segment for Shipment Information", "", true, []edi.TemplateElement{
-			el(1, "Standard Carrier Alpha Code", edi.TemplateElementSourcePartnerSetting, "", false),
-			field(2, "Shipment Identification Number", "shipmentId", "", true),
-			field(4, "Shipment Method of Payment", "ratingDetail.paymentMethod", "PP", false),
-		}),
-		segment(50, "B2A", "Set Purpose", "", true, []edi.TemplateElement{
-			el(1, "Transaction Set Purpose Code", edi.TemplateElementSourceConstant, "00", true),
-		}),
-		segment(60, "L11", "Reference Identification", "", false, []edi.TemplateElement{
-			field(1, "Reference Identification", "bol", "", false),
-			el(2, "Reference Identification Qualifier", edi.TemplateElementSourceConstant, "BM", false),
-		}),
-		segment(70, "G62", "Date Time", "moves.0.stops", false, []edi.TemplateElement{
-			el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "37", false),
-			field(2, "Date", "repeat.scheduledWindowStart", "", false),
-			el(3, "Time Qualifier", edi.TemplateElementSourceConstant, "I", false),
-			field(4, "Time", "repeat.scheduledWindowStart", "", false),
-		}),
-		segment(80, "NTE", "Note", "", false, []edi.TemplateElement{
-			el(1, "Note Reference Code", edi.TemplateElementSourceConstant, "ADD", false),
-			field(2, "Description", "ratingDetail.note", "", false),
-		}),
-		segment(90, "N1", "Name", "moves.0.stops", false, []edi.TemplateElement{
-			field(1, "Entity Identifier Code", "repeat.type", "SF", false),
-			field(2, "Name", "repeat.locationName", "", false),
-		}),
-		segment(100, "N3", "Address", "moves.0.stops", false, []edi.TemplateElement{
-			field(1, "Address Information", "repeat.locationAddressLine1", "", false),
-			field(2, "Address Information", "repeat.locationAddressLine2", "", false),
-		}),
-		segment(110, "N4", "Geographic Location", "moves.0.stops", false, []edi.TemplateElement{
-			field(1, "City Name", "repeat.locationCity", "", false),
-			field(2, "State or Province Code", "repeat.locationStateCode", "", false),
-			field(3, "Postal Code", "repeat.locationPostalCode", "", false),
-		}),
-		segment(120, "G61", "Contact", "", false, []edi.TemplateElement{
-			el(1, "Contact Function Code", edi.TemplateElementSourceConstant, "IC", false),
-			el(2, "Name", edi.TemplateElementSourcePartnerSetting, "", false),
-			el(3, "Communication Number Qualifier", edi.TemplateElementSourceConstant, "TE", false),
-			el(4, "Communication Number", edi.TemplateElementSourcePartnerSetting, "", false),
-		}),
-		segment(130, "S5", "Stop Off Details", "moves.0.stops", true, []edi.TemplateElement{
-			field(1, "Stop Sequence Number", "repeat.sequence", "", true),
-			field(2, "Stop Reason Code", "repeat.type", "LD", true),
-			field(3, "Weight", "repeat.weight", "", false),
-			el(4, "Weight Unit Code", edi.TemplateElementSourceConstant, "L", false),
-			field(5, "Number of Units Shipped", "repeat.pieces", "", false),
-			el(6, "Unit or Basis for Measurement Code", edi.TemplateElementSourceConstant, "PCS", false),
-		}),
-		segment(140, "AT8", "Shipment Weight Packaging and Quantity Data", "", false, []edi.TemplateElement{
-			el(1, "Weight Qualifier", edi.TemplateElementSourceConstant, "G", false),
-			el(2, "Weight Unit Code", edi.TemplateElementSourceConstant, "L", false),
-			field(3, "Weight", "weight", "", false),
-			field(4, "Lading Quantity", "pieces", "", false),
-		}),
-		segment(150, "L5", "Description Marks and Numbers", "commodities", false, []edi.TemplateElement{
-			field(1, "Lading Line Item Number", "repeat.sequence", "", false),
-			field(2, "Lading Description", "repeat.commodityDescription", "", false),
-		}),
-		segment(160, "L3", "Total Weight and Charges", "", false, []edi.TemplateElement{
-			field(1, "Weight", "weight", "", false),
-			el(2, "Weight Qualifier", edi.TemplateElementSourceConstant, "G", false),
-			field(5, "Charge", "totalChargeAmount", "", false),
-		}),
-		segment(170, "SE", "Transaction Set Trailer", "", true, []edi.TemplateElement{
-			runtime(1, "Segment Count", "transactionSegmentCount", true),
-			runtime(2, "Transaction Control Number", "transactionControlNumber", true),
-		}),
-		segment(180, "GE", "Functional Group Trailer", "", true, []edi.TemplateElement{
-			el(1, "Number of Transaction Sets", edi.TemplateElementSourceConstant, "1", true),
-			runtime(2, "Group Control Number", "groupControlNumber", true),
-		}),
-		segment(190, "IEA", "Interchange Control Trailer", "", true, []edi.TemplateElement{
-			el(1, "Number of Functional Groups", edi.TemplateElementSourceConstant, "1", true),
-			runtime(2, "Interchange Control Number", "isaControlNumber", true),
-		}),
-	}
 }

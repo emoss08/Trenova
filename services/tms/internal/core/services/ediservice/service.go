@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
@@ -1255,7 +1256,7 @@ func (s *Service) buildMappingPreview(
 	}
 
 	index := mappingIndex(items)
-	sourceLabels := sourceLabelIndex(payload)
+	sourceLabels := sourceLabelIndex(&payload)
 	for _, item := range overrides {
 		if item == nil {
 			continue
@@ -1277,7 +1278,7 @@ func (s *Service) buildMappingPreview(
 				SourceLabel: sourceLabels[entityType][sourceID],
 			}
 			if item := index[entityType][sourceID]; item != nil && item.TargetID.IsNotNil() {
-				resolution.SourceLabel = firstNonEmpty(item.SourceLabel, resolution.SourceLabel)
+				resolution.SourceLabel = stringutils.FirstNonEmpty(item.SourceLabel, resolution.SourceLabel)
 				resolution.TargetID = item.TargetID
 				resolution.TargetLabel = item.TargetLabel
 				resolution.Resolved = true

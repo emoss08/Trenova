@@ -2,8 +2,6 @@ package databasesessionrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -11,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -114,7 +113,7 @@ func (r *repository) Terminate(
 			err := tx.NewRaw(`SELECT datname FROM pg_stat_activity WHERE pid = ?`, pid).
 				Scan(txCtx, &targetDatabase)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
+				if dberror.IsNotFoundError(err) {
 					return errortypes.NewNotFoundError("Database session was not found.")
 				}
 				return fmt.Errorf("load target database session: %w", err)

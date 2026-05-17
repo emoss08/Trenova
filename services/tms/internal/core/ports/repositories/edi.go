@@ -235,6 +235,11 @@ type ListEDITestCasesRequest struct {
 	PartnerDocumentProfileID pulid.ID                 `json:"partnerDocumentProfileId"`
 }
 
+type GetEDITestCaseByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type EDIShipmentLinkRepository interface {
 	ListShipmentLinks(
 		ctx context.Context,
@@ -260,8 +265,14 @@ type EDITransferChangeRepository interface {
 		ctx context.Context,
 		req GetEDITransferChangeByIDRequest,
 	) (*edi.TransferChange, error)
-	CreateTransferChange(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error)
-	UpdateTransferChange(ctx context.Context, entity *edi.TransferChange) (*edi.TransferChange, error)
+	CreateTransferChange(
+		ctx context.Context,
+		entity *edi.TransferChange,
+	) (*edi.TransferChange, error)
+	UpdateTransferChange(
+		ctx context.Context,
+		entity *edi.TransferChange,
+	) (*edi.TransferChange, error)
 }
 
 type EDILoadTenderTransferRepository interface {
@@ -402,11 +413,14 @@ type EDICommunicationProfileRepository interface {
 	) (*edi.EDICommunicationProfile, error)
 }
 
-type EDIDocumentRepository interface {
+type EDIDocumentTypeRepository interface {
 	ListDocumentTypes(
 		ctx context.Context,
 		req ListEDIDocumentTypesRequest,
 	) ([]*edi.EDIDocumentType, error)
+}
+
+type EDITemplateRepository interface {
 	ListTemplates(
 		ctx context.Context,
 		req *ListEDITemplatesRequest,
@@ -420,6 +434,9 @@ type EDIDocumentRepository interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) (*edi.EDITemplate, *edi.EDITemplateVersion, error)
+}
+
+type EDIPartnerDocumentProfileRepository interface {
 	ListPartnerDocumentProfiles(
 		ctx context.Context,
 		req *ListEDIPartnerDocumentProfilesRequest,
@@ -440,10 +457,16 @@ type EDIDocumentRepository interface {
 		ctx context.Context,
 		entity *edi.EDIPartnerDocumentProfile,
 	) (*edi.EDIPartnerDocumentProfile, error)
+}
+
+type EDIControlNumberRepository interface {
 	AllocateControlNumbers(
 		ctx context.Context,
 		req AllocateEDIControlNumbersRequest,
 	) (map[edi.ControlNumberKind]int64, error)
+}
+
+type EDIMessageRepository interface {
 	ListMessages(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
@@ -453,9 +476,22 @@ type EDIDocumentRepository interface {
 		ctx context.Context,
 		req CreateEDIMessageWithDiagnosticsRequest,
 	) (*edi.EDIMessage, error)
+}
+
+type EDITestCaseRepository interface {
 	ListTestCases(
 		ctx context.Context,
 		req *ListEDITestCasesRequest,
 	) (*pagination.ListResult[*edi.EDITestCase], error)
+	GetTestCaseByID(ctx context.Context, req GetEDITestCaseByIDRequest) (*edi.EDITestCase, error)
 	CreateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)
+}
+
+type EDIDocumentRepository interface {
+	EDIDocumentTypeRepository
+	EDITemplateRepository
+	EDIPartnerDocumentProfileRepository
+	EDIControlNumberRepository
+	EDIMessageRepository
+	EDITestCaseRepository
 }

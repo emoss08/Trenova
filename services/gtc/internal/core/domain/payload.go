@@ -1,6 +1,9 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 func SelectFields(data map[string]any, fields []string) (map[string]any, error) {
 	if data == nil {
@@ -9,9 +12,7 @@ func SelectFields(data map[string]any, fields []string) (map[string]any, error) 
 
 	if len(fields) == 0 {
 		document := make(map[string]any, len(data))
-		for key, value := range data {
-			document[key] = value
-		}
+		maps.Copy(document, data)
 		return document, nil
 	}
 

@@ -2,25 +2,20 @@ package ediservice
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"fmt"
-	"sort"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/expr-lang/expr"
-	"github.com/expr-lang/expr/vm"
-	"github.com/shopspring/decimal"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 type resolvedDocumentContext struct {
@@ -29,12 +24,6 @@ type resolvedDocumentContext struct {
 	payload         edi.LoadTenderPayload
 	x12Version      string
 	runtime         map[string]any
-}
-
-type renderResult struct {
-	rawX12       string
-	segmentCount int64
-	diagnostics  []EDIDiagnostic
 }
 
 func (s *Service) ListDocumentTypes(
@@ -48,9 +37,6 @@ func (s *Service) ListTemplates(
 	ctx context.Context,
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	if _, _, err := s.documentRepo.EnsureBase204Template(ctx, req.Filter.TenantInfo); err != nil {
-		return nil, err
-	}
 	return s.documentRepo.ListTemplates(ctx, req)
 }
 
@@ -74,10 +60,13 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	actor *services.RequestActor,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	if req == nil {
-		return nil, errortypes.NewValidationError("profile", errortypes.ErrRequired, "Profile is required")
+		return nil, s.validator.ValidatePartnerDocumentProfileRequest(req)
 	}
-	if req.EDIPartnerID.IsNil() {
-		return nil, errortypes.NewValidationError("ediPartnerId", errortypes.ErrRequired, "EDI partner is required")
+	if req.Envelope.ElementSeparator == "" {
+		req.Envelope = edi.DefaultX12EnvelopeSettings()
+	}
+	if multiErr := s.validator.ValidatePartnerDocumentProfileRequest(req); multiErr != nil {
+		return nil, multiErr
 	}
 	if req.TemplateID.IsNil() {
 		base, _, err := s.documentRepo.EnsureBase204Template(ctx, req.TenantInfo)
@@ -86,24 +75,30 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		}
 		req.TemplateID = base.ID
 	}
-	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(ctx, repositories.GetActiveEDITemplateVersionRequest{
-		TemplateID: req.TemplateID,
-		TenantInfo: req.TenantInfo,
-		VersionID:  req.TemplateVersionID,
-	})
+	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(
+		ctx,
+		repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+			VersionID:  req.TemplateVersionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
-	documentTypes, err := s.documentRepo.ListDocumentTypes(ctx, repositories.ListEDIDocumentTypesRequest{
-		Standard:       edi.EDIStandardX12,
-		TransactionSet: edi.TransactionSet204,
-		Direction:      edi.DocumentDirectionOutbound,
-	})
+	documentTypes, err := s.documentRepo.ListDocumentTypes(
+		ctx,
+		repositories.ListEDIDocumentTypesRequest{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 	if len(documentTypes) == 0 {
-		return nil, fmt.Errorf("x12 204 outbound document type is not seeded")
+		return nil, errors.New("x12 204 outbound document type is not seeded")
 	}
 
 	profile := &edi.EDIPartnerDocumentProfile{
@@ -114,18 +109,22 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		DocumentTypeID:     documentTypes[0].ID,
 		TemplateID:         req.TemplateID,
 		TemplateVersionID:  req.TemplateVersionID,
-		Name:               firstNonEmpty(req.Name, "Outbound X12 204"),
+		Name:               stringutils.FirstNonEmpty(req.Name, "Outbound X12 204"),
 		Status:             req.Status,
 		Direction:          edi.DocumentDirectionOutbound,
 		Standard:           edi.EDIStandardX12,
 		TransactionSet:     edi.TransactionSet204,
 		X12VersionOverride: req.X12VersionOverride,
-		FunctionalGroupID:  firstNonEmpty(req.FunctionalGroupID, templateVersion.FunctionalGroupID, "SM"),
-		Envelope:           req.Envelope,
-		Acknowledgment:     req.Acknowledgment,
-		ValidationMode:     req.ValidationMode,
-		PartnerSettings:    req.PartnerSettings,
-		Version:            req.Version,
+		FunctionalGroupID: stringutils.FirstNonEmpty(
+			req.FunctionalGroupID,
+			templateVersion.FunctionalGroupID,
+			"SM",
+		),
+		Envelope:        req.Envelope,
+		Acknowledgment:  req.Acknowledgment,
+		ValidationMode:  req.ValidationMode,
+		PartnerSettings: req.PartnerSettings,
+		Version:         req.Version,
 	}
 	if profile.Status == "" {
 		profile.Status = edi.DocumentStatusActive
@@ -144,7 +143,14 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		if createErr != nil {
 			return nil, createErr
 		}
-		s.logAction(created, actor, permission.OpCreate, nil, created, "EDI document profile created")
+		s.logAction(
+			created,
+			actor,
+			permission.OpCreate,
+			nil,
+			created,
+			"EDI document profile created",
+		)
 		return created, nil
 	}
 	updated, err := s.documentRepo.UpdatePartnerDocumentProfile(ctx, profile)
@@ -163,19 +169,19 @@ func (s *Service) PreviewDocument(
 	if err != nil {
 		return nil, err
 	}
-	setProvisionalControlNumbers(resolved.runtime)
-	result, err := renderX12204(resolved)
+	edix12.SetProvisionalControlNumbers(resolved.runtime)
+	result, err := edix12.Render204(resolved.renderInput())
 	if err != nil {
 		return nil, err
 	}
 	return &EDIDocumentPreview{
-		RawX12:                   result.rawX12,
-		SegmentCount:             result.segmentCount,
+		RawX12:                   result.RawX12,
+		SegmentCount:             result.SegmentCount,
 		X12Version:               resolved.x12Version,
 		InterchangeControlNumber: fmt.Sprint(resolved.runtime["isaControlNumber"]),
 		GroupControlNumber:       fmt.Sprint(resolved.runtime["groupControlNumber"]),
 		TransactionControlNumber: fmt.Sprint(resolved.runtime["transactionControlNumber"]),
-		Diagnostics:              result.diagnostics,
+		Diagnostics:              result.Diagnostics,
 		Profile:                  resolved.profile,
 		TemplateVersion:          resolved.templateVersion,
 	}, nil
@@ -185,6 +191,13 @@ func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
 ) (*edi.EDIMessage, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"document",
+			errortypes.ErrRequired,
+			"Document request is required",
+		)
+	}
 	previewReq := &PreviewEDIDocumentRequest{
 		TenantInfo:               req.TenantInfo,
 		PartnerDocumentProfileID: req.PartnerDocumentProfileID,
@@ -198,35 +211,53 @@ func (s *Service) GenerateDocument(
 		return nil, err
 	}
 	provisional := *resolved
-	provisional.runtime = cloneMap(resolved.runtime)
-	setProvisionalControlNumbers(provisional.runtime)
-	provisionalResult, err := renderX12204(&provisional)
+	provisional.runtime = maputils.CloneShallow(resolved.runtime)
+	edix12.SetProvisionalControlNumbers(provisional.runtime)
+	provisionalResult, err := edix12.Render204(provisional.renderInput())
 	if err != nil {
 		return nil, err
 	}
-	if hasBlockingDiagnostics(provisionalResult.diagnostics, resolved.profile.ValidationMode) {
-		return nil, diagnosticsToValidationError(provisionalResult.diagnostics)
+	if edix12.HasBlockingDiagnostics(
+		provisionalResult.Diagnostics,
+		resolved.profile.ValidationMode,
+	) {
+		return nil, diagnosticsToValidationError(provisionalResult.Diagnostics)
 	}
 
-	controlNumbers, err := s.documentRepo.AllocateControlNumbers(ctx, repositories.AllocateEDIControlNumbersRequest{
-		TenantInfo:     req.TenantInfo,
-		PartnerID:      resolved.profile.EDIPartnerID,
-		DocumentTypeID: resolved.profile.DocumentTypeID,
-		Kinds: []edi.ControlNumberKind{
-			edi.ControlNumberKindInterchange,
-			edi.ControlNumberKindGroup,
-			edi.ControlNumberKindTransaction,
+	controlNumbers, err := s.documentRepo.AllocateControlNumbers(
+		ctx,
+		repositories.AllocateEDIControlNumbersRequest{
+			TenantInfo:     req.TenantInfo,
+			PartnerID:      resolved.profile.EDIPartnerID,
+			DocumentTypeID: resolved.profile.DocumentTypeID,
+			Kinds: []edi.ControlNumberKind{
+				edi.ControlNumberKindInterchange,
+				edi.ControlNumberKindGroup,
+				edi.ControlNumberKindTransaction,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return nil, err
 	}
-	resolved.runtime["isaControlNumber"] = fmt.Sprintf("%09d", controlNumbers[edi.ControlNumberKindInterchange])
-	resolved.runtime["groupControlNumber"] = strconv.FormatInt(controlNumbers[edi.ControlNumberKindGroup], 10)
-	resolved.runtime["transactionControlNumber"] = fmt.Sprintf("%04d", controlNumbers[edi.ControlNumberKindTransaction])
-	result, err := renderX12204(resolved)
+	resolved.runtime["isaControlNumber"] = fmt.Sprintf(
+		"%09d",
+		controlNumbers[edi.ControlNumberKindInterchange],
+	)
+	resolved.runtime["groupControlNumber"] = strconv.FormatInt(
+		controlNumbers[edi.ControlNumberKindGroup],
+		10,
+	)
+	resolved.runtime["transactionControlNumber"] = fmt.Sprintf(
+		"%04d",
+		controlNumbers[edi.ControlNumberKindTransaction],
+	)
+	result, err := edix12.Render204(resolved.renderInput())
 	if err != nil {
 		return nil, err
+	}
+	if edix12.HasBlockingDiagnostics(result.Diagnostics, resolved.profile.ValidationMode) {
+		return nil, diagnosticsToValidationError(result.Diagnostics)
 	}
 	message := &edi.EDIMessage{
 		BusinessUnitID:           req.TenantInfo.BuID,
@@ -247,13 +278,13 @@ func (s *Service) GenerateDocument(
 		InterchangeControlNumber: fmt.Sprint(resolved.runtime["isaControlNumber"]),
 		GroupControlNumber:       fmt.Sprint(resolved.runtime["groupControlNumber"]),
 		TransactionControlNumber: fmt.Sprint(resolved.runtime["transactionControlNumber"]),
-		SegmentCount:             result.segmentCount,
-		RawX12:                   result.rawX12,
+		SegmentCount:             result.SegmentCount,
+		RawX12:                   result.RawX12,
 		PayloadSnapshot:          resolved.payload,
 		GeneratedByID:            req.GeneratedByID,
 	}
-	diagnostics := make([]*edi.EDIMessageValidationError, 0, len(result.diagnostics))
-	for _, diagnostic := range result.diagnostics {
+	diagnostics := make([]*edi.EDIMessageValidationError, 0, len(result.Diagnostics))
+	for _, diagnostic := range result.Diagnostics {
 		diagnostics = append(diagnostics, &edi.EDIMessageValidationError{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
@@ -263,10 +294,13 @@ func (s *Service) GenerateDocument(
 			Message:         diagnostic.Message,
 		})
 	}
-	return s.documentRepo.CreateMessageWithDiagnostics(ctx, repositories.CreateEDIMessageWithDiagnosticsRequest{
-		Message:     message,
-		Diagnostics: diagnostics,
-	})
+	return s.documentRepo.CreateMessageWithDiagnostics(
+		ctx,
+		repositories.CreateEDIMessageWithDiagnosticsRequest{
+			Message:     message,
+			Diagnostics: diagnostics,
+		},
+	)
 }
 
 func (s *Service) ListMessages(
@@ -290,41 +324,44 @@ func (s *Service) ListTestCases(
 	return s.documentRepo.ListTestCases(ctx, req)
 }
 
-func (s *Service) PreviewTestCase(ctx context.Context, testCaseID pulid.ID, tenantInfo pagination.TenantInfo) (*EDIDocumentPreview, error) {
-	cases, err := s.documentRepo.ListTestCases(ctx, &repositories.ListEDITestCasesRequest{
-		Filter: &pagination.QueryOptions{TenantInfo: tenantInfo},
+func (s *Service) PreviewTestCase(
+	ctx context.Context,
+	testCaseID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*EDIDocumentPreview, error) {
+	testCase, err := s.documentRepo.GetTestCaseByID(ctx, repositories.GetEDITestCaseByIDRequest{
+		ID:         testCaseID,
+		TenantInfo: tenantInfo,
 	})
 	if err != nil {
 		return nil, err
 	}
-	for _, testCase := range cases.Items {
-		if testCase.ID == testCaseID {
-			return s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
-				TenantInfo:               tenantInfo,
-				PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
-				Payload:                  &testCase.Payload,
-			})
-		}
-	}
-	return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "EDITestCase")
+	return s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
+		TenantInfo:               tenantInfo,
+		PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
+		Payload:                  &testCase.Payload,
+	})
 }
 
 func (s *Service) resolveDocumentContext(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
 ) (*resolvedDocumentContext, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError("document", errortypes.ErrRequired, "Document request is required")
+	if multiErr := s.validator.ValidatePreviewDocumentRequest(req); multiErr != nil {
+		return nil, multiErr
 	}
 	profile, err := s.resolveProfile(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(ctx, repositories.GetActiveEDITemplateVersionRequest{
-		TemplateID: profile.TemplateID,
-		TenantInfo: req.TenantInfo,
-		VersionID:  profile.TemplateVersionID,
-	})
+	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(
+		ctx,
+		repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: profile.TemplateID,
+			TenantInfo: req.TenantInfo,
+			VersionID:  profile.TemplateVersionID,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -332,8 +369,12 @@ func (s *Service) resolveDocumentContext(
 	if err != nil {
 		return nil, err
 	}
-	x12Version := firstNonEmpty(profile.X12VersionOverride, templateVersion.X12Version, edi.DefaultX12204Version)
-	runtime := runtimeValues(profile, x12Version)
+	x12Version := stringutils.FirstNonEmpty(
+		profile.X12VersionOverride,
+		templateVersion.X12Version,
+		edi.DefaultX12204Version,
+	)
+	runtime := edix12.RuntimeValues(profile, x12Version)
 	return &resolvedDocumentContext{
 		profile:         profile,
 		templateVersion: templateVersion,
@@ -348,20 +389,30 @@ func (s *Service) resolveProfile(
 	req *PreviewEDIDocumentRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	if !req.PartnerDocumentProfileID.IsNil() {
-		return s.documentRepo.GetPartnerDocumentProfileByID(ctx, repositories.GetEDIPartnerDocumentProfileByIDRequest{
-			ID:         req.PartnerDocumentProfileID,
-			TenantInfo: req.TenantInfo,
-		})
+		return s.documentRepo.GetPartnerDocumentProfileByID(
+			ctx,
+			repositories.GetEDIPartnerDocumentProfileByIDRequest{
+				ID:         req.PartnerDocumentProfileID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
 	}
 	if req.EDIPartnerID.IsNil() {
-		return nil, errortypes.NewValidationError("ediPartnerId", errortypes.ErrRequired, "EDI partner or document profile is required")
+		return nil, errortypes.NewValidationError(
+			"ediPartnerId",
+			errortypes.ErrRequired,
+			"EDI partner or document profile is required",
+		)
 	}
-	return s.documentRepo.GetActivePartnerDocumentProfile(ctx, repositories.GetActiveEDIPartnerDocumentProfileRequest{
-		PartnerID:      req.EDIPartnerID,
-		TenantInfo:     req.TenantInfo,
-		TransactionSet: edi.TransactionSet204,
-		Direction:      edi.DocumentDirectionOutbound,
-	})
+	return s.documentRepo.GetActivePartnerDocumentProfile(
+		ctx,
+		repositories.GetActiveEDIPartnerDocumentProfileRequest{
+			PartnerID:      req.EDIPartnerID,
+			TenantInfo:     req.TenantInfo,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+	)
 }
 
 func (s *Service) resolvePayload(
@@ -383,7 +434,11 @@ func (s *Service) resolvePayload(
 		return transfer.TenderPayload, nil
 	}
 	if req.ShipmentID.IsNil() {
-		return edi.LoadTenderPayload{}, errortypes.NewValidationError("shipmentId", errortypes.ErrRequired, "Shipment, transfer, or payload is required")
+		return edi.LoadTenderPayload{}, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Shipment, transfer, or payload is required",
+		)
 	}
 	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         req.ShipmentID,
@@ -398,389 +453,27 @@ func (s *Service) resolvePayload(
 	return buildTenderPayload(source), nil
 }
 
-func renderX12204(ctx *resolvedDocumentContext) (*renderResult, error) {
-	payloadMap, err := jsonutils.ToJSON(ctx.payload)
-	if err != nil {
-		return nil, err
-	}
-	segments := append([]*edi.EDITemplateSegment{}, ctx.templateVersion.Segments...)
-	sort.SliceStable(segments, func(i, j int) bool {
-		return segments[i].Sequence < segments[j].Sequence
-	})
-	rendered := make([]string, 0, len(segments)+8)
-	diagnostics := make([]EDIDiagnostic, 0)
-	for _, segment := range segments {
-		repeats := repeatValues(payloadMap, segment.RepeatPath)
-		if len(repeats) == 0 {
-			repeats = []any{nil}
-		}
-		for _, repeatValue := range repeats {
-			env := expressionEnv(payloadMap, ctx.profile.PartnerSettings, ctx.runtime, repeatValue)
-			include, err := evaluateCondition(segment.Condition, env)
-			if err != nil {
-				diagnostics = append(diagnostics, expressionDiagnostic(segment, 0, segment.Condition, err))
-				continue
-			}
-			if !include {
-				continue
-			}
-			elements := make([]string, 0, len(segment.Elements))
-			segmentHasValue := segment.Required
-			for _, element := range segment.Elements {
-				value, elementDiagnostics := resolveElement(segment, element, env)
-				diagnostics = append(diagnostics, elementDiagnostics...)
-				if value != "" {
-					segmentHasValue = true
-				}
-				elements = append(elements, sanitizeX12Value(value, ctx.profile.Envelope))
-			}
-			if !segmentHasValue && !segment.Required {
-				continue
-			}
-			rendered = append(rendered, strings.Join(append([]string{segment.SegmentID}, trimTrailingEmpty(elements)...), ctx.profile.Envelope.ElementSeparator))
-		}
-	}
-	applyTrailerCounts(rendered, ctx.profile.Envelope.ElementSeparator)
-	raw := strings.Join(rendered, ctx.profile.Envelope.SegmentTerminator) + ctx.profile.Envelope.SegmentTerminator
-	return &renderResult{rawX12: raw, segmentCount: int64(len(rendered)), diagnostics: filterDiagnostics(diagnostics, ctx.profile.ValidationMode)}, nil
-}
-
-func resolveElement(
-	segment *edi.EDITemplateSegment,
-	element edi.TemplateElement,
-	env map[string]any,
-) (string, []EDIDiagnostic) {
-	diagnostics := []EDIDiagnostic{}
-	include, err := evaluateCondition(element.Condition, env)
-	if err != nil {
-		return "", []EDIDiagnostic{expressionDiagnostic(segment, element.Position, element.Condition, err)}
-	}
-	if !include {
-		return "", diagnostics
-	}
-	value := ""
-	switch element.Source {
-	case edi.TemplateElementSourceConstant:
-		value = element.Value
-	case edi.TemplateElementSourceFieldPath:
-		value = valueToString(getPath(env, "shipment."+element.FieldPath))
-	case edi.TemplateElementSourcePartnerSetting:
-		value = valueToString(getPath(env, "partner."+firstNonEmpty(element.PartnerSettingPath, element.Name)))
-	case edi.TemplateElementSourceRuntime:
-		value = valueToString(getPath(env, "runtime."+element.RuntimeKey))
-	case edi.TemplateElementSourceRepeat:
-		value = valueToString(getPath(env, "repeat."+element.RepeatPath))
-	case edi.TemplateElementSourceExpression:
-		value, err = evaluateExpression(element.Expression, env)
-		if err != nil {
-			diagnostics = append(diagnostics, expressionDiagnostic(segment, element.Position, element.Expression, err))
-		}
-	case edi.TemplateElementSourceMapping:
-		value = valueToString(getPath(env, "mapping."+element.MappingSourcePath))
-	}
-	if value == "" {
-		value = element.Default
-	}
-	if element.Validation.Required && strings.TrimSpace(value) == "" {
-		diagnostics = append(diagnostics, EDIDiagnostic{
-			Severity:        edi.ValidationSeverityError,
-			Code:            firstNonEmpty(element.Validation.Code, "required"),
-			SegmentID:       segment.SegmentID,
-			ElementPosition: element.Position,
-			Path:            firstNonEmpty(element.FieldPath, element.RuntimeKey, element.Expression),
-			Message:         firstNonEmpty(element.Validation.Message, element.Name+" is required"),
-		})
-	}
-	if element.Validation.MaxLength > 0 && len(value) > element.Validation.MaxLength {
-		diagnostics = append(diagnostics, EDIDiagnostic{
-			Severity:        edi.ValidationSeverityWarning,
-			Code:            "max_length",
-			SegmentID:       segment.SegmentID,
-			ElementPosition: element.Position,
-			Message:         fmt.Sprintf("%s exceeds max length %d", element.Name, element.Validation.MaxLength),
-		})
-		value = value[:element.Validation.MaxLength]
-	}
-	return value, diagnostics
-}
-
-func runtimeValues(profile *edi.EDIPartnerDocumentProfile, x12Version string) map[string]any {
-	now := time.Now().UTC()
-	envelope := profile.Envelope
-	return map[string]any{
-		"interchangeSenderId":     padISAID(envelope.InterchangeSenderID),
-		"interchangeReceiverId":   padISAID(envelope.InterchangeReceiverID),
-		"applicationSenderCode":   firstNonEmpty(envelope.ApplicationSenderCode, envelope.InterchangeSenderID),
-		"applicationReceiverCode": firstNonEmpty(envelope.ApplicationReceiverCode, envelope.InterchangeReceiverID),
-		"usageIndicator":          firstNonEmpty(envelope.InterchangeUsageIndicator, "T"),
-		"componentSeparator":      firstNonEmpty(envelope.ComponentSeparator, ">"),
-		"repetitionSeparator":     firstNonEmpty(envelope.RepetitionSeparator, "^"),
-		"functionalGroupId":       firstNonEmpty(profile.FunctionalGroupID, "SM"),
-		"x12Version":              x12Version,
-		"interchangeDate":         now.Format("060102"),
-		"interchangeTime":         now.Format("1504"),
-		"groupDate":               now.Format("20060102"),
-		"groupTime":               now.Format("1504"),
+func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
+	return &edix12.RenderInput{
+		Profile:         c.profile,
+		TemplateVersion: c.templateVersion,
+		Payload:         c.payload,
+		X12Version:      c.x12Version,
+		Runtime:         c.runtime,
 	}
 }
 
-func setProvisionalControlNumbers(runtime map[string]any) {
-	runtime["isaControlNumber"] = "000000000"
-	runtime["groupControlNumber"] = "0"
-	runtime["transactionControlNumber"] = "0000"
-}
-
-func applyTrailerCounts(rendered []string, separator string) {
-	stIndex := -1
-	transactionCount := 0
-	controlNumber := ""
-	for i, segment := range rendered {
-		parts := strings.Split(segment, separator)
-		if len(parts) == 0 {
-			continue
-		}
-		switch parts[0] {
-		case "ST":
-			stIndex = i
-			if len(parts) > 2 {
-				controlNumber = parts[2]
-			}
-		case "SE":
-			if stIndex >= 0 {
-				transactionCount = i - stIndex + 1
-			}
-			if len(parts) > 1 {
-				parts[1] = strconv.Itoa(transactionCount)
-			}
-			if len(parts) > 2 && controlNumber != "" {
-				parts[2] = controlNumber
-			}
-			rendered[i] = strings.Join(parts, separator)
-		}
-	}
-}
-
-func expressionEnv(
-	shipment map[string]any,
-	partner map[string]any,
-	runtime map[string]any,
-	repeat any,
-) map[string]any {
-	if partner == nil {
-		partner = map[string]any{}
-	}
-	return map[string]any{
-		"shipment": shipment,
-		"partner":  partner,
-		"mapping":  map[string]any{},
-		"runtime":  runtime,
-		"repeat":   repeat,
-	}
-}
-
-func repeatValues(payload map[string]any, path string) []any {
-	if strings.TrimSpace(path) == "" {
-		return nil
-	}
-	value := getPath(map[string]any{"shipment": payload}, "shipment."+path)
-	items, ok := value.([]any)
-	if !ok {
-		return nil
-	}
-	return items
-}
-
-func getPath(root any, path string) any {
-	current := root
-	for _, part := range strings.Split(path, ".") {
-		if part == "" {
-			continue
-		}
-		switch typed := current.(type) {
-		case map[string]any:
-			current = typed[part]
-		case []any:
-			index, err := strconv.Atoi(part)
-			if err != nil || index < 0 || index >= len(typed) {
-				return nil
-			}
-			current = typed[index]
-		default:
-			return nil
-		}
-	}
-	return current
-}
-
-func evaluateCondition(condition string, env map[string]any) (bool, error) {
-	if strings.TrimSpace(condition) == "" {
-		return true, nil
-	}
-	program, err := expr.Compile(condition, expr.Env(env))
-	if err != nil {
-		return false, err
-	}
-	result, err := vm.Run(program, env)
-	if err != nil {
-		return false, err
-	}
-	value, ok := result.(bool)
-	if !ok {
-		return false, fmt.Errorf("condition did not return a boolean")
-	}
-	return value, nil
-}
-
-func evaluateExpression(expression string, env map[string]any) (string, error) {
-	if strings.TrimSpace(expression) == "" {
-		return "", nil
-	}
-	program, err := expr.Compile(expression, expr.Env(env))
-	if err != nil {
-		return "", err
-	}
-	result, err := vm.Run(program, env)
-	if err != nil {
-		return "", err
-	}
-	return valueToString(result), nil
-}
-
-func valueToString(value any) string {
-	switch typed := value.(type) {
-	case nil:
-		return ""
-	case string:
-		return strings.TrimSpace(typed)
-	case fmt.Stringer:
-		return typed.String()
-	case decimal.NullDecimal:
-		if !typed.Valid {
-			return ""
-		}
-		return typed.Decimal.StringFixed(2)
-	case decimal.Decimal:
-		return typed.StringFixed(2)
-	case float64:
-		return trimFloat(typed)
-	case float32:
-		return trimFloat(float64(typed))
-	case int:
-		return strconv.Itoa(typed)
-	case int64:
-		return strconv.FormatInt(typed, 10)
-	case bool:
-		if typed {
-			return "Y"
-		}
-		return "N"
-	case map[string]any:
-		if valid, ok := typed["Valid"].(bool); ok && !valid {
-			return ""
-		}
-		if decimalValue, ok := typed["Decimal"]; ok {
-			return valueToString(decimalValue)
-		}
-		return ""
-	default:
-		return fmt.Sprint(typed)
-	}
-}
-
-func trimFloat(value float64) string {
-	if value == float64(int64(value)) {
-		return strconv.FormatInt(int64(value), 10)
-	}
-	return strconv.FormatFloat(value, 'f', -1, 64)
-}
-
-func sanitizeX12Value(value string, envelope edi.X12EnvelopeSettings) string {
-	replacer := strings.NewReplacer(
-		envelope.ElementSeparator, " ",
-		envelope.SegmentTerminator, " ",
-		envelope.ComponentSeparator, " ",
-	)
-	return strings.TrimSpace(replacer.Replace(value))
-}
-
-func trimTrailingEmpty(values []string) []string {
-	last := len(values)
-	for last > 0 && values[last-1] == "" {
-		last--
-	}
-	return values[:last]
-}
-
-func filterDiagnostics(diagnostics []EDIDiagnostic, mode edi.ValidationMode) []EDIDiagnostic {
-	if mode == edi.ValidationModeDisabled {
-		filtered := make([]EDIDiagnostic, 0, len(diagnostics))
-		for _, diagnostic := range diagnostics {
-			if diagnostic.Code == "render_error" {
-				filtered = append(filtered, diagnostic)
-			}
-		}
-		return filtered
-	}
-	if mode == edi.ValidationModeWarnOnly {
-		for i := range diagnostics {
-			if diagnostics[i].Severity == edi.ValidationSeverityError {
-				diagnostics[i].Severity = edi.ValidationSeverityWarning
-			}
-		}
-	}
-	return diagnostics
-}
-
-func hasBlockingDiagnostics(diagnostics []EDIDiagnostic, mode edi.ValidationMode) bool {
-	if mode != edi.ValidationModeStrict {
-		return false
-	}
-	for _, diagnostic := range diagnostics {
-		if diagnostic.Severity == edi.ValidationSeverityError {
-			return true
-		}
-	}
-	return false
-}
-
-func diagnosticsToValidationError(diagnostics []EDIDiagnostic) error {
+func diagnosticsToValidationError(diagnostics []edix12.Diagnostic) error {
 	multiErr := errortypes.NewMultiError()
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Severity != edi.ValidationSeverityError {
 			continue
 		}
-		field := firstNonEmpty(diagnostic.Path, diagnostic.SegmentID, "edi")
+		field := stringutils.FirstNonEmpty(diagnostic.Path, diagnostic.SegmentID, "edi")
 		multiErr.Add(field, errortypes.ErrInvalid, diagnostic.Message)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
 	}
 	return nil
-}
-
-func expressionDiagnostic(segment *edi.EDITemplateSegment, position int, expression string, err error) EDIDiagnostic {
-	return EDIDiagnostic{
-		Severity:        edi.ValidationSeverityError,
-		Code:            "expression_error",
-		SegmentID:       segment.SegmentID,
-		ElementPosition: position,
-		Path:            expression,
-		Message:         err.Error(),
-	}
-}
-
-func padISAID(value string) string {
-	value = strings.ToUpper(strings.TrimSpace(value))
-	if len(value) > 15 {
-		return value[:15]
-	}
-	return value + strings.Repeat(" ", 15-len(value))
-}
-
-func cloneMap(input map[string]any) map[string]any {
-	output := make(map[string]any, len(input))
-	for key, value := range input {
-		output[key] = value
-	}
-	return output
 }

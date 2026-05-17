@@ -3,6 +3,7 @@ package ediservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -129,15 +130,6 @@ type UpsertEDIPartnerDocumentProfileRequest struct {
 	Version            int64                    `json:"version"`
 }
 
-type EDIDiagnostic struct {
-	Severity        edi.ValidationSeverity `json:"severity"`
-	Code            string                 `json:"code"`
-	SegmentID       string                 `json:"segmentId"`
-	ElementPosition int                    `json:"elementPosition"`
-	Path            string                 `json:"path"`
-	Message         string                 `json:"message"`
-}
-
 type EDIDocumentPreview struct {
 	RawX12                   string                         `json:"rawX12"`
 	SegmentCount             int64                          `json:"segmentCount"`
@@ -145,7 +137,7 @@ type EDIDocumentPreview struct {
 	InterchangeControlNumber string                         `json:"interchangeControlNumber"`
 	GroupControlNumber       string                         `json:"groupControlNumber"`
 	TransactionControlNumber string                         `json:"transactionControlNumber"`
-	Diagnostics              []EDIDiagnostic                `json:"diagnostics"`
+	Diagnostics              []edix12.Diagnostic            `json:"diagnostics"`
 	Profile                  *edi.EDIPartnerDocumentProfile `json:"profile"`
 	TemplateVersion          *edi.EDITemplateVersion        `json:"templateVersion"`
 }

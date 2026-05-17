@@ -2,8 +2,6 @@ package pagefavoriterepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -85,7 +83,7 @@ func (r *repository) GetByURL(
 		}).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if dberror.IsNotFoundError(err) {
 			return nil, false, nil
 		}
 		log.Error("failed to get page favorite by URL", zap.Error(err))

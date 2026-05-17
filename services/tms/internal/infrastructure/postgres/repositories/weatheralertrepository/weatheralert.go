@@ -3,8 +3,6 @@ package weatheralertrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/weatheralert"
@@ -182,11 +180,11 @@ func (r *repository) UpsertAlert(
 			alert.BusinessUnitID.String(),
 			alert.NWSID,
 		)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !dberror.IsNotFoundError(err) {
 			return err
 		}
 
-		if errors.Is(err, sql.ErrNoRows) {
+		if dberror.IsNotFoundError(err) {
 			if alert.ID.IsNil() {
 				alert.ID = pulid.MustNew("walt_")
 			}

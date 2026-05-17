@@ -2,8 +2,6 @@ package integrationrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -107,7 +105,7 @@ func (r *repository) Upsert(
 		}).
 		Scan(ctx)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if dberror.IsNotFoundError(err) {
 			if _, insertErr := r.db.DB().NewInsert().
 				Model(entity).
 				Returning("*").

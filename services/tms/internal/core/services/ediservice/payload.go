@@ -1,6 +1,7 @@
 package ediservice
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -8,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
@@ -42,10 +44,26 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 		payload.RatingDetail = jsonutils.MustToJSON(source.RatingDetail)
 	}
 
-	addRequiredID(payload.RequiredMappingEntityIDs, edi.MappingEntityTypeCustomer, source.CustomerID)
-	addRequiredID(payload.RequiredMappingEntityIDs, edi.MappingEntityTypeServiceType, source.ServiceTypeID)
-	addRequiredID(payload.RequiredMappingEntityIDs, edi.MappingEntityTypeFormulaTemplate, source.FormulaTemplateID)
-	addRequiredID(payload.RequiredMappingEntityIDs, edi.MappingEntityTypeShipmentType, source.ShipmentTypeID)
+	addRequiredID(
+		payload.RequiredMappingEntityIDs,
+		edi.MappingEntityTypeCustomer,
+		source.CustomerID,
+	)
+	addRequiredID(
+		payload.RequiredMappingEntityIDs,
+		edi.MappingEntityTypeServiceType,
+		source.ServiceTypeID,
+	)
+	addRequiredID(
+		payload.RequiredMappingEntityIDs,
+		edi.MappingEntityTypeFormulaTemplate,
+		source.FormulaTemplateID,
+	)
+	addRequiredID(
+		payload.RequiredMappingEntityIDs,
+		edi.MappingEntityTypeShipmentType,
+		source.ShipmentTypeID,
+	)
 
 	for _, move := range source.Moves {
 		tenderMove := edi.LoadTenderMove{
@@ -55,10 +73,10 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 			Stops:    make([]edi.LoadTenderStop, 0, len(move.Stops)),
 		}
 		for _, stop := range move.Stops {
-			locationLabel, locationAddress := stopLocationDetails(stop)
+			locLabel, locAddr := stopLocationDetails(stop)
 			tenderMove.Stops = append(tenderMove.Stops, edi.LoadTenderStop{
 				LocationID:           stop.LocationID,
-				LocationLabel:        locationLabel,
+				LocationLabel:        locLabel,
 				Type:                 string(stop.Type),
 				ScheduleType:         string(stop.ScheduleType),
 				Sequence:             stop.Sequence,
@@ -66,7 +84,7 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 				Weight:               stop.Weight,
 				ScheduledWindowStart: stop.ScheduledWindowStart,
 				ScheduledWindowEnd:   stop.ScheduledWindowEnd,
-				AddressLine:          firstNonEmpty(stop.AddressLine, locationAddress),
+				AddressLine:          stringutils.FirstNonEmpty(stop.AddressLine, locAddr),
 			})
 			if stop.Location != nil {
 				tenderMove.Stops[len(tenderMove.Stops)-1].LocationName = stop.Location.Name
@@ -79,7 +97,11 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 					tenderMove.Stops[len(tenderMove.Stops)-1].LocationStateCode = stop.Location.State.Abbreviation
 				}
 			}
-			addRequiredID(payload.RequiredMappingEntityIDs, edi.MappingEntityTypeLocation, stop.LocationID)
+			addRequiredID(
+				payload.RequiredMappingEntityIDs,
+				edi.MappingEntityTypeLocation,
+				stop.LocationID,
+			)
 		}
 		payload.Moves = append(payload.Moves, tenderMove)
 	}
@@ -120,11 +142,23 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	return payload
 }
 
-func sourceLabelIndex(payload edi.LoadTenderPayload) map[edi.MappingEntityType]map[pulid.ID]string {
+func sourceLabelIndex(
+	payload *edi.LoadTenderPayload,
+) map[edi.MappingEntityType]map[pulid.ID]string {
 	labels := map[edi.MappingEntityType]map[pulid.ID]string{}
 	setLabel(labels, edi.MappingEntityTypeCustomer, payload.CustomerID, payload.CustomerLabel)
-	setLabel(labels, edi.MappingEntityTypeServiceType, payload.ServiceTypeID, payload.ServiceTypeLabel)
-	setLabel(labels, edi.MappingEntityTypeShipmentType, payload.ShipmentTypeID, payload.ShipmentTypeLabel)
+	setLabel(
+		labels,
+		edi.MappingEntityTypeServiceType,
+		payload.ServiceTypeID,
+		payload.ServiceTypeLabel,
+	)
+	setLabel(
+		labels,
+		edi.MappingEntityTypeShipmentType,
+		payload.ShipmentTypeID,
+		payload.ShipmentTypeLabel,
+	)
 	setLabel(
 		labels,
 		edi.MappingEntityTypeFormulaTemplate,
@@ -133,7 +167,8 @@ func sourceLabelIndex(payload edi.LoadTenderPayload) map[edi.MappingEntityType]m
 	)
 
 	for _, move := range payload.Moves {
-		for _, stop := range move.Stops {
+		for i := range move.Stops {
+			stop := &move.Stops[i]
 			setLabel(labels, edi.MappingEntityTypeLocation, stop.LocationID, stopLabel(stop))
 		}
 	}
@@ -165,10 +200,8 @@ func addRequiredID(
 	if id.IsNil() {
 		return
 	}
-	for _, existing := range required[entityType] {
-		if existing == id {
-			return
-		}
+	if slices.Contains(required[entityType], id) {
+		return
 	}
 	required[entityType] = append(required[entityType], id)
 }
@@ -192,6 +225,7 @@ func customerLabel(source *shipment.Shipment) string {
 	if source.Customer == nil {
 		return ""
 	}
+
 	return joinCodeName(source.Customer.Code, source.Customer.Name)
 }
 
@@ -199,34 +233,38 @@ func serviceTypeLabel(source *shipment.Shipment) string {
 	if source.ServiceType == nil {
 		return ""
 	}
-	return firstNonEmpty(source.ServiceType.Code, source.ServiceType.Description)
+
+	return stringutils.FirstNonEmpty(source.ServiceType.Code, source.ServiceType.Description)
 }
 
 func shipmentTypeLabel(source *shipment.Shipment) string {
 	if source.ShipmentType == nil {
 		return ""
 	}
-	return firstNonEmpty(source.ShipmentType.Code, source.ShipmentType.Description)
+
+	return stringutils.FirstNonEmpty(source.ShipmentType.Code, source.ShipmentType.Description)
 }
 
 func formulaTemplateLabel(source *shipment.Shipment) string {
 	if source.FormulaTemplate == nil {
 		return ""
 	}
+
 	return source.FormulaTemplate.Name
 }
 
-func stopLocationDetails(stop *shipment.Stop) (string, string) {
+func stopLocationDetails(stop *shipment.Stop) (label, address string) {
 	if stop.Location == nil {
 		return "", ""
 	}
-	address := locationAddress(stop.Location)
-	label := joinCodeName(stop.Location.Code, stop.Location.Name)
-	return firstNonEmpty(label, address), address
+
+	address = locationAddress(stop.Location)
+	label = joinCodeName(stop.Location.Code, stop.Location.Name)
+	return stringutils.FirstNonEmpty(label, address), address
 }
 
-func stopLabel(stop edi.LoadTenderStop) string {
-	return firstNonEmpty(
+func stopLabel(stop *edi.LoadTenderStop) string {
+	return stringutils.FirstNonEmpty(
 		stop.LocationLabel,
 		joinCodeName(stop.LocationCode, stop.LocationName),
 		stop.AddressLine,
@@ -238,13 +276,15 @@ func commodityLabel(commodity *shipment.ShipmentCommodity) string {
 	if commodity.Commodity == nil {
 		return ""
 	}
-	return firstNonEmpty(commodity.Commodity.Name, commodity.Commodity.Description)
+
+	return stringutils.FirstNonEmpty(commodity.Commodity.Name, commodity.Commodity.Description)
 }
 
 func commodityName(commodity *shipment.ShipmentCommodity) string {
 	if commodity.Commodity == nil {
 		return ""
 	}
+
 	return commodity.Commodity.Name
 }
 
@@ -259,7 +299,7 @@ func accessorialLabel(charge *shipment.AdditionalCharge) string {
 	if charge.AccessorialCharge == nil {
 		return ""
 	}
-	return firstNonEmpty(
+	return stringutils.FirstNonEmpty(
 		joinCodeName(charge.AccessorialCharge.Code, charge.AccessorialCharge.Description),
 		charge.AccessorialCharge.Code,
 		charge.AccessorialCharge.Description,
@@ -270,6 +310,7 @@ func accessorialCode(charge *shipment.AdditionalCharge) string {
 	if charge.AccessorialCharge == nil {
 		return ""
 	}
+
 	return charge.AccessorialCharge.Code
 }
 
@@ -277,6 +318,7 @@ func accessorialDescription(charge *shipment.AdditionalCharge) string {
 	if charge.AccessorialCharge == nil {
 		return ""
 	}
+
 	return charge.AccessorialCharge.Description
 }
 
@@ -284,14 +326,16 @@ func locationAddress(loc *location.Location) string {
 	if loc == nil {
 		return ""
 	}
+
 	state := ""
 	if loc.State != nil {
 		state = loc.State.Abbreviation
 	}
-	return strings.Join(nonEmptyStrings(
+
+	return strings.Join(stringutils.NonEmptyStrings(
 		loc.AddressLine1,
 		loc.AddressLine2,
-		strings.Join(nonEmptyStrings(loc.City, state, loc.PostalCode), ", "),
+		strings.Join(stringutils.NonEmptyStrings(loc.City, state, loc.PostalCode), ", "),
 	), ", ")
 }
 
@@ -301,26 +345,5 @@ func joinCodeName(code, name string) string {
 	if code != "" && name != "" {
 		return code + " - " + name
 	}
-	return firstNonEmpty(code, name)
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value != "" {
-			return value
-		}
-	}
-	return ""
-}
-
-func nonEmptyStrings(values ...string) []string {
-	items := make([]string, 0, len(values))
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value != "" {
-			items = append(items, value)
-		}
-	}
-	return items
+	return stringutils.FirstNonEmpty(code, name)
 }

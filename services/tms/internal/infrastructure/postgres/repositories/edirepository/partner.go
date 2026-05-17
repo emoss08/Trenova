@@ -2,8 +2,6 @@ package edirepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -500,7 +498,7 @@ func (r *repository) ensureMappingProfile(
 	if err == nil {
 		return profile, nil
 	}
-	if !errors.Is(err, sql.ErrNoRows) {
+	if !dberror.IsNotFoundError(err) {
 		return nil, err
 	}
 
