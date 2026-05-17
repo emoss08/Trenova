@@ -50,9 +50,10 @@ const (
 	TemplateElementSourceFieldPath      = TemplateElementSource("fieldPath")
 	TemplateElementSourcePartnerSetting = TemplateElementSource("partnerSetting")
 	TemplateElementSourceMapping        = TemplateElementSource("mapping")
-	TemplateElementSourceExpression     = TemplateElementSource("expression")
 	TemplateElementSourceRuntime        = TemplateElementSource("runtime")
 	TemplateElementSourceRepeat         = TemplateElementSource("repeat")
+	TemplateElementSourceTransform      = TemplateElementSource("transform")
+	TemplateElementSourceStarlark       = TemplateElementSource("starlark")
 )
 
 type TemplateValidationRule struct {
@@ -63,22 +64,42 @@ type TemplateValidationRule struct {
 	Message   string `json:"message"`
 }
 
+type TemplateElementBaseSource struct {
+	Source             TemplateElementSource `json:"source"`
+	Value              string                `json:"value,omitempty"`
+	FieldPath          string                `json:"fieldPath,omitempty"`
+	PartnerSettingPath string                `json:"partnerSettingPath,omitempty"`
+	MappingEntityType  MappingEntityType     `json:"mappingEntityType,omitempty"`
+	MappingSourcePath  string                `json:"mappingSourcePath,omitempty"`
+	RuntimeKey         string                `json:"runtimeKey,omitempty"`
+	RepeatPath         string                `json:"repeatPath,omitempty"`
+	Default            string                `json:"default,omitempty"`
+}
+
+type TemplateTransformStep struct {
+	Operation string         `json:"operation"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+}
+
 type TemplateElement struct {
-	Position                int                    `json:"position"`
-	Name                    string                 `json:"name"`
-	Source                  TemplateElementSource  `json:"source"`
-	Value                   string                 `json:"value"`
-	FieldPath               string                 `json:"fieldPath"`
-	PartnerSettingPath      string                 `json:"partnerSettingPath"`
-	MappingEntityType       MappingEntityType      `json:"mappingEntityType"`
-	MappingSourcePath       string                 `json:"mappingSourcePath"`
-	Expression              string                 `json:"expression"`
-	RuntimeKey              string                 `json:"runtimeKey"`
-	RepeatPath              string                 `json:"repeatPath"`
-	Default                 string                 `json:"default"`
-	Condition               string                 `json:"condition"`
-	Validation              TemplateValidationRule `json:"validation"`
-	ImplementationGuideNote string                 `json:"implementationGuideNote"`
+	Position                int                        `json:"position"`
+	Name                    string                     `json:"name"`
+	Source                  TemplateElementSource      `json:"source"`
+	Value                   string                     `json:"value"`
+	FieldPath               string                     `json:"fieldPath"`
+	PartnerSettingPath      string                     `json:"partnerSettingPath"`
+	MappingEntityType       MappingEntityType          `json:"mappingEntityType,omitempty"`
+	MappingSourcePath       string                     `json:"mappingSourcePath"`
+	RuntimeKey              string                     `json:"runtimeKey"`
+	RepeatPath              string                     `json:"repeatPath"`
+	BaseSource              *TemplateElementBaseSource `json:"baseSource,omitempty"`
+	TransformPipeline       []TemplateTransformStep    `json:"transformPipeline,omitempty"`
+	StarlarkFunction        string                     `json:"starlarkFunction"`
+	StarlarkScript          string                     `json:"starlarkScript"`
+	Default                 string                     `json:"default"`
+	Condition               string                     `json:"condition"`
+	Validation              TemplateValidationRule     `json:"validation"`
+	ImplementationGuideNote string                     `json:"implementationGuideNote"`
 }
 
 type EDIDocumentType struct {

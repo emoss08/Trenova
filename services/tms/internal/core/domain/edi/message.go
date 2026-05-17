@@ -73,6 +73,7 @@ type EDIMessageValidationError struct {
 	ElementPosition int                `json:"elementPosition" bun:"element_position,type:INTEGER,notnull,default:0"`
 	Path            string             `json:"path"           bun:"path,type:TEXT,nullzero"`
 	Message         string             `json:"message"        bun:"message,type:TEXT,notnull"`
+	SuggestedFix    string             `json:"suggestedFix"   bun:"suggested_fix,type:TEXT,nullzero"`
 	CreatedAt       int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 

@@ -128,6 +128,50 @@ func TestRender204_FiltersDiagnosticsByValidationMode(t *testing.T) {
 	}
 }
 
+func TestRender204_ReportsUnsupportedAdvancedRenderingFeatures(t *testing.T) {
+	t.Parallel()
+
+	input := renderInput(edi.ValidationModeStrict)
+	input.Payload.ShipmentID = pulid.MustNew("shp_")
+	input.Payload.Moves = []edi.LoadTenderMove{
+		{
+			Sequence: 1,
+			Stops: []edi.LoadTenderStop{
+				{Type: "LD", Sequence: 1},
+			},
+		},
+	}
+	for _, segment := range input.TemplateVersion.Segments {
+		switch segment.SegmentID {
+		case "B2":
+			segment.Elements[2].Source = edi.TemplateElementSourceTransform
+			segment.Elements[2].BaseSource = &edi.TemplateElementBaseSource{
+				Source:    edi.TemplateElementSourceFieldPath,
+				FieldPath: "ratingDetail.paymentMethod",
+			}
+			segment.Elements[2].TransformPipeline = []edi.TemplateTransformStep{
+				{
+					Operation: "uppercase",
+					Arguments: map[string]any{},
+				},
+			}
+		case "NTE":
+			segment.Condition = "shipment.ratingDetail.note != ''"
+		}
+	}
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 2)
+	assert.Equal(t, "render_error", result.Diagnostics[0].Code)
+	assert.NotEmpty(t, result.Diagnostics[0].SuggestedFix)
+	assert.Contains(t, result.Diagnostics[0].Message, "not supported")
+	assert.Equal(t, "render_error", result.Diagnostics[1].Code)
+	assert.NotEmpty(t, result.Diagnostics[1].SuggestedFix)
+	assert.Contains(t, result.Diagnostics[1].Message, "not supported")
+}
+
 func renderInput(mode edi.ValidationMode) *RenderInput {
 	envelope := edi.DefaultX12EnvelopeSettings()
 	profile := &edi.EDIPartnerDocumentProfile{

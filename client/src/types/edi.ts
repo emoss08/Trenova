@@ -56,6 +56,17 @@ export const ediTemplateStatusSchema = z.enum(["Draft", "Active", "Archived", "S
 export const ediValidationModeSchema = z.enum(["Strict", "WarnOnly", "Disabled"]);
 export const ediValidationSeveritySchema = z.enum(["Info", "Warning", "Error"]);
 export const ediMessageStatusSchema = z.enum(["Generated", "Failed"]);
+export const ediTemplateElementSourceSchema = z.enum([
+  "constant",
+  "fieldPath",
+  "partnerSetting",
+  "mapping",
+  "runtime",
+  "repeat",
+  "transform",
+  "starlark",
+]);
+export type EDITemplateElementSource = z.infer<typeof ediTemplateElementSourceSchema>;
 
 export const ediPartnerSchema = z.object({
   id: z.string(),
@@ -372,16 +383,42 @@ export const ediTransferChangeSchema = z.object({
 
 export type EDITransferChange = z.infer<typeof ediTransferChangeSchema>;
 
-export const ediTemplateElementSchema = z.object({
-  position: z.number(),
-  name: z.string(),
-  source: z.string(),
+export const ediTemplateElementBaseSourceSchema = z.object({
+  source: ediTemplateElementSourceSchema,
   value: z.string().nullish(),
   fieldPath: z.string().nullish(),
   partnerSettingPath: z.string().nullish(),
-  expression: z.string().nullish(),
+  mappingEntityType: ediMappingEntityTypeSchema.nullish(),
+  mappingSourcePath: z.string().nullish(),
   runtimeKey: z.string().nullish(),
   repeatPath: z.string().nullish(),
+  default: z.string().nullish(),
+});
+export type EDITemplateElementBaseSource = z.infer<
+  typeof ediTemplateElementBaseSourceSchema
+>;
+
+export const ediTemplateTransformStepSchema = z.object({
+  operation: z.string(),
+  arguments: z.record(z.string(), z.unknown()).default({}),
+});
+export type EDITemplateTransformStep = z.infer<typeof ediTemplateTransformStepSchema>;
+
+export const ediTemplateElementSchema = z.object({
+  position: z.number(),
+  name: z.string(),
+  source: ediTemplateElementSourceSchema,
+  value: z.string().nullish(),
+  fieldPath: z.string().nullish(),
+  partnerSettingPath: z.string().nullish(),
+  mappingEntityType: ediMappingEntityTypeSchema.nullish(),
+  mappingSourcePath: z.string().nullish(),
+  runtimeKey: z.string().nullish(),
+  repeatPath: z.string().nullish(),
+  baseSource: ediTemplateElementBaseSourceSchema.nullish(),
+  transformPipeline: z.array(ediTemplateTransformStepSchema).default([]),
+  starlarkFunction: z.string().nullish(),
+  starlarkScript: z.string().nullish(),
   default: z.string().nullish(),
   condition: z.string().nullish(),
   implementationGuideNote: z.string().nullish(),
@@ -516,6 +553,7 @@ export const ediDiagnosticSchema = z.object({
   elementPosition: z.number().default(0),
   path: z.string().nullish(),
   message: z.string(),
+  suggestedFix: z.string().nullish(),
 });
 
 export type EDIDiagnostic = z.infer<typeof ediDiagnosticSchema>;

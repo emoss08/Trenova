@@ -627,18 +627,56 @@ function ElementInspector({ segment }: { segment?: EDITemplateSegment }) {
                 </Badge>
               </TableCell>
               <TableCell className="font-mono text-xs">
-                {element.fieldPath ??
-                  element.runtimeKey ??
-                  element.expression ??
-                  element.partnerSettingPath ??
-                  element.value ??
-                  element.default}
+                {templateElementSourceLabel(element)}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
+  );
+}
+
+function templateElementSourceLabel(
+  element: EDITemplateSegment["elements"][number],
+) {
+  if (element.source === "transform") {
+    const base = element.baseSource
+      ? templateBaseSourceLabel(element.baseSource)
+      : "No base source";
+    const steps =
+      element.transformPipeline.length > 0
+        ? element.transformPipeline.map((step) => step.operation).join(" -> ")
+        : "No transforms";
+    return `${base} / ${steps}`;
+  }
+  if (element.source === "starlark") {
+    return element.starlarkFunction ?? element.starlarkScript ?? "Starlark script";
+  }
+  return (
+    element.fieldPath ??
+    element.runtimeKey ??
+    element.mappingSourcePath ??
+    element.partnerSettingPath ??
+    element.repeatPath ??
+    element.value ??
+    element.default ??
+    ""
+  );
+}
+
+function templateBaseSourceLabel(
+  source: NonNullable<EDITemplateSegment["elements"][number]["baseSource"]>,
+) {
+  return (
+    source.fieldPath ??
+    source.runtimeKey ??
+    source.mappingSourcePath ??
+    source.partnerSettingPath ??
+    source.repeatPath ??
+    source.value ??
+    source.default ??
+    source.source
   );
 }
 
@@ -678,6 +716,11 @@ function DiagnosticsList({ diagnostics }: { diagnostics: EDIDiagnostic[] }) {
                 <span className="font-mono text-xs">{diagnostic.segmentId}</span>
               </div>
               <div className="mt-1 text-xs">{diagnostic.message}</div>
+              {diagnostic.suggestedFix ? (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {diagnostic.suggestedFix}
+                </div>
+              ) : null}
             </div>
           ))}
         </div>

@@ -1,7 +1,6 @@
 package edix12
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -12,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/expr-lang/expr"
-	"github.com/expr-lang/expr/vm"
 	"github.com/shopspring/decimal"
 )
 
@@ -38,6 +35,7 @@ type Diagnostic struct {
 	ElementPosition int                    `json:"elementPosition"`
 	Path            string                 `json:"path"`
 	Message         string                 `json:"message"`
+	SuggestedFix    string                 `json:"suggestedFix"`
 }
 
 func Render204(ctx *RenderInput) (*RenderResult, error) {
@@ -58,12 +56,17 @@ func Render204(ctx *RenderInput) (*RenderResult, error) {
 			repeats = []any{nil}
 		}
 		for _, repeatValue := range repeats {
-			env := expressionEnv(payloadMap, ctx.Profile.PartnerSettings, ctx.Runtime, repeatValue)
-			include, evalErr := evaluateCondition(segment.Condition, env)
+			renderCtx := renderContext(
+				payloadMap,
+				ctx.Profile.PartnerSettings,
+				ctx.Runtime,
+				repeatValue,
+			)
+			include, evalErr := evaluateCondition(segment.Condition)
 			if evalErr != nil {
 				diagnostics = append(
 					diagnostics,
-					expressionDiagnostic(segment, 0, segment.Condition, evalErr),
+					unsupportedConditionDiagnostic(segment, 0, segment.Condition),
 				)
 				continue
 			}
@@ -74,7 +77,7 @@ func Render204(ctx *RenderInput) (*RenderResult, error) {
 			segmentHasValue := segment.Required
 			for i := range segment.Elements {
 				element := &segment.Elements[i]
-				value, elementDiagnostics := resolveElement(segment, element, env)
+				value, elementDiagnostics := resolveElement(segment, element, renderCtx)
 				diagnostics = append(diagnostics, elementDiagnostics...)
 				if value != "" {
 					segmentHasValue = true
@@ -156,10 +159,10 @@ func resolveElement(
 	env map[string]any,
 ) (string, []Diagnostic) {
 	diagnostics := []Diagnostic{}
-	include, err := evaluateCondition(element.Condition, env)
+	include, err := evaluateCondition(element.Condition)
 	if err != nil {
 		return "", []Diagnostic{
-			expressionDiagnostic(segment, element.Position, element.Condition, err),
+			unsupportedConditionDiagnostic(segment, element.Position, element.Condition),
 		}
 	}
 	if !include {
@@ -171,7 +174,13 @@ func resolveElement(
 	if valueErr != nil {
 		diagnostics = append(
 			diagnostics,
-			expressionDiagnostic(segment, element.Position, element.Expression, valueErr),
+			renderDiagnostic(renderDiagnosticParams{
+				Segment:      segment,
+				Position:     element.Position,
+				Path:         sourcePath(element),
+				Message:      valueErr.Error(),
+				SuggestedFix: suggestedFixForSource(element.Source),
+			}),
 		)
 	}
 	if value == "" {
@@ -183,12 +192,7 @@ func resolveElement(
 			Code:            stringutils.FirstNonEmpty(element.Validation.Code, "required"),
 			SegmentID:       segment.SegmentID,
 			ElementPosition: element.Position,
-			Path: stringutils.FirstNonEmpty(
-				element.FieldPath,
-				element.RepeatPath,
-				element.RuntimeKey,
-				element.Expression,
-			),
+			Path:            sourcePath(element),
 			Message: stringutils.FirstNonEmpty(
 				element.Validation.Message,
 				element.Name+" is required",
@@ -225,10 +229,10 @@ func resolveElementValue(element *edi.TemplateElement, env map[string]any) (any,
 		return maputils.Path(env, "runtime."+element.RuntimeKey), nil
 	case edi.TemplateElementSourceRepeat:
 		return maputils.Path(env, "repeat."+element.RepeatPath), nil
-	case edi.TemplateElementSourceExpression:
-		return evaluateExpression(element.Expression, env)
 	case edi.TemplateElementSourceMapping:
 		return maputils.Path(env, "mapping."+element.MappingSourcePath), nil
+	case edi.TemplateElementSourceTransform, edi.TemplateElementSourceStarlark:
+		return "", fmt.Errorf("%s source rendering is not supported yet", element.Source)
 	default:
 		return "", nil
 	}
@@ -325,7 +329,7 @@ func applyTrailerCounts(rendered []string, separator string) {
 	}
 }
 
-func expressionEnv(
+func renderContext(
 	shipment map[string]any,
 	partner map[string]any,
 	runtime map[string]any,
@@ -354,38 +358,11 @@ func repeatValues(payload map[string]any, path string) []any {
 	return items
 }
 
-func evaluateCondition(condition string, env map[string]any) (bool, error) {
+func evaluateCondition(condition string) (bool, error) {
 	if strings.TrimSpace(condition) == "" {
 		return true, nil
 	}
-	program, err := expr.Compile(condition, expr.Env(env))
-	if err != nil {
-		return false, err
-	}
-	result, err := vm.Run(program, env)
-	if err != nil {
-		return false, err
-	}
-	value, ok := result.(bool)
-	if !ok {
-		return false, errors.New("condition did not return a boolean")
-	}
-	return value, nil
-}
-
-func evaluateExpression(expression string, env map[string]any) (string, error) {
-	if strings.TrimSpace(expression) == "" {
-		return "", nil
-	}
-	program, err := expr.Compile(expression, expr.Env(env))
-	if err != nil {
-		return "", err
-	}
-	result, err := vm.Run(program, env)
-	if err != nil {
-		return "", err
-	}
-	return valueToString(result), nil
+	return false, fmt.Errorf("template conditions are not supported until Starlark condition rendering is available")
 }
 
 func valueToString(value any) string {
@@ -473,19 +450,79 @@ func filterDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) []Diag
 	return diagnostics
 }
 
-func expressionDiagnostic(
-	segment *edi.EDITemplateSegment,
-	position int,
-	expression string,
-	err error,
-) Diagnostic {
+type renderDiagnosticParams struct {
+	Segment      *edi.EDITemplateSegment
+	Position     int
+	Path         string
+	Message      string
+	SuggestedFix string
+}
+
+func renderDiagnostic(params renderDiagnosticParams) Diagnostic {
 	return Diagnostic{
 		Severity:        edi.ValidationSeverityError,
-		Code:            "expression_error",
-		SegmentID:       segment.SegmentID,
-		ElementPosition: position,
-		Path:            expression,
-		Message:         err.Error(),
+		Code:            "render_error",
+		SegmentID:       params.Segment.SegmentID,
+		ElementPosition: params.Position,
+		Path:            params.Path,
+		Message:         params.Message,
+		SuggestedFix:    params.SuggestedFix,
+	}
+}
+
+func unsupportedConditionDiagnostic(
+	segment *edi.EDITemplateSegment,
+	position int,
+	condition string,
+) Diagnostic {
+	return renderDiagnostic(renderDiagnosticParams{
+		Segment:  segment,
+		Position: position,
+		Path:     condition,
+		Message:  "Template conditions are not supported until Starlark condition rendering is available",
+		SuggestedFix: "Remove this condition for now, or wait for Starlark condition support " +
+			"before using conditional EDI rendering.",
+	})
+}
+
+func sourcePath(element *edi.TemplateElement) string {
+	path := stringutils.FirstNonEmpty(
+		element.FieldPath,
+		element.RepeatPath,
+		element.RuntimeKey,
+		element.MappingSourcePath,
+		element.PartnerSettingPath,
+		element.StarlarkFunction,
+		element.StarlarkScript,
+		element.Value,
+		element.Default,
+	)
+	if path != "" || element.BaseSource == nil {
+		return path
+	}
+	return baseSourcePath(element.BaseSource)
+}
+
+func baseSourcePath(source *edi.TemplateElementBaseSource) string {
+	return stringutils.FirstNonEmpty(
+		source.FieldPath,
+		source.RepeatPath,
+		source.RuntimeKey,
+		source.MappingSourcePath,
+		source.PartnerSettingPath,
+		source.Value,
+		source.Default,
+	)
+}
+
+func suggestedFixForSource(source edi.TemplateElementSource) string {
+	switch source {
+	case edi.TemplateElementSourceTransform:
+		return "Use a direct source until transform pipeline rendering is implemented."
+	case edi.TemplateElementSourceStarlark:
+		return "Use a direct source until the restricted Starlark runtime is implemented."
+	default:
+		return ""
 	}
 }
 

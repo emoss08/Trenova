@@ -263,6 +263,7 @@ CREATE TABLE IF NOT EXISTS "edi_message_validation_errors"(
     "element_position" integer NOT NULL DEFAULT 0,
     "path" text,
     "message" text NOT NULL,
+    "suggested_fix" text,
     "created_at" bigint NOT NULL DEFAULT extract(epoch FROM current_timestamp)::bigint,
     CONSTRAINT "pk_edi_message_validation_errors" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
     CONSTRAINT "fk_edi_message_validation_errors_message" FOREIGN KEY ("message_id", "business_unit_id", "organization_id") REFERENCES "edi_messages"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE CASCADE

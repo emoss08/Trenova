@@ -292,6 +292,7 @@ func (s *Service) GenerateDocument(
 			ElementPosition: diagnostic.ElementPosition,
 			Path:            diagnostic.Path,
 			Message:         diagnostic.Message,
+			SuggestedFix:    diagnostic.SuggestedFix,
 		})
 	}
 	return s.documentRepo.CreateMessageWithDiagnostics(
