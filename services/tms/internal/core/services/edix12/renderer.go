@@ -240,27 +240,92 @@ func resolveElementValue(
 	element *edi.TemplateElement,
 	env map[string]any,
 ) (any, []Diagnostic, error) {
+	if isDirectElementSource(element.Source) {
+		value, _ := resolveDirectSource(elementDirectSource(element), env)
+		return value, nil, nil
+	}
+
 	switch element.Source {
-	case edi.TemplateElementSourceConstant:
-		return element.Value, nil, nil
-	case edi.TemplateElementSourceFieldPath:
-		return maputils.Path(env, qualifyFieldPath(element.FieldPath)), nil, nil
-	case edi.TemplateElementSourcePartnerSetting:
-		path := stringutils.FirstNonEmpty(element.PartnerSettingPath, element.Name)
-		return maputils.Path(env, "partner."+path), nil, nil
-	case edi.TemplateElementSourceRuntime:
-		return maputils.Path(env, "runtime."+element.RuntimeKey), nil, nil
-	case edi.TemplateElementSourceRepeat:
-		return maputils.Path(env, "repeat."+element.RepeatPath), nil, nil
-	case edi.TemplateElementSourceMapping:
-		return maputils.Path(env, "mapping."+element.MappingSourcePath), nil, nil
 	case edi.TemplateElementSourceTransform:
-		return "", nil, fmt.Errorf("%s source rendering is not supported yet", element.Source)
+		return resolveTransformElementValue(segment, element, env)
 	case edi.TemplateElementSourceStarlark:
 		value, diagnostics := resolveStarlarkElementValue(ctx, segment, element, env)
 		return value, diagnostics, nil
 	default:
 		return "", nil, nil
+	}
+}
+
+func isDirectElementSource(source edi.TemplateElementSource) bool {
+	switch source {
+	case edi.TemplateElementSourceConstant,
+		edi.TemplateElementSourceFieldPath,
+		edi.TemplateElementSourcePartnerSetting,
+		edi.TemplateElementSourceRuntime,
+		edi.TemplateElementSourceRepeat,
+		edi.TemplateElementSourceMapping:
+		return true
+	default:
+		return false
+	}
+}
+
+type directSource struct {
+	Source             edi.TemplateElementSource
+	Value              string
+	FieldPath          string
+	PartnerSettingPath string
+	MappingSourcePath  string
+	RuntimeKey         string
+	RepeatPath         string
+	Name               string
+}
+
+func elementDirectSource(element *edi.TemplateElement) directSource {
+	return directSource{
+		Source:             element.Source,
+		Value:              element.Value,
+		FieldPath:          element.FieldPath,
+		PartnerSettingPath: element.PartnerSettingPath,
+		MappingSourcePath:  element.MappingSourcePath,
+		RuntimeKey:         element.RuntimeKey,
+		RepeatPath:         element.RepeatPath,
+		Name:               element.Name,
+	}
+}
+
+func baseDirectSource(source *edi.TemplateElementBaseSource) directSource {
+	return directSource{
+		Source:             source.Source,
+		Value:              source.Value,
+		FieldPath:          source.FieldPath,
+		PartnerSettingPath: source.PartnerSettingPath,
+		MappingSourcePath:  source.MappingSourcePath,
+		RuntimeKey:         source.RuntimeKey,
+		RepeatPath:         source.RepeatPath,
+	}
+}
+
+func resolveDirectSource(source directSource, env map[string]any) (any, bool) {
+	switch source.Source {
+	case edi.TemplateElementSourceConstant:
+		return source.Value, true
+	case edi.TemplateElementSourceFieldPath:
+		return maputils.Path(env, qualifyFieldPath(source.FieldPath)), true
+	case edi.TemplateElementSourcePartnerSetting:
+		path := stringutils.FirstNonEmpty(source.PartnerSettingPath, source.Name)
+		if strings.TrimSpace(path) == "" {
+			return nil, true
+		}
+		return maputils.Path(env, "partner."+path), true
+	case edi.TemplateElementSourceRuntime:
+		return maputils.Path(env, "runtime."+source.RuntimeKey), true
+	case edi.TemplateElementSourceRepeat:
+		return maputils.Path(env, "repeat."+source.RepeatPath), true
+	case edi.TemplateElementSourceMapping:
+		return maputils.Path(env, "mapping."+source.MappingSourcePath), true
+	default:
+		return nil, false
 	}
 }
 
@@ -529,7 +594,8 @@ func filterDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) []Diag
 	if mode == edi.ValidationModeDisabled {
 		filtered := make([]Diagnostic, 0, len(diagnostics))
 		for _, diagnostic := range diagnostics {
-			if diagnostic.Code == "render_error" || strings.HasPrefix(diagnostic.Code, "starlark_") {
+			if diagnostic.Code == "render_error" || strings.HasPrefix(diagnostic.Code, "starlark_") ||
+				strings.HasPrefix(diagnostic.Code, "transform_") {
 				filtered = append(filtered, diagnostic)
 			}
 		}
@@ -621,7 +687,7 @@ func baseSourcePath(source *edi.TemplateElementBaseSource) string {
 func suggestedFixForSource(source edi.TemplateElementSource) string {
 	switch source {
 	case edi.TemplateElementSourceTransform:
-		return "Use a direct source until transform pipeline rendering is implemented."
+		return transformSuggestedFix
 	case edi.TemplateElementSourceStarlark:
 		return "Check the Starlark script, function name, helper arguments, and available context fields."
 	default:

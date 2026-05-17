@@ -142,20 +142,7 @@ func TestRender204_ReportsUnsupportedAdvancedRenderingFeatures(t *testing.T) {
 		},
 	}
 	for _, segment := range input.TemplateVersion.Segments {
-		switch segment.SegmentID {
-		case "B2":
-			segment.Elements[2].Source = edi.TemplateElementSourceTransform
-			segment.Elements[2].BaseSource = &edi.TemplateElementBaseSource{
-				Source:    edi.TemplateElementSourceFieldPath,
-				FieldPath: "ratingDetail.paymentMethod",
-			}
-			segment.Elements[2].TransformPipeline = []edi.TemplateTransformStep{
-				{
-					Operation: "uppercase",
-					Arguments: map[string]any{},
-				},
-			}
-		case "NTE":
+		if segment.SegmentID == "NTE" {
 			segment.Condition = "shipment.ratingDetail.note != ''"
 		}
 	}
@@ -163,13 +150,10 @@ func TestRender204_ReportsUnsupportedAdvancedRenderingFeatures(t *testing.T) {
 	result, err := Render204(input)
 
 	require.NoError(t, err)
-	require.Len(t, result.Diagnostics, 2)
+	require.Len(t, result.Diagnostics, 1)
 	assert.Equal(t, "render_error", result.Diagnostics[0].Code)
 	assert.NotEmpty(t, result.Diagnostics[0].SuggestedFix)
 	assert.Contains(t, result.Diagnostics[0].Message, "not supported")
-	assert.Equal(t, "render_error", result.Diagnostics[1].Code)
-	assert.NotEmpty(t, result.Diagnostics[1].SuggestedFix)
-	assert.Contains(t, result.Diagnostics[1].Message, "not supported")
 }
 
 func TestRender204_StarlarkConstantScalarRenders(t *testing.T) {
