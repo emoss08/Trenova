@@ -172,6 +172,126 @@ func TestRender204_ReportsUnsupportedAdvancedRenderingFeatures(t *testing.T) {
 	assert.Contains(t, result.Diagnostics[1].Message, "not supported")
 }
 
+func TestRender204_StarlarkConstantScalarRenders(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return "STAR-REF"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "L11*STAR-REF*BM")
+}
+
+func TestRender204_StarlarkReadsShipmentContext(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.BOL = "BOL-STARK"
+	element := findElement(t, input, "B2", 2)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return ctx["shipment"]["bol"]`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"*BOL-STARK")
+}
+
+func TestRender204_StarlarkRepeatItemRenders(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Payload.Moves[0].Stops[0].LocationName = "Starlark Dock"
+	element := findElement(t, input, "N1", 1)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx, item):
+    return item["locationName"]`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "N1*LD*Starlark Dock")
+}
+
+func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "explode"
+	element.StarlarkScript = `def explode(ctx):
+    return 1 / 0`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+	assert.Equal(t, "starlark_runtime_error", diagnostic.Code)
+	assert.Equal(t, "L11", diagnostic.SegmentID)
+	assert.Equal(t, 1, diagnostic.ElementPosition)
+	assert.Equal(t, "explode", diagnostic.Path)
+	assert.Contains(t, diagnostic.Message, "floating-point division by zero")
+	assert.Equal(
+		t,
+		"Check field paths, helper arguments, and function arity in the Starlark script.",
+		diagnostic.SuggestedFix,
+	)
+	assert.False(t, strings.Contains(result.RawX12, "L11**BM*"))
+}
+
+func TestRender204_StarlarkStepLimitDiagnosticPropagates(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.FieldPath = ""
+	element.StarlarkFunction = "loop"
+	element.StarlarkScript = `def loop(ctx):
+    while True:
+        pass`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+	assert.Equal(t, "starlark_step_limit", diagnostic.Code)
+	assert.Equal(t, "L11", diagnostic.SegmentID)
+	assert.Equal(t, 1, diagnostic.ElementPosition)
+	assert.Equal(t, "loop", diagnostic.Path)
+	assert.NotEmpty(t, diagnostic.Message)
+	assert.Equal(t, "Reduce loop work or simplify the Starlark script.", diagnostic.SuggestedFix)
+}
+
+func TestHasBlockingDiagnostics_BlocksStrictStarlarkDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := []Diagnostic{
+		{
+			Severity: edi.ValidationSeverityError,
+			Code:     "starlark_runtime_error",
+		},
+	}
+
+	assert.True(t, HasBlockingDiagnostics(diagnostics, edi.ValidationModeStrict))
+	assert.False(t, HasBlockingDiagnostics(diagnostics, edi.ValidationModeWarnOnly))
+}
+
 func renderInput(mode edi.ValidationMode) *RenderInput {
 	envelope := edi.DefaultX12EnvelopeSettings()
 	profile := &edi.EDIPartnerDocumentProfile{
@@ -200,4 +320,51 @@ func renderInput(mode edi.ValidationMode) *RenderInput {
 		X12Version: edi.DefaultX12204Version,
 		Runtime:    runtime,
 	}
+}
+
+func validRenderInput(mode edi.ValidationMode) *RenderInput {
+	input := renderInput(mode)
+	input.Payload.ShipmentID = pulid.MustNew("shp_")
+	input.Payload.Moves = []edi.LoadTenderMove{
+		{
+			Sequence: 1,
+			Stops: []edi.LoadTenderStop{
+				{
+					Type:         "LD",
+					Sequence:     1,
+					LocationName: "Chicago Dock",
+				},
+			},
+		},
+	}
+	return input
+}
+
+func findSegment(
+	t *testing.T,
+	input *RenderInput,
+	segmentID string,
+) *edi.EDITemplateSegment {
+	t.Helper()
+
+	for _, segment := range input.TemplateVersion.Segments {
+		if segment.SegmentID == segmentID {
+			return segment
+		}
+	}
+	require.Failf(t, "segment not found", "segment %s not found", segmentID)
+	return nil
+}
+
+func findElement(
+	t *testing.T,
+	input *RenderInput,
+	segmentID string,
+	index int,
+) *edi.TemplateElement {
+	t.Helper()
+
+	segment := findSegment(t, input, segmentID)
+	require.Less(t, index, len(segment.Elements))
+	return &segment.Elements[index]
 }

@@ -19,6 +19,7 @@ import (
 )
 
 type resolvedDocumentContext struct {
+	ctx             context.Context
 	profile         *edi.EDIPartnerDocumentProfile
 	templateVersion *edi.EDITemplateVersion
 	payload         edi.LoadTenderPayload
@@ -377,6 +378,7 @@ func (s *Service) resolveDocumentContext(
 	)
 	runtime := edix12.RuntimeValues(profile, x12Version)
 	return &resolvedDocumentContext{
+		ctx:             ctx,
 		profile:         profile,
 		templateVersion: templateVersion,
 		payload:         payload,
@@ -456,6 +458,7 @@ func (s *Service) resolvePayload(
 
 func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
 	return &edix12.RenderInput{
+		Context:         c.ctx,
 		Profile:         c.profile,
 		TemplateVersion: c.templateVersion,
 		Payload:         c.payload,

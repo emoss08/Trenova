@@ -1,6 +1,7 @@
 package edix12
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/services/edistarlark"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -15,6 +17,7 @@ import (
 )
 
 type RenderInput struct {
+	Context         context.Context
 	Profile         *edi.EDIPartnerDocumentProfile
 	TemplateVersion *edi.EDITemplateVersion
 	Payload         edi.LoadTenderPayload
@@ -38,12 +41,17 @@ type Diagnostic struct {
 	SuggestedFix    string                 `json:"suggestedFix"`
 }
 
-func Render204(ctx *RenderInput) (*RenderResult, error) {
-	payloadMap, err := jsonutils.ToJSON(ctx.Payload)
+func Render204(input *RenderInput) (*RenderResult, error) {
+	renderCtx := input.Context
+	if renderCtx == nil {
+		renderCtx = context.Background()
+	}
+
+	payloadMap, err := jsonutils.ToJSON(input.Payload)
 	if err != nil {
 		return nil, err
 	}
-	segments := append([]*edi.EDITemplateSegment{}, ctx.TemplateVersion.Segments...)
+	segments := append([]*edi.EDITemplateSegment{}, input.TemplateVersion.Segments...)
 	sort.SliceStable(segments, func(i, j int) bool {
 		return segments[i].Sequence < segments[j].Sequence
 	})
@@ -56,10 +64,10 @@ func Render204(ctx *RenderInput) (*RenderResult, error) {
 			repeats = []any{nil}
 		}
 		for _, repeatValue := range repeats {
-			renderCtx := renderContext(
+			env := renderEnvironment(
 				payloadMap,
-				ctx.Profile.PartnerSettings,
-				ctx.Runtime,
+				input.Profile.PartnerSettings,
+				input.Runtime,
 				repeatValue,
 			)
 			include, evalErr := evaluateCondition(segment.Condition)
@@ -77,32 +85,37 @@ func Render204(ctx *RenderInput) (*RenderResult, error) {
 			segmentHasValue := segment.Required
 			for i := range segment.Elements {
 				element := &segment.Elements[i]
-				value, elementDiagnostics := resolveElement(segment, element, renderCtx)
+				value, elementDiagnostics := resolveElement(
+					renderCtx,
+					segment,
+					element,
+					env,
+				)
 				diagnostics = append(diagnostics, elementDiagnostics...)
 				if value != "" {
 					segmentHasValue = true
 				}
-				elements = append(elements, sanitizeX12Value(value, &ctx.Profile.Envelope))
+				elements = append(elements, sanitizeX12Value(value, &input.Profile.Envelope))
 			}
 			if !segmentHasValue && !segment.Required {
 				continue
 			}
 			rendered = append(rendered, strings.Join(
 				append([]string{segment.SegmentID}, trimTrailingEmpty(elements)...),
-				ctx.Profile.Envelope.ElementSeparator,
+				input.Profile.Envelope.ElementSeparator,
 			))
 		}
 	}
 
-	applyTrailerCounts(rendered, ctx.Profile.Envelope.ElementSeparator)
+	applyTrailerCounts(rendered, input.Profile.Envelope.ElementSeparator)
 	raw := strings.Join(
 		rendered,
-		ctx.Profile.Envelope.SegmentTerminator,
-	) + ctx.Profile.Envelope.SegmentTerminator
+		input.Profile.Envelope.SegmentTerminator,
+	) + input.Profile.Envelope.SegmentTerminator
 	return &RenderResult{
 		RawX12:       raw,
 		SegmentCount: int64(len(rendered)),
-		Diagnostics:  filterDiagnostics(diagnostics, ctx.Profile.ValidationMode),
+		Diagnostics:  filterDiagnostics(diagnostics, input.Profile.ValidationMode),
 	}, nil
 }
 
@@ -154,6 +167,7 @@ func HasBlockingDiagnostics(diagnostics []Diagnostic, mode edi.ValidationMode) b
 }
 
 func resolveElement(
+	ctx context.Context,
 	segment *edi.EDITemplateSegment,
 	element *edi.TemplateElement,
 	env map[string]any,
@@ -169,7 +183,11 @@ func resolveElement(
 		return "", diagnostics
 	}
 
-	rawValue, valueErr := resolveElementValue(element, env)
+	rawValue, sourceDiagnostics, valueErr := resolveElementValue(ctx, segment, element, env)
+	if len(sourceDiagnostics) > 0 {
+		return "", sourceDiagnostics
+	}
+
 	value := formatElementValue(segment, element, rawValue)
 	if valueErr != nil {
 		diagnostics = append(
@@ -216,25 +234,33 @@ func resolveElement(
 	return value, diagnostics
 }
 
-func resolveElementValue(element *edi.TemplateElement, env map[string]any) (any, error) {
+func resolveElementValue(
+	ctx context.Context,
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+	env map[string]any,
+) (any, []Diagnostic, error) {
 	switch element.Source {
 	case edi.TemplateElementSourceConstant:
-		return element.Value, nil
+		return element.Value, nil, nil
 	case edi.TemplateElementSourceFieldPath:
-		return maputils.Path(env, qualifyFieldPath(element.FieldPath)), nil
+		return maputils.Path(env, qualifyFieldPath(element.FieldPath)), nil, nil
 	case edi.TemplateElementSourcePartnerSetting:
 		path := stringutils.FirstNonEmpty(element.PartnerSettingPath, element.Name)
-		return maputils.Path(env, "partner."+path), nil
+		return maputils.Path(env, "partner."+path), nil, nil
 	case edi.TemplateElementSourceRuntime:
-		return maputils.Path(env, "runtime."+element.RuntimeKey), nil
+		return maputils.Path(env, "runtime."+element.RuntimeKey), nil, nil
 	case edi.TemplateElementSourceRepeat:
-		return maputils.Path(env, "repeat."+element.RepeatPath), nil
+		return maputils.Path(env, "repeat."+element.RepeatPath), nil, nil
 	case edi.TemplateElementSourceMapping:
-		return maputils.Path(env, "mapping."+element.MappingSourcePath), nil
-	case edi.TemplateElementSourceTransform, edi.TemplateElementSourceStarlark:
-		return "", fmt.Errorf("%s source rendering is not supported yet", element.Source)
+		return maputils.Path(env, "mapping."+element.MappingSourcePath), nil, nil
+	case edi.TemplateElementSourceTransform:
+		return "", nil, fmt.Errorf("%s source rendering is not supported yet", element.Source)
+	case edi.TemplateElementSourceStarlark:
+		value, diagnostics := resolveStarlarkElementValue(ctx, segment, element, env)
+		return value, diagnostics, nil
 	default:
-		return "", nil
+		return "", nil, nil
 	}
 }
 
@@ -329,7 +355,7 @@ func applyTrailerCounts(rendered []string, separator string) {
 	}
 }
 
-func renderContext(
+func renderEnvironment(
 	shipment map[string]any,
 	partner map[string]any,
 	runtime map[string]any,
@@ -345,6 +371,69 @@ func renderContext(
 		"runtime":  runtime,
 		"repeat":   repeat,
 	}
+}
+
+func resolveStarlarkElementValue(
+	ctx context.Context,
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+	env map[string]any,
+) (string, []Diagnostic) {
+	starlarkCtx, err := edistarlark.BuildContext(
+		envMap(env, "shipment"),
+		envMap(env, "partner"),
+		envMap(env, "runtime"),
+		envMap(env, "mapping"),
+	)
+	if err != nil {
+		return "", []Diagnostic{
+			renderDiagnostic(renderDiagnosticParams{
+				Segment:      segment,
+				Position:     element.Position,
+				Path:         sourcePath(element),
+				Message:      err.Error(),
+				SuggestedFix: suggestedFixForSource(element.Source),
+			}),
+		}
+	}
+
+	result := edistarlark.Evaluate(ctx, edistarlark.EvalRequest{
+		Script:          element.StarlarkScript,
+		FunctionName:    element.StarlarkFunction,
+		Context:         starlarkCtx,
+		Item:            env["repeat"],
+		SegmentID:       segment.SegmentID,
+		ElementPosition: element.Position,
+		Path:            sourcePath(element),
+	})
+	if len(result.Diagnostics) > 0 {
+		return "", starlarkDiagnostics(result.Diagnostics)
+	}
+	return result.Value, nil
+}
+
+func starlarkDiagnostics(diagnostics []edistarlark.Diagnostic) []Diagnostic {
+	converted := make([]Diagnostic, 0, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		converted = append(converted, Diagnostic{
+			Severity:        edi.ValidationSeverity(diagnostic.Severity),
+			Code:            diagnostic.Code,
+			SegmentID:       diagnostic.SegmentID,
+			ElementPosition: diagnostic.ElementPosition,
+			Path:            diagnostic.Path,
+			Message:         diagnostic.Message,
+			SuggestedFix:    diagnostic.SuggestedFix,
+		})
+	}
+	return converted
+}
+
+func envMap(env map[string]any, key string) map[string]any {
+	value, ok := env[key].(map[string]any)
+	if !ok {
+		return map[string]any{}
+	}
+	return value
 }
 
 func repeatValues(payload map[string]any, path string) []any {
