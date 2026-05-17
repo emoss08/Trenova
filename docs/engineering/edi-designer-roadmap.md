@@ -161,6 +161,25 @@ hardened. They are not the end state.
   element defaults, required validation, max-length truncation, and X12
   separator sanitization.
 
+### Stage 3.7: Backend Condition Rendering
+
+- Backend segment and element conditions are supported for outbound 204
+  rendering.
+- Declarative conditions support path truthiness, negation, string equality, and
+  string inequality against shipment, repeat, partner, mapping, and runtime
+  context roots.
+- Repeated segment conditions can filter individual repeat items through the
+  repeat aliases used by value rendering.
+- Element conditions blank skipped element values and bypass required validation
+  for skipped elements.
+- Starlark-backed conditions use the same safe Starlark evaluator, source
+  context, repeat aliases, timeout, and step-limit controls as value rendering.
+- Condition diagnostics use `condition_error` with segment, element position,
+  condition path, message, suggested fix metadata, and validation-mode handling.
+- Starlark condition diagnostics preserve the underlying Starlark diagnostic
+  code in the condition error message, such as `starlark_runtime_error` or
+  `starlark_step_limit`.
+
 ## Remaining Stages
 
 The stages below are ordered by dependency and operational value. A stage is
@@ -195,12 +214,17 @@ operational support are present where relevant.
 
 ### Stage 6: Condition Rendering
 
-- Add condition rendering for loops, segments, elements, and transform branches.
-- Support declarative predicates and Starlark predicates.
-- Conditions must run with the same source context and safety controls as value
-  rendering.
-- Diagnostics must identify skipped, failed, and invalid condition paths.
-- Add designer previews showing why a segment or element rendered or did not
+- [ ] Add condition rendering for loops and transform branches.
+- [x] Add condition rendering for segments and elements.
+- [x] Support declarative path, negated path, equality, and inequality
+  predicates.
+- [x] Support Starlark predicates for complex partner rules.
+- [x] Conditions must run with the same source context and safety controls as
+  value rendering.
+- [x] Diagnostics must identify failed and invalid condition paths.
+- [ ] Diagnostics and previews must identify skipped condition paths when needed
+  for designer explainability.
+- [ ] Add designer previews showing why a segment or element rendered or did not
   render for a selected fixture.
 
 ### Stage 7: Script Libraries
