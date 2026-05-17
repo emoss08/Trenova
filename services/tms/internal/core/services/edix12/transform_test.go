@@ -86,6 +86,60 @@ func TestRender204_TransformPipelineRendersValues(t *testing.T) {
 			wantRaw: "L11*FALLBACK*BM",
 		},
 		{
+			name: "empty runtime slice uses default",
+			configure: func(t *testing.T, input *RenderInput) {
+				input.Runtime["emptySlice"] = []any{}
+				setTransform(
+					findElement(t, input, "L11", 0),
+					edi.TemplateElementBaseSource{
+						Source:     edi.TemplateElementSourceRuntime,
+						RuntimeKey: "emptySlice",
+					},
+					edi.TemplateTransformStep{
+						Operation: "default",
+						Arguments: map[string]any{"value": "FALLBACK"},
+					},
+				)
+			},
+			wantRaw: "L11*FALLBACK*BM",
+		},
+		{
+			name: "empty runtime map uses default",
+			configure: func(t *testing.T, input *RenderInput) {
+				input.Runtime["emptyMap"] = map[string]any{}
+				setTransform(
+					findElement(t, input, "L11", 0),
+					edi.TemplateElementBaseSource{
+						Source:     edi.TemplateElementSourceRuntime,
+						RuntimeKey: "emptyMap",
+					},
+					edi.TemplateTransformStep{
+						Operation: "default",
+						Arguments: map[string]any{"value": "FALLBACK"},
+					},
+				)
+			},
+			wantRaw: "L11*FALLBACK*BM",
+		},
+		{
+			name: "false runtime bool uses default",
+			configure: func(t *testing.T, input *RenderInput) {
+				input.Runtime["emptyFlag"] = false
+				setTransform(
+					findElement(t, input, "L11", 0),
+					edi.TemplateElementBaseSource{
+						Source:     edi.TemplateElementSourceRuntime,
+						RuntimeKey: "emptyFlag",
+					},
+					edi.TemplateTransformStep{
+						Operation: "default",
+						Arguments: map[string]any{"value": "FALLBACK"},
+					},
+				)
+			},
+			wantRaw: "L11*FALLBACK*BM",
+		},
+		{
 			name: "coalesce references",
 			configure: func(t *testing.T, input *RenderInput) {
 				input.Payload.BOL = ""
@@ -103,6 +157,30 @@ func TestRender204_TransformPipelineRendersValues(t *testing.T) {
 				)
 			},
 			wantRaw: "L11*shp_",
+		},
+		{
+			name: "coalesce skips empty runtime collections",
+			configure: func(t *testing.T, input *RenderInput) {
+				input.Runtime["emptySlice"] = []string{}
+				input.Runtime["emptyMap"] = map[string]string{}
+				setTransform(
+					findElement(t, input, "L11", 0),
+					edi.TemplateElementBaseSource{
+						Source: edi.TemplateElementSourceConstant,
+					},
+					edi.TemplateTransformStep{
+						Operation: "coalesce",
+						Arguments: map[string]any{
+							"values": []any{
+								"$runtime.emptySlice",
+								"$runtime.emptyMap",
+								"NEXT",
+							},
+						},
+					},
+				)
+			},
+			wantRaw: "L11*NEXT*BM",
 		},
 		{
 			name: "unix timestamp format date",
@@ -322,6 +400,59 @@ func TestRender204_TransformPipelineReportsConfigurationErrors(t *testing.T) {
 			assert.Equal(t, "L11", diagnostic.SegmentID)
 			assert.Equal(t, 1, diagnostic.ElementPosition)
 			assert.Contains(t, diagnostic.Message, tt.message)
+			assert.Equal(t, transformSuggestedFix, diagnostic.SuggestedFix)
+		})
+	}
+}
+
+func TestRender204_TransformRequiredReportsEmptyRuntimeCollections(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		runtimeKey string
+		value      any
+	}{
+		{
+			name:       "empty slice",
+			runtimeKey: "emptySlice",
+			value:      []any{},
+		},
+		{
+			name:       "empty map",
+			runtimeKey: "emptyMap",
+			value:      map[string]any{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			input := validRenderInput(edi.ValidationModeStrict)
+			input.Runtime[tt.runtimeKey] = tt.value
+			setTransform(
+				findElement(t, input, "L11", 0),
+				edi.TemplateElementBaseSource{
+					Source:     edi.TemplateElementSourceRuntime,
+					RuntimeKey: tt.runtimeKey,
+				},
+				edi.TemplateTransformStep{
+					Operation: "required",
+					Arguments: map[string]any{"message": "runtime collection is required"},
+				},
+			)
+
+			result, err := Render204(input)
+
+			require.NoError(t, err)
+			require.Len(t, result.Diagnostics, 1)
+			diagnostic := result.Diagnostics[0]
+			assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+			assert.Equal(t, "transform_error", diagnostic.Code)
+			assert.Equal(t, "L11", diagnostic.SegmentID)
+			assert.Equal(t, 1, diagnostic.ElementPosition)
+			assert.Contains(t, diagnostic.Message, "runtime collection is required")
 			assert.Equal(t, transformSuggestedFix, diagnostic.SuggestedFix)
 		})
 	}

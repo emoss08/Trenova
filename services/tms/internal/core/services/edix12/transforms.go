@@ -644,7 +644,22 @@ func (r *transformRuntime) resolveArgument(value any) any {
 }
 
 func isEmptyTransformValue(value any) bool {
-	return strings.TrimSpace(valueToString(value)) == ""
+	switch typed := value.(type) {
+	case nil:
+		return true
+	case bool:
+		return !typed
+	case string:
+		return strings.TrimSpace(typed) == ""
+	}
+
+	reflected := reflect.ValueOf(value)
+	switch reflected.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice:
+		return reflected.Len() == 0
+	default:
+		return strings.TrimSpace(valueToString(value)) == ""
+	}
 }
 
 func isTruthyTransformValue(value any) bool {
