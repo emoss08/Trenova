@@ -136,6 +136,19 @@ func normalizeTransformOperation(operation string) string {
 	}
 }
 
+func NormalizeTransformOperation(operation string) string {
+	return normalizeTransformOperation(operation)
+}
+
+func IsSupportedTransformOperation(operation string) bool {
+	_, ok := transformOperationHandlers[normalizeTransformOperation(operation)]
+	return ok
+}
+
+func IsDirectElementSource(source edi.TemplateElementSource) bool {
+	return isDirectElementSource(source)
+}
+
 func transformTrim(_ *transformRuntime, value any, _ map[string]any) (any, error) {
 	return strings.TrimSpace(valueToString(value)), nil
 }
@@ -377,7 +390,10 @@ func transformFormatDecimal(r *transformRuntime, value any, args map[string]any)
 
 	number, ok := decimalFromTransformValue(value)
 	if !ok {
-		return nil, fmt.Errorf("format_decimal input %q is not a valid decimal", valueToString(value))
+		return nil, fmt.Errorf(
+			"format_decimal input %q is not a valid decimal",
+			valueToString(value),
+		)
 	}
 	return number.StringFixed(int32(places)), nil
 }
@@ -581,7 +597,10 @@ func (r *transformRuntime) optionalArgAny(args map[string]any, keys ...string) (
 	return nil, false, nil
 }
 
-func (r *transformRuntime) optionalStringArg(args map[string]any, key string) (string, bool, error) {
+func (r *transformRuntime) optionalStringArg(
+	args map[string]any,
+	key string,
+) (string, bool, error) {
 	value, ok, err := r.optionalArg(args, key)
 	if err != nil || !ok {
 		return "", ok, err
@@ -600,7 +619,10 @@ func (r *transformRuntime) optionalStringArgAny(
 	return valueToString(value), true, nil
 }
 
-func (r *transformRuntime) requiredStringArgAny(args map[string]any, keys ...string) (string, error) {
+func (r *transformRuntime) requiredStringArgAny(
+	args map[string]any,
+	keys ...string,
+) (string, error) {
 	value, ok, err := r.optionalStringArgAny(args, keys...)
 	if err != nil {
 		return "", err

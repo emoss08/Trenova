@@ -1,8 +1,4 @@
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type DataTableColorColumnProps = {
@@ -11,18 +7,11 @@ type DataTableColorColumnProps = {
   className?: string;
 };
 
-export function DataTableColorColumn({
-  text,
-  color,
-  className,
-}: DataTableColorColumnProps) {
+export function DataTableColorColumn({ text, color, className }: DataTableColorColumnProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {color && (
-        <span
-          className="size-2 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
+        <span className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       )}
       <span className="truncate">{text}</span>
     </div>
@@ -45,9 +34,7 @@ export function DataTableDescription({
   }
 
   const shouldTruncate = description.length > truncateLength;
-  const displayText = shouldTruncate
-    ? `${description.slice(0, truncateLength)}...`
-    : description;
+  const displayText = shouldTruncate ? `${description.slice(0, truncateLength)}...` : description;
 
   if (!shouldTruncate) {
     return <span className={cn("text-sm", className)}>{description}</span>;
@@ -81,20 +68,12 @@ type DataTableLinkProps = {
   className?: string;
 };
 
-export function DataTableLink({
-  text,
-  href,
-  onClick,
-  className,
-}: DataTableLinkProps) {
+export function DataTableLink({ text, href, onClick, className }: DataTableLinkProps) {
   if (href) {
     return (
       <a
         href={href}
-        className={cn(
-          "text-sm text-primary underline-offset-4 hover:underline",
-          className,
-        )}
+        className={cn("text-sm text-primary underline-offset-4 hover:underline", className)}
         onClick={(e) => {
           if (onClick) {
             e.preventDefault();
@@ -110,10 +89,7 @@ export function DataTableLink({
   return (
     <button
       type="button"
-      className={cn(
-        "text-left text-sm text-primary underline-offset-4 hover:underline",
-        className,
-      )}
+      className={cn("text-left text-sm text-primary underline-offset-4 hover:underline", className)}
       onClick={onClick}
     >
       {text}
@@ -126,9 +102,6 @@ type DataTablePlaceholderProps = {
   className?: string;
 };
 
-export function DataTablePlaceholder({
-  text = "-",
-  className,
-}: DataTablePlaceholderProps) {
+export function DataTablePlaceholder({ text = "-", className }: DataTablePlaceholderProps) {
   return <span className={cn("text-muted-foreground", className)}>{text}</span>;
 }

@@ -116,7 +116,9 @@ type TemplateStatus string
 
 const (
 	TemplateStatusDraft      = TemplateStatus("Draft")
+	TemplateStatusCertified  = TemplateStatus("Certified")
 	TemplateStatusActive     = TemplateStatus("Active")
+	TemplateStatusDeprecated = TemplateStatus("Deprecated")
 	TemplateStatusArchived   = TemplateStatus("Archived")
 	TemplateStatusSuperseded = TemplateStatus("Superseded")
 )

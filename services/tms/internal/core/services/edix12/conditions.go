@@ -95,6 +95,70 @@ func evaluateConditionValue(params conditionEvalParams, condition string) (bool,
 	return truthy, nil
 }
 
+func ValidateConditionSyntax(condition string) *Diagnostic {
+	condition = strings.TrimSpace(condition)
+	if condition == "" {
+		return nil
+	}
+
+	params := conditionEvalParams{
+		Context: context.Background(),
+		Env: map[string]any{
+			"shipment": map[string]any{},
+			"repeat":   map[string]any{},
+			"partner":  map[string]any{},
+			"mapping":  map[string]any{},
+			"runtime":  map[string]any{},
+		},
+		Segment: &edi.EDITemplateSegment{},
+	}
+	if strings.HasPrefix(condition, starlarkConditionPrefix) {
+		script := strings.TrimSpace(strings.TrimPrefix(condition, starlarkConditionPrefix))
+		if script == "" {
+			diagnostic := conditionErrorDiagnostic(
+				params,
+				starlarkConditionPath(),
+				fmt.Errorf("Starlark condition script is required"),
+			)
+			return &diagnostic
+		}
+		return nil
+	}
+
+	operator, left, right, hasComparison, err := splitConditionComparison(condition)
+	if err != nil {
+		diagnostic := conditionErrorDiagnostic(params, conditionDiagnosticPath(condition), err)
+		return &diagnostic
+	}
+	if hasComparison {
+		if err = validateConditionPath(left); err != nil {
+			diagnostic := conditionErrorDiagnostic(params, left, err)
+			return &diagnostic
+		}
+		if _, err = parseConditionStringLiteral(right); err != nil {
+			diagnostic := conditionErrorDiagnostic(params, operator, err)
+			return &diagnostic
+		}
+		return nil
+	}
+	if strings.Contains(condition, "&&") || strings.Contains(condition, "||") ||
+		strings.ContainsAny(condition, "=<>") {
+		diagnostic := conditionErrorDiagnostic(
+			params,
+			conditionDiagnosticPath(condition),
+			fmt.Errorf("unsupported condition operator"),
+		)
+		return &diagnostic
+	}
+
+	path := strings.TrimSpace(strings.TrimPrefix(condition, "!"))
+	if err = validateConditionPath(path); err != nil {
+		diagnostic := conditionErrorDiagnostic(params, path, err)
+		return &diagnostic
+	}
+	return nil
+}
+
 func splitConditionComparison(condition string) (string, string, string, bool, error) {
 	eqIndex := strings.Index(condition, "==")
 	neIndex := strings.Index(condition, "!=")
@@ -200,7 +264,9 @@ func parseConditionStringLiteral(value string) (string, error) {
 			continue
 		}
 		if char == quote {
-			return "", fmt.Errorf("condition comparison value must be a single quoted string literal")
+			return "", fmt.Errorf(
+				"condition comparison value must be a single quoted string literal",
+			)
 		}
 		builder.WriteByte(char)
 	}

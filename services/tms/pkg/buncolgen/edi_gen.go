@@ -24,6 +24,130 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// EDICodeListDefinition — table "edi_code_list_definitions", alias "ecld"
+// ---------------------------------------------------------------------------
+
+// EDICodeListDefinitionTable holds the table name, alias, and primary key columns
+// for the "edi_code_list_definitions" table. The alias "ecld" is used in all generated
+// SQL fragments (e.g. "ecld.id = ?").
+var EDICodeListDefinitionTable = TableInfo{
+	Name:       "edi_code_list_definitions",
+	Alias:      "ecld",
+	PrimaryKey: []string{"id"},
+}
+
+// EDICodeListDefinitionColumns provides type-safe column references for the "edi_code_list_definitions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDICodeListDefinitionColumns.ID.String())
+//	// SELECT ecld.id FROM edi_code_list_definitions AS ecld
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDICodeListDefinitionColumns.ID.Eq(), id)           // WHERE ecld.id = ?
+//	q.Order(EDICodeListDefinitionColumns.CreatedAt.OrderDesc())  // ORDER BY ecld.created_at DESC
+var EDICodeListDefinitionColumns = struct {
+	ID               Column // "id" → qualified: "ecld.id"
+	TransactionSetID Column // "transaction_set_id" → qualified: "ecld.transaction_set_id"
+	Direction        Column // "direction" → qualified: "ecld.direction"
+	X12Version       Column // "x12_version" → qualified: "ecld.x12_version"
+	ElementID        Column // "element_id" → qualified: "ecld.element_id"
+	Code             Column // "code" → qualified: "ecld.code"
+	Description      Column // "description" → qualified: "ecld.description"
+	CreatedAt        Column // "created_at" → qualified: "ecld.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "ecld.updated_at"
+}{
+	ID:               NewColumn("id", "ecld"),
+	TransactionSetID: NewColumn("transaction_set_id", "ecld"),
+	Direction:        NewColumn("direction", "ecld"),
+	X12Version:       NewColumn("x12_version", "ecld"),
+	ElementID:        NewColumn("element_id", "ecld"),
+	Code:             NewColumn("code", "ecld"),
+	Description:      NewColumn("description", "ecld"),
+	CreatedAt:        NewColumn("created_at", "ecld"),
+	UpdatedAt:        NewColumn("updated_at", "ecld"),
+}
+
+// EDICodeListDefinitionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDICodeListDefinition.GetStaticFieldMap().
+var EDICodeListDefinitionFieldMap = map[string]string{
+	"id":               "id",
+	"transactionSetId": "transaction_set_id",
+	"direction":        "direction",
+	"x12Version":       "x12_version",
+	"elementId":        "element_id",
+	"code":             "code",
+	"description":      "description",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// EDICodeListDefinitionInsertableColumns lists column names suitable for INSERT statements on the "edi_code_list_definitions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDICodeListDefinitionInsertableColumns = []string{
+	"id",
+	"transaction_set_id",
+	"direction",
+	"x12_version",
+	"element_id",
+	"code",
+	"description",
+	"created_at",
+	"updated_at",
+}
+
+// EDICodeListDefinitionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_code_list_definitions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDICodeListDefinitionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDICodeListDefinitionFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TransactionSetID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSetId" → DB: "transaction_set_id"
+	Direction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	X12Version       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	ElementID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "elementId" → DB: "element_id"
+	Code             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Description      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TransactionSetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSetId", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	X12Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("x12Version", op, value)
+	},
+	ElementID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("elementId", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("code", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EDICommunicationProfile — table "edi_communication_profiles", alias "ecp"
 // ---------------------------------------------------------------------------
 
@@ -732,27 +856,29 @@ var EDIDocumentTypeTable = TableInfo{
 //	q.Where(EDIDocumentTypeColumns.ID.Eq(), id)           // WHERE edt.id = ?
 //	q.Order(EDIDocumentTypeColumns.CreatedAt.OrderDesc())  // ORDER BY edt.created_at DESC
 var EDIDocumentTypeColumns = struct {
-	ID             Column // "id" → qualified: "edt.id"
-	Code           Column // "code" → qualified: "edt.code"
-	Name           Column // "name" → qualified: "edt.name"
-	Standard       Column // "standard" → qualified: "edt.standard"
-	TransactionSet Column // "transaction_set" → qualified: "edt.transaction_set"
-	Direction      Column // "direction" → qualified: "edt.direction"
-	DefaultVersion Column // "default_version" → qualified: "edt.default_version"
-	Status         Column // "status" → qualified: "edt.status"
-	CreatedAt      Column // "created_at" → qualified: "edt.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "edt.updated_at"
+	ID               Column // "id" → qualified: "edt.id"
+	Code             Column // "code" → qualified: "edt.code"
+	Name             Column // "name" → qualified: "edt.name"
+	Standard         Column // "standard" → qualified: "edt.standard"
+	TransactionSet   Column // "transaction_set" → qualified: "edt.transaction_set"
+	TransactionSetID Column // "transaction_set_id" → qualified: "edt.transaction_set_id"
+	Direction        Column // "direction" → qualified: "edt.direction"
+	DefaultVersion   Column // "default_version" → qualified: "edt.default_version"
+	Status           Column // "status" → qualified: "edt.status"
+	CreatedAt        Column // "created_at" → qualified: "edt.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "edt.updated_at"
 }{
-	ID:             NewColumn("id", "edt"),
-	Code:           NewColumn("code", "edt"),
-	Name:           NewColumn("name", "edt"),
-	Standard:       NewColumn("standard", "edt"),
-	TransactionSet: NewColumn("transaction_set", "edt"),
-	Direction:      NewColumn("direction", "edt"),
-	DefaultVersion: NewColumn("default_version", "edt"),
-	Status:         NewColumn("status", "edt"),
-	CreatedAt:      NewColumn("created_at", "edt"),
-	UpdatedAt:      NewColumn("updated_at", "edt"),
+	ID:               NewColumn("id", "edt"),
+	Code:             NewColumn("code", "edt"),
+	Name:             NewColumn("name", "edt"),
+	Standard:         NewColumn("standard", "edt"),
+	TransactionSet:   NewColumn("transaction_set", "edt"),
+	TransactionSetID: NewColumn("transaction_set_id", "edt"),
+	Direction:        NewColumn("direction", "edt"),
+	DefaultVersion:   NewColumn("default_version", "edt"),
+	Status:           NewColumn("status", "edt"),
+	CreatedAt:        NewColumn("created_at", "edt"),
+	UpdatedAt:        NewColumn("updated_at", "edt"),
 }
 
 // EDIDocumentTypeFieldMap maps JSON API field names to database column names.
@@ -760,16 +886,17 @@ var EDIDocumentTypeColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EDIDocumentType.GetStaticFieldMap().
 var EDIDocumentTypeFieldMap = map[string]string{
-	"id":             "id",
-	"code":           "code",
-	"name":           "name",
-	"standard":       "standard",
-	"transactionSet": "transaction_set",
-	"direction":      "direction",
-	"defaultVersion": "default_version",
-	"status":         "status",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":               "id",
+	"code":             "code",
+	"name":             "name",
+	"standard":         "standard",
+	"transactionSet":   "transaction_set",
+	"transactionSetId": "transaction_set_id",
+	"direction":        "direction",
+	"defaultVersion":   "default_version",
+	"status":           "status",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
 }
 
 // EDIDocumentTypeInsertableColumns lists column names suitable for INSERT statements on the "edi_document_types" table.
@@ -780,11 +907,23 @@ var EDIDocumentTypeInsertableColumns = []string{
 	"name",
 	"standard",
 	"transaction_set",
+	"transaction_set_id",
 	"direction",
 	"default_version",
 	"status",
 	"created_at",
 	"updated_at",
+}
+
+// EDIDocumentTypeRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDIDocumentTypeRelations.TransactionSetRef)
+//	// Bun eager-loads the TransactionSetRef association via a separate query
+var EDIDocumentTypeRelations = struct {
+	TransactionSetRef string
+}{
+	TransactionSetRef: "TransactionSetRef",
 }
 
 // EDIDocumentTypeFilter builds [domaintypes.FieldFilter] values using the correct JSON
@@ -795,16 +934,17 @@ var EDIDocumentTypeInsertableColumns = []string{
 //	EDIDocumentTypeFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EDIDocumentTypeFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
-	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Standard       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
-	TransactionSet func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
-	Direction      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
-	DefaultVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultVersion" → DB: "default_version"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	Code             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Standard         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
+	TransactionSet   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
+	TransactionSetID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSetId" → DB: "transaction_set_id"
+	Direction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	DefaultVersion   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultVersion" → DB: "default_version"
+	Status           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -820,6 +960,9 @@ var EDIDocumentTypeFilter = struct {
 	},
 	TransactionSet: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("transactionSet", op, value)
+	},
+	TransactionSetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSetId", op, value)
 	},
 	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("direction", op, value)
@@ -2820,33 +2963,65 @@ var EDITemplateVersionTable = TableInfo{
 //	q.Where(EDITemplateVersionColumns.ID.Eq(), id)           // WHERE etv.id = ?
 //	q.Order(EDITemplateVersionColumns.CreatedAt.OrderDesc())  // ORDER BY etv.created_at DESC
 var EDITemplateVersionColumns = struct {
-	ID                Column // "id" → qualified: "etv.id"
-	BusinessUnitID    Column // "business_unit_id" → qualified: "etv.business_unit_id"
-	OrganizationID    Column // "organization_id" → qualified: "etv.organization_id"
-	TemplateID        Column // "template_id" → qualified: "etv.template_id"
-	VersionNumber     Column // "version_number" → qualified: "etv.version_number"
-	X12Version        Column // "x12_version" → qualified: "etv.x12_version"
-	FunctionalGroupID Column // "functional_group_id" → qualified: "etv.functional_group_id"
-	Status            Column // "status" → qualified: "etv.status"
-	IsActive          Column // "is_active" → qualified: "etv.is_active"
-	Notes             Column // "notes" → qualified: "etv.notes"
-	Version           Column // "version" → qualified: "etv.version"
-	CreatedAt         Column // "created_at" → qualified: "etv.created_at"
-	UpdatedAt         Column // "updated_at" → qualified: "etv.updated_at"
+	ID                 Column // "id" → qualified: "etv.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "etv.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "etv.organization_id"
+	TemplateID         Column // "template_id" → qualified: "etv.template_id"
+	SourceVersionID    Column // "source_version_id" → qualified: "etv.source_version_id"
+	VersionNumber      Column // "version_number" → qualified: "etv.version_number"
+	X12Version         Column // "x12_version" → qualified: "etv.x12_version"
+	FunctionalGroupID  Column // "functional_group_id" → qualified: "etv.functional_group_id"
+	Status             Column // "status" → qualified: "etv.status"
+	IsActive           Column // "is_active" → qualified: "etv.is_active"
+	Notes              Column // "notes" → qualified: "etv.notes"
+	CertificationNotes Column // "certification_notes" → qualified: "etv.certification_notes"
+	ActivationNotes    Column // "activation_notes" → qualified: "etv.activation_notes"
+	ArchiveNotes       Column // "archive_notes" → qualified: "etv.archive_notes"
+	DeprecatedNotes    Column // "deprecated_notes" → qualified: "etv.deprecated_notes"
+	SupersededNotes    Column // "superseded_notes" → qualified: "etv.superseded_notes"
+	CertifiedByID      Column // "certified_by_id" → qualified: "etv.certified_by_id"
+	ActivatedByID      Column // "activated_by_id" → qualified: "etv.activated_by_id"
+	ArchivedByID       Column // "archived_by_id" → qualified: "etv.archived_by_id"
+	DeprecatedByID     Column // "deprecated_by_id" → qualified: "etv.deprecated_by_id"
+	SupersededByID     Column // "superseded_by_id" → qualified: "etv.superseded_by_id"
+	CertifiedAt        Column // "certified_at" → qualified: "etv.certified_at"
+	ActivatedAt        Column // "activated_at" → qualified: "etv.activated_at"
+	ArchivedAt         Column // "archived_at" → qualified: "etv.archived_at"
+	DeprecatedAt       Column // "deprecated_at" → qualified: "etv.deprecated_at"
+	SupersededAt       Column // "superseded_at" → qualified: "etv.superseded_at"
+	Version            Column // "version" → qualified: "etv.version"
+	CreatedAt          Column // "created_at" → qualified: "etv.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "etv.updated_at"
 }{
-	ID:                NewColumn("id", "etv"),
-	BusinessUnitID:    NewColumn("business_unit_id", "etv"),
-	OrganizationID:    NewColumn("organization_id", "etv"),
-	TemplateID:        NewColumn("template_id", "etv"),
-	VersionNumber:     NewColumn("version_number", "etv"),
-	X12Version:        NewColumn("x12_version", "etv"),
-	FunctionalGroupID: NewColumn("functional_group_id", "etv"),
-	Status:            NewColumn("status", "etv"),
-	IsActive:          NewColumn("is_active", "etv"),
-	Notes:             NewColumn("notes", "etv"),
-	Version:           NewColumn("version", "etv"),
-	CreatedAt:         NewColumn("created_at", "etv"),
-	UpdatedAt:         NewColumn("updated_at", "etv"),
+	ID:                 NewColumn("id", "etv"),
+	BusinessUnitID:     NewColumn("business_unit_id", "etv"),
+	OrganizationID:     NewColumn("organization_id", "etv"),
+	TemplateID:         NewColumn("template_id", "etv"),
+	SourceVersionID:    NewColumn("source_version_id", "etv"),
+	VersionNumber:      NewColumn("version_number", "etv"),
+	X12Version:         NewColumn("x12_version", "etv"),
+	FunctionalGroupID:  NewColumn("functional_group_id", "etv"),
+	Status:             NewColumn("status", "etv"),
+	IsActive:           NewColumn("is_active", "etv"),
+	Notes:              NewColumn("notes", "etv"),
+	CertificationNotes: NewColumn("certification_notes", "etv"),
+	ActivationNotes:    NewColumn("activation_notes", "etv"),
+	ArchiveNotes:       NewColumn("archive_notes", "etv"),
+	DeprecatedNotes:    NewColumn("deprecated_notes", "etv"),
+	SupersededNotes:    NewColumn("superseded_notes", "etv"),
+	CertifiedByID:      NewColumn("certified_by_id", "etv"),
+	ActivatedByID:      NewColumn("activated_by_id", "etv"),
+	ArchivedByID:       NewColumn("archived_by_id", "etv"),
+	DeprecatedByID:     NewColumn("deprecated_by_id", "etv"),
+	SupersededByID:     NewColumn("superseded_by_id", "etv"),
+	CertifiedAt:        NewColumn("certified_at", "etv"),
+	ActivatedAt:        NewColumn("activated_at", "etv"),
+	ArchivedAt:         NewColumn("archived_at", "etv"),
+	DeprecatedAt:       NewColumn("deprecated_at", "etv"),
+	SupersededAt:       NewColumn("superseded_at", "etv"),
+	Version:            NewColumn("version", "etv"),
+	CreatedAt:          NewColumn("created_at", "etv"),
+	UpdatedAt:          NewColumn("updated_at", "etv"),
 }
 
 // EDITemplateVersionFieldMap maps JSON API field names to database column names.
@@ -2854,19 +3029,35 @@ var EDITemplateVersionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EDITemplateVersion.GetStaticFieldMap().
 var EDITemplateVersionFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"templateId":        "template_id",
-	"versionNumber":     "version_number",
-	"x12Version":        "x12_version",
-	"functionalGroupId": "functional_group_id",
-	"status":            "status",
-	"isActive":          "is_active",
-	"notes":             "notes",
-	"version":           "version",
-	"createdAt":         "created_at",
-	"updatedAt":         "updated_at",
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"templateId":         "template_id",
+	"sourceVersionId":    "source_version_id",
+	"versionNumber":      "version_number",
+	"x12Version":         "x12_version",
+	"functionalGroupId":  "functional_group_id",
+	"status":             "status",
+	"isActive":           "is_active",
+	"notes":              "notes",
+	"certificationNotes": "certification_notes",
+	"activationNotes":    "activation_notes",
+	"archiveNotes":       "archive_notes",
+	"deprecatedNotes":    "deprecated_notes",
+	"supersededNotes":    "superseded_notes",
+	"certifiedById":      "certified_by_id",
+	"activatedById":      "activated_by_id",
+	"archivedById":       "archived_by_id",
+	"deprecatedById":     "deprecated_by_id",
+	"supersededById":     "superseded_by_id",
+	"certifiedAt":        "certified_at",
+	"activatedAt":        "activated_at",
+	"archivedAt":         "archived_at",
+	"deprecatedAt":       "deprecated_at",
+	"supersededAt":       "superseded_at",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
 }
 
 // EDITemplateVersionInsertableColumns lists column names suitable for INSERT statements on the "edi_template_versions" table.
@@ -2876,12 +3067,28 @@ var EDITemplateVersionInsertableColumns = []string{
 	"business_unit_id",
 	"organization_id",
 	"template_id",
+	"source_version_id",
 	"version_number",
 	"x12_version",
 	"functional_group_id",
 	"status",
 	"is_active",
 	"notes",
+	"certification_notes",
+	"activation_notes",
+	"archive_notes",
+	"deprecated_notes",
+	"superseded_notes",
+	"certified_by_id",
+	"activated_by_id",
+	"archived_by_id",
+	"deprecated_by_id",
+	"superseded_by_id",
+	"certified_at",
+	"activated_at",
+	"archived_at",
+	"deprecated_at",
+	"superseded_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2893,11 +3100,13 @@ var EDITemplateVersionInsertableColumns = []string{
 //	q.Relation(EDITemplateVersionRelations.Template)
 //	// Bun eager-loads the Template association via a separate query
 var EDITemplateVersionRelations = struct {
-	Template string
-	Segments string
+	Template      string
+	SourceVersion string
+	Segments      string
 }{
-	Template: "Template",
-	Segments: "Segments",
+	Template:      "Template",
+	SourceVersion: "SourceVersion",
+	Segments:      "Segments",
 }
 
 // EDITemplateVersionScopeTenant restricts a query to a single tenant by adding:
@@ -2950,19 +3159,35 @@ func EDITemplateVersionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQue
 //	EDITemplateVersionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EDITemplateVersionFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	TemplateID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	VersionNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
-	X12Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
-	FunctionalGroupID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalGroupId" → DB: "functional_group_id"
-	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	IsActive          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isActive" → DB: "is_active"
-	Notes             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
-	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	TemplateID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	SourceVersionID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceVersionId" → DB: "source_version_id"
+	VersionNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	X12Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	FunctionalGroupID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalGroupId" → DB: "functional_group_id"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	IsActive           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isActive" → DB: "is_active"
+	Notes              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	CertificationNotes func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "certificationNotes" → DB: "certification_notes"
+	ActivationNotes    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activationNotes" → DB: "activation_notes"
+	ArchiveNotes       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "archiveNotes" → DB: "archive_notes"
+	DeprecatedNotes    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deprecatedNotes" → DB: "deprecated_notes"
+	SupersededNotes    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededNotes" → DB: "superseded_notes"
+	CertifiedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "certifiedById" → DB: "certified_by_id"
+	ActivatedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activatedById" → DB: "activated_by_id"
+	ArchivedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "archivedById" → DB: "archived_by_id"
+	DeprecatedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deprecatedById" → DB: "deprecated_by_id"
+	SupersededByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededById" → DB: "superseded_by_id"
+	CertifiedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "certifiedAt" → DB: "certified_at"
+	ActivatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "activatedAt" → DB: "activated_at"
+	ArchivedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "archivedAt" → DB: "archived_at"
+	DeprecatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deprecatedAt" → DB: "deprecated_at"
+	SupersededAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededAt" → DB: "superseded_at"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2975,6 +3200,9 @@ var EDITemplateVersionFilter = struct {
 	},
 	TemplateID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("templateId", op, value)
+	},
+	SourceVersionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceVersionId", op, value)
 	},
 	VersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("versionNumber", op, value)
@@ -2993,6 +3221,51 @@ var EDITemplateVersionFilter = struct {
 	},
 	Notes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("notes", op, value)
+	},
+	CertificationNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("certificationNotes", op, value)
+	},
+	ActivationNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("activationNotes", op, value)
+	},
+	ArchiveNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("archiveNotes", op, value)
+	},
+	DeprecatedNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deprecatedNotes", op, value)
+	},
+	SupersededNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("supersededNotes", op, value)
+	},
+	CertifiedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("certifiedById", op, value)
+	},
+	ActivatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("activatedById", op, value)
+	},
+	ArchivedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("archivedById", op, value)
+	},
+	DeprecatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deprecatedById", op, value)
+	},
+	SupersededByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("supersededById", op, value)
+	},
+	CertifiedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("certifiedAt", op, value)
+	},
+	ActivatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("activatedAt", op, value)
+	},
+	ArchivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("archivedAt", op, value)
+	},
+	DeprecatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deprecatedAt", op, value)
+	},
+	SupersededAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("supersededAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -3186,6 +3459,614 @@ var EDITestCaseFilter = struct {
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDITransactionElementDefinition — table "edi_transaction_element_definitions", alias "eted"
+// ---------------------------------------------------------------------------
+
+// EDITransactionElementDefinitionTable holds the table name, alias, and primary key columns
+// for the "edi_transaction_element_definitions" table. The alias "eted" is used in all generated
+// SQL fragments (e.g. "eted.id = ?").
+var EDITransactionElementDefinitionTable = TableInfo{
+	Name:       "edi_transaction_element_definitions",
+	Alias:      "eted",
+	PrimaryKey: []string{"id"},
+}
+
+// EDITransactionElementDefinitionColumns provides type-safe column references for the "edi_transaction_element_definitions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDITransactionElementDefinitionColumns.ID.String())
+//	// SELECT eted.id FROM edi_transaction_element_definitions AS eted
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDITransactionElementDefinitionColumns.ID.Eq(), id)           // WHERE eted.id = ?
+//	q.Order(EDITransactionElementDefinitionColumns.CreatedAt.OrderDesc())  // ORDER BY eted.created_at DESC
+var EDITransactionElementDefinitionColumns = struct {
+	ID               Column // "id" → qualified: "eted.id"
+	TransactionSetID Column // "transaction_set_id" → qualified: "eted.transaction_set_id"
+	Direction        Column // "direction" → qualified: "eted.direction"
+	X12Version       Column // "x12_version" → qualified: "eted.x12_version"
+	SegmentID        Column // "segment_id" → qualified: "eted.segment_id"
+	Position         Column // "position" → qualified: "eted.position"
+	ElementID        Column // "element_id" → qualified: "eted.element_id"
+	Name             Column // "name" → qualified: "eted.name"
+	Required         Column // "required" → qualified: "eted.required"
+	MinLength        Column // "min_length" → qualified: "eted.min_length"
+	MaxLength        Column // "max_length" → qualified: "eted.max_length"
+	CodeListID       Column // "code_list_id" → qualified: "eted.code_list_id"
+	UsageNotes       Column // "usage_notes" → qualified: "eted.usage_notes"
+	CreatedAt        Column // "created_at" → qualified: "eted.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "eted.updated_at"
+}{
+	ID:               NewColumn("id", "eted"),
+	TransactionSetID: NewColumn("transaction_set_id", "eted"),
+	Direction:        NewColumn("direction", "eted"),
+	X12Version:       NewColumn("x12_version", "eted"),
+	SegmentID:        NewColumn("segment_id", "eted"),
+	Position:         NewColumn("position", "eted"),
+	ElementID:        NewColumn("element_id", "eted"),
+	Name:             NewColumn("name", "eted"),
+	Required:         NewColumn("required", "eted"),
+	MinLength:        NewColumn("min_length", "eted"),
+	MaxLength:        NewColumn("max_length", "eted"),
+	CodeListID:       NewColumn("code_list_id", "eted"),
+	UsageNotes:       NewColumn("usage_notes", "eted"),
+	CreatedAt:        NewColumn("created_at", "eted"),
+	UpdatedAt:        NewColumn("updated_at", "eted"),
+}
+
+// EDITransactionElementDefinitionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDITransactionElementDefinition.GetStaticFieldMap().
+var EDITransactionElementDefinitionFieldMap = map[string]string{
+	"id":               "id",
+	"transactionSetId": "transaction_set_id",
+	"direction":        "direction",
+	"x12Version":       "x12_version",
+	"segmentId":        "segment_id",
+	"position":         "position",
+	"elementId":        "element_id",
+	"name":             "name",
+	"required":         "required",
+	"minLength":        "min_length",
+	"maxLength":        "max_length",
+	"codeListId":       "code_list_id",
+	"usageNotes":       "usage_notes",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// EDITransactionElementDefinitionInsertableColumns lists column names suitable for INSERT statements on the "edi_transaction_element_definitions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDITransactionElementDefinitionInsertableColumns = []string{
+	"id",
+	"transaction_set_id",
+	"direction",
+	"x12_version",
+	"segment_id",
+	"position",
+	"element_id",
+	"name",
+	"required",
+	"min_length",
+	"max_length",
+	"code_list_id",
+	"usage_notes",
+	"created_at",
+	"updated_at",
+}
+
+// EDITransactionElementDefinitionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_transaction_element_definitions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDITransactionElementDefinitionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDITransactionElementDefinitionFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TransactionSetID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSetId" → DB: "transaction_set_id"
+	Direction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	X12Version       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	SegmentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "segmentId" → DB: "segment_id"
+	Position         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "position" → DB: "position"
+	ElementID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "elementId" → DB: "element_id"
+	Name             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Required         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "required" → DB: "required"
+	MinLength        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minLength" → DB: "min_length"
+	MaxLength        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxLength" → DB: "max_length"
+	CodeListID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "codeListId" → DB: "code_list_id"
+	UsageNotes       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usageNotes" → DB: "usage_notes"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TransactionSetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSetId", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	X12Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("x12Version", op, value)
+	},
+	SegmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("segmentId", op, value)
+	},
+	Position: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("position", op, value)
+	},
+	ElementID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("elementId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Required: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("required", op, value)
+	},
+	MinLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minLength", op, value)
+	},
+	MaxLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxLength", op, value)
+	},
+	CodeListID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("codeListId", op, value)
+	},
+	UsageNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usageNotes", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDITransactionLoopDefinition — table "edi_transaction_loop_definitions", alias "etld"
+// ---------------------------------------------------------------------------
+
+// EDITransactionLoopDefinitionTable holds the table name, alias, and primary key columns
+// for the "edi_transaction_loop_definitions" table. The alias "etld" is used in all generated
+// SQL fragments (e.g. "etld.id = ?").
+var EDITransactionLoopDefinitionTable = TableInfo{
+	Name:       "edi_transaction_loop_definitions",
+	Alias:      "etld",
+	PrimaryKey: []string{"id"},
+}
+
+// EDITransactionLoopDefinitionColumns provides type-safe column references for the "edi_transaction_loop_definitions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDITransactionLoopDefinitionColumns.ID.String())
+//	// SELECT etld.id FROM edi_transaction_loop_definitions AS etld
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDITransactionLoopDefinitionColumns.ID.Eq(), id)           // WHERE etld.id = ?
+//	q.Order(EDITransactionLoopDefinitionColumns.CreatedAt.OrderDesc())  // ORDER BY etld.created_at DESC
+var EDITransactionLoopDefinitionColumns = struct {
+	ID               Column // "id" → qualified: "etld.id"
+	TransactionSetID Column // "transaction_set_id" → qualified: "etld.transaction_set_id"
+	Direction        Column // "direction" → qualified: "etld.direction"
+	X12Version       Column // "x12_version" → qualified: "etld.x12_version"
+	LoopID           Column // "loop_id" → qualified: "etld.loop_id"
+	Name             Column // "name" → qualified: "etld.name"
+	ParentLoopID     Column // "parent_loop_id" → qualified: "etld.parent_loop_id"
+	Sequence         Column // "sequence" → qualified: "etld.sequence"
+	RepeatPath       Column // "repeat_path" → qualified: "etld.repeat_path"
+	UsageNotes       Column // "usage_notes" → qualified: "etld.usage_notes"
+	CreatedAt        Column // "created_at" → qualified: "etld.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "etld.updated_at"
+}{
+	ID:               NewColumn("id", "etld"),
+	TransactionSetID: NewColumn("transaction_set_id", "etld"),
+	Direction:        NewColumn("direction", "etld"),
+	X12Version:       NewColumn("x12_version", "etld"),
+	LoopID:           NewColumn("loop_id", "etld"),
+	Name:             NewColumn("name", "etld"),
+	ParentLoopID:     NewColumn("parent_loop_id", "etld"),
+	Sequence:         NewColumn("sequence", "etld"),
+	RepeatPath:       NewColumn("repeat_path", "etld"),
+	UsageNotes:       NewColumn("usage_notes", "etld"),
+	CreatedAt:        NewColumn("created_at", "etld"),
+	UpdatedAt:        NewColumn("updated_at", "etld"),
+}
+
+// EDITransactionLoopDefinitionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDITransactionLoopDefinition.GetStaticFieldMap().
+var EDITransactionLoopDefinitionFieldMap = map[string]string{
+	"id":               "id",
+	"transactionSetId": "transaction_set_id",
+	"direction":        "direction",
+	"x12Version":       "x12_version",
+	"loopId":           "loop_id",
+	"name":             "name",
+	"parentLoopId":     "parent_loop_id",
+	"sequence":         "sequence",
+	"repeatPath":       "repeat_path",
+	"usageNotes":       "usage_notes",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// EDITransactionLoopDefinitionInsertableColumns lists column names suitable for INSERT statements on the "edi_transaction_loop_definitions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDITransactionLoopDefinitionInsertableColumns = []string{
+	"id",
+	"transaction_set_id",
+	"direction",
+	"x12_version",
+	"loop_id",
+	"name",
+	"parent_loop_id",
+	"sequence",
+	"repeat_path",
+	"usage_notes",
+	"created_at",
+	"updated_at",
+}
+
+// EDITransactionLoopDefinitionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_transaction_loop_definitions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDITransactionLoopDefinitionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDITransactionLoopDefinitionFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TransactionSetID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSetId" → DB: "transaction_set_id"
+	Direction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	X12Version       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	LoopID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loopId" → DB: "loop_id"
+	Name             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	ParentLoopID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentLoopId" → DB: "parent_loop_id"
+	Sequence         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	RepeatPath       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "repeatPath" → DB: "repeat_path"
+	UsageNotes       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usageNotes" → DB: "usage_notes"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TransactionSetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSetId", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	X12Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("x12Version", op, value)
+	},
+	LoopID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("loopId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	ParentLoopID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("parentLoopId", op, value)
+	},
+	Sequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sequence", op, value)
+	},
+	RepeatPath: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("repeatPath", op, value)
+	},
+	UsageNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usageNotes", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDITransactionSegmentDefinition — table "edi_transaction_segment_definitions", alias "etsd"
+// ---------------------------------------------------------------------------
+
+// EDITransactionSegmentDefinitionTable holds the table name, alias, and primary key columns
+// for the "edi_transaction_segment_definitions" table. The alias "etsd" is used in all generated
+// SQL fragments (e.g. "etsd.id = ?").
+var EDITransactionSegmentDefinitionTable = TableInfo{
+	Name:       "edi_transaction_segment_definitions",
+	Alias:      "etsd",
+	PrimaryKey: []string{"id"},
+}
+
+// EDITransactionSegmentDefinitionColumns provides type-safe column references for the "edi_transaction_segment_definitions" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDITransactionSegmentDefinitionColumns.ID.String())
+//	// SELECT etsd.id FROM edi_transaction_segment_definitions AS etsd
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDITransactionSegmentDefinitionColumns.ID.Eq(), id)           // WHERE etsd.id = ?
+//	q.Order(EDITransactionSegmentDefinitionColumns.CreatedAt.OrderDesc())  // ORDER BY etsd.created_at DESC
+var EDITransactionSegmentDefinitionColumns = struct {
+	ID               Column // "id" → qualified: "etsd.id"
+	TransactionSetID Column // "transaction_set_id" → qualified: "etsd.transaction_set_id"
+	Direction        Column // "direction" → qualified: "etsd.direction"
+	X12Version       Column // "x12_version" → qualified: "etsd.x12_version"
+	SegmentID        Column // "segment_id" → qualified: "etsd.segment_id"
+	Name             Column // "name" → qualified: "etsd.name"
+	LoopID           Column // "loop_id" → qualified: "etsd.loop_id"
+	Sequence         Column // "sequence" → qualified: "etsd.sequence"
+	Required         Column // "required" → qualified: "etsd.required"
+	MaxUse           Column // "max_use" → qualified: "etsd.max_use"
+	RepeatPath       Column // "repeat_path" → qualified: "etsd.repeat_path"
+	UsageNotes       Column // "usage_notes" → qualified: "etsd.usage_notes"
+	CreatedAt        Column // "created_at" → qualified: "etsd.created_at"
+	UpdatedAt        Column // "updated_at" → qualified: "etsd.updated_at"
+}{
+	ID:               NewColumn("id", "etsd"),
+	TransactionSetID: NewColumn("transaction_set_id", "etsd"),
+	Direction:        NewColumn("direction", "etsd"),
+	X12Version:       NewColumn("x12_version", "etsd"),
+	SegmentID:        NewColumn("segment_id", "etsd"),
+	Name:             NewColumn("name", "etsd"),
+	LoopID:           NewColumn("loop_id", "etsd"),
+	Sequence:         NewColumn("sequence", "etsd"),
+	Required:         NewColumn("required", "etsd"),
+	MaxUse:           NewColumn("max_use", "etsd"),
+	RepeatPath:       NewColumn("repeat_path", "etsd"),
+	UsageNotes:       NewColumn("usage_notes", "etsd"),
+	CreatedAt:        NewColumn("created_at", "etsd"),
+	UpdatedAt:        NewColumn("updated_at", "etsd"),
+}
+
+// EDITransactionSegmentDefinitionFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDITransactionSegmentDefinition.GetStaticFieldMap().
+var EDITransactionSegmentDefinitionFieldMap = map[string]string{
+	"id":               "id",
+	"transactionSetId": "transaction_set_id",
+	"direction":        "direction",
+	"x12Version":       "x12_version",
+	"segmentId":        "segment_id",
+	"name":             "name",
+	"loopId":           "loop_id",
+	"sequence":         "sequence",
+	"required":         "required",
+	"maxUse":           "max_use",
+	"repeatPath":       "repeat_path",
+	"usageNotes":       "usage_notes",
+	"createdAt":        "created_at",
+	"updatedAt":        "updated_at",
+}
+
+// EDITransactionSegmentDefinitionInsertableColumns lists column names suitable for INSERT statements on the "edi_transaction_segment_definitions" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDITransactionSegmentDefinitionInsertableColumns = []string{
+	"id",
+	"transaction_set_id",
+	"direction",
+	"x12_version",
+	"segment_id",
+	"name",
+	"loop_id",
+	"sequence",
+	"required",
+	"max_use",
+	"repeat_path",
+	"usage_notes",
+	"created_at",
+	"updated_at",
+}
+
+// EDITransactionSegmentDefinitionFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_transaction_segment_definitions" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDITransactionSegmentDefinitionFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDITransactionSegmentDefinitionFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	TransactionSetID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSetId" → DB: "transaction_set_id"
+	Direction        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	X12Version       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	SegmentID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "segmentId" → DB: "segment_id"
+	Name             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	LoopID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loopId" → DB: "loop_id"
+	Sequence         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Required         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "required" → DB: "required"
+	MaxUse           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxUse" → DB: "max_use"
+	RepeatPath       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "repeatPath" → DB: "repeat_path"
+	UsageNotes       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usageNotes" → DB: "usage_notes"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	TransactionSetID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSetId", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	X12Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("x12Version", op, value)
+	},
+	SegmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("segmentId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	LoopID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("loopId", op, value)
+	},
+	Sequence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sequence", op, value)
+	},
+	Required: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("required", op, value)
+	},
+	MaxUse: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxUse", op, value)
+	},
+	RepeatPath: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("repeatPath", op, value)
+	},
+	UsageNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usageNotes", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDITransactionSet — table "edi_transaction_sets", alias "ets"
+// ---------------------------------------------------------------------------
+
+// EDITransactionSetTable holds the table name, alias, and primary key columns
+// for the "edi_transaction_sets" table. The alias "ets" is used in all generated
+// SQL fragments (e.g. "ets.id = ?").
+var EDITransactionSetTable = TableInfo{
+	Name:       "edi_transaction_sets",
+	Alias:      "ets",
+	PrimaryKey: []string{"id"},
+}
+
+// EDITransactionSetColumns provides type-safe column references for the "edi_transaction_sets" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDITransactionSetColumns.ID.String())
+//	// SELECT ets.id FROM edi_transaction_sets AS ets
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDITransactionSetColumns.ID.Eq(), id)           // WHERE ets.id = ?
+//	q.Order(EDITransactionSetColumns.CreatedAt.OrderDesc())  // ORDER BY ets.created_at DESC
+var EDITransactionSetColumns = struct {
+	ID             Column // "id" → qualified: "ets.id"
+	Standard       Column // "standard" → qualified: "ets.standard"
+	Code           Column // "code" → qualified: "ets.code"
+	Name           Column // "name" → qualified: "ets.name"
+	Description    Column // "description" → qualified: "ets.description"
+	DefaultVersion Column // "default_version" → qualified: "ets.default_version"
+	Status         Column // "status" → qualified: "ets.status"
+	CreatedAt      Column // "created_at" → qualified: "ets.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "ets.updated_at"
+}{
+	ID:             NewColumn("id", "ets"),
+	Standard:       NewColumn("standard", "ets"),
+	Code:           NewColumn("code", "ets"),
+	Name:           NewColumn("name", "ets"),
+	Description:    NewColumn("description", "ets"),
+	DefaultVersion: NewColumn("default_version", "ets"),
+	Status:         NewColumn("status", "ets"),
+	CreatedAt:      NewColumn("created_at", "ets"),
+	UpdatedAt:      NewColumn("updated_at", "ets"),
+}
+
+// EDITransactionSetFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDITransactionSet.GetStaticFieldMap().
+var EDITransactionSetFieldMap = map[string]string{
+	"id":             "id",
+	"standard":       "standard",
+	"code":           "code",
+	"name":           "name",
+	"description":    "description",
+	"defaultVersion": "default_version",
+	"status":         "status",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// EDITransactionSetInsertableColumns lists column names suitable for INSERT statements on the "edi_transaction_sets" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDITransactionSetInsertableColumns = []string{
+	"id",
+	"standard",
+	"code",
+	"name",
+	"description",
+	"default_version",
+	"status",
+	"created_at",
+	"updated_at",
+}
+
+// EDITransactionSetFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_transaction_sets" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDITransactionSetFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDITransactionSetFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	Standard       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
+	Code           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "code" → DB: "code"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	DefaultVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultVersion" → DB: "default_version"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	Standard: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("standard", op, value)
+	},
+	Code: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("code", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	DefaultVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultVersion", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

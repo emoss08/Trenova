@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { FormSaveDock } from "./form-save-dock";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -13,6 +12,7 @@ import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
+import { usePermissionStore } from "@/stores/permission-store";
 import type { DataTablePanelProps } from "@/types/data-table";
 import type { API_ENDPOINTS } from "@/types/server";
 import { Dialog } from "@base-ui/react/dialog";
@@ -23,6 +23,8 @@ import { Suspense, useCallback, useEffect, useRef, type LazyExoticComponent } fr
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { ComponentLoader } from "./component-loader";
+import { FormCopyButton } from "./form-copy-button";
+import { FormSaveDock } from "./form-save-dock";
 
 const PANEL_SIZES = {
   sm: 400,
@@ -95,8 +97,9 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
-
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("details"));
+  const manifest = usePermissionStore((s) => s.manifest);
+  const isAdmin = manifest?.isOrgAdmin || manifest?.isPlatformAdmin; // check if the user is organization admin or platform admin
 
   const {
     setError,
@@ -183,7 +186,13 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (open && !activeTabHidesFooter && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
+      if (
+        open &&
+        !activeTabHidesFooter &&
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter" &&
+        !isSubmitting
+      ) {
         event.preventDefault();
         pendingActionRef.current = defaultAction;
         void handleSubmit(onSubmit)();
@@ -203,10 +212,16 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
       : title;
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: user?.timeFormat || "24-hour",
-      }, user?.timezone)}`
+    ? `Last updated on ${formatToUserTimezone(
+        row.updatedAt as number,
+        {
+          timeFormat: user?.timeFormat || "24-hour",
+        },
+        user?.timezone,
+      )}`
     : undefined;
+
+  const rowId = row !== null && row !== undefined ? String(row.id) : "unable to retrieve ID";
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
@@ -222,9 +237,12 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
         >
           <div className="flex flex-col border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
-              <Dialog.Title className="text-2xl leading-none font-semibold">
-                {typeof panelTitle === "string" ? panelTitle : title}
-              </Dialog.Title>
+              <div className="flex flex-row gap-1">
+                <Dialog.Title className="text-2xl leading-none font-semibold">
+                  {typeof panelTitle === "string" ? panelTitle : title}
+                </Dialog.Title>
+                {isAdmin && <FormCopyButton rowId={rowId} />}
+              </div>
               <div className="flex items-center gap-1">
                 {headerActions}
                 <Dialog.Close
@@ -286,7 +304,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                           formId="panel-edit-form"
                           position="right"
                           showReset={false}
-                          />
+                        />
                       )}
                     </Form>
                   </FormProvider>

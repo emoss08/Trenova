@@ -87,6 +87,9 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if err != nil {
 		return nil, err
 	}
+	if err = validateProfileTemplateVersionCompatibility(req.Status, templateVersion); err != nil {
+		return nil, err
+	}
 	documentTypes, err := s.documentRepo.ListDocumentTypes(
 		ctx,
 		repositories.ListEDIDocumentTypesRequest{
@@ -130,6 +133,9 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if profile.Status == "" {
 		profile.Status = edi.DocumentStatusActive
 	}
+	if err = validateProfileTemplateVersionCompatibility(profile.Status, templateVersion); err != nil {
+		return nil, err
+	}
 	if profile.ValidationMode == "" {
 		profile.ValidationMode = edi.ValidationModeStrict
 	}
@@ -160,6 +166,73 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	}
 	s.logAction(updated, actor, permission.OpUpdate, nil, updated, "EDI document profile updated")
 	return updated, nil
+}
+
+func validateProfileTemplateVersionCompatibility(
+	status edi.DocumentStatus,
+	version *edi.EDITemplateVersion,
+) error {
+	if version == nil {
+		return errortypes.NewValidationError(
+			"templateVersionId",
+			errortypes.ErrInvalidReference,
+			"Template version is required",
+		)
+	}
+	if status == "" {
+		status = edi.DocumentStatusActive
+	}
+	if status == edi.DocumentStatusActive {
+		switch version.Status {
+		case edi.TemplateStatusActive, edi.TemplateStatusCertified:
+			return nil
+		case edi.TemplateStatusDraft,
+			edi.TemplateStatusDeprecated,
+			edi.TemplateStatusArchived,
+			edi.TemplateStatusSuperseded:
+			return errortypes.NewValidationError(
+				"templateVersionId",
+				errortypes.ErrInvalidOperation,
+				"Active document profiles can only pin active or certified template versions",
+			)
+		}
+	}
+	if version.Status == edi.TemplateStatusArchived {
+		return errortypes.NewValidationError(
+			"templateVersionId",
+			errortypes.ErrInvalidOperation,
+			"Archived template versions cannot be used for document profiles",
+		)
+	}
+	return nil
+}
+
+func validateProductionTemplateVersion(version *edi.EDITemplateVersion) error {
+	if version == nil {
+		return errortypes.NewValidationError(
+			"templateVersionId",
+			errortypes.ErrInvalidReference,
+			"Template version is required",
+		)
+	}
+	switch version.Status {
+	case edi.TemplateStatusActive, edi.TemplateStatusCertified:
+		return nil
+	case edi.TemplateStatusDraft,
+		edi.TemplateStatusDeprecated,
+		edi.TemplateStatusArchived,
+		edi.TemplateStatusSuperseded:
+		return errortypes.NewValidationError(
+			"templateVersionId",
+			errortypes.ErrInvalidOperation,
+			"Production EDI generation requires an active or certified template version",
+		)
+	}
+	return errortypes.NewValidationError(
+		"templateVersionId",
+		errortypes.ErrInvalidOperation,
+		"Production EDI generation requires an active or certified template version",
+	)
 }
 
 func (s *Service) PreviewDocument(
@@ -209,6 +282,9 @@ func (s *Service) GenerateDocument(
 	}
 	resolved, err := s.resolveDocumentContext(ctx, previewReq)
 	if err != nil {
+		return nil, err
+	}
+	if err = validateProductionTemplateVersion(resolved.templateVersion); err != nil {
 		return nil, err
 	}
 	provisional := *resolved

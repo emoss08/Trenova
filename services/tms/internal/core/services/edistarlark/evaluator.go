@@ -18,6 +18,15 @@ type executionResult struct {
 	result EvalResult
 }
 
+const (
+	diagnosticCodeInvalidResult = "starlark_invalid_result"
+	diagnosticCodePanic         = "starlark_panic"
+	diagnosticCodeRuntimeError  = "starlark_runtime_error"
+	diagnosticCodeStepLimit     = "starlark_step_limit"
+	diagnosticCodeSyntaxError   = "starlark_syntax_error"
+	diagnosticCodeTimeout       = "starlark_timeout"
+)
+
 func NewEvaluator(options Options) *Evaluator {
 	if options.MaxExecutionSteps == 0 {
 		options.MaxExecutionSteps = DefaultMaxExecutionSteps
@@ -36,6 +45,48 @@ func NewEvaluator(options Options) *Evaluator {
 
 func Evaluate(ctx context.Context, req EvalRequest) EvalResult {
 	return NewEvaluator(Options{}).Evaluate(ctx, req)
+}
+
+func ValidateScriptFunction(req EvalRequest) []Diagnostic {
+	evaluator := NewEvaluator(Options{})
+	thread := evaluator.newThread()
+	thread.SetMaxExecutionSteps(evaluator.options.MaxExecutionSteps)
+
+	globals, err := starlark.ExecFileOptions(
+		&syntax.FileOptions{While: true},
+		thread,
+		filename(req),
+		req.Script,
+		evaluator.predeclared,
+	)
+	if err != nil {
+		return []Diagnostic{diagnostic(req, classifyError(err), err.Error())}
+	}
+
+	functionName := strings.TrimSpace(req.FunctionName)
+	if functionName == "" {
+		functionName = defaultFunctionName
+	}
+	fn, ok := globals[functionName]
+	if !ok {
+		return []Diagnostic{
+			diagnostic(
+				req,
+				diagnosticCodeRuntimeError,
+				fmt.Sprintf("required Starlark function %q is not defined", functionName),
+			),
+		}
+	}
+	if _, ok = fn.(starlark.Callable); !ok {
+		return []Diagnostic{
+			diagnostic(
+				req,
+				diagnosticCodeRuntimeError,
+				fmt.Sprintf("%q is not callable", functionName),
+			),
+		}
+	}
+	return nil
 }
 
 func BuildContext(
@@ -91,14 +142,14 @@ func (e *Evaluator) Evaluate(ctx context.Context, req EvalRequest) EvalResult {
 		case result := <-done:
 			if len(result.result.Diagnostics) == 0 {
 				result.result.Diagnostics = []Diagnostic{
-					diagnostic(req, "starlark_timeout", "Starlark execution timed out"),
+					diagnostic(req, diagnosticCodeTimeout, "Starlark execution timed out"),
 				}
 			}
 			return result.result
 		case <-time.After(timeoutCancelGrace):
 			return EvalResult{
 				Diagnostics: []Diagnostic{
-					diagnostic(req, "starlark_timeout", "Starlark execution timed out"),
+					diagnostic(req, diagnosticCodeTimeout, "Starlark execution timed out"),
 				},
 			}
 		}
@@ -113,21 +164,25 @@ func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (
 			result.Value = ""
 			result.Raw = nil
 			result.Diagnostics = []Diagnostic{
-				diagnostic(req, "starlark_panic", fmt.Sprintf("Starlark runtime panicked: %v", recovered)),
+				diagnostic(
+					req,
+					diagnosticCodePanic,
+					fmt.Sprintf("Starlark runtime panicked: %v", recovered),
+				),
 			}
 		}
 	}()
 
 	ctxValue, err := toFrozenStarlarkValue(ensureMap(req.Context))
 	if err != nil {
-		return resultWithDiagnostic(req, thread, "starlark_runtime_error", err)
+		return resultWithDiagnostic(req, thread, diagnosticCodeRuntimeError, err)
 	}
 
 	var itemValue starlark.Value
 	if req.Item != nil {
 		itemValue, err = toFrozenStarlarkValue(req.Item)
 		if err != nil {
-			return resultWithDiagnostic(req, thread, "starlark_runtime_error", err)
+			return resultWithDiagnostic(req, thread, diagnosticCodeRuntimeError, err)
 		}
 	}
 
@@ -152,7 +207,7 @@ func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (
 		return resultWithDiagnostic(
 			req,
 			thread,
-			"starlark_runtime_error",
+			diagnosticCodeRuntimeError,
 			fmt.Errorf("required Starlark function %q is not defined", functionName),
 		)
 	}
@@ -160,7 +215,7 @@ func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (
 		return resultWithDiagnostic(
 			req,
 			thread,
-			"starlark_runtime_error",
+			diagnosticCodeRuntimeError,
 			fmt.Errorf("%q is not callable", functionName),
 		)
 	}
@@ -182,7 +237,7 @@ func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (
 		result.Diagnostics = []Diagnostic{
 			diagnostic(
 				req,
-				"starlark_invalid_result",
+				diagnosticCodeInvalidResult,
 				fmt.Sprintf("Starlark function returned unsupported %s result", raw.Type()),
 			),
 		}
@@ -235,28 +290,28 @@ func classifyError(err error) string {
 	switch {
 	case strings.Contains(message, "execution step limit exceeded"),
 		strings.Contains(message, "too many steps"):
-		return "starlark_step_limit"
+		return diagnosticCodeStepLimit
 	case strings.Contains(message, "execution timed out"),
 		strings.Contains(message, "Starlark computation cancelled"):
-		return "starlark_timeout"
+		return diagnosticCodeTimeout
 	}
 
 	var evalErr *starlark.EvalError
 	if errors.As(err, &evalErr) {
-		return "starlark_runtime_error"
+		return diagnosticCodeRuntimeError
 	}
 
 	var syntaxErr syntax.Error
 	if errors.As(err, &syntaxErr) {
-		return "starlark_syntax_error"
+		return diagnosticCodeSyntaxError
 	}
 
 	var resolveErrs resolve.ErrorList
 	if errors.As(err, &resolveErrs) {
-		return "starlark_runtime_error"
+		return diagnosticCodeRuntimeError
 	}
 
-	return "starlark_syntax_error"
+	return diagnosticCodeSyntaxError
 }
 
 func diagnostic(req EvalRequest, code string, message string) Diagnostic {
@@ -273,17 +328,17 @@ func diagnostic(req EvalRequest, code string, message string) Diagnostic {
 
 func suggestedFix(code string) string {
 	switch code {
-	case "starlark_syntax_error":
+	case diagnosticCodeSyntaxError:
 		return "Fix the Starlark script syntax before rendering this element."
-	case "starlark_runtime_error":
+	case diagnosticCodeRuntimeError:
 		return "Check the Starlark script, function name, helper arguments, and available context fields."
-	case "starlark_step_limit":
+	case diagnosticCodeStepLimit:
 		return "Reduce loop work or simplify the Starlark script."
-	case "starlark_timeout":
+	case diagnosticCodeTimeout:
 		return "Reduce script execution time or simplify expensive loops."
-	case "starlark_invalid_result":
+	case diagnosticCodeInvalidResult:
 		return "Return a string, number, boolean, or None from the Starlark function."
-	case "starlark_panic":
+	case diagnosticCodePanic:
 		return "Review the approved helper implementation used by this script."
 	default:
 		return ""

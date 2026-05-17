@@ -4,6 +4,13 @@ package edi
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDICodeListDefinition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDICodeListDefinitionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDICodeListDefinition) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDICodeListDefinitionFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDICommunicationProfile].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDICommunicationProfileFieldMap] instead of parsing struct tags via reflection.
@@ -100,6 +107,34 @@ func (e *EDITemplateVersion) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.EDITestCaseFieldMap] instead of parsing struct tags via reflection.
 func (e *EDITestCase) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDITestCaseFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransactionElementDefinition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITransactionElementDefinitionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITransactionElementDefinition) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITransactionElementDefinitionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransactionLoopDefinition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITransactionLoopDefinitionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITransactionLoopDefinition) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITransactionLoopDefinitionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransactionSegmentDefinition].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITransactionSegmentDefinitionFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITransactionSegmentDefinition) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITransactionSegmentDefinitionFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransactionSet].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDITransactionSetFieldMap] instead of parsing struct tags via reflection.
+func (e *EDITransactionSet) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDITransactionSetFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDITransfer].

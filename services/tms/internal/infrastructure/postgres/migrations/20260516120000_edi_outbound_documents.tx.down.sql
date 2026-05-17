@@ -6,7 +6,12 @@ DROP TABLE IF EXISTS "edi_partner_document_profiles";
 DROP TABLE IF EXISTS "edi_template_segments";
 DROP TABLE IF EXISTS "edi_template_versions";
 DROP TABLE IF EXISTS "edi_templates";
+DROP TABLE IF EXISTS "edi_transaction_element_definitions";
+DROP TABLE IF EXISTS "edi_code_list_definitions";
+DROP TABLE IF EXISTS "edi_transaction_segment_definitions";
+DROP TABLE IF EXISTS "edi_transaction_loop_definitions";
 DROP TABLE IF EXISTS "edi_document_types";
+DROP TABLE IF EXISTS "edi_transaction_sets";
 
 DROP TYPE IF EXISTS edi_control_number_kind_enum;
 DROP TYPE IF EXISTS edi_validation_severity_enum;

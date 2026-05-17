@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -86,6 +87,102 @@ func (r *repository) GetTemplateByID(
 	return entity, nil
 }
 
+func (r *repository) CreateTemplate(
+	ctx context.Context,
+	req *repositories.CreateEDITemplateRequest,
+) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if _, err := r.db.DBForContext(c).NewInsert().Model(req.Template).Returning("*").Exec(c); err != nil {
+			return err
+		}
+		req.Version.TemplateID = req.Template.ID
+		if _, err := r.db.DBForContext(c).NewInsert().Model(req.Version).Returning("*").Exec(c); err != nil {
+			return err
+		}
+		for _, segment := range req.Segments {
+			segment.TemplateVersionID = req.Version.ID
+			segment.BusinessUnitID = req.Version.BusinessUnitID
+			segment.OrganizationID = req.Version.OrganizationID
+		}
+		if len(req.Segments) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
+				return err
+			}
+		}
+		req.Version.Segments = req.Segments
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	return req.Template, req.Version, nil
+}
+
+func (r *repository) UpdateTemplate(
+	ctx context.Context,
+	entity *edi.EDITemplate,
+) (*edi.EDITemplate, error) {
+	ov := entity.Version
+	entity.Version++
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		WherePK().
+		Where("version = ?", ov).
+		Column("name", "description", "status", "version", "updated_at").
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = dberror.CheckRowsAffected(results, "EDITemplate", entity.ID.String()); err != nil {
+		return nil, err
+	}
+	return entity, nil
+}
+
+func (r *repository) ListTemplateVersions(
+	ctx context.Context,
+	req repositories.ListEDITemplateVersionsRequest,
+) ([]*edi.EDITemplateVersion, error) {
+	entities := make([]*edi.EDITemplateVersion, 0, 8)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where("etv.template_id = ?", req.TemplateID).
+		Where("etv.organization_id = ?", req.TenantInfo.OrgID).
+		Where("etv.business_unit_id = ?", req.TenantInfo.BuID).
+		Order("etv.version_number DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *repository) GetTemplateVersionByID(
+	ctx context.Context,
+	req repositories.GetEDITemplateVersionByIDRequest,
+) (*edi.EDITemplateVersion, error) {
+	entity := new(edi.EDITemplateVersion)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation("Template").
+		Relation("Segments", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("sequence ASC")
+		}).
+		Where("etv.id = ?", req.VersionID).
+		Where("etv.template_id = ?", req.TemplateID).
+		Where("etv.organization_id = ?", req.TenantInfo.OrgID).
+		Where("etv.business_unit_id = ?", req.TenantInfo.BuID).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITemplateVersion")
+	}
+	return entity, nil
+}
+
 func (r *repository) GetActiveTemplateVersion(
 	ctx context.Context,
 	req repositories.GetActiveEDITemplateVersionRequest,
@@ -109,6 +206,261 @@ func (r *repository) GetActiveTemplateVersion(
 		return nil, dberror.HandleNotFoundError(err, "EDITemplateVersion")
 	}
 	return entity, nil
+}
+
+func (r *repository) CreateTemplateVersion(
+	ctx context.Context,
+	version *edi.EDITemplateVersion,
+	segments []*edi.EDITemplateSegment,
+) (*edi.EDITemplateVersion, error) {
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if _, err := r.db.DBForContext(c).NewInsert().Model(version).Returning("*").Exec(c); err != nil {
+			return err
+		}
+		for _, segment := range segments {
+			segment.TemplateVersionID = version.ID
+			segment.BusinessUnitID = version.BusinessUnitID
+			segment.OrganizationID = version.OrganizationID
+		}
+		if len(segments) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&segments).Exec(c); err != nil {
+				return err
+			}
+		}
+		version.Segments = segments
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return version, nil
+}
+
+func (r *repository) UpdateTemplateVersionMetadata(
+	ctx context.Context,
+	version *edi.EDITemplateVersion,
+) (*edi.EDITemplateVersion, error) {
+	ov := version.Version
+	version.Version++
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(version).
+		WherePK().
+		Where("version = ?", ov).
+		Column(
+			"x12_version",
+			"functional_group_id",
+			"status",
+			"is_active",
+			"notes",
+			"certification_notes",
+			"activation_notes",
+			"archive_notes",
+			"deprecated_notes",
+			"superseded_notes",
+			"certified_by_id",
+			"activated_by_id",
+			"archived_by_id",
+			"deprecated_by_id",
+			"superseded_by_id",
+			"certified_at",
+			"activated_at",
+			"archived_at",
+			"deprecated_at",
+			"superseded_at",
+			"version",
+			"updated_at",
+		).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = dberror.CheckRowsAffected(results, "EDITemplateVersion", version.ID.String()); err != nil {
+		return nil, err
+	}
+	return version, nil
+}
+
+func (r *repository) ReplaceTemplateVersionSegments(
+	ctx context.Context,
+	req repositories.ReplaceEDITemplateVersionSegmentsRequest,
+) (*edi.EDITemplateVersion, error) {
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if _, err := r.UpdateTemplateVersionMetadata(c, req.Version); err != nil {
+			return err
+		}
+		if _, err := r.db.DBForContext(c).
+			NewDelete().
+			Model((*edi.EDITemplateSegment)(nil)).
+			Where("template_version_id = ?", req.Version.ID).
+			Where("organization_id = ?", req.Version.OrganizationID).
+			Where("business_unit_id = ?", req.Version.BusinessUnitID).
+			Exec(c); err != nil {
+			return err
+		}
+		for _, segment := range req.Segments {
+			segment.TemplateVersionID = req.Version.ID
+			segment.BusinessUnitID = req.Version.BusinessUnitID
+			segment.OrganizationID = req.Version.OrganizationID
+		}
+		if len(req.Segments) > 0 {
+			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Segments).Exec(c); err != nil {
+				return err
+			}
+		}
+		req.Version.Segments = req.Segments
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return req.Version, nil
+}
+
+func (r *repository) ActivateTemplateVersion(
+	ctx context.Context,
+	req repositories.ActivateEDITemplateVersionRequest,
+) (*edi.EDITemplateVersion, error) {
+	version := new(edi.EDITemplateVersion)
+	now := timeutils.NowUnix()
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if err := r.db.DBForContext(c).
+			NewSelect().
+			Model(version).
+			Relation("Segments", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order("sequence ASC")
+			}).
+			Where("etv.id = ?", req.VersionID).
+			Where("etv.template_id = ?", req.TemplateID).
+			Where("etv.organization_id = ?", req.TenantInfo.OrgID).
+			Where("etv.business_unit_id = ?", req.TenantInfo.BuID).
+			For("UPDATE").
+			Scan(c); err != nil {
+			return dberror.HandleNotFoundError(err, "EDITemplateVersion")
+		}
+
+		active := make([]*edi.EDITemplateVersion, 0, 1)
+		if err := r.db.DBForContext(c).
+			NewSelect().
+			Model(&active).
+			Where("etv.template_id = ?", req.TemplateID).
+			Where("etv.organization_id = ?", req.TenantInfo.OrgID).
+			Where("etv.business_unit_id = ?", req.TenantInfo.BuID).
+			Where("etv.is_active = TRUE").
+			For("UPDATE").
+			Scan(c); err != nil {
+			return err
+		}
+		for _, current := range active {
+			if current.ID == version.ID {
+				continue
+			}
+			current.IsActive = false
+			current.Status = edi.TemplateStatusSuperseded
+			current.SupersededByID = req.ActorID
+			current.SupersededAt = &now
+			current.SupersededNotes = req.Notes
+			current.Version++
+			if _, err := r.db.DBForContext(c).
+				NewUpdate().
+				Model(current).
+				WherePK().
+				Column(
+					"status",
+					"is_active",
+					"superseded_by_id",
+					"superseded_at",
+					"superseded_notes",
+					"version",
+					"updated_at",
+				).
+				Exec(c); err != nil {
+				return err
+			}
+		}
+
+		version.Status = edi.TemplateStatusActive
+		version.IsActive = true
+		version.ActivatedByID = req.ActorID
+		version.ActivatedAt = &now
+		version.ActivationNotes = req.Notes
+		version.Version++
+		if _, err := r.db.DBForContext(c).
+			NewUpdate().
+			Model(version).
+			WherePK().
+			Column(
+				"status",
+				"is_active",
+				"activated_by_id",
+				"activated_at",
+				"activation_notes",
+				"version",
+				"updated_at",
+			).
+			Returning("*").
+			Exec(c); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return version, nil
+}
+
+func (r *repository) ArchiveTemplateVersion(
+	ctx context.Context,
+	req repositories.ArchiveEDITemplateVersionRequest,
+) (*edi.EDITemplateVersion, error) {
+	version := new(edi.EDITemplateVersion)
+	now := timeutils.NowUnix()
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
+		if err := r.db.DBForContext(c).
+			NewSelect().
+			Model(version).
+			Relation("Segments", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order("sequence ASC")
+			}).
+			Where("etv.id = ?", req.VersionID).
+			Where("etv.template_id = ?", req.TemplateID).
+			Where("etv.organization_id = ?", req.TenantInfo.OrgID).
+			Where("etv.business_unit_id = ?", req.TenantInfo.BuID).
+			For("UPDATE").
+			Scan(c); err != nil {
+			return dberror.HandleNotFoundError(err, "EDITemplateVersion")
+		}
+		version.Status = edi.TemplateStatusArchived
+		version.IsActive = false
+		version.ArchivedByID = req.ActorID
+		version.ArchivedAt = &now
+		version.ArchiveNotes = req.Notes
+		version.Version++
+		if _, err := r.db.DBForContext(c).
+			NewUpdate().
+			Model(version).
+			WherePK().
+			Column(
+				"status",
+				"is_active",
+				"archived_by_id",
+				"archived_at",
+				"archive_notes",
+				"version",
+				"updated_at",
+			).
+			Returning("*").
+			Exec(c); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return version, nil
 }
 
 func (r *repository) EnsureBase204Template(
@@ -177,6 +529,7 @@ func (r *repository) EnsureBase204Template(
 			return err
 		}
 
+		activatedAt := timeutils.NowUnix()
 		version = &edi.EDITemplateVersion{
 			BusinessUnitID:    tenantInfo.BuID,
 			OrganizationID:    tenantInfo.OrgID,
@@ -187,6 +540,7 @@ func (r *repository) EnsureBase204Template(
 			Status:            edi.TemplateStatusActive,
 			IsActive:          true,
 			Notes:             "Seeded base 004010 Motor Carrier Load Tender profile",
+			ActivatedAt:       &activatedAt,
 		}
 		if _, err = r.db.DBForContext(c).NewInsert().Model(version).Returning("*").Exec(c); err != nil {
 			return err

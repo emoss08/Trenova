@@ -188,15 +188,24 @@ operational support are present where relevant.
 
 ### Stage 4: Template Versioning and Transaction-Set Model
 
-- Add first-class document families, transaction sets, loops, segment
-  dictionaries, element dictionaries, code lists, implementation-guide metadata,
-  and template version lifecycle states.
-- Support draft, certified, active, deprecated, archived, and rollback states.
-- Persist immutable version snapshots and mutable draft working copies.
-- Track compatibility between partner profiles, transaction sets, source
-  context schemas, script libraries, and template versions.
-- Add migration tools for cloning active templates into new drafts.
-- Require promotion checks before activation.
+- [x] Add first-class backend transaction sets plus loop, segment, element, and
+  code-list dictionary tables for the outbound 204 foundation.
+- [x] Support backend draft, certified, active, deprecated, archived,
+  superseded, and rollback lifecycle states for template versions.
+- [x] Keep active/certified template versions immutable in service workflows and
+  allow edits only through cloned draft versions.
+- [x] Pin partner document profiles to stable template versions by default and
+  prevent active profiles from pinning draft or archived versions.
+- [x] Add backend APIs for template creation, draft cloning, version update,
+  segment replacement, validation, certification, activation, archive, and
+  rollback.
+- [x] Require backend validation and certification before normal activation,
+  while allowing rollback to validated certified, superseded, or deprecated
+  versions.
+- [ ] Add frontend designer workflows for version diffing, promotion review, and
+  certification evidence.
+- [ ] Track source context schema and script library compatibility once those
+  first-class models exist.
 
 ### Stage 5: Transform Pipelines
 

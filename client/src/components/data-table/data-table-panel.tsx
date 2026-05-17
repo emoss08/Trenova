@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import type { DataTablePanelProps } from "@/types/data-table";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
@@ -15,7 +16,7 @@ const PANEL_SIZES = {
 
 export type PanelSize = keyof typeof PANEL_SIZES;
 
-type DataTablePanelContainerProps = {
+type DataTablePanelContainerProps<T extends Record<string, unknown>> = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -25,9 +26,9 @@ type DataTablePanelContainerProps = {
   footer?: React.ReactNode;
   headerActions?: React.ReactNode;
   size?: PanelSize;
-};
+} & Pick<DataTablePanelProps<T>, "row">;
 
-export function DataTablePanelContainer({
+export function DataTablePanelContainer<T extends Record<string, unknown>>({
   open,
   onOpenChange,
   title,
@@ -36,16 +37,17 @@ export function DataTablePanelContainer({
   children,
   footer,
   headerActions,
+  row,
   size = "md",
-}: DataTablePanelContainerProps) {
+}: DataTablePanelContainerProps<T>) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Popup
           className={cn(
             "fixed top-4 right-4 bottom-4 z-50 flex flex-col rounded-lg border border-border bg-background shadow-lg outline-none",
-            "data-[open]:animate-in data-[open]:slide-in-from-right",
-            "data-[closed]:animate-out data-[closed]:slide-out-to-right",
+            "data-open:animate-in data-open:slide-in-from-right",
+            "data-closed:animate-out data-closed:slide-out-to-right",
             "duration-200",
           )}
           style={{ width: PANEL_SIZES[size] }}

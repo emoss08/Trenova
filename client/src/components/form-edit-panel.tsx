@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
-import { FormSaveDock } from "./form-save-dock";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -19,6 +18,7 @@ import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-f
 import { toast } from "sonner";
 import { ComponentLoader } from "./component-loader";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
+import { FormSaveDock } from "./form-save-dock";
 
 type FormEditPanelProps<T extends FieldValues, TData extends Record<string, unknown>> = Pick<
   DataTablePanelProps<TData>,
@@ -146,9 +146,13 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   const resolvedTitleComponent = titleComponent && row ? titleComponent(row) : undefined;
 
   const panelDescription = row?.updatedAt
-    ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: user?.timeFormat || "24-hour",
-      }, user?.timezone)}`
+    ? `Last updated on ${formatToUserTimezone(
+        row.updatedAt as number,
+        {
+          timeFormat: user?.timeFormat || "24-hour",
+        },
+        user?.timezone,
+      )}`
     : undefined;
 
   const splitButtonConfig = {
@@ -159,7 +163,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   };
 
   return (
-    <DataTablePanelContainer
+    <DataTablePanelContainer<TData>
       open={open}
       onOpenChange={onOpenChange}
       title={resolvedTitle}
@@ -167,6 +171,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
       description={panelDescription}
       headerActions={headerActions}
       size={size}
+      row={row}
       footer={
         useDock ? undefined : (
           <>

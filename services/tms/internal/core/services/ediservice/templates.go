@@ -1,0 +1,942 @@
+package ediservice
+
+import (
+	"context"
+	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/core/domain/edi"
+	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/edistarlark"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
+)
+
+func (s *Service) GetTemplate(
+	ctx context.Context,
+	req repositories.GetEDITemplateByIDRequest,
+) (*edi.EDITemplate, error) {
+	return s.documentRepo.GetTemplateByID(ctx, req)
+}
+
+func (s *Service) CreateTemplate(
+	ctx context.Context,
+	req *CreateEDITemplateRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplate, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"template",
+			errortypes.ErrRequired,
+			"EDI template is required",
+		)
+	}
+	if err := s.validateTemplateCreateRequest(ctx, req); err != nil {
+		return nil, err
+	}
+
+	template := &edi.EDITemplate{
+		BusinessUnitID: req.TenantInfo.BuID,
+		OrganizationID: req.TenantInfo.OrgID,
+		DocumentTypeID: req.DocumentTypeID,
+		Name:           strings.TrimSpace(req.Name),
+		Description:    strings.TrimSpace(req.Description),
+		Direction:      req.Direction,
+		Standard:       req.Standard,
+		TransactionSet: req.TransactionSet,
+		Status:         edi.TemplateStatusDraft,
+	}
+	version := &edi.EDITemplateVersion{
+		BusinessUnitID:    req.TenantInfo.BuID,
+		OrganizationID:    req.TenantInfo.OrgID,
+		VersionNumber:     1,
+		X12Version:        stringutils.FirstNonEmpty(req.X12Version, edi.DefaultX12204Version),
+		FunctionalGroupID: stringutils.FirstNonEmpty(req.FunctionalGroupID, "SM"),
+		Status:            edi.TemplateStatusDraft,
+		Notes:             strings.TrimSpace(req.Notes),
+	}
+	segments := cloneTemplateSegments(req.TenantInfo, pulid.Nil, req.Segments)
+	if len(segments) == 0 && req.TransactionSet == edi.TransactionSet204 &&
+		req.Direction == edi.DocumentDirectionOutbound {
+		segments = editemplates.Base204Segments(req.TenantInfo, pulid.Nil)
+	}
+
+	created, createdVersion, err := s.documentRepo.CreateTemplate(
+		ctx,
+		&repositories.CreateEDITemplateRequest{
+			Template: template,
+			Version:  version,
+			Segments: segments,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	created.ActiveVersion = createdVersion
+	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI template created")
+	return created, nil
+}
+
+func (s *Service) UpdateTemplate(
+	ctx context.Context,
+	req *UpdateEDITemplateRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplate, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"template",
+			errortypes.ErrRequired,
+			"EDI template is required",
+		)
+	}
+	current, err := s.documentRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
+		ID:         req.TemplateID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	original := *current
+	if strings.TrimSpace(req.Name) != "" {
+		current.Name = strings.TrimSpace(req.Name)
+	}
+	current.Description = strings.TrimSpace(req.Description)
+	if req.Status != "" {
+		current.Status = req.Status
+	}
+	current.Version = req.Version
+
+	updated, err := s.documentRepo.UpdateTemplate(ctx, current)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI template updated")
+	return updated, nil
+}
+
+func (s *Service) CreateDraftVersion(
+	ctx context.Context,
+	req *CreateEDITemplateDraftRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	source, err := s.sourceTemplateVersion(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	switch source.Status {
+	case edi.TemplateStatusActive, edi.TemplateStatusCertified:
+	case edi.TemplateStatusDraft,
+		edi.TemplateStatusDeprecated,
+		edi.TemplateStatusArchived,
+		edi.TemplateStatusSuperseded:
+		return nil, errortypes.NewValidationError(
+			"sourceVersionId",
+			errortypes.ErrInvalidOperation,
+			"Drafts can only be cloned from active or certified template versions",
+		)
+	}
+
+	versions, err := s.documentRepo.ListTemplateVersions(
+		ctx,
+		repositories.ListEDITemplateVersionsRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	nextVersion := int64(1)
+	for _, version := range versions {
+		if version.VersionNumber >= nextVersion {
+			nextVersion = version.VersionNumber + 1
+		}
+	}
+
+	draft := &edi.EDITemplateVersion{
+		BusinessUnitID:    req.TenantInfo.BuID,
+		OrganizationID:    req.TenantInfo.OrgID,
+		TemplateID:        req.TemplateID,
+		SourceVersionID:   source.ID,
+		VersionNumber:     nextVersion,
+		X12Version:        source.X12Version,
+		FunctionalGroupID: source.FunctionalGroupID,
+		Status:            edi.TemplateStatusDraft,
+		Notes:             strings.TrimSpace(req.Notes),
+	}
+	segments := cloneTemplateSegments(req.TenantInfo, draft.ID, source.Segments)
+	created, err := s.documentRepo.CreateTemplateVersion(ctx, draft, segments)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI draft version created")
+	return created, nil
+}
+
+func (s *Service) ListTemplateVersions(
+	ctx context.Context,
+	req repositories.ListEDITemplateVersionsRequest,
+) ([]*edi.EDITemplateVersion, error) {
+	return s.documentRepo.ListTemplateVersions(ctx, req)
+}
+
+func (s *Service) GetTemplateVersion(
+	ctx context.Context,
+	req repositories.GetEDITemplateVersionByIDRequest,
+) (*edi.EDITemplateVersion, error) {
+	return s.documentRepo.GetTemplateVersionByID(ctx, req)
+}
+
+func (s *Service) UpdateDraftVersion(
+	ctx context.Context,
+	req *UpdateEDITemplateVersionRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	original := *version
+	version.X12Version = stringutils.FirstNonEmpty(req.X12Version, version.X12Version)
+	version.FunctionalGroupID = stringutils.FirstNonEmpty(
+		req.FunctionalGroupID,
+		version.FunctionalGroupID,
+	)
+	version.Notes = strings.TrimSpace(req.Notes)
+	version.Version = req.Version
+
+	updated, err := s.documentRepo.UpdateTemplateVersionMetadata(ctx, version)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		&original,
+		updated,
+		"EDI draft version updated",
+	)
+	return updated, nil
+}
+
+func (s *Service) ReplaceDraftSegments(
+	ctx context.Context,
+	req *ReplaceEDITemplateSegmentsRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	original := *version
+	version.Version = req.Version
+	segments := cloneTemplateSegments(req.TenantInfo, version.ID, req.Segments)
+	updated, err := s.documentRepo.ReplaceTemplateVersionSegments(
+		ctx,
+		repositories.ReplaceEDITemplateVersionSegmentsRequest{
+			Version:  version,
+			Segments: segments,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		&original,
+		updated,
+		"EDI draft segments updated",
+	)
+	return updated, nil
+}
+
+func (s *Service) ValidateTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+) ([]edix12.Diagnostic, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"version",
+			errortypes.ErrRequired,
+			"Template version is required",
+		)
+	}
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: req.TemplateID,
+			VersionID:  req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return validateTemplateVersionDefinition(version), nil
+}
+
+func (s *Service) CertifyTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.editableTemplateVersion(ctx, req.TemplateID, req.VersionID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	diagnostics := validateTemplateVersionDefinition(version)
+	if hasTemplateValidationErrors(diagnostics) {
+		return nil, diagnosticsToValidationError(diagnostics)
+	}
+
+	original := *version
+	now := timeutils.NowUnix()
+	version.Status = edi.TemplateStatusCertified
+	version.CertifiedAt = &now
+	version.CertifiedByID = actorID(actor)
+	version.CertificationNotes = strings.TrimSpace(req.Notes)
+	updated, err := s.documentRepo.UpdateTemplateVersionMetadata(ctx, version)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI version certified")
+	return updated, nil
+}
+
+func (s *Service) ActivateTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: req.TemplateID,
+			VersionID:  req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if version.Status != edi.TemplateStatusCertified {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Only certified template versions can be activated",
+		)
+	}
+	return s.activateTemplateVersion(ctx, req, actor, false)
+}
+
+func (s *Service) ArchiveTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: req.TemplateID,
+			VersionID:  req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if version.IsActive || version.Status == edi.TemplateStatusActive {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Active template versions cannot be archived",
+		)
+	}
+	if version.Status == edi.TemplateStatusArchived {
+		return version, nil
+	}
+	archived, err := s.documentRepo.ArchiveTemplateVersion(
+		ctx,
+		repositories.ArchiveEDITemplateVersionRequest{
+			VersionID:  req.VersionID,
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+			ActorID:    actorID(actor),
+			Notes:      strings.TrimSpace(req.Notes),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(archived, actor, permission.OpUpdate, version, archived, "EDI version archived")
+	return archived, nil
+}
+
+func (s *Service) RollbackTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+	actor *services.RequestActor,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: req.TemplateID,
+			VersionID:  req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	switch version.Status {
+	case edi.TemplateStatusCertified, edi.TemplateStatusSuperseded, edi.TemplateStatusDeprecated:
+	case edi.TemplateStatusDraft, edi.TemplateStatusActive, edi.TemplateStatusArchived:
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Only certified, superseded, or deprecated versions can be rolled back",
+		)
+	}
+	return s.activateTemplateVersion(ctx, req, actor, true)
+}
+
+func (s *Service) activateTemplateVersion(
+	ctx context.Context,
+	req *EDIActionNotesRequest,
+	actor *services.RequestActor,
+	isRollback bool,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: req.TemplateID,
+			VersionID:  req.VersionID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if version.Status == edi.TemplateStatusArchived {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Archived template versions cannot be activated",
+		)
+	}
+	diagnostics := validateTemplateVersionDefinition(version)
+	if hasTemplateValidationErrors(diagnostics) {
+		return nil, diagnosticsToValidationError(diagnostics)
+	}
+	activated, err := s.documentRepo.ActivateTemplateVersion(
+		ctx,
+		repositories.ActivateEDITemplateVersionRequest{
+			VersionID:  req.VersionID,
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+			ActorID:    actorID(actor),
+			Notes:      strings.TrimSpace(req.Notes),
+			IsRollback: isRollback,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	comment := "EDI version activated"
+	if isRollback {
+		comment = "EDI version rolled back"
+	}
+	s.logAction(activated, actor, permission.OpUpdate, version, activated, comment)
+	return activated, nil
+}
+
+func (s *Service) sourceTemplateVersion(
+	ctx context.Context,
+	req *CreateEDITemplateDraftRequest,
+) (*edi.EDITemplateVersion, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"template",
+			errortypes.ErrRequired,
+			"Draft request is required",
+		)
+	}
+	if req.SourceVersionID.IsNotNil() {
+		return s.documentRepo.GetTemplateVersionByID(
+			ctx,
+			repositories.GetEDITemplateVersionByIDRequest{
+				TemplateID: req.TemplateID,
+				VersionID:  req.SourceVersionID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
+	}
+	return s.documentRepo.GetActiveTemplateVersion(
+		ctx,
+		repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+}
+
+func (s *Service) editableTemplateVersion(
+	ctx context.Context,
+	templateID pulid.ID,
+	versionID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*edi.EDITemplateVersion, error) {
+	version, err := s.documentRepo.GetTemplateVersionByID(
+		ctx,
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: templateID,
+			VersionID:  versionID,
+			TenantInfo: tenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if version.Status != edi.TemplateStatusDraft {
+		return nil, errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Only draft template versions can be edited",
+		)
+	}
+	return version, nil
+}
+
+func (s *Service) validateTemplateCreateRequest(
+	ctx context.Context,
+	req *CreateEDITemplateRequest,
+) error {
+	multiErr := errortypes.NewMultiError()
+	if req.DocumentTypeID.IsNil() {
+		multiErr.Add("documentTypeId", errortypes.ErrRequired, "Document type is required")
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		multiErr.Add("name", errortypes.ErrRequired, "Template name is required")
+	}
+	if req.Standard == "" {
+		req.Standard = edi.EDIStandardX12
+	}
+	if req.Direction == "" {
+		req.Direction = edi.DocumentDirectionOutbound
+	}
+	if req.TransactionSet == "" {
+		req.TransactionSet = edi.TransactionSet204
+	}
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+	_, err := s.documentRepo.ListDocumentTypes(ctx, repositories.ListEDIDocumentTypesRequest{
+		Standard:       req.Standard,
+		TransactionSet: req.TransactionSet,
+		Direction:      req.Direction,
+	})
+	return err
+}
+
+func cloneTemplateSegments(
+	tenantInfo pagination.TenantInfo,
+	versionID pulid.ID,
+	source []*edi.EDITemplateSegment,
+) []*edi.EDITemplateSegment {
+	segments := make([]*edi.EDITemplateSegment, 0, len(source))
+	for _, segment := range source {
+		if segment == nil {
+			continue
+		}
+		cloned := *segment
+		cloned.ID = pulid.Nil
+		cloned.BusinessUnitID = tenantInfo.BuID
+		cloned.OrganizationID = tenantInfo.OrgID
+		cloned.TemplateVersionID = versionID
+		cloned.Elements = append([]edi.TemplateElement{}, segment.Elements...)
+		segments = append(segments, &cloned)
+	}
+	return segments
+}
+
+func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if version == nil {
+		return append(
+			diagnostics,
+			templateDiagnostic(
+				"template",
+				"",
+				0,
+				"template_required",
+				"Template version is required",
+				"Select a template version.",
+			),
+		)
+	}
+
+	diagnostics = append(diagnostics, validateTemplateMetadata(version)...)
+	if len(version.Segments) == 0 {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"segments",
+				"",
+				0,
+				"segments_required",
+				"At least one template segment is required",
+				"Add template segments before certification.",
+			),
+		)
+		return diagnostics
+	}
+
+	return append(diagnostics, validateTemplateSegments(version.Segments)...)
+}
+
+func validateTemplateMetadata(version *edi.EDITemplateVersion) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if strings.TrimSpace(version.X12Version) == "" {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"x12Version",
+				"",
+				0,
+				"metadata_required",
+				"X12 version is required",
+				"Set the X12 version.",
+			),
+		)
+	}
+	if strings.TrimSpace(version.FunctionalGroupID) == "" {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"functionalGroupId",
+				"GS",
+				1,
+				"metadata_required",
+				"Functional group ID is required",
+				"Set a functional group ID.",
+			),
+		)
+	}
+	return diagnostics
+}
+
+func validateTemplateSegments(source []*edi.EDITemplateSegment) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	segments := append([]*edi.EDITemplateSegment{}, source...)
+	sort.SliceStable(segments, func(i, j int) bool {
+		return segments[i].Sequence < segments[j].Sequence
+	})
+	seenSequences := make(map[int64]string, len(segments))
+	requiredSegments := map[string]bool{
+		"ISA": false,
+		"GS":  false,
+		"ST":  false,
+		"SE":  false,
+		"GE":  false,
+		"IEA": false,
+	}
+	for _, segment := range segments {
+		if segment == nil {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				"segments",
+				"",
+				0,
+				"segment_required",
+				"Template segment is required",
+				"Remove empty segment entries before certification.",
+			))
+			continue
+		}
+		if previous, ok := seenSequences[segment.Sequence]; ok {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				fmt.Sprintf("segments.%d.sequence", segment.Sequence),
+				segment.SegmentID,
+				0,
+				"duplicate_sequence",
+				fmt.Sprintf(
+					"Segment sequence %d is used by both %s and %s",
+					segment.Sequence,
+					previous,
+					segment.SegmentID,
+				),
+				"Use a unique sequence for each segment.",
+			))
+		}
+		seenSequences[segment.Sequence] = segment.SegmentID
+		if _, ok := requiredSegments[segment.SegmentID]; ok {
+			requiredSegments[segment.SegmentID] = true
+		}
+		diagnostics = append(diagnostics, validateTemplateSegment(segment)...)
+	}
+	for segmentID, found := range requiredSegments {
+		if found {
+			continue
+		}
+		diagnostics = append(diagnostics, templateDiagnostic(
+			"segments",
+			segmentID,
+			0,
+			"required_control_segment_missing",
+			segmentID+" segment is required",
+			"Add the required X12 control segment.",
+		))
+	}
+	return diagnostics
+}
+
+func validateTemplateSegment(segment *edi.EDITemplateSegment) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if strings.TrimSpace(segment.SegmentID) == "" {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"segmentId",
+				"",
+				0,
+				"segment_id_required",
+				"Segment ID is required",
+				"Set the X12 segment ID.",
+			),
+		)
+	}
+	if condition := edix12.ValidateConditionSyntax(segment.Condition); condition != nil {
+		condition.SegmentID = segment.SegmentID
+		diagnostics = append(diagnostics, *condition)
+	}
+	for idx := range segment.Elements {
+		element := &segment.Elements[idx]
+		diagnostics = append(diagnostics, validateTemplateElement(segment, element)...)
+	}
+	return diagnostics
+}
+
+func validateTemplateElement(
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if element.Position <= 0 {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"position",
+				segment.SegmentID,
+				element.Position,
+				"element_position_required",
+				"Element position is required",
+				"Set a 1-based element position.",
+			),
+		)
+	}
+	switch element.Source {
+	case edi.TemplateElementSourceConstant:
+		if element.Validation.Required && strings.TrimSpace(element.Value) == "" {
+			diagnostics = append(
+				diagnostics,
+				templateDiagnostic(
+					"value",
+					segment.SegmentID,
+					element.Position,
+					"constant_required",
+					"Required constant element has no value",
+					"Set the constant value.",
+				),
+			)
+		}
+	case edi.TemplateElementSourceFieldPath:
+		requireElementPath(&diagnostics, segment, element, element.FieldPath, "fieldPath")
+	case edi.TemplateElementSourcePartnerSetting:
+		requireElementPath(
+			&diagnostics,
+			segment,
+			element,
+			element.PartnerSettingPath,
+			"partnerSettingPath",
+		)
+	case edi.TemplateElementSourceMapping:
+		requireElementPath(
+			&diagnostics,
+			segment,
+			element,
+			element.MappingSourcePath,
+			"mappingSourcePath",
+		)
+	case edi.TemplateElementSourceRuntime:
+		requireElementPath(&diagnostics, segment, element, element.RuntimeKey, "runtimeKey")
+	case edi.TemplateElementSourceRepeat:
+		requireElementPath(&diagnostics, segment, element, element.RepeatPath, "repeatPath")
+	case edi.TemplateElementSourceTransform:
+		diagnostics = append(diagnostics, validateTransformElement(segment, element)...)
+	case edi.TemplateElementSourceStarlark:
+		diagnostics = append(diagnostics, validateStarlarkElement(segment, element)...)
+	default:
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"source",
+				segment.SegmentID,
+				element.Position,
+				"unsupported_source",
+				"Element source is unsupported",
+				"Choose a supported template element source.",
+			),
+		)
+	}
+	if condition := edix12.ValidateConditionSyntax(element.Condition); condition != nil {
+		condition.SegmentID = segment.SegmentID
+		condition.ElementPosition = element.Position
+		diagnostics = append(diagnostics, *condition)
+	}
+	return diagnostics
+}
+
+func requireElementPath(
+	diagnostics *[]edix12.Diagnostic,
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+	value string,
+	path string,
+) {
+	if strings.TrimSpace(value) != "" || !element.Validation.Required {
+		return
+	}
+	*diagnostics = append(*diagnostics, templateDiagnostic(
+		path,
+		segment.SegmentID,
+		element.Position,
+		"source_path_required",
+		"Required element source path is missing",
+		"Set the source path or make the element optional.",
+	))
+}
+
+func validateTransformElement(
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if element.BaseSource == nil {
+		return append(diagnostics, templateDiagnostic(
+			"baseSource",
+			segment.SegmentID,
+			element.Position,
+			"transform_base_source_required",
+			"Transform base source is required",
+			"Choose the source value that feeds the transform pipeline.",
+		))
+	}
+	if !edix12.IsDirectElementSource(element.BaseSource.Source) {
+		diagnostics = append(diagnostics, templateDiagnostic(
+			"baseSource.source",
+			segment.SegmentID,
+			element.Position,
+			"transform_base_source_invalid",
+			"Transform base source must be a direct source",
+			"Use a constant, field path, partner setting, runtime, repeat, or mapping source.",
+		))
+	}
+	for _, step := range element.TransformPipeline {
+		if !edix12.IsSupportedTransformOperation(step.Operation) {
+			diagnostics = append(diagnostics, templateDiagnostic(
+				"transformPipeline.operation",
+				segment.SegmentID,
+				element.Position,
+				"unsupported_transform_operation",
+				"Unsupported transform operation "+step.Operation,
+				"Choose a supported transform operation.",
+			))
+		}
+	}
+	return diagnostics
+}
+
+func validateStarlarkElement(
+	segment *edi.EDITemplateSegment,
+	element *edi.TemplateElement,
+) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0)
+	if strings.TrimSpace(element.StarlarkScript) == "" {
+		diagnostics = append(
+			diagnostics,
+			templateDiagnostic(
+				"starlarkScript",
+				segment.SegmentID,
+				element.Position,
+				"starlark_script_required",
+				"Starlark script is required",
+				"Add the Starlark script.",
+			),
+		)
+	}
+	functionName := stringutils.FirstNonEmpty(strings.TrimSpace(element.StarlarkFunction), "value")
+	starlarkDiagnostics := edistarlark.ValidateScriptFunction(edistarlark.EvalRequest{
+		Script:       element.StarlarkScript,
+		FunctionName: functionName,
+		Context:      map[string]any{},
+		SegmentID:    segment.SegmentID,
+		Path:         "starlark:" + functionName,
+	})
+	if len(starlarkDiagnostics) > 0 {
+		diagnostics = append(diagnostics, edix12.Diagnostic{
+			Severity:        edi.ValidationSeverity(starlarkDiagnostics[0].Severity),
+			Code:            starlarkDiagnostics[0].Code,
+			SegmentID:       segment.SegmentID,
+			ElementPosition: element.Position,
+			Path:            starlarkDiagnostics[0].Path,
+			Message:         starlarkDiagnostics[0].Message,
+			SuggestedFix:    starlarkDiagnostics[0].SuggestedFix,
+		})
+	}
+	return diagnostics
+}
+
+func actorID(actor *services.RequestActor) pulid.ID {
+	if actor == nil {
+		return pulid.Nil
+	}
+	return actor.UserID
+}
+
+func templateDiagnostic(
+	path string,
+	segmentID string,
+	position int,
+	code string,
+	message string,
+	suggestedFix string,
+) edix12.Diagnostic {
+	return edix12.Diagnostic{
+		Severity:        edi.ValidationSeverityError,
+		Code:            code,
+		SegmentID:       segmentID,
+		ElementPosition: position,
+		Path:            path,
+		Message:         message,
+		SuggestedFix:    suggestedFix,
+	}
+}
+
+func hasTemplateValidationErrors(diagnostics []edix12.Diagnostic) bool {
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == edi.ValidationSeverityError {
+			return true
+		}
+	}
+	return false
+}

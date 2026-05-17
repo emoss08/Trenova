@@ -44,7 +44,22 @@ func New(p Params) *Handler {
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/edi")
 
-	partners := api.Group("/partners")
+	h.registerPartnerRoutes(api.Group("/partners"))
+	h.registerMappingProfileRoutes(api.Group("/mapping-profiles"))
+	h.registerConnectionRoutes(api.Group("/connections"))
+	h.registerCommunicationProfileRoutes(api.Group("/communication-profiles"))
+	h.registerDocumentTypeRoutes(api.Group("/document-types"))
+	h.registerTemplateRoutes(api.Group("/templates"))
+	h.registerDocumentProfileRoutes(api.Group("/document-profiles"))
+	h.registerDocumentRoutes(api.Group("/documents"))
+	h.registerMessageRoutes(api.Group("/messages"))
+	h.registerTestCaseRoutes(api.Group("/test-cases"))
+	h.registerTransferRoutes(api.Group("/transfers"))
+	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
+	h.registerTransferChangeRoutes(api.Group("/transfer-changes"))
+}
+
+func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
 	partners.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -90,8 +105,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.deleteMappingItem,
 	)
+}
 
-	mappingProfiles := api.Group("/mapping-profiles")
+func (h *Handler) registerMappingProfileRoutes(mappingProfiles *gin.RouterGroup) {
 	mappingProfiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -112,8 +128,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.deleteMappingProfileItem,
 	)
+}
 
-	connections := api.Group("/connections")
+func (h *Handler) registerConnectionRoutes(connections *gin.RouterGroup) {
 	connections.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -149,8 +166,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.revokeConnection,
 	)
+}
 
-	profiles := api.Group("/communication-profiles")
+func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) {
 	profiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -171,22 +189,90 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.updateCommunicationProfile,
 	)
+}
 
-	documentTypes := api.Group("/document-types")
+func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
 	documentTypes.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listDocumentTypes,
 	)
+}
 
-	templates := api.Group("/templates")
+func (h *Handler) registerTemplateRoutes(templates *gin.RouterGroup) {
 	templates.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.listTemplates,
 	)
+	templates.POST(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
+		h.createTemplate,
+	)
+	templates.GET(
+		"/:templateID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTemplate,
+	)
+	templates.PUT(
+		"/:templateID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.updateTemplate,
+	)
+	templates.POST(
+		"/:templateID/draft/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
+		h.createDraftVersion,
+	)
+	templates.GET(
+		"/:templateID/versions/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.listTemplateVersions,
+	)
+	templates.GET(
+		"/:templateID/versions/:versionID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTemplateVersion,
+	)
+	templates.PUT(
+		"/:templateID/versions/:versionID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.updateTemplateVersion,
+	)
+	templates.PUT(
+		"/:templateID/versions/:versionID/segments/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.replaceTemplateSegments,
+	)
+	templates.POST(
+		"/:templateID/versions/:versionID/validate/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.validateTemplateVersion,
+	)
+	templates.POST(
+		"/:templateID/versions/:versionID/certify/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.certifyTemplateVersion,
+	)
+	templates.POST(
+		"/:templateID/versions/:versionID/activate/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.activateTemplateVersion,
+	)
+	templates.POST(
+		"/:templateID/versions/:versionID/archive/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.archiveTemplateVersion,
+	)
+	templates.POST(
+		"/:templateID/versions/:versionID/rollback/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.rollbackTemplateVersion,
+	)
+}
 
-	documentProfiles := api.Group("/document-profiles")
+func (h *Handler) registerDocumentProfileRoutes(documentProfiles *gin.RouterGroup) {
 	documentProfiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -207,8 +293,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.updatePartnerDocumentProfile,
 	)
+}
 
-	documents := api.Group("/documents")
+func (h *Handler) registerDocumentRoutes(documents *gin.RouterGroup) {
 	documents.POST(
 		"/preview/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -219,8 +306,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
 		h.generateDocument,
 	)
+}
 
-	messages := api.Group("/messages")
+func (h *Handler) registerMessageRoutes(messages *gin.RouterGroup) {
 	messages.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -231,8 +319,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.getMessage,
 	)
+}
 
-	testCases := api.Group("/test-cases")
+func (h *Handler) registerTestCaseRoutes(testCases *gin.RouterGroup) {
 	testCases.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -243,8 +332,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.previewTestCase,
 	)
+}
 
-	transfers := api.Group("/transfers")
+func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
 	transfers.POST(
 		"/load-tenders/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
@@ -290,8 +380,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.expireTransfer,
 	)
+}
 
-	links := api.Group("/shipment-links")
+func (h *Handler) registerShipmentLinkRoutes(links *gin.RouterGroup) {
 	links.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -302,8 +393,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.getShipmentLink,
 	)
+}
 
-	changes := api.Group("/transfer-changes")
+func (h *Handler) registerTransferChangeRoutes(changes *gin.RouterGroup) {
 	changes.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -785,12 +877,17 @@ func (h *Handler) listCommunicationProfiles(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-		return h.service.ListCommunicationProfiles(
-			c.Request.Context(),
-			&repositories.ListEDICommunicationProfilesRequest{Filter: req},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
+			return h.service.ListCommunicationProfiles(
+				c.Request.Context(),
+				&repositories.ListEDICommunicationProfilesRequest{Filter: req},
+			)
+		},
+	)
 }
 
 func (h *Handler) createCommunicationProfile(c *gin.Context) {
@@ -905,26 +1002,319 @@ func (h *Handler) listTemplates(c *gin.Context) {
 			&repositories.ListEDITemplatesRequest{
 				Filter:         req,
 				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "204")),
-				Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "Outbound")),
+				Direction: edi.DocumentDirection(
+					helpers.QueryString(c, "direction", "Outbound"),
+				),
 			},
 		)
 	})
+}
+
+func (h *Handler) createTemplate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.CreateEDITemplateRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	created, err := h.service.CreateTemplate(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, created)
+}
+
+func (h *Handler) getTemplate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	template, err := h.service.GetTemplate(
+		c.Request.Context(),
+		repositories.GetEDITemplateByIDRequest{
+			ID:         templateID,
+			TenantInfo: tenantInfoFromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, template)
+}
+
+func (h *Handler) updateTemplate(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(ediservice.UpdateEDITemplateRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TemplateID = templateID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	updated, err := h.service.UpdateTemplate(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, updated)
+}
+
+func (h *Handler) createDraftVersion(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(ediservice.CreateEDITemplateDraftRequest)
+	if c.Request.ContentLength > 0 {
+		if err = c.ShouldBindJSON(req); err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+	}
+	req.TemplateID = templateID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	version, err := h.service.CreateDraftVersion(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, version)
+}
+
+func (h *Handler) listTemplateVersions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, err := pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	versions, err := h.service.ListTemplateVersions(
+		c.Request.Context(),
+		repositories.ListEDITemplateVersionsRequest{
+			TemplateID: templateID,
+			TenantInfo: tenantInfoFromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, versions)
+}
+
+func (h *Handler) getTemplateVersion(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	version, err := h.service.GetTemplateVersion(
+		c.Request.Context(),
+		repositories.GetEDITemplateVersionByIDRequest{
+			TemplateID: templateID,
+			VersionID:  versionID,
+			TenantInfo: tenantInfoFromAuth(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, version)
+}
+
+func (h *Handler) updateTemplateVersion(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(ediservice.UpdateEDITemplateVersionRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TemplateID = templateID
+	req.VersionID = versionID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	version, err := h.service.UpdateDraftVersion(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, version)
+}
+
+func (h *Handler) replaceTemplateSegments(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req := new(ediservice.ReplaceEDITemplateSegmentsRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TemplateID = templateID
+	req.VersionID = versionID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	version, err := h.service.ReplaceDraftSegments(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, version)
+}
+
+func (h *Handler) validateTemplateVersion(c *gin.Context) {
+	req, err := h.templateActionRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	diagnostics, err := h.service.ValidateTemplateVersion(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"diagnostics": diagnostics})
+}
+
+func (h *Handler) certifyTemplateVersion(c *gin.Context) {
+	h.templateVersionAction(c, h.service.CertifyTemplateVersion)
+}
+
+func (h *Handler) activateTemplateVersion(c *gin.Context) {
+	h.templateVersionAction(c, h.service.ActivateTemplateVersion)
+}
+
+func (h *Handler) archiveTemplateVersion(c *gin.Context) {
+	h.templateVersionAction(c, h.service.ArchiveTemplateVersion)
+}
+
+func (h *Handler) rollbackTemplateVersion(c *gin.Context) {
+	h.templateVersionAction(c, h.service.RollbackTemplateVersion)
+}
+
+func (h *Handler) templateVersionAction(
+	c *gin.Context,
+	fn func(context.Context, *ediservice.EDIActionNotesRequest, *services.RequestActor) (*edi.EDITemplateVersion, error),
+) {
+	authCtx := authctx.GetAuthContext(c)
+	req, err := h.templateActionRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	version, err := fn(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, version)
+}
+
+func (h *Handler) templateActionRequest(c *gin.Context) (*ediservice.EDIActionNotesRequest, error) {
+	authCtx := authctx.GetAuthContext(c)
+	templateID, versionID, err := h.templateVersionIDs(c)
+	if err != nil {
+		return nil, err
+	}
+	req := new(ediservice.EDIActionNotesRequest)
+	if c.Request.ContentLength > 0 {
+		if err = c.ShouldBindJSON(req); err != nil {
+			return nil, err
+		}
+	}
+	req.TemplateID = templateID
+	req.VersionID = versionID
+	req.TenantInfo = tenantInfoFromAuth(authCtx)
+	return req, nil
+}
+
+func (h *Handler) templateVersionIDs(c *gin.Context) (
+	templateID pulid.ID,
+	versionID pulid.ID,
+	err error,
+) {
+	templateID, err = pulid.MustParse(c.Param("templateID"))
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+	versionID, err = pulid.MustParse(c.Param("versionID"))
+	if err != nil {
+		return pulid.Nil, pulid.Nil, err
+	}
+	return templateID, versionID, nil
+}
+
+func tenantInfoFromAuth(authCtx *authctx.AuthContext) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
 }
 
 func (h *Handler) listPartnerDocumentProfiles(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-		return h.service.ListPartnerDocumentProfiles(
-			c.Request.Context(),
-			&repositories.ListEDIPartnerDocumentProfilesRequest{
-				Filter:         req,
-				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "204")),
-				Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "Outbound")),
-			},
-		)
-	})
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+			return h.service.ListPartnerDocumentProfiles(
+				c.Request.Context(),
+				&repositories.ListEDIPartnerDocumentProfilesRequest{
+					Filter: req,
+					TransactionSet: edi.TransactionSet(
+						helpers.QueryString(c, "transactionSet", "204"),
+					),
+					Direction: edi.DocumentDirection(
+						helpers.QueryString(c, "direction", "Outbound"),
+					),
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getPartnerDocumentProfile(c *gin.Context) {
@@ -1055,7 +1445,9 @@ func (h *Handler) listMessages(c *gin.Context) {
 			&repositories.ListEDIMessagesRequest{
 				Filter:         req,
 				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "204")),
-				Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "Outbound")),
+				Direction: edi.DocumentDirection(
+					helpers.QueryString(c, "direction", "Outbound"),
+				),
 			},
 		)
 	})
