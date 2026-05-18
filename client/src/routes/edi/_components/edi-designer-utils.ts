@@ -249,7 +249,7 @@ export function buildConditionString(draft: ConditionDraft): string {
         ? `${draft.path.trim()} ${draft.operator} ${JSON.stringify(draft.value)}`
         : "";
     case "starlarkFunction":
-      return draft.functionName.trim() ? `starlark:${draft.functionName.trim()}()` : "";
+      return draft.functionName.trim() ? `starlark:${draft.functionName.trim()}` : "";
     case "inlineStarlark":
       return draft.script.trim() ? `starlark:${draft.script.trim()}` : "";
   }
@@ -260,8 +260,9 @@ export function parseConditionString(condition?: string | null): ConditionDraft 
   if (!trimmed) return { mode: "none" };
   if (trimmed.startsWith("starlark:")) {
     const script = trimmed.slice("starlark:".length).trim();
-    if (/^[A-Za-z_][A-Za-z0-9_]*\(\)$/.test(script)) {
-      return { mode: "starlarkFunction", functionName: script.slice(0, -2) };
+    const functionReference = script.match(/^([A-Za-z_][A-Za-z0-9_]*)(?:\(\))?$/);
+    if (functionReference) {
+      return { mode: "starlarkFunction", functionName: functionReference[1] };
     }
     return { mode: "inlineStarlark", script };
   }

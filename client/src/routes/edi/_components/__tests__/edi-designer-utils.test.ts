@@ -38,10 +38,26 @@ describe("conditions", () => {
     ).toBe('partner.mode == "test"');
   });
 
+  it("builds starlark function conditions", () => {
+    expect(
+      buildConditionString({
+        mode: "starlarkFunction",
+        functionName: "include_load_stop",
+      }),
+    ).toBe("starlark:include_load_stop");
+  });
+
   it("parses starlark function conditions", () => {
-    expect(parseConditionString("starlark:include_stop()")).toEqual({
+    expect(parseConditionString("starlark:include_load_stop")).toEqual({
       mode: "starlarkFunction",
-      functionName: "include_stop",
+      functionName: "include_load_stop",
+    });
+  });
+
+  it("parses legacy starlark function call conditions", () => {
+    expect(parseConditionString("starlark:include_load_stop()")).toEqual({
+      mode: "starlarkFunction",
+      functionName: "include_load_stop",
     });
   });
 });
