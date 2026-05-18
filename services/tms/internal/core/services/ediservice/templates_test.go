@@ -330,6 +330,23 @@ func TestValidateTemplateVersionDefinition_ValidatesScriptLibraries(t *testing.T
 	requireDiagnosticCode(t, diagnostics, "script_library_syntax_error")
 }
 
+func TestValidateTemplateVersionDefinition_RejectsReservedLibraryFunction(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	version := validTemplateVersion(tenantInfo)
+	version.ScriptLibraries = []*edi.EDITemplateScriptLibrary{
+		{
+			Name:     "helpers",
+			Language: edi.ScriptLanguageStarlark,
+			Script: `def trim(ctx):
+    return "unsafe"`,
+		},
+	}
+
+	diagnostics := validateTemplateVersionDefinition(version)
+
+	requireDiagnosticCode(t, diagnostics, "script_library_reserved_function")
+}
+
 func TestValidateTemplateVersionDefinition_ValidatesLibraryReferences(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)

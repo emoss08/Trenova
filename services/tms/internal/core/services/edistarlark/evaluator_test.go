@@ -153,6 +153,48 @@ func TestEvaluate_LibrarySyntaxErrorReturnDiagnostic(t *testing.T) {
 	requireDiagnostic(t, result, DiagnosticCodeLibrarySyntaxError)
 }
 
+func TestValidateLibraries_ReservedHelperNameReturnsDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := ValidateLibraries([]ScriptLibrary{
+		{
+			Name: "refs",
+			Script: `def trim(ctx):
+    return "unsafe"`,
+		},
+	})
+
+	require.Len(t, diagnostics, 1)
+	assert.Equal(t, DiagnosticCodeLibraryReservedFunction, diagnostics[0].Code)
+	assert.Equal(t, "scriptLibrary:refs", diagnostics[0].Path)
+	assert.Equal(t, `function "trim" uses a reserved helper name`, diagnostics[0].Message)
+	assert.Equal(
+		t,
+		"Rename the library function because this name is reserved by Trenova helper functions.",
+		diagnostics[0].SuggestedFix,
+	)
+}
+
+func TestEvaluate_ReservedLibraryFunctionReturnsDiagnostic(t *testing.T) {
+	t.Parallel()
+
+	result := Evaluate(t.Context(), EvalRequest{
+		FunctionName: "trim",
+		Libraries: []ScriptLibrary{
+			{
+				Name: "refs",
+				Script: `def trim(ctx):
+    return "unsafe"`,
+			},
+		},
+		Context: map[string]any{},
+	})
+
+	requireDiagnostic(t, result, DiagnosticCodeLibraryReservedFunction)
+	assert.Equal(t, "scriptLibrary:refs", result.Diagnostics[0].Path)
+	assert.Equal(t, `function "trim" uses a reserved helper name`, result.Diagnostics[0].Message)
+}
+
 func TestEvaluate_LibraryFunctionWithItem(t *testing.T) {
 	t.Parallel()
 

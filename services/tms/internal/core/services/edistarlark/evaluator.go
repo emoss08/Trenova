@@ -326,7 +326,7 @@ func (e *Evaluator) evalLibraries(
 		return globals, nil
 	}
 
-	if diagnostics := duplicateFunctionDiagnostics(req); len(diagnostics) > 0 {
+	if diagnostics := e.libraryFunctionDiagnostics(req); len(diagnostics) > 0 {
 		return nil, diagnostics
 	}
 
@@ -376,7 +376,7 @@ func (e *Evaluator) evalInlineScript(
 	return globals, nil
 }
 
-func duplicateFunctionDiagnostics(req EvalRequest) []Diagnostic {
+func (e *Evaluator) libraryFunctionDiagnostics(req EvalRequest) []Diagnostic {
 	type functionSource struct {
 		Library string
 		Path    string
@@ -396,6 +396,18 @@ func duplicateFunctionDiagnostics(req EvalRequest) []Diagnostic {
 			continue
 		}
 		for _, functionName := range names {
+			if _, reserved := e.predeclared[functionName]; reserved {
+				message := fmt.Sprintf(
+					"function %q uses a reserved helper name",
+					functionName,
+				)
+				diagnostics = append(
+					diagnostics,
+					diagnostic(libraryReq, DiagnosticCodeLibraryReservedFunction, message),
+				)
+				continue
+			}
+
 			source, ok := seen[functionName]
 			if !ok {
 				seen[functionName] = functionSource{
@@ -514,6 +526,8 @@ func suggestedFix(code string) string {
 		return "Fix the Starlark script library syntax before rendering this template."
 	case DiagnosticCodeLibraryDuplicateFunction:
 		return "Rename one library function so each function name is defined once per template version."
+	case DiagnosticCodeLibraryReservedFunction:
+		return "Rename the library function because this name is reserved by Trenova helper functions."
 	case DiagnosticCodeFunctionNotFound:
 		return "Define the referenced Starlark function in the inline script or template script libraries."
 	case DiagnosticCodeFunctionNotCallable:
