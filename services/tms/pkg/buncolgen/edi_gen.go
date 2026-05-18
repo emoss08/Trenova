@@ -2249,49 +2249,53 @@ var EDIPartnerDocumentProfileTable = TableInfo{
 //	q.Where(EDIPartnerDocumentProfileColumns.ID.Eq(), id)           // WHERE epdp.id = ?
 //	q.Order(EDIPartnerDocumentProfileColumns.CreatedAt.OrderDesc())  // ORDER BY epdp.created_at DESC
 var EDIPartnerDocumentProfileColumns = struct {
-	ID                 Column // "id" → qualified: "epdp.id"
-	BusinessUnitID     Column // "business_unit_id" → qualified: "epdp.business_unit_id"
-	OrganizationID     Column // "organization_id" → qualified: "epdp.organization_id"
-	EDIPartnerID       Column // "edi_partner_id" → qualified: "epdp.edi_partner_id"
-	DocumentTypeID     Column // "document_type_id" → qualified: "epdp.document_type_id"
-	TemplateID         Column // "template_id" → qualified: "epdp.template_id"
-	TemplateVersionID  Column // "template_version_id" → qualified: "epdp.template_version_id"
-	Name               Column // "name" → qualified: "epdp.name"
-	Status             Column // "status" → qualified: "epdp.status"
-	Direction          Column // "direction" → qualified: "epdp.direction"
-	Standard           Column // "standard" → qualified: "epdp.standard"
-	TransactionSet     Column // "transaction_set" → qualified: "epdp.transaction_set"
-	X12VersionOverride Column // "x12_version_override" → qualified: "epdp.x12_version_override"
-	FunctionalGroupID  Column // "functional_group_id" → qualified: "epdp.functional_group_id"
-	Envelope           Column // "envelope" → qualified: "epdp.envelope"
-	Acknowledgment     Column // "acknowledgment" → qualified: "epdp.acknowledgment"
-	ValidationMode     Column // "validation_mode" → qualified: "epdp.validation_mode"
-	PartnerSettings    Column // "partner_settings" → qualified: "epdp.partner_settings"
-	Version            Column // "version" → qualified: "epdp.version"
-	CreatedAt          Column // "created_at" → qualified: "epdp.created_at"
-	UpdatedAt          Column // "updated_at" → qualified: "epdp.updated_at"
+	ID                           Column // "id" → qualified: "epdp.id"
+	BusinessUnitID               Column // "business_unit_id" → qualified: "epdp.business_unit_id"
+	OrganizationID               Column // "organization_id" → qualified: "epdp.organization_id"
+	EDIPartnerID                 Column // "edi_partner_id" → qualified: "epdp.edi_partner_id"
+	DocumentTypeID               Column // "document_type_id" → qualified: "epdp.document_type_id"
+	TemplateID                   Column // "template_id" → qualified: "epdp.template_id"
+	TemplateVersionID            Column // "template_version_id" → qualified: "epdp.template_version_id"
+	Name                         Column // "name" → qualified: "epdp.name"
+	Status                       Column // "status" → qualified: "epdp.status"
+	Direction                    Column // "direction" → qualified: "epdp.direction"
+	Standard                     Column // "standard" → qualified: "epdp.standard"
+	TransactionSet               Column // "transaction_set" → qualified: "epdp.transaction_set"
+	X12VersionOverride           Column // "x12_version_override" → qualified: "epdp.x12_version_override"
+	FunctionalGroupID            Column // "functional_group_id" → qualified: "epdp.functional_group_id"
+	Envelope                     Column // "envelope" → qualified: "epdp.envelope"
+	Acknowledgment               Column // "acknowledgment" → qualified: "epdp.acknowledgment"
+	ValidationMode               Column // "validation_mode" → qualified: "epdp.validation_mode"
+	PartnerSettings              Column // "partner_settings" → qualified: "epdp.partner_settings"
+	PartnerSettingsSchemaID      Column // "partner_settings_schema_id" → qualified: "epdp.partner_settings_schema_id"
+	PartnerSettingsSchemaVersion Column // "partner_settings_schema_version" → qualified: "epdp.partner_settings_schema_version"
+	Version                      Column // "version" → qualified: "epdp.version"
+	CreatedAt                    Column // "created_at" → qualified: "epdp.created_at"
+	UpdatedAt                    Column // "updated_at" → qualified: "epdp.updated_at"
 }{
-	ID:                 NewColumn("id", "epdp"),
-	BusinessUnitID:     NewColumn("business_unit_id", "epdp"),
-	OrganizationID:     NewColumn("organization_id", "epdp"),
-	EDIPartnerID:       NewColumn("edi_partner_id", "epdp"),
-	DocumentTypeID:     NewColumn("document_type_id", "epdp"),
-	TemplateID:         NewColumn("template_id", "epdp"),
-	TemplateVersionID:  NewColumn("template_version_id", "epdp"),
-	Name:               NewColumn("name", "epdp"),
-	Status:             NewColumn("status", "epdp"),
-	Direction:          NewColumn("direction", "epdp"),
-	Standard:           NewColumn("standard", "epdp"),
-	TransactionSet:     NewColumn("transaction_set", "epdp"),
-	X12VersionOverride: NewColumn("x12_version_override", "epdp"),
-	FunctionalGroupID:  NewColumn("functional_group_id", "epdp"),
-	Envelope:           NewColumn("envelope", "epdp"),
-	Acknowledgment:     NewColumn("acknowledgment", "epdp"),
-	ValidationMode:     NewColumn("validation_mode", "epdp"),
-	PartnerSettings:    NewColumn("partner_settings", "epdp"),
-	Version:            NewColumn("version", "epdp"),
-	CreatedAt:          NewColumn("created_at", "epdp"),
-	UpdatedAt:          NewColumn("updated_at", "epdp"),
+	ID:                           NewColumn("id", "epdp"),
+	BusinessUnitID:               NewColumn("business_unit_id", "epdp"),
+	OrganizationID:               NewColumn("organization_id", "epdp"),
+	EDIPartnerID:                 NewColumn("edi_partner_id", "epdp"),
+	DocumentTypeID:               NewColumn("document_type_id", "epdp"),
+	TemplateID:                   NewColumn("template_id", "epdp"),
+	TemplateVersionID:            NewColumn("template_version_id", "epdp"),
+	Name:                         NewColumn("name", "epdp"),
+	Status:                       NewColumn("status", "epdp"),
+	Direction:                    NewColumn("direction", "epdp"),
+	Standard:                     NewColumn("standard", "epdp"),
+	TransactionSet:               NewColumn("transaction_set", "epdp"),
+	X12VersionOverride:           NewColumn("x12_version_override", "epdp"),
+	FunctionalGroupID:            NewColumn("functional_group_id", "epdp"),
+	Envelope:                     NewColumn("envelope", "epdp"),
+	Acknowledgment:               NewColumn("acknowledgment", "epdp"),
+	ValidationMode:               NewColumn("validation_mode", "epdp"),
+	PartnerSettings:              NewColumn("partner_settings", "epdp"),
+	PartnerSettingsSchemaID:      NewColumn("partner_settings_schema_id", "epdp"),
+	PartnerSettingsSchemaVersion: NewColumn("partner_settings_schema_version", "epdp"),
+	Version:                      NewColumn("version", "epdp"),
+	CreatedAt:                    NewColumn("created_at", "epdp"),
+	UpdatedAt:                    NewColumn("updated_at", "epdp"),
 }
 
 // EDIPartnerDocumentProfileFieldMap maps JSON API field names to database column names.
@@ -2299,27 +2303,29 @@ var EDIPartnerDocumentProfileColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EDIPartnerDocumentProfile.GetStaticFieldMap().
 var EDIPartnerDocumentProfileFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"ediPartnerId":       "edi_partner_id",
-	"documentTypeId":     "document_type_id",
-	"templateId":         "template_id",
-	"templateVersionId":  "template_version_id",
-	"name":               "name",
-	"status":             "status",
-	"direction":          "direction",
-	"standard":           "standard",
-	"transactionSet":     "transaction_set",
-	"x12VersionOverride": "x12_version_override",
-	"functionalGroupId":  "functional_group_id",
-	"envelope":           "envelope",
-	"acknowledgment":     "acknowledgment",
-	"validationMode":     "validation_mode",
-	"partnerSettings":    "partner_settings",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                           "id",
+	"businessUnitId":               "business_unit_id",
+	"organizationId":               "organization_id",
+	"ediPartnerId":                 "edi_partner_id",
+	"documentTypeId":               "document_type_id",
+	"templateId":                   "template_id",
+	"templateVersionId":            "template_version_id",
+	"name":                         "name",
+	"status":                       "status",
+	"direction":                    "direction",
+	"standard":                     "standard",
+	"transactionSet":               "transaction_set",
+	"x12VersionOverride":           "x12_version_override",
+	"functionalGroupId":            "functional_group_id",
+	"envelope":                     "envelope",
+	"acknowledgment":               "acknowledgment",
+	"validationMode":               "validation_mode",
+	"partnerSettings":              "partner_settings",
+	"partnerSettingsSchemaId":      "partner_settings_schema_id",
+	"partnerSettingsSchemaVersion": "partner_settings_schema_version",
+	"version":                      "version",
+	"createdAt":                    "created_at",
+	"updatedAt":                    "updated_at",
 }
 
 // EDIPartnerDocumentProfileInsertableColumns lists column names suitable for INSERT statements on the "edi_partner_document_profiles" table.
@@ -2343,6 +2349,8 @@ var EDIPartnerDocumentProfileInsertableColumns = []string{
 	"acknowledgment",
 	"validation_mode",
 	"partner_settings",
+	"partner_settings_schema_id",
+	"partner_settings_schema_version",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2354,15 +2362,17 @@ var EDIPartnerDocumentProfileInsertableColumns = []string{
 //	q.Relation(EDIPartnerDocumentProfileRelations.Partner)
 //	// Bun eager-loads the Partner association via a separate query
 var EDIPartnerDocumentProfileRelations = struct {
-	Partner         string
-	DocumentType    string
-	Template        string
-	TemplateVersion string
+	Partner               string
+	DocumentType          string
+	PartnerSettingsSchema string
+	Template              string
+	TemplateVersion       string
 }{
-	Partner:         "Partner",
-	DocumentType:    "DocumentType",
-	Template:        "Template",
-	TemplateVersion: "TemplateVersion",
+	Partner:               "Partner",
+	DocumentType:          "DocumentType",
+	PartnerSettingsSchema: "PartnerSettingsSchema",
+	Template:              "Template",
+	TemplateVersion:       "TemplateVersion",
 }
 
 // EDIPartnerDocumentProfileScopeTenant restricts a query to a single tenant by adding:
@@ -2415,27 +2425,29 @@ func EDIPartnerDocumentProfileApplyTenant(ti pagination.TenantInfo) func(*bun.Se
 //	EDIPartnerDocumentProfileFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EDIPartnerDocumentProfileFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	EDIPartnerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
-	DocumentTypeID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
-	TemplateID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
-	TemplateVersionID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
-	Name               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Direction          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
-	Standard           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
-	TransactionSet     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
-	X12VersionOverride func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12VersionOverride" → DB: "x12_version_override"
-	FunctionalGroupID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalGroupId" → DB: "functional_group_id"
-	Envelope           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "envelope" → DB: "envelope"
-	Acknowledgment     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgment" → DB: "acknowledgment"
-	ValidationMode     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validationMode" → DB: "validation_mode"
-	PartnerSettings    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partnerSettings" → DB: "partner_settings"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	EDIPartnerID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	DocumentTypeID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
+	TemplateID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateId" → DB: "template_id"
+	TemplateVersionID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
+	Name                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Status                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Direction                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	Standard                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
+	TransactionSet               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
+	X12VersionOverride           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12VersionOverride" → DB: "x12_version_override"
+	FunctionalGroupID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "functionalGroupId" → DB: "functional_group_id"
+	Envelope                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "envelope" → DB: "envelope"
+	Acknowledgment               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "acknowledgment" → DB: "acknowledgment"
+	ValidationMode               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validationMode" → DB: "validation_mode"
+	PartnerSettings              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partnerSettings" → DB: "partner_settings"
+	PartnerSettingsSchemaID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partnerSettingsSchemaId" → DB: "partner_settings_schema_id"
+	PartnerSettingsSchemaVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partnerSettingsSchemaVersion" → DB: "partner_settings_schema_version"
+	Version                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -2491,8 +2503,454 @@ var EDIPartnerDocumentProfileFilter = struct {
 	PartnerSettings: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("partnerSettings", op, value)
 	},
+	PartnerSettingsSchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partnerSettingsSchemaId", op, value)
+	},
+	PartnerSettingsSchemaVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partnerSettingsSchemaVersion", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDIPartnerSettingField — table "edi_partner_setting_fields", alias "epsf"
+// ---------------------------------------------------------------------------
+
+// EDIPartnerSettingFieldTable holds the table name, alias, and primary key columns
+// for the "edi_partner_setting_fields" table. The alias "epsf" is used in all generated
+// SQL fragments (e.g. "epsf.id = ?").
+var EDIPartnerSettingFieldTable = TableInfo{
+	Name:       "edi_partner_setting_fields",
+	Alias:      "epsf",
+	PrimaryKey: []string{"id"},
+}
+
+// EDIPartnerSettingFieldColumns provides type-safe column references for the "edi_partner_setting_fields" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDIPartnerSettingFieldColumns.ID.String())
+//	// SELECT epsf.id FROM edi_partner_setting_fields AS epsf
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDIPartnerSettingFieldColumns.ID.Eq(), id)           // WHERE epsf.id = ?
+//	q.Order(EDIPartnerSettingFieldColumns.CreatedAt.OrderDesc())  // ORDER BY epsf.created_at DESC
+var EDIPartnerSettingFieldColumns = struct {
+	ID                Column // "id" → qualified: "epsf.id"
+	SchemaID          Column // "schema_id" → qualified: "epsf.schema_id"
+	Path              Column // "path" → qualified: "epsf.path"
+	Label             Column // "label" → qualified: "epsf.label"
+	Description       Column // "description" → qualified: "epsf.description"
+	DataType          Column // "data_type" → qualified: "epsf.data_type"
+	Required          Column // "required" → qualified: "epsf.required"
+	Nullable          Column // "nullable" → qualified: "epsf.nullable"
+	DefaultValue      Column // "default_value" → qualified: "epsf.default_value"
+	AllowedValues     Column // "allowed_values" → qualified: "epsf.allowed_values"
+	Secret            Column // "secret" → qualified: "epsf.secret"
+	GroupKey          Column // "group_key" → qualified: "epsf.group_key"
+	DisplayOrder      Column // "display_order" → qualified: "epsf.display_order"
+	ValidationPattern Column // "validation_pattern" → qualified: "epsf.validation_pattern"
+	MinLength         Column // "min_length" → qualified: "epsf.min_length"
+	MaxLength         Column // "max_length" → qualified: "epsf.max_length"
+	UsageNotes        Column // "usage_notes" → qualified: "epsf.usage_notes"
+	Status            Column // "status" → qualified: "epsf.status"
+	CreatedAt         Column // "created_at" → qualified: "epsf.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "epsf.updated_at"
+}{
+	ID:                NewColumn("id", "epsf"),
+	SchemaID:          NewColumn("schema_id", "epsf"),
+	Path:              NewColumn("path", "epsf"),
+	Label:             NewColumn("label", "epsf"),
+	Description:       NewColumn("description", "epsf"),
+	DataType:          NewColumn("data_type", "epsf"),
+	Required:          NewColumn("required", "epsf"),
+	Nullable:          NewColumn("nullable", "epsf"),
+	DefaultValue:      NewColumn("default_value", "epsf"),
+	AllowedValues:     NewColumn("allowed_values", "epsf"),
+	Secret:            NewColumn("secret", "epsf"),
+	GroupKey:          NewColumn("group_key", "epsf"),
+	DisplayOrder:      NewColumn("display_order", "epsf"),
+	ValidationPattern: NewColumn("validation_pattern", "epsf"),
+	MinLength:         NewColumn("min_length", "epsf"),
+	MaxLength:         NewColumn("max_length", "epsf"),
+	UsageNotes:        NewColumn("usage_notes", "epsf"),
+	Status:            NewColumn("status", "epsf"),
+	CreatedAt:         NewColumn("created_at", "epsf"),
+	UpdatedAt:         NewColumn("updated_at", "epsf"),
+}
+
+// EDIPartnerSettingFieldFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDIPartnerSettingField.GetStaticFieldMap().
+var EDIPartnerSettingFieldFieldMap = map[string]string{
+	"id":                "id",
+	"schemaId":          "schema_id",
+	"path":              "path",
+	"label":             "label",
+	"description":       "description",
+	"dataType":          "data_type",
+	"required":          "required",
+	"nullable":          "nullable",
+	"defaultValue":      "default_value",
+	"allowedValues":     "allowed_values",
+	"secret":            "secret",
+	"groupKey":          "group_key",
+	"displayOrder":      "display_order",
+	"validationPattern": "validation_pattern",
+	"minLength":         "min_length",
+	"maxLength":         "max_length",
+	"usageNotes":        "usage_notes",
+	"status":            "status",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// EDIPartnerSettingFieldInsertableColumns lists column names suitable for INSERT statements on the "edi_partner_setting_fields" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDIPartnerSettingFieldInsertableColumns = []string{
+	"id",
+	"schema_id",
+	"path",
+	"label",
+	"description",
+	"data_type",
+	"required",
+	"nullable",
+	"default_value",
+	"allowed_values",
+	"secret",
+	"group_key",
+	"display_order",
+	"validation_pattern",
+	"min_length",
+	"max_length",
+	"usage_notes",
+	"status",
+	"created_at",
+	"updated_at",
+}
+
+// EDIPartnerSettingFieldRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDIPartnerSettingFieldRelations.Schema)
+//	// Bun eager-loads the Schema association via a separate query
+var EDIPartnerSettingFieldRelations = struct {
+	Schema string
+}{
+	Schema: "Schema",
+}
+
+// EDIPartnerSettingFieldFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_partner_setting_fields" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDIPartnerSettingFieldFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDIPartnerSettingFieldFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	SchemaID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaId" → DB: "schema_id"
+	Path              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "path" → DB: "path"
+	Label             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "label" → DB: "label"
+	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	DataType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataType" → DB: "data_type"
+	Required          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "required" → DB: "required"
+	Nullable          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nullable" → DB: "nullable"
+	DefaultValue      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "defaultValue" → DB: "default_value"
+	AllowedValues     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowedValues" → DB: "allowed_values"
+	Secret            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "secret" → DB: "secret"
+	GroupKey          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "groupKey" → DB: "group_key"
+	DisplayOrder      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "displayOrder" → DB: "display_order"
+	ValidationPattern func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "validationPattern" → DB: "validation_pattern"
+	MinLength         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minLength" → DB: "min_length"
+	MaxLength         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxLength" → DB: "max_length"
+	UsageNotes        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "usageNotes" → DB: "usage_notes"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	SchemaID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("schemaId", op, value)
+	},
+	Path: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("path", op, value)
+	},
+	Label: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("label", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	DataType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dataType", op, value)
+	},
+	Required: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("required", op, value)
+	},
+	Nullable: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("nullable", op, value)
+	},
+	DefaultValue: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("defaultValue", op, value)
+	},
+	AllowedValues: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("allowedValues", op, value)
+	},
+	Secret: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("secret", op, value)
+	},
+	GroupKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("groupKey", op, value)
+	},
+	DisplayOrder: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("displayOrder", op, value)
+	},
+	ValidationPattern: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("validationPattern", op, value)
+	},
+	MinLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minLength", op, value)
+	},
+	MaxLength: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxLength", op, value)
+	},
+	UsageNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("usageNotes", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EDIPartnerSettingSchema — table "edi_partner_setting_schemas", alias "epss"
+// ---------------------------------------------------------------------------
+
+// EDIPartnerSettingSchemaTable holds the table name, alias, and primary key columns
+// for the "edi_partner_setting_schemas" table. The alias "epss" is used in all generated
+// SQL fragments (e.g. "epss.id = ?").
+var EDIPartnerSettingSchemaTable = TableInfo{
+	Name:       "edi_partner_setting_schemas",
+	Alias:      "epss",
+	PrimaryKey: []string{"id"},
+}
+
+// EDIPartnerSettingSchemaColumns provides type-safe column references for the "edi_partner_setting_schemas" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDIPartnerSettingSchemaColumns.ID.String())
+//	// SELECT epss.id FROM edi_partner_setting_schemas AS epss
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDIPartnerSettingSchemaColumns.ID.Eq(), id)           // WHERE epss.id = ?
+//	q.Order(EDIPartnerSettingSchemaColumns.CreatedAt.OrderDesc())  // ORDER BY epss.created_at DESC
+var EDIPartnerSettingSchemaColumns = struct {
+	ID             Column // "id" → qualified: "epss.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "epss.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "epss.organization_id"
+	DocumentTypeID Column // "document_type_id" → qualified: "epss.document_type_id"
+	Standard       Column // "standard" → qualified: "epss.standard"
+	TransactionSet Column // "transaction_set" → qualified: "epss.transaction_set"
+	Direction      Column // "direction" → qualified: "epss.direction"
+	X12Version     Column // "x12_version" → qualified: "epss.x12_version"
+	SchemaVersion  Column // "schema_version" → qualified: "epss.schema_version"
+	Name           Column // "name" → qualified: "epss.name"
+	Description    Column // "description" → qualified: "epss.description"
+	Status         Column // "status" → qualified: "epss.status"
+	CreatedAt      Column // "created_at" → qualified: "epss.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "epss.updated_at"
+}{
+	ID:             NewColumn("id", "epss"),
+	BusinessUnitID: NewColumn("business_unit_id", "epss"),
+	OrganizationID: NewColumn("organization_id", "epss"),
+	DocumentTypeID: NewColumn("document_type_id", "epss"),
+	Standard:       NewColumn("standard", "epss"),
+	TransactionSet: NewColumn("transaction_set", "epss"),
+	Direction:      NewColumn("direction", "epss"),
+	X12Version:     NewColumn("x12_version", "epss"),
+	SchemaVersion:  NewColumn("schema_version", "epss"),
+	Name:           NewColumn("name", "epss"),
+	Description:    NewColumn("description", "epss"),
+	Status:         NewColumn("status", "epss"),
+	CreatedAt:      NewColumn("created_at", "epss"),
+	UpdatedAt:      NewColumn("updated_at", "epss"),
+}
+
+// EDIPartnerSettingSchemaFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDIPartnerSettingSchema.GetStaticFieldMap().
+var EDIPartnerSettingSchemaFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"documentTypeId": "document_type_id",
+	"standard":       "standard",
+	"transactionSet": "transaction_set",
+	"direction":      "direction",
+	"x12Version":     "x12_version",
+	"schemaVersion":  "schema_version",
+	"name":           "name",
+	"description":    "description",
+	"status":         "status",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// EDIPartnerSettingSchemaInsertableColumns lists column names suitable for INSERT statements on the "edi_partner_setting_schemas" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDIPartnerSettingSchemaInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"document_type_id",
+	"standard",
+	"transaction_set",
+	"direction",
+	"x12_version",
+	"schema_version",
+	"name",
+	"description",
+	"status",
+	"created_at",
+	"updated_at",
+}
+
+// EDIPartnerSettingSchemaRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDIPartnerSettingSchemaRelations.Fields)
+//	// Bun eager-loads the Fields association via a separate query
+var EDIPartnerSettingSchemaRelations = struct {
+	Fields string
+}{
+	Fields: "Fields",
+}
+
+// EDIPartnerSettingSchemaScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE epss.organization_id = ? AND epss.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EDIPartnerSettingSchemaScopeTenant(sq, ti).
+//		Where(buncolgen.EDIPartnerSettingSchemaColumns.ID.Eq(), id)
+func EDIPartnerSettingSchemaScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EDIPartnerSettingSchemaColumns.OrganizationID, EDIPartnerSettingSchemaColumns.BusinessUnitID, ti)
+}
+
+// EDIPartnerSettingSchemaScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EDIPartnerSettingSchemaScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EDIPartnerSettingSchemaColumns.ID.In(), bun.List(ids))
+//	})
+func EDIPartnerSettingSchemaScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EDIPartnerSettingSchemaColumns.OrganizationID, EDIPartnerSettingSchemaColumns.BusinessUnitID, ti)
+}
+
+// EDIPartnerSettingSchemaScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EDIPartnerSettingSchemaScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EDIPartnerSettingSchemaColumns.ID.Eq(), id)
+//	})
+func EDIPartnerSettingSchemaScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EDIPartnerSettingSchemaColumns.OrganizationID, EDIPartnerSettingSchemaColumns.BusinessUnitID, ti)
+}
+
+// EDIPartnerSettingSchemaApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EDIPartnerSettingSchemaApplyTenant(tenantInfo))
+func EDIPartnerSettingSchemaApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EDIPartnerSettingSchemaColumns.OrganizationID, EDIPartnerSettingSchemaColumns.BusinessUnitID, ti)
+}
+
+// EDIPartnerSettingSchemaFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_partner_setting_schemas" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDIPartnerSettingSchemaFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDIPartnerSettingSchemaFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	DocumentTypeID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
+	Standard       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
+	TransactionSet func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
+	Direction      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
+	X12Version     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "x12Version" → DB: "x12_version"
+	SchemaVersion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "schemaVersion" → DB: "schema_version"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	DocumentTypeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentTypeId", op, value)
+	},
+	Standard: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("standard", op, value)
+	},
+	TransactionSet: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionSet", op, value)
+	},
+	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("direction", op, value)
+	},
+	X12Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("x12Version", op, value)
+	},
+	SchemaVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("schemaVersion", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

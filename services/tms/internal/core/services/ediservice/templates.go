@@ -388,10 +388,15 @@ func (s *Service) ValidateTemplateVersion(
 	if err != nil {
 		return nil, err
 	}
+	partnerSettings, _, err := s.templatePartnerSettingIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	return validateTemplateVersionDefinitionWithSourceContext(
 		version,
 		sourceContext,
 		schemaMissing,
+		partnerSettings,
 	), nil
 }
 
@@ -408,10 +413,15 @@ func (s *Service) CertifyTemplateVersion(
 	if err != nil {
 		return nil, err
 	}
+	partnerSettings, _, err := s.templatePartnerSettingIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	diagnostics := validateTemplateVersionDefinitionWithSourceContext(
 		version,
 		sourceContext,
 		schemaMissing,
+		partnerSettings,
 	)
 	if hasTemplateValidationErrors(diagnostics) {
 		return nil, diagnosticsToValidationError(diagnostics)
@@ -556,10 +566,15 @@ func (s *Service) activateTemplateVersion(
 	if err != nil {
 		return nil, err
 	}
+	partnerSettings, _, err := s.templatePartnerSettingIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	diagnostics := validateTemplateVersionDefinitionWithSourceContext(
 		version,
 		sourceContext,
 		schemaMissing,
+		partnerSettings,
 	)
 	if hasTemplateValidationErrors(diagnostics) {
 		return nil, diagnosticsToValidationError(diagnostics)
@@ -689,6 +704,49 @@ func (s *Service) templateSourceContextIndex(
 		return nil, false, err
 	}
 	return newSourceContextIndex(fields.Items), false, nil
+}
+
+func (s *Service) templatePartnerSettingIndex(
+	ctx context.Context,
+	version *edi.EDITemplateVersion,
+	tenantInfo pagination.TenantInfo,
+) (*partnerSettingIndex, bool, error) {
+	if version == nil || version.Template == nil {
+		return nil, false, nil
+	}
+
+	schema, err := s.documentRepo.GetActivePartnerSettingSchema(
+		ctx,
+		repositories.GetActiveEDIPartnerSettingSchemaRequest{
+			TenantInfo:     tenantInfo,
+			DocumentTypeID: version.Template.DocumentTypeID,
+			Standard:       version.Template.Standard,
+			TransactionSet: version.Template.TransactionSet,
+			Direction:      version.Template.Direction,
+			X12Version:     stringutils.FirstNonEmpty(version.X12Version, edi.DefaultX12204Version),
+		},
+	)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, true, nil
+		}
+		return nil, false, err
+	}
+
+	fields, err := s.documentRepo.ListPartnerSettingFields(
+		ctx,
+		&repositories.ListEDIPartnerSettingFieldsRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{Limit: 1000},
+			},
+			SchemaID: schema.ID,
+		},
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return newPartnerSettingIndex(fields.Items), false, nil
 }
 
 func (s *Service) validateTemplateCreateRequest(
@@ -828,6 +886,7 @@ func validateTemplateVersionDefinitionWithSourceContext(
 	version *edi.EDITemplateVersion,
 	sourceContext *sourceContextIndex,
 	schemaMissing bool,
+	partnerSettings ...*partnerSettingIndex,
 ) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	if version == nil {
@@ -868,6 +927,12 @@ func validateTemplateVersionDefinitionWithSourceContext(
 		diagnostics,
 		validateTemplateSourceContext(version, sourceContext, schemaMissing)...,
 	)
+	if len(partnerSettings) > 0 {
+		diagnostics = append(
+			diagnostics,
+			validateTemplatePartnerSettings(version, partnerSettings[0], false)...,
+		)
+	}
 	return diagnostics
 }
 

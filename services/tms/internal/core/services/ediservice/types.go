@@ -114,20 +114,35 @@ type GenerateEDIDocumentRequest struct {
 }
 
 type UpsertEDIPartnerDocumentProfileRequest struct {
-	TenantInfo         pagination.TenantInfo    `json:"-"`
-	ProfileID          pulid.ID                 `json:"-"`
-	EDIPartnerID       pulid.ID                 `json:"ediPartnerId"`
-	TemplateID         pulid.ID                 `json:"templateId"`
-	TemplateVersionID  pulid.ID                 `json:"templateVersionId"`
-	Name               string                   `json:"name"`
-	Status             edi.DocumentStatus       `json:"status"`
-	X12VersionOverride string                   `json:"x12VersionOverride"`
-	FunctionalGroupID  string                   `json:"functionalGroupId"`
-	Envelope           edi.X12EnvelopeSettings  `json:"envelope"`
-	Acknowledgment     edi.AcknowledgmentConfig `json:"acknowledgment"`
-	ValidationMode     edi.ValidationMode       `json:"validationMode"`
-	PartnerSettings    map[string]any           `json:"partnerSettings"`
-	Version            int64                    `json:"version"`
+	TenantInfo                   pagination.TenantInfo    `json:"-"`
+	ProfileID                    pulid.ID                 `json:"-"`
+	EDIPartnerID                 pulid.ID                 `json:"ediPartnerId"`
+	TemplateID                   pulid.ID                 `json:"templateId"`
+	TemplateVersionID            pulid.ID                 `json:"templateVersionId"`
+	Name                         string                   `json:"name"`
+	Status                       edi.DocumentStatus       `json:"status"`
+	X12VersionOverride           string                   `json:"x12VersionOverride"`
+	FunctionalGroupID            string                   `json:"functionalGroupId"`
+	Envelope                     edi.X12EnvelopeSettings  `json:"envelope"`
+	Acknowledgment               edi.AcknowledgmentConfig `json:"acknowledgment"`
+	ValidationMode               edi.ValidationMode       `json:"validationMode"`
+	PartnerSettings              map[string]any           `json:"partnerSettings"`
+	PartnerSettingsSchemaID      pulid.ID                 `json:"partnerSettingsSchemaId"`
+	PartnerSettingsSchemaVersion int64                    `json:"partnerSettingsSchemaVersion"`
+	Version                      int64                    `json:"version"`
+}
+
+type ValidatePartnerSettingsRequest struct {
+	TenantInfo                   pagination.TenantInfo `json:"-"`
+	PartnerDocumentProfileID     pulid.ID              `json:"partnerDocumentProfileId"`
+	PartnerSettingsSchemaID      pulid.ID              `json:"partnerSettingsSchemaId"`
+	PartnerSettingsSchemaVersion int64                 `json:"partnerSettingsSchemaVersion"`
+	DocumentTypeID               pulid.ID              `json:"documentTypeId"`
+	Standard                     edi.EDIStandard       `json:"standard"`
+	TransactionSet               edi.TransactionSet    `json:"transactionSet"`
+	Direction                    edi.DocumentDirection `json:"direction"`
+	X12Version                   string                `json:"x12Version"`
+	Settings                     map[string]any        `json:"settings"`
 }
 
 type CreateEDITemplateRequest struct {

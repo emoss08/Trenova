@@ -108,6 +108,9 @@ func validateSourceContextReferences(
 		}
 
 		root := sourceContextRoot(path)
+		if root == string(edi.SourceContextKindPartner) {
+			continue
+		}
 		if !isSupportedSourceContextRoot(root) {
 			diagnostics = append(diagnostics, sourceContextDiagnostic(sourceContextDiagnosticParams{
 				Reference:    reference,

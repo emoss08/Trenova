@@ -736,6 +736,74 @@ func (_c *MockEDIDocumentRepository_GetActivePartnerDocumentProfile_Call) RunAnd
 	return _c
 }
 
+// GetActivePartnerSettingSchema provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetActivePartnerSettingSchema(ctx context.Context, req repositories.GetActiveEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActivePartnerSettingSchema")
+	}
+
+	var r0 *edi.EDIPartnerSettingSchema
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveEDIPartnerSettingSchemaRequest) *edi.EDIPartnerSettingSchema); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIPartnerSettingSchema)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetActiveEDIPartnerSettingSchemaRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActivePartnerSettingSchema'
+type MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call struct {
+	*mock.Call
+}
+
+// GetActivePartnerSettingSchema is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetActiveEDIPartnerSettingSchemaRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetActivePartnerSettingSchema(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call {
+	return &MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call{Call: _e.mock.On("GetActivePartnerSettingSchema", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call) Run(run func(ctx context.Context, req repositories.GetActiveEDIPartnerSettingSchemaRequest)) *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetActiveEDIPartnerSettingSchemaRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetActiveEDIPartnerSettingSchemaRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call) Return(eDIPartnerSettingSchema *edi.EDIPartnerSettingSchema, err error) *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call {
+	_c.Call.Return(eDIPartnerSettingSchema, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetActiveEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error)) *MockEDIDocumentRepository_GetActivePartnerSettingSchema_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetActiveSourceContextSchema provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) GetActiveSourceContextSchema(ctx context.Context, req repositories.GetActiveEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error) {
 	ret := _mock.Called(ctx, req)
@@ -1004,6 +1072,74 @@ func (_c *MockEDIDocumentRepository_GetPartnerDocumentProfileByID_Call) Return(e
 }
 
 func (_c *MockEDIDocumentRepository_GetPartnerDocumentProfileByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIPartnerDocumentProfileByIDRequest) (*edi.EDIPartnerDocumentProfile, error)) *MockEDIDocumentRepository_GetPartnerDocumentProfileByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPartnerSettingSchema provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetPartnerSettingSchema(ctx context.Context, req repositories.GetEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPartnerSettingSchema")
+	}
+
+	var r0 *edi.EDIPartnerSettingSchema
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIPartnerSettingSchemaRequest) *edi.EDIPartnerSettingSchema); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIPartnerSettingSchema)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIPartnerSettingSchemaRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetPartnerSettingSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPartnerSettingSchema'
+type MockEDIDocumentRepository_GetPartnerSettingSchema_Call struct {
+	*mock.Call
+}
+
+// GetPartnerSettingSchema is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIPartnerSettingSchemaRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetPartnerSettingSchema(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetPartnerSettingSchema_Call {
+	return &MockEDIDocumentRepository_GetPartnerSettingSchema_Call{Call: _e.mock.On("GetPartnerSettingSchema", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerSettingSchema_Call) Run(run func(ctx context.Context, req repositories.GetEDIPartnerSettingSchemaRequest)) *MockEDIDocumentRepository_GetPartnerSettingSchema_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIPartnerSettingSchemaRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIPartnerSettingSchemaRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerSettingSchema_Call) Return(eDIPartnerSettingSchema *edi.EDIPartnerSettingSchema, err error) *MockEDIDocumentRepository_GetPartnerSettingSchema_Call {
+	_c.Call.Return(eDIPartnerSettingSchema, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerSettingSchema_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIPartnerSettingSchemaRequest) (*edi.EDIPartnerSettingSchema, error)) *MockEDIDocumentRepository_GetPartnerSettingSchema_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1480,6 +1616,142 @@ func (_c *MockEDIDocumentRepository_ListPartnerDocumentProfiles_Call) Return(lis
 }
 
 func (_c *MockEDIDocumentRepository_ListPartnerDocumentProfiles_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIPartnerDocumentProfilesRequest) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error)) *MockEDIDocumentRepository_ListPartnerDocumentProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListPartnerSettingFields provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListPartnerSettingFields(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPartnerSettingFields")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIPartnerSettingField]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) *pagination.ListResult[*edi.EDIPartnerSettingField]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIPartnerSettingField])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListPartnerSettingFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPartnerSettingFields'
+type MockEDIDocumentRepository_ListPartnerSettingFields_Call struct {
+	*mock.Call
+}
+
+// ListPartnerSettingFields is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIPartnerSettingFieldsRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListPartnerSettingFields(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListPartnerSettingFields_Call {
+	return &MockEDIDocumentRepository_ListPartnerSettingFields_Call{Call: _e.mock.On("ListPartnerSettingFields", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingFields_Call) Run(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest)) *MockEDIDocumentRepository_ListPartnerSettingFields_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIPartnerSettingFieldsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIPartnerSettingFieldsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingFields_Call) Return(listResult *pagination.ListResult[*edi.EDIPartnerSettingField], err error) *MockEDIDocumentRepository_ListPartnerSettingFields_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingFields_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)) *MockEDIDocumentRepository_ListPartnerSettingFields_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListPartnerSettingSchemas provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListPartnerSettingSchemas(ctx context.Context, req *repositories.ListEDIPartnerSettingSchemasRequest) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPartnerSettingSchemas")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIPartnerSettingSchema]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingSchemasRequest) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingSchemasRequest) *pagination.ListResult[*edi.EDIPartnerSettingSchema]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIPartnerSettingSchema])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIPartnerSettingSchemasRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListPartnerSettingSchemas_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPartnerSettingSchemas'
+type MockEDIDocumentRepository_ListPartnerSettingSchemas_Call struct {
+	*mock.Call
+}
+
+// ListPartnerSettingSchemas is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIPartnerSettingSchemasRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListPartnerSettingSchemas(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call {
+	return &MockEDIDocumentRepository_ListPartnerSettingSchemas_Call{Call: _e.mock.On("ListPartnerSettingSchemas", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call) Run(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingSchemasRequest)) *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIPartnerSettingSchemasRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIPartnerSettingSchemasRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call) Return(listResult *pagination.ListResult[*edi.EDIPartnerSettingSchema], err error) *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingSchemasRequest) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error)) *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2024,6 +2296,74 @@ func (_c *MockEDIDocumentRepository_ReplaceTemplateVersionSegments_Call) Return(
 }
 
 func (_c *MockEDIDocumentRepository_ReplaceTemplateVersionSegments_Call) RunAndReturn(run func(ctx context.Context, req repositories.ReplaceEDITemplateVersionSegmentsRequest) (*edi.EDITemplateVersion, error)) *MockEDIDocumentRepository_ReplaceTemplateVersionSegments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchPartnerSettingFields provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) SearchPartnerSettingFields(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchPartnerSettingFields")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIPartnerSettingField]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) *pagination.ListResult[*edi.EDIPartnerSettingField]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIPartnerSettingField])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIPartnerSettingFieldsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_SearchPartnerSettingFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchPartnerSettingFields'
+type MockEDIDocumentRepository_SearchPartnerSettingFields_Call struct {
+	*mock.Call
+}
+
+// SearchPartnerSettingFields is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIPartnerSettingFieldsRequest
+func (_e *MockEDIDocumentRepository_Expecter) SearchPartnerSettingFields(ctx interface{}, req interface{}) *MockEDIDocumentRepository_SearchPartnerSettingFields_Call {
+	return &MockEDIDocumentRepository_SearchPartnerSettingFields_Call{Call: _e.mock.On("SearchPartnerSettingFields", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_SearchPartnerSettingFields_Call) Run(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest)) *MockEDIDocumentRepository_SearchPartnerSettingFields_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIPartnerSettingFieldsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIPartnerSettingFieldsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_SearchPartnerSettingFields_Call) Return(listResult *pagination.ListResult[*edi.EDIPartnerSettingField], err error) *MockEDIDocumentRepository_SearchPartnerSettingFields_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_SearchPartnerSettingFields_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingFieldsRequest) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)) *MockEDIDocumentRepository_SearchPartnerSettingFields_Call {
 	_c.Call.Return(run)
 	return _c
 }

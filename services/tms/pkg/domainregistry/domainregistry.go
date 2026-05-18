@@ -46,6 +46,8 @@ func RegisterEntities() []any {
 		&edi.EDIMappingProfileItem{},
 		&edi.EDITransfer{},
 		&edi.EDIDocumentType{},
+		&edi.EDIPartnerSettingSchema{},
+		&edi.EDIPartnerSettingField{},
 		&edi.EDITemplate{},
 		&edi.EDITemplateVersion{},
 		&edi.EDITemplateSegment{},

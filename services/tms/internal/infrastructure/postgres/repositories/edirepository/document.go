@@ -703,6 +703,7 @@ func (r *repository) ListPartnerDocumentProfiles(
 		Relation(rel.Partner).
 		Relation(rel.DocumentType).
 		Relation(rel.Template).
+		Relation("PartnerSettingsSchema").
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.Filter.TenantInfo)
 		})
@@ -745,6 +746,7 @@ func (r *repository) GetPartnerDocumentProfileByID(
 		Relation(rel.DocumentType).
 		Relation(rel.Template).
 		Relation(rel.TemplateVersion).
+		Relation("PartnerSettingsSchema").
 		Where(cols.ID.Eq(), req.ID).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.EDIPartnerDocumentProfileScopeTenant(sq, req.TenantInfo)
@@ -769,6 +771,7 @@ func (r *repository) GetActivePartnerDocumentProfile(
 		Model(entity).
 		Relation(rel.DocumentType).
 		Relation(rel.Template).
+		Relation("PartnerSettingsSchema").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID).
 				Where(cols.TransactionSet.Eq(), req.TransactionSet).
@@ -818,6 +821,8 @@ func (r *repository) UpdatePartnerDocumentProfile(
 			"acknowledgment",
 			"validation_mode",
 			"partner_settings",
+			"partner_settings_schema_id",
+			"partner_settings_schema_version",
 			"version",
 			"updated_at",
 		).

@@ -128,12 +128,47 @@ func TestValidateTemplateVersionDefinition_SourceContextPaths(t *testing.T) {
 			wantCode: sourceContextPathUnknownCode,
 		},
 		{
-			name: "unknown partner path warns",
+			name: "unknown partner setting path warns",
 			mutate: func(version *edi.EDITemplateVersion) {
 				segment := findTemplateSegment(t, version, "B2")
 				segment.Elements[0].PartnerSettingPath = "customThing"
 			},
-			wantCode: sourceContextPathUnknownCode,
+			wantCode: partnerSettingUnknownCode,
+		},
+		{
+			name: "unknown transform partner argument warns",
+			mutate: func(version *edi.EDITemplateVersion) {
+				segment := findTemplateSegment(t, version, "L11")
+				segment.Elements[0].Source = edi.TemplateElementSourceTransform
+				segment.Elements[0].BaseSource = &edi.TemplateElementBaseSource{
+					Source:             edi.TemplateElementSourcePartnerSetting,
+					PartnerSettingPath: "carrier.scac",
+				}
+				segment.Elements[0].TransformPipeline = []edi.TemplateTransformStep{
+					{
+						Operation: "concat",
+						Arguments: map[string]any{
+							"values": []any{"$partner.notReal"},
+						},
+					},
+				}
+			},
+			wantCode: partnerSettingUnknownCode,
+		},
+		{
+			name: "deprecated partner condition warns",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "L11").Condition = "partner.carrier.legacyCode"
+			},
+			wantCode: partnerSettingDeprecatedCode,
+		},
+		{
+			name: "future partner reference errors",
+			mutate: func(version *edi.EDITemplateVersion) {
+				segment := findTemplateSegment(t, version, "B2")
+				segment.Elements[0].PartnerSettingPath = "carrier.futureCode"
+			},
+			wantCode: partnerSettingFutureCode,
 		},
 		{
 			name: "future mapping path errors",
@@ -155,6 +190,7 @@ func TestValidateTemplateVersionDefinition_SourceContextPaths(t *testing.T) {
 				version,
 				testSourceContextIndex(),
 				false,
+				testTemplatePartnerSettingIndex(),
 			)
 
 			if tt.wantCode != "" {
@@ -163,12 +199,22 @@ func TestValidateTemplateVersionDefinition_SourceContextPaths(t *testing.T) {
 			if tt.wantAbsent != "" {
 				requireNoDiagnosticCode(t, diagnostics, tt.wantAbsent)
 			}
-			if tt.name == "unknown partner path warns" {
+			if tt.name == "unknown partner setting path warns" ||
+				tt.name == "unknown transform partner argument warns" ||
+				tt.name == "deprecated partner condition warns" {
 				requireDiagnosticSeverity(
 					t,
 					diagnostics,
-					sourceContextPathUnknownCode,
+					tt.wantCode,
 					edi.ValidationSeverityWarning,
+				)
+			}
+			if tt.name == "future partner reference errors" {
+				requireDiagnosticSeverity(
+					t,
+					diagnostics,
+					partnerSettingFutureCode,
+					edi.ValidationSeverityError,
 				)
 			}
 			if tt.name == "future mapping path errors" {
@@ -872,6 +918,36 @@ func testSourceContextIndex() *sourceContextIndex {
 		sourceContextField("mapping.customer", "", edi.SourceContextKindMapping, edi.SourceContextFieldStatusFuture),
 	}
 	return newSourceContextIndex(fields)
+}
+
+func testTemplatePartnerSettingIndex() *partnerSettingIndex {
+	return newPartnerSettingIndex([]*edi.EDIPartnerSettingField{
+		testPartnerSettingField(
+			"carrier.scac",
+			edi.PartnerSettingDataTypeString,
+			edi.PartnerSettingStatusActive,
+		),
+		testPartnerSettingField(
+			"contact.name",
+			edi.PartnerSettingDataTypeString,
+			edi.PartnerSettingStatusActive,
+		),
+		testPartnerSettingField(
+			"contact.phone",
+			edi.PartnerSettingDataTypeString,
+			edi.PartnerSettingStatusActive,
+		),
+		testPartnerSettingField(
+			"carrier.legacyCode",
+			edi.PartnerSettingDataTypeString,
+			edi.PartnerSettingStatusDeprecated,
+		),
+		testPartnerSettingField(
+			"carrier.futureCode",
+			edi.PartnerSettingDataTypeString,
+			edi.PartnerSettingStatusFuture,
+		),
+	})
 }
 
 func sourceContextField(

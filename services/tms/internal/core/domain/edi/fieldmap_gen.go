@@ -81,6 +81,20 @@ func (e *EDIPartnerDocumentProfile) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIPartnerDocumentProfileFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIPartnerSettingField].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIPartnerSettingFieldFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIPartnerSettingField) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIPartnerSettingFieldFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIPartnerSettingSchema].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIPartnerSettingSchemaFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIPartnerSettingSchema) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIPartnerSettingSchemaFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDISourceContextField].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDISourceContextFieldFieldMap] instead of parsing struct tags via reflection.

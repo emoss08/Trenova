@@ -19,12 +19,13 @@ import (
 )
 
 type resolvedDocumentContext struct {
-	ctx             context.Context
-	profile         *edi.EDIPartnerDocumentProfile
-	templateVersion *edi.EDITemplateVersion
-	payload         edi.LoadTenderPayload
-	x12Version      string
-	runtime         map[string]any
+	ctx                context.Context
+	profile            *edi.EDIPartnerDocumentProfile
+	templateVersion    *edi.EDITemplateVersion
+	payload            edi.LoadTenderPayload
+	x12Version         string
+	runtime            map[string]any
+	partnerDiagnostics []edix12.Diagnostic
 }
 
 func (s *Service) ListDocumentTypes(
@@ -124,11 +125,13 @@ func (s *Service) UpsertPartnerDocumentProfile(
 			templateVersion.FunctionalGroupID,
 			"SM",
 		),
-		Envelope:        req.Envelope,
-		Acknowledgment:  req.Acknowledgment,
-		ValidationMode:  req.ValidationMode,
-		PartnerSettings: req.PartnerSettings,
-		Version:         req.Version,
+		Envelope:                     req.Envelope,
+		Acknowledgment:               req.Acknowledgment,
+		ValidationMode:               req.ValidationMode,
+		PartnerSettings:              req.PartnerSettings,
+		PartnerSettingsSchemaID:      req.PartnerSettingsSchemaID,
+		PartnerSettingsSchemaVersion: req.PartnerSettingsSchemaVersion,
+		Version:                      req.Version,
 	}
 	if profile.Status == "" {
 		profile.Status = edi.DocumentStatusActive
@@ -144,6 +147,19 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	}
 	if profile.TemplateVersionID.IsNil() {
 		profile.TemplateVersionID = templateVersion.ID
+	}
+	partnerDiagnostics, err := s.validateProfilePartnerSettings(
+		ctx,
+		profile,
+		req.TenantInfo,
+		profile.PartnerSettings,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if profile.Status == edi.DocumentStatusActive &&
+		hasPartnerSettingErrorDiagnostics(partnerDiagnostics) {
+		return nil, partnerSettingsValidationError(partnerDiagnostics)
 	}
 	if profile.ID.IsNil() {
 		created, createErr := s.documentRepo.CreatePartnerDocumentProfile(ctx, profile)
@@ -248,6 +264,7 @@ func (s *Service) PreviewDocument(
 	if err != nil {
 		return nil, err
 	}
+	diagnostics := append(result.Diagnostics, resolved.partnerDiagnostics...)
 	return &EDIDocumentPreview{
 		RawX12:                   result.RawX12,
 		SegmentCount:             result.SegmentCount,
@@ -255,7 +272,7 @@ func (s *Service) PreviewDocument(
 		InterchangeControlNumber: fmt.Sprint(resolved.runtime["isaControlNumber"]),
 		GroupControlNumber:       fmt.Sprint(resolved.runtime["groupControlNumber"]),
 		TransactionControlNumber: fmt.Sprint(resolved.runtime["transactionControlNumber"]),
-		Diagnostics:              result.Diagnostics,
+		Diagnostics:              diagnostics,
 		Profile:                  resolved.profile,
 		TemplateVersion:          resolved.templateVersion,
 	}, nil
@@ -294,11 +311,12 @@ func (s *Service) GenerateDocument(
 	if err != nil {
 		return nil, err
 	}
+	provisionalDiagnostics := append(provisionalResult.Diagnostics, provisional.partnerDiagnostics...)
 	if edix12.HasBlockingDiagnostics(
-		provisionalResult.Diagnostics,
+		provisionalDiagnostics,
 		resolved.profile.ValidationMode,
 	) {
-		return nil, diagnosticsToValidationError(provisionalResult.Diagnostics)
+		return nil, diagnosticsToValidationError(provisionalDiagnostics)
 	}
 
 	controlNumbers, err := s.documentRepo.AllocateControlNumbers(
@@ -333,8 +351,9 @@ func (s *Service) GenerateDocument(
 	if err != nil {
 		return nil, err
 	}
-	if edix12.HasBlockingDiagnostics(result.Diagnostics, resolved.profile.ValidationMode) {
-		return nil, diagnosticsToValidationError(result.Diagnostics)
+	diagnostics := append(result.Diagnostics, resolved.partnerDiagnostics...)
+	if edix12.HasBlockingDiagnostics(diagnostics, resolved.profile.ValidationMode) {
+		return nil, diagnosticsToValidationError(diagnostics)
 	}
 	message := &edi.EDIMessage{
 		BusinessUnitID:           req.TenantInfo.BuID,
@@ -360,9 +379,9 @@ func (s *Service) GenerateDocument(
 		PayloadSnapshot:          resolved.payload,
 		GeneratedByID:            req.GeneratedByID,
 	}
-	diagnostics := make([]*edi.EDIMessageValidationError, 0, len(result.Diagnostics))
-	for _, diagnostic := range result.Diagnostics {
-		diagnostics = append(diagnostics, &edi.EDIMessageValidationError{
+	messageDiagnostics := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		messageDiagnostics = append(messageDiagnostics, &edi.EDIMessageValidationError{
 			Severity:        diagnostic.Severity,
 			Code:            diagnostic.Code,
 			SegmentID:       diagnostic.SegmentID,
@@ -376,7 +395,7 @@ func (s *Service) GenerateDocument(
 		ctx,
 		repositories.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
-			Diagnostics: diagnostics,
+			Diagnostics: messageDiagnostics,
 		},
 	)
 }
@@ -453,13 +472,23 @@ func (s *Service) resolveDocumentContext(
 		edi.DefaultX12204Version,
 	)
 	runtime := edix12.RuntimeValues(profile, x12Version)
+	partnerDiagnostics, err := s.validateProfilePartnerSettings(
+		ctx,
+		profile,
+		req.TenantInfo,
+		profile.PartnerSettings,
+	)
+	if err != nil {
+		return nil, err
+	}
 	return &resolvedDocumentContext{
-		ctx:             ctx,
-		profile:         profile,
-		templateVersion: templateVersion,
-		payload:         payload,
-		x12Version:      x12Version,
-		runtime:         runtime,
+		ctx:                ctx,
+		profile:            profile,
+		templateVersion:    templateVersion,
+		payload:            payload,
+		x12Version:         x12Version,
+		runtime:            runtime,
+		partnerDiagnostics: partnerDiagnostics,
 	}, nil
 }
 

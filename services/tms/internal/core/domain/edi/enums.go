@@ -206,3 +206,27 @@ const (
 	SourceContextFieldStatusDeprecated = SourceContextFieldStatus("Deprecated")
 	SourceContextFieldStatusFuture     = SourceContextFieldStatus("Future")
 )
+
+type PartnerSettingDataType string
+
+const (
+	PartnerSettingDataTypeString  = PartnerSettingDataType("string")
+	PartnerSettingDataTypeNumber  = PartnerSettingDataType("number")
+	PartnerSettingDataTypeInteger = PartnerSettingDataType("integer")
+	PartnerSettingDataTypeBoolean = PartnerSettingDataType("boolean")
+	PartnerSettingDataTypeDecimal = PartnerSettingDataType("decimal")
+	PartnerSettingDataTypeEnum    = PartnerSettingDataType("enum")
+	PartnerSettingDataTypeObject  = PartnerSettingDataType("object")
+	PartnerSettingDataTypeArray   = PartnerSettingDataType("array")
+	PartnerSettingDataTypeMap     = PartnerSettingDataType("map")
+	PartnerSettingDataTypeSecret  = PartnerSettingDataType("secret")
+	PartnerSettingDataTypeUnknown = PartnerSettingDataType("unknown")
+)
+
+type PartnerSettingStatus string
+
+const (
+	PartnerSettingStatusActive     = PartnerSettingStatus("Active")
+	PartnerSettingStatusDeprecated = PartnerSettingStatus("Deprecated")
+	PartnerSettingStatusFuture     = PartnerSettingStatus("Future")
+)

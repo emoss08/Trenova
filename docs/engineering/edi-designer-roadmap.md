@@ -275,15 +275,21 @@ operational support are present where relevant.
 
 ### Stage 9: Partner Settings Schema
 
-- Replace free-form partner settings with versioned schema definitions where
-  practical.
-- Support field definitions, types, required flags, defaults, secret fields,
-  enum values, validation messages, display grouping, and environment-specific
-  values.
-- Allow templates, conditions, transforms, and scripts to reference typed partner
-  settings with design-time validation.
-- Preserve escape hatches for rare partner-specific JSON while marking them as
-  operational risk.
+- [x] Add backend versioned partner settings schema models and metadata fields.
+- [x] Seed global outbound X12 204 partner settings metadata for carrier,
+  contact, bill-to, shipper, consignee, default equipment/payment/weight/
+  packaging values, reference qualifiers, stop mappings, accessorial codes,
+  commodity defaults, and envelope bridge metadata.
+- [x] Expose backend listing, search, and validation APIs for partner setting
+  schemas and fields.
+- [x] Validate profile partner settings on active profile create/update while
+  allowing inactive profiles to retain invalid draft settings.
+- [x] Validate template `partner.*` references against partner setting schema
+  metadata without changing render or Starlark value semantics.
+- [ ] Add frontend structured settings editor and environment-specific settings
+  management.
+- [ ] Add secret-management UI and encrypted sensitive partner setting storage.
+- [ ] Add designer insertion/snippet integration for partner setting paths.
 
 ### Stage 10: Frontend Designer
 
