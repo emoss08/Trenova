@@ -13,7 +13,9 @@ import {
   partnerSettingFieldSearchText,
   sourceContextFieldDisplayText,
   sourceContextFieldSearchText,
-  toPartnerPathReference,
+  toPartnerConditionPathReference,
+  toPartnerSettingPath,
+  toPartnerTransformPathReference,
   toSourcePathReference,
 } from "../designer/components/designer-fields";
 import {
@@ -260,15 +262,29 @@ describe("insertPathReference", () => {
 
   it("builds source and partner field insert paths", () => {
     expect(toSourcePathReference({ path: "shipment.bol" } as never)).toBe("shipment.bol");
-    expect(toPartnerPathReference({ path: "envelope.receiverId" } as never)).toBe(
+    expect(toPartnerConditionPathReference({ path: "envelope.receiverId" } as never)).toBe(
       "partner.envelope.receiverId",
     );
     expect(insertPathReference("", toSourcePathReference({ path: "shipment.bol" } as never))).toBe(
       "$shipment.bol",
     );
     expect(
-      insertPathReference("ABC", toPartnerPathReference({ path: "envelope.receiverId" } as never)),
+      insertPathReference(
+        "ABC",
+        toPartnerConditionPathReference({ path: "envelope.receiverId" } as never),
+      ),
     ).toBe("ABC, $partner.envelope.receiverId");
+  });
+
+  it("keeps partner setting source, transform, and condition path formats distinct", () => {
+    const field = { path: "carrier.scac" } as never;
+
+    expect(toPartnerSettingPath(field)).toBe("carrier.scac");
+    expect(toPartnerTransformPathReference(field)).toBe("$partner.carrier.scac");
+    expect(toPartnerConditionPathReference(field)).toBe("partner.carrier.scac");
+    expect(insertPathReference("", toPartnerTransformPathReference(field), false)).toBe(
+      "$partner.carrier.scac",
+    );
   });
 });
 

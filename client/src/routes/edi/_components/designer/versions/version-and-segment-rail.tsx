@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { EDIDiagnostic, EDITemplateSegment, EDITemplateVersion } from "@/types/edi";
 import { VersionStatusBadge } from "../components/designer-shared";
@@ -48,36 +49,40 @@ export default function VersionAndSegmentRail({
         <div className="sticky top-0 border-b bg-background px-3 py-2 text-xs font-semibold">
           Outline
         </div>
-        {segments.map((segment) => {
-          const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);
-          return (
-            <button
-              key={segment.id}
-              type="button"
-              onClick={() => onSegmentSelect(segment)}
-              className={cn(
-                "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
-                selectedSegmentId === segment.id && "bg-muted",
-              )}
-            >
-              <span className="min-w-0">
-                <span className="block font-mono text-sm font-medium">{segment.segmentId}</span>
-                <span className="block truncate text-xs text-muted-foreground">{segment.name}</span>
-              </span>
-              {segmentDiagnostics.length > 0 ? (
-                <Badge
-                  variant={
-                    segmentDiagnostics.some((item) => item.severity === "Error")
-                      ? "inactive"
-                      : "warning"
-                  }
-                >
-                  {segmentDiagnostics.length}
-                </Badge>
-              ) : null}
-            </button>
-          );
-        })}
+        <ScrollArea className="flex flex-col h-[calc(100vh-30rem)]">
+          {segments.map((segment) => {
+            const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);
+            return (
+              <button
+                key={segment.id}
+                type="button"
+                onClick={() => onSegmentSelect(segment)}
+                className={cn(
+                  "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted cursor-pointer",
+                  selectedSegmentId === segment.id && "bg-muted",
+                )}
+              >
+                <span className="min-w-0">
+                  <span className="block font-mono text-sm font-medium">{segment.segmentId}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {segment.name}
+                  </span>
+                </span>
+                {segmentDiagnostics.length > 0 ? (
+                  <Badge
+                    variant={
+                      segmentDiagnostics.some((item) => item.severity === "Error")
+                        ? "inactive"
+                        : "warning"
+                    }
+                  >
+                    {segmentDiagnostics.length}
+                  </Badge>
+                ) : null}
+              </button>
+            );
+          })}
+        </ScrollArea>
       </div>
     </div>
   );

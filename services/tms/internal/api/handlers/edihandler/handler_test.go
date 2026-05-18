@@ -25,6 +25,7 @@ import (
 func setupEDIHandler(
 	t *testing.T,
 	repo *mocks.MockEDIDocumentRepository,
+	applyParams ...func(*ediservice.Params),
 ) *edihandler.Handler {
 	t.Helper()
 
@@ -37,11 +38,15 @@ func setupEDIHandler(
 		PermissionEngine: &mocks.AllowAllPermissionEngine{},
 		ErrorHandler:     errorHandler,
 	})
-	service := ediservice.New(ediservice.Params{
+	params := ediservice.Params{
 		Logger:       logger,
 		DocumentRepo: repo,
 		Validator:    ediservice.NewValidator(),
-	})
+	}
+	for _, apply := range applyParams {
+		apply(&params)
+	}
+	service := ediservice.New(params)
 
 	return edihandler.New(edihandler.Params{
 		Service:              service,
@@ -361,6 +366,141 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
+}
+
+func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
+	t.Parallel()
+
+	partnerID := pulid.MustNew("edip_")
+	documentTypeID := pulid.MustNew("edidt_")
+	templateID := pulid.MustNew("editpl_")
+	profileID := pulid.MustNew("edipdp_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+
+	partnerRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIPartnerByIDRequest) bool {
+			return req.ID == partnerID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+		})).
+		Return(&edi.EDIPartner{
+			ID:   partnerID,
+			Code: "CARR",
+			Name: "Carrier Partner",
+			Kind: edi.PartnerKindExternal,
+		}, nil).
+		Once()
+	repo.EXPECT().
+		GetTemplateByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDITemplateByIDRequest) bool {
+			return req.ID == templateID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+		})).
+		Return(&edi.EDITemplate{
+			ID:          templateID,
+			Name:        "Outbound 204",
+			Description: "Load tender template",
+			Status:      edi.TemplateStatusDraft,
+		}, nil).
+		Once()
+	repo.EXPECT().
+		GetPartnerDocumentProfileByID(
+			mock.Anything,
+			mock.MatchedBy(func(req repositories.GetEDIPartnerDocumentProfileByIDRequest) bool {
+				return req.ID == profileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+			}),
+		).
+		Return(&edi.EDIPartnerDocumentProfile{
+			ID:   profileID,
+			Name: "Outbound Profile",
+			Partner: &edi.EDIPartner{
+				ID:   partnerID,
+				Code: "CARR",
+				Name: "Carrier Partner",
+			},
+		}, nil).
+		Once()
+	repo.EXPECT().
+		ListDocumentTypes(mock.Anything, repositories.ListEDIDocumentTypesRequest{}).
+		Return([]*edi.EDIDocumentType{{
+			ID:             documentTypeID,
+			Code:           "204",
+			Name:           "Motor Carrier Load Tender",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+			DefaultVersion: edi.DefaultX12204Version,
+			Status:         edi.DocumentStatusActive,
+		}}, nil).
+		Once()
+
+	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
+		params.PartnerRepo = partnerRepo
+	})
+
+	partnerRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/partners/"+partnerID.String()+"/",
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var partnerResp edi.EDIPartner
+	require.NoError(t, partnerRecorder.ResponseJSON(&partnerResp))
+	assert.Equal(t, partnerID, partnerResp.ID)
+	assert.Equal(t, "CARR", partnerResp.Code)
+	assert.Equal(t, "Carrier Partner", partnerResp.Name)
+	assert.Equal(t, edi.PartnerKindExternal, partnerResp.Kind)
+
+	templateRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/templates/select-options/"+templateID.String(),
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var templateResp edi.EDITemplate
+	require.NoError(t, templateRecorder.ResponseJSON(&templateResp))
+	assert.Equal(t, templateID, templateResp.ID)
+	assert.Equal(t, "Outbound 204", templateResp.Name)
+	assert.Equal(t, "Load tender template", templateResp.Description)
+	assert.Equal(t, edi.TemplateStatusDraft, templateResp.Status)
+
+	profileRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/document-profiles/select-options/"+profileID.String(),
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var profileResp edi.EDIPartnerDocumentProfile
+	require.NoError(t, profileRecorder.ResponseJSON(&profileResp))
+	assert.Equal(t, profileID, profileResp.ID)
+	assert.Equal(t, "Outbound Profile", profileResp.Name)
+	require.NotNil(t, profileResp.Partner)
+	assert.Equal(t, "CARR", profileResp.Partner.Code)
+	assert.Equal(t, "Carrier Partner", profileResp.Partner.Name)
+
+	documentTypeRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/document-types/select-options/"+documentTypeID.String(),
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var documentTypeResp edi.EDIDocumentType
+	require.NoError(t, documentTypeRecorder.ResponseJSON(&documentTypeResp))
+	assert.Equal(t, documentTypeID, documentTypeResp.ID)
+	assert.Equal(t, "204", documentTypeResp.Code)
+	assert.Equal(t, "Motor Carrier Load Tender", documentTypeResp.Name)
+	assert.Equal(t, edi.TransactionSet204, documentTypeResp.TransactionSet)
+	assert.Equal(t, edi.DocumentDirectionOutbound, documentTypeResp.Direction)
+	assert.Equal(t, edi.DefaultX12204Version, documentTypeResp.DefaultVersion)
 }
 
 func runEDIRequest(

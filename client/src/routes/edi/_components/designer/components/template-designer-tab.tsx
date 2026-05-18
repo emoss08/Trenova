@@ -314,7 +314,7 @@ export default function TemplateDesignerTab() {
   );
 
   return (
-    <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
+    <div className="grid min-h-[calc(100vh-100rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
       <Suspense fallback={<DesignerAsideSkeleton />}>
         <TemplateDesignerAside
           templates={templates}

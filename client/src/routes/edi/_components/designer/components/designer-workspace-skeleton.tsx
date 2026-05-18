@@ -83,7 +83,7 @@ export function DesignerWorkspaceSkeleton() {
       </div>
       <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
         <DesignerAsideSkeleton />
-        <main className="flex min-h-0 flex-col rounded-md border bg-background">
+        <main className="flex min-h-[calc(100vh-40rem)] flex-col rounded-md border bg-background">
           <SkeletonToolbar count={4} />
           <div className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)] max-md:grid-cols-1">
             <div className="min-h-0 border-r max-md:hidden">

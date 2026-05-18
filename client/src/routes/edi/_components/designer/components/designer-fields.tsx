@@ -98,6 +98,7 @@ export function ControlledAutocompleteField<TOption>({
         value={value}
         onChange={(nextValue) => onValueChange(nextValue ? String(nextValue) : "")}
         onOptionChange={onOptionChange}
+        label={label}
         renderOption={renderOption}
         getOptionValue={getOptionValue}
         getDisplayValue={getDisplayValue}
@@ -274,8 +275,16 @@ export function toSourcePathReference(field: EDISourceContextField) {
   return field.path;
 }
 
-export function toPartnerPathReference(field: EDIPartnerSettingField) {
+export function toPartnerSettingPath(field: EDIPartnerSettingField) {
+  return field.path;
+}
+
+export function toPartnerConditionPathReference(field: EDIPartnerSettingField) {
   return `partner.${field.path}`;
+}
+
+export function toPartnerTransformPathReference(field: EDIPartnerSettingField) {
+  return `$${toPartnerConditionPathReference(field)}`;
 }
 
 export function PathReferenceField({
@@ -377,7 +386,8 @@ export function PathInsertField({
           direction={direction}
           documentTypeId={documentTypeId}
           x12Version={x12Version}
-          onPick={(path) => onChange(insertPathReference(value, path))}
+          getPickValue={toPartnerTransformPathReference}
+          onPick={(path) => onChange(insertPathReference(value, path, false))}
         />
       </div>
     </div>
@@ -424,6 +434,7 @@ function PartnerSettingPicker({
   direction,
   documentTypeId,
   x12Version,
+  getPickValue = toPartnerSettingPath,
 }: {
   disabled?: boolean;
   onPick: (path: string) => void;
@@ -432,6 +443,7 @@ function PartnerSettingPicker({
   direction?: string;
   documentTypeId?: string;
   x12Version?: string;
+  getPickValue?: (field: EDIPartnerSettingField) => string;
 }) {
   return (
     <PathPicker<EDIPartnerSettingField>
@@ -441,7 +453,7 @@ function PartnerSettingPicker({
       placeholder={placeholder}
       getOptionValue={(field) => field.path}
       getDisplayValue={partnerSettingFieldDisplayText}
-      getPickValue={toPartnerPathReference}
+      getPickValue={getPickValue}
       extraSearchParams={{
         status: "Active",
         ...(transactionSet ? { transactionSet } : {}),
