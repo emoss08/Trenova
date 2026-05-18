@@ -1791,6 +1791,7 @@ func (h *Handler) generateDocument(c *gin.Context) {
 func (h *Handler) listMessages(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
+	partnerID, _ := pulid.MustParse(helpers.QueryString(c, "partnerId", ""))
 	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMessage], error) {
 		return h.service.ListMessages(
 			c.Request.Context(),
@@ -1800,6 +1801,11 @@ func (h *Handler) listMessages(c *gin.Context) {
 				Direction: edi.DocumentDirection(
 					helpers.QueryString(c, "direction", "Outbound"),
 				),
+				PartnerID:     partnerID,
+				Status:        edi.MessageStatus(helpers.QueryString(c, "status", "")),
+				Query:         helpers.QueryStringTrimmed(c, "query", ""),
+				GeneratedFrom: helpers.QueryInt64(c, "generatedFrom", 0),
+				GeneratedTo:   helpers.QueryInt64(c, "generatedTo", 0),
 			},
 		)
 	})

@@ -92,9 +92,7 @@ describe("ediScriptPresets", () => {
   });
 
   it("appends preset code to a non-empty editor with one blank line", () => {
-    expect(insertScriptPresetCode("existing\n", { code: "\nvalue\n" })).toBe(
-      "existing\n\nvalue",
-    );
+    expect(insertScriptPresetCode("existing\n", { code: "\nvalue\n" })).toBe("existing\n\nvalue");
   });
 
   it("parses condition reference presets as Starlark function references", () => {

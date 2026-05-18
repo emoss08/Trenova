@@ -3,6 +3,7 @@ package edirepository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
@@ -904,7 +905,17 @@ func (r *repository) ListMessages(
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		ColumnExpr("emsg.*").
+		ColumnExpr(`(
+			SELECT COUNT(*)
+			FROM edi_message_validation_errors AS emve
+			WHERE emve.message_id = emsg.id
+				AND emve.organization_id = emsg.organization_id
+				AND emve.business_unit_id = emsg.business_unit_id
+		) AS diagnostic_count`).
+		Relation("Partner").
 		Relation("PartnerDocumentProfile").
+		Relation("Template").
 		Where("emsg.organization_id = ?", req.Filter.TenantInfo.OrgID).
 		Where("emsg.business_unit_id = ?", req.Filter.TenantInfo.BuID)
 	if req.TransactionSet != "" {
@@ -913,6 +924,19 @@ func (r *repository) ListMessages(
 	if req.Direction != "" {
 		query = query.Where("emsg.direction = ?", req.Direction)
 	}
+	if !req.PartnerID.IsNil() {
+		query = query.Where("emsg.edi_partner_id = ?", req.PartnerID)
+	}
+	if req.Status != "" {
+		query = query.Where("emsg.status = ?", req.Status)
+	}
+	if req.GeneratedFrom > 0 {
+		query = query.Where("emsg.generated_at >= ?", req.GeneratedFrom)
+	}
+	if req.GeneratedTo > 0 {
+		query = query.Where("emsg.generated_at <= ?", req.GeneratedTo)
+	}
+	query = applyMessageArchiveSearch(query, req.Query)
 	total, err := query.
 		Order("emsg.generated_at DESC").
 		Limit(req.Filter.Pagination.SafeLimit()).
@@ -932,9 +956,16 @@ func (r *repository) GetMessageByID(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
+		Relation("Partner").
+		Relation("DocumentType").
 		Relation("PartnerDocumentProfile").
+		Relation("Template").
+		Relation("TemplateVersion").
+		Relation("TemplateVersion.ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Order("lower(name) ASC")
+		}).
 		Relation("ValidationErrors", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("created_at ASC")
+			return q.Order("created_at ASC", "id ASC")
 		}).
 		Where("emsg.id = ?", req.ID).
 		Where("emsg.organization_id = ?", req.TenantInfo.OrgID).
@@ -971,6 +1002,23 @@ func (r *repository) CreateMessageWithDiagnostics(
 	}
 	req.Message.ValidationErrors = req.Diagnostics
 	return req.Message, nil
+}
+
+func applyMessageArchiveSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(emsg.id) LIKE ?", term).
+			WhereOr("lower(emsg.shipment_id) LIKE ?", term).
+			WhereOr("lower(emsg.transfer_id) LIKE ?", term).
+			WhereOr("lower(emsg.interchange_control_number) LIKE ?", term).
+			WhereOr("lower(emsg.group_control_number) LIKE ?", term).
+			WhereOr("lower(emsg.transaction_control_number) LIKE ?", term)
+	})
 }
 
 func (r *repository) ListTestCases(

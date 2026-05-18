@@ -346,6 +346,11 @@ type ListEDIMessagesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
+	PartnerID      pulid.ID                 `json:"partnerId"`
+	Status         edi.MessageStatus        `json:"status"`
+	Query          string                   `json:"query"`
+	GeneratedFrom  int64                    `json:"generatedFrom"`
+	GeneratedTo    int64                    `json:"generatedTo"`
 }
 
 type GetEDIMessageByIDRequest struct {

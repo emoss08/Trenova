@@ -708,6 +708,7 @@ export const ediPartnerDocumentProfileSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   partner: ediPartnerSchema.nullish(),
+  documentType: ediDocumentTypeSchema.nullish(),
   template: ediTemplateSchema.nullish(),
   templateVersion: ediTemplateVersionSchema.nullish(),
 });
@@ -748,6 +749,8 @@ export type EDIDocumentPreview = z.infer<typeof ediDocumentPreviewSchema>;
 
 export const ediMessageSchema = z.object({
   id: z.string(),
+  businessUnitId: z.string().nullish(),
+  organizationId: z.string().nullish(),
   ediPartnerId: z.string(),
   documentTypeId: z.string(),
   partnerDocumentProfileId: z.string(),
@@ -766,8 +769,15 @@ export const ediMessageSchema = z.object({
   transactionControlNumber: z.string(),
   segmentCount: z.number(),
   rawX12: z.string(),
+  payloadSnapshot: loadTenderPayloadSchema.nullish(),
+  generatedById: z.string().nullish(),
   generatedAt: z.number(),
+  diagnosticCount: z.number().default(0),
+  partner: ediPartnerSchema.nullish(),
+  documentType: ediDocumentTypeSchema.nullish(),
   partnerDocumentProfile: ediPartnerDocumentProfileSchema.nullish(),
+  template: ediTemplateSchema.nullish(),
+  templateVersion: ediTemplateVersionSchema.nullish(),
   validationErrors: z.array(ediDiagnosticSchema).default([]),
 });
 

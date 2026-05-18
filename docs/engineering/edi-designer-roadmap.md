@@ -338,14 +338,22 @@ operational support are present where relevant.
 
 ### Stage 11: Message Archive
 
-- Persist every inbound and outbound message with immutable raw payloads,
-  normalized payloads, rendered payloads, envelope metadata, partner resolution,
-  template version, script library versions, validation diagnostics,
-  acknowledgments, transport attempts, replay metadata, and audit trail.
-- Support search by partner, document type, shipment, invoice, control number,
-  status, date range, acknowledgment state, exception type, and transport method.
-- Store payload hashes for deduplication and tamper evidence.
-- Keep retention and purge policies configurable by tenant and regulatory need.
+- Completed for generated outbound messages:
+  - Outbound message detail inspector.
+  - Raw X12 viewer.
+  - Payload snapshot viewer.
+  - Diagnostics detail grouping.
+  - Control number display and copy.
+  - Lightweight segment tree.
+  - Download and copy support.
+- Remaining:
+  - Transport attempts.
+  - Acknowledgment history.
+  - Replay.
+  - Inbound archive.
+  - Immutable payload hash and tamper evidence.
+  - Advanced archive search beyond partner, transaction set, direction, status,
+    generated date range, and ID/control-number query filters.
 
 ### Stage 12: Test and Certification Workbench
 
