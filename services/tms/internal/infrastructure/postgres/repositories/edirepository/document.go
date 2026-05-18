@@ -23,19 +23,44 @@ func (r *repository) ListDocumentTypes(
 ) ([]*edi.EDIDocumentType, error) {
 	entities := make([]*edi.EDIDocumentType, 0, 8)
 	query := r.db.DBForContext(ctx).NewSelect().Model(&entities).Order("edt.code ASC")
-	if req.Standard != "" {
-		query = query.Where("edt.standard = ?", req.Standard)
-	}
-	if req.TransactionSet != "" {
-		query = query.Where("edt.transaction_set = ?", req.TransactionSet)
-	}
-	if req.Direction != "" {
-		query = query.Where("edt.direction = ?", req.Direction)
-	}
+	query = filterDocumentTypesQuery(query, req)
 	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
 	return entities, nil
+}
+
+func (r *repository) SelectDocumentTypeOptions(
+	ctx context.Context,
+	req *repositories.EDIDocumentTypeSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIDocumentType], error) {
+	entities := make([]*edi.EDIDocumentType, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column("id", "code", "name", "standard", "transaction_set", "direction", "default_version", "status").
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return filterDocumentTypesQuery(sq, repositories.ListEDIDocumentTypesRequest{
+				Standard:       req.Standard,
+				TransactionSet: req.TransactionSet,
+				Direction:      req.Direction,
+				Status:         req.Status,
+			})
+		}).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return applyDocumentTypeSearch(sq, req.SelectQueryRequest.Query)
+		})
+
+	total, err := query.
+		Order("edt.code ASC").
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDIDocumentType]{Items: entities, Total: total}, nil
 }
 
 func (r *repository) ListTemplates(
@@ -55,10 +80,60 @@ func (r *repository) ListTemplates(
 	if req.Direction != "" {
 		query = query.Where("et.direction = ?", req.Direction)
 	}
+	if req.Status != "" {
+		query = query.Where("et.status = ?", req.Status)
+	}
+	query = applyTemplateSearch(query, req.Filter.Query)
 	total, err := query.
 		Order("et.created_at DESC").
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
+}
+
+func (r *repository) SelectTemplateOptions(
+	ctx context.Context,
+	req *repositories.EDITemplateSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDITemplate], error) {
+	entities := make([]*edi.EDITemplate, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column(
+			"id",
+			"business_unit_id",
+			"organization_id",
+			"document_type_id",
+			"name",
+			"description",
+			"direction",
+			"standard",
+			"transaction_set",
+			"status",
+		).
+		Relation("DocumentType").
+		Where("et.organization_id = ?", req.SelectQueryRequest.TenantInfo.OrgID).
+		Where("et.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+	if req.TransactionSet != "" {
+		query = query.Where("et.transaction_set = ?", req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where("et.direction = ?", req.Direction)
+	}
+	if req.Status != "" {
+		query = query.Where("et.status = ?", req.Status)
+	}
+	query = applyTemplateSearch(query, req.SelectQueryRequest.Query)
+
+	total, err := query.
+		Order("et.name ASC").
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, err
@@ -182,7 +257,7 @@ func (r *repository) GetTemplateVersionByID(
 			return q.Order("sequence ASC")
 		}).
 		Relation("ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("lower(name) ASC")
+			return q.OrderExpr("lower(name) ASC")
 		}).
 		Where("etv.id = ?", req.VersionID).
 		Where("etv.template_id = ?", req.TemplateID).
@@ -207,7 +282,7 @@ func (r *repository) GetActiveTemplateVersion(
 			return q.Order("sequence ASC")
 		}).
 		Relation("ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("lower(name) ASC")
+			return q.OrderExpr("lower(name) ASC")
 		}).
 		Where("etv.template_id = ?", req.TemplateID).
 		Where("etv.organization_id = ?", req.TenantInfo.OrgID).
@@ -716,11 +791,71 @@ func (r *repository) ListPartnerDocumentProfiles(
 	if req.Direction != "" {
 		query = query.Where(cols.Direction.Eq(), req.Direction)
 	}
+	if req.Status != "" {
+		query = query.Where(cols.Status.Eq(), req.Status)
+	}
+	if req.PartnerID.IsNotNil() {
+		query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+	}
+	query = applyPartnerDocumentProfileSearch(query, req.Filter.Query)
 
 	total, err := query.
 		Order(cols.CreatedAt.OrderDesc()).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (r *repository) SelectPartnerDocumentProfileOptions(
+	ctx context.Context,
+	req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+	entities := make(
+		[]*edi.EDIPartnerDocumentProfile,
+		0,
+		req.SelectQueryRequest.Pagination.SafeLimit(),
+	)
+	cols := buncolgen.EDIPartnerDocumentProfileColumns
+	rel := buncolgen.EDIPartnerDocumentProfileRelations
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Relation(rel.Partner).
+		Relation(rel.Template).
+		Relation(rel.DocumentType).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIPartnerDocumentProfileScopeTenant(
+				sq,
+				req.SelectQueryRequest.TenantInfo,
+			)
+		})
+	if req.TransactionSet != "" {
+		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where(cols.Direction.Eq(), req.Direction)
+	}
+	if req.Status != "" {
+		query = query.Where(cols.Status.Eq(), req.Status)
+	}
+	if req.PartnerID.IsNotNil() {
+		query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
+	}
+	query = applyPartnerDocumentProfileSearch(query, req.SelectQueryRequest.Query)
+
+	total, err := query.
+		Order(cols.Name.OrderAsc()).
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
 		ScanAndCount(ctx)
 	if err != nil {
 		return nil, err
@@ -836,6 +971,67 @@ func (r *repository) UpdatePartnerDocumentProfile(
 		return nil, err
 	}
 	return entity, nil
+}
+
+func filterDocumentTypesQuery(
+	query *bun.SelectQuery,
+	req repositories.ListEDIDocumentTypesRequest,
+) *bun.SelectQuery {
+	if req.Standard != "" {
+		query = query.Where("edt.standard = ?", req.Standard)
+	}
+	if req.TransactionSet != "" {
+		query = query.Where("edt.transaction_set = ?", req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where("edt.direction = ?", req.Direction)
+	}
+	if req.Status != "" {
+		query = query.Where("edt.status = ?", req.Status)
+	}
+	return query
+}
+
+func applyDocumentTypeSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(edt.code) LIKE ?", term).
+			WhereOr("lower(edt.name) LIKE ?", term).
+			WhereOr("lower(edt.default_version) LIKE ?", term)
+	})
+}
+
+func applyTemplateSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(et.name) LIKE ?", term).
+			WhereOr("lower(et.description) LIKE ?", term)
+	})
+}
+
+func applyPartnerDocumentProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(epdp.name) LIKE ?", term).
+			WhereOr("lower(ep.code) LIKE ?", term).
+			WhereOr("lower(ep.name) LIKE ?", term).
+			WhereOr("lower(et.name) LIKE ?", term)
+	})
 }
 
 func (r *repository) AllocateControlNumbers(
@@ -962,7 +1158,7 @@ func (r *repository) GetMessageByID(
 		Relation("Template").
 		Relation("TemplateVersion").
 		Relation("TemplateVersion.ScriptLibraries", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order("lower(name) ASC")
+			return q.OrderExpr("lower(name) ASC")
 		}).
 		Relation("ValidationErrors", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Order("created_at ASC", "id ASC")

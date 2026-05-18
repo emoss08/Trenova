@@ -11,8 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import type {
   EDIDiagnostic,
-  EDIPartnerSettingField,
-  EDISourceContextField,
   EDITemplateElement,
   EDITemplateSegment,
   EDITemplateVersion,
@@ -30,15 +28,19 @@ import {
   type EDIScriptPreset,
 } from "../../edi-script-presets";
 import { TransformPipelineEditor } from "../transforms/transform-pipeline-editor";
+import { ControlledSelectField, PathReferenceField } from "../components/designer-fields";
 import {
   InputBlock,
-  PartnerPathField,
-  PathField,
   ScriptPresetPicker,
-  SelectBlock,
   TextareaBlock,
   templateElementSourceLabel,
 } from "../components/designer-shared";
+import {
+  conditionModeOptions,
+  conditionOperatorOptions,
+  mappingEntityTypeOptions,
+  templateElementSourceOptions,
+} from "../utils/edi-designer-options";
 
 export function ElementDesigner({
   version,
@@ -50,8 +52,6 @@ export function ElementDesigner({
   element,
   diagnostics,
   isEditable,
-  sourceFields,
-  partnerFields,
   onSegmentChange,
   onElementSelect,
   onElementChange,
@@ -69,8 +69,6 @@ export function ElementDesigner({
   element?: EDITemplateElement;
   diagnostics: EDIDiagnostic[];
   isEditable: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onSegmentChange: (
     segmentId: string,
     updater: (segment: EDITemplateSegment) => EDITemplateSegment,
@@ -184,8 +182,6 @@ export function ElementDesigner({
           segment={segment}
           element={element}
           isEditable={isEditable}
-          sourceFields={sourceFields}
-          partnerFields={partnerFields}
           onChange={onElementChange}
         />
       </div>
@@ -197,15 +193,11 @@ function ElementInspector({
   segment,
   element,
   isEditable,
-  sourceFields,
-  partnerFields,
   onChange,
 }: {
   segment: EDITemplateSegment;
   element?: EDITemplateElement;
   isEditable: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onChange: (
     position: number,
     updater: (element: EDITemplateElement) => EDITemplateElement,
@@ -226,27 +218,16 @@ function ElementInspector({
         </div>
         <div className="text-xs text-muted-foreground">Element source and validation rules</div>
       </div>
-      <SelectBlock
+      <ControlledSelectField
         label="Source"
         value={element.source}
         onValueChange={(source) => update({ source: source as EDITemplateElement["source"] })}
         disabled={!isEditable}
-        options={[
-          { value: "constant", label: "Constant" },
-          { value: "fieldPath", label: "Field Path" },
-          { value: "partnerSetting", label: "Partner Setting" },
-          { value: "runtime", label: "Runtime" },
-          { value: "repeat", label: "Repeat" },
-          { value: "mapping", label: "Mapping" },
-          { value: "transform", label: "Transform" },
-          { value: "starlark", label: "Starlark" },
-        ]}
+        options={templateElementSourceOptions}
       />
       <SourceEditor
         element={element}
         isEditable={isEditable}
-        sourceFields={sourceFields}
-        partnerFields={partnerFields}
         onChange={update}
       />
       <ConditionEditor
@@ -298,14 +279,10 @@ function ElementInspector({
 function SourceEditor({
   element,
   isEditable,
-  sourceFields,
-  partnerFields,
   onChange,
 }: {
   element: EDITemplateElement;
   isEditable: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onChange: (patch: Partial<EDITemplateElement>) => void;
 }) {
   if (element.source === "constant") {
@@ -320,23 +297,22 @@ function SourceEditor({
   }
   if (element.source === "fieldPath") {
     return (
-      <PathField
+      <PathReferenceField
         label="Field Path"
         value={element.fieldPath ?? ""}
         onChange={(fieldPath) => onChange({ fieldPath })}
-        fields={sourceFields}
         disabled={!isEditable}
       />
     );
   }
   if (element.source === "partnerSetting") {
     return (
-      <PartnerPathField
+      <PathReferenceField
         label="Partner Setting"
         value={element.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
-        fields={partnerFields}
         disabled={!isEditable}
+        partner
       />
     );
   }
@@ -352,19 +328,19 @@ function SourceEditor({
   }
   if (element.source === "repeat") {
     return (
-      <PathField
+      <PathReferenceField
         label="Repeat Path"
         value={element.repeatPath ?? ""}
         onChange={(repeatPath) => onChange({ repeatPath })}
-        fields={sourceFields.filter((field) => field.repeated || field.sourceKind === "repeat")}
         disabled={!isEditable}
+        sourceOnlyRepeated
       />
     );
   }
   if (element.source === "mapping") {
     return (
       <div className="space-y-2">
-        <SelectBlock
+        <ControlledSelectField
           label="Mapping Entity"
           value={element.mappingEntityType ?? ""}
           onValueChange={(mappingEntityType) =>
@@ -373,21 +349,12 @@ function SourceEditor({
             })
           }
           disabled={!isEditable}
-          options={[
-            { value: "Customer", label: "Customer" },
-            { value: "ServiceType", label: "Service Type" },
-            { value: "ShipmentType", label: "Shipment Type" },
-            { value: "FormulaTemplate", label: "Formula Template" },
-            { value: "Location", label: "Location" },
-            { value: "Commodity", label: "Commodity" },
-            { value: "AccessorialCharge", label: "Accessorial Charge" },
-          ]}
+          options={mappingEntityTypeOptions}
         />
-        <PathField
+        <PathReferenceField
           label="Mapping Source Path"
           value={element.mappingSourcePath ?? ""}
           onChange={(mappingSourcePath) => onChange({ mappingSourcePath })}
-          fields={sourceFields}
           disabled={!isEditable}
         />
       </div>
@@ -398,8 +365,6 @@ function SourceEditor({
       <TransformPipelineEditor
         element={element}
         disabled={!isEditable}
-        sourceFields={sourceFields}
-        partnerFields={partnerFields}
         onChange={onChange}
       />
     );
@@ -481,7 +446,7 @@ function ConditionEditor({
         disabled={disabled}
         onApply={applyPreset}
       />
-      <SelectBlock
+      <ControlledSelectField
         label="Mode"
         value={draft.mode}
         disabled={disabled}
@@ -494,14 +459,7 @@ function ConditionEditor({
           if (mode === "starlarkFunction") apply({ mode: "starlarkFunction", functionName: "" });
           if (mode === "inlineStarlark") apply({ mode: "inlineStarlark", script: "" });
         }}
-        options={[
-          { value: "none", label: "None" },
-          { value: "truthy", label: "Path Truthy" },
-          { value: "falsey", label: "Path Falsey" },
-          { value: "comparison", label: "Comparison" },
-          { value: "starlarkFunction", label: "Starlark Function" },
-          { value: "inlineStarlark", label: "Inline Starlark" },
-        ]}
+        options={conditionModeOptions}
       />
       {draft.mode === "truthy" || draft.mode === "falsey" ? (
         <InputBlock
@@ -519,15 +477,12 @@ function ConditionEditor({
             disabled={disabled}
             onChange={(path) => apply({ ...draft, path })}
           />
-          <SelectBlock
+          <ControlledSelectField
             label="Op"
             value={draft.operator}
             disabled={disabled}
             onValueChange={(operator) => apply({ ...draft, operator: operator as "==" | "!=" })}
-            options={[
-              { value: "==", label: "==" },
-              { value: "!=", label: "!=" },
-            ]}
+            options={conditionOperatorOptions}
           />
           <InputBlock
             label="Value"

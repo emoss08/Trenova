@@ -8,17 +8,15 @@ import type {
   EDIDiagnostic,
   EDIDocumentPreview,
   EDIPartnerDocumentProfile,
-  EDIPartnerSettingField,
-  EDISourceContextField,
   EDITemplateElement,
   EDITemplateElementBaseSource,
   EDITemplateVersion,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
-import { AlertTriangleIcon, CopyPlusIcon, FilterIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { AlertTriangleIcon, CopyPlusIcon } from "lucide-react";
+import { type ReactNode } from "react";
 import { toast } from "sonner";
-import { diagnosticKey, insertPathReference } from "../utils/edi-designer-utils";
+import { diagnosticKey } from "../utils/edi-designer-utils";
 import type { EDIScriptPreset } from "../../edi-script-presets";
 
 function ScriptPresetPicker({
@@ -52,152 +50,6 @@ function ScriptPresetPicker({
                 {preset.description}
               </span>
             </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PathField({
-  label,
-  value,
-  onChange,
-  fields,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  fields: EDISourceContextField[];
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-1">
-      <InputBlock label={label} value={value} onChange={onChange} disabled={disabled} />
-      <FieldPicker
-        fields={fields}
-        disabled={disabled}
-        getPath={(field) => field.path}
-        getLabel={(field) => `${field.path} (${field.dataType})`}
-        onPick={onChange}
-      />
-    </div>
-  );
-}
-
-function PartnerPathField({
-  label,
-  value,
-  onChange,
-  fields,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  fields: EDIPartnerSettingField[];
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-1">
-      <InputBlock label={label} value={value} onChange={onChange} disabled={disabled} />
-      <FieldPicker
-        fields={fields}
-        disabled={disabled}
-        getPath={(field) => field.path}
-        getLabel={(field) => `${field.path} (${field.dataType})`}
-        onPick={onChange}
-      />
-    </div>
-  );
-}
-
-function PathInsertField({
-  label,
-  value,
-  placeholder,
-  disabled,
-  sourceFields,
-  partnerFields,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  placeholder?: string;
-  disabled: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="space-y-1">
-      <InputBlock
-        label={label}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        placeholder={placeholder}
-      />
-      <div className="grid grid-cols-2 gap-1">
-        <FieldPicker
-          fields={sourceFields}
-          disabled={disabled}
-          getPath={(field) => field.path}
-          getLabel={(field) => field.path}
-          onPick={(path) => onChange(insertPathReference(value, path))}
-        />
-        <FieldPicker
-          fields={partnerFields}
-          disabled={disabled}
-          getPath={(field) => `partner.${field.path}`}
-          getLabel={(field) => field.path}
-          onPick={(path) => onChange(insertPathReference(value, path))}
-        />
-      </div>
-    </div>
-  );
-}
-
-function FieldPicker<T>({
-  fields,
-  disabled,
-  getPath,
-  getLabel,
-  onPick,
-}: {
-  fields: T[];
-  disabled?: boolean;
-  getPath: (field: T) => string;
-  getLabel: (field: T) => string;
-  onPick: (path: string) => void;
-}) {
-  const [filter, setFilter] = useState("");
-  const visible = fields
-    .filter((field) => getLabel(field).toLowerCase().includes(filter.toLowerCase()))
-    .slice(0, 8);
-  return (
-    <div className="rounded-md border bg-muted/20 p-2">
-      <div className="mb-1 flex items-center gap-1">
-        <FilterIcon className="size-3 text-muted-foreground" />
-        <Input
-          value={filter}
-          disabled={disabled}
-          onChange={(event) => setFilter(event.target.value)}
-          placeholder="Find path"
-          className="h-7 text-xs"
-        />
-      </div>
-      <div className="max-h-32 space-y-1 overflow-auto">
-        {visible.map((field) => (
-          <button
-            key={getPath(field)}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPick(getPath(field))}
-            className="block w-full truncate rounded-sm px-1.5 py-1 text-left font-mono text-xs hover:bg-background disabled:opacity-50"
-          >
-            {getLabel(field)}
           </button>
         ))}
       </div>
@@ -342,41 +194,6 @@ function TextareaBlock({
   );
 }
 
-function SelectBlock({
-  label,
-  value,
-  options,
-  onValueChange,
-  placeholder = "Select",
-  disabled,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onValueChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onValueChange(event.target.value)}
-        className="h-8 w-full rounded-md border border-input bg-muted px-2 text-sm outline-none focus-visible:border-brand focus-visible:ring-4 focus-visible:ring-brand/30 disabled:opacity-50"
-      >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
 function templateElementSourceLabel(element: EDITemplateElement) {
   if (element.source === "transform") {
     const base = element.baseSource
@@ -470,16 +287,11 @@ function useEditorTheme() {
 
 export {
   DiagnosticsList,
-  FieldPicker,
   InputBlock,
   PanelHeader,
-  PartnerPathField,
-  PathField,
-  PathInsertField,
   PreviewPane,
   ReadOnlyBanner,
   ScriptPresetPicker,
-  SelectBlock,
   TextareaBlock,
   VersionStatusBadge,
   formatArgumentValue,

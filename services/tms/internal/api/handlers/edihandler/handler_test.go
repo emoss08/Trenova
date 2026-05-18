@@ -215,6 +215,154 @@ func TestEDIHandler_ValidatePartnerSettings(t *testing.T) {
 	assert.Equal(t, "partner_setting_required", resp.Diagnostics[0].Code)
 }
 
+func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
+	t.Parallel()
+
+	templateID := pulid.MustNew("editpl_")
+	profileID := pulid.MustNew("edipdp_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.On(
+		"SelectDocumentTypeOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDIDocumentTypeSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "204" &&
+				req.TransactionSet == edi.TransactionSet204 &&
+				req.Direction == edi.DocumentDirectionOutbound
+		}),
+	).Return(&pagination.ListResult[*edi.EDIDocumentType]{
+		Items: []*edi.EDIDocumentType{{
+			ID:             pulid.MustNew("edidt_"),
+			Code:           "204",
+			Name:           "Motor Carrier Load Tender",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+			DefaultVersion: edi.DefaultX12204Version,
+			Status:         edi.DocumentStatusActive,
+		}},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectTemplateOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDITemplateSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "load" &&
+				req.TransactionSet == edi.TransactionSet204 &&
+				req.Direction == edi.DocumentDirectionOutbound
+		}),
+	).Return(&pagination.ListResult[*edi.EDITemplate]{
+		Items: []*edi.EDITemplate{{
+			ID:             templateID,
+			Name:           "Outbound 204",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+			Status:         edi.TemplateStatusDraft,
+		}},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectPartnerDocumentProfileOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "profile" &&
+				req.TransactionSet == edi.TransactionSet204 &&
+				req.Direction == edi.DocumentDirectionOutbound
+		}),
+	).Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+		Items: []*edi.EDIPartnerDocumentProfile{{
+			ID:             profileID,
+			Name:           "Outbound Profile",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		}},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectSourceContextFieldOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.ListEDISourceContextFieldsRequest) bool {
+			return req.Filter.Query == "bol" &&
+				req.Status == edi.SourceContextFieldStatusActive &&
+				req.TransactionSet == edi.TransactionSet204
+		}),
+	).Return(&pagination.ListResult[*edi.EDISourceContextField]{
+		Items: []*edi.EDISourceContextField{{
+			Path:        "shipment.bol",
+			DisplayName: "BOL",
+			DataType:    edi.SourceContextDataTypeString,
+			Status:      edi.SourceContextFieldStatusActive,
+		}},
+		Total: 1,
+	}, nil).Once()
+	repo.On(
+		"SelectPartnerSettingFieldOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.ListEDIPartnerSettingFieldsRequest) bool {
+			return req.Filter.Query == "receiver" &&
+				req.Status == edi.PartnerSettingStatusActive &&
+				req.TransactionSet == edi.TransactionSet204
+		}),
+	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
+		Items: []*edi.EDIPartnerSettingField{{
+			Path:     "envelope.receiverId",
+			Label:    "Receiver ID",
+			DataType: edi.PartnerSettingDataTypeString,
+			Status:   edi.PartnerSettingStatusActive,
+		}},
+		Total: 1,
+	}, nil).Once()
+
+	handler := setupEDIHandler(t, repo)
+
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/document-types/select-options/",
+		map[string]string{"query": "204", "transactionSet": "204", "direction": "Outbound"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/templates/select-options/",
+		map[string]string{"query": "load", "transactionSet": "204", "direction": "Outbound"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/document-profiles/select-options/",
+		map[string]string{"query": "profile", "transactionSet": "204", "direction": "Outbound"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/source-context/fields/select-options/",
+		map[string]string{"query": "bol", "status": "Active", "transactionSet": "204"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/partner-settings/fields/select-options/",
+		map[string]string{"query": "receiver", "status": "Active", "transactionSet": "204"},
+		nil,
+		http.StatusOK,
+	)
+}
+
 func runEDIRequest(
 	t *testing.T,
 	handler *edihandler.Handler,

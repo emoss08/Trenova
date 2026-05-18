@@ -170,6 +170,15 @@ type ListEDIDocumentTypesRequest struct {
 	Standard       edi.EDIStandard       `json:"standard"`
 	TransactionSet edi.TransactionSet    `json:"transactionSet"`
 	Direction      edi.DocumentDirection `json:"direction"`
+	Status         edi.DocumentStatus    `json:"status"`
+}
+
+type EDIDocumentTypeSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	Standard           edi.EDIStandard                `json:"standard"`
+	TransactionSet     edi.TransactionSet             `json:"transactionSet"`
+	Direction          edi.DocumentDirection          `json:"direction"`
+	Status             edi.DocumentStatus             `json:"status"`
 }
 
 type ListEDISourceContextSchemasRequest struct {
@@ -225,28 +234,42 @@ type GetActiveEDIPartnerSettingSchemaRequest struct {
 }
 
 type ListEDIPartnerSettingFieldsRequest struct {
-	Filter     *pagination.QueryOptions `json:"filter"`
-	SchemaID   pulid.ID                 `json:"schemaId"`
-	Status     edi.PartnerSettingStatus `json:"status"`
-	PathPrefix string                   `json:"pathPrefix"`
-	GroupKey   string                   `json:"groupKey"`
-	Required   *bool                    `json:"required"`
-	Secret     *bool                    `json:"secret"`
+	Filter         *pagination.QueryOptions `json:"filter"`
+	SchemaID       pulid.ID                 `json:"schemaId"`
+	Standard       edi.EDIStandard          `json:"standard"`
+	TransactionSet edi.TransactionSet       `json:"transactionSet"`
+	Direction      edi.DocumentDirection    `json:"direction"`
+	Status         edi.PartnerSettingStatus `json:"status"`
+	PathPrefix     string                   `json:"pathPrefix"`
+	GroupKey       string                   `json:"groupKey"`
+	Required       *bool                    `json:"required"`
+	Secret         *bool                    `json:"secret"`
 }
 
 type ListEDISourceContextFieldsRequest struct {
-	Filter     *pagination.QueryOptions     `json:"filter"`
-	SchemaID   pulid.ID                     `json:"schemaId"`
-	Status     edi.SourceContextFieldStatus `json:"status"`
-	SourceKind edi.SourceContextKind        `json:"sourceKind"`
-	Repeated   *bool                        `json:"repeated"`
-	PathPrefix string                       `json:"pathPrefix"`
+	Filter         *pagination.QueryOptions     `json:"filter"`
+	SchemaID       pulid.ID                     `json:"schemaId"`
+	Standard       edi.EDIStandard              `json:"standard"`
+	TransactionSet edi.TransactionSet           `json:"transactionSet"`
+	Direction      edi.DocumentDirection        `json:"direction"`
+	Status         edi.SourceContextFieldStatus `json:"status"`
+	SourceKind     edi.SourceContextKind        `json:"sourceKind"`
+	Repeated       *bool                        `json:"repeated"`
+	PathPrefix     string                       `json:"pathPrefix"`
 }
 
 type ListEDITemplatesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
+	Status         edi.TemplateStatus       `json:"status"`
+}
+
+type EDITemplateSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	TransactionSet     edi.TransactionSet             `json:"transactionSet"`
+	Direction          edi.DocumentDirection          `json:"direction"`
+	Status             edi.TemplateStatus             `json:"status"`
 }
 
 type GetEDITemplateByIDRequest struct {
@@ -321,6 +344,16 @@ type ListEDIPartnerDocumentProfilesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
+	Status         edi.DocumentStatus       `json:"status"`
+	PartnerID      pulid.ID                 `json:"partnerId"`
+}
+
+type EDIPartnerDocumentProfileSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	TransactionSet     edi.TransactionSet             `json:"transactionSet"`
+	Direction          edi.DocumentDirection          `json:"direction"`
+	Status             edi.DocumentStatus             `json:"status"`
+	PartnerID          pulid.ID                       `json:"partnerId"`
 }
 
 type GetEDIPartnerDocumentProfileByIDRequest struct {
@@ -551,6 +584,10 @@ type EDIDocumentTypeRepository interface {
 		ctx context.Context,
 		req ListEDIDocumentTypesRequest,
 	) ([]*edi.EDIDocumentType, error)
+	SelectDocumentTypeOptions(
+		ctx context.Context,
+		req *EDIDocumentTypeSelectOptionsRequest,
+	) (*pagination.ListResult[*edi.EDIDocumentType], error)
 	ListPartnerSettingSchemas(
 		ctx context.Context,
 		req *ListEDIPartnerSettingSchemasRequest,
@@ -568,6 +605,10 @@ type EDIDocumentTypeRepository interface {
 		req *ListEDIPartnerSettingFieldsRequest,
 	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
 	SearchPartnerSettingFields(
+		ctx context.Context,
+		req *ListEDIPartnerSettingFieldsRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
+	SelectPartnerSettingFieldOptions(
 		ctx context.Context,
 		req *ListEDIPartnerSettingFieldsRequest,
 	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
@@ -591,12 +632,20 @@ type EDIDocumentTypeRepository interface {
 		ctx context.Context,
 		req *ListEDISourceContextFieldsRequest,
 	) (*pagination.ListResult[*edi.EDISourceContextField], error)
+	SelectSourceContextFieldOptions(
+		ctx context.Context,
+		req *ListEDISourceContextFieldsRequest,
+	) (*pagination.ListResult[*edi.EDISourceContextField], error)
 }
 
 type EDITemplateRepository interface {
 	ListTemplates(
 		ctx context.Context,
 		req *ListEDITemplatesRequest,
+	) (*pagination.ListResult[*edi.EDITemplate], error)
+	SelectTemplateOptions(
+		ctx context.Context,
+		req *EDITemplateSelectOptionsRequest,
 	) (*pagination.ListResult[*edi.EDITemplate], error)
 	GetTemplateByID(ctx context.Context, req GetEDITemplateByIDRequest) (*edi.EDITemplate, error)
 	CreateTemplate(
@@ -654,6 +703,10 @@ type EDIPartnerDocumentProfileRepository interface {
 	ListPartnerDocumentProfiles(
 		ctx context.Context,
 		req *ListEDIPartnerDocumentProfilesRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error)
+	SelectPartnerDocumentProfileOptions(
+		ctx context.Context,
+		req *EDIPartnerDocumentProfileSelectOptionsRequest,
 	) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error)
 	GetPartnerDocumentProfileByID(
 		ctx context.Context,

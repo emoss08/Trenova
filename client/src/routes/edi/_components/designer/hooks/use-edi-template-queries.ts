@@ -13,7 +13,6 @@ export function useEDITemplateQueries({
   selectedVersionId,
 }: UseEDITemplateQueriesParams) {
   const templatesQuery = useQuery(queries.edi.templates(templatesQueryString));
-  const documentTypesQuery = useQuery(queries.edi.documentTypes());
   const templateQuery = useQuery({
     ...queries.edi.template(selectedTemplateId),
     enabled: !!selectedTemplateId,
@@ -26,24 +25,11 @@ export function useEDITemplateQueries({
     ...queries.edi.templateVersion(selectedTemplateId, selectedVersionId),
     enabled: !!selectedTemplateId && !!selectedVersionId,
   });
-  const sourceFieldsQuery = useQuery(
-    queries.edi.sourceContextFields(
-      "?limit=100&status=Active&transactionSet=204&direction=Outbound",
-    ),
-  );
-  const partnerFieldsQuery = useQuery(
-    queries.edi.partnerSettingFields(
-      "?limit=100&status=Active&transactionSet=204&direction=Outbound",
-    ),
-  );
 
   return {
     templatesQuery,
-    documentTypesQuery,
     templateQuery,
     versionsQuery,
     versionQuery,
-    sourceFieldsQuery,
-    partnerFieldsQuery,
   };
 }

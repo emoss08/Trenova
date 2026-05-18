@@ -35,6 +35,13 @@ func (s *Service) ListDocumentTypes(
 	return s.documentRepo.ListDocumentTypes(ctx, req)
 }
 
+func (s *Service) SelectDocumentTypeOptions(
+	ctx context.Context,
+	req *repositories.EDIDocumentTypeSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIDocumentType], error) {
+	return s.documentRepo.SelectDocumentTypeOptions(ctx, req)
+}
+
 func (s *Service) ListTemplates(
 	ctx context.Context,
 	req *repositories.ListEDITemplatesRequest,
@@ -42,11 +49,25 @@ func (s *Service) ListTemplates(
 	return s.documentRepo.ListTemplates(ctx, req)
 }
 
+func (s *Service) SelectTemplateOptions(
+	ctx context.Context,
+	req *repositories.EDITemplateSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDITemplate], error) {
+	return s.documentRepo.SelectTemplateOptions(ctx, req)
+}
+
 func (s *Service) ListPartnerDocumentProfiles(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	return s.documentRepo.ListPartnerDocumentProfiles(ctx, req)
+}
+
+func (s *Service) SelectPartnerDocumentProfileOptions(
+	ctx context.Context,
+	req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+	return s.documentRepo.SelectPartnerDocumentProfileOptions(ctx, req)
 }
 
 func (s *Service) GetPartnerDocumentProfile(

@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
 import type {
-  EDIPartnerSettingField,
-  EDISourceContextField,
   EDITemplateElement,
   EDITemplateElementBaseSource,
   EDITemplateTransformStep,
@@ -13,26 +11,24 @@ import {
   transformOperationDefinitions,
 } from "../utils/edi-designer-utils";
 import {
-  InputBlock,
-  PartnerPathField,
-  PathField,
+  ControlledSelectField,
   PathInsertField,
-  SelectBlock,
+  PathReferenceField,
+} from "../components/designer-fields";
+import {
+  InputBlock,
   TextareaBlock,
   formatArgumentValue,
 } from "../components/designer-shared";
+import { transformBaseSourceOptions } from "../utils/edi-designer-options";
 
 export function TransformPipelineEditor({
   element,
   disabled,
-  sourceFields,
-  partnerFields,
   onChange,
 }: {
   element: EDITemplateElement;
   disabled: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onChange: (patch: Partial<EDITemplateElement>) => void;
 }) {
   const baseSource = element.baseSource ?? { source: "fieldPath" as const, fieldPath: "" };
@@ -46,27 +42,18 @@ export function TransformPipelineEditor({
         <ShuffleIcon className="size-4" />
         Transform Pipeline
       </div>
-      <SelectBlock
+      <ControlledSelectField
         label="Base Source"
         value={baseSource.source}
         onValueChange={(source) =>
           updateBase({ source: source as EDITemplateElementBaseSource["source"] })
         }
         disabled={disabled}
-        options={[
-          { value: "constant", label: "Constant" },
-          { value: "fieldPath", label: "Field Path" },
-          { value: "partnerSetting", label: "Partner Setting" },
-          { value: "runtime", label: "Runtime" },
-          { value: "repeat", label: "Repeat" },
-          { value: "mapping", label: "Mapping" },
-        ]}
+        options={transformBaseSourceOptions}
       />
       <BaseSourceValueEditor
         source={baseSource}
         disabled={disabled}
-        sourceFields={sourceFields}
-        partnerFields={partnerFields}
         onChange={updateBase}
       />
       <div className="space-y-2">
@@ -76,8 +63,6 @@ export function TransformPipelineEditor({
             step={step}
             index={index}
             disabled={disabled}
-            sourceFields={sourceFields}
-            partnerFields={partnerFields}
             onMove={(direction) => {
               const next = [...element.transformPipeline];
               const target = index + direction;
@@ -100,7 +85,7 @@ export function TransformPipelineEditor({
           />
         ))}
       </div>
-      <SelectBlock
+      <ControlledSelectField
         label="Add Operation"
         value=""
         onValueChange={(operation) => {
@@ -121,30 +106,26 @@ export function TransformPipelineEditor({
 function BaseSourceValueEditor({
   source,
   disabled,
-  sourceFields,
-  partnerFields,
   onChange,
 }: {
   source: EDITemplateElementBaseSource;
   disabled: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onChange: (patch: Partial<EDITemplateElementBaseSource>) => void;
 }) {
   if (source.source === "partnerSetting") {
     return (
-      <PartnerPathField
+      <PathReferenceField
         label="Base Partner Setting"
         value={source.partnerSettingPath ?? ""}
         onChange={(partnerSettingPath) => onChange({ partnerSettingPath })}
-        fields={partnerFields}
         disabled={disabled}
+        partner
       />
     );
   }
   if (source.source === "fieldPath" || source.source === "repeat" || source.source === "mapping") {
     return (
-      <PathField
+      <PathReferenceField
         label="Base Path"
         value={source.fieldPath ?? source.repeatPath ?? source.mappingSourcePath ?? ""}
         onChange={(value) => {
@@ -152,8 +133,8 @@ function BaseSourceValueEditor({
           else if (source.source === "mapping") onChange({ mappingSourcePath: value });
           else onChange({ fieldPath: value });
         }}
-        fields={sourceFields}
         disabled={disabled}
+        sourceOnlyRepeated={source.source === "repeat"}
       />
     );
   }
@@ -181,8 +162,6 @@ function TransformStepEditor({
   step,
   index,
   disabled,
-  sourceFields,
-  partnerFields,
   onChange,
   onMove,
   onRemove,
@@ -190,8 +169,6 @@ function TransformStepEditor({
   step: EDITemplateTransformStep;
   index: number;
   disabled: boolean;
-  sourceFields: EDISourceContextField[];
-  partnerFields: EDIPartnerSettingField[];
   onChange: (step: EDITemplateTransformStep) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
@@ -269,8 +246,6 @@ function TransformStepEditor({
                 value={value}
                 placeholder={argument.placeholder}
                 disabled={disabled}
-                sourceFields={sourceFields}
-                partnerFields={partnerFields}
                 onChange={onValueChange}
               />
             ) : argument.kind === "json" ? (

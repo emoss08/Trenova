@@ -46,15 +46,16 @@ import {
   isTemplateVersionEditable,
 } from "../utils/edi-designer-utils";
 import VersionAndSegmentRail from "../versions/version-and-segment-rail";
+import { ControlledSelectField } from "./designer-fields";
 import {
   DiagnosticsList,
   PanelHeader,
   ReadOnlyBanner,
-  SelectBlock,
   VersionStatusBadge,
 } from "./designer-shared";
 import { DesignerPanelSkeleton } from "./designer-workspace-skeleton";
 import { ValidationPanel } from "./validation-panel";
+import { templateStatusOptions } from "../utils/edi-designer-options";
 
 const ScriptLibraryEditor = lazy(() => import("../scripts/script-library-editor"));
 const TemplatePreviewPanel = lazy(() => import("./template-preview-panel"));
@@ -131,12 +132,9 @@ export default function TemplateDesignerTab() {
 
   const {
     templatesQuery,
-    documentTypesQuery,
     templateQuery,
     versionsQuery,
     versionQuery,
-    sourceFieldsQuery,
-    partnerFieldsQuery,
   } = useEDITemplateQueries({
     templatesQueryString,
     selectedTemplateId,
@@ -355,18 +353,11 @@ export default function TemplateDesignerTab() {
               className="h-8"
             />
           </div>
-          <SelectBlock
+          <ControlledSelectField
             label="Status"
             value={templateStatus}
             onValueChange={setTemplateStatus}
-            options={[
-              { value: "Draft", label: "Draft" },
-              { value: "Certified", label: "Certified" },
-              { value: "Active", label: "Active" },
-              { value: "Deprecated", label: "Deprecated" },
-              { value: "Superseded", label: "Superseded" },
-              { value: "Archived", label: "Archived" },
-            ]}
+            options={templateStatusOptions}
             placeholder="All statuses"
           />
         </div>
@@ -380,7 +371,6 @@ export default function TemplateDesignerTab() {
           }}
         />
         <CreateTemplateForm
-          documentTypes={documentTypesQuery.data ?? []}
           draft={newTemplate}
           onChange={setNewTemplate}
           onCreate={() =>
@@ -572,8 +562,6 @@ export default function TemplateDesignerTab() {
                 element={selectedElement}
                 diagnostics={diagnostics}
                 isEditable={isEditable}
-                sourceFields={sourceFieldsQuery.data?.results ?? []}
-                partnerFields={partnerFieldsQuery.data?.results ?? []}
                 onSegmentChange={updateSegment}
                 onElementSelect={setSelectedElementPosition}
                 onElementChange={updateElement}

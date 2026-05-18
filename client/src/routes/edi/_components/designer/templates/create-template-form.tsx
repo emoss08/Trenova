@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import type { CreateTemplateDraft, EDIDocumentType } from "@/types/edi";
+import type { CreateTemplateDraft } from "@/types/edi";
 import { PlusIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
-import { InputBlock, SelectBlock } from "../components/designer-shared";
+import { EDIDocumentTypeAutocompleteField } from "../components/designer-fields";
+import { InputBlock } from "../components/designer-shared";
 
 type CreateTemplateFormProps = {
-  documentTypes: EDIDocumentType[];
   draft: CreateTemplateDraft;
   onChange: Dispatch<SetStateAction<CreateTemplateDraft>>;
   onCreate: () => void;
@@ -13,7 +13,6 @@ type CreateTemplateFormProps = {
 };
 
 export default function CreateTemplateForm({
-  documentTypes,
   draft,
   onChange,
   onCreate,
@@ -25,21 +24,22 @@ export default function CreateTemplateForm({
         <PlusIcon className="size-4" />
         New Template
       </div>
-      <SelectBlock
-        label="Document Type"
+      <EDIDocumentTypeAutocompleteField
         value={draft.documentTypeId}
-        onValueChange={(documentTypeId) => {
-          const documentType = documentTypes.find((item) => item.id === documentTypeId);
+        onValueChange={(documentTypeId) =>
           onChange((current) => ({
             ...current,
             documentTypeId,
-            x12Version: documentType?.defaultVersion ?? current.x12Version,
+          }))
+        }
+        onOptionChange={(documentType) => {
+          if (!documentType) return;
+          onChange((current) => ({
+            ...current,
+            documentTypeId: documentType.id,
+            x12Version: documentType.defaultVersion || current.x12Version,
           }));
         }}
-        options={documentTypes.map((documentType) => ({
-          value: documentType.id,
-          label: `${documentType.code} - ${documentType.name}`,
-        }))}
       />
       <InputBlock
         label="Name"

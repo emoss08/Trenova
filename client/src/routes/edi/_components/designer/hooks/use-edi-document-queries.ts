@@ -8,7 +8,6 @@ type UseEDIDocumentArchiveQueriesParams = {
 export function useEDIDocumentArchiveQueries({
   messagesQueryString,
 }: UseEDIDocumentArchiveQueriesParams) {
-  const partnersQuery = useQuery(queries.edi.partnerOptions());
   const profilesQuery = useQuery(
     queries.edi.documentProfiles("?limit=100&transactionSet=204&direction=Outbound"),
   );
@@ -18,7 +17,6 @@ export function useEDIDocumentArchiveQueries({
   const messagesQuery = useQuery(queries.edi.messages(messagesQueryString));
 
   return {
-    partnersQuery,
     profilesQuery,
     templatesQuery,
     messagesQuery,

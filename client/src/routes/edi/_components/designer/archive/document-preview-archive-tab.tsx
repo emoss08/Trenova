@@ -20,7 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { downloadJsonFile, downloadTextFile } from "@/lib/utils";
-import type { EDIMessage, EDIPartner, UpsertEDIPartnerDocumentProfileRequest } from "@/types/edi";
+import type { EDIMessage, UpsertEDIPartnerDocumentProfileRequest } from "@/types/edi";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
@@ -62,15 +62,26 @@ import { diagnosticKey } from "../utils/edi-designer-utils";
 import { AckEditor } from "../profile/ack-editor";
 import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
+  ControlledSelectField,
+  EDIDocumentProfileAutocompleteField,
+  EDIPartnerAutocompleteField,
+  EDITemplateAutocompleteField,
+} from "../components/designer-fields";
+import {
   InputBlock,
   PanelHeader,
   PreviewPane,
-  SelectBlock,
   TextareaBlock,
   parseSettings,
   profileToDraft,
   useEditorTheme,
 } from "../components/designer-shared";
+import {
+  documentDirectionOptions,
+  messageStatusOptions,
+  transactionSetOptions,
+  validationModeOptions,
+} from "../utils/edi-designer-options";
 
 const defaultEnvelope = {
   interchangeSenderId: "TRENOVA",
@@ -145,8 +156,9 @@ export function DocumentPreviewArchiveTab() {
     ],
   );
 
-  const { partnersQuery, profilesQuery, templatesQuery, messagesQuery } =
-    useEDIDocumentArchiveQueries({ messagesQueryString });
+  const { profilesQuery, templatesQuery, messagesQuery } = useEDIDocumentArchiveQueries({
+    messagesQueryString,
+  });
   const selectedProfile = profilesQuery.data?.results.find((profile) => profile.id === profileId);
   const activeTemplate =
     templatesQuery.data?.results.find((template) => template.id === profileDraft.templateId) ??
@@ -195,33 +207,21 @@ export function DocumentPreviewArchiveTab() {
       <aside className="flex min-h-0 flex-col rounded-md border bg-background">
         <PanelHeader icon={<ShieldCheckIcon />} title="204 Profile" />
         <div className="flex min-h-0 flex-col gap-3 overflow-auto p-3">
-          <SelectBlock
-            label="Partner"
+          <EDIPartnerAutocompleteField
             value={partnerId}
             onValueChange={setPartnerId}
-            options={(partnersQuery.data?.results ?? [])
-              .filter((partner) => partner.kind === "External")
-              .map((partner) => ({
-                value: partner.id,
-                label: `${partner.code} - ${partner.name}`,
-              }))}
           />
-          <SelectBlock
-            label="Document Profile"
+          <EDIDocumentProfileAutocompleteField
             value={profileId}
             onValueChange={setProfileId}
-            options={(profilesQuery.data?.results ?? []).map((profile) => ({
-              value: profile.id,
-              label: profile.name,
-            }))}
+            partnerId={partnerId}
           />
           <InputBlock
             label="Profile Name"
             value={profileDraft.name}
             onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
           />
-          <SelectBlock
-            label="Template"
+          <EDITemplateAutocompleteField
             value={activeTemplate?.id ?? ""}
             onValueChange={(templateId) =>
               setProfileDraft((current) => ({
@@ -230,10 +230,6 @@ export function DocumentPreviewArchiveTab() {
                 templateVersionId: undefined,
               }))
             }
-            options={(templatesQuery.data?.results ?? []).map((template) => ({
-              value: template.id,
-              label: template.name,
-            }))}
           />
           <div className="grid grid-cols-2 gap-2">
             <InputBlock
@@ -251,7 +247,7 @@ export function DocumentPreviewArchiveTab() {
               }
             />
           </div>
-          <SelectBlock
+          <ControlledSelectField
             label="Validation"
             value={profileDraft.validationMode}
             onValueChange={(validationMode) =>
@@ -261,11 +257,7 @@ export function DocumentPreviewArchiveTab() {
                   validationMode as UpsertEDIPartnerDocumentProfileRequest["validationMode"],
               }))
             }
-            options={[
-              { value: "Strict", label: "Strict" },
-              { value: "WarnOnly", label: "Warn Only" },
-              { value: "Disabled", label: "Disabled" },
-            ]}
+            options={validationModeOptions}
           />
           <EnvelopeEditor
             envelope={profileDraft.envelope}
@@ -361,7 +353,6 @@ export function DocumentPreviewArchiveTab() {
             <MessageArchive
               messages={messagesQuery.data?.results ?? []}
               isLoading={messagesQuery.isLoading}
-              partners={partnersQuery.data?.results ?? []}
               filters={{
                 partnerId: archivePartnerId,
                 transactionSet: archiveTransactionSet,
@@ -424,14 +415,12 @@ type MessageArchiveFilters = {
 function MessageArchive({
   messages,
   isLoading,
-  partners,
   filters,
   onFiltersChange,
   onOpenMessage,
 }: {
   messages: EDIMessage[];
   isLoading: boolean;
-  partners: EDIPartner[];
   filters: MessageArchiveFilters;
   onFiltersChange: (patch: Partial<MessageArchiveFilters>) => void;
   onOpenMessage: (messageId: string) => void;
@@ -444,50 +433,30 @@ function MessageArchive({
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
       <div className="grid grid-cols-1 gap-2 border-b p-3 md:grid-cols-2 xl:grid-cols-[repeat(4,minmax(140px,1fr))_minmax(220px,1.4fr)]">
-        <SelectBlock
-          label="Partner"
+        <EDIPartnerAutocompleteField
           value={filters.partnerId}
           onValueChange={(partnerId) => onFiltersChange({ partnerId })}
-          options={partners
-            .filter((partner) => partner.kind === "External")
-            .map((partner) => ({
-              value: partner.id,
-              label: `${partner.code} - ${partner.name}`,
-            }))}
           placeholder="All partners"
         />
-        <SelectBlock
+        <ControlledSelectField
           label="Transaction"
           value={filters.transactionSet}
           onValueChange={(transactionSet) => onFiltersChange({ transactionSet })}
-          options={[
-            { value: "204", label: "204" },
-            { value: "210", label: "210" },
-            { value: "214", label: "214" },
-            { value: "990", label: "990" },
-            { value: "997", label: "997" },
-            { value: "999", label: "999" },
-          ]}
+          options={transactionSetOptions}
           placeholder="All sets"
         />
-        <SelectBlock
+        <ControlledSelectField
           label="Direction"
           value={filters.direction}
           onValueChange={(direction) => onFiltersChange({ direction })}
-          options={[
-            { value: "Outbound", label: "Outbound" },
-            { value: "Inbound", label: "Inbound" },
-          ]}
+          options={documentDirectionOptions}
           placeholder="All directions"
         />
-        <SelectBlock
+        <ControlledSelectField
           label="Status"
           value={filters.status}
           onValueChange={(status) => onFiltersChange({ status })}
-          options={[
-            { value: "Generated", label: "Generated" },
-            { value: "Failed", label: "Failed" },
-          ]}
+          options={messageStatusOptions}
           placeholder="All statuses"
         />
         <InputBlock

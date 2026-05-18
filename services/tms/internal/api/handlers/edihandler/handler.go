@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -194,6 +195,17 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 }
 
 func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
+	selectOptions := documentTypes.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectDocumentTypeOptions,
+	)
+	selectOptions.GET(
+		"/:documentTypeID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getDocumentTypeOption,
+	)
 	documentTypes.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -222,6 +234,11 @@ func (h *Handler) registerSourceContextRoutes(sourceContext *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.searchSourceContextFields,
 	)
+	sourceContext.GET(
+		"/fields/select-options/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectSourceContextFieldOptions,
+	)
 }
 
 func (h *Handler) registerPartnerSettingsRoutes(partnerSettings *gin.RouterGroup) {
@@ -245,6 +262,11 @@ func (h *Handler) registerPartnerSettingsRoutes(partnerSettings *gin.RouterGroup
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.searchPartnerSettingFields,
 	)
+	partnerSettings.GET(
+		"/fields/select-options/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectPartnerSettingFieldOptions,
+	)
 	partnerSettings.POST(
 		"/validate/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -253,6 +275,17 @@ func (h *Handler) registerPartnerSettingsRoutes(partnerSettings *gin.RouterGroup
 }
 
 func (h *Handler) registerTemplateRoutes(templates *gin.RouterGroup) {
+	selectOptions := templates.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectTemplateOptions,
+	)
+	selectOptions.GET(
+		"/:templateID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTemplateOption,
+	)
 	templates.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -336,6 +369,17 @@ func (h *Handler) registerTemplateRoutes(templates *gin.RouterGroup) {
 }
 
 func (h *Handler) registerDocumentProfileRoutes(documentProfiles *gin.RouterGroup) {
+	selectOptions := documentProfiles.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectPartnerDocumentProfileOptions,
+	)
+	selectOptions.GET(
+		"/:profileID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getPartnerDocumentProfileOption,
+	)
 	documentProfiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -1046,6 +1090,7 @@ func (h *Handler) listDocumentTypes(c *gin.Context) {
 			Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
 			TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 			Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
+			Status:         edi.DocumentStatus(helpers.QueryString(c, "status", "")),
 		},
 	)
 	if err != nil {
@@ -1053,6 +1098,55 @@ func (h *Handler) listDocumentTypes(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, entities)
+}
+
+func (h *Handler) selectDocumentTypeOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDIDocumentType], error) {
+			return h.service.SelectDocumentTypeOptions(
+				c.Request.Context(),
+				&repositories.EDIDocumentTypeSelectOptionsRequest{
+					SelectQueryRequest: req,
+					Standard:           edi.EDIStandard(helpers.QueryString(c, "standard", "")),
+					TransactionSet: edi.TransactionSet(
+						helpers.QueryString(c, "transactionSet", ""),
+					),
+					Direction: edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
+					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+				},
+			)
+		},
+	)
+}
+
+func (h *Handler) getDocumentTypeOption(c *gin.Context) {
+	documentTypeID, err := pulid.MustParse(c.Param("documentTypeID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entities, err := h.service.ListDocumentTypes(
+		c.Request.Context(),
+		repositories.ListEDIDocumentTypesRequest{},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	for _, entity := range entities {
+		if entity.ID == documentTypeID {
+			c.JSON(http.StatusOK, entity)
+			return
+		}
+	}
+	h.eh.HandleError(c, errortypes.NewNotFoundError("EDI document type not found"))
 }
 
 func (h *Handler) listSourceContextSchemas(c *gin.Context) {
@@ -1147,6 +1241,21 @@ func (h *Handler) searchSourceContextFields(c *gin.Context) {
 	)
 }
 
+func (h *Handler) selectSourceContextFieldOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+	fieldReq := h.sourceContextFieldRequest(c, queryOptionsFromSelect(req))
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDISourceContextField], error) {
+			return h.service.SelectSourceContextFieldOptions(c.Request.Context(), fieldReq)
+		},
+	)
+}
+
 func (h *Handler) sourceContextFieldRequest(
 	c *gin.Context,
 	req *pagination.QueryOptions,
@@ -1156,8 +1265,11 @@ func (h *Handler) sourceContextFieldRequest(
 		Status: edi.SourceContextFieldStatus(
 			helpers.QueryString(c, "status", ""),
 		),
-		SourceKind: edi.SourceContextKind(helpers.QueryString(c, "sourceKind", "")),
-		PathPrefix: helpers.QueryString(c, "pathPrefix", ""),
+		Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
+		TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
+		Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
+		SourceKind:     edi.SourceContextKind(helpers.QueryString(c, "sourceKind", "")),
+		PathPrefix:     helpers.QueryString(c, "pathPrefix", ""),
 	}
 	if _, ok := c.GetQuery("repeated"); ok {
 		repeated := helpers.QueryBool(c, "repeated", false)
@@ -1255,15 +1367,33 @@ func (h *Handler) searchPartnerSettingFields(c *gin.Context) {
 	)
 }
 
+func (h *Handler) selectPartnerSettingFieldOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+	fieldReq := h.partnerSettingFieldRequest(c, queryOptionsFromSelect(req))
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+			return h.service.SelectPartnerSettingFieldOptions(c.Request.Context(), fieldReq)
+		},
+	)
+}
+
 func (h *Handler) partnerSettingFieldRequest(
 	c *gin.Context,
 	req *pagination.QueryOptions,
 ) *repositories.ListEDIPartnerSettingFieldsRequest {
 	fieldReq := &repositories.ListEDIPartnerSettingFieldsRequest{
-		Filter:     req,
-		Status:     edi.PartnerSettingStatus(helpers.QueryString(c, "status", "")),
-		PathPrefix: helpers.QueryString(c, "pathPrefix", ""),
-		GroupKey:   helpers.QueryString(c, "groupKey", ""),
+		Filter:         req,
+		Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
+		TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
+		Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
+		Status:         edi.PartnerSettingStatus(helpers.QueryString(c, "status", "")),
+		PathPrefix:     helpers.QueryString(c, "pathPrefix", ""),
+		GroupKey:       helpers.QueryString(c, "groupKey", ""),
 	}
 	if _, ok := c.GetQuery("required"); ok {
 		required := helpers.QueryBool(c, "required", false)
@@ -1308,9 +1438,40 @@ func (h *Handler) listTemplates(c *gin.Context) {
 				Direction: edi.DocumentDirection(
 					helpers.QueryString(c, "direction", "Outbound"),
 				),
+				Status: edi.TemplateStatus(helpers.QueryString(c, "status", "")),
 			},
 		)
 	})
+}
+
+func (h *Handler) selectTemplateOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDITemplate], error) {
+			return h.service.SelectTemplateOptions(
+				c.Request.Context(),
+				&repositories.EDITemplateSelectOptionsRequest{
+					SelectQueryRequest: req,
+					TransactionSet: edi.TransactionSet(
+						helpers.QueryString(c, "transactionSet", "204"),
+					),
+					Direction: edi.DocumentDirection(
+						helpers.QueryString(c, "direction", "Outbound"),
+					),
+					Status: edi.TemplateStatus(helpers.QueryString(c, "status", "")),
+				},
+			)
+		},
+	)
+}
+
+func (h *Handler) getTemplateOption(c *gin.Context) {
+	h.getTemplate(c)
 }
 
 func (h *Handler) createTemplate(c *gin.Context) {
@@ -1644,6 +1805,14 @@ func tenantInfoFromAuth(authCtx *authctx.AuthContext) pagination.TenantInfo {
 	}
 }
 
+func queryOptionsFromSelect(req *pagination.SelectQueryRequest) *pagination.QueryOptions {
+	return &pagination.QueryOptions{
+		TenantInfo: req.TenantInfo,
+		Pagination: req.Pagination,
+		Query:      req.Query,
+	}
+}
+
 func (h *Handler) listPartnerDocumentProfiles(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
@@ -1663,10 +1832,43 @@ func (h *Handler) listPartnerDocumentProfiles(c *gin.Context) {
 					Direction: edi.DocumentDirection(
 						helpers.QueryString(c, "direction", "Outbound"),
 					),
+					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+					PartnerID: helpers.QueryPulid(c, "partnerId"),
 				},
 			)
 		},
 	)
+}
+
+func (h *Handler) selectPartnerDocumentProfileOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+			return h.service.SelectPartnerDocumentProfileOptions(
+				c.Request.Context(),
+				&repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
+					SelectQueryRequest: req,
+					TransactionSet: edi.TransactionSet(
+						helpers.QueryString(c, "transactionSet", "204"),
+					),
+					Direction: edi.DocumentDirection(
+						helpers.QueryString(c, "direction", "Outbound"),
+					),
+					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
+					PartnerID: helpers.QueryPulid(c, "partnerId"),
+				},
+			)
+		},
+	)
+}
+
+func (h *Handler) getPartnerDocumentProfileOption(c *gin.Context) {
+	h.getPartnerDocumentProfile(c)
 }
 
 func (h *Handler) getPartnerDocumentProfile(c *gin.Context) {

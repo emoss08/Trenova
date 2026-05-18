@@ -1,7 +1,9 @@
 import { Switch } from "@/components/ui/switch";
 import type { UpsertEDIPartnerDocumentProfileRequest } from "@/types/edi";
 import type { Dispatch, SetStateAction } from "react";
-import { InputBlock, SelectBlock } from "../components/designer-shared";
+import { ControlledSelectField } from "../components/designer-fields";
+import { InputBlock } from "../components/designer-shared";
+import { acknowledgmentTypeOptions } from "../utils/edi-designer-options";
 
 export function AckEditor({
   profile,
@@ -25,7 +27,7 @@ export function AckEditor({
         />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <SelectBlock
+        <ControlledSelectField
           label="Type"
           value={profile.acknowledgment.type}
           onValueChange={(type) =>
@@ -34,11 +36,7 @@ export function AckEditor({
               acknowledgment: { ...current.acknowledgment, type },
             }))
           }
-          options={[
-            { value: "None", label: "None" },
-            { value: "997", label: "997" },
-            { value: "999", label: "999" },
-          ]}
+          options={acknowledgmentTypeOptions}
         />
         <InputBlock
           label="SLA Minutes"

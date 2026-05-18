@@ -208,6 +208,11 @@ hardened. They are not the end state.
 - Template and archive server state is routed through React Query hooks, heavy
   workspace sections are lazy-loaded, and shared designer/message/date helpers
   are isolated in tested utility modules.
+- Designer select-like controls now use the shared Trenova field UX: static EDI
+  enums are rendered through controlled `SelectField` adapters, backend-owned
+  values use autocomplete-backed EDI select-options endpoints, and source /
+  partner path browsing keeps manual path editing while inserting through
+  autocomplete popovers.
 
 ## Remaining Stages
 

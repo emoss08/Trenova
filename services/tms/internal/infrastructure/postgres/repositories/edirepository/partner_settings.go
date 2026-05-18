@@ -103,6 +103,13 @@ func (r *repository) SearchPartnerSettingFields(
 	return r.searchPartnerSettingFields(ctx, req)
 }
 
+func (r *repository) SelectPartnerSettingFieldOptions(
+	ctx context.Context,
+	req *repositories.ListEDIPartnerSettingFieldsRequest,
+) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+	return r.searchPartnerSettingFields(ctx, req)
+}
+
 func (r *repository) searchPartnerSettingFields(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerSettingFieldsRequest,
@@ -173,6 +180,15 @@ func filterPartnerSettingFieldsQuery(
 	query = partnerSettingSchemaTenantScope(query, req.Filter.TenantInfo)
 	if req.SchemaID.IsNotNil() {
 		query = query.Where("epsf.schema_id = ?", req.SchemaID)
+	}
+	if req.Standard != "" {
+		query = query.Where("epss.standard = ?", req.Standard)
+	}
+	if req.TransactionSet != "" {
+		query = query.Where("epss.transaction_set = ?", req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where("epss.direction = ?", req.Direction)
 	}
 	if req.Status != "" {
 		query = query.Where("epsf.status = ?", req.Status)

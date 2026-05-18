@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  partnerSettingFieldDisplayText,
+  partnerSettingFieldSearchText,
+  sourceContextFieldDisplayText,
+  sourceContextFieldSearchText,
+  toPartnerPathReference,
+  toSourcePathReference,
+} from "../designer/components/designer-fields";
+import {
   buildConditionString,
   getReadOnlyReason,
   getTransformOperationDefinition,
@@ -74,6 +82,51 @@ describe("insertPathReference", () => {
   it("inserts backend $path references into argument lists", () => {
     expect(insertPathReference("", "shipment.bol")).toBe("$shipment.bol");
     expect(insertPathReference("ABC", "partner.receiver")).toBe("ABC, $partner.receiver");
+  });
+
+  it("builds source and partner field insert paths", () => {
+    expect(toSourcePathReference({ path: "shipment.bol" } as never)).toBe("shipment.bol");
+    expect(toPartnerPathReference({ path: "envelope.receiverId" } as never)).toBe(
+      "partner.envelope.receiverId",
+    );
+    expect(insertPathReference("", toSourcePathReference({ path: "shipment.bol" } as never))).toBe(
+      "$shipment.bol",
+    );
+    expect(
+      insertPathReference(
+        "ABC",
+        toPartnerPathReference({ path: "envelope.receiverId" } as never),
+      ),
+    ).toBe("ABC, $partner.envelope.receiverId");
+  });
+});
+
+describe("field picker display text", () => {
+  it("formats searchable source context field text", () => {
+    const field = {
+      path: "shipment.stops[0].city",
+      displayName: "Stop city",
+      description: "Pickup or delivery city",
+      dataType: "string",
+    } as never;
+
+    expect(sourceContextFieldDisplayText(field)).toBe("shipment.stops[0].city (string)");
+    expect(sourceContextFieldSearchText(field)).toContain("Stop city");
+    expect(sourceContextFieldSearchText(field)).toContain("Pickup or delivery city");
+  });
+
+  it("formats searchable partner setting field text", () => {
+    const field = {
+      path: "envelope.receiverId",
+      label: "Receiver ID",
+      description: "ISA receiver identifier",
+      dataType: "string",
+      groupKey: "envelope",
+    } as never;
+
+    expect(partnerSettingFieldDisplayText(field)).toBe("envelope.receiverId (string)");
+    expect(partnerSettingFieldSearchText(field)).toContain("Receiver ID");
+    expect(partnerSettingFieldSearchText(field)).toContain("envelope");
   });
 });
 

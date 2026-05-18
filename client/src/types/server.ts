@@ -74,6 +74,8 @@ export type BaseEndpoint =
   | "/edi/partners/"
   | "/edi/communication-profiles/"
   | "/edi/document-types/"
+  | "/edi/source-context/fields/"
+  | "/edi/partner-settings/fields/"
   | "/edi/templates/"
   | "/edi/document-profiles/"
   | "/edi/documents/preview/"

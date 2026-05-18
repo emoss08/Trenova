@@ -1440,6 +1440,7 @@ var EDIMessageColumns = struct {
 	Version                  Column // "version" → qualified: "emsg.version"
 	CreatedAt                Column // "created_at" → qualified: "emsg.created_at"
 	UpdatedAt                Column // "updated_at" → qualified: "emsg.updated_at"
+	DiagnosticCount          Column // "diagnostic_count" → qualified: "emsg.diagnostic_count"
 }{
 	ID:                       NewColumn("id", "emsg"),
 	BusinessUnitID:           NewColumn("business_unit_id", "emsg"),
@@ -1468,6 +1469,7 @@ var EDIMessageColumns = struct {
 	Version:                  NewColumn("version", "emsg"),
 	CreatedAt:                NewColumn("created_at", "emsg"),
 	UpdatedAt:                NewColumn("updated_at", "emsg"),
+	DiagnosticCount:          NewColumn("diagnostic_count", "emsg"),
 }
 
 // EDIMessageFieldMap maps JSON API field names to database column names.
@@ -1502,6 +1504,7 @@ var EDIMessageFieldMap = map[string]string{
 	"version":                  "version",
 	"createdAt":                "created_at",
 	"updatedAt":                "updated_at",
+	"diagnosticCount":          "diagnostic_count",
 }
 
 // EDIMessageInsertableColumns lists column names suitable for INSERT statements on the "edi_messages" table.
@@ -1539,13 +1542,21 @@ var EDIMessageInsertableColumns = []string{
 // EDIMessageRelations provides type-safe names for Bun eager-loading.
 // Use these instead of string literals in .Relation() calls to get compile-time safety.
 //
-//	q.Relation(EDIMessageRelations.PartnerDocumentProfile)
-//	// Bun eager-loads the PartnerDocumentProfile association via a separate query
+//	q.Relation(EDIMessageRelations.Partner)
+//	// Bun eager-loads the Partner association via a separate query
 var EDIMessageRelations = struct {
+	Partner                string
+	DocumentType           string
 	PartnerDocumentProfile string
+	Template               string
+	TemplateVersion        string
 	ValidationErrors       string
 }{
+	Partner:                "Partner",
+	DocumentType:           "DocumentType",
 	PartnerDocumentProfile: "PartnerDocumentProfile",
+	Template:               "Template",
+	TemplateVersion:        "TemplateVersion",
 	ValidationErrors:       "ValidationErrors",
 }
 

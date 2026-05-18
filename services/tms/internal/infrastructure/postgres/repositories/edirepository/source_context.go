@@ -100,6 +100,13 @@ func (r *repository) SearchSourceContextFields(
 	return r.searchSourceContextFields(ctx, req)
 }
 
+func (r *repository) SelectSourceContextFieldOptions(
+	ctx context.Context,
+	req *repositories.ListEDISourceContextFieldsRequest,
+) (*pagination.ListResult[*edi.EDISourceContextField], error) {
+	return r.searchSourceContextFields(ctx, req)
+}
+
 func (r *repository) searchSourceContextFields(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextFieldsRequest,
@@ -171,6 +178,15 @@ func filterSourceContextFieldsQuery(
 	if req.SchemaID.IsNotNil() {
 		query = query.Where("escf.schema_id = ?", req.SchemaID)
 	}
+	if req.Standard != "" {
+		query = query.Where("escs.standard = ?", req.Standard)
+	}
+	if req.TransactionSet != "" {
+		query = query.Where("escs.transaction_set = ?", req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where("escs.direction = ?", req.Direction)
+	}
 	if req.Status != "" {
 		query = query.Where("escf.status = ?", req.Status)
 	}
@@ -191,7 +207,8 @@ func filterSourceContextFieldsQuery(
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr("escf.path ILIKE ?", term).
 			WhereOr("escf.display_name ILIKE ?", term).
-			WhereOr("escf.description ILIKE ?", term)
+			WhereOr("escf.description ILIKE ?", term).
+			WhereOr("escf.data_type::text ILIKE ?", term)
 	})
 }
 

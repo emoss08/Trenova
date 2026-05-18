@@ -940,6 +940,74 @@ func (_c *MockEDITemplateRepository_ReplaceTemplateVersionSegments_Call) RunAndR
 	return _c
 }
 
+// SelectTemplateOptions provides a mock function for the type MockEDITemplateRepository
+func (_mock *MockEDITemplateRepository) SelectTemplateOptions(ctx context.Context, req *repositories.EDITemplateSelectOptionsRequest) (*pagination.ListResult[*edi.EDITemplate], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectTemplateOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDITemplate]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDITemplateSelectOptionsRequest) (*pagination.ListResult[*edi.EDITemplate], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDITemplateSelectOptionsRequest) *pagination.ListResult[*edi.EDITemplate]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDITemplate])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDITemplateSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITemplateRepository_SelectTemplateOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectTemplateOptions'
+type MockEDITemplateRepository_SelectTemplateOptions_Call struct {
+	*mock.Call
+}
+
+// SelectTemplateOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDITemplateSelectOptionsRequest
+func (_e *MockEDITemplateRepository_Expecter) SelectTemplateOptions(ctx interface{}, req interface{}) *MockEDITemplateRepository_SelectTemplateOptions_Call {
+	return &MockEDITemplateRepository_SelectTemplateOptions_Call{Call: _e.mock.On("SelectTemplateOptions", ctx, req)}
+}
+
+func (_c *MockEDITemplateRepository_SelectTemplateOptions_Call) Run(run func(ctx context.Context, req *repositories.EDITemplateSelectOptionsRequest)) *MockEDITemplateRepository_SelectTemplateOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDITemplateSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDITemplateSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_SelectTemplateOptions_Call) Return(listResult *pagination.ListResult[*edi.EDITemplate], err error) *MockEDITemplateRepository_SelectTemplateOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDITemplateRepository_SelectTemplateOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDITemplateSelectOptionsRequest) (*pagination.ListResult[*edi.EDITemplate], error)) *MockEDITemplateRepository_SelectTemplateOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateTemplate provides a mock function for the type MockEDITemplateRepository
 func (_mock *MockEDITemplateRepository) UpdateTemplate(ctx context.Context, entity *edi.EDITemplate) (*edi.EDITemplate, error) {
 	ret := _mock.Called(ctx, entity)

@@ -312,6 +312,74 @@ func (_c *MockEDIPartnerDocumentProfileRepository_ListPartnerDocumentProfiles_Ca
 	return _c
 }
 
+// SelectPartnerDocumentProfileOptions provides a mock function for the type MockEDIPartnerDocumentProfileRepository
+func (_mock *MockEDIPartnerDocumentProfileRepository) SelectPartnerDocumentProfileOptions(ctx context.Context, req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectPartnerDocumentProfileOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIPartnerDocumentProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) *pagination.ListResult[*edi.EDIPartnerDocumentProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIPartnerDocumentProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectPartnerDocumentProfileOptions'
+type MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call struct {
+	*mock.Call
+}
+
+// SelectPartnerDocumentProfileOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest
+func (_e *MockEDIPartnerDocumentProfileRepository_Expecter) SelectPartnerDocumentProfileOptions(ctx interface{}, req interface{}) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
+	return &MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call{Call: _e.mock.On("SelectPartnerDocumentProfileOptions", ctx, req)}
+}
+
+func (_c *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call) Run(run func(ctx context.Context, req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest)) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDIPartnerDocumentProfileSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDIPartnerDocumentProfileSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call) Return(listResult *pagination.ListResult[*edi.EDIPartnerDocumentProfile], err error) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error)) *MockEDIPartnerDocumentProfileRepository_SelectPartnerDocumentProfileOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePartnerDocumentProfile provides a mock function for the type MockEDIPartnerDocumentProfileRepository
 func (_mock *MockEDIPartnerDocumentProfileRepository) UpdatePartnerDocumentProfile(ctx context.Context, entity *edi.EDIPartnerDocumentProfile) (*edi.EDIPartnerDocumentProfile, error) {
 	ret := _mock.Called(ctx, entity)

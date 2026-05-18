@@ -43,6 +43,13 @@ func (s *Service) SearchPartnerSettingFields(
 	return s.documentRepo.SearchPartnerSettingFields(ctx, req)
 }
 
+func (s *Service) SelectPartnerSettingFieldOptions(
+	ctx context.Context,
+	req *repositories.ListEDIPartnerSettingFieldsRequest,
+) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
+	return s.documentRepo.SelectPartnerSettingFieldOptions(ctx, req)
+}
+
 func (s *Service) GetSourceContextSchema(
 	ctx context.Context,
 	req repositories.GetEDISourceContextSchemaRequest,
@@ -62,4 +69,11 @@ func (s *Service) SearchSourceContextFields(
 	req *repositories.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
 	return s.documentRepo.SearchSourceContextFields(ctx, req)
+}
+
+func (s *Service) SelectSourceContextFieldOptions(
+	ctx context.Context,
+	req *repositories.ListEDISourceContextFieldsRequest,
+) (*pagination.ListResult[*edi.EDISourceContextField], error) {
+	return s.documentRepo.SelectSourceContextFieldOptions(ctx, req)
 }
