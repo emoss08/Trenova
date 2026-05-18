@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildArchiveMessagesQueryString,
   buildMessageJsonFilename,
   buildX12Filename,
   groupDiagnostics,
   parseX12Segments,
 } from "../designer/utils/edi-message-utils";
-import { dateInputToUnix } from "../designer/utils/edi-date-utils";
 
 describe("message archive helpers", () => {
   it("splits raw X12 into ordered segments", () => {
@@ -80,14 +80,40 @@ describe("message archive helpers", () => {
     expect(buildMessageJsonFilename({ id: "edimsg_1" })).toBe("edi-message-edimsg_1.json");
   });
 
-  it("converts archive date query input to unix day bounds", () => {
-    expect(dateInputToUnix("", false)).toBe(0);
-    expect(dateInputToUnix("not-a-date", false)).toBe(0);
-    expect(dateInputToUnix("2026-05-18", false)).toBe(
-      Math.floor(new Date("2026-05-18T00:00:00").getTime() / 1000),
+  it("builds archive query strings with unix day bounds", () => {
+    const query = buildArchiveMessagesQueryString({
+      partnerId: "partner_1",
+      transactionSet: "204",
+      direction: "Outbound",
+      status: "Generated",
+      generatedFrom: "2026-05-18",
+      generatedTo: "2026-05-19",
+      query: "  000042  ",
+    });
+    const params = new URLSearchParams(query.slice(1));
+
+    expect(params.get("limit")).toBe("50");
+    expect(params.get("partnerId")).toBe("partner_1");
+    expect(params.get("transactionSet")).toBe("204");
+    expect(params.get("direction")).toBe("Outbound");
+    expect(params.get("status")).toBe("Generated");
+    expect(params.get("query")).toBe("000042");
+    expect(params.get("generatedFrom")).toBe(
+      String(Math.floor(new Date("2026-05-18T00:00:00").getTime() / 1000)),
     );
-    expect(dateInputToUnix("2026-05-18", true)).toBe(
-      Math.floor(new Date("2026-05-18T23:59:59").getTime() / 1000),
+    expect(params.get("generatedTo")).toBe(
+      String(Math.floor(new Date("2026-05-19T23:59:59").getTime() / 1000)),
     );
+  });
+
+  it("omits invalid archive date filters", () => {
+    const query = buildArchiveMessagesQueryString({
+      generatedFrom: "",
+      generatedTo: "not-a-date",
+    });
+    const params = new URLSearchParams(query.slice(1));
+
+    expect(params.has("generatedFrom")).toBe(false);
+    expect(params.has("generatedTo")).toBe(false);
   });
 });

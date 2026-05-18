@@ -1,7 +1,5 @@
-import type {
-  FormulaTemplate,
-  FormulaTemplateVersion,
-} from "@/types/formula-template";
+import type { FormulaTemplate, FormulaTemplateVersion } from "@/types/formula-template";
+import { downloadJsonFile } from "./utils";
 
 export type FormulaTemplateExport = {
   exportVersion: "1.0";
@@ -48,17 +46,7 @@ export function slugify(name: string): string {
 }
 
 export function downloadJson(data: unknown, filename: string): void {
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadJsonFile(filename, data);
 }
 
 export function buildTemplateExport(
@@ -102,9 +90,7 @@ export function buildTemplateExport(
   return exportData;
 }
 
-export function buildBulkExport(
-  templates: FormulaTemplate[],
-): BulkFormulaTemplateExport {
+export function buildBulkExport(templates: FormulaTemplate[]): BulkFormulaTemplateExport {
   return {
     exportVersion: "1.0",
     exportedAt: new Date().toISOString(),
@@ -123,14 +109,9 @@ export function buildBulkExport(
   };
 }
 
-export function getExportFilename(
-  template: FormulaTemplate,
-  includeVersions: boolean,
-): string {
+export function getExportFilename(template: FormulaTemplate, includeVersions: boolean): string {
   const slug = slugify(template.name);
-  return includeVersions
-    ? `${slug}.formula-template-full.json`
-    : `${slug}.formula-template.json`;
+  return includeVersions ? `${slug}.formula-template-full.json` : `${slug}.formula-template.json`;
 }
 
 export function getBulkExportFilename(): string {

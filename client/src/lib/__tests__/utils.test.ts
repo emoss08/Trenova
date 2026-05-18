@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  downloadJsonFile,
+  downloadTextFile,
   toTitleCase,
   pluralize,
   upperFirst,
@@ -8,6 +10,20 @@ import {
   formatLocation,
   initials,
 } from "../utils";
+import { afterEach, vi } from "vitest";
+
+const originalCreateObjectUrlDescriptor = Object.getOwnPropertyDescriptor(URL, "createObjectURL");
+const originalRevokeObjectUrlDescriptor = Object.getOwnPropertyDescriptor(URL, "revokeObjectURL");
+
+afterEach(() => {
+  if (originalCreateObjectUrlDescriptor) {
+    Object.defineProperty(URL, "createObjectURL", originalCreateObjectUrlDescriptor);
+  }
+  if (originalRevokeObjectUrlDescriptor) {
+    Object.defineProperty(URL, "revokeObjectURL", originalRevokeObjectUrlDescriptor);
+  }
+  vi.restoreAllMocks();
+});
 
 describe("toTitleCase", () => {
   it("splits camelCase", () => {
@@ -43,9 +59,7 @@ describe("toTitleCase", () => {
   });
 
   it("capitalizes last word even if lowercase", () => {
-    expect(toTitleCase("something_to_think_of")).toBe(
-      "Something to Think Of",
-    );
+    expect(toTitleCase("something_to_think_of")).toBe("Something to Think Of");
   });
 
   it("handles 'At' after created", () => {
@@ -247,5 +261,47 @@ describe("initials", () => {
 
   it("uppercases lowercase input", () => {
     expect(initials("alice", "bob")).toBe("AB");
+  });
+});
+
+describe("download helpers", () => {
+  it("downloads text files and revokes the object URL", () => {
+    const click = vi.fn();
+    const appendChild = vi.spyOn(document.body, "appendChild");
+    const removeChild = vi.spyOn(document.body, "removeChild");
+    const createObjectURL = vi.fn(() => "blob:test");
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    vi.spyOn(document, "createElement").mockImplementation((tagName) => {
+      const element = document.createElementNS("http://www.w3.org/1999/xhtml", tagName);
+      if (tagName === "a") {
+        Object.defineProperty(element, "click", { value: click });
+      }
+      return element as HTMLElement;
+    });
+
+    downloadTextFile("test.txt", "contents");
+
+    expect(createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
+    expect(appendChild).toHaveBeenCalledWith(expect.objectContaining({ download: "test.txt" }));
+    expect(click).toHaveBeenCalledOnce();
+    expect(removeChild).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:test");
+  });
+
+  it("serializes JSON downloads with application/json", async () => {
+    let blob: Blob | undefined;
+    URL.createObjectURL = vi.fn((value) => {
+      blob = value as Blob;
+      return "blob:json";
+    });
+    URL.revokeObjectURL = vi.fn();
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    downloadJsonFile("data.json", { ok: true });
+
+    expect(blob?.type).toBe("application/json");
+    await expect(blob?.text()).resolves.toBe(JSON.stringify({ ok: true }, null, 2));
   });
 });

@@ -1,3 +1,4 @@
+import { generateDateOnly, getEndOfDay, getStartOfDay } from "@/lib/date";
 import type { EDIDiagnostic, EDIMessage, EDIX12EnvelopeSettings } from "@/types/edi";
 
 export type ParsedX12Segment = {
@@ -15,6 +16,17 @@ export type DiagnosticGroup = {
   code: string;
   path: string;
   diagnostics: EDIDiagnostic[];
+};
+
+export type ArchiveMessagesQueryFilters = {
+  partnerId?: string;
+  transactionSet?: string;
+  direction?: string;
+  status?: string;
+  generatedFrom?: string;
+  generatedTo?: string;
+  query?: string;
+  limit?: number;
 };
 
 export function parseX12Segments(
@@ -79,20 +91,20 @@ export function buildMessageJsonFilename(message: Pick<EDIMessage, "id">) {
   return `edi-message-${message.id}.json`;
 }
 
-export function downloadText(filename: string, contents: string, type = "text/plain") {
-  const blob = new Blob([contents], { type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
+export function buildArchiveMessagesQueryString(filters: ArchiveMessagesQueryFilters) {
+  const params = new URLSearchParams({ limit: String(filters.limit ?? 50) });
+  if (filters.transactionSet) params.set("transactionSet", filters.transactionSet);
+  if (filters.direction) params.set("direction", filters.direction);
+  if (filters.partnerId) params.set("partnerId", filters.partnerId);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.query?.trim()) params.set("query", filters.query.trim());
 
-export function downloadJson(filename: string, data: unknown) {
-  downloadText(filename, JSON.stringify(data, null, 2), "application/json");
+  const generatedFrom = parseDateBoundary(filters.generatedFrom, "start");
+  const generatedTo = parseDateBoundary(filters.generatedTo, "end");
+  if (generatedFrom) params.set("generatedFrom", String(generatedFrom));
+  if (generatedTo) params.set("generatedTo", String(generatedTo));
+
+  return `?${params.toString()}`;
 }
 
 function severityRank(severity: EDIDiagnostic["severity"]) {
@@ -104,4 +116,11 @@ function severityRank(severity: EDIDiagnostic["severity"]) {
     case "Info":
       return 2;
   }
+}
+
+function parseDateBoundary(value: string | undefined, boundary: "start" | "end") {
+  if (!value?.trim()) return 0;
+  const date = generateDateOnly(value);
+  if (!date) return 0;
+  return boundary === "start" ? getStartOfDay(date) : getEndOfDay(date);
 }

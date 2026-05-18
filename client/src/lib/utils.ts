@@ -144,6 +144,22 @@ export function isAbsoluteUrl(value?: string | null) {
   return Boolean(value) && (value!.startsWith("http://") || value!.startsWith("https://"));
 }
 
+export function downloadTextFile(filename: string, contents: string, type = "text/plain"): void {
+  const blob = new Blob([contents], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function downloadJsonFile(filename: string, data: unknown): void {
+  downloadTextFile(filename, JSON.stringify(data, null, 2), "application/json");
+}
+
 export function findDuplicateIds<T>(
   items: T[],
   getId: (item: T) => string | undefined,
