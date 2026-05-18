@@ -1,17 +1,12 @@
-import { LoadingSkeletonState } from "@/components/loading-skeleton";
-import { Button } from "@/components/ui/button";
 import { useMapId } from "@/hooks/use-map-id";
-import { DEFAULT_ZOOM, GOOGLE_MAPS_ERROR_MESSAGE, US_CENTER } from "@/lib/constants";
+import { DEFAULT_ZOOM, US_CENTER } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { formatElapsedTime } from "@/lib/time-utils";
 import { cn } from "@/lib/utils";
 import { useRealtimeStore } from "@/stores/realtime-store";
-import { QueryErrorResetBoundary, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
-import { MapPinOffIcon, SettingsIcon, TriangleAlertIcon } from "lucide-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
-import { useNavigate } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 import { GeofenceOverlay } from "./geofence-overlay";
 import { GeofencePopover } from "./geofence-popover";
 import { LocationAddressMarker } from "./location-address-marker";
@@ -234,70 +229,6 @@ function LiveMapSyncOverlay({
       <span className="rounded-md border border-border bg-card/80 px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
         synced {formatElapsedTime(syncedAt, now)}
       </span>
-    </div>
-  );
-}
-
-export function ShipmentMapPanelBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <QueryErrorResetBoundary>
-      {({ reset }) => (
-        <ErrorBoundary
-          fallbackRender={({ error }) => <MapErrorFallback error={error as Error} />}
-          onReset={reset}
-        >
-          <Suspense
-            fallback={
-              <LoadingSkeletonState description="Loading map component..." className="h-full" />
-            }
-          >
-            {children}
-          </Suspense>
-        </ErrorBoundary>
-      )}
-    </QueryErrorResetBoundary>
-  );
-}
-
-function MapErrorFallback({ error }: { error: Error }) {
-  const isConfigError = error.message === GOOGLE_MAPS_ERROR_MESSAGE;
-  const navigate = useNavigate();
-
-  return (
-    <div className="relative h-[clamp(420px,calc(100vh-380px),540px)] w-full overflow-hidden rounded-lg border border-border">
-      <img
-        src="/integrations/empty-state/map-preview.webp"
-        alt="Empty state map preview"
-        className="absolute inset-0 size-full object-cover"
-      />
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm" />
-      <div className="relative flex size-full items-center justify-center">
-        <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <div className="flex size-10 items-center justify-center rounded-lg border border-border bg-background">
-            {isConfigError ? (
-              <MapPinOffIcon className="size-5 text-muted-foreground" />
-            ) : (
-              <TriangleAlertIcon className="size-5 text-muted-foreground" />
-            )}
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">
-              {isConfigError ? "Map integration not configured" : "Unable to load map"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {isConfigError
-                ? "A Google Maps API key is required to display the fleet map. Configure the integration to enable this feature."
-                : "An error occurred while loading the map component. Please try refreshing the page."}
-            </p>
-          </div>
-          {isConfigError && (
-            <Button variant="outline" size="sm" onClick={() => navigate("/admin/integrations")}>
-              <SettingsIcon className="size-3.5" />
-              Configure Integration
-            </Button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
