@@ -160,6 +160,31 @@ func ValidateConditionSyntax(condition string) *Diagnostic {
 	return nil
 }
 
+func DeclarativeConditionPaths(condition string) []string {
+	condition = strings.TrimSpace(condition)
+	if condition == "" || strings.HasPrefix(condition, starlarkConditionPrefix) {
+		return nil
+	}
+
+	_, left, _, hasComparison, err := splitConditionComparison(condition)
+	if err != nil {
+		return nil
+	}
+	if hasComparison {
+		return []string{left}
+	}
+	if strings.Contains(condition, "&&") || strings.Contains(condition, "||") ||
+		strings.ContainsAny(condition, "=<>") {
+		return nil
+	}
+
+	path := strings.TrimSpace(strings.TrimPrefix(condition, "!"))
+	if path == "" {
+		return nil
+	}
+	return []string{path}
+}
+
 func splitConditionComparison(condition string) (string, string, string, bool, error) {
 	eqIndex := strings.Index(condition, "==")
 	neIndex := strings.Index(condition, "!=")

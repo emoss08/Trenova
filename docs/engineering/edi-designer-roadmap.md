@@ -259,16 +259,19 @@ operational support are present where relevant.
 
 ### Stage 8: Source Context Browser
 
-- Provide a browsable source context schema for each transaction set and
-  direction.
-- Show field paths, data types, nullability, examples, domain descriptions,
-  repeat boundaries, and source ownership.
-- Support direct field insertion into elements, transforms, conditions, and
+- [x] Add backend source context schema models and seeded outbound X12 204
+  metadata for shipment, repeat, partner, runtime, and future mapping paths.
+- [x] Provide backend list/search APIs for source context schemas and fields.
+- [x] Validate supported template source paths against active source context
+  metadata, including repeat context mismatches and future/deprecated fields.
+- [ ] Show field paths, data types, nullability, examples, domain descriptions,
+  repeat boundaries, and source ownership in the frontend browser.
+- [ ] Support direct field insertion into elements, transforms, conditions, and
   Starlark editor snippets.
-- Include partner settings, runtime values, mappings, repeat aliases, and
-  envelope values in the browser.
-- Add schema versioning so template versions know exactly which context shape
-  they were certified against.
+- [ ] Include source context preview, explainability, repeat aliases, envelope
+  values, and resolved mapping context in the browser.
+- [ ] Add schema versioning pins so template versions know exactly which context
+  shape they were certified against.
 
 ### Stage 9: Partner Settings Schema
 

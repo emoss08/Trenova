@@ -21,7 +21,7 @@ func TestValidateTemplateVersionDefinition_ValidBase204(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
 
-	diagnostics := validateTemplateVersionDefinition(version)
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(version, nil, false)
 
 	require.Empty(t, diagnostics)
 }
@@ -46,7 +46,7 @@ func TestValidateTemplateVersionDefinition_CatchesDraftDefinitionErrors(t *testi
 	version.Segments[8].Elements[1].StarlarkScript = "def other(ctx):\n    return 'x'"
 	version.Segments[8].Elements[1].StarlarkFunction = "missing"
 
-	diagnostics := validateTemplateVersionDefinition(version)
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(version, nil, false)
 
 	requireDiagnosticCode(t, diagnostics, "required_control_segment_missing")
 	requireDiagnosticCode(t, diagnostics, "duplicate_sequence")
@@ -54,6 +54,133 @@ func TestValidateTemplateVersionDefinition_CatchesDraftDefinitionErrors(t *testi
 	requireDiagnosticCode(t, diagnostics, "transform_base_source_required")
 	requireDiagnosticCode(t, diagnostics, "unsupported_transform_operation")
 	requireDiagnosticCode(t, diagnostics, "script_function_not_found")
+}
+
+func TestValidateTemplateVersionDefinition_SourceContextPaths(t *testing.T) {
+	tenantInfo := testTenantInfo()
+
+	tests := []struct {
+		name       string
+		mutate     func(*edi.EDITemplateVersion)
+		wantCode   string
+		wantAbsent string
+	}{
+		{
+			name: "valid shipment bol",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "L11").Elements[0].FieldPath = "bol"
+			},
+			wantAbsent: sourceContextPathUnknownCode,
+		},
+		{
+			name: "invalid shipment path",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "L11").Elements[0].FieldPath = "notReal"
+			},
+			wantCode: sourceContextPathUnknownCode,
+		},
+		{
+			name: "valid repeat path on stop context",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "N1").Elements[1].RepeatPath = "locationName"
+			},
+			wantAbsent: sourceContextRepeatMismatchCode,
+		},
+		{
+			name: "repeat mismatch on commodity context",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "L5").Elements[1].RepeatPath = "locationName"
+			},
+			wantCode: sourceContextRepeatMismatchCode,
+		},
+		{
+			name: "invalid runtime key",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "ST").Elements[1].RuntimeKey = "notReal"
+			},
+			wantCode: sourceContextPathUnknownCode,
+		},
+		{
+			name: "invalid transform reference",
+			mutate: func(version *edi.EDITemplateVersion) {
+				segment := findTemplateSegment(t, version, "L11")
+				segment.Elements[0].Source = edi.TemplateElementSourceTransform
+				segment.Elements[0].BaseSource = &edi.TemplateElementBaseSource{
+					Source:    edi.TemplateElementSourceFieldPath,
+					FieldPath: "bol",
+				}
+				segment.Elements[0].TransformPipeline = []edi.TemplateTransformStep{
+					{
+						Operation: "concat",
+						Arguments: map[string]any{
+							"values": []any{"$shipment.notReal"},
+						},
+					},
+				}
+			},
+			wantCode: sourceContextPathUnknownCode,
+		},
+		{
+			name: "invalid declarative condition path",
+			mutate: func(version *edi.EDITemplateVersion) {
+				findTemplateSegment(t, version, "L11").Condition = "shipment.notReal"
+			},
+			wantCode: sourceContextPathUnknownCode,
+		},
+		{
+			name: "unknown partner path warns",
+			mutate: func(version *edi.EDITemplateVersion) {
+				segment := findTemplateSegment(t, version, "B2")
+				segment.Elements[0].PartnerSettingPath = "customThing"
+			},
+			wantCode: sourceContextPathUnknownCode,
+		},
+		{
+			name: "future mapping path errors",
+			mutate: func(version *edi.EDITemplateVersion) {
+				segment := findTemplateSegment(t, version, "B2")
+				segment.Elements[0].Source = edi.TemplateElementSourceMapping
+				segment.Elements[0].MappingSourcePath = "customer"
+			},
+			wantCode: sourceContextPathFutureCode,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			version := validTemplateVersion(tenantInfo)
+			tt.mutate(version)
+
+			diagnostics := validateTemplateVersionDefinitionWithSourceContext(
+				version,
+				testSourceContextIndex(),
+				false,
+			)
+
+			if tt.wantCode != "" {
+				requireDiagnosticCode(t, diagnostics, tt.wantCode)
+			}
+			if tt.wantAbsent != "" {
+				requireNoDiagnosticCode(t, diagnostics, tt.wantAbsent)
+			}
+			if tt.name == "unknown partner path warns" {
+				requireDiagnosticSeverity(
+					t,
+					diagnostics,
+					sourceContextPathUnknownCode,
+					edi.ValidationSeverityWarning,
+				)
+			}
+			if tt.name == "future mapping path errors" {
+				requireDiagnosticSeverity(
+					t,
+					diagnostics,
+					sourceContextPathFutureCode,
+					edi.ValidationSeverityError,
+				)
+			}
+		})
+	}
 }
 
 func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
@@ -322,7 +449,7 @@ func TestValidateTemplateVersionDefinition_ValidatesScriptLibraries(t *testing.T
 		},
 	}
 
-	diagnostics := validateTemplateVersionDefinition(version)
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(version, nil, false)
 
 	requireDiagnosticCode(t, diagnostics, "script_library_duplicate_name")
 	requireDiagnosticCode(t, diagnostics, "script_library_duplicate_function")
@@ -342,7 +469,7 @@ func TestValidateTemplateVersionDefinition_RejectsReservedLibraryFunction(t *tes
 		},
 	}
 
-	diagnostics := validateTemplateVersionDefinition(version)
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(version, nil, false)
 
 	requireDiagnosticCode(t, diagnostics, "script_library_reserved_function")
 }
@@ -354,7 +481,7 @@ func TestValidateTemplateVersionDefinition_ValidatesLibraryReferences(t *testing
 	version.Segments[8].Elements[1].Source = edi.TemplateElementSourceStarlark
 	version.Segments[8].Elements[1].StarlarkFunction = "missing_element"
 
-	diagnostics := validateTemplateVersionDefinition(version)
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(version, nil, false)
 
 	requireDiagnosticCode(t, diagnostics, "script_function_not_found")
 }
@@ -700,6 +827,68 @@ func validTemplateVersion(tenantInfo pagination.TenantInfo) *edi.EDITemplateVers
 	}
 }
 
+func testSourceContextIndex() *sourceContextIndex {
+	fields := []*edi.EDISourceContextField{
+		sourceContextField("shipment.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.weight", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.pieces", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.totalChargeAmount", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.ratingDetail.paymentMethod", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.ratingDetail.note", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationName", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationAddressLine1", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationAddressLine2", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationCity", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationStateCode", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.locationPostalCode", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.sequence", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.sequence", "commodities", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.type", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.scheduledWindowStart", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.weight", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.pieces", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("repeat.commodityDescription", "commodities", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
+		sourceContextField("partner.carrier.scac", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
+		sourceContextField("partner.contact.name", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
+		sourceContextField("partner.contact.phone", "", edi.SourceContextKindPartner, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeSenderId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeReceiverId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeDate", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.interchangeTime", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.repetitionSeparator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.componentSeparator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.usageIndicator", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.applicationSenderCode", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.applicationReceiverCode", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.groupDate", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.groupTime", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.groupControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.transactionControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.functionalGroupId", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.x12Version", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.isaControlNumber", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("runtime.transactionSegmentCount", "", edi.SourceContextKindRuntime, edi.SourceContextFieldStatusActive),
+		sourceContextField("mapping.customer", "", edi.SourceContextKindMapping, edi.SourceContextFieldStatusFuture),
+	}
+	return newSourceContextIndex(fields)
+}
+
+func sourceContextField(
+	path string,
+	repeatPath string,
+	kind edi.SourceContextKind,
+	status edi.SourceContextFieldStatus,
+) *edi.EDISourceContextField {
+	return &edi.EDISourceContextField{
+		Path:       path,
+		SourceKind: kind,
+		Repeated:   repeatPath != "",
+		RepeatPath: repeatPath,
+		Status:     status,
+	}
+}
+
 func testTenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
@@ -718,6 +907,21 @@ func testActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
 	}
 }
 
+func findTemplateSegment(
+	t *testing.T,
+	version *edi.EDITemplateVersion,
+	segmentID string,
+) *edi.EDITemplateSegment {
+	t.Helper()
+	for _, segment := range version.Segments {
+		if segment.SegmentID == segmentID {
+			return segment
+		}
+	}
+	require.Failf(t, "missing segment", "segment %s not found", segmentID)
+	return nil
+}
+
 func requireDiagnosticCode(
 	t *testing.T,
 	diagnostics []edix12.Diagnostic,
@@ -726,6 +930,33 @@ func requireDiagnosticCode(
 	t.Helper()
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Code == code {
+			return
+		}
+	}
+	require.Failf(t, "missing diagnostic code", "code %s not found in %#v", code, diagnostics)
+}
+
+func requireNoDiagnosticCode(
+	t *testing.T,
+	diagnostics []edix12.Diagnostic,
+	code string,
+) {
+	t.Helper()
+	for _, diagnostic := range diagnostics {
+		require.NotEqual(t, code, diagnostic.Code, "unexpected diagnostic: %#v", diagnostic)
+	}
+}
+
+func requireDiagnosticSeverity(
+	t *testing.T,
+	diagnostics []edix12.Diagnostic,
+	code string,
+	severity edi.ValidationSeverity,
+) {
+	t.Helper()
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == code {
+			require.Equal(t, severity, diagnostic.Severity)
 			return
 		}
 	}

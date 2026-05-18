@@ -167,3 +167,42 @@ const (
 	AcknowledgmentType997  = AcknowledgmentType("997")
 	AcknowledgmentType999  = AcknowledgmentType("999")
 )
+
+type SourceContextDataType string
+
+const (
+	SourceContextDataTypeString    = SourceContextDataType("string")
+	SourceContextDataTypeNumber    = SourceContextDataType("number")
+	SourceContextDataTypeInteger   = SourceContextDataType("integer")
+	SourceContextDataTypeBoolean   = SourceContextDataType("boolean")
+	SourceContextDataTypeTimestamp = SourceContextDataType("timestamp")
+	SourceContextDataTypeDate      = SourceContextDataType("date")
+	SourceContextDataTypeDecimal   = SourceContextDataType("decimal")
+	SourceContextDataTypeObject    = SourceContextDataType("object")
+	SourceContextDataTypeArray     = SourceContextDataType("array")
+	SourceContextDataTypeUnknown   = SourceContextDataType("unknown")
+)
+
+type SourceContextKind string
+
+const (
+	SourceContextKindShipment     = SourceContextKind("shipment")
+	SourceContextKindRepeat       = SourceContextKind("repeat")
+	SourceContextKindPartner      = SourceContextKind("partner")
+	SourceContextKindRuntime      = SourceContextKind("runtime")
+	SourceContextKindMapping      = SourceContextKind("mapping")
+	SourceContextKindOrganization = SourceContextKind("organization")
+	SourceContextKindCustomer     = SourceContextKind("customer")
+	SourceContextKindLocation     = SourceContextKind("location")
+	SourceContextKindCommodity    = SourceContextKind("commodity")
+	SourceContextKindCharge       = SourceContextKind("charge")
+	SourceContextKindEnvelope     = SourceContextKind("envelope")
+)
+
+type SourceContextFieldStatus string
+
+const (
+	SourceContextFieldStatusActive     = SourceContextFieldStatus("Active")
+	SourceContextFieldStatusDeprecated = SourceContextFieldStatus("Deprecated")
+	SourceContextFieldStatusFuture     = SourceContextFieldStatus("Future")
+)

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edistarlark"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -383,7 +384,15 @@ func (s *Service) ValidateTemplateVersion(
 	if err != nil {
 		return nil, err
 	}
-	return validateTemplateVersionDefinition(version), nil
+	sourceContext, schemaMissing, err := s.templateSourceContextIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	return validateTemplateVersionDefinitionWithSourceContext(
+		version,
+		sourceContext,
+		schemaMissing,
+	), nil
 }
 
 func (s *Service) CertifyTemplateVersion(
@@ -395,7 +404,15 @@ func (s *Service) CertifyTemplateVersion(
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := validateTemplateVersionDefinition(version)
+	sourceContext, schemaMissing, err := s.templateSourceContextIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(
+		version,
+		sourceContext,
+		schemaMissing,
+	)
 	if hasTemplateValidationErrors(diagnostics) {
 		return nil, diagnosticsToValidationError(diagnostics)
 	}
@@ -535,7 +552,15 @@ func (s *Service) activateTemplateVersion(
 			"Archived template versions cannot be activated",
 		)
 	}
-	diagnostics := validateTemplateVersionDefinition(version)
+	sourceContext, schemaMissing, err := s.templateSourceContextIndex(ctx, version, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(
+		version,
+		sourceContext,
+		schemaMissing,
+	)
 	if hasTemplateValidationErrors(diagnostics) {
 		return nil, diagnosticsToValidationError(diagnostics)
 	}
@@ -616,6 +641,54 @@ func (s *Service) editableTemplateVersion(
 		)
 	}
 	return version, nil
+}
+
+func (s *Service) templateSourceContextIndex(
+	ctx context.Context,
+	version *edi.EDITemplateVersion,
+	tenantInfo pagination.TenantInfo,
+) (*sourceContextIndex, bool, error) {
+	if version == nil {
+		return nil, false, nil
+	}
+	if version.Template == nil {
+		return nil, false, nil
+	}
+
+	schema, err := s.documentRepo.GetActiveSourceContextSchema(
+		ctx,
+		repositories.GetActiveEDISourceContextSchemaRequest{
+			TenantInfo:     tenantInfo,
+			Standard:       version.Template.Standard,
+			TransactionSet: version.Template.TransactionSet,
+			Direction:      version.Template.Direction,
+			X12Version:     stringutils.FirstNonEmpty(version.X12Version, edi.DefaultX12204Version),
+			ContextKey:     "loadTender",
+		},
+	)
+	if err != nil {
+		if dberror.IsNotFoundError(err) {
+			return nil, true, nil
+		}
+		return nil, false, err
+	}
+
+	fields, err := s.documentRepo.ListSourceContextFields(
+		ctx,
+		&repositories.ListEDISourceContextFieldsRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: tenantInfo,
+				Pagination: pagination.Info{
+					Limit: 1000,
+				},
+			},
+			SchemaID: schema.ID,
+		},
+	)
+	if err != nil {
+		return nil, false, err
+	}
+	return newSourceContextIndex(fields.Items), false, nil
 }
 
 func (s *Service) validateTemplateCreateRequest(
@@ -751,7 +824,11 @@ func populateTemplateScriptLibraryFunctionNames(libraries []*edi.EDITemplateScri
 	}
 }
 
-func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12.Diagnostic {
+func validateTemplateVersionDefinitionWithSourceContext(
+	version *edi.EDITemplateVersion,
+	sourceContext *sourceContextIndex,
+	schemaMissing bool,
+) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	if version == nil {
 		return append(
@@ -784,9 +861,14 @@ func validateTemplateVersionDefinition(version *edi.EDITemplateVersion) []edix12
 		return diagnostics
 	}
 
-	return append(
+	diagnostics = append(
 		diagnostics,
 		validateTemplateSegments(version.Segments, version.ScriptLibraries)...)
+	diagnostics = append(
+		diagnostics,
+		validateTemplateSourceContext(version, sourceContext, schemaMissing)...,
+	)
+	return diagnostics
 }
 
 func validateTemplateMetadata(version *edi.EDITemplateVersion) []edix12.Diagnostic {

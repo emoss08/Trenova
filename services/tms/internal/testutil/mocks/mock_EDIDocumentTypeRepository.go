@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -37,6 +38,142 @@ type MockEDIDocumentTypeRepository_Expecter struct {
 
 func (_m *MockEDIDocumentTypeRepository) EXPECT() *MockEDIDocumentTypeRepository_Expecter {
 	return &MockEDIDocumentTypeRepository_Expecter{mock: &_m.Mock}
+}
+
+// GetActiveSourceContextSchema provides a mock function for the type MockEDIDocumentTypeRepository
+func (_mock *MockEDIDocumentTypeRepository) GetActiveSourceContextSchema(ctx context.Context, req repositories.GetActiveEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetActiveSourceContextSchema")
+	}
+
+	var r0 *edi.EDISourceContextSchema
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetActiveEDISourceContextSchemaRequest) *edi.EDISourceContextSchema); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDISourceContextSchema)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetActiveEDISourceContextSchemaRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetActiveSourceContextSchema'
+type MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call struct {
+	*mock.Call
+}
+
+// GetActiveSourceContextSchema is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetActiveEDISourceContextSchemaRequest
+func (_e *MockEDIDocumentTypeRepository_Expecter) GetActiveSourceContextSchema(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call {
+	return &MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call{Call: _e.mock.On("GetActiveSourceContextSchema", ctx, req)}
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call) Run(run func(ctx context.Context, req repositories.GetActiveEDISourceContextSchemaRequest)) *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetActiveEDISourceContextSchemaRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetActiveEDISourceContextSchemaRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call) Return(eDISourceContextSchema *edi.EDISourceContextSchema, err error) *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call {
+	_c.Call.Return(eDISourceContextSchema, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetActiveEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error)) *MockEDIDocumentTypeRepository_GetActiveSourceContextSchema_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSourceContextSchema provides a mock function for the type MockEDIDocumentTypeRepository
+func (_mock *MockEDIDocumentTypeRepository) GetSourceContextSchema(ctx context.Context, req repositories.GetEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSourceContextSchema")
+	}
+
+	var r0 *edi.EDISourceContextSchema
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDISourceContextSchemaRequest) *edi.EDISourceContextSchema); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDISourceContextSchema)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDISourceContextSchemaRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentTypeRepository_GetSourceContextSchema_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSourceContextSchema'
+type MockEDIDocumentTypeRepository_GetSourceContextSchema_Call struct {
+	*mock.Call
+}
+
+// GetSourceContextSchema is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDISourceContextSchemaRequest
+func (_e *MockEDIDocumentTypeRepository_Expecter) GetSourceContextSchema(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call {
+	return &MockEDIDocumentTypeRepository_GetSourceContextSchema_Call{Call: _e.mock.On("GetSourceContextSchema", ctx, req)}
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call) Run(run func(ctx context.Context, req repositories.GetEDISourceContextSchemaRequest)) *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDISourceContextSchemaRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDISourceContextSchemaRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call) Return(eDISourceContextSchema *edi.EDISourceContextSchema, err error) *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call {
+	_c.Call.Return(eDISourceContextSchema, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDISourceContextSchemaRequest) (*edi.EDISourceContextSchema, error)) *MockEDIDocumentTypeRepository_GetSourceContextSchema_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ListDocumentTypes provides a mock function for the type MockEDIDocumentTypeRepository
@@ -103,6 +240,210 @@ func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) Return(eDIDocume
 }
 
 func (_c *MockEDIDocumentTypeRepository_ListDocumentTypes_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListEDIDocumentTypesRequest) ([]*edi.EDIDocumentType, error)) *MockEDIDocumentTypeRepository_ListDocumentTypes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListSourceContextFields provides a mock function for the type MockEDIDocumentTypeRepository
+func (_mock *MockEDIDocumentTypeRepository) ListSourceContextFields(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSourceContextFields")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDISourceContextField]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) *pagination.ListResult[*edi.EDISourceContextField]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDISourceContextField])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentTypeRepository_ListSourceContextFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSourceContextFields'
+type MockEDIDocumentTypeRepository_ListSourceContextFields_Call struct {
+	*mock.Call
+}
+
+// ListSourceContextFields is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDISourceContextFieldsRequest
+func (_e *MockEDIDocumentTypeRepository_Expecter) ListSourceContextFields(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_ListSourceContextFields_Call {
+	return &MockEDIDocumentTypeRepository_ListSourceContextFields_Call{Call: _e.mock.On("ListSourceContextFields", ctx, req)}
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextFields_Call) Run(run func(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest)) *MockEDIDocumentTypeRepository_ListSourceContextFields_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDISourceContextFieldsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDISourceContextFieldsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextFields_Call) Return(listResult *pagination.ListResult[*edi.EDISourceContextField], err error) *MockEDIDocumentTypeRepository_ListSourceContextFields_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextFields_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error)) *MockEDIDocumentTypeRepository_ListSourceContextFields_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListSourceContextSchemas provides a mock function for the type MockEDIDocumentTypeRepository
+func (_mock *MockEDIDocumentTypeRepository) ListSourceContextSchemas(ctx context.Context, req *repositories.ListEDISourceContextSchemasRequest) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSourceContextSchemas")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDISourceContextSchema]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextSchemasRequest) (*pagination.ListResult[*edi.EDISourceContextSchema], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextSchemasRequest) *pagination.ListResult[*edi.EDISourceContextSchema]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDISourceContextSchema])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDISourceContextSchemasRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSourceContextSchemas'
+type MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call struct {
+	*mock.Call
+}
+
+// ListSourceContextSchemas is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDISourceContextSchemasRequest
+func (_e *MockEDIDocumentTypeRepository_Expecter) ListSourceContextSchemas(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call {
+	return &MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call{Call: _e.mock.On("ListSourceContextSchemas", ctx, req)}
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call) Run(run func(ctx context.Context, req *repositories.ListEDISourceContextSchemasRequest)) *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDISourceContextSchemasRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDISourceContextSchemasRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call) Return(listResult *pagination.ListResult[*edi.EDISourceContextSchema], err error) *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDISourceContextSchemasRequest) (*pagination.ListResult[*edi.EDISourceContextSchema], error)) *MockEDIDocumentTypeRepository_ListSourceContextSchemas_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchSourceContextFields provides a mock function for the type MockEDIDocumentTypeRepository
+func (_mock *MockEDIDocumentTypeRepository) SearchSourceContextFields(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchSourceContextFields")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDISourceContextField]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) *pagination.ListResult[*edi.EDISourceContextField]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDISourceContextField])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDISourceContextFieldsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentTypeRepository_SearchSourceContextFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchSourceContextFields'
+type MockEDIDocumentTypeRepository_SearchSourceContextFields_Call struct {
+	*mock.Call
+}
+
+// SearchSourceContextFields is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDISourceContextFieldsRequest
+func (_e *MockEDIDocumentTypeRepository_Expecter) SearchSourceContextFields(ctx interface{}, req interface{}) *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call {
+	return &MockEDIDocumentTypeRepository_SearchSourceContextFields_Call{Call: _e.mock.On("SearchSourceContextFields", ctx, req)}
+}
+
+func (_c *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call) Run(run func(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest)) *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDISourceContextFieldsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDISourceContextFieldsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call) Return(listResult *pagination.ListResult[*edi.EDISourceContextField], err error) *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDISourceContextFieldsRequest) (*pagination.ListResult[*edi.EDISourceContextField], error)) *MockEDIDocumentTypeRepository_SearchSourceContextFields_Call {
 	_c.Call.Return(run)
 	return _c
 }
