@@ -4,7 +4,8 @@ import {
   buildX12Filename,
   groupDiagnostics,
   parseX12Segments,
-} from "../edi-designer-utils";
+} from "../designer/utils/edi-message-utils";
+import { dateInputToUnix } from "../designer/utils/edi-date-utils";
 
 describe("message archive helpers", () => {
   it("splits raw X12 into ordered segments", () => {
@@ -77,5 +78,16 @@ describe("message archive helpers", () => {
       }),
     ).toBe("edi-204-000042.x12");
     expect(buildMessageJsonFilename({ id: "edimsg_1" })).toBe("edi-message-edimsg_1.json");
+  });
+
+  it("converts archive date query input to unix day bounds", () => {
+    expect(dateInputToUnix("", false)).toBe(0);
+    expect(dateInputToUnix("not-a-date", false)).toBe(0);
+    expect(dateInputToUnix("2026-05-18", false)).toBe(
+      Math.floor(new Date("2026-05-18T00:00:00").getTime() / 1000),
+    );
+    expect(dateInputToUnix("2026-05-18", true)).toBe(
+      Math.floor(new Date("2026-05-18T23:59:59").getTime() / 1000),
+    );
   });
 });

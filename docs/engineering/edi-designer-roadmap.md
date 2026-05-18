@@ -199,6 +199,15 @@ hardened. They are not the end state.
   script editing with discovered function names.
 - The existing outbound document profile, preview, generate, and archive
   workflow remains available as the Document Preview & Archive tab.
+- The frontend designer foundation has been modularized under focused
+  designer, archive, script, transform, element, profile, hook, and utility
+  folders while preserving the existing workspace import path.
+- Template, archive, and message inspector state that should survive reloads is
+  backed by `nuqs` URL parameters; drafts, editor contents, and payload bodies
+  remain local component state.
+- Template and archive server state is routed through React Query hooks, heavy
+  workspace sections are lazy-loaded, and shared designer/message/date helpers
+  are isolated in tested utility modules.
 
 ## Remaining Stages
 

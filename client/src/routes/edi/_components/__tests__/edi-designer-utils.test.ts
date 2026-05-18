@@ -6,7 +6,7 @@ import {
   insertPathReference,
   isTemplateVersionEditable,
   parseConditionString,
-} from "../edi-designer-utils";
+} from "../designer/utils/edi-designer-utils";
 import { ediScriptPresets, insertScriptPresetCode } from "../edi-script-presets";
 
 describe("isTemplateVersionEditable", () => {
