@@ -18,7 +18,7 @@ export function DesignerWorkspace() {
     <Tabs
       value={designerTab}
       onValueChange={(tab) => void setDesignerUrlState({ designerTab: tab as typeof designerTab })}
-      className="min-h-[calc(100vh-11rem)] gap-3"
+      className="min-h-[calc(100vh-30rem)] gap-3"
     >
       <TabsList className="grid w-fit max-w-full grid-cols-2 overflow-x-auto">
         <TabsTrigger value="templates">

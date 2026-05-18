@@ -51,7 +51,7 @@ func (p *EDIPartnerDocumentProfile) BeforeAppendModel(_ context.Context, query b
 		p.PartnerSettings = map[string]any{}
 	}
 	if p.FunctionalGroupID == "" {
-		p.FunctionalGroupID = "SM"
+		p.FunctionalGroupID = FunctionalGroupDefault(p.TransactionSet)
 	}
 	if p.ValidationMode == "" {
 		p.ValidationMode = ValidationModeStrict
@@ -78,6 +78,21 @@ func (p *EDIPartnerDocumentProfile) GetOrganizationID() pulid.ID {
 
 func (p *EDIPartnerDocumentProfile) GetBusinessUnitID() pulid.ID {
 	return p.BusinessUnitID
+}
+
+func FunctionalGroupDefault(transactionSet TransactionSet) string {
+	switch transactionSet {
+	case TransactionSet210:
+		return "IM"
+	case TransactionSet214:
+		return "QM"
+	case TransactionSet990:
+		return "GF"
+	case TransactionSet997, TransactionSet999:
+		return "FA"
+	default:
+		return "SM"
+	}
 }
 
 type EDIControlNumberSequence struct {

@@ -108,10 +108,8 @@ export class EDIService {
     return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
   }
 
-  public async listDocumentTypes() {
-    const response = await api.get(
-      "/edi/document-types/?standard=X12&transactionSet=204&direction=Outbound",
-    );
+  public async listDocumentTypes(query = "?standard=X12") {
+    const response = await api.get(`/edi/document-types/${query}`);
     return safeParse(ediDocumentTypeSchema.array(), response, "EDIDocumentTypes");
   }
 

@@ -32,7 +32,7 @@ type EDIMessage struct {
 	TransactionControlNumber string            `json:"transactionControlNumber"  bun:"transaction_control_number,type:VARCHAR(20),notnull"`
 	SegmentCount             int64             `json:"segmentCount"              bun:"segment_count,type:BIGINT,notnull"`
 	RawX12                   string            `json:"rawX12"                    bun:"raw_x12,type:TEXT,notnull"`
-	PayloadSnapshot          LoadTenderPayload `json:"payloadSnapshot"        bun:"payload_snapshot,type:JSONB,notnull"`
+	PayloadSnapshot          DocumentPayload   `json:"payloadSnapshot"        bun:"payload_snapshot,type:JSONB,notnull"`
 	GeneratedByID            pulid.ID          `json:"generatedById"             bun:"generated_by_id,type:VARCHAR(100),nullzero"`
 	GeneratedAt              int64             `json:"generatedAt"               bun:"generated_at,type:BIGINT,notnull"`
 	Version                  int64             `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
@@ -96,18 +96,18 @@ func (e *EDIMessageValidationError) BeforeAppendModel(_ context.Context, query b
 type EDITestCase struct {
 	bun.BaseModel `json:"-" bun:"table:edi_test_cases,alias:etc"`
 
-	ID                       pulid.ID          `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID           pulid.ID          `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID          `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	PartnerDocumentProfileID pulid.ID          `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
-	Name                     string            `json:"name"                     bun:"name,type:VARCHAR(200),notnull"`
-	Description              string            `json:"description"              bun:"description,type:TEXT,nullzero"`
-	Payload                  LoadTenderPayload `json:"payload"                  bun:"payload,type:JSONB,notnull"`
-	ExpectedWarnings         int               `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull,default:0"`
-	ExpectedErrors           int               `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull,default:0"`
-	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt                int64             `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64             `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                       pulid.ID        `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID           pulid.ID        `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID           pulid.ID        `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	PartnerDocumentProfileID pulid.ID        `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
+	Name                     string          `json:"name"                     bun:"name,type:VARCHAR(200),notnull"`
+	Description              string          `json:"description"              bun:"description,type:TEXT,nullzero"`
+	Payload                  DocumentPayload `json:"payload"                  bun:"payload,type:JSONB,notnull"`
+	ExpectedWarnings         int             `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull,default:0"`
+	ExpectedErrors           int             `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull,default:0"`
+	Version                  int64           `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt                int64           `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                int64           `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (t *EDITestCase) BeforeAppendModel(_ context.Context, query bun.Query) error {

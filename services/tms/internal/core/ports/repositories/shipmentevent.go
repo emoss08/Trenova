@@ -19,8 +19,17 @@ type ListShipmentEventsRequest struct {
 	Before     int64                 `json:"before,omitempty"`
 }
 
+type GetShipmentEventByIDRequest struct {
+	ID         pulid.ID              `json:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type ShipmentEventRepository interface {
 	Insert(ctx context.Context, entity *shipmentevent.Event) error
+	GetByID(
+		ctx context.Context,
+		req GetShipmentEventByIDRequest,
+	) (*shipmentevent.Event, error)
 	List(
 		ctx context.Context,
 		req *ListShipmentEventsRequest,

@@ -1,9 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  createTemplateDraftSchema,
   type ediDiagnosticSchema,
   type ediTemplateElementSchema,
   type ediTemplateScriptLibrarySchema,
@@ -15,10 +13,8 @@ import {
   CheckCircle2Icon,
   ClipboardCheckIcon,
   CopyPlusIcon,
-  FileCode2Icon,
   ListChecksIcon,
   SaveIcon,
-  SearchIcon,
 } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -29,7 +25,6 @@ import {
   useActivateEDITemplateMutation,
   useArchiveEDITemplateMutation,
   useCreateEDITemplateDraftMutation,
-  useCreateEDITemplateMutation,
   useInvalidateEDITemplateQueries,
   useSaveEDITemplateMetadataMutation,
   useSaveEDITemplateScriptsMutation,
@@ -38,26 +33,24 @@ import {
   useValidateEDITemplateMutation,
 } from "../hooks/use-edi-template-mutations";
 import { useEDITemplateQueries } from "../hooks/use-edi-template-queries";
-import CreateTemplateForm from "../templates/create-template-form";
-import TemplateList from "../templates/template-list";
 import {
+  buildEDIDocumentContextQuery,
   cloneSegments,
   getReadOnlyReason,
   isTemplateVersionEditable,
 } from "../utils/edi-designer-utils";
 import VersionAndSegmentRail from "../versions/version-and-segment-rail";
-import { ControlledSelectField } from "./designer-fields";
 import {
   DiagnosticsList,
   PanelHeader,
   ReadOnlyBanner,
   VersionStatusBadge,
 } from "./designer-shared";
-import { DesignerPanelSkeleton } from "./designer-workspace-skeleton";
+import { DesignerAsideSkeleton, DesignerPanelSkeleton } from "./designer-workspace-skeleton";
 import { ValidationPanel } from "./validation-panel";
-import { templateStatusOptions } from "../utils/edi-designer-options";
 
 const ScriptLibraryEditor = lazy(() => import("../scripts/script-library-editor"));
+const TemplateDesignerAside = lazy(() => import("./template-designer-aside"));
 const TemplatePreviewPanel = lazy(() => import("./template-preview-panel"));
 
 type TemplateSegment = z.infer<typeof ediTemplateSegmentSchema>;
@@ -74,15 +67,10 @@ export default function TemplateDesignerTab() {
     versionId: selectedVersionId,
     segmentId: selectedSegmentId,
     elementPosition: selectedElementPosition,
+    templateTransactionSet,
+    templateDirection,
   } = templateUrlState;
-  const setTemplateSearch = useCallback(
-    (value: string) => void setTemplateUrlState({ templateSearch: value }),
-    [setTemplateUrlState],
-  );
-  const setTemplateStatus = useCallback(
-    (value: string) => void setTemplateUrlState({ templateStatus: value }),
-    [setTemplateUrlState],
-  );
+
   const setSelectedTemplateId = useCallback(
     (templateId: string) => void setTemplateUrlState({ templateId }),
     [setTemplateUrlState],
@@ -108,34 +96,36 @@ export default function TemplateDesignerTab() {
   const [scriptsDirty, setScriptsDirty] = useState(false);
   const [metadataDirty, setMetadataDirty] = useState(false);
   const [diagnostics, setDiagnostics] = useState<TemplateDiagnostic[]>([]);
-  const [newTemplate, setNewTemplate] = useState(
-    createTemplateDraftSchema.parse({
-      documentTypeId: "",
-      name: "",
-      description: "",
-      x12Version: "004010",
-      functionalGroupId: "SM",
-      notes: "",
-    }),
+  const clearDirtyState = useCallback(() => {
+    setSegmentsDirty(false);
+    setScriptsDirty(false);
+    setMetadataDirty(false);
+  }, []);
+  const handleTemplateSelect = useCallback(
+    (templateId: string) => {
+      clearDirtyState();
+      void setTemplateUrlState({ templateId, versionId: "" });
+    },
+    [clearDirtyState, setTemplateUrlState],
   );
-
+  const handleTemplateCreated = useCallback(
+    (templateId: string, versionId: string) => {
+      clearDirtyState();
+      void setTemplateUrlState({ templateId, versionId });
+    },
+    [clearDirtyState, setTemplateUrlState],
+  );
   const templatesQueryString = useMemo(() => {
-    const params = new URLSearchParams({
-      limit: "100",
-      transactionSet: "204",
-      direction: "Outbound",
+    return buildEDIDocumentContextQuery({
+      limit: 100,
+      query: templateSearch,
+      status: templateStatus,
+      transactionSet: templateTransactionSet,
+      direction: templateDirection,
     });
-    if (templateSearch.trim()) params.set("search", templateSearch.trim());
-    if (templateStatus) params.set("status", templateStatus);
-    return `?${params.toString()}`;
-  }, [templateSearch, templateStatus]);
+  }, [templateDirection, templateSearch, templateStatus, templateTransactionSet]);
 
-  const {
-    templatesQuery,
-    templateQuery,
-    versionsQuery,
-    versionQuery,
-  } = useEDITemplateQueries({
+  const { templatesQuery, templateQuery, versionsQuery, versionQuery } = useEDITemplateQueries({
     templatesQueryString,
     selectedTemplateId,
     selectedVersionId,
@@ -215,26 +205,6 @@ export default function TemplateDesignerTab() {
     selectedTemplateId,
     selectedVersionId,
   );
-
-  const createTemplateMutation = useCreateEDITemplateMutation({
-    onSuccess: async (template) => {
-      toast.success("EDI template created");
-      setSelectedTemplateId(template.id);
-      setSelectedVersionId(template.versions[0]?.id ?? template.activeVersion?.id ?? "");
-      setNewTemplate(
-        createTemplateDraftSchema.parse({
-          documentTypeId: "",
-          name: "",
-          description: "",
-          x12Version: "004010",
-          functionalGroupId: "SM",
-          notes: "",
-        }),
-      );
-      await invalidateTemplateQueries();
-    },
-    onError: () => toast.error("Failed to create EDI template"),
-  });
 
   const createDraftMutation = useCreateEDITemplateDraftMutation({
     onSuccess: async (version) => {
@@ -333,63 +303,27 @@ export default function TemplateDesignerTab() {
     }));
   };
 
-  const clearDirtyState = () => {
-    setSegmentsDirty(false);
-    setScriptsDirty(false);
-    setMetadataDirty(false);
-  };
+  const handleDiagnosticSelect = useCallback(
+    (diagnostic: TemplateDiagnostic) => {
+      const segment = segmentsDraft.find((item) => item.segmentId === diagnostic.segmentId);
+      if (!segment) return;
+      setSelectedSegmentId(segment.id);
+      if (diagnostic.elementPosition > 0) setSelectedElementPosition(diagnostic.elementPosition);
+    },
+    [segmentsDraft, setSelectedElementPosition, setSelectedSegmentId],
+  );
 
   return (
     <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
-      <aside className="flex min-h-0 flex-col rounded-md border bg-background">
-        <PanelHeader icon={<FileCode2Icon />} title="Templates" />
-        <div className="space-y-3 border-b p-3">
-          <div className="flex items-center gap-2">
-            <SearchIcon className="size-4 text-muted-foreground" />
-            <Input
-              value={templateSearch}
-              onChange={(event) => setTemplateSearch(event.target.value)}
-              placeholder="Search templates"
-              className="h-8"
-            />
-          </div>
-          <ControlledSelectField
-            label="Status"
-            value={templateStatus}
-            onValueChange={setTemplateStatus}
-            options={templateStatusOptions}
-            placeholder="All statuses"
-          />
-        </div>
-        <TemplateList
+      <Suspense fallback={<DesignerAsideSkeleton />}>
+        <TemplateDesignerAside
           templates={templates}
           selectedTemplateId={selectedTemplateId}
-          onSelect={(templateId) => {
-            clearDirtyState();
-            setSelectedTemplateId(templateId);
-            setSelectedVersionId("");
-          }}
+          selectedVersionId={selectedVersionId}
+          onSelectTemplate={handleTemplateSelect}
+          onTemplateCreated={handleTemplateCreated}
         />
-        <CreateTemplateForm
-          draft={newTemplate}
-          onChange={setNewTemplate}
-          onCreate={() =>
-            createTemplateMutation.mutate({
-              documentTypeId: newTemplate.documentTypeId,
-              name: newTemplate.name,
-              description: newTemplate.description,
-              direction: "Outbound",
-              standard: "X12",
-              transactionSet: "204",
-              x12Version: newTemplate.x12Version,
-              functionalGroupId: newTemplate.functionalGroupId,
-              notes: newTemplate.notes,
-            })
-          }
-          isLoading={createTemplateMutation.isPending}
-        />
-      </aside>
-
+      </Suspense>
       <main className="flex min-h-0 flex-col rounded-md border bg-background">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
           <div className="min-w-0">
@@ -593,15 +527,7 @@ export default function TemplateDesignerTab() {
             <TabsContent value="validation" className="min-h-0">
               <ValidationPanel
                 diagnostics={diagnostics}
-                onSelectDiagnostic={(diagnostic) => {
-                  const segment = segmentsDraft.find(
-                    (item) => item.segmentId === diagnostic.segmentId,
-                  );
-                  if (!segment) return;
-                  setSelectedSegmentId(segment.id);
-                  if (diagnostic.elementPosition > 0)
-                    setSelectedElementPosition(diagnostic.elementPosition);
-                }}
+                onSelectDiagnostic={handleDiagnosticSelect}
                 onValidate={() =>
                   validateMutation.mutate({
                     templateId: selectedTemplateId,
@@ -648,16 +574,7 @@ export default function TemplateDesignerTab() {
 
       <aside className="flex min-h-0 flex-col rounded-md border bg-background max-xl:hidden">
         <PanelHeader icon={<AlertTriangleIcon />} title="Diagnostics" />
-        <DiagnosticsList
-          diagnostics={diagnostics}
-          onSelect={(diagnostic) => {
-            const segment = segmentsDraft.find((item) => item.segmentId === diagnostic.segmentId);
-            if (!segment) return;
-            setSelectedSegmentId(segment.id);
-            if (diagnostic.elementPosition > 0)
-              setSelectedElementPosition(diagnostic.elementPosition);
-          }}
-        />
+        <DiagnosticsList diagnostics={diagnostics} onSelect={handleDiagnosticSelect} />
       </aside>
     </div>
   );

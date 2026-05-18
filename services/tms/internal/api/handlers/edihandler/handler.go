@@ -1434,9 +1434,9 @@ func (h *Handler) listTemplates(c *gin.Context) {
 			c.Request.Context(),
 			&repositories.ListEDITemplatesRequest{
 				Filter:         req,
-				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "204")),
+				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 				Direction: edi.DocumentDirection(
-					helpers.QueryString(c, "direction", "Outbound"),
+					helpers.QueryString(c, "direction", ""),
 				),
 				Status: edi.TemplateStatus(helpers.QueryString(c, "status", "")),
 			},
@@ -1458,10 +1458,10 @@ func (h *Handler) selectTemplateOptions(c *gin.Context) {
 				&repositories.EDITemplateSelectOptionsRequest{
 					SelectQueryRequest: req,
 					TransactionSet: edi.TransactionSet(
-						helpers.QueryString(c, "transactionSet", "204"),
+						helpers.QueryString(c, "transactionSet", ""),
 					),
 					Direction: edi.DocumentDirection(
-						helpers.QueryString(c, "direction", "Outbound"),
+						helpers.QueryString(c, "direction", ""),
 					),
 					Status: edi.TemplateStatus(helpers.QueryString(c, "status", "")),
 				},
@@ -1827,10 +1827,10 @@ func (h *Handler) listPartnerDocumentProfiles(c *gin.Context) {
 				&repositories.ListEDIPartnerDocumentProfilesRequest{
 					Filter: req,
 					TransactionSet: edi.TransactionSet(
-						helpers.QueryString(c, "transactionSet", "204"),
+						helpers.QueryString(c, "transactionSet", ""),
 					),
 					Direction: edi.DocumentDirection(
-						helpers.QueryString(c, "direction", "Outbound"),
+						helpers.QueryString(c, "direction", ""),
 					),
 					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
 					PartnerID: helpers.QueryPulid(c, "partnerId"),
@@ -1854,10 +1854,10 @@ func (h *Handler) selectPartnerDocumentProfileOptions(c *gin.Context) {
 				&repositories.EDIPartnerDocumentProfileSelectOptionsRequest{
 					SelectQueryRequest: req,
 					TransactionSet: edi.TransactionSet(
-						helpers.QueryString(c, "transactionSet", "204"),
+						helpers.QueryString(c, "transactionSet", ""),
 					),
 					Direction: edi.DocumentDirection(
-						helpers.QueryString(c, "direction", "Outbound"),
+						helpers.QueryString(c, "direction", ""),
 					),
 					Status:    edi.DocumentStatus(helpers.QueryString(c, "status", "")),
 					PartnerID: helpers.QueryPulid(c, "partnerId"),
@@ -1999,9 +1999,9 @@ func (h *Handler) listMessages(c *gin.Context) {
 			c.Request.Context(),
 			&repositories.ListEDIMessagesRequest{
 				Filter:         req,
-				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "204")),
+				TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
 				Direction: edi.DocumentDirection(
-					helpers.QueryString(c, "direction", "Outbound"),
+					helpers.QueryString(c, "direction", ""),
 				),
 				PartnerID:     partnerID,
 				Status:        edi.MessageStatus(helpers.QueryString(c, "status", "")),

@@ -10,7 +10,7 @@ const pageTitles: Record<EDIPageKind, string> = {
   partners: "EDI Partners",
   "communication-profiles": "EDI Communication Profiles",
   "mapping-profiles": "EDI Mapping Profiles",
-  designer: "Outbound 204 Designer",
+  designer: "Template Designer",
   inbound: "Inbound EDI Transfers",
   outbound: "Outbound EDI Transfers",
 };

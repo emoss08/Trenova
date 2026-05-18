@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@/components/theme-provider";
+import { parseEDIDocumentPayload } from "@/lib/edi/document-source";
 import type {
   EDIDiagnostic,
   EDIDocumentPreview,
@@ -264,13 +265,11 @@ function parseSettings(value: string): Record<string, unknown> {
 }
 
 function parsePayload(value: string) {
-  if (!value.trim()) return undefined;
-  try {
-    return JSON.parse(value) as never;
-  } catch {
+  const result = parseEDIDocumentPayload(value);
+  if (!result.ok) {
     toast.error("Payload must be valid JSON");
-    return undefined;
   }
+  return result;
 }
 
 function formatArgumentValue(value: unknown) {

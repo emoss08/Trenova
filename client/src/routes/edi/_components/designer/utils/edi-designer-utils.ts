@@ -8,6 +8,36 @@ import type {
   EDITemplateVersion,
 } from "@/types/edi";
 
+export type EDIDocumentContextFilters = {
+  transactionSet?: string;
+  direction?: string;
+  status?: string;
+  query?: string;
+  limit?: number;
+};
+
+export const functionalGroupByTransactionSet: Record<string, string> = {
+  "204": "SM",
+  "210": "IM",
+  "214": "QM",
+  "990": "GF",
+  "997": "FA",
+  "999": "FA",
+};
+
+export function functionalGroupForTransactionSet(transactionSet?: string | null) {
+  return functionalGroupByTransactionSet[transactionSet ?? ""] ?? "SM";
+}
+
+export function buildEDIDocumentContextQuery(filters: EDIDocumentContextFilters) {
+  const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
+  if (filters.transactionSet) params.set("transactionSet", filters.transactionSet);
+  if (filters.direction) params.set("direction", filters.direction);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.query?.trim()) params.set("search", filters.query.trim());
+  return `?${params.toString()}`;
+}
+
 export type TransformArgumentDefinition = {
   key: string;
   label: string;

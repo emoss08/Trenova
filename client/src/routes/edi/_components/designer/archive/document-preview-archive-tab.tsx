@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
+import { DocumentSourceControls } from "@/components/edi/document-source-controls";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Sheet,
   SheetContent,
@@ -20,7 +20,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { downloadJsonFile, downloadTextFile } from "@/lib/utils";
-import type { EDIMessage, UpsertEDIPartnerDocumentProfileRequest } from "@/types/edi";
+import {
+  buildEDIDocumentResolutionRequest,
+  hasEDIDocumentSourceValue,
+  pruneEDIDocumentSourceValues,
+  resolveEDIDocumentSourceContext,
+  type EDIDocumentSourceField,
+  type EDIDocumentSourceValues,
+} from "@/lib/edi/document-source";
+import type {
+  EDIMessage,
+  EDIPartnerDocumentProfile,
+  UpsertEDIPartnerDocumentProfileRequest,
+} from "@/types/edi";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
@@ -58,7 +70,7 @@ import {
   groupDiagnostics,
   parseX12Segments,
 } from "../utils/edi-message-utils";
-import { diagnosticKey } from "../utils/edi-designer-utils";
+import { buildEDIDocumentContextQuery, diagnosticKey } from "../utils/edi-designer-utils";
 import { AckEditor } from "../profile/ack-editor";
 import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
@@ -72,6 +84,7 @@ import {
   PanelHeader,
   PreviewPane,
   TextareaBlock,
+  parsePayload,
   parseSettings,
   profileToDraft,
   useEditorTheme,
@@ -97,7 +110,7 @@ const defaultEnvelope = {
 
 const defaultProfileDraft: UpsertEDIPartnerDocumentProfileRequest = {
   ediPartnerId: "",
-  name: "Outbound X12 204",
+  name: "EDI Document Profile",
   status: "Active",
   functionalGroupId: "SM",
   envelope: defaultEnvelope,
@@ -129,7 +142,8 @@ export function DocumentPreviewArchiveTab() {
   ] = useDocumentArchiveUrlState();
   const [partnerId, setPartnerId] = useState("");
   const [profileId, setProfileId] = useState("");
-  const [shipmentId, setShipmentId] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState<EDIPartnerDocumentProfile | null>(null);
+  const [sourceValues, setSourceValues] = useState<EDIDocumentSourceValues>({});
   const [rawPartnerSettings, setRawPartnerSettings] = useState("{}");
   const [profileDraft, setProfileDraft] =
     useState<UpsertEDIPartnerDocumentProfileRequest>(defaultProfileDraft);
@@ -156,21 +170,47 @@ export function DocumentPreviewArchiveTab() {
     ],
   );
 
+  const documentContextQueryString = useMemo(
+    () =>
+      buildEDIDocumentContextQuery({
+        limit: 100,
+        transactionSet: archiveTransactionSet,
+        direction: archiveDirection,
+      }),
+    [archiveDirection, archiveTransactionSet],
+  );
   const { profilesQuery, templatesQuery, messagesQuery } = useEDIDocumentArchiveQueries({
     messagesQueryString,
+    profilesQueryString: documentContextQueryString,
+    templatesQueryString: documentContextQueryString,
   });
-  const selectedProfile = profilesQuery.data?.results.find((profile) => profile.id === profileId);
+  const queriedSelectedProfile =
+    profilesQuery.data?.results.find((profile) => profile.id === profileId) ?? null;
   const activeTemplate =
     templatesQuery.data?.results.find((template) => template.id === profileDraft.templateId) ??
     templatesQuery.data?.results[0];
+  const draftTemplate =
+    templatesQuery.data?.results.find((template) => template.id === profileDraft.templateId) ??
+    null;
+  const selectedDocumentProfile =
+    selectedProfile?.id === profileId ? selectedProfile : queriedSelectedProfile;
+  const sourceContext = resolveEDIDocumentSourceContext({
+    profile: selectedDocumentProfile,
+    template: draftTemplate,
+    fallbackTransactionSet: archiveTransactionSet || activeTemplate?.transactionSet,
+    fallbackDirection: archiveDirection || activeTemplate?.direction,
+  });
+  const sourceTransactionSet = sourceContext.transactionSet;
+  const sourceDirection = sourceContext.direction;
+  const hasSourceValue = hasEDIDocumentSourceValue(sourceValues, sourceTransactionSet);
   const invalidateDocumentProfiles = useInvalidateEDIDocumentProfiles();
   const invalidateMessageArchive = useInvalidateEDIMessageArchive();
 
   useEffect(() => {
-    if (selectedProfile) {
-      setPartnerId(selectedProfile.ediPartnerId);
-      setProfileDraft(profileToDraft(selectedProfile));
-      setRawPartnerSettings(JSON.stringify(selectedProfile.partnerSettings ?? {}, null, 2));
+    if (selectedDocumentProfile) {
+      setPartnerId(selectedDocumentProfile.ediPartnerId);
+      setProfileDraft(profileToDraft(selectedDocumentProfile));
+      setRawPartnerSettings(JSON.stringify(selectedDocumentProfile.partnerSettings ?? {}, null, 2));
       return;
     }
     setProfileDraft((current) => ({
@@ -178,43 +218,62 @@ export function DocumentPreviewArchiveTab() {
       ediPartnerId: partnerId,
       templateId: activeTemplate?.id ?? current.templateId,
     }));
-  }, [activeTemplate?.id, partnerId, selectedProfile]);
+  }, [activeTemplate?.id, partnerId, selectedDocumentProfile]);
+
+  useEffect(() => {
+    setSourceValues((current) => pruneEDIDocumentSourceValues(current, sourceTransactionSet));
+  }, [sourceTransactionSet]);
 
   const saveProfileMutation = useSaveEDIDocumentProfileMutation({
     onSuccess: async (profile) => {
-      toast.success("204 document profile saved");
+      toast.success("Document profile saved");
       setProfileId(profile.id);
+      setSelectedProfile(profile);
       await invalidateDocumentProfiles();
     },
     onError: () => toast.error("Failed to save document profile"),
   });
 
   const previewMutation = usePreviewEDIDocumentMutation({
-    onError: () => toast.error("Failed to preview 204 document"),
+    onError: () => toast.error("Failed to preview EDI document"),
   });
 
   const generateMutation = useGenerateEDIDocumentMutation({
     onSuccess: async (message) => {
-      toast.success("204 message generated and archived");
+      toast.success("EDI message generated and archived");
       void setInspectorMessageId(message.id);
       await invalidateMessageArchive();
     },
-    onError: () => toast.error("Failed to generate 204 message"),
+    onError: () => toast.error("Failed to generate EDI message"),
   });
+
+  const setSourceValue = (field: EDIDocumentSourceField, value: string) => {
+    setSourceValues((current) => ({ ...current, [field]: value }));
+  };
 
   return (
     <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[360px_minmax(0,1fr)] gap-3">
       <aside className="flex min-h-0 flex-col rounded-md border bg-background">
-        <PanelHeader icon={<ShieldCheckIcon />} title="204 Profile" />
+        <PanelHeader icon={<ShieldCheckIcon />} title="Document Profile" />
         <div className="flex min-h-0 flex-col gap-3 overflow-auto p-3">
           <EDIPartnerAutocompleteField
             value={partnerId}
-            onValueChange={setPartnerId}
+            onValueChange={(nextPartnerId) => {
+              setPartnerId(nextPartnerId);
+              setProfileId("");
+              setSelectedProfile(null);
+            }}
           />
           <EDIDocumentProfileAutocompleteField
             value={profileId}
-            onValueChange={setProfileId}
+            onValueChange={(nextProfileId) => {
+              setProfileId(nextProfileId);
+              setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
+            }}
+            onOptionChange={setSelectedProfile}
             partnerId={partnerId}
+            transactionSet={archiveTransactionSet}
+            direction={archiveDirection}
           />
           <InputBlock
             label="Profile Name"
@@ -223,6 +282,8 @@ export function DocumentPreviewArchiveTab() {
           />
           <EDITemplateAutocompleteField
             value={activeTemplate?.id ?? ""}
+            transactionSet={archiveTransactionSet}
+            direction={archiveDirection}
             onValueChange={(templateId) =>
               setProfileDraft((current) => ({
                 ...current,
@@ -307,39 +368,53 @@ export function DocumentPreviewArchiveTab() {
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
-              <Input
-                value={shipmentId}
-                onChange={(event) => setShipmentId(event.target.value)}
-                placeholder="Shipment ID"
-                className="w-56"
+              <DocumentSourceControls
+                transactionSet={sourceTransactionSet}
+                values={sourceValues}
+                onChange={setSourceValue}
+                layout="toolbar"
               />
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  previewMutation.mutate({
-                    partnerDocumentProfileId: profileId || undefined,
-                    ediPartnerId: partnerId || undefined,
-                    shipmentId: shipmentId || undefined,
-                  })
-                }
+                onClick={() => {
+                  const payloadResult = parsePayload(sourceValues.payload ?? "");
+                  if (!payloadResult.ok) return;
+                  previewMutation.mutate(
+                    buildEDIDocumentResolutionRequest({
+                      partnerDocumentProfileId: profileId || undefined,
+                      ediPartnerId: partnerId || undefined,
+                      sourceValues,
+                      transactionSet: sourceTransactionSet,
+                      direction: sourceDirection,
+                      payload: payloadResult.payload,
+                    }),
+                  );
+                }}
                 isLoading={previewMutation.isPending}
-                disabled={!profileId && !partnerId}
+                disabled={(!profileId && !partnerId) || !hasSourceValue}
               >
                 <RefreshCwIcon className="size-4" />
                 Preview
               </Button>
               <Button
                 type="button"
-                onClick={() =>
-                  generateMutation.mutate({
-                    partnerDocumentProfileId: profileId || undefined,
-                    ediPartnerId: partnerId || undefined,
-                    shipmentId: shipmentId || undefined,
-                  })
-                }
+                onClick={() => {
+                  const payloadResult = parsePayload(sourceValues.payload ?? "");
+                  if (!payloadResult.ok) return;
+                  generateMutation.mutate(
+                    buildEDIDocumentResolutionRequest({
+                      partnerDocumentProfileId: profileId || undefined,
+                      ediPartnerId: partnerId || undefined,
+                      sourceValues,
+                      transactionSet: sourceTransactionSet,
+                      direction: sourceDirection,
+                      payload: payloadResult.payload,
+                    }),
+                  );
+                }}
                 isLoading={generateMutation.isPending}
-                disabled={!profileId || !shipmentId}
+                disabled={!profileId || !hasSourceValue}
               >
                 <PlayIcon className="size-4" />
                 Generate

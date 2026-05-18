@@ -18,11 +18,17 @@ const (
 )
 
 var validConditionRoots = map[string]struct{}{
-	"shipment": {},
-	"repeat":   {},
-	"partner":  {},
-	"mapping":  {},
-	"runtime":  {},
+	"shipment":          {},
+	"loadTender":        {},
+	"invoice":           {},
+	"shipmentStatus":    {},
+	"tenderResponse":    {},
+	"functionalAck":     {},
+	"implementationAck": {},
+	"repeat":            {},
+	"partner":           {},
+	"mapping":           {},
+	"runtime":           {},
 }
 
 type conditionEvalParams struct {
@@ -303,15 +309,7 @@ func parseConditionStringLiteral(value string) (string, error) {
 }
 
 func evaluateStarlarkCondition(params conditionEvalParams, condition string) (bool, error) {
-	starlarkCtx, err := edistarlark.BuildContext(
-		envMap(params.Env, "shipment"),
-		envMap(params.Env, "partner"),
-		envMap(params.Env, "runtime"),
-		envMap(params.Env, "mapping"),
-	)
-	if err != nil {
-		return false, err
-	}
+	starlarkCtx := starlarkContext(params.Env)
 
 	repeatValue := params.Env["repeat"]
 	if repeatValue != nil {

@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { EDIDocumentTypeAutocompleteField } from "../components/designer-fields";
 import { InputBlock } from "../components/designer-shared";
+import { functionalGroupForTransactionSet } from "../utils/edi-designer-utils";
 
 type CreateTemplateFormProps = {
   draft: CreateTemplateDraft;
@@ -37,7 +38,10 @@ export default function CreateTemplateForm({
           onChange((current) => ({
             ...current,
             documentTypeId: documentType.id,
+            direction: documentType.direction,
+            transactionSet: documentType.transactionSet,
             x12Version: documentType.defaultVersion || current.x12Version,
+            functionalGroupId: functionalGroupForTransactionSet(documentType.transactionSet),
           }));
         }}
       />

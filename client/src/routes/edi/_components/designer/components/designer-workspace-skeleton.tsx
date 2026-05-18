@@ -42,6 +42,38 @@ export function DesignerPanelSkeleton() {
   );
 }
 
+export function DesignerAsideSkeleton() {
+  return (
+    <aside className="flex min-h-0 flex-col rounded-md border bg-background">
+      <div className="flex h-11 items-center gap-2 border-b px-3">
+        <Skeleton className="size-4 rounded-sm" />
+        <SkeletonLine className="w-24" />
+      </div>
+      <div className="space-y-3 border-b p-3">
+        <Skeleton className="h-8 rounded-md" />
+        <Skeleton className="h-8 rounded-md" />
+        <div className="grid grid-cols-2 gap-2">
+          <Skeleton className="h-8 rounded-md" />
+          <Skeleton className="h-8 rounded-md" />
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <div key={index} className="space-y-2 border-b px-3 py-3">
+            <SkeletonLine className="w-4/5" />
+            <SkeletonLine className="w-2/3" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 border-t p-3">
+        <SkeletonLine className="w-36" />
+        <Skeleton className="h-8 rounded-md" />
+        <Skeleton className="h-8 rounded-md" />
+      </div>
+    </aside>
+  );
+}
+
 export function DesignerWorkspaceSkeleton() {
   return (
     <div className="space-y-3" aria-label="Loading EDI designer workspace">
@@ -50,29 +82,7 @@ export function DesignerWorkspaceSkeleton() {
         <Skeleton className="h-8 w-52 rounded-sm" />
       </div>
       <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
-        <aside className="flex min-h-0 flex-col rounded-md border bg-background">
-          <div className="flex h-11 items-center gap-2 border-b px-3">
-            <Skeleton className="size-4 rounded-sm" />
-            <SkeletonLine className="w-24" />
-          </div>
-          <div className="space-y-3 border-b p-3">
-            <Skeleton className="h-8 rounded-md" />
-            <Skeleton className="h-8 rounded-md" />
-          </div>
-          <div className="min-h-0 flex-1 space-y-0 overflow-hidden">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="space-y-2 border-b px-3 py-3">
-                <SkeletonLine className="w-4/5" />
-                <SkeletonLine className="w-2/3" />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-2 border-t p-3">
-            <SkeletonLine className="w-36" />
-            <Skeleton className="h-8 rounded-md" />
-            <Skeleton className="h-8 rounded-md" />
-          </div>
-        </aside>
+        <DesignerAsideSkeleton />
         <main className="flex min-h-0 flex-col rounded-md border bg-background">
           <SkeletonToolbar count={4} />
           <div className="grid min-h-0 flex-1 grid-cols-[280px_minmax(0,1fr)] max-md:grid-cols-1">

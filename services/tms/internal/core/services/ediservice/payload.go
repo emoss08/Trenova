@@ -1,15 +1,22 @@
 package ediservice
 
 import (
+	"cmp"
+	"context"
+	"fmt"
 	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/shopspring/decimal"
 )
 
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
@@ -140,6 +147,280 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	}
 
 	return payload
+}
+
+func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
+	payload := edi.FreightInvoicePayload{
+		InvoiceID:          source.ID,
+		InvoiceNumber:      source.Number,
+		InvoiceDate:        source.InvoiceDate,
+		ShipmentID:         source.ShipmentID,
+		BOL:                stringutils.FirstNonEmpty(source.ShipmentBOL, shipmentBOL(source.Shipment)),
+		ProNumber:          stringutils.FirstNonEmpty(source.ShipmentProNumber, shipmentProNumber(source.Shipment)),
+		BillToName:         source.BillToName,
+		BillToAddressLine1: source.BillToAddressLine1,
+		BillToAddressLine2: source.BillToAddressLine2,
+		BillToCity:         source.BillToCity,
+		BillToStateCode:    source.BillToState,
+		BillToPostalCode:   source.BillToPostalCode,
+		BillToCountry:      source.BillToCountry,
+		CurrencyCode:       source.CurrencyCode,
+		TotalAmount: decimal.NullDecimal{
+			Decimal: source.TotalAmount,
+			Valid:   true,
+		},
+		LineCharges: make([]edi.FreightInvoiceCharge, 0, len(source.Lines)),
+		ReferenceNumbers: map[string]string{
+			"qualifier":  "BM",
+			"bol":        stringutils.FirstNonEmpty(source.ShipmentBOL, shipmentBOL(source.Shipment)),
+			"pro":        stringutils.FirstNonEmpty(source.ShipmentProNumber, shipmentProNumber(source.Shipment)),
+			"shipmentId": source.ShipmentID.String(),
+		},
+	}
+
+	lines := make([]*invoice.InoviceLine, 0, len(source.Lines))
+	for _, line := range source.Lines {
+		if line == nil {
+			continue
+		}
+		lines = append(lines, line)
+	}
+	slices.SortFunc(lines, func(a, b *invoice.InoviceLine) int {
+		return cmp.Compare(a.LineNumber, b.LineNumber)
+	})
+
+	for _, line := range lines {
+		payload.LineCharges = append(payload.LineCharges, edi.FreightInvoiceCharge{
+			Sequence:    int64(line.LineNumber),
+			Code:        string(line.Type),
+			Description: line.Description,
+			Amount:      line.Amount,
+		})
+	}
+
+	return edi.DocumentPayload{
+		TransactionSet: edi.TransactionSet210,
+		FreightInvoice: &payload,
+	}
+}
+
+func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
+	if source == nil {
+		return edi.DocumentPayload{
+			TransactionSet: edi.TransactionSet214,
+			ShipmentStatus: &edi.ShipmentStatusPayload{References: map[string]string{}},
+		}
+	}
+	payload := edi.ShipmentStatusPayload{
+		ShipmentID: source.ID,
+		BOL:        source.BOL,
+		StatusCode: "X3",
+		References: map[string]string{
+			"shipmentId": source.ID.String(),
+			"bol":        source.BOL,
+		},
+	}
+	if len(source.Moves) > 0 &&
+		source.Moves[0] != nil &&
+		len(source.Moves[0].Stops) > 0 &&
+		source.Moves[0].Stops[0] != nil {
+		stop := source.Moves[0].Stops[0]
+		payload.EventDate = stop.ScheduledWindowStart
+		payload.EventTime = stop.ScheduledWindowStart
+		if stop.Location != nil {
+			payload.City = stop.Location.City
+			if stop.Location.State != nil {
+				payload.StateCode = stop.Location.State.Abbreviation
+			}
+		}
+	}
+	return edi.DocumentPayload{
+		TransactionSet: edi.TransactionSet214,
+		ShipmentStatus: &payload,
+	}
+}
+
+func buildShipmentEventStatusPayload(
+	event *shipmentevent.Event,
+	source *shipment.Shipment,
+) edi.DocumentPayload {
+	payload := edi.ShipmentStatusPayload{
+		ShipmentID: event.ShipmentID,
+		BOL:        shipmentBOL(source),
+		StatusCode: shipmentEventStatusCode(event),
+		EventDate:  event.OccurredAt,
+		EventTime:  event.OccurredAt,
+		References: map[string]string{
+			"shipmentId": event.ShipmentID.String(),
+			"eventId":    event.ID.String(),
+			"eventType":  string(event.Type),
+			"bol":        shipmentBOL(source),
+			"pro":        shipmentProNumber(source),
+		},
+	}
+	if event.Summary != "" {
+		payload.References["summary"] = event.Summary
+	}
+	if reason := metadataString(event.Metadata, "reason"); reason != "" {
+		payload.StatusReasonCode = reason
+	}
+	stop := shipmentEventStop(event, source)
+	if stop != nil && stop.Location != nil {
+		payload.City = stop.Location.City
+		if stop.Location.State != nil {
+			payload.StateCode = stop.Location.State.Abbreviation
+		}
+	}
+	return edi.DocumentPayload{
+		TransactionSet: edi.TransactionSet214,
+		ShipmentStatus: &payload,
+	}
+}
+
+func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {
+	responseCode := "A"
+	reasonCode := ""
+	if transfer.Status == edi.TransferStatusRejected {
+		responseCode = "D"
+		reasonCode = "ZZ"
+	}
+	payload := edi.TenderResponsePayload{
+		TransferID:      transfer.ID,
+		ShipmentID:      transfer.SourceShipmentID,
+		BOL:             transfer.TenderPayload.BOL,
+		ResponseCode:    responseCode,
+		ReasonCode:      reasonCode,
+		RejectionReason: transfer.RejectionReason,
+		Status:          transfer.Status,
+	}
+	return edi.DocumentPayload{
+		TransactionSet: edi.TransactionSet990,
+		TenderResponse: &payload,
+	}
+}
+
+func shipmentEventStatusCode(event *shipmentevent.Event) string {
+	switch event.Type {
+	case shipmentevent.TypeMoveDeparted:
+		return "AF"
+	case shipmentevent.TypeMoveArrived:
+		return "X1"
+	case shipmentevent.TypeStopCompleted:
+		return "D1"
+	case shipmentevent.TypeShipmentCanceled:
+		return "A7"
+	case shipmentevent.TypeStatusChanged:
+		switch shipment.Status(metadataString(event.Metadata, "newStatus")) {
+		case shipment.StatusInTransit:
+			return "AF"
+		case shipment.StatusCompleted, shipment.StatusInvoiced, shipment.StatusReadyToInvoice:
+			return "D1"
+		case shipment.StatusDelayed:
+			return "A3"
+		case shipment.StatusCanceled:
+			return "A7"
+		}
+	}
+	return "X3"
+}
+
+func shipmentEventStop(event *shipmentevent.Event, source *shipment.Shipment) *shipment.Stop {
+	if source == nil {
+		return nil
+	}
+	var moveFallback *shipment.Stop
+	for _, move := range source.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop == nil {
+				continue
+			}
+			if event.StopID.IsNotNil() && stop.ID == event.StopID {
+				return stop
+			}
+			if event.MoveID.IsNotNil() && move.ID == event.MoveID && moveFallback == nil {
+				moveFallback = stop
+			}
+		}
+	}
+	if moveFallback != nil {
+		return moveFallback
+	}
+	if len(source.Moves) > 0 && source.Moves[0] != nil && len(source.Moves[0].Stops) > 0 {
+		return source.Moves[0].Stops[0]
+	}
+	return nil
+}
+
+func metadataString(metadata map[string]any, key string) string {
+	value, ok := metadata[key]
+	if !ok || value == nil {
+		return ""
+	}
+	switch typed := value.(type) {
+	case string:
+		return strings.TrimSpace(typed)
+	case fmt.Stringer:
+		return strings.TrimSpace(typed.String())
+	default:
+		return strings.TrimSpace(fmt.Sprint(typed))
+	}
+}
+
+func shipmentBOL(source *shipment.Shipment) string {
+	if source == nil {
+		return ""
+	}
+	return source.BOL
+}
+
+func shipmentProNumber(source *shipment.Shipment) string {
+	if source == nil {
+		return ""
+	}
+	return source.ProNumber
+}
+
+func (s *Service) buildAcknowledgmentPayload(
+	ctx context.Context,
+	req *PreviewEDIDocumentRequest,
+	transactionSet edi.TransactionSet,
+) (edi.DocumentPayload, error) {
+	message, err := s.documentRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
+		ID:         req.SourceMessageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return edi.DocumentPayload{}, err
+	}
+	ack := edi.FunctionalAcknowledgmentPayload{
+		SourceMessageID:                  message.ID,
+		OriginalFunctionalGroupID:        edi.FunctionalGroupDefault(message.TransactionSet),
+		OriginalGroupControlNumber:       message.GroupControlNumber,
+		OriginalTransactionSet:           message.TransactionSet,
+		OriginalTransactionControlNumber: message.TransactionControlNumber,
+		GroupAcknowledgmentCode:          "A",
+		TransactionAcknowledgmentCode:    "A",
+		AcceptedTransactionSetCount:      1,
+		ReceivedTransactionSetCount:      1,
+		IncludedTransactionSetCount:      1,
+	}
+	if message.PartnerDocumentProfile != nil {
+		ack.OriginalFunctionalGroupID = message.PartnerDocumentProfile.FunctionalGroupID
+	}
+	if transactionSet == edi.TransactionSet999 {
+		implementation := edi.ImplementationAckPayload(ack)
+		return edi.DocumentPayload{
+			TransactionSet:               edi.TransactionSet999,
+			ImplementationAcknowledgment: &implementation,
+		}, nil
+	}
+	return edi.DocumentPayload{
+		TransactionSet:           edi.TransactionSet997,
+		FunctionalAcknowledgment: &ack,
+	}, nil
 }
 
 func sourceLabelIndex(

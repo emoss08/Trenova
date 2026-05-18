@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildEDIDocumentResolutionRequest,
+  buildEDIDocumentSourceRequest,
+  getEDIDocumentSourceInputs,
+  hasEDIDocumentSourceValue,
+  parseEDIDocumentPayload,
+  pruneEDIDocumentSourceValues,
+  resolveEDIDocumentSourceContext,
+} from "@/lib/edi/document-source";
+import {
   partnerSettingFieldDisplayText,
   partnerSettingFieldSearchText,
   sourceContextFieldDisplayText,
@@ -78,6 +87,171 @@ describe("transform operation metadata", () => {
   });
 });
 
+describe("EDI document source inputs", () => {
+  it("maps transaction sets to supported source fields", () => {
+    expect(getEDIDocumentSourceInputs("204").map((input) => input.field)).toEqual([
+      "shipmentId",
+      "transferId",
+      "payload",
+    ]);
+    expect(getEDIDocumentSourceInputs("210").map((input) => input.field)).toEqual([
+      "invoiceId",
+      "payload",
+    ]);
+    expect(getEDIDocumentSourceInputs("214").map((input) => input.field)).toEqual([
+      "shipmentId",
+      "shipmentEventId",
+      "payload",
+    ]);
+    expect(getEDIDocumentSourceInputs("997").map((input) => input.field)).toEqual([
+      "sourceMessageId",
+      "payload",
+    ]);
+    expect(getEDIDocumentSourceInputs("999").map((input) => input.field)).toEqual([
+      "sourceMessageId",
+      "payload",
+    ]);
+    expect(getEDIDocumentSourceInputs(undefined).map((input) => input.field)).toEqual(["payload"]);
+  });
+
+  it("builds source requests with only fields valid for the transaction set", () => {
+    expect(
+      buildEDIDocumentSourceRequest(
+        { shipmentId: " sp_123 ", invoiceId: " inv_123 " },
+        "210",
+        "Outbound",
+      ),
+    ).toMatchObject({
+      invoiceId: "inv_123",
+      shipmentId: undefined,
+      transactionSet: "210",
+      direction: "Outbound",
+    });
+
+    expect(
+      buildEDIDocumentSourceRequest({ sourceMessageId: " edimsg_123 " }, "999", "Inbound"),
+    ).toMatchObject({
+      sourceMessageId: "edimsg_123",
+      transactionSet: "999",
+      direction: "Inbound",
+    });
+  });
+
+  it("builds preview and generate resolution requests for source-backed transaction sets", () => {
+    expect(
+      buildEDIDocumentResolutionRequest({
+        partnerDocumentProfileId: " profile_210 ",
+        ediPartnerId: " partner_1 ",
+        sourceValues: {
+          shipmentId: "sp_ignored",
+          invoiceId: " inv_123 ",
+          payload: '{"ignored":true}',
+        },
+        transactionSet: "210",
+        direction: "Outbound",
+        payload: { invoice: { id: "inline" } } as never,
+      }),
+    ).toMatchObject({
+      partnerDocumentProfileId: "profile_210",
+      ediPartnerId: "partner_1",
+      invoiceId: "inv_123",
+      shipmentId: undefined,
+      transactionSet: "210",
+      direction: "Outbound",
+      payload: { invoice: { id: "inline" } },
+    });
+
+    expect(
+      buildEDIDocumentResolutionRequest({
+        partnerDocumentProfileId: "profile_214",
+        sourceValues: {
+          shipmentId: " sp_123 ",
+          shipmentEventId: " spe_123 ",
+          invoiceId: "inv_ignored",
+        },
+        transactionSet: "214",
+        direction: "Outbound",
+      }),
+    ).toMatchObject({
+      partnerDocumentProfileId: "profile_214",
+      shipmentId: "sp_123",
+      shipmentEventId: "spe_123",
+      invoiceId: undefined,
+      transactionSet: "214",
+      direction: "Outbound",
+    });
+
+    expect(
+      buildEDIDocumentResolutionRequest({
+        ediPartnerId: " partner_997 ",
+        sourceValues: { sourceMessageId: " msg_997 ", transferId: "editr_ignored" },
+        transactionSet: "997",
+        direction: "Inbound",
+      }),
+    ).toMatchObject({
+      ediPartnerId: "partner_997",
+      sourceMessageId: "msg_997",
+      transferId: undefined,
+      transactionSet: "997",
+      direction: "Inbound",
+    });
+
+    expect(
+      buildEDIDocumentResolutionRequest({
+        ediPartnerId: "partner_999",
+        sourceValues: { sourceMessageId: " msg_999 " },
+        transactionSet: "999",
+        direction: "Inbound",
+      }),
+    ).toMatchObject({
+      ediPartnerId: "partner_999",
+      sourceMessageId: "msg_999",
+      transactionSet: "999",
+      direction: "Inbound",
+    });
+  });
+
+  it("detects source values from the active transaction source set", () => {
+    expect(hasEDIDocumentSourceValue({ shipmentId: "sp_123" }, "204")).toBe(true);
+    expect(hasEDIDocumentSourceValue({ shipmentId: "sp_123" }, "210")).toBe(false);
+    expect(hasEDIDocumentSourceValue({ invoiceId: "inv_123" }, "210")).toBe(true);
+  });
+
+  it("prunes source values that are inactive for the selected transaction set", () => {
+    expect(
+      pruneEDIDocumentSourceValues(
+        {
+          shipmentId: "sp_ignored",
+          invoiceId: "inv_123",
+          shipmentEventId: "spe_ignored",
+          payload: "{}",
+        },
+        "210",
+      ),
+    ).toEqual({ invoiceId: "inv_123", payload: "{}" });
+  });
+
+  it("uses unsaved template metadata before selected profile metadata for source context", () => {
+    expect(
+      resolveEDIDocumentSourceContext({
+        profile: { transactionSet: "204", direction: "Outbound" } as never,
+        template: { transactionSet: "210", direction: "Inbound" } as never,
+        fallbackTransactionSet: "214",
+        fallbackDirection: "Outbound",
+      }),
+    ).toEqual({ transactionSet: "210", direction: "Inbound" });
+  });
+
+  it("reports invalid payload JSON without producing a payload", () => {
+    expect(parseEDIDocumentPayload("{")).toEqual({ ok: false });
+    expect(parseEDIDocumentPayload("")).toEqual({ ok: true });
+    expect(parseEDIDocumentPayload('{"invoice":{"invoiceNumber":"INV-1"}}')).toEqual({
+      ok: true,
+      payload: { invoice: { invoiceNumber: "INV-1" } },
+    });
+  });
+});
+
 describe("insertPathReference", () => {
   it("inserts backend $path references into argument lists", () => {
     expect(insertPathReference("", "shipment.bol")).toBe("$shipment.bol");
@@ -93,10 +267,7 @@ describe("insertPathReference", () => {
       "$shipment.bol",
     );
     expect(
-      insertPathReference(
-        "ABC",
-        toPartnerPathReference({ path: "envelope.receiverId" } as never),
-      ),
+      insertPathReference("ABC", toPartnerPathReference({ path: "envelope.receiverId" } as never)),
     ).toBe("ABC, $partner.envelope.receiverId");
   });
 });

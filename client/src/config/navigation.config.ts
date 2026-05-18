@@ -281,7 +281,7 @@ const ediModule: NavModule = {
     },
     {
       id: "edi-designer",
-      label: "204 Designer",
+      label: "Template Designer",
       path: "/edi/designer",
       resource: Resource.EDI,
     },

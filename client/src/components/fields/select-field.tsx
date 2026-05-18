@@ -34,6 +34,7 @@ export type BaseSelectFieldProps = {
   placeholder?: string;
   isClearable?: boolean;
   renderOption?: (option: SelectOption, searchValue: string) => React.ReactNode;
+  onValueChange?: (value: string) => void;
   warning?: WarningProps;
 };
 
@@ -53,6 +54,7 @@ export function SelectField<T extends FieldValues>({
   isReadOnly,
   isClearable = false,
   renderOption,
+  onValueChange,
 }: SelectFieldProps<T>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState("");
@@ -78,6 +80,7 @@ export function SelectField<T extends FieldValues>({
 
         const handleClear = () => {
           field.onChange("");
+          onValueChange?.("");
           setSearchValue("");
         };
 
@@ -85,7 +88,9 @@ export function SelectField<T extends FieldValues>({
           if (!isClearable && currentValue === field.value) {
             return;
           }
-          field.onChange(currentValue === field.value ? "" : currentValue);
+          const nextValue = currentValue === field.value ? "" : currentValue;
+          field.onChange(nextValue);
+          onValueChange?.(nextValue);
           setIsOpen(false);
         };
 

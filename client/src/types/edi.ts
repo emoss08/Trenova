@@ -360,6 +360,35 @@ const loadTenderPayloadSchema = z.object({
 
 export type LoadTenderPayload = z.infer<typeof loadTenderPayloadSchema>;
 
+const ediAcknowledgmentDiagnosticSchema = z.object({
+  segmentId: z.string().nullish(),
+  segmentPosition: z.number().nullish(),
+  elementPosition: z.number().nullish(),
+  errorCode: z.string().nullish(),
+  message: z.string().nullish(),
+});
+
+const freightInvoicePayloadSchema = z.object({}).catchall(z.unknown());
+const shipmentStatusPayloadSchema = z.object({}).catchall(z.unknown());
+const tenderResponsePayloadSchema = z.object({}).catchall(z.unknown());
+const functionalAcknowledgmentPayloadSchema = z
+  .object({ diagnostics: z.array(ediAcknowledgmentDiagnosticSchema).nullish() })
+  .catchall(z.unknown());
+const implementationAcknowledgmentPayloadSchema = functionalAcknowledgmentPayloadSchema;
+
+export const ediDocumentPayloadSchema = z.object({
+  transactionSet: ediTransactionSetSchema.nullish(),
+  loadTender: loadTenderPayloadSchema.nullish(),
+  shipment: loadTenderPayloadSchema.nullish(),
+  invoice: freightInvoicePayloadSchema.nullish(),
+  shipmentStatus: shipmentStatusPayloadSchema.nullish(),
+  tenderResponse: tenderResponsePayloadSchema.nullish(),
+  functionalAck: functionalAcknowledgmentPayloadSchema.nullish(),
+  implementationAck: implementationAcknowledgmentPayloadSchema.nullish(),
+});
+
+export type EDIDocumentPayload = z.infer<typeof ediDocumentPayloadSchema>;
+
 export const ediTransferSchema = z.object({
   id: z.string(),
   sourceOrganizationId: z.string(),
@@ -769,7 +798,7 @@ export const ediMessageSchema = z.object({
   transactionControlNumber: z.string(),
   segmentCount: z.number(),
   rawX12: z.string(),
-  payloadSnapshot: loadTenderPayloadSchema.nullish(),
+  payloadSnapshot: ediDocumentPayloadSchema.nullish(),
   generatedById: z.string().nullish(),
   generatedAt: z.number(),
   diagnosticCount: z.number().default(0),
@@ -788,7 +817,7 @@ export const ediTestCaseSchema = z.object({
   partnerDocumentProfileId: z.string(),
   name: z.string(),
   description: z.string().nullish(),
-  payload: loadTenderPayloadSchema,
+  payload: ediDocumentPayloadSchema,
   expectedWarnings: z.number(),
   expectedErrors: z.number(),
 });
@@ -948,7 +977,12 @@ export type PreviewEDIDocumentRequest = {
   ediPartnerId?: string;
   shipmentId?: string;
   transferId?: string;
-  payload?: LoadTenderPayload;
+  invoiceId?: string;
+  shipmentEventId?: string;
+  sourceMessageId?: string;
+  transactionSet?: z.infer<typeof ediTransactionSetSchema>;
+  direction?: z.infer<typeof ediDocumentDirectionSchema>;
+  payload?: EDIDocumentPayload;
 };
 
 export type GenerateEDIDocumentRequest = PreviewEDIDocumentRequest;
@@ -977,6 +1011,8 @@ export const createTemplateDraftSchema = z.object({
   documentTypeId: z.string(),
   name: z.string(),
   description: z.string(),
+  direction: ediDocumentDirectionSchema.default("Outbound"),
+  transactionSet: ediTransactionSetSchema.default("204"),
   x12Version: z.string(),
   functionalGroupId: z.string(),
   notes: z.string(),

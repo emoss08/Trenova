@@ -9,6 +9,7 @@ import (
 	editemplates "github.com/emoss08/trenova/internal/core/domain/edi/templates"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -647,6 +648,228 @@ func TestRender204_StarlarkValueSanitizesSeparators(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, result.Diagnostics)
 	assert.Contains(t, result.RawX12, "L11*A B C D*BM~")
+}
+
+func TestRenderX12_StarterTemplatesRenderTransactionSets(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		transactionSet edi.TransactionSet
+		payload        edi.DocumentPayload
+	}{
+		{
+			name:           "204 load tender",
+			transactionSet: edi.TransactionSet204,
+			payload: edi.NewLoadTenderDocumentPayload(edi.LoadTenderPayload{
+				ShipmentID: pulid.MustNew("shp_"),
+				BOL:        "BOL-204",
+			}),
+		},
+		{
+			name:           "210 invoice",
+			transactionSet: edi.TransactionSet210,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet210,
+				FreightInvoice: &edi.FreightInvoicePayload{
+					InvoiceID:     pulid.MustNew("inv_"),
+					InvoiceNumber: "INV-210",
+					BOL:           "BOL-210",
+					CurrencyCode:  "USD",
+					TotalAmount: decimal.NullDecimal{
+						Decimal: decimal.NewFromInt(100),
+						Valid:   true,
+					},
+					LineCharges: []edi.FreightInvoiceCharge{
+						{Sequence: 1, Description: "Linehaul", Amount: decimal.NewFromInt(100)},
+					},
+				},
+			},
+		},
+		{
+			name:           "214 shipment status",
+			transactionSet: edi.TransactionSet214,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet214,
+				ShipmentStatus: &edi.ShipmentStatusPayload{
+					ShipmentID: pulid.MustNew("shp_"),
+					BOL:        "BOL-214",
+					StatusCode: "X3",
+				},
+			},
+		},
+		{
+			name:           "990 tender response",
+			transactionSet: edi.TransactionSet990,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet990,
+				TenderResponse: &edi.TenderResponsePayload{
+					ShipmentID:   pulid.MustNew("shp_"),
+					BOL:          "BOL-990",
+					ResponseCode: "A",
+				},
+			},
+		},
+		{
+			name:           "997 functional acknowledgment",
+			transactionSet: edi.TransactionSet997,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet997,
+				FunctionalAcknowledgment: &edi.FunctionalAcknowledgmentPayload{
+					OriginalFunctionalGroupID:        "SM",
+					OriginalGroupControlNumber:       "7",
+					OriginalTransactionSet:           edi.TransactionSet204,
+					OriginalTransactionControlNumber: "0007",
+					GroupAcknowledgmentCode:          "A",
+					TransactionAcknowledgmentCode:    "A",
+					AcceptedTransactionSetCount:      1,
+					ReceivedTransactionSetCount:      1,
+					IncludedTransactionSetCount:      1,
+				},
+			},
+		},
+		{
+			name:           "999 implementation acknowledgment",
+			transactionSet: edi.TransactionSet999,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet999,
+				ImplementationAcknowledgment: &edi.ImplementationAckPayload{
+					OriginalFunctionalGroupID:        "SM",
+					OriginalGroupControlNumber:       "9",
+					OriginalTransactionSet:           edi.TransactionSet204,
+					OriginalTransactionControlNumber: "0009",
+					GroupAcknowledgmentCode:          "A",
+					TransactionAcknowledgmentCode:    "A",
+					AcceptedTransactionSetCount:      1,
+					ReceivedTransactionSetCount:      1,
+					IncludedTransactionSetCount:      1,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			versionID := pulid.MustNew("editv_")
+			segments, err := editemplates.StarterSegments(
+				pagination.TenantInfo{},
+				versionID,
+				tt.transactionSet,
+			)
+			require.NoError(t, err)
+			profile := &edi.EDIPartnerDocumentProfile{
+				TransactionSet:    tt.transactionSet,
+				FunctionalGroupID: edi.FunctionalGroupDefault(tt.transactionSet),
+				Envelope:          edi.DefaultX12EnvelopeSettings(),
+				ValidationMode:    edi.ValidationModeWarnOnly,
+				PartnerSettings: map[string]any{
+					"carrier": map[string]any{"scac": "TEST"},
+				},
+			}
+			runtime := RuntimeValues(profile, "004010")
+			runtime["isaControlNumber"] = "000000001"
+			runtime["groupControlNumber"] = "1"
+			runtime["transactionControlNumber"] = "0001"
+
+			result, err := RenderX12(&RenderInput{
+				Profile: profile,
+				TemplateVersion: &edi.EDITemplateVersion{
+					Segments: segments,
+				},
+				DocumentPayload: tt.payload,
+				Runtime:         runtime,
+			})
+			require.NoError(t, err)
+			assert.Contains(t, result.RawX12, "ST*"+string(tt.transactionSet)+"*0001")
+			assert.Contains(t, result.RawX12, "GE*1*1")
+			assert.Contains(t, result.RawX12, "IEA*1*000000001")
+			assert.Contains(t, result.RawX12, "SE*")
+			assert.Positive(t, result.SegmentCount)
+		})
+	}
+}
+
+func TestRenderX12_StarlarkReadsDocumentRoots(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		transactionSet edi.TransactionSet
+		payload        edi.DocumentPayload
+		script         string
+		want           string
+	}{
+		{
+			name:           "invoice",
+			transactionSet: edi.TransactionSet210,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet210,
+				FreightInvoice: &edi.FreightInvoicePayload{
+					InvoiceNumber: "INV-ROOT",
+				},
+			},
+			script: "def value(ctx):\n    return ctx[\"invoice\"][\"invoiceNumber\"]",
+			want:   "TST*INV-ROOT~",
+		},
+		{
+			name:           "shipment status",
+			transactionSet: edi.TransactionSet214,
+			payload: edi.DocumentPayload{
+				TransactionSet: edi.TransactionSet214,
+				ShipmentStatus: &edi.ShipmentStatusPayload{
+					StatusCode: "D1",
+				},
+			},
+			script: "def value(ctx):\n    return ctx[\"shipmentStatus\"][\"statusCode\"]",
+			want:   "TST*D1~",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			profile := &edi.EDIPartnerDocumentProfile{
+				TransactionSet:    tt.transactionSet,
+				FunctionalGroupID: edi.FunctionalGroupDefault(tt.transactionSet),
+				Envelope:          edi.DefaultX12EnvelopeSettings(),
+				ValidationMode:    edi.ValidationModeStrict,
+				PartnerSettings:   map[string]any{},
+			}
+			runtime := RuntimeValues(profile, edi.DefaultX12204Version)
+			SetProvisionalControlNumbers(runtime)
+
+			result, err := RenderX12(&RenderInput{
+				Profile: profile,
+				TemplateVersion: &edi.EDITemplateVersion{
+					Segments: []*edi.EDITemplateSegment{
+						{
+							SegmentID: "TST",
+							Sequence:  1,
+							Required:  true,
+							Elements: []edi.TemplateElement{
+								{
+									Position:         1,
+									Name:             "Value",
+									Source:           edi.TemplateElementSourceStarlark,
+									StarlarkFunction: "value",
+									StarlarkScript:   tt.script,
+								},
+							},
+						},
+					},
+				},
+				DocumentPayload: tt.payload,
+				Runtime:         runtime,
+			})
+
+			require.NoError(t, err)
+			require.Empty(t, result.Diagnostics)
+			assert.Contains(t, result.RawX12, tt.want)
+		})
+	}
 }
 
 func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {

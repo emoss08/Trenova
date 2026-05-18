@@ -59,15 +59,18 @@ func (s *Service) CreateTemplate(
 		BusinessUnitID:    req.TenantInfo.BuID,
 		OrganizationID:    req.TenantInfo.OrgID,
 		VersionNumber:     1,
-		X12Version:        stringutils.FirstNonEmpty(req.X12Version, edi.DefaultX12204Version),
-		FunctionalGroupID: stringutils.FirstNonEmpty(req.FunctionalGroupID, "SM"),
+		X12Version:        stringutils.FirstNonEmpty(req.X12Version, defaultX12Version(req.TransactionSet)),
+		FunctionalGroupID: stringutils.FirstNonEmpty(req.FunctionalGroupID, edi.FunctionalGroupDefault(req.TransactionSet)),
 		Status:            edi.TemplateStatusDraft,
 		Notes:             strings.TrimSpace(req.Notes),
 	}
 	segments := cloneTemplateSegments(req.TenantInfo, pulid.Nil, req.Segments)
-	if len(segments) == 0 && req.TransactionSet == edi.TransactionSet204 &&
-		req.Direction == edi.DocumentDirectionOutbound {
-		segments = editemplates.Base204Segments(req.TenantInfo, pulid.Nil)
+	if len(segments) == 0 {
+		var starterErr error
+		segments, starterErr = editemplates.StarterSegments(req.TenantInfo, pulid.Nil, req.TransactionSet)
+		if starterErr != nil {
+			return nil, starterErr
+		}
 	}
 
 	created, createdVersion, err := s.documentRepo.CreateTemplate(

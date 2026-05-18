@@ -225,11 +225,7 @@ function ElementInspector({
         disabled={!isEditable}
         options={templateElementSourceOptions}
       />
-      <SourceEditor
-        element={element}
-        isEditable={isEditable}
-        onChange={update}
-      />
+      <SourceEditor element={element} isEditable={isEditable} onChange={update} />
       <ConditionEditor
         condition={element.condition ?? ""}
         disabled={!isEditable}
@@ -361,13 +357,7 @@ function SourceEditor({
     );
   }
   if (element.source === "transform") {
-    return (
-      <TransformPipelineEditor
-        element={element}
-        disabled={!isEditable}
-        onChange={onChange}
-      />
-    );
+    return <TransformPipelineEditor element={element} disabled={!isEditable} onChange={onChange} />;
   }
   const starlarkPresets = [
     ...getEDIScriptPresetsByCategory("elementValue"),

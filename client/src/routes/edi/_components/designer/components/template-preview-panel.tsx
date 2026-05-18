@@ -1,46 +1,70 @@
 import { Button } from "@/components/ui/button";
+import { DocumentSourceControls } from "@/components/edi/document-source-controls";
+import {
+  buildEDIDocumentResolutionRequest,
+  hasEDIDocumentSourceValue,
+  pruneEDIDocumentSourceValues,
+  type EDIDocumentSourceField,
+  type EDIDocumentSourceValues,
+} from "@/lib/edi/document-source";
+import type { EDIPartnerDocumentProfile } from "@/types/edi";
 import { RefreshCwIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
 import { EDIDocumentProfileAutocompleteField } from "./designer-fields";
-import {
-  InputBlock,
-  PreviewPane,
-  TextareaBlock,
-  parsePayload,
-} from "./designer-shared";
+import { PreviewPane, parsePayload } from "./designer-shared";
 
 export default function TemplatePreviewPanel() {
   const [profileId, setProfileId] = useState("");
-  const [shipmentId, setShipmentId] = useState("");
-  const [transferId, setTransferId] = useState("");
-  const [payloadJson, setPayloadJson] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState<EDIPartnerDocumentProfile | null>(null);
+  const [sourceValues, setSourceValues] = useState<EDIDocumentSourceValues>({});
   const previewMutation = usePreviewEDIDocumentMutation({
     onError: () => toast.error("Failed to preview EDI document"),
   });
-  const canPreview = !!profileId && (!!shipmentId || !!transferId || !!payloadJson.trim());
+  const transactionSet = selectedProfile?.transactionSet;
+  const direction = selectedProfile?.direction;
+  const canPreview = !!profileId && hasEDIDocumentSourceValue(sourceValues, transactionSet);
+
+  useEffect(() => {
+    setSourceValues((current) => pruneEDIDocumentSourceValues(current, transactionSet));
+  }, [transactionSet]);
+
+  const setSourceValue = (field: EDIDocumentSourceField, value: string) => {
+    setSourceValues((current) => ({ ...current, [field]: value }));
+  };
 
   return (
     <div className="grid h-full grid-cols-[360px_minmax(0,1fr)]">
       <div className="space-y-3 border-r p-3">
         <EDIDocumentProfileAutocompleteField
           value={profileId}
-          onValueChange={setProfileId}
+          onValueChange={(nextProfileId) => {
+            setProfileId(nextProfileId);
+            setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
+          }}
+          onOptionChange={setSelectedProfile}
         />
-        <InputBlock label="Shipment ID" value={shipmentId} onChange={setShipmentId} />
-        <InputBlock label="Transfer ID" value={transferId} onChange={setTransferId} />
-        <TextareaBlock label="Payload JSON" value={payloadJson} onChange={setPayloadJson} />
+        <DocumentSourceControls
+          transactionSet={transactionSet}
+          values={sourceValues}
+          onChange={setSourceValue}
+        />
         <Button
           type="button"
-          onClick={() =>
-            previewMutation.mutate({
-              partnerDocumentProfileId: profileId || undefined,
-              shipmentId: shipmentId || undefined,
-              transferId: transferId || undefined,
-              payload: parsePayload(payloadJson),
-            })
-          }
+          onClick={() => {
+            const payloadResult = parsePayload(sourceValues.payload ?? "");
+            if (!payloadResult.ok) return;
+            previewMutation.mutate(
+              buildEDIDocumentResolutionRequest({
+                partnerDocumentProfileId: profileId || undefined,
+                sourceValues,
+                transactionSet,
+                direction,
+                payload: payloadResult.payload,
+              }),
+            );
+          }}
           isLoading={previewMutation.isPending}
           disabled={!canPreview}
         >

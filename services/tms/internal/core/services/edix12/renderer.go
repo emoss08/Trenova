@@ -21,6 +21,7 @@ type RenderInput struct {
 	Profile         *edi.EDIPartnerDocumentProfile
 	TemplateVersion *edi.EDITemplateVersion
 	Payload         edi.LoadTenderPayload
+	DocumentPayload edi.DocumentPayload
 	X12Version      string
 	Runtime         map[string]any
 }
@@ -41,13 +42,18 @@ type Diagnostic struct {
 	SuggestedFix    string                 `json:"suggestedFix"`
 }
 
-func Render204(input *RenderInput) (*RenderResult, error) {
+func RenderX12(input *RenderInput) (*RenderResult, error) {
 	renderCtx := input.Context
 	if renderCtx == nil {
 		renderCtx = context.Background()
 	}
 
-	payloadMap, err := jsonutils.ToJSON(input.Payload)
+	payload := input.DocumentPayload
+	if !payload.HasBranch() && input.Payload.ShipmentID.IsNotNil() {
+		payload = edi.NewLoadTenderDocumentPayload(input.Payload)
+	}
+	payload.Normalize()
+	payloadMap, err := jsonutils.ToJSON(payload)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +71,7 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 			repeats = []any{nil}
 		}
 		for _, repeatValue := range repeats {
-			env := renderEnvironment(
-				payloadMap,
-				input.Profile.PartnerSettings,
-				input.Runtime,
-				repeatValue,
-			)
+			env := renderEnvironment(payloadMap, input.Profile.PartnerSettings, input.Runtime, repeatValue)
 			include, conditionDiagnostic := evaluateCondition(conditionEvalParams{
 				Context:   renderCtx,
 				Condition: segment.Condition,
@@ -124,6 +125,10 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 	}, nil
 }
 
+func Render204(input *RenderInput) (*RenderResult, error) {
+	return RenderX12(input)
+}
+
 func RuntimeValues(profile *edi.EDIPartnerDocumentProfile, x12Version string) map[string]any {
 	now := time.Now().UTC()
 	envelope := profile.Envelope
@@ -144,12 +149,15 @@ func RuntimeValues(profile *edi.EDIPartnerDocumentProfile, x12Version string) ma
 		),
 		"componentSeparator":  stringutils.FirstNonEmpty(envelope.ComponentSeparator, ">"),
 		"repetitionSeparator": stringutils.FirstNonEmpty(envelope.RepetitionSeparator, "^"),
-		"functionalGroupId":   stringutils.FirstNonEmpty(profile.FunctionalGroupID, "SM"),
-		"x12Version":          x12Version,
-		"interchangeDate":     now.Format("060102"),
-		"interchangeTime":     now.Format("1504"),
-		"groupDate":           now.Format("20060102"),
-		"groupTime":           now.Format("1504"),
+		"functionalGroupId": stringutils.FirstNonEmpty(
+			profile.FunctionalGroupID,
+			edi.FunctionalGroupDefault(profile.TransactionSet),
+		),
+		"x12Version":      x12Version,
+		"interchangeDate": now.Format("060102"),
+		"interchangeTime": now.Format("1504"),
+		"groupDate":       now.Format("20060102"),
+		"groupTime":       now.Format("1504"),
 	}
 }
 
@@ -339,11 +347,32 @@ func resolveDirectSource(source directSource, env map[string]any) (any, bool) {
 }
 
 func qualifyFieldPath(path string) string {
-	if strings.HasPrefix(path, "repeat.") || strings.HasPrefix(path, "runtime.") ||
-		strings.HasPrefix(path, "partner.") || strings.HasPrefix(path, "mapping.") {
+	if isQualifiedFieldRoot(path) {
 		return path
 	}
 	return "shipment." + path
+}
+
+func isQualifiedFieldRoot(path string) bool {
+	roots := [...]string{
+		"shipment.",
+		"loadTender.",
+		"invoice.",
+		"shipmentStatus.",
+		"tenderResponse.",
+		"functionalAck.",
+		"implementationAck.",
+		"repeat.",
+		"runtime.",
+		"partner.",
+		"mapping.",
+	}
+	for _, root := range roots {
+		if strings.HasPrefix(path, root) {
+			return true
+		}
+	}
+	return false
 }
 
 func formatElementValue(
@@ -430,7 +459,7 @@ func applyTrailerCounts(rendered []string, separator string) {
 }
 
 func renderEnvironment(
-	shipment map[string]any,
+	payload map[string]any,
 	partner map[string]any,
 	runtime map[string]any,
 	repeat any,
@@ -438,33 +467,38 @@ func renderEnvironment(
 	if partner == nil {
 		partner = map[string]any{}
 	}
-	return map[string]any{
-		"shipment": shipment,
-		"partner":  partner,
-		"mapping":  map[string]any{},
-		"runtime":  runtime,
-		"repeat":   repeat,
+	env := make(map[string]any, len(payload)+11)
+	for key, value := range payload {
+		env[key] = value
+	}
+	ensureDocumentRootMaps(env)
+	env["partner"] = partner
+	env["mapping"] = map[string]any{}
+	env["runtime"] = runtime
+	env["repeat"] = repeat
+	return env
+}
+
+func ensureDocumentRootMaps(env map[string]any) {
+	for _, root := range documentRootKeys {
+		if _, ok := env[root].(map[string]any); !ok {
+			env[root] = map[string]any{}
+		}
 	}
 }
 
+var documentRootKeys = [...]string{
+	"shipment",
+	"loadTender",
+	"invoice",
+	"shipmentStatus",
+	"tenderResponse",
+	"functionalAck",
+	"implementationAck",
+}
+
 func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnostic) {
-	starlarkCtx, err := edistarlark.BuildContext(
-		envMap(params.Env, "shipment"),
-		envMap(params.Env, "partner"),
-		envMap(params.Env, "runtime"),
-		envMap(params.Env, "mapping"),
-	)
-	if err != nil {
-		return "", []Diagnostic{
-			renderDiagnostic(renderDiagnosticParams{
-				Segment:      params.Segment,
-				Position:     params.Element.Position,
-				Path:         sourcePath(params.Element),
-				Message:      err.Error(),
-				SuggestedFix: suggestedFixForSource(params.Element.Source),
-			}),
-		}
-	}
+	starlarkCtx := starlarkContext(params.Env)
 
 	repeatValue := params.Env["repeat"]
 	if repeatValue != nil {
@@ -486,6 +520,24 @@ func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnos
 		return "", starlarkDiagnostics(result.Diagnostics)
 	}
 	return result.Value, nil
+}
+
+func starlarkContext(env map[string]any) map[string]any {
+	ctx := make(map[string]any, len(env))
+	for key, value := range env {
+		ctx[key] = value
+	}
+	ensureDocumentRootMaps(ctx)
+	if _, ok := ctx["partner"].(map[string]any); !ok {
+		ctx["partner"] = map[string]any{}
+	}
+	if _, ok := ctx["runtime"].(map[string]any); !ok {
+		ctx["runtime"] = map[string]any{}
+	}
+	if _, ok := ctx["mapping"].(map[string]any); !ok {
+		ctx["mapping"] = map[string]any{}
+	}
+	return ctx
 }
 
 func templateScriptLibraries(
@@ -520,19 +572,11 @@ func starlarkDiagnostics(diagnostics []edistarlark.Diagnostic) []Diagnostic {
 	return converted
 }
 
-func envMap(env map[string]any, key string) map[string]any {
-	value, ok := env[key].(map[string]any)
-	if !ok {
-		return map[string]any{}
-	}
-	return value
-}
-
 func repeatValues(payload map[string]any, path string) []any {
 	if strings.TrimSpace(path) == "" {
 		return nil
 	}
-	items, ok := maputils.Path(map[string]any{"shipment": payload}, "shipment."+path).([]any)
+	items, ok := maputils.Path(payload, qualifyFieldPath(path)).([]any)
 	if !ok {
 		return nil
 	}

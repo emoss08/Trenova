@@ -95,22 +95,32 @@ type TransferChangeActionRequest struct {
 }
 
 type PreviewEDIDocumentRequest struct {
-	TenantInfo               pagination.TenantInfo  `json:"-"`
-	PartnerDocumentProfileID pulid.ID               `json:"partnerDocumentProfileId"`
-	EDIPartnerID             pulid.ID               `json:"ediPartnerId"`
-	ShipmentID               pulid.ID               `json:"shipmentId"`
-	TransferID               pulid.ID               `json:"transferId"`
-	Payload                  *edi.LoadTenderPayload `json:"payload"`
+	TenantInfo               pagination.TenantInfo `json:"-"`
+	PartnerDocumentProfileID pulid.ID              `json:"partnerDocumentProfileId"`
+	EDIPartnerID             pulid.ID              `json:"ediPartnerId"`
+	ShipmentID               pulid.ID              `json:"shipmentId"`
+	TransferID               pulid.ID              `json:"transferId"`
+	InvoiceID                pulid.ID              `json:"invoiceId"`
+	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
+	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
+	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
+	Direction                edi.DocumentDirection `json:"direction"`
+	Payload                  *edi.DocumentPayload  `json:"payload"`
 }
 
 type GenerateEDIDocumentRequest struct {
-	TenantInfo               pagination.TenantInfo  `json:"-"`
-	PartnerDocumentProfileID pulid.ID               `json:"partnerDocumentProfileId"`
-	EDIPartnerID             pulid.ID               `json:"ediPartnerId"`
-	ShipmentID               pulid.ID               `json:"shipmentId"`
-	TransferID               pulid.ID               `json:"transferId"`
-	Payload                  *edi.LoadTenderPayload `json:"payload"`
-	GeneratedByID            pulid.ID               `json:"-"`
+	TenantInfo               pagination.TenantInfo `json:"-"`
+	PartnerDocumentProfileID pulid.ID              `json:"partnerDocumentProfileId"`
+	EDIPartnerID             pulid.ID              `json:"ediPartnerId"`
+	ShipmentID               pulid.ID              `json:"shipmentId"`
+	TransferID               pulid.ID              `json:"transferId"`
+	InvoiceID                pulid.ID              `json:"invoiceId"`
+	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
+	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
+	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
+	Direction                edi.DocumentDirection `json:"direction"`
+	Payload                  *edi.DocumentPayload  `json:"payload"`
+	GeneratedByID            pulid.ID              `json:"-"`
 }
 
 type UpsertEDIPartnerDocumentProfileRequest struct {

@@ -15,8 +15,8 @@ import type {
 import type { SelectOption } from "@/types/fields";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import { SearchIcon } from "lucide-react";
-import { useEffect, useId, useState, type ReactNode } from "react";
-import { useForm, useWatch, type FieldValues } from "react-hook-form";
+import { useId, useState, type ReactNode } from "react";
+import { useForm, type FieldValues } from "react-hook-form";
 import { insertPathReference } from "../utils/edi-designer-utils";
 
 type ControlledSelectFormValues = {
@@ -44,13 +44,6 @@ export function ControlledSelectField({
     defaultValues: { value: value ?? "" },
     values: { value: value ?? "" },
   });
-  const watchedValue = useWatch({ control: form.control, name: "value" });
-
-  useEffect(() => {
-    if (watchedValue !== value) {
-      onValueChange(watchedValue ?? "");
-    }
-  }, [onValueChange, value, watchedValue]);
 
   return (
     <SelectField
@@ -61,6 +54,7 @@ export function ControlledSelectField({
       placeholder={placeholder}
       isReadOnly={disabled}
       isClearable={clearable}
+      onValueChange={onValueChange}
     />
   );
 }
@@ -185,10 +179,14 @@ export function EDITemplateAutocompleteField({
   value,
   onValueChange,
   disabled,
+  transactionSet,
+  direction,
 }: {
   value: string;
   onValueChange: (value: string) => void;
   disabled?: boolean;
+  transactionSet?: string;
+  direction?: string;
 }) {
   return (
     <ControlledAutocompleteField<EDITemplate>
@@ -197,7 +195,10 @@ export function EDITemplateAutocompleteField({
       onValueChange={onValueChange}
       link="/edi/templates/select-options/"
       selectedValueLink="/edi/templates/"
-      extraSearchParams={{ transactionSet: "204", direction: "Outbound" }}
+      extraSearchParams={{
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+      }}
       renderOption={(option) => (
         <OptionStack primary={option.name} secondary={option.description ?? option.status} />
       )}
@@ -211,24 +212,31 @@ export function EDITemplateAutocompleteField({
 export function EDIDocumentProfileAutocompleteField({
   value,
   onValueChange,
+  onOptionChange,
   disabled,
   partnerId,
+  transactionSet,
+  direction,
 }: {
   value: string;
   onValueChange: (value: string) => void;
+  onOptionChange?: (option: EDIPartnerDocumentProfile | null) => void;
   disabled?: boolean;
   partnerId?: string;
+  transactionSet?: string;
+  direction?: string;
 }) {
   return (
     <ControlledAutocompleteField<EDIPartnerDocumentProfile>
       label="Document Profile"
       value={value}
       onValueChange={onValueChange}
+      onOptionChange={onOptionChange}
       link="/edi/document-profiles/select-options/"
       selectedValueLink="/edi/document-profiles/"
       extraSearchParams={{
-        transactionSet: "204",
-        direction: "Outbound",
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
         ...(partnerId ? { partnerId } : {}),
       }}
       renderOption={(option) => (
@@ -259,9 +267,7 @@ export function partnerSettingFieldDisplayText(field: EDIPartnerSettingField) {
 }
 
 export function partnerSettingFieldSearchText(field: EDIPartnerSettingField) {
-  return [field.path, field.label, field.description, field.groupKey]
-    .filter(Boolean)
-    .join(" ");
+  return [field.path, field.label, field.description, field.groupKey].filter(Boolean).join(" ");
 }
 
 export function toSourcePathReference(field: EDISourceContextField) {
@@ -279,6 +285,10 @@ export function PathReferenceField({
   disabled,
   sourceOnlyRepeated,
   partner,
+  transactionSet,
+  direction,
+  documentTypeId,
+  x12Version,
 }: {
   label: string;
   value: string;
@@ -286,17 +296,33 @@ export function PathReferenceField({
   disabled?: boolean;
   sourceOnlyRepeated?: boolean;
   partner?: boolean;
+  transactionSet?: string;
+  direction?: string;
+  documentTypeId?: string;
+  x12Version?: string;
 }) {
   return (
     <div className="space-y-1">
       <PathInput label={label} value={value} onChange={onChange} disabled={disabled} />
       {partner ? (
-        <PartnerSettingPicker disabled={disabled} onPick={onChange} />
+        <PartnerSettingPicker
+          disabled={disabled}
+          onPick={onChange}
+          transactionSet={transactionSet}
+          direction={direction}
+          documentTypeId={documentTypeId}
+          x12Version={x12Version}
+        />
       ) : (
         <SourceContextPicker
           disabled={disabled}
           onPick={onChange}
-          extraSearchParams={sourceOnlyRepeated ? { repeated: "true" } : undefined}
+          extraSearchParams={{
+            ...(sourceOnlyRepeated ? { repeated: "true" } : {}),
+            ...(transactionSet ? { transactionSet } : {}),
+            ...(direction ? { direction } : {}),
+            ...(x12Version ? { x12Version } : {}),
+          }}
         />
       )}
     </div>
@@ -309,12 +335,20 @@ export function PathInsertField({
   placeholder,
   disabled,
   onChange,
+  transactionSet,
+  direction,
+  documentTypeId,
+  x12Version,
 }: {
   label: string;
   value: string;
   placeholder?: string;
   disabled: boolean;
   onChange: (value: string) => void;
+  transactionSet?: string;
+  direction?: string;
+  documentTypeId?: string;
+  x12Version?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -329,11 +363,20 @@ export function PathInsertField({
         <SourceContextPicker
           disabled={disabled}
           placeholder="Source"
+          extraSearchParams={{
+            ...(transactionSet ? { transactionSet } : {}),
+            ...(direction ? { direction } : {}),
+            ...(x12Version ? { x12Version } : {}),
+          }}
           onPick={(path) => onChange(insertPathReference(value, path))}
         />
         <PartnerSettingPicker
           disabled={disabled}
           placeholder="Partner"
+          transactionSet={transactionSet}
+          direction={direction}
+          documentTypeId={documentTypeId}
+          x12Version={x12Version}
           onPick={(path) => onChange(insertPathReference(value, path))}
         />
       </div>
@@ -363,8 +406,6 @@ function SourceContextPicker({
       getPickValue={toSourcePathReference}
       extraSearchParams={{
         status: "Active",
-        transactionSet: "204",
-        direction: "Outbound",
         ...extraSearchParams,
       }}
       renderOption={(field) => (
@@ -379,10 +420,18 @@ function PartnerSettingPicker({
   disabled,
   onPick,
   placeholder = "Browse partner settings",
+  transactionSet,
+  direction,
+  documentTypeId,
+  x12Version,
 }: {
   disabled?: boolean;
   onPick: (path: string) => void;
   placeholder?: string;
+  transactionSet?: string;
+  direction?: string;
+  documentTypeId?: string;
+  x12Version?: string;
 }) {
   return (
     <PathPicker<EDIPartnerSettingField>
@@ -395,8 +444,10 @@ function PartnerSettingPicker({
       getPickValue={toPartnerPathReference}
       extraSearchParams={{
         status: "Active",
-        transactionSet: "204",
-        direction: "Outbound",
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+        ...(documentTypeId ? { documentTypeId } : {}),
+        ...(x12Version ? { x12Version } : {}),
       }}
       renderOption={(field) => (
         <OptionStack

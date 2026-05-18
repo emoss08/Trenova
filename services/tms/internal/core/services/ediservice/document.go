@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -22,7 +23,7 @@ type resolvedDocumentContext struct {
 	ctx                context.Context
 	profile            *edi.EDIPartnerDocumentProfile
 	templateVersion    *edi.EDITemplateVersion
-	payload            edi.LoadTenderPayload
+	payload            edi.DocumentPayload
 	x12Version         string
 	runtime            map[string]any
 	partnerDiagnostics []edix12.Diagnostic
@@ -112,39 +113,50 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if err = validateProfileTemplateVersionCompatibility(req.Status, templateVersion); err != nil {
 		return nil, err
 	}
-	documentTypes, err := s.documentRepo.ListDocumentTypes(
-		ctx,
-		repositories.ListEDIDocumentTypesRequest{
-			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionOutbound,
-		},
-	)
+	template, err := s.documentRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
+		ID:         req.TemplateID,
+		TenantInfo: req.TenantInfo,
+	})
 	if err != nil {
 		return nil, err
 	}
-	if len(documentTypes) == 0 {
-		return nil, errors.New("x12 204 outbound document type is not seeded")
+	documentType := template.DocumentType
+	if documentType == nil {
+		documentTypes, listErr := s.documentRepo.ListDocumentTypes(ctx, repositories.ListEDIDocumentTypesRequest{
+			Standard:       template.Standard,
+			TransactionSet: template.TransactionSet,
+			Direction:      template.Direction,
+		})
+		if listErr != nil {
+			return nil, listErr
+		}
+		if len(documentTypes) == 0 {
+			return nil, errors.New("selected template document type is not seeded")
+		}
+		documentType = documentTypes[0]
 	}
 
 	profile := &edi.EDIPartnerDocumentProfile{
-		ID:                 req.ProfileID,
-		BusinessUnitID:     req.TenantInfo.BuID,
-		OrganizationID:     req.TenantInfo.OrgID,
-		EDIPartnerID:       req.EDIPartnerID,
-		DocumentTypeID:     documentTypes[0].ID,
-		TemplateID:         req.TemplateID,
-		TemplateVersionID:  req.TemplateVersionID,
-		Name:               stringutils.FirstNonEmpty(req.Name, "Outbound X12 204"),
+		ID:                req.ProfileID,
+		BusinessUnitID:    req.TenantInfo.BuID,
+		OrganizationID:    req.TenantInfo.OrgID,
+		EDIPartnerID:      req.EDIPartnerID,
+		DocumentTypeID:    documentType.ID,
+		TemplateID:        req.TemplateID,
+		TemplateVersionID: req.TemplateVersionID,
+		Name: stringutils.FirstNonEmpty(
+			req.Name,
+			defaultProfileName(documentType.TransactionSet, documentType.Direction),
+		),
 		Status:             req.Status,
-		Direction:          edi.DocumentDirectionOutbound,
-		Standard:           edi.EDIStandardX12,
-		TransactionSet:     edi.TransactionSet204,
+		Direction:          documentType.Direction,
+		Standard:           documentType.Standard,
+		TransactionSet:     documentType.TransactionSet,
 		X12VersionOverride: req.X12VersionOverride,
 		FunctionalGroupID: stringutils.FirstNonEmpty(
 			req.FunctionalGroupID,
 			templateVersion.FunctionalGroupID,
-			"SM",
+			edi.FunctionalGroupDefault(documentType.TransactionSet),
 		),
 		Envelope:                     req.Envelope,
 		Acknowledgment:               req.Acknowledgment,
@@ -281,7 +293,7 @@ func (s *Service) PreviewDocument(
 		return nil, err
 	}
 	edix12.SetProvisionalControlNumbers(resolved.runtime)
-	result, err := edix12.Render204(resolved.renderInput())
+	result, err := edix12.RenderX12(resolved.renderInput())
 	if err != nil {
 		return nil, err
 	}
@@ -316,6 +328,11 @@ func (s *Service) GenerateDocument(
 		EDIPartnerID:             req.EDIPartnerID,
 		ShipmentID:               req.ShipmentID,
 		TransferID:               req.TransferID,
+		InvoiceID:                req.InvoiceID,
+		ShipmentEventID:          req.ShipmentEventID,
+		SourceMessageID:          req.SourceMessageID,
+		TransactionSet:           req.TransactionSet,
+		Direction:                req.Direction,
 		Payload:                  req.Payload,
 	}
 	resolved, err := s.resolveDocumentContext(ctx, previewReq)
@@ -328,7 +345,7 @@ func (s *Service) GenerateDocument(
 	provisional := *resolved
 	provisional.runtime = maputils.CloneShallow(resolved.runtime)
 	edix12.SetProvisionalControlNumbers(provisional.runtime)
-	provisionalResult, err := edix12.Render204(provisional.renderInput())
+	provisionalResult, err := edix12.RenderX12(provisional.renderInput())
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +385,7 @@ func (s *Service) GenerateDocument(
 		"%04d",
 		controlNumbers[edi.ControlNumberKindTransaction],
 	)
-	result, err := edix12.Render204(resolved.renderInput())
+	result, err := edix12.RenderX12(resolved.renderInput())
 	if err != nil {
 		return nil, err
 	}
@@ -384,11 +401,11 @@ func (s *Service) GenerateDocument(
 		PartnerDocumentProfileID: resolved.profile.ID,
 		TemplateID:               resolved.profile.TemplateID,
 		TemplateVersionID:        resolved.templateVersion.ID,
-		ShipmentID:               resolved.payload.ShipmentID,
+		ShipmentID:               documentShipmentID(resolved.payload),
 		TransferID:               req.TransferID,
-		Direction:                edi.DocumentDirectionOutbound,
-		Standard:                 edi.EDIStandardX12,
-		TransactionSet:           edi.TransactionSet204,
+		Direction:                resolved.profile.Direction,
+		Standard:                 resolved.profile.Standard,
+		TransactionSet:           resolved.profile.TransactionSet,
 		X12Version:               resolved.x12Version,
 		Status:                   edi.MessageStatusGenerated,
 		ValidationMode:           resolved.profile.ValidationMode,
@@ -483,14 +500,14 @@ func (s *Service) resolveDocumentContext(
 	if err != nil {
 		return nil, err
 	}
-	payload, err := s.resolvePayload(ctx, req)
+	payload, err := s.resolvePayload(ctx, req, profile)
 	if err != nil {
 		return nil, err
 	}
 	x12Version := stringutils.FirstNonEmpty(
 		profile.X12VersionOverride,
 		templateVersion.X12Version,
-		edi.DefaultX12204Version,
+		defaultX12Version(profile.TransactionSet),
 	)
 	runtime := edix12.RuntimeValues(profile, x12Version)
 	partnerDiagnostics, err := s.validateProfilePartnerSettings(
@@ -533,40 +550,140 @@ func (s *Service) resolveProfile(
 			"EDI partner or document profile is required",
 		)
 	}
-	return s.documentRepo.GetActivePartnerDocumentProfile(
+	profile, err := s.documentRepo.GetActivePartnerDocumentProfile(
 		ctx,
 		repositories.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      req.EDIPartnerID,
 			TenantInfo:     req.TenantInfo,
-			TransactionSet: edi.TransactionSet204,
-			Direction:      edi.DocumentDirectionOutbound,
+			TransactionSet: req.TransactionSet,
+			Direction:      req.Direction,
 		},
 	)
+	if err != nil && strings.Contains(err.Error(), "multiple active EDI document profiles") {
+		return nil, errortypes.NewValidationError(
+			"transactionSet",
+			errortypes.ErrRequired,
+			"Transaction set and direction are required when a partner has multiple active EDI document profiles",
+		)
+	}
+	return profile, err
 }
 
 func (s *Service) resolvePayload(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
-) (edi.LoadTenderPayload, error) {
+	profile *edi.EDIPartnerDocumentProfile,
+) (edi.DocumentPayload, error) {
 	if req.Payload != nil {
-		return *req.Payload, nil
+		payload := *req.Payload
+		payload.Normalize()
+		return payload, nil
+	}
+	transactionSet := profile.TransactionSet
+	if transactionSet == "" {
+		transactionSet = req.TransactionSet
+	}
+	if transactionSet == "" {
+		transactionSet = edi.TransactionSet204
 	}
 	if !req.TransferID.IsNil() {
+		if transactionSet != edi.TransactionSet204 && transactionSet != edi.TransactionSet990 {
+			return edi.DocumentPayload{}, sourceTransactionSetError(
+				"transferId",
+				"transfer",
+				transactionSet,
+				edi.TransactionSet204,
+				edi.TransactionSet990,
+			)
+		}
 		transfer, err := s.transferRepo.GetTransferByID(ctx, repositories.GetEDITransferByIDRequest{
 			ID:         req.TransferID,
 			TenantInfo: req.TenantInfo,
 			Direction:  "outbound",
 		})
 		if err != nil {
-			return edi.LoadTenderPayload{}, err
+			return edi.DocumentPayload{}, err
 		}
-		return transfer.TenderPayload, nil
+		if transactionSet == edi.TransactionSet990 {
+			return buildTenderResponsePayload(transfer), nil
+		}
+		return edi.NewLoadTenderDocumentPayload(transfer.TenderPayload), nil
+	}
+	if !req.SourceMessageID.IsNil() {
+		if transactionSet != edi.TransactionSet997 && transactionSet != edi.TransactionSet999 {
+			return edi.DocumentPayload{}, sourceTransactionSetError(
+				"sourceMessageId",
+				"source message",
+				transactionSet,
+				edi.TransactionSet997,
+				edi.TransactionSet999,
+			)
+		}
+		return s.buildAcknowledgmentPayload(ctx, req, transactionSet)
+	}
+	if !req.InvoiceID.IsNil() {
+		if transactionSet != edi.TransactionSet210 {
+			return edi.DocumentPayload{}, sourceTransactionSetError(
+				"invoiceId",
+				"invoice",
+				transactionSet,
+				edi.TransactionSet210,
+			)
+		}
+		invoiceEntity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
+			ID:         req.InvoiceID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return edi.DocumentPayload{}, err
+		}
+		return buildFreightInvoicePayload(invoiceEntity), nil
+	}
+	if !req.ShipmentEventID.IsNil() {
+		if transactionSet != edi.TransactionSet214 {
+			return edi.DocumentPayload{}, sourceTransactionSetError(
+				"shipmentEventId",
+				"shipment event",
+				transactionSet,
+				edi.TransactionSet214,
+			)
+		}
+		event, err := s.shipmentEventRepo.GetByID(ctx, repositories.GetShipmentEventByIDRequest{
+			ID:         req.ShipmentEventID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return edi.DocumentPayload{}, err
+		}
+		if req.ShipmentID.IsNotNil() && req.ShipmentID != event.ShipmentID {
+			return edi.DocumentPayload{}, errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalidReference,
+				"Shipment ID must match the shipment event",
+			)
+		}
+		source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+			ID:         event.ShipmentID,
+			TenantInfo: req.TenantInfo,
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: true,
+			},
+		})
+		if err != nil {
+			return edi.DocumentPayload{}, err
+		}
+		return buildShipmentEventStatusPayload(event, source), nil
 	}
 	if req.ShipmentID.IsNil() {
-		return edi.LoadTenderPayload{}, errortypes.NewValidationError(
+		return edi.DocumentPayload{}, missingSourceError(transactionSet)
+	}
+	if transactionSet != edi.TransactionSet204 && transactionSet != edi.TransactionSet214 {
+		return edi.DocumentPayload{}, sourceTransactionSetError(
 			"shipmentId",
-			errortypes.ErrRequired,
-			"Shipment, transfer, or payload is required",
+			"shipment",
+			transactionSet,
+			edi.TransactionSet204,
+			edi.TransactionSet214,
 		)
 	}
 	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
@@ -577,9 +694,69 @@ func (s *Service) resolvePayload(
 		},
 	})
 	if err != nil {
-		return edi.LoadTenderPayload{}, err
+		return edi.DocumentPayload{}, err
 	}
-	return buildTenderPayload(source), nil
+	if transactionSet == edi.TransactionSet214 {
+		return buildShipmentStatusPayload(source), nil
+	}
+	return edi.NewLoadTenderDocumentPayload(buildTenderPayload(source)), nil
+}
+
+func sourceTransactionSetError(
+	field string,
+	source string,
+	actual edi.TransactionSet,
+	allowed ...edi.TransactionSet,
+) error {
+	allowedValues := make([]string, 0, len(allowed))
+	for _, transactionSet := range allowed {
+		allowedValues = append(allowedValues, string(transactionSet))
+	}
+	return errortypes.NewValidationError(
+		field,
+		errortypes.ErrInvalidReference,
+		fmt.Sprintf(
+			"%s source cannot be used with transaction set %s; expected %s",
+			source,
+			actual,
+			strings.Join(allowedValues, " or "),
+		),
+	)
+}
+
+func missingSourceError(transactionSet edi.TransactionSet) error {
+	switch transactionSet {
+	case edi.TransactionSet210:
+		return errortypes.NewValidationError(
+			"invoiceId",
+			errortypes.ErrRequired,
+			"Invoice ID or payload is required for 210 documents",
+		)
+	case edi.TransactionSet214:
+		return errortypes.NewValidationError(
+			"shipmentEventId",
+			errortypes.ErrRequired,
+			"Shipment event ID, shipment ID, or payload is required for 214 documents",
+		)
+	case edi.TransactionSet990:
+		return errortypes.NewValidationError(
+			"transferId",
+			errortypes.ErrRequired,
+			"Transfer ID or payload is required for 990 documents",
+		)
+	case edi.TransactionSet997, edi.TransactionSet999:
+		return errortypes.NewValidationError(
+			"sourceMessageId",
+			errortypes.ErrRequired,
+			"Source message ID or payload is required for acknowledgment documents",
+		)
+	default:
+		return errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrRequired,
+			"Shipment, transfer, invoice, shipment event, source message, or payload is required",
+		)
+	}
 }
 
 func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
@@ -587,10 +764,45 @@ func (c *resolvedDocumentContext) renderInput() *edix12.RenderInput {
 		Context:         c.ctx,
 		Profile:         c.profile,
 		TemplateVersion: c.templateVersion,
-		Payload:         c.payload,
+		DocumentPayload: c.payload,
 		X12Version:      c.x12Version,
 		Runtime:         c.runtime,
 	}
+}
+
+func defaultX12Version(transactionSet edi.TransactionSet) string {
+	if transactionSet == edi.TransactionSet999 {
+		return "005010"
+	}
+	return edi.DefaultX12204Version
+}
+
+func defaultProfileName(transactionSet edi.TransactionSet, direction edi.DocumentDirection) string {
+	parts := []string{"X12"}
+	if transactionSet != "" {
+		parts = append(parts, string(transactionSet))
+	}
+	if direction != "" {
+		parts = append(parts, string(direction))
+	}
+	return strings.Join(parts, " ")
+}
+
+func documentShipmentID(payload edi.DocumentPayload) pulid.ID {
+	payload.Normalize()
+	if payload.Shipment != nil {
+		return payload.Shipment.ShipmentID
+	}
+	if payload.ShipmentStatus != nil {
+		return payload.ShipmentStatus.ShipmentID
+	}
+	if payload.TenderResponse != nil {
+		return payload.TenderResponse.ShipmentID
+	}
+	if payload.FreightInvoice != nil {
+		return payload.FreightInvoice.ShipmentID
+	}
+	return pulid.Nil
 }
 
 func diagnosticsToValidationError(diagnostics []edix12.Diagnostic) error {

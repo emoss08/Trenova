@@ -2,6 +2,7 @@ package edirepository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 
@@ -898,31 +899,43 @@ func (r *repository) GetActivePartnerDocumentProfile(
 	ctx context.Context,
 	req repositories.GetActiveEDIPartnerDocumentProfileRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
-	entity := new(edi.EDIPartnerDocumentProfile)
+	entities := make([]*edi.EDIPartnerDocumentProfile, 0, 2)
 	cols := buncolgen.EDIPartnerDocumentProfileColumns
 	rel := buncolgen.EDIPartnerDocumentProfileRelations
 
-	err := r.db.DBForContext(ctx).
+	query := r.db.DBForContext(ctx).
 		NewSelect().
-		Model(entity).
+		Model(&entities).
 		Relation(rel.DocumentType).
 		Relation(rel.Template).
 		Relation("PartnerSettingsSchema").
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-				Where(cols.TransactionSet.Eq(), req.TransactionSet).
-				Where(cols.Direction.Eq(), req.Direction).
 				Where(cols.Status.Eq(), edi.DocumentStatusActive)
 		}).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.EDIPartnerDocumentProfileApplyTenant(req.TenantInfo)(sq)
-		}).
-		Limit(1).
+		})
+	if req.TransactionSet != "" {
+		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
+	}
+	if req.Direction != "" {
+		query = query.Where(cols.Direction.Eq(), req.Direction)
+	}
+	err := query.
+		Order(cols.CreatedAt.OrderDesc()).
+		Limit(2).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "EDIPartnerDocumentProfile")
 	}
-	return entity, nil
+	if len(entities) == 0 {
+		return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "EDIPartnerDocumentProfile")
+	}
+	if (req.TransactionSet == "" || req.Direction == "") && len(entities) > 1 {
+		return nil, errors.New("multiple active EDI document profiles match partner; transaction set and direction are required")
+	}
+	return entities[0], nil
 }
 
 func (r *repository) CreatePartnerDocumentProfile(
@@ -949,8 +962,12 @@ func (r *repository) UpdatePartnerDocumentProfile(
 		Column(
 			"template_id",
 			"template_version_id",
+			"document_type_id",
 			"name",
 			"status",
+			"direction",
+			"standard",
+			"transaction_set",
 			"x12_version_override",
 			"functional_group_id",
 			"envelope",

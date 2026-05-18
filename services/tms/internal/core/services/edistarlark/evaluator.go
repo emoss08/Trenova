@@ -142,16 +142,33 @@ func BuildContext(
 }
 
 func BuildContextFromPayload(
-	payload edi.LoadTenderPayload,
+	payload any,
 	partner map[string]any,
 	runtime map[string]any,
 	mapping map[string]any,
 ) (map[string]any, error) {
-	shipment, err := jsonutils.ToJSON(payload)
-	if err != nil {
-		return nil, fmt.Errorf("build shipment context: %w", err)
+	documentPayload, ok := payload.(edi.DocumentPayload)
+	if !ok {
+		if loadTender, legacy := payload.(edi.LoadTenderPayload); legacy {
+			documentPayload = edi.NewLoadTenderDocumentPayload(loadTender)
+		} else {
+			return nil, fmt.Errorf("unsupported EDI payload type %T", payload)
+		}
 	}
-	return BuildContext(shipment, partner, runtime, mapping)
+	documentPayload.Normalize()
+	document, err := jsonutils.ToJSON(documentPayload)
+	if err != nil {
+		return nil, fmt.Errorf("build document context: %w", err)
+	}
+	shipment, _ := document["shipment"].(map[string]any)
+	ctx, err := BuildContext(shipment, partner, runtime, mapping)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range document {
+		ctx[key] = value
+	}
+	return ctx, nil
 }
 
 func (e *Evaluator) Evaluate(ctx context.Context, req EvalRequest) EvalResult {

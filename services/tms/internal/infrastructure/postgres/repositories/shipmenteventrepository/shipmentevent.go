@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -41,6 +42,25 @@ func (r *repository) Insert(ctx context.Context, entity *shipmentevent.Event) er
 		return err
 	}
 	return nil
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req repositories.GetShipmentEventByIDRequest,
+) (*shipmentevent.Event, error) {
+	entity := new(shipmentevent.Event)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("se.id = ?", req.ID).
+		Where("se.organization_id = ?", req.TenantInfo.OrgID).
+		Where("se.business_unit_id = ?", req.TenantInfo.BuID).
+		Relation("Shipment").
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Shipment event")
+	}
+	return entity, nil
 }
 
 func (r *repository) List(

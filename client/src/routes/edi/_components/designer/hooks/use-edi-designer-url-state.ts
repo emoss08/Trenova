@@ -19,12 +19,14 @@ export const templateDesignerUrlStateParser = {
   elementPosition: parseAsInteger.withDefault(0),
   templateSearch: parseAsString.withDefault(""),
   templateStatus: parseAsString.withDefault(""),
+  templateTransactionSet: parseAsString.withDefault(""),
+  templateDirection: parseAsString.withDefault(""),
 };
 
 export const documentArchiveUrlStateParser = {
   archivePartnerId: parseAsString.withDefault(""),
-  archiveTransactionSet: parseAsString.withDefault("204"),
-  archiveDirection: parseAsString.withDefault("Outbound"),
+  archiveTransactionSet: parseAsString.withDefault(""),
+  archiveDirection: parseAsString.withDefault(""),
   archiveStatus: parseAsString.withDefault(""),
   archiveGeneratedFrom: parseAsString.withDefault(""),
   archiveGeneratedTo: parseAsString.withDefault(""),

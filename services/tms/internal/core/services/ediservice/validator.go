@@ -197,12 +197,17 @@ func (v *Validator) ValidatePreviewDocumentRequest(
 			"EDI partner or document profile is required",
 		)
 	}
-	hasPayloadSource := req.Payload != nil || req.TransferID.IsNotNil() || req.ShipmentID.IsNotNil()
+	hasPayloadSource := req.Payload != nil ||
+		req.TransferID.IsNotNil() ||
+		req.ShipmentID.IsNotNil() ||
+		req.InvoiceID.IsNotNil() ||
+		req.ShipmentEventID.IsNotNil() ||
+		req.SourceMessageID.IsNotNil()
 	if !hasPayloadSource {
 		multiErr.Add(
 			"shipmentId",
 			errortypes.ErrRequired,
-			"Shipment, transfer, or payload is required",
+			"Shipment, transfer, invoice, source message, or payload is required",
 		)
 	}
 
