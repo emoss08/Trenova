@@ -86,6 +86,11 @@ import {
   transformOperationDefinitions,
   type ConditionDraft,
 } from "./edi-designer-utils";
+import {
+  getEDIScriptPresetsByCategory,
+  insertScriptPresetCode,
+  type EDIScriptPreset,
+} from "./edi-script-presets";
 
 const defaultEnvelope: EDIX12EnvelopeSettings = {
   interchangeSenderId: "TRENOVA",
@@ -1286,6 +1291,20 @@ function SourceEditor({
       />
     );
   }
+  const starlarkPresets = [
+    ...getEDIScriptPresetsByCategory("elementValue"),
+    ...getEDIScriptPresetsByCategory("repeatItem"),
+  ];
+  const applyStarlarkPreset = (preset: EDIScriptPreset) => {
+    const patch: Partial<EDITemplateElement> = {
+      starlarkScript: insertScriptPresetCode(element.starlarkScript ?? "", preset),
+    };
+    if (preset.recommendedFunctionName && !element.starlarkFunction?.trim()) {
+      patch.starlarkFunction = preset.recommendedFunctionName;
+    }
+    onChange(patch);
+  };
+
   return (
     <div className="space-y-2">
       <InputBlock
@@ -1299,6 +1318,12 @@ function SourceEditor({
         value={element.starlarkScript ?? ""}
         onChange={(starlarkScript) => onChange({ starlarkScript })}
         disabled={!isEditable}
+      />
+      <ScriptPresetPicker
+        title="Presets"
+        presets={starlarkPresets}
+        disabled={!isEditable}
+        onApply={applyStarlarkPreset}
       />
     </div>
   );
@@ -1597,10 +1622,27 @@ function ConditionEditor({
     setDraft(next);
     onChange(buildConditionString(next));
   };
+  const applyPreset = (preset: EDIScriptPreset) => {
+    const next = parseConditionString(preset.code);
+    if (draft.mode === "inlineStarlark" && next.mode === "inlineStarlark") {
+      apply({
+        mode: "inlineStarlark",
+        script: insertScriptPresetCode(draft.script, { code: next.script }),
+      });
+      return;
+    }
+    apply(next);
+  };
 
   return (
     <div className="space-y-2 rounded-md border p-2">
       <div className="text-xs font-semibold">Condition</div>
+      <ScriptPresetPicker
+        title="Presets"
+        presets={getEDIScriptPresetsByCategory("condition")}
+        disabled={disabled}
+        onApply={applyPreset}
+      />
       <SelectBlock
         label="Mode"
         value={draft.mode}
@@ -1705,6 +1747,10 @@ function ScriptLibraryEditor({
       libraries.map((library) => (library.id === selected.id ? { ...library, ...patch } : library)),
     );
   };
+  const applyPreset = (preset: EDIScriptPreset) => {
+    if (!selected) return;
+    updateSelected({ script: insertScriptPresetCode(selected.script, preset) });
+  };
 
   return (
     <div className="grid min-h-0 grid-cols-[260px_minmax(0,1fr)]">
@@ -1757,7 +1803,7 @@ function ScriptLibraryEditor({
           </button>
         ))}
       </div>
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)]">
+      <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)]">
         <div className="flex items-end justify-between gap-3 border-b p-3">
           <div className="grid flex-1 grid-cols-2 gap-2">
             <InputBlock
@@ -1790,6 +1836,14 @@ function ScriptLibraryEditor({
               Save Scripts
             </Button>
           </div>
+        </div>
+        <div className="border-b p-3">
+          <ScriptPresetPicker
+            title="Script Presets"
+            presets={getEDIScriptPresetsByCategory("scriptLibrary")}
+            disabled={!isEditable || !selected}
+            onApply={applyPreset}
+          />
         </div>
         {selected ? (
           <div className="min-h-0 overflow-hidden">
@@ -2120,6 +2174,44 @@ function DocumentPreviewArchiveTab() {
         <PanelHeader icon={<DatabaseIcon />} title="204 Archive" />
         <MessageArchive messages={messagesQuery.data?.results ?? []} />
       </aside>
+    </div>
+  );
+}
+
+function ScriptPresetPicker({
+  title,
+  presets,
+  disabled,
+  onApply,
+}: {
+  title: string;
+  presets: EDIScriptPreset[];
+  disabled?: boolean;
+  onApply: (preset: EDIScriptPreset) => void;
+}) {
+  if (presets.length === 0) return null;
+  return (
+    <div className="space-y-2 rounded-md border bg-muted/20 p-2">
+      <div className="text-xs font-semibold">{title}</div>
+      <div className="space-y-1">
+        {presets.map((preset) => (
+          <button
+            key={preset.id}
+            type="button"
+            disabled={disabled}
+            onClick={() => onApply(preset)}
+            className="flex w-full items-start gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CopyPlusIcon className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0">
+              <span className="block text-xs font-medium">{preset.label}</span>
+              <span className="block text-xs leading-snug text-muted-foreground">
+                {preset.description}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
