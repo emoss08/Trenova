@@ -8,7 +8,7 @@ import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
-import type { EDIPartner } from "@/types/edi";
+import type { EDICommunicationProfile, EDIMappingProfile, EDIPartner } from "@/types/edi";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import type { EquipmentType } from "@/types/equipment-type";
 import type { FleetCode } from "@/types/fleet-code";
@@ -40,6 +40,7 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   description?: string;
   clearable?: boolean;
   placeholder?: string;
+  disabled?: boolean;
   extraSearchParams?: Record<string, string | string[]>;
   selectedValueLink?: API_ENDPOINTS;
   onOptionChange?: (option: TOption | null) => void;
@@ -308,6 +309,52 @@ export function CustomerAutocompleteField<T extends FieldValues>({
           <span>
             {option.code} - {option.name}
           </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EDICommunicationProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EDICommunicationProfile, T>) {
+  return (
+    <AutocompleteField<EDICommunicationProfile, T>
+      link="/edi/communication-profiles/select-options/"
+      selectedValueLink="/edi/communication-profiles/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.method} · {option.status}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EDIMappingProfile, T>) {
+  return (
+    <AutocompleteField<EDIMappingProfile, T>
+      link="/edi/mapping-profiles/select-options/"
+      selectedValueLink="/edi/mapping-profiles/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
+            </span>
+          )}
         </div>
       )}
       {...props}

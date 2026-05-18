@@ -1,4 +1,7 @@
 import {
+  CustomerAutocompleteField,
+  EDICommunicationProfileAutocompleteField,
+  EDIMappingProfileAutocompleteField,
   EDIPartnerAutocompleteField,
   OrganizationAutocompleteField,
 } from "@/components/autocomplete-fields";
@@ -21,7 +24,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -60,7 +62,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm, useWatch, type Control } from "react-hook-form";
+import { useForm, useWatch, type Control, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { getCommunicationProfileColumns } from "./edi-communication-profile-columns";
 import { DesignerWorkspace } from "./edi-designer-workspace";
@@ -73,14 +75,21 @@ import {
   communicationProfileFormSchema,
   communicationProfileMethodOptions,
   createInternalPartnerPairSchema,
+  ediPartnerFormSchema,
   environmentOptions,
+  getPartnerFormDefaults,
   mappingEntityTypes,
   mdnModeOptions,
+  partnerCountryOptions,
+  partnerStatusOptions,
+  partnerTimezoneOptions,
   profileStatusOptions,
   sftpAuthModeOptions,
+  toPartnerRequest,
   type CommunicationProfileFormValues,
   type CommunicationProfileMethod,
   type CreateInternalPartnerPairFormValues,
+  type EDIPartnerFormValues,
 } from "./edi-schemas";
 import { EDITransferReviewPanel } from "./panel/edi-transfer-review-panel";
 import type { EDIPageKind } from "./edi-types";
@@ -1061,13 +1070,13 @@ function emptyToUndefined(value: string) {
 
 function PartnerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<EDIPartner>) {
   if (mode === "create") {
-    return <CreatePairPanel open={open} onOpenChange={onOpenChange} />;
+    return <CreatePartnerPanel open={open} onOpenChange={onOpenChange} />;
   }
 
   return <PartnerEditPanel open={open} onOpenChange={onOpenChange} partner={row} />;
 }
 
-function CreatePairPanel({
+function CreatePartnerPanel({
   open,
   onOpenChange,
 }: {
@@ -1076,40 +1085,59 @@ function CreatePairPanel({
 }) {
   const queryClient = useQueryClient();
   const currentOrganizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
-  const form = useForm<CreateInternalPartnerPairFormValues>({
+  const [activeTab, setActiveTab] = useState("external");
+  const externalForm = useForm<EDIPartnerFormValues>({
+    resolver: zodResolver(ediPartnerFormSchema),
+    defaultValues: getPartnerFormDefaults(),
+    mode: "onChange",
+  });
+  const pairForm = useForm<CreateInternalPartnerPairFormValues>({
     resolver: zodResolver(createInternalPartnerPairSchema),
     defaultValues: getCreatePairDefaults(),
     mode: "onChange",
   });
-  const { control, handleSubmit, reset, setValue, watch } = form;
-  const values = watch();
+  const { control, handleSubmit, reset, setValue, watch } = pairForm;
+  const pairValues = watch();
   const { data: currentOrganization } = useQuery({
     queryKey: ["organization", "edi-current", currentOrganizationId],
     queryFn: () => apiService.organizationService.getByID(currentOrganizationId),
     enabled: open && Boolean(currentOrganizationId),
   });
-  const mutation = useApiMutation({
+  const createExternalMutation = useApiMutation({
+    mutationFn: (values: EDIPartnerFormValues) =>
+      apiService.ediService.createPartner(toPartnerRequest(values)),
+    onSuccess: async () => {
+      toast.success("External EDI partner created");
+      externalForm.reset(getPartnerFormDefaults());
+      onOpenChange(false);
+      await invalidateEDIPartners(queryClient);
+    },
+    onError: () => toast.error("Failed to create EDI partner"),
+  });
+  const createConnectionMutation = useApiMutation({
     mutationFn: (values: CreateInternalPartnerPairFormValues) =>
       apiService.ediService.createConnection(toConnectionRequest(values)),
     onSuccess: async () => {
       toast.success("EDI connection requested");
       reset(getCreatePairDefaults());
       onOpenChange(false);
-      await queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] });
+      await invalidateEDIPartners(queryClient);
       await invalidateEDIConnections(queryClient);
     },
     onError: () => toast.error("Failed to request EDI connection"),
   });
   const canSubmit =
-    values.targetOrganizationId &&
-    values.sourceCode &&
-    values.sourceName &&
-    values.targetCode &&
-    values.targetName;
+    pairValues.targetOrganizationId &&
+    pairValues.sourceCode &&
+    pairValues.sourceName &&
+    pairValues.targetCode &&
+    pairValues.targetName;
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
+      externalForm.reset(getPartnerFormDefaults());
       reset(getCreatePairDefaults());
+      setActiveTab("external");
     }
     onOpenChange(nextOpen);
   };
@@ -1136,68 +1164,105 @@ function CreatePairPanel({
 
   useEffect(() => {
     if (!open || !currentOrganization) return;
-    if (values.targetCode || values.targetName) return;
+    if (pairValues.targetCode || pairValues.targetName) return;
 
     fillCurrentOrganizationPartner();
   }, [
     currentOrganization,
     fillCurrentOrganizationPartner,
     open,
-    values.targetCode,
-    values.targetName,
+    pairValues.targetCode,
+    pairValues.targetName,
   ]);
 
   return (
     <DataTablePanelContainer
       open={open}
       onOpenChange={handleOpenChange}
-      title="Request EDI Connection"
-      description="Configure the partner records that will be created after acceptance."
+      title="New EDI Partner"
+      description="Create an external trading partner or request an internal organization connection."
       size="xl"
       footer={
         <>
           <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            form="edi-create-pair-form"
-            disabled={!canSubmit}
-            isLoading={mutation.isPending}
-          >
-            Request Connection
-          </Button>
+          {activeTab === "external" ? (
+            <Button
+              type="submit"
+              form="edi-create-external-partner-form"
+              isLoading={createExternalMutation.isPending}
+            >
+              Create Partner
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              form="edi-create-pair-form"
+              disabled={!canSubmit}
+              isLoading={createConnectionMutation.isPending}
+            >
+              Request Connection
+            </Button>
+          )}
         </>
       }
     >
-      <Form
-        id="edi-create-pair-form"
-        className="flex flex-col gap-4"
-        onSubmit={(event) => {
-          event.stopPropagation();
-          void handleSubmit((submittedValues) => mutation.mutate(submittedValues))(event);
-        }}
-      >
-        <FormGroup cols={2} className="gap-x-5 gap-y-3">
-          <FormControl cols="full">
-            <OrganizationAutocompleteField
-              control={control}
-              name="targetOrganizationId"
-              label="Target Organization"
-              placeholder="Select organization"
-              description="Only organizations in the current business unit are available."
-              rules={{ required: true }}
-              extraSearchParams={{
-                scope: "business-unit",
-                excludeCurrent: "true",
-              }}
-              onOptionChange={handleTargetOrganizationChange}
-            />
-          </FormControl>
-          <PartnerSideFields title="Current Organization View" prefix="source" control={control} />
-          <PartnerSideFields title="Target Organization View" prefix="target" control={control} />
-        </FormGroup>
-      </Form>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="min-h-0">
+        <TabsList>
+          <TabsTrigger value="external">External Partner</TabsTrigger>
+          <TabsTrigger value="internal">Internal Connection</TabsTrigger>
+        </TabsList>
+        <TabsContent value="external" className="pt-3">
+          <PartnerDetailsForm
+            id="edi-create-external-partner-form"
+            form={externalForm}
+            disabled={false}
+            readOnlyInternalFields={false}
+            onSubmit={(values) => createExternalMutation.mutate(values)}
+          />
+        </TabsContent>
+        <TabsContent value="internal" className="pt-3">
+          <Form
+            id="edi-create-pair-form"
+            className="flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.stopPropagation();
+              void handleSubmit((submittedValues) =>
+                createConnectionMutation.mutate(submittedValues),
+              )(event);
+            }}
+          >
+            <FormGroup cols={2} className="gap-x-5 gap-y-3">
+              <FormControl cols="full">
+                <OrganizationAutocompleteField
+                  control={control}
+                  name="targetOrganizationId"
+                  label="Target Organization"
+                  placeholder="Select organization"
+                  description="Only organizations in the current business unit are available."
+                  rules={{ required: true }}
+                  extraSearchParams={{
+                    scope: "business-unit",
+                    excludeCurrent: "true",
+                  }}
+                  onOptionChange={handleTargetOrganizationChange}
+                />
+              </FormControl>
+              <PartnerSideFields
+                title="Current Organization View"
+                prefix="source"
+                control={control}
+              />
+              <PartnerSideFields
+                title="Target Organization View"
+                prefix="target"
+                control={control}
+              />
+            </FormGroup>
+          </Form>
+        </TabsContent>
+      </Tabs>
     </DataTablePanelContainer>
   );
 }
@@ -1361,27 +1426,35 @@ function PartnerEditPanel({
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );
-  const [draft, setDraft] = useState<EDIPartner | null>(partner);
+  const form = useForm<EDIPartnerFormValues>({
+    resolver: zodResolver(ediPartnerFormSchema),
+    defaultValues: getPartnerFormDefaults(partner),
+    mode: "onChange",
+  });
 
   useEffect(() => {
     if (open) {
-      setDraft(partner);
+      form.reset(getPartnerFormDefaults(partner));
     }
-  }, [open, partner]);
+  }, [form, open, partner]);
 
   const mutation = useApiMutation({
-    mutationFn: (values: EDIPartner) => apiService.ediService.updatePartner(values),
+    mutationFn: (values: EDIPartnerFormValues) => {
+      if (!partner) {
+        throw new Error("Partner is required");
+      }
+      return apiService.ediService.updatePartner(partner.id, toPartnerRequest(values));
+    },
     onSuccess: async () => {
       toast.success("EDI partner updated");
-      await queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] });
-      await queryClient.invalidateQueries({ queryKey: queries.edi.partners._def });
+      await invalidateEDIPartners(queryClient);
     },
     onError: () => toast.error("Failed to update EDI partner"),
   });
   const handleClose = () => {
     onOpenChange(false);
-    setDraft(null);
   };
+  const isInternal = partner?.kind === "Internal";
 
   return (
     <DataTablePanelContainer
@@ -1395,76 +1468,227 @@ function PartnerEditPanel({
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          {draft && canUpdate && (
-            <Button isLoading={mutation.isPending} onClick={() => mutation.mutate(draft)}>
+          {partner && canUpdate && (
+            <Button type="submit" form="edi-edit-partner-form" isLoading={mutation.isPending}>
               Save Partner
             </Button>
           )}
         </>
       }
     >
-      {draft && (
+      {partner && (
         <Tabs defaultValue="details" className="min-h-0">
           <TabsList>
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="mappings">Mappings</TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="pt-3">
-            <div className="grid gap-3 md:grid-cols-2">
-              <Input
-                value={draft.code}
-                disabled={!canUpdate}
-                placeholder="Partner code"
-                onChange={(event) => setDraft({ ...draft, code: event.target.value })}
-              />
-              <Input
-                value={draft.name}
-                disabled={!canUpdate}
-                placeholder="Partner name"
-                onChange={(event) => setDraft({ ...draft, name: event.target.value })}
-              />
-              <Input
-                value={draft.contactName ?? ""}
-                disabled={!canUpdate}
-                placeholder="Contact name"
-                onChange={(event) => setDraft({ ...draft, contactName: event.target.value })}
-              />
-              <Input
-                value={draft.contactEmail ?? ""}
-                disabled={!canUpdate}
-                placeholder="Contact email"
-                onChange={(event) => setDraft({ ...draft, contactEmail: event.target.value })}
-              />
-              <Input
-                value={draft.contactPhone ?? ""}
-                disabled={!canUpdate}
-                placeholder="Contact phone"
-                onChange={(event) => setDraft({ ...draft, contactPhone: event.target.value })}
-              />
-              <div className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
-                Inbound enabled
-                <Switch
-                  checked={draft.enabledForInbound}
-                  disabled={!canUpdate}
-                  onCheckedChange={(checked) => setDraft({ ...draft, enabledForInbound: checked })}
-                />
-              </div>
-              <div className="flex items-center justify-between gap-2 rounded-md border p-2 text-sm">
-                Outbound enabled
-                <Switch
-                  checked={draft.enabledForOutbound}
-                  disabled={!canUpdate}
-                  onCheckedChange={(checked) => setDraft({ ...draft, enabledForOutbound: checked })}
-                />
-              </div>
-            </div>
+            <PartnerDetailsForm
+              id="edi-edit-partner-form"
+              form={form}
+              disabled={!canUpdate}
+              readOnlyInternalFields={isInternal}
+              onSubmit={(values) => mutation.mutate(values)}
+            />
           </TabsContent>
           <TabsContent value="mappings" className="pt-3">
-            <MappingProfilePanel partnerId={draft.id} canUpdate={canUpdate} />
+            <MappingProfilePanel partnerId={partner.id} canUpdate={canUpdate} />
           </TabsContent>
         </Tabs>
       )}
     </DataTablePanelContainer>
+  );
+}
+
+function PartnerDetailsForm({
+  id,
+  form,
+  disabled,
+  readOnlyInternalFields,
+  onSubmit,
+}: {
+  id: string;
+  form: UseFormReturn<EDIPartnerFormValues>;
+  disabled: boolean;
+  readOnlyInternalFields: boolean;
+  onSubmit: (values: EDIPartnerFormValues) => void;
+}) {
+  const { control, handleSubmit } = form;
+
+  return (
+    <Form
+      id={id}
+      className="flex flex-col gap-4"
+      onSubmit={(event) => {
+        event.stopPropagation();
+        void handleSubmit(onSubmit)(event);
+      }}
+    >
+      <FormSection title="Profile">
+        <FormGroup cols={2}>
+          <FormControl>
+            <InputField
+              control={control}
+              name="code"
+              label="Partner Code"
+              placeholder="SCAC or ISA ID"
+              disabled={disabled || readOnlyInternalFields}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="name"
+              label="Partner Name"
+              placeholder="Partner name"
+              disabled={disabled || readOnlyInternalFields}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="status"
+              label="Status"
+              options={partnerStatusOptions}
+              isReadOnly={disabled}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <CustomerAutocompleteField
+              control={control}
+              name="customerId"
+              label="Customer"
+              placeholder="Select customer"
+              clearable
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="country"
+              label="Country"
+              options={partnerCountryOptions}
+              isReadOnly={disabled}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="timezone"
+              label="Timezone"
+              options={partnerTimezoneOptions}
+              isReadOnly={disabled}
+              isClearable
+              placeholder="Select timezone"
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <TextareaField
+              control={control}
+              name="description"
+              label="Description"
+              placeholder="Operational notes for this partner"
+              disabled={disabled}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+      <FormSection title="Contact">
+        <FormGroup cols={3}>
+          <FormControl>
+            <InputField
+              control={control}
+              name="contactName"
+              label="Contact Name"
+              placeholder="Contact name"
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="contactEmail"
+              label="Contact Email"
+              placeholder="ops@example.com"
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="contactPhone"
+              label="Contact Phone"
+              placeholder="Contact phone"
+              disabled={disabled}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+      <FormSection title="Defaults">
+        <FormGroup cols={2}>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="enabledForInbound"
+              label="Inbound Enabled"
+              description="Allow inbound documents for this partner."
+              disabled={disabled}
+              outlined
+            />
+          </FormControl>
+          <FormControl>
+            <SwitchField
+              control={control}
+              name="enabledForOutbound"
+              label="Outbound Enabled"
+              description="Allow outbound documents for this partner."
+              disabled={disabled}
+              outlined
+            />
+          </FormControl>
+          <FormControl>
+            <EDICommunicationProfileAutocompleteField
+              control={control}
+              name="defaultTransportId"
+              label="Default Transport Profile"
+              placeholder="Select transport profile"
+              extraSearchParams={{ status: "Active" }}
+              clearable
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormControl>
+            <EDIMappingProfileAutocompleteField
+              control={control}
+              name="defaultMappingProfileId"
+              label="Default Mapping Profile"
+              placeholder="Select mapping profile"
+              clearable
+              disabled={disabled}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+      <FormSection title="Advanced">
+        <FormGroup cols={2}>
+          <FormControl cols="full">
+            <TextareaField
+              control={control}
+              name="settingsJson"
+              label="Settings JSON"
+              placeholder="{}"
+              className="font-mono"
+              disabled={disabled}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+    </Form>
   );
 }
 
@@ -1700,6 +1924,14 @@ async function invalidateEDIConnections(queryClient: ReturnType<typeof useQueryC
     queryClient.invalidateQueries({ queryKey: queries.edi.connections._def }),
     queryClient.invalidateQueries({ queryKey: queries.edi.partners._def }),
     queryClient.invalidateQueries({ queryKey: queries.edi.communicationProfiles._def }),
+    queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] }),
+  ]);
+}
+
+async function invalidateEDIPartners(queryClient: ReturnType<typeof useQueryClient>) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: queries.edi.partners._def }),
+    queryClient.invalidateQueries({ queryKey: queries.edi.partnerOptions._def }),
     queryClient.invalidateQueries({ queryKey: ["edi-partner-list"] }),
   ]);
 }

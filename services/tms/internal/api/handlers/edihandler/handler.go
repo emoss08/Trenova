@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -32,6 +33,29 @@ type Handler struct {
 	service *ediservice.Service
 	eh      *helpers.ErrorHandler
 	pm      *middleware.PermissionMiddleware
+}
+
+type partnerRequest struct {
+	Kind                       edi.PartnerKind `json:"kind"`
+	Status                     string          `json:"status"`
+	Code                       string          `json:"code"`
+	Name                       string          `json:"name"`
+	Description                string          `json:"description"`
+	InternalOrganizationID     pulid.ID        `json:"internalOrganizationId"`
+	EDIConnectionID            pulid.ID        `json:"ediConnectionId"`
+	CustomerID                 pulid.ID        `json:"customerId"`
+	DefaultTransportID         pulid.ID        `json:"defaultTransportId"`
+	DefaultMappingProfileID    pulid.ID        `json:"defaultMappingProfileId"`
+	DefaultValidationProfileID pulid.ID        `json:"defaultValidationProfileId"`
+	Timezone                   string          `json:"timezone"`
+	Country                    string          `json:"country"`
+	ContactName                string          `json:"contactName"`
+	ContactEmail               string          `json:"contactEmail"`
+	ContactPhone               string          `json:"contactPhone"`
+	EnabledForInbound          *bool           `json:"enabledForInbound"`
+	EnabledForOutbound         *bool           `json:"enabledForOutbound"`
+	Settings                   map[string]any  `json:"settings"`
+	Version                    int64           `json:"version"`
 }
 
 func New(p Params) *Handler {
@@ -111,6 +135,17 @@ func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
 }
 
 func (h *Handler) registerMappingProfileRoutes(mappingProfiles *gin.RouterGroup) {
+	selectOptions := mappingProfiles.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectMappingProfileOptions,
+	)
+	selectOptions.GET(
+		"/:profileID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getMappingProfileOption,
+	)
 	mappingProfiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -172,6 +207,17 @@ func (h *Handler) registerConnectionRoutes(connections *gin.RouterGroup) {
 }
 
 func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) {
+	selectOptions := profiles.Group("/select-options")
+	selectOptions.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.selectCommunicationProfileOptions,
+	)
+	selectOptions.GET(
+		"/:profileID",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getCommunicationProfileOption,
+	)
 	profiles.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
@@ -578,12 +624,13 @@ func (h *Handler) getPartner(c *gin.Context) {
 
 func (h *Handler) createPartner(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	entity := new(edi.EDIPartner)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	req := new(partnerRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
+	entity := req.toEntity(true)
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
 
@@ -635,12 +682,13 @@ func (h *Handler) updatePartner(c *gin.Context) {
 		return
 	}
 
-	entity := new(edi.EDIPartner)
-	if err = c.ShouldBindJSON(entity); err != nil {
+	req := new(partnerRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
+	entity := req.toEntity(false)
 	entity.ID = partnerID
 	entity.OrganizationID = authCtx.OrganizationID
 	entity.BusinessUnitID = authCtx.BusinessUnitID
@@ -656,6 +704,40 @@ func (h *Handler) updatePartner(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, updated)
+}
+
+func (r *partnerRequest) toEntity(defaultEnabled bool) *edi.EDIPartner {
+	enabledForInbound := defaultEnabled
+	if r.EnabledForInbound != nil {
+		enabledForInbound = *r.EnabledForInbound
+	}
+	enabledForOutbound := defaultEnabled
+	if r.EnabledForOutbound != nil {
+		enabledForOutbound = *r.EnabledForOutbound
+	}
+
+	return &edi.EDIPartner{
+		Kind:                       r.Kind,
+		Status:                     domaintypes.Status(r.Status),
+		Code:                       r.Code,
+		Name:                       r.Name,
+		Description:                r.Description,
+		InternalOrganizationID:     r.InternalOrganizationID,
+		EDIConnectionID:            r.EDIConnectionID,
+		CustomerID:                 r.CustomerID,
+		DefaultTransportID:         r.DefaultTransportID,
+		DefaultMappingProfileID:    r.DefaultMappingProfileID,
+		DefaultValidationProfileID: r.DefaultValidationProfileID,
+		Timezone:                   r.Timezone,
+		Country:                    r.Country,
+		ContactName:                r.ContactName,
+		ContactEmail:               r.ContactEmail,
+		ContactPhone:               r.ContactPhone,
+		EnabledForInbound:          enabledForInbound,
+		EnabledForOutbound:         enabledForOutbound,
+		Settings:                   r.Settings,
+		Version:                    r.Version,
+	}
 }
 
 func (h *Handler) getMappingProfile(c *gin.Context) {
@@ -763,6 +845,25 @@ func (h *Handler) listMappingProfiles(c *gin.Context) {
 			&repositories.ListEDIMappingProfilesRequest{Filter: req},
 		)
 	})
+}
+
+func (h *Handler) selectMappingProfileOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+		return h.service.SelectMappingProfileOptions(
+			c.Request.Context(),
+			&repositories.EDIMappingProfileSelectOptionsRequest{
+				SelectQueryRequest: req,
+				PartnerID:          helpers.QueryPulid(c, "partnerId"),
+			},
+		)
+	})
+}
+
+func (h *Handler) getMappingProfileOption(c *gin.Context) {
+	h.getMappingProfileByID(c)
 }
 
 func (h *Handler) getMappingProfileByID(c *gin.Context) {
@@ -997,6 +1098,28 @@ func (h *Handler) listCommunicationProfiles(c *gin.Context) {
 	)
 }
 
+func (h *Handler) selectCommunicationProfileOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
+			return h.service.SelectCommunicationProfileOptions(
+				c.Request.Context(),
+				&repositories.EDICommunicationProfileSelectOptionsRequest{
+					SelectQueryRequest: req,
+					Status:             domaintypes.Status(helpers.QueryString(c, "status", "")),
+					Method:             edi.ConnectionMethod(helpers.QueryString(c, "method", "")),
+					PartnerID:          helpers.QueryPulid(c, "partnerId"),
+				},
+			)
+		},
+	)
+}
+
 func (h *Handler) createCommunicationProfile(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := new(ediservice.UpsertEDICommunicationProfileRequest)
@@ -1022,6 +1145,10 @@ func (h *Handler) createCommunicationProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, profile)
+}
+
+func (h *Handler) getCommunicationProfileOption(c *gin.Context) {
+	h.getCommunicationProfile(c)
 }
 
 func (h *Handler) getCommunicationProfile(c *gin.Context) {

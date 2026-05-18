@@ -834,6 +834,74 @@ func (_c *MockEDIPartnerRepository_SaveMappingProfileItems_Call) RunAndReturn(ru
 	return _c
 }
 
+// SelectMappingProfileOptions provides a mock function for the type MockEDIPartnerRepository
+func (_mock *MockEDIPartnerRepository) SelectMappingProfileOptions(ctx context.Context, req *repositories.EDIMappingProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectMappingProfileOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDIMappingProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIMappingProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDIMappingProfileSelectOptionsRequest) *pagination.ListResult[*edi.EDIMappingProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDIMappingProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDIMappingProfileSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIPartnerRepository_SelectMappingProfileOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectMappingProfileOptions'
+type MockEDIPartnerRepository_SelectMappingProfileOptions_Call struct {
+	*mock.Call
+}
+
+// SelectMappingProfileOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDIMappingProfileSelectOptionsRequest
+func (_e *MockEDIPartnerRepository_Expecter) SelectMappingProfileOptions(ctx interface{}, req interface{}) *MockEDIPartnerRepository_SelectMappingProfileOptions_Call {
+	return &MockEDIPartnerRepository_SelectMappingProfileOptions_Call{Call: _e.mock.On("SelectMappingProfileOptions", ctx, req)}
+}
+
+func (_c *MockEDIPartnerRepository_SelectMappingProfileOptions_Call) Run(run func(ctx context.Context, req *repositories.EDIMappingProfileSelectOptionsRequest)) *MockEDIPartnerRepository_SelectMappingProfileOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDIMappingProfileSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDIMappingProfileSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_SelectMappingProfileOptions_Call) Return(listResult *pagination.ListResult[*edi.EDIMappingProfile], err error) *MockEDIPartnerRepository_SelectMappingProfileOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDIPartnerRepository_SelectMappingProfileOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDIMappingProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDIMappingProfile], error)) *MockEDIPartnerRepository_SelectMappingProfileOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SelectOptions provides a mock function for the type MockEDIPartnerRepository
 func (_mock *MockEDIPartnerRepository) SelectOptions(ctx context.Context, req *repositories.EDIPartnerSelectOptionsRequest) (*pagination.ListResult[*edi.EDIPartner], error) {
 	ret := _mock.Called(ctx, req)

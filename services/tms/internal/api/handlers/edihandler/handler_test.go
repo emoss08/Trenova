@@ -1,6 +1,7 @@
 package edihandler_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -368,6 +369,140 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 	)
 }
 
+func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
+	t.Parallel()
+
+	partnerID := pulid.MustNew("edip_")
+	communicationProfileID := pulid.MustNew("edicp_")
+	mappingProfileID := pulid.MustNew("edimp_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+
+	profileRepo.EXPECT().
+		SelectProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDICommunicationProfileSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "sftp" &&
+				req.Status == "Active" &&
+				req.Method == edi.ConnectionMethodSFTP &&
+				req.PartnerID == partnerID
+		})).
+		Return(&pagination.ListResult[*edi.EDICommunicationProfile]{
+			Items: []*edi.EDICommunicationProfile{{
+				ID:           communicationProfileID,
+				EDIPartnerID: partnerID,
+				Method:       edi.ConnectionMethodSFTP,
+				Status:       "Active",
+				Name:         "Carrier SFTP",
+			}},
+			Total: 1,
+		}, nil).
+		Once()
+	partnerRepo.EXPECT().
+		SelectMappingProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIMappingProfileSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Query == "carrier" && req.PartnerID == partnerID
+		})).
+		Return(&pagination.ListResult[*edi.EDIMappingProfile]{
+			Items: []*edi.EDIMappingProfile{{
+				ID:           mappingProfileID,
+				EDIPartnerID: partnerID,
+				Name:         "Carrier Mapping",
+			}},
+			Total: 1,
+		}, nil).
+		Once()
+
+	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
+		params.ProfileRepo = profileRepo
+		params.PartnerRepo = partnerRepo
+	})
+
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/communication-profiles/select-options/",
+		map[string]string{
+			"query":     "sftp",
+			"status":    "Active",
+			"method":    "SFTP",
+			"partnerId": partnerID.String(),
+		},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/mapping-profiles/select-options/",
+		map[string]string{"query": "carrier", "partnerId": partnerID.String()},
+		nil,
+		http.StatusOK,
+	)
+}
+
+func TestEDIHandler_CreatePartnerDefaultsAndExplicitFalseFlags(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+	partnerRepo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(entity *edi.EDIPartner) bool {
+			return entity.Kind == edi.PartnerKindExternal &&
+				entity.Status == "Active" &&
+				entity.Country == "US" &&
+				entity.EnabledForInbound &&
+				entity.EnabledForOutbound
+		})).
+		RunAndReturn(func(_ context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
+			entity.ID = pulid.MustNew("edip_")
+			return entity, nil
+		}).
+		Once()
+	partnerRepo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(entity *edi.EDIPartner) bool {
+			return entity.Kind == edi.PartnerKindExternal &&
+				entity.InternalOrganizationID.IsNil() &&
+				!entity.EnabledForInbound &&
+				!entity.EnabledForOutbound
+		})).
+		RunAndReturn(func(_ context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
+			entity.ID = pulid.MustNew("edip_")
+			return entity, nil
+		}).
+		Once()
+	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
+		params.PartnerRepo = partnerRepo
+	})
+
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodPost,
+		"/api/v1/edi/partners/",
+		nil,
+		map[string]any{"code": "EXT", "name": "External Partner"},
+		http.StatusCreated,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodPost,
+		"/api/v1/edi/partners/",
+		nil,
+		map[string]any{
+			"kind":               "External",
+			"status":             "Active",
+			"code":               "EXT2",
+			"name":               "External Partner 2",
+			"country":            "US",
+			"enabledForInbound":  false,
+			"enabledForOutbound": false,
+		},
+		http.StatusCreated,
+	)
+}
+
 func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	t.Parallel()
 
@@ -375,8 +510,11 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	documentTypeID := pulid.MustNew("edidt_")
 	templateID := pulid.MustNew("editpl_")
 	profileID := pulid.MustNew("edipdp_")
+	communicationProfileID := pulid.MustNew("edicp_")
+	mappingProfileID := pulid.MustNew("edimp_")
 	repo := mocks.NewMockEDIDocumentRepository(t)
 	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
 
 	partnerRepo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIPartnerByIDRequest) bool {
@@ -430,9 +568,30 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 			Status:         edi.DocumentStatusActive,
 		}}, nil).
 		Once()
+	profileRepo.EXPECT().
+		GetProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDICommunicationProfileByIDRequest) bool {
+			return req.ID == communicationProfileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+		})).
+		Return(&edi.EDICommunicationProfile{
+			ID:     communicationProfileID,
+			Method: edi.ConnectionMethodSFTP,
+			Status: "Active",
+			Name:   "Carrier SFTP",
+		}, nil).
+		Once()
+	partnerRepo.EXPECT().
+		GetMappingProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingProfileByIDRequest) bool {
+			return req.ProfileID == mappingProfileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
+		})).
+		Return(&edi.EDIMappingProfile{
+			ID:   mappingProfileID,
+			Name: "Carrier Mapping",
+		}, nil).
+		Once()
 
 	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
 		params.PartnerRepo = partnerRepo
+		params.ProfileRepo = profileRepo
 	})
 
 	partnerRecorder := runEDIRequest(
@@ -501,6 +660,34 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	assert.Equal(t, edi.TransactionSet204, documentTypeResp.TransactionSet)
 	assert.Equal(t, edi.DocumentDirectionOutbound, documentTypeResp.Direction)
 	assert.Equal(t, edi.DefaultX12204Version, documentTypeResp.DefaultVersion)
+
+	communicationProfileRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/communication-profiles/select-options/"+communicationProfileID.String(),
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var communicationProfileResp edi.EDICommunicationProfile
+	require.NoError(t, communicationProfileRecorder.ResponseJSON(&communicationProfileResp))
+	assert.Equal(t, communicationProfileID, communicationProfileResp.ID)
+	assert.Equal(t, "Carrier SFTP", communicationProfileResp.Name)
+
+	mappingProfileRecorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/mapping-profiles/select-options/"+mappingProfileID.String(),
+		nil,
+		nil,
+		http.StatusOK,
+	)
+	var mappingProfileResp edi.EDIMappingProfile
+	require.NoError(t, mappingProfileRecorder.ResponseJSON(&mappingProfileResp))
+	assert.Equal(t, mappingProfileID, mappingProfileResp.ID)
+	assert.Equal(t, "Carrier Mapping", mappingProfileResp.Name)
 }
 
 func runEDIRequest(

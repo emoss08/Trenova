@@ -319,6 +319,46 @@ func (r *repository) ListMappingProfiles(
 	}, nil
 }
 
+func (r *repository) SelectMappingProfileOptions(
+	ctx context.Context,
+	req *repositories.EDIMappingProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	entities := make([]*edi.EDIMappingProfile, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column(
+			"id",
+			"business_unit_id",
+			"organization_id",
+			"edi_partner_id",
+			"name",
+			"description",
+		).
+		Relation("Partner").
+		Where("emp.organization_id = ?", req.SelectQueryRequest.TenantInfo.OrgID).
+		Where("emp.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+
+	if req.PartnerID.IsNotNil() {
+		query = query.Where("emp.edi_partner_id = ?", req.PartnerID)
+	}
+	query = applyMappingProfileSearch(query, req.SelectQueryRequest.Query)
+
+	total, err := query.
+		Order("emp.name ASC").
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDIMappingProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 func (r *repository) GetMappingProfileByID(
 	ctx context.Context,
 	req repositories.GetMappingProfileByIDRequest,
@@ -551,5 +591,20 @@ func applyPartnerSearch(query *bun.SelectQuery, search string) *bun.SelectQuery 
 	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.WhereOr("lower(ep.code) LIKE ?", term).
 			WhereOr("lower(ep.name) LIKE ?", term)
+	})
+}
+
+func applyMappingProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(emp.name) LIKE ?", term).
+			WhereOr("lower(emp.description) LIKE ?", term).
+			WhereOr("lower(partner.code) LIKE ?", term).
+			WhereOr("lower(partner.name) LIKE ?", term)
 	})
 }

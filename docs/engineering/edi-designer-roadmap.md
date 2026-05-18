@@ -213,6 +213,9 @@ hardened. They are not the end state.
   values use autocomplete-backed EDI select-options endpoints, and source /
   partner path browsing keeps manual path editing while inserting through
   autocomplete popovers.
+- The EDI Partners workspace supports direct External partner setup alongside
+  the existing Internal partner-pair connection workflow; direct Internal
+  partner creation remains pair controlled.
 
 ## Remaining Stages
 

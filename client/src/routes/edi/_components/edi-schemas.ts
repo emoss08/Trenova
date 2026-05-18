@@ -1,4 +1,11 @@
-import { ediConnectionMethodSchema, ediMappingEntityTypeSchema } from "@/types/edi";
+import { timezoneChoices } from "@/lib/choices";
+import {
+  ediConnectionMethodSchema,
+  ediMappingEntityTypeSchema,
+  ediPartnerKindSchema,
+  type EDIPartner,
+  type UpsertEDIPartnerRequest,
+} from "@/types/edi";
 import { z } from "zod";
 
 export const mappingEntityTypes = ediMappingEntityTypeSchema.options;
@@ -26,6 +33,16 @@ export const profileStatusOptions = [
   { label: "Active", value: "Active" },
   { label: "Inactive", value: "Inactive" },
 ];
+
+export const partnerStatusOptions = profileStatusOptions;
+
+export const partnerCountryOptions = [
+  { label: "United States", value: "US" },
+  { label: "Canada", value: "CA" },
+  { label: "Mexico", value: "MX" },
+];
+
+export const partnerTimezoneOptions = timezoneChoices;
 
 export const mdnModeOptions = [
   { label: "Synchronous", value: "sync" },
@@ -133,6 +150,99 @@ export const createInternalPartnerPairSchema = z.object({
   targetSettings: z.record(z.string(), z.unknown()),
 });
 
-export type CreateInternalPartnerPairFormValues = z.infer<
-  typeof createInternalPartnerPairSchema
->;
+export type CreateInternalPartnerPairFormValues = z.infer<typeof createInternalPartnerPairSchema>;
+
+export const ediPartnerFormSchema = z.object({
+  kind: ediPartnerKindSchema,
+  status: z.string().min(1, { error: "Status is required" }),
+  code: z.string().min(1, { error: "Partner code is required" }),
+  name: z.string().min(1, { error: "Partner name is required" }),
+  description: z.string(),
+  internalOrganizationId: z.string(),
+  ediConnectionId: z.string(),
+  customerId: z.string(),
+  country: z.string().min(2, { error: "Country is required" }).max(2),
+  timezone: z.string(),
+  contactName: z.string(),
+  contactEmail: z.string(),
+  contactPhone: z.string(),
+  enabledForInbound: z.boolean(),
+  enabledForOutbound: z.boolean(),
+  defaultTransportId: z.string(),
+  defaultMappingProfileId: z.string(),
+  defaultValidationProfileId: z.string(),
+  settingsJson: z.string().refine(
+    (value) => {
+      try {
+        const parsed = JSON.parse(value);
+        return parsed !== null && !Array.isArray(parsed) && typeof parsed === "object";
+      } catch {
+        return false;
+      }
+    },
+    { error: "Settings must be a valid JSON object" },
+  ),
+  version: z.number().optional(),
+});
+
+export type EDIPartnerFormValues = z.infer<typeof ediPartnerFormSchema>;
+
+export function getPartnerFormDefaults(partner?: EDIPartner | null): EDIPartnerFormValues {
+  return {
+    kind: partner?.kind ?? "External",
+    status: partner?.status ?? "Active",
+    code: partner?.code ?? "",
+    name: partner?.name ?? "",
+    description: partner?.description ?? "",
+    internalOrganizationId: partner?.internalOrganizationId ?? "",
+    ediConnectionId: partner?.ediConnectionId ?? "",
+    customerId: partner?.customerId ?? "",
+    country: partner?.country ?? "US",
+    timezone: partner?.timezone ?? "",
+    contactName: partner?.contactName ?? "",
+    contactEmail: partner?.contactEmail ?? "",
+    contactPhone: partner?.contactPhone ?? "",
+    enabledForInbound: partner?.enabledForInbound ?? true,
+    enabledForOutbound: partner?.enabledForOutbound ?? true,
+    defaultTransportId: partner?.defaultTransportId ?? "",
+    defaultMappingProfileId: partner?.defaultMappingProfileId ?? "",
+    defaultValidationProfileId: partner?.defaultValidationProfileId ?? "",
+    settingsJson: JSON.stringify(partner?.settings ?? {}, null, 2),
+    version: partner?.version,
+  };
+}
+
+export function toPartnerRequest(values: EDIPartnerFormValues): UpsertEDIPartnerRequest {
+  const request: UpsertEDIPartnerRequest = {
+    kind: values.kind,
+    status: values.status,
+    code: values.code.trim(),
+    name: values.name.trim(),
+    description: emptyToUndefined(values.description),
+    customerId: emptyToUndefined(values.customerId),
+    defaultTransportId: emptyToUndefined(values.defaultTransportId),
+    defaultMappingProfileId: emptyToUndefined(values.defaultMappingProfileId),
+    defaultValidationProfileId: emptyToUndefined(values.defaultValidationProfileId),
+    country: values.country,
+    timezone: emptyToUndefined(values.timezone),
+    contactName: emptyToUndefined(values.contactName),
+    contactEmail: emptyToUndefined(values.contactEmail),
+    contactPhone: emptyToUndefined(values.contactPhone),
+    enabledForInbound: values.enabledForInbound,
+    enabledForOutbound: values.enabledForOutbound,
+    settings: JSON.parse(values.settingsJson) as Record<string, unknown>,
+    version: values.version,
+  };
+
+  if (values.kind === "Internal") {
+    request.internalOrganizationId = emptyToUndefined(values.internalOrganizationId);
+    request.ediConnectionId = emptyToUndefined(values.ediConnectionId);
+  }
+
+  return request;
+}
+
+function emptyToUndefined(value: string) {
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}

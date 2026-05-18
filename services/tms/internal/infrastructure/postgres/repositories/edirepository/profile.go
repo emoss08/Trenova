@@ -2,6 +2,7 @@ package edirepository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -40,6 +41,54 @@ func (r *repository) ListProfiles(
 	}, nil
 }
 
+func (r *repository) SelectProfileOptions(
+	ctx context.Context,
+	req *repositories.EDICommunicationProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
+	entities := make([]*edi.EDICommunicationProfile, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column(
+			"id",
+			"business_unit_id",
+			"organization_id",
+			"edi_connection_id",
+			"edi_partner_id",
+			"method",
+			"status",
+			"name",
+			"description",
+		).
+		Where("ecp.organization_id = ?", req.SelectQueryRequest.TenantInfo.OrgID).
+		Where("ecp.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+
+	if req.Status != "" {
+		query = query.Where("ecp.status = ?", req.Status)
+	}
+	if req.Method != "" {
+		query = query.Where("ecp.method = ?", req.Method)
+	}
+	if req.PartnerID.IsNotNil() {
+		query = query.Where("ecp.edi_partner_id = ?", req.PartnerID)
+	}
+	query = applyCommunicationProfileSearch(query, req.SelectQueryRequest.Query)
+
+	total, err := query.
+		Order("ecp.name ASC").
+		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
+		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagination.ListResult[*edi.EDICommunicationProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 func (r *repository) GetProfileByID(
 	ctx context.Context,
 	req repositories.GetEDICommunicationProfileByIDRequest,
@@ -58,6 +107,20 @@ func (r *repository) GetProfileByID(
 	}
 
 	return entity, nil
+}
+
+func applyCommunicationProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
+	search = strings.TrimSpace(search)
+	if search == "" {
+		return query
+	}
+
+	term := "%" + strings.ToLower(search) + "%"
+	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.WhereOr("lower(ecp.name) LIKE ?", term).
+			WhereOr("lower(ecp.description) LIKE ?", term).
+			WhereOr("lower(ecp.method::text) LIKE ?", term)
+	})
 }
 
 func (r *repository) GetActiveProfileByPartner(

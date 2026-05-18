@@ -128,7 +128,12 @@ export const ediPartnerSchema = z.object({
   description: z.string().nullish(),
   internalOrganizationId: z.string().nullish(),
   ediConnectionId: z.string().nullish(),
+  customerId: z.string().nullish(),
   defaultTransportId: z.string().nullish(),
+  defaultMappingProfileId: z.string().nullish(),
+  defaultValidationProfileId: z.string().nullish(),
+  timezone: z.string().nullish(),
+  country: z.string(),
   contactName: z.string().nullish(),
   contactEmail: z.string().nullish(),
   contactPhone: z.string().nullish(),
@@ -145,6 +150,8 @@ export const ediPartnerSchema = z.object({
     .nullish(),
   connection: z.unknown().nullish(),
   defaultTransport: z.unknown().nullish(),
+  customer: z.unknown().nullish(),
+  mappingProfile: z.unknown().nullish(),
 });
 
 export type EDIPartner = z.infer<typeof ediPartnerSchema>;
@@ -878,6 +885,29 @@ export const createInternalPartnerPairRequestSchema = z.object({
 export type CreateInternalPartnerPairRequest = z.infer<
   typeof createInternalPartnerPairRequestSchema
 >;
+
+export type UpsertEDIPartnerRequest = {
+  kind?: z.infer<typeof ediPartnerKindSchema>;
+  status?: string;
+  code: string;
+  name: string;
+  description?: string;
+  internalOrganizationId?: string;
+  ediConnectionId?: string;
+  customerId?: string;
+  defaultTransportId?: string;
+  defaultMappingProfileId?: string;
+  defaultValidationProfileId?: string;
+  timezone?: string;
+  country?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  enabledForInbound?: boolean;
+  enabledForOutbound?: boolean;
+  settings?: Record<string, unknown>;
+  version?: number;
+};
 
 export const createEDIConnectionRequestSchema = z.object({
   targetOrganizationId: z.string().min(1),

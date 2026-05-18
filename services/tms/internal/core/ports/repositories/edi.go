@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -36,6 +37,11 @@ type GetMappingProfileRequest struct {
 
 type ListEDIMappingProfilesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+}
+
+type EDIMappingProfileSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	PartnerID          pulid.ID                       `json:"partnerId"`
 }
 
 type GetMappingProfileByIDRequest struct {
@@ -107,6 +113,13 @@ type CreateInternalEDIConnectionAcceptanceRequest struct {
 
 type ListEDICommunicationProfilesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+}
+
+type EDICommunicationProfileSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+	Status             domaintypes.Status             `json:"status"`
+	Method             edi.ConnectionMethod           `json:"method"`
+	PartnerID          pulid.ID                       `json:"partnerId"`
 }
 
 type GetEDICommunicationProfileByIDRequest struct {
@@ -505,6 +518,10 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req *ListEDIMappingProfilesRequest,
 	) (*pagination.ListResult[*edi.EDIMappingProfile], error)
+	SelectMappingProfileOptions(
+		ctx context.Context,
+		req *EDIMappingProfileSelectOptionsRequest,
+	) (*pagination.ListResult[*edi.EDIMappingProfile], error)
 	GetMappingProfileByID(
 		ctx context.Context,
 		req GetMappingProfileByIDRequest,
@@ -560,6 +577,10 @@ type EDICommunicationProfileRepository interface {
 	ListProfiles(
 		ctx context.Context,
 		req *ListEDICommunicationProfilesRequest,
+	) (*pagination.ListResult[*edi.EDICommunicationProfile], error)
+	SelectProfileOptions(
+		ctx context.Context,
+		req *EDICommunicationProfileSelectOptionsRequest,
 	) (*pagination.ListResult[*edi.EDICommunicationProfile], error)
 	GetProfileByID(
 		ctx context.Context,

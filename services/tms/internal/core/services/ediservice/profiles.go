@@ -28,6 +28,21 @@ func (s *Service) ListCommunicationProfiles(
 	return result, nil
 }
 
+func (s *Service) SelectCommunicationProfileOptions(
+	ctx context.Context,
+	req *repositories.EDICommunicationProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
+	result, err := s.profileRepo.SelectProfileOptions(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	for idx := range result.Items {
+		result.Items[idx] = profileWithSecretState(result.Items[idx])
+	}
+	return result, nil
+}
+
 func (s *Service) GetCommunicationProfile(
 	ctx context.Context,
 	req repositories.GetEDICommunicationProfileByIDRequest,

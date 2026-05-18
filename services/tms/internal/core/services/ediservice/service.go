@@ -206,6 +206,13 @@ func (s *Service) ListMappingProfiles(
 	return s.partnerRepo.ListMappingProfiles(ctx, req)
 }
 
+func (s *Service) SelectMappingProfileOptions(
+	ctx context.Context,
+	req *repositories.EDIMappingProfileSelectOptionsRequest,
+) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+	return s.partnerRepo.SelectMappingProfileOptions(ctx, req)
+}
+
 func (s *Service) GetMappingProfileByID(
 	ctx context.Context,
 	req repositories.GetMappingProfileByIDRequest,
@@ -1679,8 +1686,6 @@ func normalizePartnerForCreate(entity *edi.EDIPartner) {
 	if entity.Country == "" {
 		entity.Country = "US"
 	}
-	entity.EnabledForInbound = true
-	entity.EnabledForOutbound = true
 	if entity.Settings == nil {
 		entity.Settings = map[string]any{}
 	}

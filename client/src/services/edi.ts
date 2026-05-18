@@ -51,6 +51,7 @@ import {
   ediTransferChangeListSchema,
   ediTransferChangeSchema,
   type UpsertEDICommunicationProfileRequest,
+  type UpsertEDIPartnerRequest,
   type UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
 
@@ -305,9 +306,28 @@ export class EDIService {
     return safeParse(ediTransferListSchema, response, "EDIOutboundTransferList");
   }
 
-  public async selectPartners(kind = "Internal") {
-    const response = await api.get(`/edi/partners/select-options/?kind=${kind}&limit=100`);
+  public async selectPartners(
+    options: {
+      kind?: EDIPartner["kind"];
+      enabledForOutbound?: boolean;
+      limit?: number;
+    } = {},
+  ) {
+    const params = new URLSearchParams({
+      limit: String(options.limit ?? 100),
+    });
+    if (options.kind) params.set("kind", options.kind);
+    if (options.enabledForOutbound !== undefined) {
+      params.set("enabledForOutbound", String(options.enabledForOutbound));
+    }
+
+    const response = await api.get(`/edi/partners/select-options/?${params.toString()}`);
     return safeParse(ediPartnerSelectOptionListSchema, response, "EDIPartnerOptions");
+  }
+
+  public async createPartner(request: UpsertEDIPartnerRequest) {
+    const response = await api.post("/edi/partners/", request);
+    return safeParse(ediPartnerSchema, response, "EDIPartner");
   }
 
   public async createInternalPair(request: CreateInternalPartnerPairRequest) {
@@ -315,8 +335,8 @@ export class EDIService {
     return safeParse(internalPartnerPairSchema, response, "InternalPartnerPair");
   }
 
-  public async updatePartner(partner: EDIPartner) {
-    const response = await api.put(`/edi/partners/${partner.id}/`, partner);
+  public async updatePartner(partnerId: string, request: UpsertEDIPartnerRequest) {
+    const response = await api.put(`/edi/partners/${partnerId}/`, request);
     return safeParse(ediPartnerSchema, response, "EDIPartner");
   }
 

@@ -73,6 +73,7 @@ export type BaseEndpoint =
   | "/accounting/bank-receipt-work-items/"
   | "/edi/partners/"
   | "/edi/communication-profiles/"
+  | "/edi/mapping-profiles/"
   | "/edi/document-types/"
   | "/edi/source-context/fields/"
   | "/edi/partner-settings/fields/"

@@ -312,6 +312,74 @@ func (_c *MockEDICommunicationProfileRepository_ListProfiles_Call) RunAndReturn(
 	return _c
 }
 
+// SelectProfileOptions provides a mock function for the type MockEDICommunicationProfileRepository
+func (_mock *MockEDICommunicationProfileRepository) SelectProfileOptions(ctx context.Context, req *repositories.EDICommunicationProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectProfileOptions")
+	}
+
+	var r0 *pagination.ListResult[*edi.EDICommunicationProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDICommunicationProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.EDICommunicationProfileSelectOptionsRequest) *pagination.ListResult[*edi.EDICommunicationProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*edi.EDICommunicationProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.EDICommunicationProfileSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDICommunicationProfileRepository_SelectProfileOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectProfileOptions'
+type MockEDICommunicationProfileRepository_SelectProfileOptions_Call struct {
+	*mock.Call
+}
+
+// SelectProfileOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.EDICommunicationProfileSelectOptionsRequest
+func (_e *MockEDICommunicationProfileRepository_Expecter) SelectProfileOptions(ctx interface{}, req interface{}) *MockEDICommunicationProfileRepository_SelectProfileOptions_Call {
+	return &MockEDICommunicationProfileRepository_SelectProfileOptions_Call{Call: _e.mock.On("SelectProfileOptions", ctx, req)}
+}
+
+func (_c *MockEDICommunicationProfileRepository_SelectProfileOptions_Call) Run(run func(ctx context.Context, req *repositories.EDICommunicationProfileSelectOptionsRequest)) *MockEDICommunicationProfileRepository_SelectProfileOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.EDICommunicationProfileSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.EDICommunicationProfileSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_SelectProfileOptions_Call) Return(listResult *pagination.ListResult[*edi.EDICommunicationProfile], err error) *MockEDICommunicationProfileRepository_SelectProfileOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockEDICommunicationProfileRepository_SelectProfileOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.EDICommunicationProfileSelectOptionsRequest) (*pagination.ListResult[*edi.EDICommunicationProfile], error)) *MockEDICommunicationProfileRepository_SelectProfileOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateProfile provides a mock function for the type MockEDICommunicationProfileRepository
 func (_mock *MockEDICommunicationProfileRepository) UpdateProfile(ctx context.Context, entity *edi.EDICommunicationProfile) (*edi.EDICommunicationProfile, error) {
 	ret := _mock.Called(ctx, entity)
