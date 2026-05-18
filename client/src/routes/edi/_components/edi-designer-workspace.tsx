@@ -1,3 +1,4 @@
+import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@/components/theme-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,8 +70,6 @@ import {
   type SetStateAction,
 } from "react";
 import { toast } from "sonner";
-import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
-import { formatUnix } from "./edi-display-utils";
 import {
   buildConditionString,
   cloneSegments,
@@ -86,6 +85,7 @@ import {
   transformOperationDefinitions,
   type ConditionDraft,
 } from "./edi-designer-utils";
+import { formatUnix } from "./edi-display-utils";
 import {
   getEDIScriptPresetsByCategory,
   insertScriptPresetCode,
@@ -594,8 +594,8 @@ function TemplateDesignerTab() {
             }}
           />
           <Tabs defaultValue="elements" className="min-h-0 gap-0">
-            <div className="flex items-center justify-between border-b px-3 py-2">
-              <TabsList>
+            <div className="flex items-center justify-between border-b px-1 bg-sidebar">
+              <TabsList variant="underline">
                 <TabsTrigger value="elements">Elements</TabsTrigger>
                 <TabsTrigger value="scripts">Scripts</TabsTrigger>
                 <TabsTrigger value="validation">Validation</TabsTrigger>
@@ -605,7 +605,7 @@ function TemplateDesignerTab() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size="xs"
                   onClick={() => saveMetadataMutation.mutate(undefined)}
                   isLoading={saveMetadataMutation.isPending}
                   disabled={!isEditable || !metadataDirty}
@@ -615,7 +615,7 @@ function TemplateDesignerTab() {
                 </Button>
                 <Button
                   type="button"
-                  size="sm"
+                  size="xs"
                   onClick={() => saveSegmentsMutation.mutate(undefined)}
                   isLoading={saveSegmentsMutation.isPending}
                   disabled={!isEditable || !segmentsDirty}
@@ -870,7 +870,7 @@ function VersionAndSegmentRail({
   return (
     <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] border-r">
       <div className="min-h-0 overflow-auto border-b">
-        <div className="sticky top-0 border-b bg-background px-3 py-2 text-xs font-semibold">
+        <div className="sticky top-0 border-b bg-sidebar px-3 py-2.5 text-sm font-semibold min-h-10.25 text-left justify-center">
           Versions
         </div>
         {versions.map((version) => (
@@ -1753,7 +1753,7 @@ function ScriptLibraryEditor({
   };
 
   return (
-    <div className="grid min-h-0 grid-cols-[260px_minmax(0,1fr)]">
+    <div className="grid h-full grid-cols-[260px_minmax(0,1fr)]">
       <div className="min-h-0 overflow-auto border-r">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-xs font-semibold">Libraries</span>
