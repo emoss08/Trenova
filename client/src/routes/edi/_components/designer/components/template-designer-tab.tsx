@@ -2,14 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import type {
-  EDIDiagnostic,
-  EDITemplate,
-  EDITemplateElement,
-  EDITemplateScriptLibrary,
-  EDITemplateSegment,
-  EDITemplateVersion,
+import {
+  createTemplateDraftSchema,
+  type ediDiagnosticSchema,
+  type ediTemplateElementSchema,
+  type ediTemplateScriptLibrarySchema,
+  type ediTemplateSegmentSchema,
 } from "@/types/edi";
 import {
   AlertTriangleIcon,
@@ -19,29 +17,14 @@ import {
   CopyPlusIcon,
   FileCode2Icon,
   ListChecksIcon,
-  PlusIcon,
   SaveIcon,
   SearchIcon,
 } from "lucide-react";
-import {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  cloneSegments,
-  diagnosticsForSegment,
-  getReadOnlyReason,
-  isTemplateVersionEditable,
-} from "../utils/edi-designer-utils";
+import type { z } from "zod";
+import { ElementDesigner } from "../element/element-designer";
 import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
-import { useEDITemplateQueries } from "../hooks/use-edi-template-queries";
 import {
   useActivateEDITemplateMutation,
   useArchiveEDITemplateMutation,
@@ -54,20 +37,32 @@ import {
   useValidateAndCertifyEDITemplateMutation,
   useValidateEDITemplateMutation,
 } from "../hooks/use-edi-template-mutations";
-import { ElementDesigner } from "../element/element-designer";
-import { DesignerPanelSkeleton } from "./designer-workspace-skeleton";
-import { ValidationPanel } from "./validation-panel";
+import { useEDITemplateQueries } from "../hooks/use-edi-template-queries";
+import CreateTemplateForm from "../templates/create-template-form";
+import TemplateList from "../templates/template-list";
+import {
+  cloneSegments,
+  getReadOnlyReason,
+  isTemplateVersionEditable,
+} from "../utils/edi-designer-utils";
+import VersionAndSegmentRail from "../versions/version-and-segment-rail";
 import {
   DiagnosticsList,
-  InputBlock,
   PanelHeader,
   ReadOnlyBanner,
   SelectBlock,
   VersionStatusBadge,
 } from "./designer-shared";
+import { DesignerPanelSkeleton } from "./designer-workspace-skeleton";
+import { ValidationPanel } from "./validation-panel";
 
 const ScriptLibraryEditor = lazy(() => import("../scripts/script-library-editor"));
 const TemplatePreviewPanel = lazy(() => import("./template-preview-panel"));
+
+type TemplateSegment = z.infer<typeof ediTemplateSegmentSchema>;
+type TemplateElement = z.infer<typeof ediTemplateElementSchema>;
+type TemplateScriptLibrary = z.infer<typeof ediTemplateScriptLibrarySchema>;
+type TemplateDiagnostic = z.infer<typeof ediDiagnosticSchema>;
 
 export default function TemplateDesignerTab() {
   const [templateUrlState, setTemplateUrlState] = useTemplateDesignerUrlState();
@@ -103,23 +98,25 @@ export default function TemplateDesignerTab() {
     (elementPosition: number) => void setTemplateUrlState({ elementPosition }),
     [setTemplateUrlState],
   );
-  const [segmentsDraft, setSegmentsDraft] = useState<EDITemplateSegment[]>([]);
-  const [scriptDraft, setScriptDraft] = useState<EDITemplateScriptLibrary[]>([]);
+  const [segmentsDraft, setSegmentsDraft] = useState<TemplateSegment[]>([]);
+  const [scriptDraft, setScriptDraft] = useState<TemplateScriptLibrary[]>([]);
   const [versionNotes, setVersionNotes] = useState("");
   const [x12Version, setX12Version] = useState("004010");
   const [functionalGroupId, setFunctionalGroupId] = useState("SM");
   const [segmentsDirty, setSegmentsDirty] = useState(false);
   const [scriptsDirty, setScriptsDirty] = useState(false);
   const [metadataDirty, setMetadataDirty] = useState(false);
-  const [diagnostics, setDiagnostics] = useState<EDIDiagnostic[]>([]);
-  const [newTemplate, setNewTemplate] = useState({
-    documentTypeId: "",
-    name: "",
-    description: "",
-    x12Version: "004010",
-    functionalGroupId: "SM",
-    notes: "",
-  });
+  const [diagnostics, setDiagnostics] = useState<TemplateDiagnostic[]>([]);
+  const [newTemplate, setNewTemplate] = useState(
+    createTemplateDraftSchema.parse({
+      documentTypeId: "",
+      name: "",
+      description: "",
+      x12Version: "004010",
+      functionalGroupId: "SM",
+      notes: "",
+    }),
+  );
 
   const templatesQueryString = useMemo(() => {
     const params = new URLSearchParams({
@@ -226,14 +223,16 @@ export default function TemplateDesignerTab() {
       toast.success("EDI template created");
       setSelectedTemplateId(template.id);
       setSelectedVersionId(template.versions[0]?.id ?? template.activeVersion?.id ?? "");
-      setNewTemplate({
-        documentTypeId: "",
-        name: "",
-        description: "",
-        x12Version: "004010",
-        functionalGroupId: "SM",
-        notes: "",
-      });
+      setNewTemplate(
+        createTemplateDraftSchema.parse({
+          documentTypeId: "",
+          name: "",
+          description: "",
+          x12Version: "004010",
+          functionalGroupId: "SM",
+          notes: "",
+        }),
+      );
       await invalidateTemplateQueries();
     },
     onError: () => toast.error("Failed to create EDI template"),
@@ -314,7 +313,7 @@ export default function TemplateDesignerTab() {
 
   const updateSegment = (
     segmentId: string,
-    updater: (segment: EDITemplateSegment) => EDITemplateSegment,
+    updater: (segment: TemplateSegment) => TemplateSegment,
   ) => {
     if (!isEditable) return;
     setSegmentsDraft((current) =>
@@ -325,7 +324,7 @@ export default function TemplateDesignerTab() {
 
   const updateElement = (
     position: number,
-    updater: (element: EDITemplateElement) => EDITemplateElement,
+    updater: (element: TemplateElement) => TemplateElement,
   ) => {
     if (!selectedSegment || !isEditable) return;
     updateSegment(selectedSegment.id, (segment) => ({
@@ -672,211 +671,6 @@ export default function TemplateDesignerTab() {
           }}
         />
       </aside>
-    </div>
-  );
-}
-
-function TemplateList({
-  templates,
-  selectedTemplateId,
-  onSelect,
-}: {
-  templates: EDITemplate[];
-  selectedTemplateId: string;
-  onSelect: (templateId: string) => void;
-}) {
-  return (
-    <div className="min-h-0 flex-1 overflow-auto">
-      {templates.map((template) => (
-        <button
-          key={template.id}
-          type="button"
-          onClick={() => onSelect(template.id)}
-          className={cn(
-            "block w-full border-b px-3 py-2 text-left hover:bg-muted",
-            selectedTemplateId === template.id && "bg-muted",
-          )}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm font-medium">{template.name}</span>
-            <Badge variant={template.status === "Active" ? "active" : "outline"}>
-              {template.status}
-            </Badge>
-          </div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            {template.transactionSet} {template.direction} / {template.versions.length} versions
-          </div>
-        </button>
-      ))}
-      {templates.length === 0 ? (
-        <div className="p-3 text-sm text-muted-foreground">No matching templates.</div>
-      ) : null}
-    </div>
-  );
-}
-
-function CreateTemplateForm({
-  documentTypes,
-  draft,
-  onChange,
-  onCreate,
-  isLoading,
-}: {
-  documentTypes: { id: string; code: string; name: string; defaultVersion: string }[];
-  draft: {
-    documentTypeId: string;
-    name: string;
-    description: string;
-    x12Version: string;
-    functionalGroupId: string;
-    notes: string;
-  };
-  onChange: Dispatch<
-    SetStateAction<{
-      documentTypeId: string;
-      name: string;
-      description: string;
-      x12Version: string;
-      functionalGroupId: string;
-      notes: string;
-    }>
-  >;
-  onCreate: () => void;
-  isLoading: boolean;
-}) {
-  return (
-    <div className="space-y-2 border-t p-3">
-      <div className="flex items-center gap-2 text-xs font-semibold">
-        <PlusIcon className="size-4" />
-        New Template
-      </div>
-      <SelectBlock
-        label="Document Type"
-        value={draft.documentTypeId}
-        onValueChange={(documentTypeId) => {
-          const documentType = documentTypes.find((item) => item.id === documentTypeId);
-          onChange((current) => ({
-            ...current,
-            documentTypeId,
-            x12Version: documentType?.defaultVersion ?? current.x12Version,
-          }));
-        }}
-        options={documentTypes.map((documentType) => ({
-          value: documentType.id,
-          label: `${documentType.code} - ${documentType.name}`,
-        }))}
-      />
-      <InputBlock
-        label="Name"
-        value={draft.name}
-        onChange={(name) => onChange((current) => ({ ...current, name }))}
-      />
-      <InputBlock
-        label="Description"
-        value={draft.description}
-        onChange={(description) => onChange((current) => ({ ...current, description }))}
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <InputBlock
-          label="X12 Version"
-          value={draft.x12Version}
-          onChange={(x12Version) => onChange((current) => ({ ...current, x12Version }))}
-        />
-        <InputBlock
-          label="Group"
-          value={draft.functionalGroupId}
-          onChange={(functionalGroupId) =>
-            onChange((current) => ({ ...current, functionalGroupId }))
-          }
-        />
-      </div>
-      <Button
-        type="button"
-        className="w-full"
-        onClick={onCreate}
-        isLoading={isLoading}
-        disabled={!draft.documentTypeId || !draft.name.trim()}
-      >
-        <PlusIcon className="size-4" />
-        Create Template
-      </Button>
-    </div>
-  );
-}
-
-function VersionAndSegmentRail({
-  versions,
-  selectedVersionId,
-  onVersionSelect,
-  segments,
-  diagnostics,
-  selectedSegmentId,
-  onSegmentSelect,
-}: {
-  versions: EDITemplateVersion[];
-  selectedVersionId: string;
-  onVersionSelect: (versionId: string) => void;
-  segments: EDITemplateSegment[];
-  diagnostics: EDIDiagnostic[];
-  selectedSegmentId: string;
-  onSegmentSelect: (segment: EDITemplateSegment) => void;
-}) {
-  return (
-    <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] border-r">
-      <div className="min-h-0 overflow-auto border-b">
-        <div className="sticky top-0 min-h-10.25 justify-center border-b bg-sidebar px-3 py-2.5 text-left text-sm font-semibold">
-          Versions
-        </div>
-        {versions.map((version) => (
-          <button
-            key={version.id}
-            type="button"
-            onClick={() => onVersionSelect(version.id)}
-            className={cn(
-              "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
-              selectedVersionId === version.id && "bg-muted",
-            )}
-          >
-            <span className="font-mono text-xs">v{version.versionNumber}</span>
-            <VersionStatusBadge version={version} />
-          </button>
-        ))}
-      </div>
-      <div className="min-h-0 overflow-auto">
-        <div className="sticky top-0 border-b bg-background px-3 py-2 text-xs font-semibold">
-          Outline
-        </div>
-        {segments.map((segment) => {
-          const segmentDiagnostics = diagnosticsForSegment(diagnostics, segment);
-          return (
-            <button
-              key={segment.id}
-              type="button"
-              onClick={() => onSegmentSelect(segment)}
-              className={cn(
-                "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
-                selectedSegmentId === segment.id && "bg-muted",
-              )}
-            >
-              <span className="min-w-0">
-                <span className="block font-mono text-sm font-medium">{segment.segmentId}</span>
-                <span className="block truncate text-xs text-muted-foreground">{segment.name}</span>
-              </span>
-              {segmentDiagnostics.length > 0 ? (
-                <Badge
-                  variant={
-                    segmentDiagnostics.some((item) => item.severity === "Error")
-                      ? "inactive"
-                      : "warning"
-                  }
-                >
-                  {segmentDiagnostics.length}
-                </Badge>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 }

@@ -972,3 +972,14 @@ export type ApproveEDITransferRequest = {
 export type RejectEDITransferRequest = {
   reason: string;
 };
+
+export const createTemplateDraftSchema = z.object({
+  documentTypeId: z.string(),
+  name: z.string(),
+  description: z.string(),
+  x12Version: z.string(),
+  functionalGroupId: z.string(),
+  notes: z.string(),
+});
+
+export type CreateTemplateDraft = z.infer<typeof createTemplateDraftSchema>;
