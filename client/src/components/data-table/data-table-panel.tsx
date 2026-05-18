@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import type { DataTablePanelProps } from "@/types/data-table";
 import { Dialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
@@ -16,7 +15,7 @@ const PANEL_SIZES = {
 
 export type PanelSize = keyof typeof PANEL_SIZES;
 
-type DataTablePanelContainerProps<T extends Record<string, unknown>> = {
+type DataTablePanelContainerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -26,9 +25,9 @@ type DataTablePanelContainerProps<T extends Record<string, unknown>> = {
   footer?: React.ReactNode;
   headerActions?: React.ReactNode;
   size?: PanelSize;
-} & Pick<DataTablePanelProps<T>, "row">;
+};
 
-export function DataTablePanelContainer<T extends Record<string, unknown>>({
+export function DataTablePanelContainer({
   open,
   onOpenChange,
   title,
@@ -37,9 +36,8 @@ export function DataTablePanelContainer<T extends Record<string, unknown>>({
   children,
   footer,
   headerActions,
-  row,
   size = "md",
-}: DataTablePanelContainerProps<T>) {
+}: DataTablePanelContainerProps) {
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>

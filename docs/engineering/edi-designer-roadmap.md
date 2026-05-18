@@ -180,6 +180,26 @@ hardened. They are not the end state.
   code in the condition error message, such as `starlark_runtime_error` or
   `starlark_step_limit`.
 
+### Stage 3.8: Frontend Template Designer Foundation
+
+- `/edi/designer` now defaults to a Templates workspace instead of the document
+  preview surface.
+- The frontend has backend-aligned DTOs and service/query helpers for template
+  creation, version metadata, draft cloning, segment replacement, script
+  library replacement, validation, certification, activation, archive, source
+  context field search, and partner setting field search.
+- Draft segment, element, transform, condition, and script-library edits use an
+  explicit Save Draft flow against backend draft endpoints.
+- Certified, active, superseded, deprecated, and archived versions are presented
+  as read-only with disabled editing controls.
+- Validation diagnostics are grouped by severity, can select related
+  segment/element rows when identifiable, and decorate outline/element rows.
+- The designer includes source and partner setting path pickers, transform
+  operation metadata, condition-string construction, and CodeMirror Starlark
+  script editing with discovered function names.
+- The existing outbound document profile, preview, generate, and archive
+  workflow remains available as the Document Preview & Archive tab.
+
 ## Remaining Stages
 
 The stages below are ordered by dependency and operational value. A stage is
@@ -293,14 +313,24 @@ operational support are present where relevant.
 
 ### Stage 10: Frontend Designer
 
-- Build the full self-service designer experience.
-- Provide template outline navigation by envelope, transaction set, loop,
+- [x] Build the initial template designer workspace for outbound 204 templates.
+- [x] Provide template outline navigation by version, segment, and element.
+- [x] Add template list filters and create-template flow.
+- [x] Add draft-only segment and element editing with explicit Save Draft.
+- [x] Add source selector and partner setting selector backed by backend field
+  search APIs.
+- [x] Add transform builder for backend-supported operations.
+- [x] Add condition editor for persisted backend condition strings.
+- [x] Add template-version script library editing with CodeMirror.
+- [x] Add validation diagnostics panel and lifecycle actions.
+- [x] Preserve existing document preview, generate, and archive workflow as a
+  secondary designer tab.
+- [ ] Provide template outline navigation by envelope, transaction set, loop,
   segment, and element.
 - Support drag/reorder where X12 ordering rules allow it and prevent invalid
   structural edits.
-- Provide source selector, transform builder, Starlark editor, condition editor,
-  validation rule editor, code list selector, partner settings references,
-  rendered preview, diagnostics panel, version diff, and promotion workflow.
+- Provide validation rule editor, code list selector, rendered preview,
+  diagnostics panel, version diff, and promotion workflow.
 - Include fixture management and side-by-side comparison between rendered output,
   expected output, and partner implementation-guide examples.
 - Surface safety warnings for scripts, unsafe truncation, required data gaps,

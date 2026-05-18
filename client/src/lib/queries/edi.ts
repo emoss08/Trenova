@@ -58,6 +58,30 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["templates", query],
     queryFn: async () => apiService.ediService.listTemplates(query),
   }),
+  template: (templateId: string) => ({
+    queryKey: ["template", templateId],
+    queryFn: async () => apiService.ediService.getTemplate(templateId),
+  }),
+  templateVersions: (templateId: string) => ({
+    queryKey: ["template-versions", templateId],
+    queryFn: async () => apiService.ediService.listTemplateVersions(templateId),
+  }),
+  templateVersion: (templateId: string, versionId: string) => ({
+    queryKey: ["template-version", templateId, versionId],
+    queryFn: async () => apiService.ediService.getTemplateVersion(templateId, versionId),
+  }),
+  templateScriptLibraries: (templateId: string, versionId: string) => ({
+    queryKey: ["template-script-libraries", templateId, versionId],
+    queryFn: async () => apiService.ediService.listTemplateScriptLibraries(templateId, versionId),
+  }),
+  sourceContextFields: (query = "") => ({
+    queryKey: ["source-context-fields", query],
+    queryFn: async () => apiService.ediService.searchSourceContextFields(query),
+  }),
+  partnerSettingFields: (query = "") => ({
+    queryKey: ["partner-setting-fields", query],
+    queryFn: async () => apiService.ediService.searchPartnerSettingFields(query),
+  }),
   documentProfiles: (query = "") => ({
     queryKey: ["document-profiles", query],
     queryFn: async () => apiService.ediService.listPartnerDocumentProfiles(query),

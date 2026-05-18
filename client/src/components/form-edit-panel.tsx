@@ -163,7 +163,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   };
 
   return (
-    <DataTablePanelContainer<TData>
+    <DataTablePanelContainer
       open={open}
       onOpenChange={onOpenChange}
       title={resolvedTitle}
@@ -171,7 +171,6 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
       description={panelDescription}
       headerActions={headerActions}
       size={size}
-      row={row}
       footer={
         useDock ? undefined : (
           <>

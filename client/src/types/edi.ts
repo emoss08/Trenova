@@ -52,10 +52,59 @@ export const ediDocumentDirectionSchema = z.enum(["Inbound", "Outbound"]);
 export const ediStandardSchema = z.enum(["X12"]);
 export const ediTransactionSetSchema = z.enum(["204", "210", "214", "990", "997", "999"]);
 export const ediDocumentStatusSchema = z.enum(["Active", "Inactive"]);
-export const ediTemplateStatusSchema = z.enum(["Draft", "Active", "Archived", "Superseded"]);
+export const ediTemplateStatusSchema = z.enum([
+  "Draft",
+  "Certified",
+  "Active",
+  "Deprecated",
+  "Archived",
+  "Superseded",
+]);
+export type EDITemplateStatus = z.infer<typeof ediTemplateStatusSchema>;
 export const ediValidationModeSchema = z.enum(["Strict", "WarnOnly", "Disabled"]);
 export const ediValidationSeveritySchema = z.enum(["Info", "Warning", "Error"]);
 export const ediMessageStatusSchema = z.enum(["Generated", "Failed"]);
+export const ediSourceContextDataTypeSchema = z.enum([
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "timestamp",
+  "date",
+  "decimal",
+  "object",
+  "array",
+  "unknown",
+]);
+export const ediSourceContextKindSchema = z.enum([
+  "shipment",
+  "repeat",
+  "partner",
+  "runtime",
+  "mapping",
+  "organization",
+  "customer",
+  "location",
+  "commodity",
+  "charge",
+  "envelope",
+]);
+export const ediSourceContextFieldStatusSchema = z.enum(["Active", "Deprecated", "Future"]);
+export const ediPartnerSettingDataTypeSchema = z.enum([
+  "string",
+  "number",
+  "integer",
+  "boolean",
+  "decimal",
+  "enum",
+  "object",
+  "array",
+  "map",
+  "secret",
+  "unknown",
+]);
+export const ediPartnerSettingStatusSchema = z.enum(["Active", "Deprecated", "Future"]);
+export const ediScriptLanguageSchema = z.enum(["Starlark"]);
 export const ediTemplateElementSourceSchema = z.enum([
   "constant",
   "fieldPath",
@@ -394,9 +443,7 @@ export const ediTemplateElementBaseSourceSchema = z.object({
   repeatPath: z.string().nullish(),
   default: z.string().nullish(),
 });
-export type EDITemplateElementBaseSource = z.infer<
-  typeof ediTemplateElementBaseSourceSchema
->;
+export type EDITemplateElementBaseSource = z.infer<typeof ediTemplateElementBaseSourceSchema>;
 
 export const ediTemplateTransformStepSchema = z.object({
   operation: z.string(),
@@ -452,16 +499,51 @@ export const ediTemplateSegmentSchema = z.object({
 
 export type EDITemplateSegment = z.infer<typeof ediTemplateSegmentSchema>;
 
+export const ediTemplateScriptLibrarySchema = z.object({
+  id: z.string(),
+  businessUnitId: z.string().optional(),
+  organizationId: z.string().optional(),
+  templateVersionId: z.string(),
+  name: z.string(),
+  description: z.string().nullish(),
+  language: ediScriptLanguageSchema,
+  script: z.string(),
+  status: ediTemplateStatusSchema,
+  version: z.number().default(0),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+  functionNames: z.array(z.string()).default([]),
+});
+
+export type EDITemplateScriptLibrary = z.infer<typeof ediTemplateScriptLibrarySchema>;
+
 export const ediTemplateVersionSchema = z.object({
   id: z.string(),
+  businessUnitId: z.string().optional(),
+  organizationId: z.string().optional(),
   templateId: z.string(),
+  sourceVersionId: z.string().nullish(),
   versionNumber: z.number(),
   x12Version: z.string(),
   functionalGroupId: z.string(),
   status: ediTemplateStatusSchema,
   isActive: z.boolean(),
   notes: z.string().nullish(),
+  certificationNotes: z.string().nullish(),
+  activationNotes: z.string().nullish(),
+  archiveNotes: z.string().nullish(),
+  deprecatedNotes: z.string().nullish(),
+  supersededNotes: z.string().nullish(),
+  certifiedAt: z.number().nullish(),
+  activatedAt: z.number().nullish(),
+  archivedAt: z.number().nullish(),
+  deprecatedAt: z.number().nullish(),
+  supersededAt: z.number().nullish(),
+  version: z.number().default(0),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
   segments: z.array(ediTemplateSegmentSchema).default([]),
+  scriptLibraries: z.array(ediTemplateScriptLibrarySchema).default([]),
 });
 
 export type EDITemplateVersion = z.infer<typeof ediTemplateVersionSchema>;
@@ -490,11 +572,97 @@ export const ediTemplateSchema = z.object({
   standard: ediStandardSchema,
   transactionSet: ediTransactionSetSchema,
   status: ediTemplateStatusSchema,
+  version: z.number().default(0),
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
   activeVersion: ediTemplateVersionSchema.nullish(),
   versions: z.array(ediTemplateVersionSchema).default([]),
 });
 
 export type EDITemplate = z.infer<typeof ediTemplateSchema>;
+
+export const ediSourceContextFieldSchema = z.object({
+  id: z.string(),
+  schemaId: z.string(),
+  path: z.string(),
+  sourceKind: ediSourceContextKindSchema,
+  dataType: ediSourceContextDataTypeSchema,
+  repeated: z.boolean(),
+  repeatPath: z.string().nullish(),
+  parentPath: z.string().nullish(),
+  displayName: z.string(),
+  description: z.string().nullish(),
+  status: ediSourceContextFieldStatusSchema,
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+});
+
+export type EDISourceContextField = z.infer<typeof ediSourceContextFieldSchema>;
+
+export const ediSourceContextSchemaSchema = z.object({
+  id: z.string(),
+  businessUnitId: z.string().nullish(),
+  organizationId: z.string().nullish(),
+  standard: ediStandardSchema,
+  transactionSet: ediTransactionSetSchema,
+  direction: ediDocumentDirectionSchema,
+  x12Version: z.string(),
+  contextKey: z.string(),
+  schemaVersion: z.number(),
+  name: z.string(),
+  description: z.string().nullish(),
+  status: ediSourceContextFieldStatusSchema,
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+  fields: z.array(ediSourceContextFieldSchema).default([]),
+});
+
+export type EDISourceContextSchema = z.infer<typeof ediSourceContextSchemaSchema>;
+
+export const ediPartnerSettingFieldSchema = z.object({
+  id: z.string(),
+  schemaId: z.string(),
+  path: z.string(),
+  label: z.string(),
+  description: z.string().nullish(),
+  dataType: ediPartnerSettingDataTypeSchema,
+  required: z.boolean(),
+  nullable: z.boolean(),
+  defaultValue: z.unknown().nullish(),
+  allowedValues: z.array(z.string()).default([]),
+  secret: z.boolean(),
+  groupKey: z.string().nullish(),
+  displayOrder: z.number().default(0),
+  validationPattern: z.string().nullish(),
+  minLength: z.number().default(0),
+  maxLength: z.number().default(0),
+  usageNotes: z.string().nullish(),
+  status: ediPartnerSettingStatusSchema,
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+});
+
+export type EDIPartnerSettingField = z.infer<typeof ediPartnerSettingFieldSchema>;
+
+export const ediPartnerSettingSchemaSchema = z.object({
+  id: z.string(),
+  businessUnitId: z.string().nullish(),
+  organizationId: z.string().nullish(),
+  documentTypeId: z.string().nullish(),
+  standard: ediStandardSchema,
+  transactionSet: ediTransactionSetSchema,
+  direction: ediDocumentDirectionSchema,
+  x12Version: z.string(),
+  schemaVersion: z.number(),
+  name: z.string(),
+  description: z.string().nullish(),
+  status: ediPartnerSettingStatusSchema,
+  createdAt: z.number().nullish(),
+  updatedAt: z.number().nullish(),
+  fields: z.array(ediPartnerSettingFieldSchema).default([]),
+});
+
+export type EDIPartnerSettingSchema = z.infer<typeof ediPartnerSettingSchemaSchema>;
 
 export const ediX12EnvelopeSettingsSchema = z.object({
   interchangeSenderId: z.string().default("TRENOVA"),
@@ -557,6 +725,12 @@ export const ediDiagnosticSchema = z.object({
 });
 
 export type EDIDiagnostic = z.infer<typeof ediDiagnosticSchema>;
+
+export const ediTemplateValidationResponseSchema = z.object({
+  diagnostics: z.array(ediDiagnosticSchema).default([]),
+});
+
+export type EDITemplateValidationResponse = z.infer<typeof ediTemplateValidationResponseSchema>;
 
 export const ediDocumentPreviewSchema = z.object({
   rawX12: z.string(),
@@ -622,6 +796,18 @@ export const ediShipmentLinkListSchema = createLimitOffsetResponse(ediShipmentLi
 export const ediTransferChangeListSchema = createLimitOffsetResponse(ediTransferChangeSchema);
 export const ediPartnerSelectOptionListSchema = createLimitOffsetResponse(ediPartnerSchema);
 export const ediTemplateListSchema = createLimitOffsetResponse(ediTemplateSchema);
+export const ediSourceContextSchemaListSchema = createLimitOffsetResponse(
+  ediSourceContextSchemaSchema,
+);
+export const ediSourceContextFieldListSchema = createLimitOffsetResponse(
+  ediSourceContextFieldSchema,
+);
+export const ediPartnerSettingSchemaListSchema = createLimitOffsetResponse(
+  ediPartnerSettingSchemaSchema,
+);
+export const ediPartnerSettingFieldListSchema = createLimitOffsetResponse(
+  ediPartnerSettingFieldSchema,
+);
 export const ediPartnerDocumentProfileListSchema = createLimitOffsetResponse(
   ediPartnerDocumentProfileSchema,
 );
@@ -698,6 +884,53 @@ export type UpsertEDIPartnerDocumentProfileRequest = {
   validationMode: z.infer<typeof ediValidationModeSchema>;
   partnerSettings: Record<string, unknown>;
   version?: number;
+};
+
+export type CreateEDITemplateRequest = {
+  documentTypeId: string;
+  name: string;
+  description?: string;
+  direction: z.infer<typeof ediDocumentDirectionSchema>;
+  standard: z.infer<typeof ediStandardSchema>;
+  transactionSet: z.infer<typeof ediTransactionSetSchema>;
+  x12Version: string;
+  functionalGroupId: string;
+  notes?: string;
+  segments?: EDITemplateSegment[];
+  scriptLibraries?: EDITemplateScriptLibrary[];
+};
+
+export type UpdateEDITemplateRequest = {
+  name: string;
+  description?: string;
+  status?: EDITemplateStatus;
+  version?: number;
+};
+
+export type CreateEDITemplateDraftRequest = {
+  sourceVersionId?: string;
+  notes?: string;
+};
+
+export type UpdateEDITemplateVersionRequest = {
+  x12Version: string;
+  functionalGroupId: string;
+  notes?: string;
+  version?: number;
+};
+
+export type ReplaceEDITemplateSegmentsRequest = {
+  segments: EDITemplateSegment[];
+  version?: number;
+};
+
+export type ReplaceEDITemplateScriptLibrariesRequest = {
+  scriptLibraries: EDITemplateScriptLibrary[];
+  version?: number;
+};
+
+export type EDITemplateActionRequest = {
+  notes?: string;
 };
 
 export type PreviewEDIDocumentRequest = {

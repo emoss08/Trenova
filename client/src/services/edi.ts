@@ -18,23 +18,36 @@ import {
   ediPartnerListSchema,
   ediPartnerSchema,
   ediPartnerSelectOptionListSchema,
+  ediPartnerSettingFieldListSchema,
+  ediSourceContextFieldListSchema,
+  ediTemplateScriptLibrarySchema,
+  ediTemplateSchema,
   ediTemplateListSchema,
+  ediTemplateValidationResponseSchema,
+  ediTemplateVersionSchema,
   ediTestCaseListSchema,
   ediTransferListSchema,
   ediTransferSchema,
   internalPartnerPairSchema,
   type ApproveEDITransferRequest,
   type CreateEDIConnectionRequest,
+  type CreateEDITemplateDraftRequest,
+  type CreateEDITemplateRequest,
   type CreateInternalPartnerPairRequest,
   type EDIConnectionActionRequest,
   type EDIMappingProfileItem,
   type EDIPartner,
+  type EDITemplateActionRequest,
   type GenerateEDIDocumentRequest,
   type PreviewEDIDocumentRequest,
+  type ReplaceEDITemplateScriptLibrariesRequest,
+  type ReplaceEDITemplateSegmentsRequest,
   ediShipmentLinkListSchema,
   ediShipmentLinkSchema,
   type RejectEDITransferRequest,
   type SubmitLoadTenderRequest,
+  type UpdateEDITemplateRequest,
+  type UpdateEDITemplateVersionRequest,
   ediTransferChangeListSchema,
   ediTransferChangeSchema,
   type UpsertEDICommunicationProfileRequest,
@@ -96,7 +109,9 @@ export class EDIService {
   }
 
   public async listDocumentTypes() {
-    const response = await api.get("/edi/document-types/?standard=X12&transactionSet=204&direction=Outbound");
+    const response = await api.get(
+      "/edi/document-types/?standard=X12&transactionSet=204&direction=Outbound",
+    );
     return safeParse(ediDocumentTypeSchema.array(), response, "EDIDocumentTypes");
   }
 
@@ -105,9 +120,138 @@ export class EDIService {
     return safeParse(ediTemplateListSchema, response, "EDITemplateList");
   }
 
+  public async createTemplate(request: CreateEDITemplateRequest) {
+    const response = await api.post("/edi/templates/", request);
+    return safeParse(ediTemplateSchema, response, "EDITemplate");
+  }
+
+  public async getTemplate(templateId: string) {
+    const response = await api.get(`/edi/templates/${templateId}/`);
+    return safeParse(ediTemplateSchema, response, "EDITemplate");
+  }
+
+  public async updateTemplate(templateId: string, request: UpdateEDITemplateRequest) {
+    const response = await api.put(`/edi/templates/${templateId}/`, request);
+    return safeParse(ediTemplateSchema, response, "EDITemplate");
+  }
+
+  public async createTemplateDraft(templateId: string, request: CreateEDITemplateDraftRequest) {
+    const response = await api.post(`/edi/templates/${templateId}/draft/`, request);
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async listTemplateVersions(templateId: string) {
+    const response = await api.get(`/edi/templates/${templateId}/versions/`);
+    return safeParse(ediTemplateVersionSchema.array(), response, "EDITemplateVersions");
+  }
+
+  public async getTemplateVersion(templateId: string, versionId: string) {
+    const response = await api.get(`/edi/templates/${templateId}/versions/${versionId}/`);
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async updateTemplateVersion(
+    templateId: string,
+    versionId: string,
+    request: UpdateEDITemplateVersionRequest,
+  ) {
+    const response = await api.put(`/edi/templates/${templateId}/versions/${versionId}/`, request);
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async replaceTemplateSegments(
+    templateId: string,
+    versionId: string,
+    request: ReplaceEDITemplateSegmentsRequest,
+  ) {
+    const response = await api.put(
+      `/edi/templates/${templateId}/versions/${versionId}/segments/`,
+      request,
+    );
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async listTemplateScriptLibraries(templateId: string, versionId: string) {
+    const response = await api.get(
+      `/edi/templates/${templateId}/versions/${versionId}/script-libraries/`,
+    );
+    return safeParse(
+      ediTemplateScriptLibrarySchema.array(),
+      response,
+      "EDITemplateScriptLibraries",
+    );
+  }
+
+  public async replaceTemplateScriptLibraries(
+    templateId: string,
+    versionId: string,
+    request: ReplaceEDITemplateScriptLibrariesRequest,
+  ) {
+    const response = await api.put(
+      `/edi/templates/${templateId}/versions/${versionId}/script-libraries/`,
+      request,
+    );
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async validateTemplateVersion(templateId: string, versionId: string) {
+    const response = await api.post(`/edi/templates/${templateId}/versions/${versionId}/validate/`);
+    return safeParse(ediTemplateValidationResponseSchema, response, "EDITemplateValidation");
+  }
+
+  public async certifyTemplateVersion(
+    templateId: string,
+    versionId: string,
+    request: EDITemplateActionRequest,
+  ) {
+    const response = await api.post(
+      `/edi/templates/${templateId}/versions/${versionId}/certify/`,
+      request,
+    );
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async activateTemplateVersion(
+    templateId: string,
+    versionId: string,
+    request: EDITemplateActionRequest,
+  ) {
+    const response = await api.post(
+      `/edi/templates/${templateId}/versions/${versionId}/activate/`,
+      request,
+    );
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async archiveTemplateVersion(
+    templateId: string,
+    versionId: string,
+    request: EDITemplateActionRequest,
+  ) {
+    const response = await api.post(
+      `/edi/templates/${templateId}/versions/${versionId}/archive/`,
+      request,
+    );
+    return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
+  }
+
+  public async searchSourceContextFields(query = "") {
+    const response = await api.get(`/edi/source-context/fields/${query}`);
+    return safeParse(ediSourceContextFieldListSchema, response, "EDISourceContextFieldList");
+  }
+
+  public async searchPartnerSettingFields(query = "") {
+    const response = await api.get(`/edi/partner-settings/fields/${query}`);
+    return safeParse(ediPartnerSettingFieldListSchema, response, "EDIPartnerSettingFieldList");
+  }
+
   public async listPartnerDocumentProfiles(query = "") {
     const response = await api.get(`/edi/document-profiles/${query}`);
-    return safeParse(ediPartnerDocumentProfileListSchema, response, "EDIPartnerDocumentProfileList");
+    return safeParse(
+      ediPartnerDocumentProfileListSchema,
+      response,
+      "EDIPartnerDocumentProfileList",
+    );
   }
 
   public async createPartnerDocumentProfile(request: UpsertEDIPartnerDocumentProfileRequest) {
