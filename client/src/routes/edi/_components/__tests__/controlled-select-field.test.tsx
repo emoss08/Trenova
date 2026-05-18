@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ControlledSelectField } from "../designer/components/designer-fields";
 import {
   messageStatusOptions,
@@ -43,11 +43,23 @@ function ControlledSelectHarness({
 
 async function chooseOption(label: string) {
   const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: /all statuses|generated|pending/i }));
+  await user.click(getSelectTrigger());
   await user.click(await screen.findByText(label));
 }
 
+function getSelectTrigger() {
+  const trigger = screen
+    .getAllByRole("button")
+    .find((button) => button.getAttribute("aria-haspopup") === "dialog");
+  if (!trigger) throw new Error("Select trigger was not rendered");
+  return trigger;
+}
+
 describe("ControlledSelectField", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   it("reflects external value updates", async () => {
     const user = userEvent.setup();
 
@@ -57,7 +69,7 @@ describe("ControlledSelectField", () => {
 
     await user.click(screen.getByRole("button", { name: "Set generated" }));
 
-    expect(screen.getByRole("button", { name: /generated/i })).toBeInTheDocument();
+    expect(getSelectTrigger()).toHaveTextContent("Generated");
     expect(screen.getByLabelText("selected value")).toHaveTextContent("Generated");
   });
 
@@ -66,10 +78,10 @@ describe("ControlledSelectField", () => {
 
     render(<ControlledSelectHarness onChange={onChange} />);
 
-    await chooseOption("Pending");
+    await chooseOption("Failed");
 
-    expect(onChange).toHaveBeenLastCalledWith("Pending");
-    expect(screen.getByLabelText("selected value")).toHaveTextContent("Pending");
+    expect(onChange).toHaveBeenLastCalledWith("Failed");
+    expect(screen.getByLabelText("selected value")).toHaveTextContent("Failed");
 
     const clearLabel = screen.getByText("Clear");
     fireEvent.click(clearLabel.parentElement as HTMLElement);
@@ -81,7 +93,11 @@ describe("ControlledSelectField", () => {
   it("renders representative EDI option sets", async () => {
     const cases = [
       { name: "status filter", options: messageStatusOptions, expected: "Generated" },
-      { name: "element source type", options: templateElementSourceOptions, expected: "Partner Setting" },
+      {
+        name: "element source type",
+        options: templateElementSourceOptions,
+        expected: "Partner Setting",
+      },
       { name: "validation mode", options: validationModeOptions, expected: "Warn Only" },
       {
         name: "transform operation",
@@ -98,7 +114,7 @@ describe("ControlledSelectField", () => {
         <ControlledSelectHarness options={testCase.options} initialValue="" />,
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /all statuses/i }));
+      await userEvent.click(getSelectTrigger());
 
       expect(
         within(await screen.findByRole("listbox")).getByText(testCase.expected),
@@ -106,6 +122,7 @@ describe("ControlledSelectField", () => {
       ).toBeInTheDocument();
 
       unmount();
+      cleanup();
     }
   });
 });
