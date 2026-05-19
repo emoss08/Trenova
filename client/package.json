@@ -8,11 +8,12 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "preview": "vite preview",
+    "preview": "pnpm run build && wrangler dev",
     "test": "vitest run",
     "test:watch": "vitest",
     "b:dev": "bunx --bun vite",
-    "b:build": "bunx --bun vite build"
+    "b:build": "bunx --bun vite build",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -81,6 +82,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
+    "@cloudflare/vite-plugin": "^1.37.2",
     "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
@@ -123,7 +125,8 @@
     "vite": "^8.0.13",
     "vite-plugin-compression2": "^2.5.3",
     "vite-plugin-static-copy": "^4.1.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.6",
+    "wrangler": "^4.93.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "oxlint"
