@@ -100,6 +100,7 @@ import {
   buildArchiveMessagesQueryString,
   buildMessageJsonFilename,
   buildX12Filename,
+  formatRawX12Display,
   groupDiagnostics,
   parseX12Segments,
 } from "../utils/edi-message-utils";
@@ -989,6 +990,11 @@ function RawX12Viewer({
   onCopy: ReturnType<typeof useCopyToClipboard>["copy"];
 }) {
   const [wrap, setWrap] = useState(true);
+  const displayRawX12 = useMemo(
+    () => formatRawX12Display(message.rawX12, message.partnerDocumentProfile?.envelope),
+    [message.partnerDocumentProfile?.envelope, message.rawX12],
+  );
+
   return (
     <>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -1018,7 +1024,7 @@ function RawX12Viewer({
         </label>
       </div>
       <CodeMirror
-        value={message.rawX12}
+        value={displayRawX12}
         editable={false}
         basicSetup={{ lineNumbers: true, foldGutter: false }}
         extensions={wrap ? [EditorView.lineWrapping] : []}

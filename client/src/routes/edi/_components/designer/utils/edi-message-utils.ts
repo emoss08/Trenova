@@ -29,6 +29,26 @@ export type ArchiveMessagesQueryFilters = {
   limit?: number;
 };
 
+export function formatRawX12Display(
+  rawX12: string,
+  envelope?: Partial<EDIX12EnvelopeSettings> | null,
+) {
+  const segmentTerminator = envelope?.segmentTerminator || "~";
+  if (!rawX12 || !segmentTerminator) return rawX12;
+
+  const parts = rawX12.split(segmentTerminator);
+  const lines: string[] = [];
+  for (let index = 0; index < parts.length; index += 1) {
+    const segment = parts[index]?.replace(/^[\r\n]+|[\r\n]+$/g, "") ?? "";
+    if (!segment) continue;
+
+    const hasTerminator = index < parts.length - 1;
+    lines.push(hasTerminator ? `${segment}${segmentTerminator}` : segment);
+  }
+
+  return lines.join("\n");
+}
+
 export function parseX12Segments(
   rawX12: string,
   envelope?: Partial<EDIX12EnvelopeSettings> | null,

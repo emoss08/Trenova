@@ -3,11 +3,33 @@ import {
   buildArchiveMessagesQueryString,
   buildMessageJsonFilename,
   buildX12Filename,
+  formatRawX12Display,
   groupDiagnostics,
   parseX12Segments,
 } from "../designer/utils/edi-message-utils";
 
 describe("message archive helpers", () => {
+  it("formats default terminated raw X12 as one segment per line", () => {
+    expect(formatRawX12Display("ISA~GS~ST~")).toBe("ISA~\nGS~\nST~");
+  });
+
+  it("formats raw X12 with a custom envelope terminator", () => {
+    expect(formatRawX12Display("ISA!GS!ST!", { segmentTerminator: "!" })).toBe(
+      "ISA!\nGS!\nST!",
+    );
+  });
+
+  it("does not add blank lines to already formatted raw X12", () => {
+    const formatted = "ISA~\nGS~\nST~";
+
+    expect(formatRawX12Display(formatted)).toBe(formatted);
+    expect(formatRawX12Display(formatRawX12Display(formatted))).toBe(formatted);
+  });
+
+  it("does not add a terminator when raw X12 is missing the trailing terminator", () => {
+    expect(formatRawX12Display("ISA~GS~ST")).toBe("ISA~\nGS~\nST");
+  });
+
   it("splits raw X12 into ordered segments", () => {
     expect(parseX12Segments("ISA*00~GS*SM~ST*204*0001~")).toEqual([
       { index: 1, segmentId: "ISA", elements: ["00"], raw: "ISA*00" },

@@ -18,6 +18,7 @@ import { AlertTriangleIcon, CopyPlusIcon } from "lucide-react";
 import { type ReactNode } from "react";
 import { toast } from "sonner";
 import { diagnosticKey } from "../utils/edi-designer-utils";
+import { formatRawX12Display } from "../utils/edi-message-utils";
 import type { EDIScriptPreset } from "../../edi-script-presets";
 
 function ScriptPresetPicker({
@@ -59,10 +60,14 @@ function ScriptPresetPicker({
 }
 
 function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isLoading: boolean }) {
+  const previewContent = preview
+    ? formatRawX12Display(preview.rawX12, preview.profile?.envelope)
+    : "Preview output appears here.";
+
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
       <pre className="min-h-0 overflow-auto bg-zinc-950 p-3 font-mono text-xs text-zinc-100">
-        {isLoading ? "Rendering preview..." : (preview?.rawX12 ?? "Preview output appears here.")}
+        {isLoading ? "Rendering preview..." : previewContent}
       </pre>
       <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
     </div>
