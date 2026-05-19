@@ -418,7 +418,7 @@ export function DocumentPreviewArchiveTab() {
         >
           <div className="grid gap-2 border-b px-3 py-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <TabsList className="grid w-fit grid-cols-2">
+              <TabsList variant="underline" className="grid w-fit grid-cols-2 border-b border-border">
                 <TabsTrigger value="preview">
                   <FileCode2Icon data-icon="inline-start" />
                   Preview

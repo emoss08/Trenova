@@ -3,9 +3,11 @@ import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type {
   EDIDocumentPreview,
+  EDIX12Inspection,
   EDIMessage,
   EDIPartnerDocumentProfile,
   GenerateEDIDocumentRequest,
+  InspectX12Request,
   PreviewEDIDocumentRequest,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
@@ -49,6 +51,16 @@ export function useGenerateEDIDocumentMutation(
   return useApiMutation({
     mutationFn: (request: GenerateEDIDocumentRequest) =>
       apiService.ediService.generateDocument(request),
+    ...options,
+  });
+}
+
+export function useInspectX12Mutation(
+  options?: MutationOptions<EDIX12Inspection, InspectX12Request>,
+) {
+  return useApiMutation({
+    mutationFn: (request: InspectX12Request) => apiService.ediService.inspectX12(request),
+    resourceName: "X12 inspection",
     ...options,
   });
 }

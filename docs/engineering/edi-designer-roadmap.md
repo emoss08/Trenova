@@ -218,9 +218,13 @@ hardened. They are not the end state.
   partner creation remains pair controlled.
 - The outbound message inspector is now modularized under the designer
   inspector workspace with URL-backed tab and selected-segment state,
-  client-side X12 parsing, formatted and raw inspection views, dictionary-backed
-  segment/element labels, diagnostics navigation, payload, control number, and
-  provenance views.
+  backend-backed X12 inspection, formatted and raw inspection views,
+  dictionary-backed segment/element labels, diagnostics navigation, payload,
+  control number, and provenance views.
+- Backend X12 inspection now detects ISA/envelope/fallback separators, preserves
+  exact raw payloads and segment offsets, returns segment/element/component
+  introspection, formats human-readable X12, and emits structural diagnostics
+  for envelope order, control-number mismatches, and trailer counts.
 - The outbound renderer preserves template element positions, fixed-width ISA
   element padding, configured delimiter fallbacks, separator sanitization, and
   generated SE/GE/IEA trailer counts/control-number consistency.
@@ -368,6 +372,8 @@ operational support are present where relevant.
 
 - Completed for generated outbound messages:
   - Outbound message detail inspector.
+  - Backend-backed X12 inspection endpoints for archived messages and raw X12
+    payloads.
   - Raw X12 viewer.
   - Formatted X12 view with segment labels, element labels, empty markers, and
     composite breakdowns.

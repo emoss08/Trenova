@@ -1,16 +1,15 @@
 import { Badge } from "@/components/ui/badge";
-import type { EDIDiagnostic } from "@/types/edi";
+import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@/types/edi";
 import { diagnosticKey } from "../../utils/edi-designer-utils";
 import { groupDiagnostics } from "../../utils/edi-message-utils";
-import { findSegmentForDiagnostic, type ParsedX12Document } from "../utils/x12-parser";
 
 export default function DiagnosticsTab({
   diagnostics,
-  document,
+  inspection,
   onSelectSegment,
 }: {
-  diagnostics: EDIDiagnostic[];
-  document: ParsedX12Document;
+  diagnostics: EDIInspectionDiagnostic[];
+  inspection: EDIX12Inspection;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
   const groups = groupDiagnostics(diagnostics);
@@ -33,7 +32,10 @@ export default function DiagnosticsTab({
       </div>
       <div className="space-y-2">
         {groups.map((group) => {
-          const segment = findSegmentForDiagnostic(document.segments, group.diagnostics[0]);
+          const segment = findSegmentForDiagnostic(
+            inspection,
+            group.diagnostics[0] as EDIInspectionDiagnostic | undefined,
+          );
           return (
             <button
               key={group.key}
@@ -93,6 +95,11 @@ function SummaryCard({
 }
 
 export function diagnosticFamilyLabel(code: string) {
+  if (code.startsWith("x12.separator")) return "separator";
+  if (code.startsWith("x12.control")) return "control";
+  if (code.startsWith("x12.count")) return "count";
+  if (code.startsWith("x12.envelope")) return "envelope";
+  if (code.startsWith("x12.segment")) return "segment";
   if (code.startsWith("starlark_") || code.startsWith("script_")) return "starlark";
   if (code.startsWith("transform_")) return "transform";
   if (code.startsWith("condition_")) return "condition";
@@ -102,4 +109,16 @@ export function diagnosticFamilyLabel(code: string) {
   if (code.includes("max_length")) return "max length";
   if (code.includes("render")) return "render";
   return "validation";
+}
+
+function findSegmentForDiagnostic(
+  inspection: EDIX12Inspection,
+  diagnostic?: EDIInspectionDiagnostic,
+) {
+  if (!diagnostic) return undefined;
+  if (diagnostic.segmentIndex) {
+    return inspection.segments.find((segment) => segment.index === diagnostic.segmentIndex);
+  }
+  if (!diagnostic.segmentId) return undefined;
+  return inspection.segments.find((segment) => segment.segmentId === diagnostic.segmentId);
 }

@@ -94,6 +94,10 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["message", messageId],
     queryFn: async () => apiService.ediService.getMessage(messageId),
   }),
+  messageInspection: (messageId: string) => ({
+    queryKey: ["message-inspection", messageId],
+    queryFn: async () => apiService.ediService.inspectMessage(messageId),
+  }),
   testCases: (query = "") => ({
     queryKey: ["test-cases", query],
     queryFn: async () => apiService.ediService.listTestCases(query),

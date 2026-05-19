@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import type { EDIMessage } from "@/types/edi";
 import { CopyIcon } from "lucide-react";
+import type { InspectorContext } from "../inspector-context";
+import { controlNumberText } from "../inspector-utils";
 import InspectorGrid from "./inspector-grid";
 
-export default function ControlNumbersTab({ message }: { message: EDIMessage }) {
+export { controlNumberText };
+
+export default function ControlNumbersTab({ context }: { context: InspectorContext }) {
   const { copy } = useCopyToClipboard();
-  const text = controlNumberText(message);
 
   return (
     <div>
@@ -14,28 +16,13 @@ export default function ControlNumbersTab({ message }: { message: EDIMessage }) 
         <Button
           type="button"
           variant="outline"
-          onClick={() => void copy(text, { withToast: true })}
+          onClick={() => void copy(context.controlCopyText, { withToast: true })}
         >
           <CopyIcon className="size-4" />
           Copy
         </Button>
       </div>
-      <InspectorGrid
-        rows={[
-          ["Interchange Control Number", message.interchangeControlNumber],
-          ["Group Control Number", message.groupControlNumber],
-          ["Transaction Control Number", message.transactionControlNumber],
-          ["Segment Count", String(message.segmentCount)],
-        ]}
-      />
+      <InspectorGrid rows={context.controlRows} />
     </div>
   );
-}
-
-export function controlNumberText(message: EDIMessage) {
-  return [
-    `ISA: ${message.interchangeControlNumber}`,
-    `GS: ${message.groupControlNumber}`,
-    `ST: ${message.transactionControlNumber}`,
-  ].join("\n");
 }

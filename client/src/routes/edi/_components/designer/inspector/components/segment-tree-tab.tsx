@@ -10,34 +10,28 @@ import {
 } from "@/components/ui/table";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
-import type { EDIDiagnostic } from "@/types/edi";
+import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@/types/edi";
 import { CopyIcon } from "lucide-react";
-import {
-  diagnosticsForX12Element,
-  diagnosticsForX12Segment,
-  type ParsedX12Document,
-  type X12Segment,
-} from "../utils/x12-parser";
 
 export default function SegmentTreeTab({
-  document,
+  inspection,
   diagnostics,
   selectedSegmentIndex,
   onSelectSegment,
 }: {
-  document: ParsedX12Document;
-  diagnostics: EDIDiagnostic[];
+  inspection: EDIX12Inspection;
+  diagnostics: EDIInspectionDiagnostic[];
   selectedSegmentIndex: number;
   onSelectSegment: (segmentIndex: number) => void;
 }) {
   const selectedSegment =
-    document.segments.find((segment) => segment.index === selectedSegmentIndex) ??
-    document.segments[0];
+    inspection.segments.find((segment) => segment.index === selectedSegmentIndex) ??
+    inspection.segments[0];
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[340px_minmax(0,1fr)] gap-3 max-lg:grid-cols-1">
       <div className="min-h-0 overflow-auto rounded-md border">
-        {document.segments.map((segment) => {
+        {inspection.segments.map((segment) => {
           const segmentDiagnostics = diagnosticsForX12Segment(diagnostics, segment);
           return (
             <button
@@ -55,10 +49,10 @@ export default function SegmentTreeTab({
                     {segment.index}
                   </span>
                   <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
-                  {segment.control ? <Badge variant="outline">Control</Badge> : null}
+                  {isControlSegment(segment) ? <Badge variant="outline">Control</Badge> : null}
                 </span>
                 <span className="block truncate pl-10 text-xs text-muted-foreground">
-                  {segment.label}
+                  {segment.name}
                 </span>
               </span>
               {segmentDiagnostics.length > 0 ? (
@@ -89,8 +83,8 @@ function SegmentDetail({
   segment,
   diagnostics,
 }: {
-  segment: X12Segment;
-  diagnostics: EDIDiagnostic[];
+  segment: EDIX12Segment;
+  diagnostics: EDIInspectionDiagnostic[];
 }) {
   const { copy } = useCopyToClipboard();
   const segmentDiagnostics = diagnosticsForX12Segment(diagnostics, segment);
@@ -99,8 +93,10 @@ function SegmentDetail({
     <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] rounded-md border">
       <div className="border-b p-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={segment.control ? "active" : "outline"}>{segment.segmentId}</Badge>
-          <div className="text-sm font-semibold">{segment.label}</div>
+          <Badge variant={isControlSegment(segment) ? "active" : "outline"}>
+            {segment.segmentId}
+          </Badge>
+          <div className="text-sm font-semibold">{segment.name}</div>
           {segment.malformed ? <Badge variant="inactive">Malformed</Badge> : null}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -148,7 +144,10 @@ function SegmentDetail({
                     {element.components.length > 1 ? (
                       <div className="mt-1 text-muted-foreground">
                         {element.components
-                          .map((component) => `${component.index}: ${component.value || "[empty]"}`)
+                          .map(
+                            (component) =>
+                              `${component.position}: ${component.value || "[empty]"}`,
+                          )
                           .join(" | ")}
                       </div>
                     ) : null}
@@ -196,5 +195,26 @@ function SegmentDetail({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function isControlSegment(segment: EDIX12Segment) {
+  return ["interchange", "group", "transaction"].includes(segment.type);
+}
+
+function diagnosticsForX12Segment(
+  diagnostics: EDIInspectionDiagnostic[],
+  segment: EDIX12Segment,
+) {
+  return diagnostics.filter((diagnostic) => diagnostic.segmentIndex === segment.index);
+}
+
+function diagnosticsForX12Element(
+  diagnostics: EDIInspectionDiagnostic[],
+  segment: EDIX12Segment,
+  position: number,
+) {
+  return diagnosticsForX12Segment(diagnostics, segment).filter(
+    (diagnostic) => diagnostic.elementPosition === position,
   );
 }

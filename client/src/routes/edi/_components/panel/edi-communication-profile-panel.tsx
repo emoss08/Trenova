@@ -120,7 +120,7 @@ function CommunicationProfileFormSheet({
           }}
         >
           <Tabs defaultValue="overview" className="gap-3">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList variant="underline" className="grid w-full grid-cols-4 border-b border-border">
               <TabsTrigger value="overview">
                 <ServerIcon data-icon="inline-start" />
                 Overview

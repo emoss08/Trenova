@@ -20,7 +20,10 @@ export function DesignerWorkspace() {
       onValueChange={(tab) => void setDesignerUrlState({ designerTab: tab as typeof designerTab })}
       className="gap-3"
     >
-      <TabsList className="grid w-fit max-w-full grid-cols-2 overflow-x-auto">
+      <TabsList
+        variant="underline"
+        className="grid w-fit max-w-full grid-cols-2 overflow-x-auto border-b border-border"
+      >
         <TabsTrigger value="templates">
           <Layers3Icon data-icon="inline-start" />
           Templates

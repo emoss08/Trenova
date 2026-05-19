@@ -29,3 +29,10 @@ export function useEDIMessageDetailQuery(messageId: string) {
     enabled: !!messageId,
   });
 }
+
+export function useEDIMessageInspectionQuery(messageId: string) {
+  return useQuery({
+    ...queries.edi.messageInspection(messageId),
+    enabled: !!messageId,
+  });
+}

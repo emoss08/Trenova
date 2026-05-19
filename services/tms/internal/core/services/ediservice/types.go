@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -121,6 +122,30 @@ type GenerateEDIDocumentRequest struct {
 	Direction                edi.DocumentDirection `json:"direction"`
 	Payload                  *edi.DocumentPayload  `json:"payload"`
 	GeneratedByID            pulid.ID              `json:"-"`
+}
+
+type InspectX12Request struct {
+	TenantInfo     pagination.TenantInfo    `json:"-"`
+	RawX12         string                   `json:"rawX12"`
+	TransactionSet edi.TransactionSet       `json:"transactionSet"`
+	X12Version     string                   `json:"x12Version"`
+	Envelope       *edi.X12EnvelopeSettings `json:"envelope"`
+	Diagnostics    []edix12.Diagnostic      `json:"diagnostics"`
+}
+
+type EDIMessageInspection struct {
+	Message    *edi.EDIMessage                `json:"message"`
+	Inspection edix12inspect.InspectX12Result `json:"inspection"`
+	Provenance EDIInspectionProvenance        `json:"provenance"`
+}
+
+type EDIInspectionProvenance struct {
+	MessageID         pulid.ID `json:"messageId"`
+	ProfileID         pulid.ID `json:"profileId"`
+	TemplateID        pulid.ID `json:"templateId"`
+	TemplateVersionID pulid.ID `json:"templateVersionId"`
+	GeneratedAt       int64    `json:"generatedAt"`
+	GeneratedByID     pulid.ID `json:"generatedById"`
 }
 
 type UpsertEDIPartnerDocumentProfileRequest struct {

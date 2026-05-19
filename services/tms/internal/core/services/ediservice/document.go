@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
+	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -349,7 +350,7 @@ func (s *Service) PreviewDocument(
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := append(result.Diagnostics, resolved.partnerDiagnostics...)
+	diagnostics := mergeEDIDiagnostics(result.Diagnostics, resolved.partnerDiagnostics)
 	return &EDIDocumentPreview{
 		RawX12:                   result.RawX12,
 		SegmentCount:             result.SegmentCount,
@@ -401,7 +402,10 @@ func (s *Service) GenerateDocument(
 	if err != nil {
 		return nil, err
 	}
-	provisionalDiagnostics := append(provisionalResult.Diagnostics, provisional.partnerDiagnostics...)
+	provisionalDiagnostics := mergeEDIDiagnostics(
+		provisionalResult.Diagnostics,
+		provisional.partnerDiagnostics,
+	)
 	if edix12.HasBlockingDiagnostics(
 		provisionalDiagnostics,
 		resolved.profile.ValidationMode,
@@ -441,7 +445,7 @@ func (s *Service) GenerateDocument(
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := append(result.Diagnostics, resolved.partnerDiagnostics...)
+	diagnostics := mergeEDIDiagnostics(result.Diagnostics, resolved.partnerDiagnostics)
 	if edix12.HasBlockingDiagnostics(diagnostics, resolved.profile.ValidationMode) {
 		return nil, diagnosticsToValidationError(diagnostics)
 	}
@@ -504,6 +508,68 @@ func (s *Service) GetMessage(
 	return s.documentRepo.GetMessageByID(ctx, req)
 }
 
+func (s *Service) InspectX12(
+	_ context.Context,
+	req *InspectX12Request,
+) (*edix12inspect.InspectX12Result, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"inspection",
+			errortypes.ErrRequired,
+			"Inspection request is required",
+		)
+	}
+	result := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+		RawX12:         req.RawX12,
+		TransactionSet: req.TransactionSet,
+		X12Version:     req.X12Version,
+		Envelope:       req.Envelope,
+		Diagnostics:    req.Diagnostics,
+	})
+	return &result, nil
+}
+
+func (s *Service) InspectMessage(
+	ctx context.Context,
+	req repositories.GetEDIMessageByIDRequest,
+) (*EDIMessageInspection, error) {
+	message, err := s.documentRepo.GetMessageByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	renderDiagnostics := make([]edix12.Diagnostic, 0, len(message.ValidationErrors))
+	for _, diagnostic := range message.ValidationErrors {
+		renderDiagnostics = append(renderDiagnostics, edix12.Diagnostic{
+			Severity:        diagnostic.Severity,
+			Code:            diagnostic.Code,
+			SegmentID:       diagnostic.SegmentID,
+			ElementPosition: diagnostic.ElementPosition,
+			Path:            diagnostic.Path,
+			Message:         diagnostic.Message,
+			SuggestedFix:    diagnostic.SuggestedFix,
+		})
+	}
+	inspection := edix12inspect.InspectX12(&edix12inspect.InspectX12Request{
+		RawX12:         message.RawX12,
+		TransactionSet: message.TransactionSet,
+		X12Version:     message.X12Version,
+		Envelope:       messageEnvelope(message),
+		Diagnostics:    renderDiagnostics,
+	})
+	return &EDIMessageInspection{
+		Message:    message,
+		Inspection: inspection,
+		Provenance: EDIInspectionProvenance{
+			MessageID:         message.ID,
+			ProfileID:         message.PartnerDocumentProfileID,
+			TemplateID:        message.TemplateID,
+			TemplateVersionID: message.TemplateVersionID,
+			GeneratedAt:       message.GeneratedAt,
+			GeneratedByID:     message.GeneratedByID,
+		},
+	}, nil
+}
+
 func (s *Service) ListTestCases(
 	ctx context.Context,
 	req *repositories.ListEDITestCasesRequest,
@@ -528,6 +594,24 @@ func (s *Service) PreviewTestCase(
 		PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
 		Payload:                  &testCase.Payload,
 	})
+}
+
+func mergeEDIDiagnostics(
+	primary []edix12.Diagnostic,
+	additional []edix12.Diagnostic,
+) []edix12.Diagnostic {
+	diagnostics := make([]edix12.Diagnostic, 0, len(primary)+len(additional))
+	diagnostics = append(diagnostics, primary...)
+	diagnostics = append(diagnostics, additional...)
+	return diagnostics
+}
+
+func messageEnvelope(message *edi.EDIMessage) *edi.X12EnvelopeSettings {
+	if message == nil || message.PartnerDocumentProfile == nil {
+		return nil
+	}
+	envelope := message.PartnerDocumentProfile.Envelope
+	return &envelope
 }
 
 func (s *Service) resolveDocumentContext(

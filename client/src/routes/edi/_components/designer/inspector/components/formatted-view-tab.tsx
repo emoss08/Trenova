@@ -1,30 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import type { EDIDiagnostic } from "@/types/edi";
+import type { EDIInspectionDiagnostic, EDIX12Inspection, EDIX12Segment } from "@/types/edi";
 import { CopyIcon } from "lucide-react";
-import { useMemo } from "react";
-import {
-  diagnosticsForX12Element,
-  diagnosticsForX12Segment,
-  formatX12Document,
-  type ParsedX12Document,
-} from "../utils/x12-parser";
 
 export default function FormattedViewTab({
-  document,
+  inspection,
   diagnostics,
   onSelectSegment,
 }: {
-  document: ParsedX12Document;
-  diagnostics: EDIDiagnostic[];
+  inspection: EDIX12Inspection;
+  diagnostics: EDIInspectionDiagnostic[];
   onSelectSegment: (segmentIndex: number) => void;
 }) {
   const { copy } = useCopyToClipboard();
-  const formattedText = useMemo(
-    () => formatX12Document(document, diagnostics),
-    [diagnostics, document],
-  );
 
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
@@ -32,14 +21,14 @@ export default function FormattedViewTab({
         <Button
           type="button"
           variant="outline"
-          onClick={() => void copy(formattedText, { withToast: true })}
+          onClick={() => void copy(inspection.formatted, { withToast: true })}
         >
           <CopyIcon className="size-4" />
           Copy formatted
         </Button>
       </div>
       <div className="min-h-0 overflow-auto rounded-md border">
-        {document.segments.map((segment) => {
+        {inspection.segments.map((segment) => {
           const segmentDiagnostics = diagnosticsForX12Segment(diagnostics, segment);
           return (
             <button
@@ -50,8 +39,8 @@ export default function FormattedViewTab({
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-semibold">{segment.segmentId}</span>
-                <span className="text-sm">{segment.label}</span>
-                {segment.control ? <Badge variant="outline">Control</Badge> : null}
+                <span className="text-sm">{segment.name}</span>
+                {isControlSegment(segment) ? <Badge variant="outline">Control</Badge> : null}
                 {segment.malformed ? <Badge variant="inactive">Malformed</Badge> : null}
                 {segmentDiagnostics.length > 0 ? (
                   <Badge variant="warning">{segmentDiagnostics.length}</Badge>
@@ -102,5 +91,26 @@ export default function FormattedViewTab({
         })}
       </div>
     </div>
+  );
+}
+
+function isControlSegment(segment: EDIX12Segment) {
+  return ["interchange", "group", "transaction"].includes(segment.type);
+}
+
+function diagnosticsForX12Segment(
+  diagnostics: EDIInspectionDiagnostic[],
+  segment: EDIX12Segment,
+) {
+  return diagnostics.filter((diagnostic) => diagnostic.segmentIndex === segment.index);
+}
+
+function diagnosticsForX12Element(
+  diagnostics: EDIInspectionDiagnostic[],
+  segment: EDIX12Segment,
+  position: number,
+) {
+  return diagnosticsForX12Segment(diagnostics, segment).filter(
+    (diagnostic) => diagnostic.elementPosition === position,
   );
 }

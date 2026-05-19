@@ -2,42 +2,40 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { downloadTextFile } from "@/lib/utils";
-import type { EDIMessage } from "@/types/edi";
+import type { EDIX12Inspection } from "@/types/edi";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { CopyIcon, DownloadIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { useEditorTheme } from "../../components/designer-shared";
-import { buildX12Filename } from "../../utils/edi-message-utils";
+import type { InspectorContext } from "../inspector-context";
 import { x12LineDecorations, x12StreamLanguage, x12ViewerTheme } from "../utils/x12-codemirror";
-import { x12DisplayText, type ParsedX12Document } from "../utils/x12-parser";
 
 export default function RawViewTab({
-  message,
-  document,
+  context,
+  inspection,
   selectedSegmentIndex,
   editorTheme,
 }: {
-  message: EDIMessage;
-  document: ParsedX12Document;
+  context: InspectorContext;
+  inspection: EDIX12Inspection;
   selectedSegmentIndex: number;
   editorTheme: ReturnType<typeof useEditorTheme>;
 }) {
   const { copy } = useCopyToClipboard();
   const [wrap, setWrap] = useState(true);
-  const displayRawX12 = useMemo(() => x12DisplayText(document), [document]);
   const extensions = useMemo(
     () => [
-      x12StreamLanguage(document.delimiters),
+      x12StreamLanguage(inspection.separators),
       x12ViewerTheme,
       x12LineDecorations({
-        document,
+        inspection,
         selectedSegmentIndex,
-        diagnostics: message.validationErrors,
+        diagnostics: inspection.diagnostics,
       }),
       ...(wrap ? [EditorView.lineWrapping] : []),
     ],
-    [document, message.validationErrors, selectedSegmentIndex, wrap],
+    [inspection, selectedSegmentIndex, wrap],
   );
 
   return (
@@ -47,7 +45,7 @@ export default function RawViewTab({
           <Button
             type="button"
             variant="outline"
-            onClick={() => void copy(message.rawX12, { withToast: true })}
+            onClick={() => void copy(context.rawX12, { withToast: true })}
           >
             <CopyIcon className="size-4" />
             Copy raw
@@ -55,9 +53,7 @@ export default function RawViewTab({
           <Button
             type="button"
             variant="outline"
-            onClick={() =>
-              downloadTextFile(buildX12Filename(message), message.rawX12, "text/plain")
-            }
+            onClick={() => downloadTextFile(context.rawFilename, context.rawX12, "text/plain")}
           >
             <DownloadIcon className="size-4" />
             Download
@@ -69,7 +65,7 @@ export default function RawViewTab({
         </label>
       </div>
       <CodeMirror
-        value={displayRawX12}
+        value={inspection.rawX12}
         editable={false}
         basicSetup={{ lineNumbers: true, foldGutter: false }}
         extensions={extensions}

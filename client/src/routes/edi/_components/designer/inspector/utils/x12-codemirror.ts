@@ -1,9 +1,12 @@
 import { StreamLanguage } from "@codemirror/language";
 import { Decoration, EditorView } from "@codemirror/view";
-import type { EDIDiagnostic } from "@/types/edi";
-import type { ParsedX12Document, X12Delimiters } from "./x12-parser";
+import type { EDIInspectionDiagnostic, EDIX12Inspection } from "@/types/edi";
 
-export function x12StreamLanguage(delimiters: X12Delimiters) {
+export function x12StreamLanguage(delimiters: EDIX12Inspection["separators"]) {
+  const delimiterChars = `${escapeRegex(delimiters.element)}${escapeRegex(
+    delimiters.component,
+  )}${escapeRegex(delimiters.repetition)}${escapeRegex(delimiters.segment)}`;
+  const segmentIdPattern = new RegExp(`[A-Z0-9]{2,3}(?=[${delimiterChars}])`);
   const separatorPattern = new RegExp(
     `[${escapeRegex(delimiters.element)}${escapeRegex(delimiters.component)}${escapeRegex(
       delimiters.repetition,
@@ -18,7 +21,7 @@ export function x12StreamLanguage(delimiters: X12Delimiters) {
 
   return StreamLanguage.define({
     token(stream) {
-      if (stream.sol() && stream.match(/[A-Z0-9]{2,3}/)) return "keyword";
+      if (stream.match(segmentIdPattern)) return "keyword";
       if (stream.match(separatorPattern)) return "separator";
       if (stream.match(terminatorPattern)) return "punctuation";
       if (stream.match(valuePattern)) return "string";
@@ -29,39 +32,35 @@ export function x12StreamLanguage(delimiters: X12Delimiters) {
 }
 
 export function x12LineDecorations({
-  document,
+  inspection,
   selectedSegmentIndex,
   diagnostics,
 }: {
-  document: ParsedX12Document;
+  inspection: EDIX12Inspection;
   selectedSegmentIndex: number;
-  diagnostics: EDIDiagnostic[];
+  diagnostics: EDIInspectionDiagnostic[];
 }) {
-  const diagnosticSegmentIds = new Set(
-    diagnostics.map((diagnostic) => diagnostic.segmentId).filter(Boolean),
-  );
+  const diagnosticIndexes = new Set(diagnostics.map((diagnostic) => diagnostic.segmentIndex));
   const malformedIndexes = new Set(
-    document.segments.filter((segment) => segment.malformed).map((segment) => segment.index),
+    inspection.segments.filter((segment) => segment.malformed).map((segment) => segment.index),
   );
   const controlIndexes = new Set(
-    document.segments.filter((segment) => segment.control).map((segment) => segment.index),
-  );
-  const diagnosticIndexes = new Set(
-    document.segments
-      .filter((segment) => diagnosticSegmentIds.has(segment.segmentId))
+    inspection.segments
+      .filter((segment) => ["interchange", "group", "transaction"].includes(segment.type))
       .map((segment) => segment.index),
   );
 
   return EditorView.decorations.compute([], (state) => {
     const decorations = [];
-    for (let lineNumber = 1; lineNumber <= state.doc.lines; lineNumber += 1) {
-      const line = state.doc.line(lineNumber);
+    for (const segment of inspection.segments) {
       const classes = ["cm-x12-line"];
-      if (lineNumber === selectedSegmentIndex) classes.push("cm-x12-selected");
-      if (diagnosticIndexes.has(lineNumber)) classes.push("cm-x12-diagnostic");
-      if (malformedIndexes.has(lineNumber)) classes.push("cm-x12-malformed");
-      if (controlIndexes.has(lineNumber)) classes.push("cm-x12-control");
-      decorations.push(Decoration.line({ class: classes.join(" ") }).range(line.from));
+      if (segment.index === selectedSegmentIndex) classes.push("cm-x12-selected");
+      if (diagnosticIndexes.has(segment.index)) classes.push("cm-x12-diagnostic");
+      if (malformedIndexes.has(segment.index)) classes.push("cm-x12-malformed");
+      if (controlIndexes.has(segment.index)) classes.push("cm-x12-control");
+      const from = Math.min(segment.startOffset, state.doc.length);
+      const to = Math.min(Math.max(segment.endOffset, from), state.doc.length);
+      decorations.push(Decoration.mark({ class: classes.join(" ") }).range(from, to));
     }
     return Decoration.set(decorations);
   });
@@ -69,11 +68,11 @@ export function x12LineDecorations({
 
 export const x12ViewerTheme = EditorView.baseTheme({
   ".cm-x12-line": {
-    borderLeft: "3px solid transparent",
+    borderBottom: "1px solid transparent",
   },
   ".cm-x12-selected": {
     backgroundColor: "var(--accent)",
-    borderLeftColor: "var(--primary)",
+    outline: "1px solid var(--primary)",
   },
   ".cm-x12-diagnostic": {
     backgroundColor: "color-mix(in oklab, var(--warning) 14%, transparent)",

@@ -80,6 +80,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerDocumentProfileRoutes(api.Group("/document-profiles"))
 	h.registerDocumentRoutes(api.Group("/documents"))
 	h.registerMessageRoutes(api.Group("/messages"))
+	h.registerX12Routes(api.Group("/x12"))
 	h.registerTestCaseRoutes(api.Group("/test-cases"))
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
@@ -471,6 +472,19 @@ func (h *Handler) registerMessageRoutes(messages *gin.RouterGroup) {
 		"/:messageID/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.getMessage,
+	)
+	messages.GET(
+		"/:messageID/inspect/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.inspectMessage,
+	)
+}
+
+func (h *Handler) registerX12Routes(x12 *gin.RouterGroup) {
+	x12.POST(
+		"/inspect/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.inspectX12,
 	)
 }
 
@@ -2169,6 +2183,50 @@ func (h *Handler) getMessage(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) inspectMessage(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	messageID, err := pulid.MustParse(c.Param("messageID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	inspection, err := h.service.InspectMessage(
+		c.Request.Context(),
+		repositories.GetEDIMessageByIDRequest{
+			ID: messageID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, inspection)
+}
+
+func (h *Handler) inspectX12(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.InspectX12Request)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	inspection, err := h.service.InspectX12(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, inspection)
 }
 
 func (h *Handler) listTestCases(c *gin.Context) {

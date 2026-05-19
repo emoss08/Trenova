@@ -819,6 +819,145 @@ export const ediMessageSchema = z.object({
 
 export type EDIMessage = z.infer<typeof ediMessageSchema>;
 
+export const ediInspectionDiagnosticSourceSchema = z.enum([
+  "inspection",
+  "render",
+  "validation",
+  "transform",
+  "starlark",
+  "condition",
+  "source_context",
+  "partner_setting",
+]);
+
+export const ediInspectionDiagnosticSchema = ediDiagnosticSchema.extend({
+  source: ediInspectionDiagnosticSourceSchema,
+  segmentIndex: z.number().default(0),
+});
+
+export type EDIInspectionDiagnostic = z.infer<typeof ediInspectionDiagnosticSchema>;
+
+export const ediX12SeparatorsSchema = z.object({
+  element: z.string(),
+  segment: z.string(),
+  component: z.string(),
+  repetition: z.string(),
+  source: z.enum(["isa", "envelope", "fallback"]),
+  hasConflict: z.boolean().default(false),
+});
+
+export const ediX12ComponentSchema = z.object({
+  position: z.number(),
+  value: z.string(),
+  empty: z.boolean(),
+});
+
+export const ediX12ElementSchema = z.object({
+  position: z.number(),
+  label: z.string(),
+  value: z.string(),
+  empty: z.boolean(),
+  required: z.boolean(),
+  known: z.boolean(),
+  startOffset: z.number(),
+  endOffset: z.number(),
+  components: z.array(ediX12ComponentSchema).default([]),
+});
+
+export const ediX12SegmentSchema = z.object({
+  index: z.number(),
+  transactionIndex: z.number().default(0),
+  segmentId: z.string(),
+  name: z.string(),
+  type: z.string(),
+  loop: z.string().nullish(),
+  raw: z.string(),
+  rawWithTerminator: z.string(),
+  startOffset: z.number(),
+  endOffset: z.number(),
+  elements: z.array(ediX12ElementSchema).default([]),
+  malformed: z.boolean(),
+});
+
+export type EDIX12Segment = z.infer<typeof ediX12SegmentSchema>;
+
+export const ediInspectSummarySchema = z.object({
+  segmentCount: z.number(),
+  groupCount: z.number(),
+  transactionCount: z.number(),
+  errorCount: z.number(),
+  warningCount: z.number(),
+  infoCount: z.number(),
+});
+
+export const ediX12EnvelopeInspectionSchema = z.object({
+  isaControlNumber: z.string().nullish(),
+  ieaControlNumber: z.string().nullish(),
+  expectedGroups: z.number().default(0),
+  actualGroups: z.number(),
+});
+
+export const ediX12FunctionalGroupSchema = z.object({
+  index: z.number(),
+  functionalIdCode: z.string().nullish(),
+  gsControlNumber: z.string().nullish(),
+  geControlNumber: z.string().nullish(),
+  expectedCount: z.number().default(0),
+  actualCount: z.number(),
+  startSegmentIndex: z.number(),
+  endSegmentIndex: z.number().default(0),
+});
+
+export const ediX12TransactionSchema = z.object({
+  index: z.number(),
+  transactionSet: z.string().nullish(),
+  stControlNumber: z.string().nullish(),
+  seControlNumber: z.string().nullish(),
+  expectedSegments: z.number().default(0),
+  actualSegments: z.number(),
+  startSegmentIndex: z.number(),
+  endSegmentIndex: z.number().default(0),
+});
+
+export const ediX12InspectionSchema = z.object({
+  rawX12: z.string(),
+  transactionSet: z.union([ediTransactionSetSchema, z.literal("")]).nullish(),
+  x12Version: z.string().nullish(),
+  separators: ediX12SeparatorsSchema,
+  summary: ediInspectSummarySchema,
+  envelope: ediX12EnvelopeInspectionSchema,
+  groups: z.array(ediX12FunctionalGroupSchema).default([]),
+  transactions: z.array(ediX12TransactionSchema).default([]),
+  segments: z.array(ediX12SegmentSchema).default([]),
+  formatted: z.string(),
+  diagnostics: z.array(ediInspectionDiagnosticSchema).default([]),
+});
+
+export type EDIX12Inspection = z.infer<typeof ediX12InspectionSchema>;
+
+export const ediMessageInspectionSchema = z.object({
+  message: ediMessageSchema,
+  inspection: ediX12InspectionSchema,
+  provenance: z.object({
+    messageId: z.string(),
+    profileId: z.string(),
+    templateId: z.string(),
+    templateVersionId: z.string(),
+    generatedAt: z.number(),
+    generatedById: z.string().nullish(),
+  }),
+});
+
+export type EDIMessageInspection = z.infer<typeof ediMessageInspectionSchema>;
+
+export type InspectX12Request = {
+  rawX12: string;
+  transactionSet?: z.infer<typeof ediTransactionSetSchema>;
+  x12Version?: string;
+  envelope?: Partial<EDIX12EnvelopeSettings> | null;
+  diagnostics?: EDIDiagnostic[];
+};
+
 export const ediTestCaseSchema = z.object({
   id: z.string(),
   partnerDocumentProfileId: z.string(),

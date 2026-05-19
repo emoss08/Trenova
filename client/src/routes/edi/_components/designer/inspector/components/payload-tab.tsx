@@ -1,26 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { downloadJsonFile } from "@/lib/utils";
-import type { EDIMessage } from "@/types/edi";
 import { json } from "@codemirror/lang-json";
 import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { CopyIcon, DownloadIcon } from "lucide-react";
 import { useMemo } from "react";
-import { buildMessageJsonFilename } from "../../utils/edi-message-utils";
 import type { useEditorTheme } from "../../components/designer-shared";
+import type { InspectorContext } from "../inspector-context";
 
 export default function PayloadTab({
-  message,
+  context,
   editorTheme,
 }: {
-  message: EDIMessage;
+  context: InspectorContext;
   editorTheme: ReturnType<typeof useEditorTheme>;
 }) {
   const { copy } = useCopyToClipboard();
   const payloadJson = useMemo(
-    () => JSON.stringify(message.payloadSnapshot ?? {}, null, 2),
-    [message.payloadSnapshot],
+    () => JSON.stringify(context.payload?.value ?? {}, null, 2),
+    [context.payload],
   );
 
   return (
@@ -38,7 +37,10 @@ export default function PayloadTab({
           type="button"
           variant="outline"
           onClick={() =>
-            downloadJsonFile(buildMessageJsonFilename(message), message.payloadSnapshot)
+            downloadJsonFile(
+              context.payload?.filename ?? "edi-payload.json",
+              context.payload?.value,
+            )
           }
         >
           <DownloadIcon className="size-4" />

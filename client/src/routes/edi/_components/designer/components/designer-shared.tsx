@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,9 +15,11 @@ import type {
   EDITemplateVersion,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
-import { AlertTriangleIcon, CopyPlusIcon } from "lucide-react";
-import { type ReactNode } from "react";
+import { AlertTriangleIcon, CopyPlusIcon, SearchIcon } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import PreviewInspectorSheet from "../inspector/preview-inspector-sheet";
+import type { InspectorTab } from "../inspector/components/inspector-tabs";
 import { diagnosticKey } from "../utils/edi-designer-utils";
 import { formatRawX12Display } from "../utils/edi-message-utils";
 import type { EDIScriptPreset } from "../../edi-script-presets";
@@ -60,30 +63,62 @@ function ScriptPresetPicker({
 }
 
 function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isLoading: boolean }) {
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>("overview");
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState(1);
+  const editorTheme = useEditorTheme();
   const previewContent = preview
     ? formatRawX12Display(preview.rawX12, preview.profile?.envelope)
     : "Preview output appears here.";
 
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
-      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-zinc-950">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2 text-xs text-zinc-300">
-          <span>Preview render</span>
-          {preview ? (
-            <span className="font-mono">
-              ISA {preview.interchangeControlNumber} / GS {preview.groupControlNumber} / ST{" "}
-              {preview.transactionControlNumber} provisional
-            </span>
-          ) : (
-            <span>Control numbers are provisional until Generate archives the message.</span>
-          )}
+    <>
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
+        <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-zinc-950">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2 text-xs text-zinc-300">
+            <span>Preview render</span>
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
+              {preview ? (
+                <span className="font-mono">
+                  ISA {preview.interchangeControlNumber} / GS {preview.groupControlNumber} / ST{" "}
+                  {preview.transactionControlNumber} provisional
+                </span>
+              ) : (
+                <span>Control numbers are provisional until Generate archives the message.</span>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={!preview}
+                onClick={() => setInspectorOpen(true)}
+                className="h-7 border-zinc-700 bg-zinc-900 text-xs text-zinc-100 hover:bg-zinc-800"
+              >
+                <SearchIcon className="size-3.5" />
+                Inspect
+              </Button>
+            </div>
+          </div>
+          <pre className="min-h-0 overflow-auto p-3 font-mono text-xs text-zinc-100">
+            {isLoading ? "Rendering preview..." : previewContent}
+          </pre>
         </div>
-        <pre className="min-h-0 overflow-auto p-3 font-mono text-xs text-zinc-100">
-          {isLoading ? "Rendering preview..." : previewContent}
-        </pre>
+        <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
       </div>
-      <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
-    </div>
+      <PreviewInspectorSheet
+        preview={preview}
+        open={inspectorOpen}
+        selectedTab={inspectorTab}
+        selectedSegmentIndex={selectedSegmentIndex}
+        editorTheme={editorTheme}
+        onOpenChange={setInspectorOpen}
+        onTabChange={setInspectorTab}
+        onSelectSegment={(segmentIndex) => {
+          setSelectedSegmentIndex(segmentIndex);
+          setInspectorTab("segments");
+        }}
+      />
+    </>
   );
 }
 

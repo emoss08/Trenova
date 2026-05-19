@@ -10,6 +10,7 @@ import {
   ediConnectionListSchema,
   ediConnectionSchema,
   ediDocumentPreviewSchema,
+  ediMessageInspectionSchema,
   ediDocumentTypeSchema,
   ediMessageListSchema,
   ediMessageSchema,
@@ -39,6 +40,7 @@ import {
   type EDIPartner,
   type EDITemplateActionRequest,
   type GenerateEDIDocumentRequest,
+  type InspectX12Request,
   type PreviewEDIDocumentRequest,
   type ReplaceEDITemplateScriptLibrariesRequest,
   type ReplaceEDITemplateSegmentsRequest,
@@ -50,6 +52,7 @@ import {
   type UpdateEDITemplateVersionRequest,
   ediTransferChangeListSchema,
   ediTransferChangeSchema,
+  ediX12InspectionSchema,
   type UpsertEDICommunicationProfileRequest,
   type UpsertEDIPartnerRequest,
   type UpsertEDIPartnerDocumentProfileRequest,
@@ -284,6 +287,16 @@ export class EDIService {
   public async getMessage(messageId: string) {
     const response = await api.get(`/edi/messages/${messageId}/`);
     return safeParse(ediMessageSchema, response, "EDIMessage");
+  }
+
+  public async inspectMessage(messageId: string) {
+    const response = await api.get(`/edi/messages/${messageId}/inspect/`);
+    return safeParse(ediMessageInspectionSchema, response, "EDIMessageInspection");
+  }
+
+  public async inspectX12(request: InspectX12Request) {
+    const response = await api.post("/edi/x12/inspect/", request);
+    return safeParse(ediX12InspectionSchema, response, "EDIX12Inspection");
   }
 
   public async listTestCases(query = "") {
