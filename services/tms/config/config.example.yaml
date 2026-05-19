@@ -58,6 +58,29 @@ search:
       workers: workers
       documents: documents
 
+# Object storage configuration
+storage:
+  provider: minio # minio or r2
+  endpoint: localhost:9000 # MinIO: localhost:9000; R2: https://<account-id>.r2.cloudflarestorage.com
+  publicEndpoint: "" # Leave empty for R2 private presigned URLs
+  accessKey: minioadmin
+  secretKey: minioadmin
+  bucket: trenova-test
+  region: us-east-1 # Use auto for Cloudflare R2
+  useSSL: false # true for Cloudflare R2
+  autoCreateBucket: true # false for Cloudflare R2 production
+
+# Cloudflare R2 production environment variables:
+# TRENOVA_STORAGE_PROVIDER=r2
+# TRENOVA_STORAGE_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+# TRENOVA_STORAGE_BUCKET=<bucket-name>
+# TRENOVA_STORAGE_ACCESSKEY=<r2-access-key-id>
+# TRENOVA_STORAGE_SECRETKEY=<r2-secret-access-key>
+# TRENOVA_STORAGE_REGION=auto
+# TRENOVA_STORAGE_USESSL=true
+# TRENOVA_STORAGE_AUTOCREATEBUCKET=false
+# TRENOVA_STORAGE_PUBLICENDPOINT=
+
 documentIntelligence:
   enabled: true # Enable async extraction/classification
   ocrCommand: tesseract # OCR binary path

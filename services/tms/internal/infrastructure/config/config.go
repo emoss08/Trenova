@@ -487,6 +487,7 @@ type AuditConfig struct {
 }
 
 type StorageConfig struct {
+	Provider           string        `mapstructure:"provider"           validate:"omitempty,oneof=minio r2"`
 	Endpoint           string        `mapstructure:"endpoint"           validate:"required"`
 	PublicEndpoint     string        `mapstructure:"publicEndpoint"`
 	AccessKey          string        `mapstructure:"accessKey"          validate:"required"`
@@ -495,9 +496,29 @@ type StorageConfig struct {
 	Bucket             string        `mapstructure:"bucket"             validate:"required"`
 	UseSSL             bool          `mapstructure:"useSSL"`
 	Region             string        `mapstructure:"region"`
+	AutoCreateBucket   *bool         `mapstructure:"autoCreateBucket"`
 	MaxFileSize        int64         `mapstructure:"maxFileSize"`
 	PresignedURLExpiry time.Duration `mapstructure:"presignedUrlExpiry"`
 	AllowedMIMETypes   []string      `mapstructure:"allowedMimeTypes"`
+}
+
+const (
+	StorageProviderMinio = "minio"
+	StorageProviderR2    = "r2"
+)
+
+func (c *StorageConfig) GetProvider() string {
+	if c.Provider == "" {
+		return StorageProviderMinio
+	}
+	return c.Provider
+}
+
+func (c *StorageConfig) ShouldAutoCreateBucket() bool {
+	if c.AutoCreateBucket == nil {
+		return true
+	}
+	return *c.AutoCreateBucket
 }
 
 func (c *StorageConfig) GetMaxFileSize() int64 {

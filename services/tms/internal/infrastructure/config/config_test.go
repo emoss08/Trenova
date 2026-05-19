@@ -188,6 +188,39 @@ func TestStorageConfig_GetAllowedMIMETypes(t *testing.T) {
 	})
 }
 
+func TestStorageConfig_GetProvider(t *testing.T) {
+	t.Parallel()
+
+	t.Run("default", func(t *testing.T) {
+		t.Parallel()
+		c := &StorageConfig{}
+		assert.Equal(t, StorageProviderMinio, c.GetProvider())
+	})
+
+	t.Run("custom", func(t *testing.T) {
+		t.Parallel()
+		c := &StorageConfig{Provider: StorageProviderR2}
+		assert.Equal(t, StorageProviderR2, c.GetProvider())
+	})
+}
+
+func TestStorageConfig_ShouldAutoCreateBucket(t *testing.T) {
+	t.Parallel()
+
+	t.Run("default", func(t *testing.T) {
+		t.Parallel()
+		c := &StorageConfig{}
+		assert.True(t, c.ShouldAutoCreateBucket())
+	})
+
+	t.Run("custom false", func(t *testing.T) {
+		t.Parallel()
+		autoCreateBucket := false
+		c := &StorageConfig{AutoCreateBucket: &autoCreateBucket}
+		assert.False(t, c.ShouldAutoCreateBucket())
+	})
+}
+
 func TestAuditConfig_GetBufferFlushInterval(t *testing.T) {
 	t.Parallel()
 

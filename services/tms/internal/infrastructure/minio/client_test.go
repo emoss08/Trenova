@@ -528,3 +528,36 @@ func TestClient_EnsureBucket_CreateNew(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, exists)
 }
+
+func TestClient_New_AutoCreateBucketDisabled(t *testing.T) {
+	tc, mc := testutil.SetupTestMinio(t)
+	defer tc.Cancel()
+
+	autoCreateBucket := false
+	bucket := "missing-test-bucket"
+	cfg := &config.Config{
+		Storage: config.StorageConfig{
+			Endpoint:         mc.Endpoint(),
+			AccessKey:        mc.AccessKey(),
+			SecretKey:        mc.SecretKey(),
+			Bucket:           bucket,
+			UseSSL:           false,
+			AutoCreateBucket: &autoCreateBucket,
+		},
+	}
+
+	logger := zap.NewNop()
+
+	client, err := minioadapter.New(minioadapter.Params{
+		Config: cfg,
+		Logger: logger,
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, client)
+	assert.Contains(t, err.Error(), "auto-create is disabled")
+
+	exists, err := mc.Client().BucketExists(tc.Ctx, bucket)
+	require.NoError(t, err)
+	assert.False(t, exists)
+}

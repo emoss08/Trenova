@@ -235,6 +235,10 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("platform.controlPlane.enabled", false)
 	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
 	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
+
+	// Storage defaults
+	l.viper.SetDefault("storage.provider", StorageProviderMinio)
+	l.viper.SetDefault("storage.autoCreateBucket", true)
 }
 
 // loadConfigFiles loads base and environment-specific config files
@@ -303,6 +307,12 @@ func (l *Loader) validateConfig(config *Config) error {
 				config.Platform.GetMode(),
 			)
 		}
+	}
+
+	if config.Storage.GetProvider() == StorageProviderR2 && config.Storage.PublicEndpoint != "" {
+		return fmt.Errorf(
+			"storage.publicEndpoint cannot be set when storage.provider is r2; private R2 presigned URLs must use the R2 S3 API endpoint",
+		)
 	}
 
 	return nil

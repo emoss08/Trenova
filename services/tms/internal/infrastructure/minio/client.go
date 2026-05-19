@@ -27,32 +27,29 @@ type Params struct {
 }
 
 type Client struct {
-	client       *minio.Client
-	core         *minio.Core
-	publicClient *minio.Client
-	publicCore   *minio.Core
-	bucket       string
-	l            *zap.Logger
+	client           *minio.Client
+	core             *minio.Core
+	publicClient     *minio.Client
+	publicCore       *minio.Core
+	bucket           string
+	autoCreateBucket bool
+	l                *zap.Logger
 }
 
 func New(p Params) (storage.Client, error) {
 	cfg := p.Config.GetStorageConfig()
-
-	opts := &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken),
-		Secure: cfg.UseSSL,
+	storageCfg, err := newStorageClientConfig(cfg)
+	if err != nil {
+		return nil, err
 	}
 
-	if cfg.Region != "" {
-		opts.Region = cfg.Region
-	}
-
-	minioClient, err := minio.New(cfg.Endpoint, opts)
+	opts := newMinioOptions(cfg, storageCfg.secure, storageCfg.region, storageCfg.bucketLookup)
+	minioClient, err := minio.New(storageCfg.endpoint, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create minio client: %w", err)
 	}
 
-	minioCore, err := minio.NewCore(cfg.Endpoint, opts)
+	minioCore, err := minio.NewCore(storageCfg.endpoint, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create minio core client: %w", err)
 	}
@@ -60,14 +57,12 @@ func New(p Params) (storage.Client, error) {
 	var publicClient *minio.Client
 	var publicCore *minio.Core
 	if cfg.PublicEndpoint != "" {
-		publicEndpoint, publicUseSSL := parsePublicEndpoint(cfg.PublicEndpoint)
-		publicOpts := &minio.Options{
-			Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken),
-			Secure: publicUseSSL,
+		publicEndpoint, publicUseSSL, err := normalizeStorageEndpoint(cfg.PublicEndpoint, false)
+		if err != nil {
+			return nil, fmt.Errorf("invalid public storage endpoint: %w", err)
 		}
-		if cfg.Region != "" {
-			publicOpts.Region = cfg.Region
-		}
+
+		publicOpts := newMinioOptions(cfg, publicUseSSL, storageCfg.region, storageCfg.bucketLookup)
 		publicClient, err = minio.New(publicEndpoint, publicOpts)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create public minio client: %w", err)
@@ -80,12 +75,13 @@ func New(p Params) (storage.Client, error) {
 	}
 
 	client := &Client{
-		client:       minioClient,
-		core:         minioCore,
-		publicClient: publicClient,
-		publicCore:   publicCore,
-		bucket:       cfg.Bucket,
-		l:            p.Logger.Named("infrastructure.minio"),
+		client:           minioClient,
+		core:             minioCore,
+		publicClient:     publicClient,
+		publicCore:       publicCore,
+		bucket:           cfg.Bucket,
+		autoCreateBucket: storageCfg.autoCreateBucket,
+		l:                p.Logger.Named("infrastructure.minio"),
 	}
 
 	ensureCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -95,17 +91,115 @@ func New(p Params) (storage.Client, error) {
 		return nil, fmt.Errorf("failed to ensure bucket exists: %w", err)
 	}
 
-	p.Logger.Info("minio bucket ready", zap.String("bucket", cfg.Bucket))
+	p.Logger.Info(
+		"storage bucket ready",
+		zap.String("provider", cfg.GetProvider()),
+		zap.String("bucket", cfg.Bucket),
+	)
 
 	return client, nil
 }
 
-func parsePublicEndpoint(publicEndpoint string) (endpoint string, useSSL bool) {
-	if after, ok := strings.CutPrefix(publicEndpoint, "https://"); ok {
-		return after, true
+type storageClientConfig struct {
+	endpoint         string
+	secure           bool
+	region           string
+	bucketLookup     minio.BucketLookupType
+	autoCreateBucket bool
+}
+
+func newStorageClientConfig(cfg *config.StorageConfig) (*storageClientConfig, error) {
+	endpoint, secure, err := normalizeStorageEndpoint(cfg.Endpoint, cfg.UseSSL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid storage endpoint: %w", err)
 	}
 
-	return strings.TrimPrefix(publicEndpoint, "http://"), false
+	provider := cfg.GetProvider()
+	region := cfg.Region
+	bucketLookup := minio.BucketLookupAuto
+
+	switch provider {
+	case config.StorageProviderMinio:
+	case config.StorageProviderR2:
+		if cfg.PublicEndpoint != "" {
+			return nil, fmt.Errorf(
+				"storage public endpoint cannot be set for R2; private R2 presigned URLs must use the R2 S3 API endpoint",
+			)
+		}
+
+		secure = true
+		bucketLookup = minio.BucketLookupPath
+		if region == "" {
+			region = "auto"
+		}
+	default:
+		return nil, fmt.Errorf("unsupported storage provider %q", provider)
+	}
+
+	return &storageClientConfig{
+		endpoint:         endpoint,
+		secure:           secure,
+		region:           region,
+		bucketLookup:     bucketLookup,
+		autoCreateBucket: cfg.ShouldAutoCreateBucket(),
+	}, nil
+}
+
+func normalizeStorageEndpoint(rawEndpoint string, defaultSecure bool) (string, bool, error) {
+	endpoint := strings.TrimSpace(rawEndpoint)
+	if endpoint == "" {
+		return "", false, fmt.Errorf("endpoint is required")
+	}
+
+	if !strings.Contains(endpoint, "://") {
+		endpoint = strings.TrimRight(endpoint, "/")
+		if strings.Contains(endpoint, "/") {
+			return "", false, fmt.Errorf("endpoint path must be empty")
+		}
+		return endpoint, defaultSecure, nil
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return "", false, err
+	}
+
+	switch u.Scheme {
+	case "http":
+		defaultSecure = false
+	case "https":
+		defaultSecure = true
+	default:
+		return "", false, fmt.Errorf("unsupported endpoint scheme %q", u.Scheme)
+	}
+
+	if u.Host == "" {
+		return "", false, fmt.Errorf("endpoint host is required")
+	}
+
+	if u.Path != "" && u.Path != "/" {
+		return "", false, fmt.Errorf("endpoint path must be empty")
+	}
+
+	if u.RawQuery != "" || u.Fragment != "" {
+		return "", false, fmt.Errorf("endpoint query and fragment must be empty")
+	}
+
+	return u.Host, defaultSecure, nil
+}
+
+func newMinioOptions(
+	cfg *config.StorageConfig,
+	secure bool,
+	region string,
+	bucketLookup minio.BucketLookupType,
+) *minio.Options {
+	return &minio.Options{
+		Creds:        credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, cfg.SessionToken),
+		Secure:       secure,
+		Region:       region,
+		BucketLookup: bucketLookup,
+	}
 }
 
 func (c *Client) Upload(
@@ -390,11 +484,17 @@ func (c *Client) EnsureBucket(ctx context.Context) error {
 		return fmt.Errorf("failed to check bucket existence: %w", err)
 	}
 
-	if !exists {
-		err = c.client.MakeBucket(ctx, c.bucket, minio.MakeBucketOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to create bucket: %w", err)
-		}
+	if exists {
+		return nil
+	}
+
+	if !c.autoCreateBucket {
+		return fmt.Errorf("bucket %q does not exist and auto-create is disabled", c.bucket)
+	}
+
+	err = c.client.MakeBucket(ctx, c.bucket, minio.MakeBucketOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create bucket: %w", err)
 	}
 
 	return nil

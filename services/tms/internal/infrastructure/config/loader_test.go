@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -818,6 +819,9 @@ func TestLoad(t *testing.T) {
 		assert.Equal(t, "localhost", cfg.Cache.Host)
 		assert.Equal(t, 6379, cfg.Cache.Port)
 		assert.Equal(t, "localhost:7233", cfg.Temporal.HostPort)
+		assert.Equal(t, StorageProviderMinio, cfg.Storage.Provider)
+		require.NotNil(t, cfg.Storage.AutoCreateBucket)
+		assert.True(t, *cfg.Storage.AutoCreateBucket)
 	})
 
 	t.Run("env vars override config file values", func(t *testing.T) {
@@ -926,6 +930,50 @@ storage:
 		require.Error(t, err)
 		assert.Nil(t, cfg)
 		assert.Contains(t, err.Error(), "failed to determine environment")
+	})
+
+	t.Run("error on invalid storage provider", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configContent := strings.Replace(
+			validConfigYAML(),
+			"storage:\n  endpoint:",
+			"storage:\n  provider: bogus\n  endpoint:",
+			1,
+		)
+		err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(configContent), 0o600)
+		require.NoError(t, err)
+
+		t.Setenv("APP_ENV", "development")
+
+		l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("development"))
+
+		cfg, err := l.Load()
+
+		require.Error(t, err)
+		assert.Nil(t, cfg)
+		assert.Contains(t, err.Error(), "storage.provider must be one of: minio r2")
+	})
+
+	t.Run("error on r2 public endpoint", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		configContent := strings.Replace(
+			validConfigYAML(),
+			"storage:\n  endpoint:",
+			"storage:\n  provider: r2\n  publicEndpoint: \"https://files.example.com\"\n  endpoint:",
+			1,
+		)
+		err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(configContent), 0o600)
+		require.NoError(t, err)
+
+		t.Setenv("APP_ENV", "development")
+
+		l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("development"))
+
+		cfg, err := l.Load()
+
+		require.Error(t, err)
+		assert.Nil(t, cfg)
+		assert.Contains(t, err.Error(), "storage.publicEndpoint cannot be set")
 	})
 }
 

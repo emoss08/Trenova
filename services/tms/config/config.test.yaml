@@ -23,8 +23,10 @@ cache:
   poolSize: 5
 
 storage:
+  provider: minio
   endpoint: localhost:9001
   bucket: trenova-test
+  autoCreateBucket: true
 
 temporal:
   namespace: test
