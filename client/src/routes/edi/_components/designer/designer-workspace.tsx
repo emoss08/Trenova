@@ -18,17 +18,13 @@ export function DesignerWorkspace() {
     <Tabs
       value={designerTab}
       onValueChange={(tab) => void setDesignerUrlState({ designerTab: tab as typeof designerTab })}
-      className="gap-3"
     >
-      <TabsList
-        variant="underline"
-        className="grid w-fit max-w-full grid-cols-2 overflow-x-auto border-b border-border"
-      >
-        <TabsTrigger value="templates">
+      <TabsList variant="underline" className="w-full border-border border-b justify-start">
+        <TabsTrigger value="templates" className="max-w-34">
           <Layers3Icon data-icon="inline-start" />
           Templates
         </TabsTrigger>
-        <TabsTrigger value="documents">
+        <TabsTrigger value="documents" className="max-w-52">
           <ArchiveIcon data-icon="inline-start" />
           Document Preview & Archive
         </TabsTrigger>
