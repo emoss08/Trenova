@@ -1,5 +1,6 @@
 import { generateDateOnly, getEndOfDay, getStartOfDay } from "@/lib/date";
 import type { EDIDiagnostic, EDIMessage, EDIX12EnvelopeSettings } from "@/types/edi";
+import { parseX12Document } from "../inspector/utils/x12-parser";
 
 export type ParsedX12Segment = {
   index: number;
@@ -33,42 +34,21 @@ export function formatRawX12Display(
   rawX12: string,
   envelope?: Partial<EDIX12EnvelopeSettings> | null,
 ) {
-  const segmentTerminator = envelope?.segmentTerminator || "~";
-  if (!rawX12 || !segmentTerminator) return rawX12;
-
-  const parts = rawX12.split(segmentTerminator);
-  const lines: string[] = [];
-  for (let index = 0; index < parts.length; index += 1) {
-    const segment = parts[index]?.replace(/^[\r\n]+|[\r\n]+$/g, "") ?? "";
-    if (!segment) continue;
-
-    const hasTerminator = index < parts.length - 1;
-    lines.push(hasTerminator ? `${segment}${segmentTerminator}` : segment);
-  }
-
-  return lines.join("\n");
+  return parseX12Document(rawX12, envelope)
+    .segments.map((segment) => segment.rawWithTerminator)
+    .join("\n");
 }
 
 export function parseX12Segments(
   rawX12: string,
   envelope?: Partial<EDIX12EnvelopeSettings> | null,
 ): ParsedX12Segment[] {
-  const segmentTerminator = envelope?.segmentTerminator || "~";
-  const elementSeparator = envelope?.elementSeparator || "*";
-
-  return rawX12
-    .split(segmentTerminator)
-    .map((segment) => segment.trim())
-    .filter(Boolean)
-    .map((segment, index) => {
-      const [segmentId = "", ...elements] = segment.split(elementSeparator);
-      return {
-        index: index + 1,
-        segmentId,
-        elements,
-        raw: segment,
-      };
-    });
+  return parseX12Document(rawX12, envelope).segments.map((segment) => ({
+    index: segment.index,
+    segmentId: segment.segmentId,
+    elements: segment.elements.map((element) => element.value),
+    raw: segment.raw,
+  }));
 }
 
 export function groupDiagnostics(diagnostics: EDIDiagnostic[]): DiagnosticGroup[] {

@@ -7,6 +7,16 @@ import {
 } from "nuqs";
 
 const designerTabs = ["templates", "documents"] as const;
+const inspectorTabs = [
+  "overview",
+  "controls",
+  "raw",
+  "formatted",
+  "segments",
+  "diagnostics",
+  "payload",
+  "provenance",
+] as const;
 
 export const ediDesignerUrlStateParser = {
   designerTab: parseAsStringLiteral(designerTabs).withDefault("templates"),
@@ -31,6 +41,8 @@ export const documentArchiveUrlStateParser = {
   archiveGeneratedFrom: parseAsString.withDefault(""),
   archiveGeneratedTo: parseAsString.withDefault(""),
   archiveQuery: parseAsString.withDefault(""),
+  inspectorTab: parseAsStringLiteral(inspectorTabs).withDefault("overview"),
+  inspectorSegment: parseAsInteger.withDefault(1),
 };
 
 export function useEDIDesignerUrlState() {

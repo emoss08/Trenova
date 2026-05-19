@@ -66,9 +66,22 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
-      <pre className="min-h-0 overflow-auto bg-zinc-950 p-3 font-mono text-xs text-zinc-100">
-        {isLoading ? "Rendering preview..." : previewContent}
-      </pre>
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-zinc-950">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2 text-xs text-zinc-300">
+          <span>Preview render</span>
+          {preview ? (
+            <span className="font-mono">
+              ISA {preview.interchangeControlNumber} / GS {preview.groupControlNumber} / ST{" "}
+              {preview.transactionControlNumber} provisional
+            </span>
+          ) : (
+            <span>Control numbers are provisional until Generate archives the message.</span>
+          )}
+        </div>
+        <pre className="min-h-0 overflow-auto p-3 font-mono text-xs text-zinc-100">
+          {isLoading ? "Rendering preview..." : previewContent}
+        </pre>
+      </div>
       <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
     </div>
   );

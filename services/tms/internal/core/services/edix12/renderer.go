@@ -42,11 +42,21 @@ type Diagnostic struct {
 	SuggestedFix    string                 `json:"suggestedFix"`
 }
 
+const (
+	x12SegmentISA = "ISA"
+	x12SegmentGS  = "GS"
+	x12SegmentST  = "ST"
+	x12SegmentSE  = "SE"
+	x12SegmentGE  = "GE"
+	x12SegmentIEA = "IEA"
+)
+
 func RenderX12(input *RenderInput) (*RenderResult, error) {
 	renderCtx := input.Context
 	if renderCtx == nil {
 		renderCtx = context.Background()
 	}
+	normalizeEnvelope(&input.Profile.Envelope)
 
 	payload := input.DocumentPayload
 	if !payload.HasBranch() && input.Payload.ShipmentID.IsNotNil() {
@@ -71,7 +81,12 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 			repeats = []any{nil}
 		}
 		for _, repeatValue := range repeats {
-			env := renderEnvironment(payloadMap, input.Profile.PartnerSettings, input.Runtime, repeatValue)
+			env := renderEnvironment(
+				payloadMap,
+				input.Profile.PartnerSettings,
+				input.Runtime,
+				repeatValue,
+			)
 			include, conditionDiagnostic := evaluateCondition(conditionEvalParams{
 				Context:   renderCtx,
 				Condition: segment.Condition,
@@ -86,7 +101,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 			if !include {
 				continue
 			}
-			elements := make([]string, 0, len(segment.Elements))
+			elements := make([]string, maxElementPosition(segment.Elements))
 			segmentHasValue := segment.Required
 			for i := range segment.Elements {
 				element := &segment.Elements[i]
@@ -101,7 +116,15 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 				if value != "" {
 					segmentHasValue = true
 				}
-				elements = append(elements, sanitizeX12Value(value, &input.Profile.Envelope))
+				if element.Position <= 0 {
+					continue
+				}
+				elements[element.Position-1] = sanitizeX12Element(
+					segment.SegmentID,
+					element.Position,
+					value,
+					&input.Profile.Envelope,
+				)
 			}
 			if !segmentHasValue && !segment.Required {
 				continue
@@ -132,6 +155,7 @@ func Render204(input *RenderInput) (*RenderResult, error) {
 func RuntimeValues(profile *edi.EDIPartnerDocumentProfile, x12Version string) map[string]any {
 	now := time.Now().UTC()
 	envelope := profile.Envelope
+	normalizeEnvelope(&envelope)
 	return map[string]any{
 		"interchangeSenderId":   padISAID(envelope.InterchangeSenderID),
 		"interchangeReceiverId": padISAID(envelope.InterchangeReceiverID),
@@ -428,33 +452,92 @@ func unixTimestamp(value any) (int64, bool) {
 	}
 }
 
+type trailerState struct {
+	stIndex                  int
+	transactionControlNumber string
+	groupControlNumber       string
+	interchangeControlNumber string
+	transactionSetCount      int
+	functionalGroupCount     int
+}
+
 func applyTrailerCounts(rendered []string, separator string) {
-	stIndex := -1
-	transactionCount := 0
-	controlNumber := ""
+	state := trailerState{stIndex: -1}
 	for i, segment := range rendered {
 		parts := strings.Split(segment, separator)
 		if len(parts) == 0 {
 			continue
 		}
 		switch parts[0] {
-		case "ST":
-			stIndex = i
-			if len(parts) > 2 {
-				controlNumber = parts[2]
-			}
-		case "SE":
-			if stIndex >= 0 {
-				transactionCount = i - stIndex + 1
-			}
-			if len(parts) > 1 {
-				parts[1] = strconv.Itoa(transactionCount)
-			}
-			if len(parts) > 2 && controlNumber != "" {
-				parts[2] = controlNumber
-			}
+		case x12SegmentISA:
+			state.captureInterchange(parts)
+		case x12SegmentGS:
+			state.captureGroup(parts)
+		case x12SegmentST:
+			state.captureTransaction(parts, i)
+		case x12SegmentSE:
+			state.applyTransactionTrailer(parts, i)
+			rendered[i] = strings.Join(parts, separator)
+		case x12SegmentGE:
+			state.applyGroupTrailer(parts)
+			rendered[i] = strings.Join(parts, separator)
+		case x12SegmentIEA:
+			state.applyInterchangeTrailer(parts)
 			rendered[i] = strings.Join(parts, separator)
 		}
+	}
+}
+
+func (s *trailerState) captureInterchange(parts []string) {
+	if len(parts) > 13 {
+		s.interchangeControlNumber = parts[13]
+	}
+}
+
+func (s *trailerState) captureGroup(parts []string) {
+	s.functionalGroupCount++
+	s.transactionSetCount = 0
+	if len(parts) > 6 {
+		s.groupControlNumber = parts[6]
+	}
+}
+
+func (s *trailerState) captureTransaction(parts []string, index int) {
+	s.stIndex = index
+	s.transactionSetCount++
+	if len(parts) > 2 {
+		s.transactionControlNumber = parts[2]
+	}
+}
+
+func (s *trailerState) applyTransactionTrailer(parts []string, index int) {
+	transactionCount := 0
+	if s.stIndex >= 0 {
+		transactionCount = index - s.stIndex + 1
+	}
+	setElement(parts, 1, strconv.Itoa(transactionCount))
+	setElementIfNotEmpty(parts, 2, s.transactionControlNumber)
+}
+
+func (s *trailerState) applyGroupTrailer(parts []string) {
+	setElement(parts, 1, strconv.Itoa(s.transactionSetCount))
+	setElementIfNotEmpty(parts, 2, s.groupControlNumber)
+}
+
+func (s *trailerState) applyInterchangeTrailer(parts []string) {
+	setElement(parts, 1, strconv.Itoa(s.functionalGroupCount))
+	setElementIfNotEmpty(parts, 2, s.interchangeControlNumber)
+}
+
+func setElement(parts []string, index int, value string) {
+	if len(parts) > index {
+		parts[index] = value
+	}
+}
+
+func setElementIfNotEmpty(parts []string, index int, value string) {
+	if value != "" {
+		setElement(parts, index, value)
 	}
 }
 
@@ -631,13 +714,30 @@ func trimFloat(value float64) string {
 	return strconv.FormatFloat(value, 'f', -1, 64)
 }
 
-func sanitizeX12Value(value string, envelope *edi.X12EnvelopeSettings) string {
-	replacer := strings.NewReplacer(
-		envelope.ElementSeparator, " ",
-		envelope.SegmentTerminator, " ",
-		envelope.ComponentSeparator, " ",
-	)
-	return strings.TrimSpace(replacer.Replace(value))
+func sanitizeX12Element(
+	segmentID string,
+	position int,
+	value string,
+	envelope *edi.X12EnvelopeSettings,
+) string {
+	if segmentID == x12SegmentISA && (position == 11 || position == 16) {
+		return formatISAElement(position, value)
+	}
+	sanitized := value
+	for _, separator := range []string{
+		envelope.ElementSeparator,
+		envelope.SegmentTerminator,
+		envelope.ComponentSeparator,
+		envelope.RepetitionSeparator,
+	} {
+		if separator != "" {
+			sanitized = strings.ReplaceAll(sanitized, separator, " ")
+		}
+	}
+	if segmentID == x12SegmentISA {
+		return formatISAElement(position, sanitized)
+	}
+	return strings.TrimSpace(sanitized)
 }
 
 func trimTrailingEmpty(values []string) []string {
@@ -747,4 +847,74 @@ func padISAID(value string) string {
 		return value[:15]
 	}
 	return value + strings.Repeat(" ", 15-len(value))
+}
+
+func normalizeEnvelope(envelope *edi.X12EnvelopeSettings) {
+	defaults := edi.DefaultX12EnvelopeSettings()
+	envelope.ElementSeparator = firstDelimiter(envelope.ElementSeparator, defaults.ElementSeparator)
+	envelope.SegmentTerminator = firstDelimiter(
+		envelope.SegmentTerminator,
+		defaults.SegmentTerminator,
+	)
+	envelope.ComponentSeparator = firstDelimiter(
+		envelope.ComponentSeparator,
+		defaults.ComponentSeparator,
+	)
+	envelope.RepetitionSeparator = firstDelimiter(
+		envelope.RepetitionSeparator,
+		defaults.RepetitionSeparator,
+	)
+}
+
+func firstDelimiter(value, fallback string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fallback
+	}
+	return value[:1]
+}
+
+func maxElementPosition(elements []edi.TemplateElement) int {
+	maxPosition := 0
+	for i := range elements {
+		element := &elements[i]
+		if element.Position > maxPosition {
+			maxPosition = element.Position
+		}
+	}
+	return maxPosition
+}
+
+func formatISAElement(position int, value string) string {
+	width := isaElementWidth(position)
+	if width == 0 {
+		return strings.TrimSpace(value)
+	}
+	if len(value) > width {
+		return value[:width]
+	}
+	return value + strings.Repeat(" ", width-len(value))
+}
+
+func isaElementWidth(position int) int {
+	switch position {
+	case 1, 3, 5, 7:
+		return 2
+	case 2, 4:
+		return 10
+	case 6, 8:
+		return 15
+	case 9:
+		return 6
+	case 10:
+		return 4
+	case 11, 14, 15, 16:
+		return 1
+	case 12:
+		return 5
+	case 13:
+		return 9
+	default:
+		return 0
+	}
 }

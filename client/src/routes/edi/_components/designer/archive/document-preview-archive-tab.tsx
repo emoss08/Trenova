@@ -3,14 +3,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
-import {
   Table,
   TableBody,
   TableCell,
@@ -28,15 +20,12 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
-import { downloadJsonFile, downloadTextFile } from "@/lib/utils";
+import { downloadTextFile } from "@/lib/utils";
 import type {
   EDIMessage,
   EDIPartnerDocumentProfile,
   UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
-import { json } from "@codemirror/lang-json";
-import { EditorView } from "@codemirror/view";
-import CodeMirror from "@uiw/react-codemirror";
 import {
   ClipboardCheckIcon,
   CopyIcon,
@@ -44,7 +33,6 @@ import {
   DownloadIcon,
   EyeIcon,
   FileCode2Icon,
-  FileJsonIcon,
   InfoIcon,
   PlayIcon,
   RefreshCwIcon,
@@ -67,8 +55,10 @@ import {
   parsePayload,
   parseSettings,
   profileToDraft,
-  useEditorTheme,
 } from "../components/designer-shared";
+import MessageInspectorSheet from "../inspector/message-inspector-sheet";
+import { controlNumberText } from "../inspector/components/control-numbers-tab";
+import type { InspectorTab } from "../inspector/components/inspector-tabs";
 import { useDocumentArchiveUrlState } from "../hooks/use-edi-designer-url-state";
 import {
   useGenerateEDIDocumentMutation,
@@ -77,10 +67,7 @@ import {
   usePreviewEDIDocumentMutation,
   useSaveEDIDocumentProfileMutation,
 } from "../hooks/use-edi-document-mutations";
-import {
-  useEDIDocumentArchiveQueries,
-  useEDIMessageDetailQuery,
-} from "../hooks/use-edi-document-queries";
+import { useEDIDocumentArchiveQueries } from "../hooks/use-edi-document-queries";
 import { AckEditor } from "../profile/ack-editor";
 import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
@@ -93,17 +80,9 @@ import {
 import {
   buildEDIDocumentContextQuery,
   buildNewPartnerDocumentProfileDraft,
-  diagnosticKey,
   resolveSelectedDocumentTemplateId,
 } from "../utils/edi-designer-utils";
-import {
-  buildArchiveMessagesQueryString,
-  buildMessageJsonFilename,
-  buildX12Filename,
-  formatRawX12Display,
-  groupDiagnostics,
-  parseX12Segments,
-} from "../utils/edi-message-utils";
+import { buildArchiveMessagesQueryString, buildX12Filename } from "../utils/edi-message-utils";
 
 const defaultEnvelope = {
   interchangeSenderId: "TRENOVA",
@@ -144,6 +123,8 @@ export function DocumentPreviewArchiveTab() {
         archiveGeneratedFrom,
         archiveGeneratedTo,
         archiveQuery,
+        inspectorTab,
+        inspectorSegment,
       },
       setArchiveUrlState,
     ],
@@ -215,6 +196,17 @@ export function DocumentPreviewArchiveTab() {
     templatesQuery.data?.results[0];
   const selectedDocumentProfile =
     selectedProfile?.id === profileId ? selectedProfile : queriedSelectedProfile;
+  const selectedPartnerLabel =
+    selectedDocumentProfile?.partner?.name ?? selectedProfile?.partner?.name ?? partnerId;
+  const documentContextLabel = [
+    selectedPartnerLabel || "No partner selected",
+    selectedDocumentProfile?.name ??
+      (!!partnerId && !profileId ? "New profile draft" : "No profile"),
+    activeTemplate?.name ?? "No template",
+    activeTemplate?.activeVersion?.versionNumber
+      ? `v${activeTemplate.activeVersion.versionNumber}`
+      : "no active version",
+  ].join(" / ");
   const sourceContext = resolveEDIDocumentSourceContext({
     profile: selectedDocumentProfile,
     template: activeTemplate,
@@ -424,69 +416,80 @@ export function DocumentPreviewArchiveTab() {
           defaultValue="preview"
           className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0"
         >
-          <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
-            <TabsList className="grid w-fit grid-cols-2">
-              <TabsTrigger value="preview">
-                <FileCode2Icon data-icon="inline-start" />
-                Preview
-              </TabsTrigger>
-              <TabsTrigger value="archive">
-                <DatabaseIcon data-icon="inline-start" />
-                Archive
-              </TabsTrigger>
-            </TabsList>
-            <div className="flex items-center gap-2">
+          <div className="grid gap-2 border-b px-3 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <TabsList className="grid w-fit grid-cols-2">
+                <TabsTrigger value="preview">
+                  <FileCode2Icon data-icon="inline-start" />
+                  Preview
+                </TabsTrigger>
+                <TabsTrigger value="archive">
+                  <DatabaseIcon data-icon="inline-start" />
+                  Archive
+                </TabsTrigger>
+              </TabsList>
+              <div className="min-w-0 truncate text-xs text-muted-foreground">
+                {documentContextLabel}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <DocumentSourceControls
                 transactionSet={sourceTransactionSet}
                 values={sourceValues}
                 onChange={setSourceValue}
                 layout="toolbar"
               />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  const payloadResult = parsePayload(sourceValues.payload ?? "");
-                  if (!payloadResult.ok) return;
-                  previewMutation.mutate(
-                    buildEDIDocumentResolutionRequest({
-                      partnerDocumentProfileId: profileId || undefined,
-                      ediPartnerId: partnerId || undefined,
-                      sourceValues,
-                      transactionSet: sourceTransactionSet,
-                      direction: sourceDirection,
-                      payload: payloadResult.payload,
-                    }),
-                  );
-                }}
-                isLoading={previewMutation.isPending}
-                disabled={(!profileId && !partnerId) || !hasSourceValue}
-              >
-                <RefreshCwIcon className="size-4" />
-                Preview
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  const payloadResult = parsePayload(sourceValues.payload ?? "");
-                  if (!payloadResult.ok) return;
-                  generateMutation.mutate(
-                    buildEDIDocumentResolutionRequest({
-                      partnerDocumentProfileId: profileId || undefined,
-                      ediPartnerId: partnerId || undefined,
-                      sourceValues,
-                      transactionSet: sourceTransactionSet,
-                      direction: sourceDirection,
-                      payload: payloadResult.payload,
-                    }),
-                  );
-                }}
-                isLoading={generateMutation.isPending}
-                disabled={!profileId || !hasSourceValue}
-              >
-                <PlayIcon className="size-4" />
-                Generate
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-md border bg-muted/30 p-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const payloadResult = parsePayload(sourceValues.payload ?? "");
+                      if (!payloadResult.ok) return;
+                      previewMutation.mutate(
+                        buildEDIDocumentResolutionRequest({
+                          partnerDocumentProfileId: profileId || undefined,
+                          ediPartnerId: partnerId || undefined,
+                          sourceValues,
+                          transactionSet: sourceTransactionSet,
+                          direction: sourceDirection,
+                          payload: payloadResult.payload,
+                        }),
+                      );
+                    }}
+                    isLoading={previewMutation.isPending}
+                    disabled={(!profileId && !partnerId) || !hasSourceValue}
+                  >
+                    <RefreshCwIcon className="size-4" />
+                    Preview provisional controls
+                  </Button>
+                </div>
+                <div className="rounded-md border border-primary/20 bg-background p-1">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const payloadResult = parsePayload(sourceValues.payload ?? "");
+                      if (!payloadResult.ok) return;
+                      generateMutation.mutate(
+                        buildEDIDocumentResolutionRequest({
+                          partnerDocumentProfileId: profileId || undefined,
+                          ediPartnerId: partnerId || undefined,
+                          sourceValues,
+                          transactionSet: sourceTransactionSet,
+                          direction: sourceDirection,
+                          payload: payloadResult.payload,
+                        }),
+                      );
+                    }}
+                    isLoading={generateMutation.isPending}
+                    disabled={!profileId || !hasSourceValue}
+                  >
+                    <PlayIcon className="size-4" />
+                    Generate archive message
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
           <TabsContent value="preview" className="min-h-0">
@@ -529,17 +532,26 @@ export function DocumentPreviewArchiveTab() {
                 if (patch.query !== undefined) nextFilters.archiveQuery = patch.query;
                 void setArchiveUrlState(nextFilters);
               }}
-              onOpenMessage={(messageId) => void setInspectorMessageId(messageId)}
+              onOpenMessage={(messageId) => {
+                void setArchiveUrlState({ inspectorTab: "overview", inspectorSegment: 1 });
+                void setInspectorMessageId(messageId);
+              }}
             />
           </TabsContent>
         </Tabs>
       </main>
-      <MessageDetailInspector
+      <MessageInspectorSheet
         messageId={inspectorMessageId}
         open={!!inspectorMessageId}
+        selectedTab={inspectorTab as InspectorTab}
+        selectedSegmentIndex={inspectorSegment}
         onOpenChange={(open) => {
           if (!open) void setInspectorMessageId("");
         }}
+        onTabChange={(tab) => void setArchiveUrlState({ inspectorTab: tab })}
+        onSelectSegment={(segmentIndex) =>
+          void setArchiveUrlState({ inspectorSegment: segmentIndex, inspectorTab: "segments" })
+        }
       />
     </div>
   );
@@ -739,343 +751,6 @@ function MessageArchive({
       </div>
     </div>
   );
-}
-
-function MessageDetailInspector({
-  messageId,
-  open,
-  onOpenChange,
-}: {
-  messageId: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const { copy } = useCopyToClipboard();
-  const messageQuery = useEDIMessageDetailQuery(open ? messageId : "");
-  const message = messageQuery.data;
-  const diagnostics = useMemo(() => message?.validationErrors ?? [], [message?.validationErrors]);
-  const diagnosticGroups = useMemo(() => groupDiagnostics(diagnostics), [diagnostics]);
-  const segments = useMemo(
-    () => parseX12Segments(message?.rawX12 ?? "", message?.partnerDocumentProfile?.envelope),
-    [message?.partnerDocumentProfile?.envelope, message?.rawX12],
-  );
-  const payloadJson = useMemo(
-    () => JSON.stringify(message?.payloadSnapshot ?? {}, null, 2),
-    [message?.payloadSnapshot],
-  );
-  const editorTheme = useEditorTheme();
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[min(1180px,calc(100vw-2rem))] gap-0 p-0 sm:max-w-none">
-        <SheetHeader className="border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <DatabaseIcon className="size-4 text-muted-foreground" />
-            Message {message?.transactionControlNumber ?? messageId}
-          </SheetTitle>
-          <SheetDescription>
-            {message
-              ? `${message.transactionSet} ${message.direction} generated ${formatUnix(message.generatedAt)}`
-              : "Loading message details."}
-          </SheetDescription>
-        </SheetHeader>
-        {!message ? (
-          <div className="p-4 text-sm text-muted-foreground">
-            {messageQuery.isLoading ? "Loading message detail." : "Message detail unavailable."}
-          </div>
-        ) : (
-          <Tabs
-            defaultValue="overview"
-            className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-0"
-          >
-            <div className="overflow-x-auto p-3 pb-0">
-              <TabsList className="grid w-max grid-cols-7">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="controls">Control Numbers</TabsTrigger>
-                <TabsTrigger value="raw">Raw X12</TabsTrigger>
-                <TabsTrigger value="segments">Segment Tree</TabsTrigger>
-                <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
-                <TabsTrigger value="payload">Payload</TabsTrigger>
-                <TabsTrigger value="provenance">Provenance</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="overview" className="min-h-0 overflow-auto p-3">
-              <InspectorGrid
-                rows={[
-                  ["Status", message.status],
-                  [
-                    "Partner",
-                    message.partner?.name ?? message.partnerDocumentProfile?.partner?.name ?? "-",
-                  ],
-                  [
-                    "Document Type",
-                    message.documentType?.name ??
-                      message.partnerDocumentProfile?.documentType?.name ??
-                      "-",
-                  ],
-                  ["Transaction Set", message.transactionSet],
-                  ["Direction", message.direction],
-                  ["X12 Version", message.x12Version],
-                  ["Generated At", formatUnix(message.generatedAt)],
-                  ["Generated By ID", message.generatedById ?? "-"],
-                  ["Shipment ID", message.shipmentId ?? "-"],
-                  ["Transfer ID", message.transferId ?? "-"],
-                  [
-                    "Profile",
-                    message.partnerDocumentProfile?.name ?? message.partnerDocumentProfileId,
-                  ],
-                  [
-                    "Template",
-                    message.template?.name ??
-                      message.partnerDocumentProfile?.template?.name ??
-                      message.templateId,
-                  ],
-                  ["Template Version", versionLabel(message)],
-                  ["Validation Mode", message.validationMode],
-                ]}
-              />
-            </TabsContent>
-            <TabsContent value="controls" className="min-h-0 overflow-auto p-3">
-              <div className="mb-3 flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void copy(controlNumberText(message), { withToast: true })}
-                >
-                  <CopyIcon className="size-4" />
-                  Copy
-                </Button>
-              </div>
-              <InspectorGrid
-                rows={[
-                  ["Interchange Control Number", message.interchangeControlNumber],
-                  ["Group Control Number", message.groupControlNumber],
-                  ["Transaction Control Number", message.transactionControlNumber],
-                  ["Segment Count", String(message.segmentCount)],
-                ]}
-              />
-            </TabsContent>
-            <TabsContent value="raw" className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] p-3">
-              <RawX12Viewer message={message} editorTheme={editorTheme} onCopy={copy} />
-            </TabsContent>
-            <TabsContent value="segments" className="min-h-0 overflow-auto p-3">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">#</TableHead>
-                    <TableHead className="w-24">Segment</TableHead>
-                    <TableHead>Elements</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {segments.map((segment) => (
-                    <TableRow key={`${segment.index}-${segment.raw}`}>
-                      <TableCell className="font-mono text-xs">{segment.index}</TableCell>
-                      <TableCell className="font-mono font-medium">{segment.segmentId}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {segment.elements.length > 0 ? segment.elements.join(" | ") : "-"}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-            <TabsContent value="diagnostics" className="min-h-0 overflow-auto p-3">
-              {diagnosticGroups.length === 0 ? (
-                <div className="text-sm text-muted-foreground">No diagnostics.</div>
-              ) : (
-                <div className="space-y-2">
-                  {diagnosticGroups.map((group) => (
-                    <div key={group.key} className="rounded-md border p-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={group.severity === "Error" ? "inactive" : "warning"}>
-                          {group.severity}
-                        </Badge>
-                        <span className="font-mono text-xs">
-                          {group.segmentId || "Payload"}
-                          {group.elementPosition ? `:${group.elementPosition}` : ""}
-                        </span>
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {group.code}
-                        </span>
-                        {group.path ? (
-                          <span className="font-mono text-xs text-muted-foreground">
-                            {group.path}
-                          </span>
-                        ) : null}
-                      </div>
-                      <div className="mt-2 space-y-2">
-                        {group.diagnostics.map((diagnostic) => (
-                          <div key={diagnosticKey(diagnostic)} className="text-sm">
-                            <div>{diagnostic.message}</div>
-                            {diagnostic.suggestedFix ? (
-                              <div className="text-xs text-muted-foreground">
-                                {diagnostic.suggestedFix}
-                              </div>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent
-              value="payload"
-              className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] p-3"
-            >
-              <div className="mb-2 flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void copy(payloadJson, { withToast: true })}
-                >
-                  <CopyIcon className="size-4" />
-                  Copy
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    downloadJsonFile(buildMessageJsonFilename(message), message.payloadSnapshot)
-                  }
-                >
-                  <FileJsonIcon className="size-4" />
-                  Download
-                </Button>
-              </div>
-              <CodeMirror
-                value={payloadJson}
-                editable={false}
-                basicSetup={{ lineNumbers: true, foldGutter: true }}
-                extensions={[json(), EditorView.lineWrapping]}
-                theme={editorTheme}
-                className="min-h-0 overflow-auto rounded-md border text-xs"
-              />
-            </TabsContent>
-            <TabsContent value="provenance" className="min-h-0 overflow-auto p-3">
-              <InspectorGrid
-                rows={[
-                  ["Profile ID", message.partnerDocumentProfileId],
-                  ["Profile Name", message.partnerDocumentProfile?.name ?? "-"],
-                  ["Template ID", message.templateId],
-                  [
-                    "Template Name",
-                    message.template?.name ?? message.partnerDocumentProfile?.template?.name ?? "-",
-                  ],
-                  ["Template Version ID", message.templateVersionId],
-                  ["Template Version", versionLabel(message)],
-                  ["Template Version Status", message.templateVersion?.status ?? "-"],
-                  ["Script Libraries", scriptLibraryLabel(message)],
-                  ["Source X12 Version", message.templateVersion?.x12Version ?? message.x12Version],
-                  ["Validation Mode", message.validationMode],
-                ]}
-              />
-            </TabsContent>
-          </Tabs>
-        )}
-      </SheetContent>
-    </Sheet>
-  );
-}
-
-function RawX12Viewer({
-  message,
-  editorTheme,
-  onCopy,
-}: {
-  message: EDIMessage;
-  editorTheme: ReturnType<typeof useEditorTheme>;
-  onCopy: ReturnType<typeof useCopyToClipboard>["copy"];
-}) {
-  const [wrap, setWrap] = useState(true);
-  const displayRawX12 = useMemo(
-    () => formatRawX12Display(message.rawX12, message.partnerDocumentProfile?.envelope),
-    [message.partnerDocumentProfile?.envelope, message.rawX12],
-  );
-
-  return (
-    <>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void onCopy(message.rawX12, { withToast: true })}
-          >
-            <CopyIcon className="size-4" />
-            Copy
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() =>
-              downloadTextFile(buildX12Filename(message), message.rawX12, "text/plain")
-            }
-          >
-            <DownloadIcon className="size-4" />
-            Download
-          </Button>
-        </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
-          Wrap
-          <Switch checked={wrap} onCheckedChange={setWrap} />
-        </label>
-      </div>
-      <CodeMirror
-        value={displayRawX12}
-        editable={false}
-        basicSetup={{ lineNumbers: true, foldGutter: false }}
-        extensions={wrap ? [EditorView.lineWrapping] : []}
-        theme={editorTheme}
-        className="min-h-0 overflow-auto rounded-md border text-xs"
-      />
-    </>
-  );
-}
-
-function InspectorGrid({ rows }: { rows: Array<[string, string]> }) {
-  return (
-    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-      {rows.map(([label, value]) => (
-        <div key={label} className="rounded-md border p-3">
-          <div className="text-xs text-muted-foreground">{label}</div>
-          <div className="mt-1 font-mono text-sm wrap-break-word">{value || "-"}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function controlNumberText(message: EDIMessage) {
-  return [
-    `ISA: ${message.interchangeControlNumber}`,
-    `GS: ${message.groupControlNumber}`,
-    `ST: ${message.transactionControlNumber}`,
-  ].join("\n");
-}
-
-function versionLabel(message: EDIMessage) {
-  if (message.templateVersion?.versionNumber) {
-    return `v${message.templateVersion.versionNumber}`;
-  }
-  if (message.partnerDocumentProfile?.templateVersion?.versionNumber) {
-    return `v${message.partnerDocumentProfile.templateVersion.versionNumber}`;
-  }
-  return message.templateVersionId;
-}
-
-function scriptLibraryLabel(message: EDIMessage) {
-  const libraries = message.templateVersion?.scriptLibraries ?? [];
-  if (libraries.length === 0) return "-";
-  return libraries
-    .map((library) => {
-      const functions =
-        library.functionNames.length > 0 ? ` (${library.functionNames.join(", ")})` : "";
-      return `${library.name}${functions}`;
-    })
-    .join("; ");
 }
 
 export default DocumentPreviewArchiveTab;

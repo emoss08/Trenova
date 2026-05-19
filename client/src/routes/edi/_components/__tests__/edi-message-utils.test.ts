@@ -7,6 +7,12 @@ import {
   groupDiagnostics,
   parseX12Segments,
 } from "../designer/utils/edi-message-utils";
+import {
+  detectX12Delimiters,
+  formatX12Document,
+  parseX12Document,
+} from "../designer/inspector/utils/x12-parser";
+import { diagnosticFamilyLabel } from "../designer/inspector/components/diagnostics-tab";
 
 describe("message archive helpers", () => {
   it("formats default terminated raw X12 as one segment per line", () => {
@@ -14,9 +20,7 @@ describe("message archive helpers", () => {
   });
 
   it("formats raw X12 with a custom envelope terminator", () => {
-    expect(formatRawX12Display("ISA!GS!ST!", { segmentTerminator: "!" })).toBe(
-      "ISA!\nGS!\nST!",
-    );
+    expect(formatRawX12Display("ISA!GS!ST!", { segmentTerminator: "!" })).toBe("ISA!\nGS!\nST!");
   });
 
   it("does not add blank lines to already formatted raw X12", () => {
@@ -53,6 +57,91 @@ describe("message archive helpers", () => {
       }).map((segment) => segment.elements),
     ).toEqual([["00"], ["SM"]]);
     expect(parseX12Segments("ISA*00~")[0]?.elements).toEqual(["00"]);
+  });
+
+  it("detects delimiters from envelope before ISA and fallback", () => {
+    expect(
+      detectX12Delimiters("ISA*00~", {
+        elementSeparator: "|",
+        segmentTerminator: "!",
+        componentSeparator: ":",
+        repetitionSeparator: "^",
+      }),
+    ).toMatchObject({ element: "|", segment: "!", component: ":", source: "envelope" });
+
+    const isa =
+      "ISA*00*          *00*          *ZZ*SENDER         *ZZ*RECEIVER       *260519*1200*^*00401*000000001*0*T*>~";
+    expect(detectX12Delimiters(isa)).toMatchObject({
+      element: "*",
+      segment: "~",
+      component: ">",
+      repetition: "^",
+      source: "isa",
+    });
+    expect(detectX12Delimiters("B2*SHIP~")).toMatchObject({
+      element: "*",
+      segment: "~",
+      component: ">",
+      repetition: "^",
+      source: "fallback",
+    });
+  });
+
+  it("preserves empty elements, trailing elements, composites, malformed segments, and controls", () => {
+    const parsed = parseX12Document(
+      "ISA*00**00**ZZ*SENDER*ZZ*RECEIVER*260519*1200*^*00401*000000001*0*T*>~ST*204*0001~B2**SHIP**PP~N1*SF*Dock>Apt>~BADSEGMENT*X~SE*4*0001~",
+    );
+
+    expect(parsed.segments[2]?.elements.map((element) => element.value)).toEqual([
+      "",
+      "SHIP",
+      "",
+      "PP",
+    ]);
+    expect(parsed.segments[3]?.elements[1]?.components).toEqual([
+      { index: 1, value: "Dock" },
+      { index: 2, value: "Apt" },
+      { index: 3, value: "" },
+    ]);
+    expect(parsed.segments[4]?.malformed).toBe(true);
+    expect(parsed.metadata.controlNumbers).toMatchObject({
+      isa: "000000001",
+      st: "0001",
+      se: "0001",
+    });
+    expect(parsed.metadata.seSegmentCount).toEqual({
+      expected: 4,
+      actual: 5,
+      matches: false,
+    });
+  });
+
+  it("formats parsed X12 with labels, empty markers, composites, and diagnostics", () => {
+    const parsed = parseX12Document("ST*204*0001~B2**SHIP**PP~SE*3*0001~");
+    const formatted = formatX12Document(parsed, [
+      {
+        severity: "Error",
+        code: "required",
+        segmentId: "B2",
+        elementPosition: 2,
+        path: "shipment.shipmentId",
+        message: "Shipment is required",
+        suggestedFix: null,
+      },
+    ]);
+
+    expect(formatted).toContain("B2 - Beginning Segment for Shipment Information");
+    expect(formatted).toContain("B201 Standard Carrier Alpha Code: [empty]");
+    expect(formatted).toContain("! Error: Shipment is required");
+  });
+
+  it("maps diagnostic code families", () => {
+    expect(diagnosticFamilyLabel("starlark_runtime_error")).toBe("starlark");
+    expect(diagnosticFamilyLabel("transform_parse_error")).toBe("transform");
+    expect(diagnosticFamilyLabel("condition_error")).toBe("condition");
+    expect(diagnosticFamilyLabel("required")).toBe("required");
+    expect(diagnosticFamilyLabel("max_length")).toBe("max length");
+    expect(diagnosticFamilyLabel("render_error")).toBe("render");
   });
 
   it("groups diagnostics by display identity", () => {

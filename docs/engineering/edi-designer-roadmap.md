@@ -216,6 +216,14 @@ hardened. They are not the end state.
 - The EDI Partners workspace supports direct External partner setup alongside
   the existing Internal partner-pair connection workflow; direct Internal
   partner creation remains pair controlled.
+- The outbound message inspector is now modularized under the designer
+  inspector workspace with URL-backed tab and selected-segment state,
+  client-side X12 parsing, formatted and raw inspection views, dictionary-backed
+  segment/element labels, diagnostics navigation, payload, control number, and
+  provenance views.
+- The outbound renderer preserves template element positions, fixed-width ISA
+  element padding, configured delimiter fallbacks, separator sanitization, and
+  generated SE/GE/IEA trailer counts/control-number consistency.
 
 ## Remaining Stages
 
@@ -342,6 +350,9 @@ operational support are present where relevant.
 - [x] Add validation diagnostics panel and lifecycle actions.
 - [x] Preserve existing document preview, generate, and archive workflow as a
   secondary designer tab.
+- [x] Refresh designer headers, sticky rails, read-only status, selected
+  segment/element affordances, and document preview/generate hierarchy while
+  keeping React Query server state and shared editor utilities.
 - [ ] Provide template outline navigation by envelope, transaction set, loop,
   segment, and element.
 - Support drag/reorder where X12 ordering rules allow it and prevent invalid
@@ -358,10 +369,13 @@ operational support are present where relevant.
 - Completed for generated outbound messages:
   - Outbound message detail inspector.
   - Raw X12 viewer.
+  - Formatted X12 view with segment labels, element labels, empty markers, and
+    composite breakdowns.
   - Payload snapshot viewer.
   - Diagnostics detail grouping.
   - Control number display and copy.
-  - Lightweight segment tree.
+  - Segment tree and segment detail with dictionary labels, control badges, and
+    element diagnostics.
   - Download and copy support.
 - Remaining:
   - Transport attempts.

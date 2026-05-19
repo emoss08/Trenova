@@ -314,7 +314,7 @@ export default function TemplateDesignerTab() {
   );
 
   return (
-    <div className="grid min-h-[calc(100vh-100rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
+    <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[310px_minmax(0,1fr)_380px] gap-3 max-xl:grid-cols-[280px_minmax(0,1fr)] max-lg:grid-cols-1">
       <Suspense fallback={<DesignerAsideSkeleton />}>
         <TemplateDesignerAside
           templates={templates}
@@ -325,7 +325,7 @@ export default function TemplateDesignerTab() {
         />
       </Suspense>
       <main className="flex min-h-0 flex-col rounded-md border bg-background">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/20 px-3 py-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="truncate text-sm font-semibold">
@@ -333,10 +333,11 @@ export default function TemplateDesignerTab() {
               </span>
               {selectedVersion ? <VersionStatusBadge version={selectedVersion} /> : null}
               {hasUnsavedChanges && <Badge variant="warning">Unsaved</Badge>}
+              {!isEditable && selectedVersion ? <Badge variant="outline">Read-only</Badge> : null}
             </div>
             <div className="text-xs text-muted-foreground">
               {selectedVersion
-                ? `Version ${selectedVersion.versionNumber} / ${selectedVersion.x12Version} / ${segmentsDraft.length} segments`
+                ? `Version ${selectedVersion.versionNumber} / ${selectedVersion.x12Version} / ${functionalGroupId} / ${segmentsDraft.length} segments`
                 : "Create or select an outbound X12 204 template."}
             </div>
           </div>

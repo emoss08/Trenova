@@ -81,13 +81,15 @@ export function ElementDesigner({
 }) {
   if (!version || !segment) {
     return (
-      <div className="p-4 text-sm text-muted-foreground">Select a template version to edit.</div>
+      <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
+        Select a template version and segment to edit.
+      </div>
     );
   }
 
   return (
     <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)]">
-      <div className="grid grid-cols-4 gap-2 border-b p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
+      <div className="sticky top-0 z-10 grid grid-cols-4 gap-2 border-b bg-background p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
         <InputBlock
           label="X12 Version"
           value={x12Version}
@@ -117,8 +119,9 @@ export function ElementDesigner({
       </div>
       <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-1">
         <div className="min-h-0 overflow-auto p-3">
-          <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <Badge variant={segment.required ? "active" : "outline"}>{segment.segmentId}</Badge>
+            <Badge variant="outline">{segment.required ? "Required" : "Optional"}</Badge>
             <div>
               <div className="text-sm font-semibold">{segment.name}</div>
               <div className="text-xs text-muted-foreground">
@@ -204,7 +207,11 @@ function ElementInspector({
   ) => void;
 }) {
   if (!element) {
-    return <div className="border-l p-4 text-sm text-muted-foreground">Select an element.</div>;
+    return (
+      <div className="flex items-center justify-center border-l p-4 text-sm text-muted-foreground">
+        Select an element.
+      </div>
+    );
   }
   const update = (patch: Partial<EDITemplateElement>) =>
     onChange(element.position, (current) => ({ ...current, ...patch }));

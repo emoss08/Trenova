@@ -85,6 +85,63 @@ func TestRender204_AppliesCustomSeparatorsAndTrailerCounts(t *testing.T) {
 	assert.Equal(t, int64(16), result.SegmentCount)
 }
 
+func TestRender204_PreservesElementPositionsAndISAFixedWidths(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Profile.Envelope.InterchangeSenderID = "trenova"
+	input.Profile.Envelope.InterchangeReceiverID = "partner"
+	input.Runtime = RuntimeValues(input.Profile, edi.DefaultX12204Version)
+	SetProvisionalControlNumbers(input.Runtime)
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	segments := strings.Split(result.RawX12, input.Profile.Envelope.SegmentTerminator)
+	require.NotEmpty(t, segments)
+	isa := strings.Split(segments[0], input.Profile.Envelope.ElementSeparator)
+	require.Len(t, isa, 17)
+	assert.Len(t, isa[2], 10)
+	assert.Len(t, isa[4], 10)
+	assert.Len(t, isa[6], 15)
+	assert.Equal(t, "TRENOVA        ", isa[6])
+	assert.Len(t, isa[8], 15)
+	assert.Equal(t, "PARTNER        ", isa[8])
+	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"**PP")
+}
+
+func TestRender204_TrailerCountsAndControlNumbersUseRenderedEnvelope(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	input.Runtime["isaControlNumber"] = "000000321"
+	input.Runtime["groupControlNumber"] = "77"
+	input.Runtime["transactionControlNumber"] = "0077"
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	assert.Contains(t, result.RawX12, "ST*204*0077~")
+	assert.Contains(t, result.RawX12, "SE*12*0077~")
+	assert.Contains(t, result.RawX12, "GE*1*77~")
+	assert.Contains(t, result.RawX12, "IEA*1*000000321~")
+}
+
+func TestRender204_SanitizesAllConfiguredSeparators(t *testing.T) {
+	t.Parallel()
+
+	input := validRenderInput(edi.ValidationModeStrict)
+	element := findElement(t, input, "L11", 0)
+	element.Source = edi.TemplateElementSourceStarlark
+	element.StarlarkScript = `def value(ctx):
+    return "A*B~C>D^E"`
+
+	result, err := Render204(input)
+
+	require.NoError(t, err)
+	assert.Contains(t, result.RawX12, "L11*A B C D E*BM~")
+}
+
 func TestRender204_FiltersDiagnosticsByValidationMode(t *testing.T) {
 	t.Parallel()
 
@@ -293,7 +350,7 @@ func TestRender204_RequiredElementFalseConditionDoesNotValidateRequired(t *testi
 
 	require.NoError(t, err)
 	require.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "B2***PP")
+	assert.Contains(t, result.RawX12, "B2****PP")
 }
 
 func TestRender204_InvalidConditionEmitsConditionError(t *testing.T) {
@@ -543,7 +600,7 @@ func TestRender204_StarlarkReadsShipmentContext(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, result.Diagnostics)
-	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"*BOL-STARK")
+	assert.Contains(t, result.RawX12, "B2**"+input.Payload.ShipmentID.String()+"**BOL-STARK")
 }
 
 func TestRender204_StarlarkRepeatValueRenders(t *testing.T) {
