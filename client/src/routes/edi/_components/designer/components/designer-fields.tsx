@@ -15,7 +15,7 @@ import type {
 import type { SelectOption } from "@/types/fields";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import { SearchIcon } from "lucide-react";
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { useForm, type FieldValues } from "react-hook-form";
 import { insertPathReference } from "../utils/edi-designer-utils";
 
@@ -40,14 +40,23 @@ export function ControlledSelectField({
   disabled?: boolean;
   clearable?: boolean;
 }) {
-  const form = useForm<ControlledSelectFormValues>({
+  const { control, getValues, setValue } = useForm<ControlledSelectFormValues>({
     defaultValues: { value: value ?? "" },
-    values: { value: value ?? "" },
   });
+
+  useEffect(() => {
+    const nextValue = value ?? "";
+    if (getValues("value") === nextValue) return;
+    setValue("value", nextValue, {
+      shouldDirty: false,
+      shouldTouch: false,
+      shouldValidate: false,
+    });
+  }, [getValues, setValue, value]);
 
   return (
     <SelectField
-      control={form.control}
+      control={control}
       name="value"
       label={label}
       options={options}

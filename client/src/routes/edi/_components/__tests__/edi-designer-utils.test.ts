@@ -29,6 +29,7 @@ import {
   parseConditionString,
   resolveSelectedDocumentTemplateId,
 } from "../designer/utils/edi-designer-utils";
+import { getTemplateDesignerSelectionPatch } from "../designer/hooks/use-edi-designer-url-state";
 import { ediScriptPresets, insertScriptPresetCode } from "../edi-script-presets";
 
 describe("buildEDIDocumentContextQuery", () => {
@@ -57,6 +58,117 @@ describe("resolveSelectedDocumentTemplateId", () => {
 
   it("preserves an intentionally cleared template selection", () => {
     expect(resolveSelectedDocumentTemplateId("", "editpl_first")).toBe("");
+  });
+});
+
+describe("getTemplateDesignerSelectionPatch", () => {
+  const templates = [{ id: "template-1" }, { id: "template-2" }];
+  const versions = [{ id: "version-1" }, { id: "version-2" }];
+  const segments = [
+    { id: "segment-1", elements: [{ position: 10 }, { position: 20 }] },
+    { id: "segment-2", elements: [{ position: 30 }] },
+  ];
+
+  it("returns a minimal patch for a missing template selection", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "",
+        versionId: "",
+        segmentId: "",
+        elementPosition: 0,
+        templates,
+        versions,
+        segments,
+        segmentsReady: true,
+      }),
+    ).toEqual({ templateId: "template-1" });
+  });
+
+  it("resets dependent selections when the selected template is invalid", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "missing-template",
+        versionId: "version-2",
+        segmentId: "segment-2",
+        elementPosition: 30,
+        templates,
+        versions,
+        segments,
+        segmentsReady: true,
+      }),
+    ).toEqual({
+      templateId: "template-1",
+      versionId: "",
+      segmentId: "",
+      elementPosition: 0,
+    });
+  });
+
+  it("resets dependent selections when the selected version is invalid", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "template-1",
+        versionId: "missing-version",
+        segmentId: "segment-2",
+        elementPosition: 30,
+        templates,
+        versions,
+        segments,
+        segmentsReady: true,
+      }),
+    ).toEqual({
+      versionId: "version-1",
+      segmentId: "",
+      elementPosition: 0,
+    });
+  });
+
+  it("normalizes invalid segment and element selections in one patch", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "template-1",
+        versionId: "version-1",
+        segmentId: "missing-segment",
+        elementPosition: 999,
+        templates,
+        versions,
+        segments,
+        segmentsReady: true,
+      }),
+    ).toEqual({
+      segmentId: "segment-1",
+      elementPosition: 10,
+    });
+  });
+
+  it("returns no patch when URL selections are already valid", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "template-1",
+        versionId: "version-1",
+        segmentId: "segment-1",
+        elementPosition: 20,
+        templates,
+        versions,
+        segments,
+        segmentsReady: true,
+      }),
+    ).toBeNull();
+  });
+
+  it("waits for draft hydration before normalizing segment selections", () => {
+    expect(
+      getTemplateDesignerSelectionPatch({
+        templateId: "template-1",
+        versionId: "version-1",
+        segmentId: "missing-segment",
+        elementPosition: 999,
+        templates,
+        versions,
+        segments,
+        segmentsReady: false,
+      }),
+    ).toBeNull();
   });
 });
 

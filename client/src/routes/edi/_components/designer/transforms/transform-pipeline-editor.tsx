@@ -22,6 +22,11 @@ import {
 } from "../components/designer-shared";
 import { transformBaseSourceOptions } from "../utils/edi-designer-options";
 
+const transformOperationOptions = transformOperationDefinitions.map((definition) => ({
+  value: definition.operation,
+  label: definition.label,
+}));
+
 export function TransformPipelineEditor({
   element,
   disabled,
@@ -94,10 +99,7 @@ export function TransformPipelineEditor({
         }}
         disabled={disabled}
         placeholder="Select operation"
-        options={transformOperationDefinitions.map((definition) => ({
-          value: definition.operation,
-          label: definition.label,
-        }))}
+        options={transformOperationOptions}
       />
     </div>
   );

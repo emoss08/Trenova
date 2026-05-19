@@ -20,7 +20,12 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react
 import { toast } from "sonner";
 import type { z } from "zod";
 import { ElementDesigner } from "../element/element-designer";
-import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
+import {
+  getChangedTemplateUrlStatePatch,
+  getTemplateDesignerSelectionPatch,
+  type TemplateDesignerUrlStatePatch,
+  useTemplateDesignerUrlState,
+} from "../hooks/use-edi-designer-url-state";
 import {
   useActivateEDITemplateMutation,
   useArchiveEDITemplateMutation,
@@ -71,21 +76,21 @@ export default function TemplateDesignerTab() {
     templateDirection,
   } = templateUrlState;
 
-  const setSelectedTemplateId = useCallback(
-    (templateId: string) => void setTemplateUrlState({ templateId }),
-    [setTemplateUrlState],
+  const patchTemplateUrlState = useCallback(
+    (patch: TemplateDesignerUrlStatePatch) => {
+      const changedPatch = getChangedTemplateUrlStatePatch(templateUrlState, patch);
+      if (!changedPatch) return;
+      void setTemplateUrlState(changedPatch);
+    },
+    [setTemplateUrlState, templateUrlState],
   );
   const setSelectedVersionId = useCallback(
-    (versionId: string) => void setTemplateUrlState({ versionId }),
-    [setTemplateUrlState],
-  );
-  const setSelectedSegmentId = useCallback(
-    (segmentId: string) => void setTemplateUrlState({ segmentId }),
-    [setTemplateUrlState],
+    (versionId: string) => patchTemplateUrlState({ versionId }),
+    [patchTemplateUrlState],
   );
   const setSelectedElementPosition = useCallback(
-    (elementPosition: number) => void setTemplateUrlState({ elementPosition }),
-    [setTemplateUrlState],
+    (elementPosition: number) => patchTemplateUrlState({ elementPosition }),
+    [patchTemplateUrlState],
   );
   const [segmentsDraft, setSegmentsDraft] = useState<TemplateSegment[]>([]);
   const [scriptDraft, setScriptDraft] = useState<TemplateScriptLibrary[]>([]);
@@ -96,6 +101,7 @@ export default function TemplateDesignerTab() {
   const [scriptsDirty, setScriptsDirty] = useState(false);
   const [metadataDirty, setMetadataDirty] = useState(false);
   const [diagnostics, setDiagnostics] = useState<TemplateDiagnostic[]>([]);
+  const [hydratedVersionKey, setHydratedVersionKey] = useState("");
   const clearDirtyState = useCallback(() => {
     setSegmentsDirty(false);
     setScriptsDirty(false);
@@ -104,16 +110,26 @@ export default function TemplateDesignerTab() {
   const handleTemplateSelect = useCallback(
     (templateId: string) => {
       clearDirtyState();
-      void setTemplateUrlState({ templateId, versionId: "" });
+      patchTemplateUrlState({
+        templateId,
+        versionId: "",
+        segmentId: "",
+        elementPosition: 0,
+      });
     },
-    [clearDirtyState, setTemplateUrlState],
+    [clearDirtyState, patchTemplateUrlState],
   );
   const handleTemplateCreated = useCallback(
     (templateId: string, versionId: string) => {
       clearDirtyState();
-      void setTemplateUrlState({ templateId, versionId });
+      patchTemplateUrlState({
+        templateId,
+        versionId,
+        segmentId: "",
+        elementPosition: 0,
+      });
     },
-    [clearDirtyState, setTemplateUrlState],
+    [clearDirtyState, patchTemplateUrlState],
   );
   const templatesQueryString = useMemo(() => {
     return buildEDIDocumentContextQuery({
@@ -146,6 +162,9 @@ export default function TemplateDesignerTab() {
     versions.find((version) => version.id === selectedVersionId) ??
     selectedTemplate?.activeVersion ??
     selectedTemplate?.versions[0];
+  const selectedVersionDraftKey = selectedVersion
+    ? `${selectedVersion.id}:${selectedVersion.version}`
+    : "";
   const isEditable = isTemplateVersionEditable(selectedVersion);
   const hasUnsavedChanges = segmentsDirty || scriptsDirty || metadataDirty;
   const canValidate = !!selectedTemplateId && !!selectedVersionId && !hasUnsavedChanges;
@@ -157,49 +176,50 @@ export default function TemplateDesignerTab() {
     selectedSegment?.elements[0];
 
   useEffect(() => {
-    if (!selectedTemplateId && templates[0]) {
-      setSelectedTemplateId(templates[0].id);
-    }
-  }, [selectedTemplateId, setSelectedTemplateId, templates]);
-
-  useEffect(() => {
-    if (!selectedVersionId && versions[0]) {
-      setSelectedVersionId(versions[0].id);
-    }
-    if (
-      selectedVersionId &&
-      versions.length > 0 &&
-      !versions.some((version) => version.id === selectedVersionId)
-    ) {
-      setSelectedVersionId(versions[0].id);
-    }
-  }, [selectedVersionId, setSelectedVersionId, versions]);
-
-  useEffect(() => {
-    if (!selectedVersion || segmentsDirty || scriptsDirty || metadataDirty) return;
+    if (!selectedVersion || !selectedVersionDraftKey) return;
+    if (selectedVersionDraftKey === hydratedVersionKey) return;
+    if (segmentsDirty || scriptsDirty || metadataDirty) return;
     setSegmentsDraft(cloneSegments(selectedVersion.segments));
     setScriptDraft(selectedVersion.scriptLibraries.map((library) => ({ ...library })));
     setVersionNotes(selectedVersion.notes ?? "");
     setX12Version(selectedVersion.x12Version);
     setFunctionalGroupId(selectedVersion.functionalGroupId);
     setDiagnostics([]);
-  }, [metadataDirty, scriptsDirty, segmentsDirty, selectedVersion]);
+    setHydratedVersionKey(selectedVersionDraftKey);
+  }, [
+    hydratedVersionKey,
+    metadataDirty,
+    scriptsDirty,
+    segmentsDirty,
+    selectedVersion,
+    selectedVersionDraftKey,
+  ]);
 
   useEffect(() => {
-    if (
-      segmentsDraft.length > 0 &&
-      !segmentsDraft.some((segment) => segment.id === selectedSegmentId)
-    ) {
-      setSelectedSegmentId(segmentsDraft[0].id);
-      setSelectedElementPosition(segmentsDraft[0].elements[0]?.position ?? 0);
-    }
-  }, [selectedSegmentId, segmentsDraft, setSelectedElementPosition, setSelectedSegmentId]);
-
-  useEffect(() => {
-    if (selectedSegment && selectedElementPosition === 0) {
-      setSelectedElementPosition(selectedSegment.elements[0]?.position ?? 0);
-    }
-  }, [selectedElementPosition, selectedSegment, setSelectedElementPosition]);
+    const selectionPatch = getTemplateDesignerSelectionPatch({
+      templateId: selectedTemplateId,
+      versionId: selectedVersionId,
+      segmentId: selectedSegmentId,
+      elementPosition: selectedElementPosition,
+      templates,
+      versions,
+      segments: segmentsDraft,
+      segmentsReady:
+        !!selectedVersionDraftKey && hydratedVersionKey === selectedVersionDraftKey,
+    });
+    if (selectionPatch) patchTemplateUrlState(selectionPatch);
+  }, [
+    hydratedVersionKey,
+    patchTemplateUrlState,
+    segmentsDraft,
+    selectedElementPosition,
+    selectedSegmentId,
+    selectedTemplateId,
+    selectedVersionDraftKey,
+    selectedVersionId,
+    templates,
+    versions,
+  ]);
 
   const invalidateTemplateQueries = useInvalidateEDITemplateQueries(
     selectedTemplateId,
@@ -307,10 +327,14 @@ export default function TemplateDesignerTab() {
     (diagnostic: TemplateDiagnostic) => {
       const segment = segmentsDraft.find((item) => item.segmentId === diagnostic.segmentId);
       if (!segment) return;
-      setSelectedSegmentId(segment.id);
-      if (diagnostic.elementPosition > 0) setSelectedElementPosition(diagnostic.elementPosition);
+      patchTemplateUrlState({
+        segmentId: segment.id,
+        ...(diagnostic.elementPosition > 0
+          ? { elementPosition: diagnostic.elementPosition }
+          : {}),
+      });
     },
-    [segmentsDraft, setSelectedElementPosition, setSelectedSegmentId],
+    [patchTemplateUrlState, segmentsDraft],
   );
 
   return (
@@ -417,14 +441,20 @@ export default function TemplateDesignerTab() {
             selectedVersionId={selectedVersionId}
             onVersionSelect={(versionId) => {
               clearDirtyState();
-              setSelectedVersionId(versionId);
+              patchTemplateUrlState({
+                versionId,
+                segmentId: "",
+                elementPosition: 0,
+              });
             }}
             segments={segmentsDraft}
             diagnostics={diagnostics}
             selectedSegmentId={selectedSegment?.id ?? ""}
             onSegmentSelect={(segment) => {
-              setSelectedSegmentId(segment.id);
-              setSelectedElementPosition(segment.elements[0]?.position ?? 0);
+              patchTemplateUrlState({
+                segmentId: segment.id,
+                elementPosition: segment.elements[0]?.position ?? 0,
+              });
             }}
           />
           <Tabs defaultValue="elements" className="min-h-0 gap-0">

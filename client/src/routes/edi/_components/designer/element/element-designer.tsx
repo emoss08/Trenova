@@ -15,7 +15,7 @@ import type {
   EDITemplateSegment,
   EDITemplateVersion,
 } from "@/types/edi";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   buildConditionString,
   diagnosticsForElement,
@@ -234,6 +234,7 @@ function ElementInspector({
       />
       <SourceEditor element={element} isEditable={isEditable} onChange={update} />
       <ConditionEditor
+        key={`${segment.id}-${element.position}`}
         condition={element.condition ?? ""}
         disabled={!isEditable}
         onChange={(condition) => update({ condition })}
@@ -413,10 +414,6 @@ function ConditionEditor({
   onChange: (condition: string) => void;
 }) {
   const [draft, setDraft] = useState<ConditionDraft>(() => parseConditionString(condition));
-
-  useEffect(() => {
-    setDraft(parseConditionString(condition));
-  }, [condition]);
 
   const apply = (next: ConditionDraft) => {
     setDraft(next);

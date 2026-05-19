@@ -20,9 +20,13 @@ function ControlledSelectHarness({
   onChange?: (value: string) => void;
 }) {
   const [value, setValue] = React.useState(initialValue);
+  const [renderCount, setRenderCount] = React.useState(0);
 
   return (
     <div>
+      <button type="button" onClick={() => setRenderCount((current) => current + 1)}>
+        Force rerender
+      </button>
       <button type="button" onClick={() => setValue("Generated")}>
         Set generated
       </button>
@@ -37,6 +41,7 @@ function ControlledSelectHarness({
         placeholder="All statuses"
       />
       <output aria-label="selected value">{value}</output>
+      <output aria-label="render count">{renderCount}</output>
     </div>
   );
 }
@@ -73,20 +78,38 @@ describe("ControlledSelectField", () => {
     expect(screen.getByLabelText("selected value")).toHaveTextContent("Generated");
   });
 
+  it("does not call onValueChange for parent rerenders or external value sync", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(<ControlledSelectHarness onChange={onChange} />);
+
+    await user.click(screen.getByRole("button", { name: "Force rerender" }));
+    await user.click(screen.getByRole("button", { name: "Set generated" }));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(getSelectTrigger()).toHaveTextContent("Generated");
+  });
+
   it("selects a new value and clears to an empty string", async () => {
     const onChange = vi.fn();
 
     render(<ControlledSelectHarness onChange={onChange} />);
 
+    expect(onChange).not.toHaveBeenCalled();
+
     await chooseOption("Failed");
 
+    expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenLastCalledWith("Failed");
     expect(screen.getByLabelText("selected value")).toHaveTextContent("Failed");
 
     const clearLabel = screen.getByText("Clear");
     fireEvent.click(clearLabel.parentElement as HTMLElement);
 
+    expect(onChange).toHaveBeenCalledTimes(2);
     expect(onChange).toHaveBeenLastCalledWith("");
+    expect(onChange.mock.calls).toEqual([["Failed"], [""]]);
     expect(screen.getByLabelText("selected value")).toBeEmptyDOMElement();
   });
 
