@@ -6,9 +6,11 @@ import type {
   EDITemplateStatus,
   EDITemplateTransformStep,
   EDITemplateVersion,
+  UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
 
 export type EDIDocumentContextFilters = {
+  partnerId?: string;
   transactionSet?: string;
   direction?: string;
   status?: string;
@@ -31,11 +33,43 @@ export function functionalGroupForTransactionSet(transactionSet?: string | null)
 
 export function buildEDIDocumentContextQuery(filters: EDIDocumentContextFilters) {
   const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
+  if (filters.partnerId) params.set("partnerId", filters.partnerId);
   if (filters.transactionSet) params.set("transactionSet", filters.transactionSet);
   if (filters.direction) params.set("direction", filters.direction);
   if (filters.status) params.set("status", filters.status);
   if (filters.query?.trim()) params.set("search", filters.query.trim());
   return `?${params.toString()}`;
+}
+
+export function resolveSelectedDocumentTemplateId(
+  draftTemplateId: string | null | undefined,
+  firstTemplateId: string | null | undefined,
+) {
+  return draftTemplateId ?? firstTemplateId ?? "";
+}
+
+export function buildNewPartnerDocumentProfileDraft({
+  defaultDraft,
+  partnerId,
+  templateId,
+  status,
+}: {
+  defaultDraft: UpsertEDIPartnerDocumentProfileRequest;
+  partnerId: string;
+  templateId?: string;
+  status?: UpsertEDIPartnerDocumentProfileRequest["status"];
+}): UpsertEDIPartnerDocumentProfileRequest {
+  return {
+    ...defaultDraft,
+    ediPartnerId: partnerId,
+    templateId: templateId || undefined,
+    templateVersionId: undefined,
+    status: status ?? defaultDraft.status,
+    envelope: { ...defaultDraft.envelope },
+    acknowledgment: { ...defaultDraft.acknowledgment },
+    partnerSettings: {},
+    version: undefined,
+  };
 }
 
 export type TransformArgumentDefinition = {

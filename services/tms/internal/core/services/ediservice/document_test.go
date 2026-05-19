@@ -1,6 +1,7 @@
 package ediservice
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -136,4 +138,139 @@ func TestResolvePayloadRejectsShipmentEventMismatch(t *testing.T) {
 
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Shipment ID must match")
+}
+
+func TestUpsertPartnerDocumentProfile_AllowsInactiveProfileWithoutActiveTemplateVersion(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+	templateID := pulid.MustNew("editpl_")
+	versionID := pulid.MustNew("editplv_")
+	documentTypeID := pulid.MustNew("edidt_")
+	partnerID := pulid.MustNew("edip_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetActiveTemplateVersion(mock.Anything, repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(nil, errortypes.NewNotFoundError("template version not found")).
+		Once()
+	repo.EXPECT().
+		ListTemplateVersions(mock.Anything, repositories.ListEDITemplateVersionsRequest{
+			TemplateID: templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return([]*edi.EDITemplateVersion{{
+			ID:                versionID,
+			TemplateID:        templateID,
+			Status:            edi.TemplateStatusDraft,
+			FunctionalGroupID: "SM",
+		}}, nil).
+		Once()
+	repo.EXPECT().
+		GetTemplateByID(mock.Anything, repositories.GetEDITemplateByIDRequest{
+			ID:         templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(&edi.EDITemplate{
+			ID:             templateID,
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+			DocumentType: &edi.EDIDocumentType{
+				ID:             documentTypeID,
+				Standard:       edi.EDIStandardX12,
+				TransactionSet: edi.TransactionSet204,
+				Direction:      edi.DocumentDirectionOutbound,
+			},
+		}, nil).
+		Once()
+	repo.EXPECT().
+		GetActivePartnerSettingSchema(mock.Anything, mock.Anything).
+		Return(nil, sql.ErrNoRows).
+		Once()
+	repo.EXPECT().
+		CreatePartnerDocumentProfile(
+			mock.Anything,
+			mock.MatchedBy(func(profile *edi.EDIPartnerDocumentProfile) bool {
+				return profile.EDIPartnerID == partnerID &&
+					profile.TemplateID == templateID &&
+					profile.TemplateVersionID == versionID &&
+					profile.Status == edi.DocumentStatusInactive
+			}),
+		).
+		Return(&edi.EDIPartnerDocumentProfile{
+			ID:                pulid.MustNew("edipdp_"),
+			EDIPartnerID:      partnerID,
+			TemplateID:        templateID,
+			TemplateVersionID: versionID,
+			Status:            edi.DocumentStatusInactive,
+		}, nil).
+		Once()
+
+	service := &Service{documentRepo: repo, validator: NewValidator()}
+	profile, err := service.UpsertPartnerDocumentProfile(
+		t.Context(),
+		&UpsertEDIPartnerDocumentProfileRequest{
+			TenantInfo:        tenantInfo,
+			EDIPartnerID:      partnerID,
+			TemplateID:        templateID,
+			Status:            edi.DocumentStatusInactive,
+			Name:              "New Profile",
+			FunctionalGroupID: "SM",
+			Envelope:          edi.DefaultX12EnvelopeSettings(),
+			Acknowledgment:    edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},
+			ValidationMode:    edi.ValidationModeStrict,
+			PartnerSettings:   map[string]any{},
+		},
+		nil,
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, versionID, profile.TemplateVersionID)
+	require.Equal(t, edi.DocumentStatusInactive, profile.Status)
+}
+
+func TestUpsertPartnerDocumentProfile_ActiveProfileRequiresActiveTemplateVersion(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+	templateID := pulid.MustNew("editpl_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.EXPECT().
+		GetActiveTemplateVersion(mock.Anything, repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: templateID,
+			TenantInfo: tenantInfo,
+		}).
+		Return(nil, errortypes.NewNotFoundError("template version not found")).
+		Once()
+
+	service := &Service{documentRepo: repo, validator: NewValidator()}
+	_, err := service.UpsertPartnerDocumentProfile(
+		t.Context(),
+		&UpsertEDIPartnerDocumentProfileRequest{
+			TenantInfo:        tenantInfo,
+			EDIPartnerID:      pulid.MustNew("edip_"),
+			TemplateID:        templateID,
+			Status:            edi.DocumentStatusActive,
+			Name:              "New Profile",
+			FunctionalGroupID: "SM",
+			Envelope:          edi.DefaultX12EnvelopeSettings(),
+			Acknowledgment:    edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},
+			ValidationMode:    edi.ValidationModeStrict,
+			PartnerSettings:   map[string]any{},
+		},
+		nil,
+	)
+
+	requireValidationError(t, err, "templateVersionId", errortypes.ErrInvalidOperation)
 }

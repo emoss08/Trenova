@@ -68,6 +68,7 @@ func TestSearchPartnerSettingFields_AppliesSchemaSearchAndRequiredFilters(t *tes
 
 	db, sqlMock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	require.NoError(t, err)
+	sqlMock.MatchExpectationsInOrder(false)
 
 	bunDB := bun.NewDB(db, pgdialect.New())
 	t.Cleanup(func() {

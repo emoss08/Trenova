@@ -64,6 +64,7 @@ export function ControlledAutocompleteField<TOption>({
   value,
   onValueChange,
   onOptionChange,
+  description,
   link,
   selectedValueLink,
   renderOption,
@@ -74,11 +75,13 @@ export function ControlledAutocompleteField<TOption>({
   clearable = true,
   extraSearchParams,
   initialLimit = 20,
+  noResultsMessage,
 }: {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
   onOptionChange?: (option: TOption | null) => void;
+  description?: string;
   link: SELECT_OPTIONS_ENDPOINTS;
   selectedValueLink?: API_ENDPOINTS;
   renderOption: (option: TOption) => React.ReactNode;
@@ -89,9 +92,10 @@ export function ControlledAutocompleteField<TOption>({
   clearable?: boolean;
   extraSearchParams?: Record<string, string | string[]>;
   initialLimit?: number;
+  noResultsMessage?: string;
 }) {
   return (
-    <FieldWrapper label={label}>
+    <FieldWrapper label={label} description={description}>
       <Autocomplete<TOption, FieldValues>
         link={link}
         selectedValueLink={selectedValueLink}
@@ -107,6 +111,7 @@ export function ControlledAutocompleteField<TOption>({
         clearable={clearable}
         extraSearchParams={extraSearchParams}
         initialLimit={initialLimit}
+        noResultsMessage={noResultsMessage}
       />
     </FieldWrapper>
   );
@@ -215,6 +220,9 @@ export function EDIDocumentProfileAutocompleteField({
   onValueChange,
   onOptionChange,
   disabled,
+  description,
+  placeholder,
+  noResultsMessage,
   partnerId,
   transactionSet,
   direction,
@@ -223,6 +231,9 @@ export function EDIDocumentProfileAutocompleteField({
   onValueChange: (value: string) => void;
   onOptionChange?: (option: EDIPartnerDocumentProfile | null) => void;
   disabled?: boolean;
+  description?: string;
+  placeholder?: string;
+  noResultsMessage?: string;
   partnerId?: string;
   transactionSet?: string;
   direction?: string;
@@ -249,6 +260,9 @@ export function EDIDocumentProfileAutocompleteField({
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => option.name}
       disabled={disabled}
+      description={description}
+      placeholder={placeholder}
+      noResultsMessage={noResultsMessage}
     />
   );
 }

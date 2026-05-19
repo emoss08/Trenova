@@ -933,7 +933,9 @@ func (r *repository) GetActivePartnerDocumentProfile(
 		return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "EDIPartnerDocumentProfile")
 	}
 	if (req.TransactionSet == "" || req.Direction == "") && len(entities) > 1 {
-		return nil, errors.New("multiple active EDI document profiles match partner; transaction set and direction are required")
+		return nil, errors.New(
+			"multiple active EDI document profiles match partner; transaction set and direction are required",
+		)
 	}
 	return entities[0], nil
 }

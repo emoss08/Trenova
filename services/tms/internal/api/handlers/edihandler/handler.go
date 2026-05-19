@@ -851,15 +851,20 @@ func (h *Handler) selectMappingProfileOptions(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewSelectQueryRequest(c, authCtx)
 
-	pagination.SelectOptions(c, req, h.eh, func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-		return h.service.SelectMappingProfileOptions(
-			c.Request.Context(),
-			&repositories.EDIMappingProfileSelectOptionsRequest{
-				SelectQueryRequest: req,
-				PartnerID:          helpers.QueryPulid(c, "partnerId"),
-			},
-		)
-	})
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*edi.EDIMappingProfile], error) {
+			return h.service.SelectMappingProfileOptions(
+				c.Request.Context(),
+				&repositories.EDIMappingProfileSelectOptionsRequest{
+					SelectQueryRequest: req,
+					PartnerID:          helpers.QueryPulid(c, "partnerId"),
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) getMappingProfileOption(c *gin.Context) {
@@ -1420,9 +1425,11 @@ func (h *Handler) listPartnerSettingSchemas(c *gin.Context) {
 			return h.service.ListPartnerSettingSchemas(
 				c.Request.Context(),
 				&repositories.ListEDIPartnerSettingSchemasRequest{
-					Filter:         req,
-					Standard:       edi.EDIStandard(helpers.QueryString(c, "standard", "")),
-					TransactionSet: edi.TransactionSet(helpers.QueryString(c, "transactionSet", "")),
+					Filter:   req,
+					Standard: edi.EDIStandard(helpers.QueryString(c, "standard", "")),
+					TransactionSet: edi.TransactionSet(
+						helpers.QueryString(c, "transactionSet", ""),
+					),
 					Direction:      edi.DocumentDirection(helpers.QueryString(c, "direction", "")),
 					X12Version:     helpers.QueryString(c, "x12Version", ""),
 					DocumentTypeID: helpers.QueryPulid(c, "documentTypeId"),
@@ -2254,8 +2261,8 @@ func (h *Handler) listOutboundTransfers(c *gin.Context) {
 }
 
 func (h *Handler) getTransfer(c *gin.Context) {
-	h.withTransfer(c, "", func(c *gin.Context, transfer *edi.EDITransfer) {
-		c.JSON(http.StatusOK, transfer)
+	h.withTransfer(c, "", func(gCtx *gin.Context, transfer *edi.EDITransfer) {
+		gCtx.JSON(http.StatusOK, transfer)
 	})
 }
 

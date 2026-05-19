@@ -25,12 +25,11 @@ func newEDISelectOptionsTestRepository(t *testing.T) (*repository, sqlmock.Sqlmo
 
 	bunDB := bun.NewDB(db, pgdialect.New())
 	t.Cleanup(func() {
+		sqlMock.ExpectClose()
+		sqlMock.ExpectClose()
 		require.NoError(t, bunDB.Close())
 		require.NoError(t, sqlMock.ExpectationsWereMet())
 	})
-
-	sqlMock.ExpectClose()
-	sqlMock.ExpectClose()
 
 	return &repository{
 		db: postgres.NewTestConnection(bunDB),
@@ -155,9 +154,9 @@ func TestSelectPartnerOptions_FiltersByExternalKind(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	partnerID := pulid.MustNew("edip_")
 
-	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*ep\.status.*ep\.kind.*lower\(ep\.code\) LIKE`).
+	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*LOWER\(ep\.name\) LIKE.*LOWER\(ep\.code\) LIKE.*ep\.kind`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	sqlMock.ExpectQuery(`SELECT "ep"."id", "ep"."business_unit_id", "ep"."organization_id".*FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*ep\.status.*ep\.kind.*lower\(ep\.code\) LIKE`).
+	sqlMock.ExpectQuery(`SELECT "ep"."id", "ep"."business_unit_id", "ep"."organization_id".*FROM "edi_partners" AS "ep".*ep\.organization_id.*ep\.business_unit_id.*LOWER\(ep\.name\) LIKE.*LOWER\(ep\.code\) LIKE.*ep\.kind`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id",
 			"business_unit_id",
@@ -269,9 +268,9 @@ func TestSelectMappingProfileOptions_AppliesTenantSearchAndFilters(t *testing.T)
 	partnerID := pulid.MustNew("edip_")
 	profileID := pulid.MustNew("edimp_")
 
-	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "edi_mapping_profiles" AS "emp".*JOIN "edi_partners" AS "partner".*emp\.organization_id.*emp\.business_unit_id.*emp\.edi_partner_id.*lower\(emp\.name\) LIKE`).
+	sqlMock.ExpectQuery(`SELECT count\(\*\) FROM "edi_mapping_profiles" AS "emp".*JOIN "edi_partners" AS "partner".*emp\.organization_id.*emp\.business_unit_id.*LOWER\(emp\.name\) LIKE.*LOWER\(emp\.description\) LIKE.*emp\.edi_partner_id`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	sqlMock.ExpectQuery(`SELECT "emp"."id", "emp"."business_unit_id", "emp"."organization_id".*FROM "edi_mapping_profiles" AS "emp".*JOIN "edi_partners" AS "partner".*emp\.organization_id.*emp\.business_unit_id.*emp\.edi_partner_id.*lower\(emp\.name\) LIKE`).
+	sqlMock.ExpectQuery(`SELECT "emp"."id", "emp"."business_unit_id", "emp"."organization_id".*FROM "edi_mapping_profiles" AS "emp".*JOIN "edi_partners" AS "partner".*emp\.organization_id.*emp\.business_unit_id.*LOWER\(emp\.name\) LIKE.*LOWER\(emp\.description\) LIKE.*emp\.edi_partner_id`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id",
 			"business_unit_id",

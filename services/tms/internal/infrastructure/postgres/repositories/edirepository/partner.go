@@ -8,7 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -126,50 +128,43 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
-	entities := make([]*edi.EDIPartner, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	col := buncolgen.EDIPartnerColumns
 
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Column(
-			"id",
-			"business_unit_id",
-			"organization_id",
-			"kind",
-			"status",
-			"code",
-			"name",
-			"internal_organization_id",
-			"edi_connection_id",
-			"default_transport_id",
-			"enabled_for_inbound",
-			"enabled_for_outbound",
-		).
-		Where("ep.organization_id = ?", req.SelectQueryRequest.TenantInfo.OrgID).
-		Where("ep.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID).
-		Where("ep.status = ?", domaintypes.StatusActive)
+	return dbhelper.SelectOptions[*edi.EDIPartner](
+		ctx,
+		r.db.DB(),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				col.ID,
+				col.BusinessUnitID,
+				col.OrganizationID,
+				col.Kind,
+				col.Code,
+				col.Name,
+				col.InternalOrganizationID,
+				col.EDIConnectionID,
+				col.DefaultTransportID,
+				col.EnabledForInbound,
+				col.EnabledForOutbound,
+			},
+			OrgColumnRef:     &col.OrganizationID,
+			BuColumnRef:      &col.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{col.Name, col.Code},
+			EntityName:       "EDIPartner",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				if req.Kind != "" {
+					q = q.Where(col.Kind.Eq(), req.Kind)
+				}
 
-	if req.Kind != "" {
-		query = query.Where("ep.kind = ?", req.Kind)
-	}
-	if req.EnabledForOutbound {
-		query = query.Where("ep.enabled_for_outbound = TRUE")
-	}
-	query = applyPartnerSearch(query, req.SelectQueryRequest.Query)
+				if req.EnabledForOutbound {
+					q = q.Where(col.EnabledForOutbound.Eq(), "TRUE")
+				}
 
-	total, err := query.
-		Order("ep.name ASC").
-		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pagination.ListResult[*edi.EDIPartner]{
-		Items: entities,
-		Total: total,
-	}, nil
+				return q
+			},
+		},
+	)
 }
 
 func (r *repository) GetByID(
@@ -323,40 +318,35 @@ func (r *repository) SelectMappingProfileOptions(
 	ctx context.Context,
 	req *repositories.EDIMappingProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	entities := make([]*edi.EDIMappingProfile, 0, req.SelectQueryRequest.Pagination.SafeLimit())
-	query := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(&entities).
-		Column(
-			"id",
-			"business_unit_id",
-			"organization_id",
-			"edi_partner_id",
-			"name",
-			"description",
-		).
-		Relation("Partner").
-		Where("emp.organization_id = ?", req.SelectQueryRequest.TenantInfo.OrgID).
-		Where("emp.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
+	col := buncolgen.EDIMappingProfileColumns
 
-	if req.PartnerID.IsNotNil() {
-		query = query.Where("emp.edi_partner_id = ?", req.PartnerID)
-	}
-	query = applyMappingProfileSearch(query, req.SelectQueryRequest.Query)
+	return dbhelper.SelectOptions[*edi.EDIMappingProfile](
+		ctx,
+		r.db.DB(),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				col.ID,
+				col.BusinessUnitID,
+				col.OrganizationID,
+				col.EDIPartnerID,
+				col.Name,
+				col.Description,
+			},
+			OrgColumnRef:     &col.OrganizationID,
+			BuColumnRef:      &col.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{col.Name, col.Description},
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				if req.PartnerID.IsNotNil() {
+					q = q.Where(col.EDIPartnerID.Eq(), req.PartnerID)
+				}
 
-	total, err := query.
-		Order("emp.name ASC").
-		Limit(req.SelectQueryRequest.Pagination.SafeLimit()).
-		Offset(req.SelectQueryRequest.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
+				q = q.Relation(buncolgen.EDIMappingProfileRelations.Partner)
 
-	return &pagination.ListResult[*edi.EDIMappingProfile]{
-		Items: entities,
-		Total: total,
-	}, nil
+				return q
+			},
+		},
+	)
 }
 
 func (r *repository) GetMappingProfileByID(
@@ -364,14 +354,17 @@ func (r *repository) GetMappingProfileByID(
 	req repositories.GetMappingProfileByIDRequest,
 ) (*edi.EDIMappingProfile, error) {
 	profile := new(edi.EDIMappingProfile)
+	rel := buncolgen.EDIMappingProfileRelations
+
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(profile).
-		Relation("Partner").
-		Relation("Entries").
-		Where("emp.id = ?", req.ProfileID).
-		Where("emp.organization_id = ?", req.TenantInfo.OrgID).
-		Where("emp.business_unit_id = ?", req.TenantInfo.BuID).
+		Relation(rel.Partner).
+		Relation(rel.Entries).
+		Where(buncolgen.EDIMappingProfileColumns.ID.Eq(), req.ProfileID).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIMappingProfileScopeTenant(sq, req.TenantInfo)
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "EDIMappingProfile")
@@ -579,19 +572,6 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 		errortypes.ErrInvalid,
 		"Target organization must belong to the current business unit",
 	)
-}
-
-func applyPartnerSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
-	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr("lower(ep.code) LIKE ?", term).
-			WhereOr("lower(ep.name) LIKE ?", term)
-	})
 }
 
 func applyMappingProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {

@@ -19,14 +19,93 @@ import {
   toSourcePathReference,
 } from "../designer/components/designer-fields";
 import {
+  buildEDIDocumentContextQuery,
+  buildNewPartnerDocumentProfileDraft,
   buildConditionString,
   getReadOnlyReason,
   getTransformOperationDefinition,
   insertPathReference,
   isTemplateVersionEditable,
   parseConditionString,
+  resolveSelectedDocumentTemplateId,
 } from "../designer/utils/edi-designer-utils";
 import { ediScriptPresets, insertScriptPresetCode } from "../edi-script-presets";
+
+describe("buildEDIDocumentContextQuery", () => {
+  it("includes partner and document context filters", () => {
+    expect(
+      buildEDIDocumentContextQuery({
+        partnerId: "edip_123",
+        transactionSet: "204",
+        direction: "Outbound",
+        limit: 20,
+      }),
+    ).toBe("?limit=20&partnerId=edip_123&transactionSet=204&direction=Outbound");
+  });
+});
+
+describe("resolveSelectedDocumentTemplateId", () => {
+  it("uses the editable draft template before the first template fallback", () => {
+    expect(resolveSelectedDocumentTemplateId("editpl_selected", "editpl_first")).toBe(
+      "editpl_selected",
+    );
+  });
+
+  it("falls back to the first template when the draft has no template", () => {
+    expect(resolveSelectedDocumentTemplateId(undefined, "editpl_first")).toBe("editpl_first");
+  });
+
+  it("preserves an intentionally cleared template selection", () => {
+    expect(resolveSelectedDocumentTemplateId("", "editpl_first")).toBe("");
+  });
+});
+
+describe("buildNewPartnerDocumentProfileDraft", () => {
+  it("resets profile-specific state for the selected partner", () => {
+    const draft = buildNewPartnerDocumentProfileDraft({
+      defaultDraft: {
+        ediPartnerId: "edip_old",
+        templateId: "editpl_old",
+        templateVersionId: "editplv_old",
+        name: "EDI Document Profile",
+        status: "Active",
+        functionalGroupId: "SM",
+        envelope: {
+          interchangeSenderId: "TRENOVA",
+          interchangeReceiverId: "PARTNER",
+          applicationSenderCode: "TRENOVA",
+          applicationReceiverCode: "PARTNER",
+          interchangeUsageIndicator: "T",
+          elementSeparator: "*",
+          segmentTerminator: "~",
+          componentSeparator: ">",
+          repetitionSeparator: "^",
+        },
+        acknowledgment: {
+          expected: false,
+          type: "None",
+          slaInMinutes: 0,
+          missingAckSeverity: "Warning",
+        },
+        validationMode: "Strict",
+        partnerSettings: { receiverId: "old" },
+        version: 3,
+      },
+      partnerId: "edip_new",
+      templateId: "editpl_first",
+      status: "Inactive",
+    });
+
+    expect(draft).toMatchObject({
+      ediPartnerId: "edip_new",
+      templateId: "editpl_first",
+      templateVersionId: undefined,
+      status: "Inactive",
+      partnerSettings: {},
+      version: undefined,
+    });
+  });
+});
 
 describe("isTemplateVersionEditable", () => {
   it("allows only draft versions", () => {

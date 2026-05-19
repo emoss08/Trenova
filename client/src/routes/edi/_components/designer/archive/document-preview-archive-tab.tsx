@@ -1,5 +1,6 @@
-import { Badge } from "@/components/ui/badge";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { downloadJsonFile, downloadTextFile } from "@/lib/utils";
 import {
   buildEDIDocumentResolutionRequest,
   hasEDIDocumentSourceValue,
@@ -28,6 +28,7 @@ import {
   type EDIDocumentSourceField,
   type EDIDocumentSourceValues,
 } from "@/lib/edi/document-source";
+import { downloadJsonFile, downloadTextFile } from "@/lib/utils";
 import type {
   EDIMessage,
   EDIPartnerDocumentProfile,
@@ -44,6 +45,7 @@ import {
   EyeIcon,
   FileCode2Icon,
   FileJsonIcon,
+  InfoIcon,
   PlayIcon,
   RefreshCwIcon,
   ShieldCheckIcon,
@@ -51,28 +53,6 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { formatUnix } from "../../edi-display-utils";
-import { useDocumentArchiveUrlState } from "../hooks/use-edi-designer-url-state";
-import {
-  useEDIDocumentArchiveQueries,
-  useEDIMessageDetailQuery,
-} from "../hooks/use-edi-document-queries";
-import {
-  useGenerateEDIDocumentMutation,
-  useInvalidateEDIDocumentProfiles,
-  useInvalidateEDIMessageArchive,
-  usePreviewEDIDocumentMutation,
-  useSaveEDIDocumentProfileMutation,
-} from "../hooks/use-edi-document-mutations";
-import {
-  buildArchiveMessagesQueryString,
-  buildMessageJsonFilename,
-  buildX12Filename,
-  groupDiagnostics,
-  parseX12Segments,
-} from "../utils/edi-message-utils";
-import { buildEDIDocumentContextQuery, diagnosticKey } from "../utils/edi-designer-utils";
-import { AckEditor } from "../profile/ack-editor";
-import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
   ControlledSelectField,
   EDIDocumentProfileAutocompleteField,
@@ -89,12 +69,40 @@ import {
   profileToDraft,
   useEditorTheme,
 } from "../components/designer-shared";
+import { useDocumentArchiveUrlState } from "../hooks/use-edi-designer-url-state";
+import {
+  useGenerateEDIDocumentMutation,
+  useInvalidateEDIDocumentProfiles,
+  useInvalidateEDIMessageArchive,
+  usePreviewEDIDocumentMutation,
+  useSaveEDIDocumentProfileMutation,
+} from "../hooks/use-edi-document-mutations";
+import {
+  useEDIDocumentArchiveQueries,
+  useEDIMessageDetailQuery,
+} from "../hooks/use-edi-document-queries";
+import { AckEditor } from "../profile/ack-editor";
+import { EnvelopeEditor } from "../profile/envelope-editor";
 import {
   documentDirectionOptions,
+  documentStatusOptions,
   messageStatusOptions,
   transactionSetOptions,
   validationModeOptions,
 } from "../utils/edi-designer-options";
+import {
+  buildEDIDocumentContextQuery,
+  buildNewPartnerDocumentProfileDraft,
+  diagnosticKey,
+  resolveSelectedDocumentTemplateId,
+} from "../utils/edi-designer-utils";
+import {
+  buildArchiveMessagesQueryString,
+  buildMessageJsonFilename,
+  buildX12Filename,
+  groupDiagnostics,
+  parseX12Segments,
+} from "../utils/edi-message-utils";
 
 const defaultEnvelope = {
   interchangeSenderId: "TRENOVA",
@@ -170,6 +178,16 @@ export function DocumentPreviewArchiveTab() {
     ],
   );
 
+  const profileContextQueryString = useMemo(
+    () =>
+      buildEDIDocumentContextQuery({
+        limit: 100,
+        partnerId: partnerId || undefined,
+        transactionSet: archiveTransactionSet,
+        direction: archiveDirection,
+      }),
+    [archiveDirection, archiveTransactionSet, partnerId],
+  );
   const documentContextQueryString = useMemo(
     () =>
       buildEDIDocumentContextQuery({
@@ -181,28 +199,34 @@ export function DocumentPreviewArchiveTab() {
   );
   const { profilesQuery, templatesQuery, messagesQuery } = useEDIDocumentArchiveQueries({
     messagesQueryString,
-    profilesQueryString: documentContextQueryString,
+    profilesQueryString: profileContextQueryString,
     templatesQueryString: documentContextQueryString,
   });
   const queriedSelectedProfile =
     profilesQuery.data?.results.find((profile) => profile.id === profileId) ?? null;
+  const firstTemplateId = templatesQuery.data?.results[0]?.id;
+  const selectedTemplateId = resolveSelectedDocumentTemplateId(
+    profileDraft.templateId,
+    firstTemplateId,
+  );
   const activeTemplate =
-    templatesQuery.data?.results.find((template) => template.id === profileDraft.templateId) ??
+    templatesQuery.data?.results.find((template) => template.id === selectedTemplateId) ??
     templatesQuery.data?.results[0];
-  const draftTemplate =
-    templatesQuery.data?.results.find((template) => template.id === profileDraft.templateId) ??
-    null;
   const selectedDocumentProfile =
     selectedProfile?.id === profileId ? selectedProfile : queriedSelectedProfile;
   const sourceContext = resolveEDIDocumentSourceContext({
     profile: selectedDocumentProfile,
-    template: draftTemplate,
+    template: activeTemplate,
     fallbackTransactionSet: archiveTransactionSet || activeTemplate?.transactionSet,
     fallbackDirection: archiveDirection || activeTemplate?.direction,
   });
   const sourceTransactionSet = sourceContext.transactionSet;
   const sourceDirection = sourceContext.direction;
   const hasSourceValue = hasEDIDocumentSourceValue(sourceValues, sourceTransactionSet);
+  const matchingProfiles = profilesQuery.data?.results ?? [];
+  const selectedPartnerHasNoProfiles =
+    !!partnerId && !profileId && !profilesQuery.isLoading && matchingProfiles.length === 0;
+  const isCreatingProfile = !!partnerId && !profileId;
   const invalidateDocumentProfiles = useInvalidateEDIDocumentProfiles();
   const invalidateMessageArchive = useInvalidateEDIMessageArchive();
 
@@ -211,14 +235,8 @@ export function DocumentPreviewArchiveTab() {
       setPartnerId(selectedDocumentProfile.ediPartnerId);
       setProfileDraft(profileToDraft(selectedDocumentProfile));
       setRawPartnerSettings(JSON.stringify(selectedDocumentProfile.partnerSettings ?? {}, null, 2));
-      return;
     }
-    setProfileDraft((current) => ({
-      ...current,
-      ediPartnerId: partnerId,
-      templateId: activeTemplate?.id ?? current.templateId,
-    }));
-  }, [activeTemplate?.id, partnerId, selectedDocumentProfile]);
+  }, [selectedDocumentProfile]);
 
   useEffect(() => {
     setSourceValues((current) => pruneEDIDocumentSourceValues(current, sourceTransactionSet));
@@ -229,7 +247,7 @@ export function DocumentPreviewArchiveTab() {
       toast.success("Document profile saved");
       setProfileId(profile.id);
       setSelectedProfile(profile);
-      await invalidateDocumentProfiles();
+      await invalidateDocumentProfiles(profile);
     },
     onError: () => toast.error("Failed to save document profile"),
   });
@@ -262,6 +280,15 @@ export function DocumentPreviewArchiveTab() {
               setPartnerId(nextPartnerId);
               setProfileId("");
               setSelectedProfile(null);
+              setRawPartnerSettings("{}");
+              setProfileDraft(
+                buildNewPartnerDocumentProfileDraft({
+                  defaultDraft: defaultProfileDraft,
+                  partnerId: nextPartnerId,
+                  templateId: firstTemplateId,
+                  status: templatesQuery.data?.results[0]?.activeVersion ? "Active" : "Inactive",
+                }),
+              );
             }}
           />
           <EDIDocumentProfileAutocompleteField
@@ -274,23 +301,51 @@ export function DocumentPreviewArchiveTab() {
             partnerId={partnerId}
             transactionSet={archiveTransactionSet}
             direction={archiveDirection}
+            disabled={!partnerId}
+            placeholder={partnerId ? "Select document profile" : "Select a partner first."}
+            description={!partnerId ? "Select a partner first." : undefined}
+            noResultsMessage="No document profiles match this partner and document context."
           />
+          {selectedPartnerHasNoProfiles && (
+            <Alert variant="info" className="py-2 text-xs">
+              <InfoIcon className="size-4" />
+              <AlertDescription className="text-xs">
+                No document profiles exist for this partner yet. Fill the profile details below and
+                click Save Profile.
+              </AlertDescription>
+            </Alert>
+          )}
+          {isCreatingProfile && (
+            <Alert variant="info" className="py-2 text-xs">
+              <InfoIcon className="size-4" />
+              <AlertDescription className="text-xs">
+                New profile for selected partner. Save Profile will create and select it.
+              </AlertDescription>
+            </Alert>
+          )}
           <InputBlock
             label="Profile Name"
             value={profileDraft.name}
             onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
           />
           <EDITemplateAutocompleteField
-            value={activeTemplate?.id ?? ""}
+            value={selectedTemplateId}
             transactionSet={archiveTransactionSet}
             direction={archiveDirection}
-            onValueChange={(templateId) =>
+            onValueChange={(templateId) => {
+              const selectedTemplateHasProductionVersion = !!templatesQuery.data?.results.find(
+                (template) => template.id === templateId,
+              )?.activeVersion;
               setProfileDraft((current) => ({
                 ...current,
                 templateId,
                 templateVersionId: undefined,
-              }))
-            }
+                status:
+                  selectedTemplateHasProductionVersion || current.status === "Inactive"
+                    ? current.status
+                    : "Inactive",
+              }));
+            }}
           />
           <div className="grid grid-cols-2 gap-2">
             <InputBlock
@@ -308,6 +363,18 @@ export function DocumentPreviewArchiveTab() {
               }
             />
           </div>
+          <ControlledSelectField
+            label="Status"
+            value={profileDraft.status}
+            onValueChange={(status) =>
+              setProfileDraft((current) => ({
+                ...current,
+                status: status as UpsertEDIPartnerDocumentProfileRequest["status"],
+              }))
+            }
+            options={documentStatusOptions}
+            clearable={false}
+          />
           <ControlledSelectField
             label="Validation"
             value={profileDraft.validationMode}
@@ -338,7 +405,7 @@ export function DocumentPreviewArchiveTab() {
                 request: {
                   ...profileDraft,
                   ediPartnerId: partnerId,
-                  templateId: activeTemplate?.id ?? profileDraft.templateId,
+                  templateId: selectedTemplateId || undefined,
                   partnerSettings: parseSettings(rawPartnerSettings),
                 },
               })
@@ -968,7 +1035,7 @@ function InspectorGrid({ rows }: { rows: Array<[string, string]> }) {
       {rows.map(([label, value]) => (
         <div key={label} className="rounded-md border p-3">
           <div className="text-xs text-muted-foreground">{label}</div>
-          <div className="mt-1 font-mono text-sm break-words">{value || "-"}</div>
+          <div className="mt-1 font-mono text-sm wrap-break-word">{value || "-"}</div>
         </div>
       ))}
     </div>

@@ -99,14 +99,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		}
 		req.TemplateID = base.ID
 	}
-	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(
-		ctx,
-		repositories.GetActiveEDITemplateVersionRequest{
-			TemplateID: req.TemplateID,
-			TenantInfo: req.TenantInfo,
-			VersionID:  req.TemplateVersionID,
-		},
-	)
+	templateVersion, err := s.resolveProfileTemplateVersion(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -215,6 +208,65 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	}
 	s.logAction(updated, actor, permission.OpUpdate, nil, updated, "EDI document profile updated")
 	return updated, nil
+}
+
+func (s *Service) resolveProfileTemplateVersion(
+	ctx context.Context,
+	req *UpsertEDIPartnerDocumentProfileRequest,
+) (*edi.EDITemplateVersion, error) {
+	if req.TemplateVersionID.IsNotNil() {
+		return s.documentRepo.GetTemplateVersionByID(
+			ctx,
+			repositories.GetEDITemplateVersionByIDRequest{
+				TemplateID: req.TemplateID,
+				VersionID:  req.TemplateVersionID,
+				TenantInfo: req.TenantInfo,
+			},
+		)
+	}
+
+	version, err := s.documentRepo.GetActiveTemplateVersion(
+		ctx,
+		repositories.GetActiveEDITemplateVersionRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err == nil {
+		return version, nil
+	}
+	if !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	if req.Status == "" || req.Status == edi.DocumentStatusActive {
+		return nil, errortypes.NewValidationError(
+			"templateVersionId",
+			errortypes.ErrInvalidOperation,
+			"Active document profiles require an active or certified template version. Activate a template version or save the profile as inactive.",
+		)
+	}
+
+	versions, listErr := s.documentRepo.ListTemplateVersions(
+		ctx,
+		repositories.ListEDITemplateVersionsRequest{
+			TemplateID: req.TemplateID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if listErr != nil {
+		return nil, listErr
+	}
+	for _, candidate := range versions {
+		if candidate.Status != edi.TemplateStatusArchived {
+			return candidate, nil
+		}
+	}
+	return nil, errortypes.NewValidationError(
+		"templateVersionId",
+		errortypes.ErrInvalidReference,
+		"Template version is required",
+	)
 }
 
 func validateProfileTemplateVersionCompatibility(

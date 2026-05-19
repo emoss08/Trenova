@@ -226,6 +226,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 
 	templateID := pulid.MustNew("editpl_")
 	profileID := pulid.MustNew("edipdp_")
+	partnerID := pulid.MustNew("edip_")
 	repo := mocks.NewMockEDIDocumentRepository(t)
 	repo.On(
 		"SelectDocumentTypeOptions",
@@ -273,7 +274,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		mock.MatchedBy(func(req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "profile" &&
 				req.TransactionSet == edi.TransactionSet204 &&
-				req.Direction == edi.DocumentDirectionOutbound
+				req.Direction == edi.DocumentDirectionOutbound &&
+				req.PartnerID == partnerID
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
 		Items: []*edi.EDIPartnerDocumentProfile{{
@@ -345,7 +347,12 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		handler,
 		http.MethodGet,
 		"/api/v1/edi/document-profiles/select-options/",
-		map[string]string{"query": "profile", "transactionSet": "204", "direction": "Outbound"},
+		map[string]string{
+			"query":          "profile",
+			"transactionSet": "204",
+			"direction":      "Outbound",
+			"partnerId":      partnerID.String(),
+		},
 		nil,
 		http.StatusOK,
 	)
@@ -367,6 +374,52 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		nil,
 		http.StatusOK,
 	)
+}
+
+func TestEDIHandler_DocumentProfileSelectOptionsReturnsProfiles(t *testing.T) {
+	t.Parallel()
+
+	profileID := pulid.MustNew("edipdp_")
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	repo.On(
+		"SelectPartnerDocumentProfileOptions",
+		mock.Anything,
+		mock.MatchedBy(func(req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest) bool {
+			return req.SelectQueryRequest.Pagination.Limit == 20 &&
+				req.SelectQueryRequest.Pagination.Offset == 0 &&
+				req.SelectQueryRequest.Query == "" &&
+				req.TransactionSet == "" &&
+				req.Direction == "" &&
+				req.PartnerID.IsNil()
+		}),
+	).Return(&pagination.ListResult[*edi.EDIPartnerDocumentProfile]{
+		Items: []*edi.EDIPartnerDocumentProfile{{
+			ID:             profileID,
+			Name:           "Outbound Profile",
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		}},
+		Total: 1,
+	}, nil).Once()
+
+	handler := setupEDIHandler(t, repo)
+	recorder := runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/document-profiles/select-options/",
+		map[string]string{"limit": "20", "offset": "0"},
+		nil,
+		http.StatusOK,
+	)
+
+	var resp pagination.Response[[]*edi.EDIPartnerDocumentProfile]
+	require.NoError(t, recorder.ResponseJSON(&resp))
+	require.Len(t, resp.Results, 1)
+	assert.Equal(t, 1, resp.Count)
+	assert.Equal(t, profileID, resp.Results[0].ID)
+	assert.Equal(t, "Outbound Profile", resp.Results[0].Name)
 }
 
 func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {

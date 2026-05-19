@@ -55,7 +55,29 @@ export function useGenerateEDIDocumentMutation(
 
 export function useInvalidateEDIDocumentProfiles() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queries.edi.documentProfiles._def });
+  return async (profile?: EDIPartnerDocumentProfile) => {
+    if (profile) {
+      queryClient.setQueryData(
+        [
+          "autocomplete-option",
+          "/edi/document-profiles/select-options/",
+          "/edi/document-profiles/",
+          profile.id,
+        ],
+        profile,
+      );
+    }
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queries.edi.documentProfiles._def }),
+      queryClient.invalidateQueries({
+        queryKey: ["autocomplete-search", "/edi/document-profiles/select-options/"],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["autocomplete-option", "/edi/document-profiles/select-options/"],
+      }),
+    ]);
+  };
 }
 
 export function useInvalidateEDIMessageArchive() {

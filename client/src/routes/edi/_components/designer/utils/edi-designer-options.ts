@@ -1,6 +1,7 @@
 import type { SelectOption } from "@/types/fields";
 import {
   ediDocumentDirectionSchema,
+  ediDocumentStatusSchema,
   ediMappingEntityTypeSchema,
   ediMessageStatusSchema,
   ediTemplateElementSourceSchema,
@@ -71,6 +72,8 @@ export const validationModeOptions = toOptions(
 export const transactionSetOptions = toOptions(ediTransactionSetSchema.options);
 
 export const documentDirectionOptions = toOptions(ediDocumentDirectionSchema.options);
+
+export const documentStatusOptions = toOptions(ediDocumentStatusSchema.options);
 
 export const messageStatusOptions = toOptions(ediMessageStatusSchema.options);
 

@@ -343,12 +343,12 @@ export function AutocompleteCommandContent<TOption>({
         id={listboxId}
         ref={commandListCallbackRef}
         onScroll={handleScrollEnd}
-        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-[250px] overflow-y-auto"
+        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-62.5 overflow-y-auto"
       >
         {isError && <div className="p-4 text-center text-destructive">Failed to fetch options</div>}
         {!isLoading && data && options.length === 0 && (
           <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
-            <CommandEmpty className="p-0">
+            <CommandEmpty className="p-0 text-center">
               {noResultsMessage ??
                 `No ${pluralize(toTitleCase(label ?? ""), options.length)} found.`}
             </CommandEmpty>
