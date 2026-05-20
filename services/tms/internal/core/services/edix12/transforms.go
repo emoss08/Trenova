@@ -1,6 +1,7 @@
 package edix12
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/shared/maputils"
@@ -18,6 +20,16 @@ import (
 const transformSuggestedFix = "Check the transform operation, arguments, and base source configuration."
 
 var transformNonDigitPattern = regexp.MustCompile(`\D+`)
+
+const (
+	maxDecimalPlaces      = 1<<31 - 1
+	maxTransformInt64Uint = uint64(1<<63 - 1)
+)
+
+var (
+	maxTransformIntUint   = ^uint(0) >> 1
+	maxTransformIntUint64 = uint64(^uint(0) >> 1)
+)
 
 var transformOperationHandlers = map[string]transformStepFunc{
 	"trim":               transformTrim,
@@ -90,21 +102,22 @@ func resolveTransformElementValue(
 
 func (r *transformRuntime) resolveBaseSource() (any, error) {
 	if r.element.BaseSource == nil {
-		return nil, fmt.Errorf("transform base source is required")
+		return nil, errors.New("transform base source is required")
 	}
 
 	source := r.element.BaseSource
+	//nolint:exhaustive // Direct source validation is handled by isDirectElementSource below.
 	switch source.Source {
 	case edi.TemplateElementSourceTransform:
-		return nil, fmt.Errorf("transform base source cannot be another transform")
+		return nil, errors.New("transform base source cannot be another transform")
 	case edi.TemplateElementSourceStarlark:
-		return nil, fmt.Errorf("transform base source cannot be starlark")
+		return nil, errors.New("transform base source cannot be starlark")
 	}
 	if !isDirectElementSource(source.Source) {
 		return nil, fmt.Errorf("unsupported transform base source %q", source.Source)
 	}
 
-	value, _ := resolveDirectSource(baseDirectSource(source), r.env)
+	value := resolveDirectSource(baseDirectSource(source), r.env)
 	if isEmptyTransformValue(value) && source.Default != "" {
 		return source.Default, nil
 	}
@@ -242,7 +255,8 @@ func transformPad(r *transformRuntime, value any, args map[string]any, left bool
 		return text, nil
 	}
 
-	padding := strings.Repeat(string([]rune(pad)[0]), length-len(runes))
+	padRune, _ := utf8.DecodeRuneInString(pad)
+	padding := strings.Repeat(string(padRune), length-len(runes))
 	if left {
 		return padding + text, nil
 	}
@@ -343,7 +357,7 @@ func transformDefault(r *transformRuntime, value any, args map[string]any) (any,
 		return nil, err
 	}
 	if !ok {
-		return nil, fmt.Errorf("default requires value or fallback")
+		return nil, errors.New("default requires value or fallback")
 	}
 	return fallback, nil
 }
@@ -384,8 +398,8 @@ func transformFormatDecimal(r *transformRuntime, value any, args map[string]any)
 	} else if ok {
 		places = argPlaces
 	}
-	if places < 0 {
-		return nil, fmt.Errorf("format_decimal places must be greater than or equal to 0")
+	if places < 0 || places > maxDecimalPlaces {
+		return nil, errors.New("format_decimal places must fit in int32")
 	}
 
 	number, ok := decimalFromTransformValue(value)
@@ -395,7 +409,8 @@ func transformFormatDecimal(r *transformRuntime, value any, args map[string]any)
 			valueToString(value),
 		)
 	}
-	return number.StringFixed(int32(places)), nil
+	places32 := int32(places) //nolint:gosec // places is bounded before converting to int32.
+	return number.StringFixed(places32), nil
 }
 
 func transformFormatInt(_ *transformRuntime, value any, _ map[string]any) (any, error) {
@@ -432,21 +447,21 @@ func transformNormalizePostal(_ *transformRuntime, value any, _ map[string]any) 
 func transformQualifier(r *transformRuntime, value any, args map[string]any) (any, error) {
 	rawMapping, ok := args["mapping"]
 	if !ok {
-		return nil, fmt.Errorf("qualifier requires mapping")
+		return nil, errors.New("qualifier requires mapping")
 	}
 	key := valueToString(value)
 
 	switch mapping := rawMapping.(type) {
 	case map[string]any:
-		if mapped, ok := mapping[key]; ok {
+		if mapped, found := mapping[key]; found {
 			return r.resolveArgument(mapped), nil
 		}
 	case map[string]string:
-		if mapped, ok := mapping[key]; ok {
+		if mapped, found := mapping[key]; found {
 			return r.resolveArgument(mapped), nil
 		}
 	default:
-		return nil, fmt.Errorf("qualifier mapping must be an object")
+		return nil, errors.New("qualifier mapping must be an object")
 	}
 
 	fallback, ok, err := r.optionalArg(args, "fallback")
@@ -465,7 +480,7 @@ func transformConditional(r *transformRuntime, _ any, args map[string]any) (any,
 		return nil, err
 	}
 	if !ok {
-		return nil, fmt.Errorf("conditional requires when")
+		return nil, errors.New("conditional requires when")
 	}
 
 	matches, err := r.evaluateConditional(when, args)
@@ -473,8 +488,8 @@ func transformConditional(r *transformRuntime, _ any, args map[string]any) (any,
 		return nil, err
 	}
 	if matches {
-		thenValue, _, err := r.optionalArg(args, "then")
-		return thenValue, err
+		thenValue, _, thenErr := r.optionalArg(args, "then")
+		return thenValue, thenErr
 	}
 	elseValue, _, err := r.optionalArg(args, "else")
 	return elseValue, err
@@ -521,33 +536,33 @@ func (r *transformRuntime) evaluateConditional(when any, args map[string]any) (b
 	case "empty":
 		return !isTruthyTransformValue(when), nil
 	case "equals", "eq":
-		target, err := r.requiredStringArgAny(args, "value", "equals", "target")
-		if err != nil {
-			return false, err
+		target, targetErr := r.requiredStringArgAny(args, "value", "equals", "target")
+		if targetErr != nil {
+			return false, targetErr
 		}
 		return valueToString(when) == target, nil
 	case "not_equals", "ne":
-		target, err := r.requiredStringArgAny(args, "value", "equals", "target")
-		if err != nil {
-			return false, err
+		target, targetErr := r.requiredStringArgAny(args, "value", "equals", "target")
+		if targetErr != nil {
+			return false, targetErr
 		}
 		return valueToString(when) != target, nil
 	case "contains":
-		target, err := r.requiredStringArgAny(args, "value", "substring", "contains")
-		if err != nil {
-			return false, err
+		target, targetErr := r.requiredStringArgAny(args, "value", "substring", "contains")
+		if targetErr != nil {
+			return false, targetErr
 		}
 		return strings.Contains(valueToString(when), target), nil
 	case "starts_with":
-		target, err := r.requiredStringArgAny(args, "value", "prefix")
-		if err != nil {
-			return false, err
+		target, targetErr := r.requiredStringArgAny(args, "value", "prefix")
+		if targetErr != nil {
+			return false, targetErr
 		}
 		return strings.HasPrefix(valueToString(when), target), nil
 	case "ends_with":
-		target, err := r.requiredStringArgAny(args, "value", "suffix")
-		if err != nil {
-			return false, err
+		target, targetErr := r.requiredStringArgAny(args, "value", "suffix")
+		if targetErr != nil {
+			return false, targetErr
 		}
 		return strings.HasSuffix(valueToString(when), target), nil
 	default:
@@ -575,11 +590,15 @@ func (r *transformRuntime) argumentValues(args map[string]any) ([]any, error) {
 		}
 		return resolved, nil
 	default:
-		return nil, fmt.Errorf("values must be an array")
+		return nil, errors.New("values must be an array")
 	}
 }
 
-func (r *transformRuntime) optionalArg(args map[string]any, key string) (any, bool, error) {
+//nolint:unparam // Error result keeps optional argument helpers consistent as validation expands.
+func (r *transformRuntime) optionalArg(
+	args map[string]any,
+	key string,
+) (value any, found bool, err error) {
 	value, ok := args[key]
 	if !ok {
 		return nil, false, nil
@@ -587,11 +606,14 @@ func (r *transformRuntime) optionalArg(args map[string]any, key string) (any, bo
 	return r.resolveArgument(value), true, nil
 }
 
-func (r *transformRuntime) optionalArgAny(args map[string]any, keys ...string) (any, bool, error) {
+func (r *transformRuntime) optionalArgAny(
+	args map[string]any,
+	keys ...string,
+) (value any, found bool, err error) {
 	for _, key := range keys {
-		value, ok, err := r.optionalArg(args, key)
-		if err != nil || ok {
-			return value, ok, err
+		rawValue, rawOK, rawErr := r.optionalArg(args, key)
+		if rawErr != nil || rawOK {
+			return rawValue, rawOK, rawErr
 		}
 	}
 	return nil, false, nil
@@ -600,23 +622,23 @@ func (r *transformRuntime) optionalArgAny(args map[string]any, keys ...string) (
 func (r *transformRuntime) optionalStringArg(
 	args map[string]any,
 	key string,
-) (string, bool, error) {
-	value, ok, err := r.optionalArg(args, key)
+) (value string, found bool, err error) {
+	rawValue, ok, err := r.optionalArg(args, key)
 	if err != nil || !ok {
 		return "", ok, err
 	}
-	return valueToString(value), true, nil
+	return valueToString(rawValue), true, nil
 }
 
 func (r *transformRuntime) optionalStringArgAny(
 	args map[string]any,
 	keys ...string,
-) (string, bool, error) {
-	value, ok, err := r.optionalArgAny(args, keys...)
+) (value string, found bool, err error) {
+	rawValue, ok, err := r.optionalArgAny(args, keys...)
 	if err != nil || !ok {
 		return "", ok, err
 	}
-	return valueToString(value), true, nil
+	return valueToString(rawValue), true, nil
 }
 
 func (r *transformRuntime) requiredStringArgAny(
@@ -633,13 +655,16 @@ func (r *transformRuntime) requiredStringArgAny(
 	return value, nil
 }
 
-func (r *transformRuntime) optionalIntArg(args map[string]any, key string) (int, bool, error) {
-	value, ok, err := r.optionalArg(args, key)
+func (r *transformRuntime) optionalIntArg(
+	args map[string]any,
+	key string,
+) (value int, found bool, err error) {
+	rawValue, ok, err := r.optionalArg(args, key)
 	if err != nil || !ok {
 		return 0, ok, err
 	}
 
-	integer, ok := intFromTransformValue(value)
+	integer, ok := intFromTransformValue(rawValue)
 	if !ok {
 		return 0, true, fmt.Errorf("%s must be an integer", key)
 	}
@@ -676,6 +701,7 @@ func isEmptyTransformValue(value any) bool {
 	}
 
 	reflected := reflect.ValueOf(value)
+	//nolint:exhaustive // Only collection-like reflect kinds have custom empty semantics.
 	switch reflected.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice:
 		return reflected.Len() == 0
@@ -695,6 +721,7 @@ func isTruthyTransformValue(value any) bool {
 	}
 
 	reflected := reflect.ValueOf(value)
+	//nolint:exhaustive // Only collection-like reflect kinds have custom truthiness semantics.
 	switch reflected.Kind() {
 	case reflect.Array, reflect.Map, reflect.Slice:
 		return reflected.Len() > 0
@@ -716,7 +743,10 @@ func intFromTransformValue(value any) (int, bool) {
 	case int64:
 		return int(typed), true
 	case uint:
-		return int(typed), true
+		if typed > maxTransformIntUint {
+			return 0, false
+		}
+		return int(typed), true //nolint:gosec // typed is bounded by maxTransformInt above.
 	case uint8:
 		return int(typed), true
 	case uint16:
@@ -724,7 +754,10 @@ func intFromTransformValue(value any) (int, bool) {
 	case uint32:
 		return int(typed), true
 	case uint64:
-		return int(typed), true
+		if typed > maxTransformIntUint64 {
+			return 0, false
+		}
+		return int(typed), true //nolint:gosec // typed is bounded by maxTransformInt above.
 	case float32:
 		floatValue := float64(typed)
 		if floatValue == float64(int(floatValue)) {
@@ -780,6 +813,7 @@ func parseTransformTime(value any) (time.Time, bool) {
 	return time.Time{}, false
 }
 
+//nolint:cyclop // Decimal coercion accepts the full set of numeric payload representations.
 func decimalFromTransformValue(value any) (decimal.Decimal, bool) {
 	switch typed := value.(type) {
 	case decimal.NullDecimal:
@@ -800,6 +834,10 @@ func decimalFromTransformValue(value any) (decimal.Decimal, bool) {
 	case int64:
 		return decimal.NewFromInt(typed), true
 	case uint:
+		if uint64(typed) > maxTransformInt64Uint {
+			return decimal.Zero, false
+		}
+		//nolint:gosec // typed is bounded by maxTransformInt64Uint above.
 		return decimal.NewFromInt(int64(typed)), true
 	case uint8:
 		return decimal.NewFromInt(int64(typed)), true
@@ -808,6 +846,9 @@ func decimalFromTransformValue(value any) (decimal.Decimal, bool) {
 	case uint32:
 		return decimal.NewFromInt(int64(typed)), true
 	case uint64:
+		if typed > maxTransformInt64Uint {
+			return decimal.Zero, false
+		}
 		return decimal.NewFromInt(int64(typed)), true
 	case float32:
 		return decimal.NewFromFloat(float64(typed)), true

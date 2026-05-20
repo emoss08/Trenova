@@ -3,6 +3,7 @@ package documentuploadjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -67,10 +68,10 @@ func FinalizeDocumentUploadWorkflow(
 func ReconcileDocumentUploadsWorkflow(
 	ctx workflow.Context,
 ) (*ReconcileUploadsResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, finalizeActivityOptions)
+	activityCtx := workflow.WithActivityOptions(ctx, finalizeActivityOptions)
+	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	var result *ReconcileUploadsResult
 	now := workflow.Now(ctx)
 
 	payload := &ReconcileUploadsPayload{
@@ -82,13 +83,55 @@ func ReconcileDocumentUploadsWorkflow(
 		Limit:               100,
 	}
 
+	var tenantsResult *ListReconcileUploadsTenantsResult
 	if err := workflow.ExecuteActivity(
-		ctx,
-		a.ReconcileUploadsActivity,
+		activityCtx,
+		a.ListReconcileUploadsTenantsActivity,
 		payload,
-	).Get(ctx, &result); err != nil {
+	).Get(ctx, &tenantsResult); err != nil {
 		return nil, err
 	}
+
+	result := &ReconcileUploadsResult{}
+	result.TenantsScanned = len(tenantsResult.Tenants)
+	for _, tenant := range tenantsResult.Tenants {
+		tenantPayload := *payload
+		tenantPayload.OrganizationID = tenant.OrganizationID
+		tenantPayload.BusinessUnitID = tenant.BusinessUnitID
+		tenantPayload.Limit = temporaljobs.NormalizeLimit(
+			tenant.Limit,
+			temporaljobs.DefaultTenantRecordLimit,
+		)
+
+		var tenantResult *ReconcileUploadsResult
+		if err := workflow.ExecuteActivity(
+			activityCtx,
+			a.ReconcileUploadsActivity,
+			&tenantPayload,
+		).Get(ctx, &tenantResult); err != nil {
+			logger.Error("Document upload reconciliation tenant failed",
+				"orgId", tenant.OrganizationID.String(),
+				"buId", tenant.BusinessUnitID.String(),
+				"error", err,
+			)
+			result.AddFailure(tenant, err)
+			continue
+		}
+
+		processed := tenantResult.StaleSessionsProcessed + tenantResult.PreviewRetriesStarted
+		result.AddTenantResult(processed, 0)
+		result.StaleSessionsProcessed += tenantResult.StaleSessionsProcessed
+		result.FinalizationsStarted += tenantResult.FinalizationsStarted
+		result.SessionsExpired += tenantResult.SessionsExpired
+		result.PreviewRetriesStarted += tenantResult.PreviewRetriesStarted
+	}
+
+	logger.Info("Document upload reconciliation workflow completed",
+		"tenantsScanned", result.TenantsScanned,
+		"tenantsProcessed", result.TenantsProcessed,
+		"recordsProcessed", result.RecordsProcessed,
+		"failureCount", result.FailureCount,
+	)
 
 	return result, nil
 }

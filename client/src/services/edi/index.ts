@@ -57,6 +57,8 @@ import {
   type UpsertEDIPartnerRequest,
   type UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
+import { ediCatalogEndpoints } from "./catalog";
+import { ediTransferEndpoints, ediTransferListEndpoint } from "./transfers";
 
 export class EDIService {
   public async listPartners(query = "") {
@@ -113,7 +115,7 @@ export class EDIService {
   }
 
   public async listDocumentTypes(query = "?standard=X12") {
-    const response = await api.get(`/edi/document-types/${query}`);
+    const response = await api.get(`${ediCatalogEndpoints.documentTypes}${query}`);
     return safeParse(ediDocumentTypeSchema.array(), response, "EDIDocumentTypes");
   }
 
@@ -238,12 +240,12 @@ export class EDIService {
   }
 
   public async searchSourceContextFields(query = "") {
-    const response = await api.get(`/edi/source-context/fields/${query}`);
+    const response = await api.get(`${ediCatalogEndpoints.sourceContextFields}${query}`);
     return safeParse(ediSourceContextFieldListSchema, response, "EDISourceContextFieldList");
   }
 
   public async searchPartnerSettingFields(query = "") {
-    const response = await api.get(`/edi/partner-settings/fields/${query}`);
+    const response = await api.get(`${ediCatalogEndpoints.partnerSettingFields}${query}`);
     return safeParse(ediPartnerSettingFieldListSchema, response, "EDIPartnerSettingFieldList");
   }
 
@@ -310,12 +312,12 @@ export class EDIService {
   }
 
   public async listInboundTransfers(query = "") {
-    const response = await api.get(`/edi/transfers/inbound/${query}`);
+    const response = await api.get(ediTransferListEndpoint("inbound", query));
     return safeParse(ediTransferListSchema, response, "EDIInboundTransferList");
   }
 
   public async listOutboundTransfers(query = "") {
-    const response = await api.get(`/edi/transfers/outbound/${query}`);
+    const response = await api.get(ediTransferListEndpoint("outbound", query));
     return safeParse(ediTransferListSchema, response, "EDIOutboundTransferList");
   }
 
@@ -387,7 +389,7 @@ export class EDIService {
   }
 
   public async submitLoadTender(request: SubmitLoadTenderRequest) {
-    const response = await api.post("/edi/transfers/load-tenders/", request);
+    const response = await api.post(ediTransferEndpoints.loadTenders, request);
     return safeParse(ediTransferSchema, response, "EDITransfer");
   }
 

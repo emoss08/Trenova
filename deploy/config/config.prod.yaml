@@ -89,6 +89,7 @@ audit:
   dlqMaxRetries: 5
 
 storage:
+  provider: minio
   endpoint: minio:9000
   publicEndpoint: ""
   accessKey: placeholder
@@ -96,6 +97,7 @@ storage:
   bucket: trenova
   region: us-east-1
   useSSL: false
+  autoCreateBucket: true
 
 google:
   apiKey: placeholder

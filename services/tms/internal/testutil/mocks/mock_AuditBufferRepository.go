@@ -106,6 +106,80 @@ func (_c *MockAuditBufferRepository_Pop_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// PopTenantBatches provides a mock function for the type MockAuditBufferRepository
+func (_mock *MockAuditBufferRepository) PopTenantBatches(ctx context.Context, batchSize int, totalLimit int) ([][]*audit.Entry, error) {
+	ret := _mock.Called(ctx, batchSize, totalLimit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PopTenantBatches")
+	}
+
+	var r0 [][]*audit.Entry
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int) ([][]*audit.Entry, error)); ok {
+		return returnFunc(ctx, batchSize, totalLimit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int) [][]*audit.Entry); ok {
+		r0 = returnFunc(ctx, batchSize, totalLimit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([][]*audit.Entry)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
+		r1 = returnFunc(ctx, batchSize, totalLimit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuditBufferRepository_PopTenantBatches_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PopTenantBatches'
+type MockAuditBufferRepository_PopTenantBatches_Call struct {
+	*mock.Call
+}
+
+// PopTenantBatches is a helper method to define mock.On call
+//   - ctx context.Context
+//   - batchSize int
+//   - totalLimit int
+func (_e *MockAuditBufferRepository_Expecter) PopTenantBatches(ctx interface{}, batchSize interface{}, totalLimit interface{}) *MockAuditBufferRepository_PopTenantBatches_Call {
+	return &MockAuditBufferRepository_PopTenantBatches_Call{Call: _e.mock.On("PopTenantBatches", ctx, batchSize, totalLimit)}
+}
+
+func (_c *MockAuditBufferRepository_PopTenantBatches_Call) Run(run func(ctx context.Context, batchSize int, totalLimit int)) *MockAuditBufferRepository_PopTenantBatches_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuditBufferRepository_PopTenantBatches_Call) Return(entryss [][]*audit.Entry, err error) *MockAuditBufferRepository_PopTenantBatches_Call {
+	_c.Call.Return(entryss, err)
+	return _c
+}
+
+func (_c *MockAuditBufferRepository_PopTenantBatches_Call) RunAndReturn(run func(ctx context.Context, batchSize int, totalLimit int) ([][]*audit.Entry, error)) *MockAuditBufferRepository_PopTenantBatches_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Push provides a mock function for the type MockAuditBufferRepository
 func (_mock *MockAuditBufferRepository) Push(ctx context.Context, entry *audit.Entry) error {
 	ret := _mock.Called(ctx, entry)

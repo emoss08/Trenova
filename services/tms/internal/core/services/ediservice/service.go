@@ -1,3 +1,4 @@
+//nolint:gocritic // EDI service request and DI value shapes are stable application contracts.
 package ediservice
 
 import (
@@ -38,10 +39,18 @@ type Params struct {
 
 	Logger              *zap.Logger
 	PartnerRepo         repositories.EDIPartnerRepository
+	MappingProfileRepo  repositories.EDIMappingProfileRepository
 	ConnectionRepo      repositories.EDIConnectionRepository
 	ProfileRepo         repositories.EDICommunicationProfileRepository
 	TransferRepo        repositories.EDILoadTenderTransferRepository
-	DocumentRepo        repositories.EDIDocumentRepository
+	DocumentTypeRepo    repositories.EDIDocumentTypeRepository
+	SourceContextRepo   repositories.EDISourceContextRepository
+	PartnerSettingRepo  repositories.EDIPartnerSettingRepository
+	TemplateRepo        repositories.EDITemplateRepository
+	DocumentProfileRepo repositories.EDIPartnerDocumentProfileRepository
+	ControlNumberRepo   repositories.EDIControlNumberRepository
+	MessageRepo         repositories.EDIMessageRepository
+	TestCaseRepo        repositories.EDITestCaseRepository
 	InvoiceRepo         repositories.InvoiceRepository
 	ShipmentEventRepo   repositories.ShipmentEventRepository
 	ShipmentLinkRepo    repositories.EDIShipmentLinkRepository
@@ -59,10 +68,18 @@ type Params struct {
 type Service struct {
 	l                   *zap.Logger
 	partnerRepo         repositories.EDIPartnerRepository
+	mappingProfileRepo  repositories.EDIMappingProfileRepository
 	connectionRepo      repositories.EDIConnectionRepository
 	profileRepo         repositories.EDICommunicationProfileRepository
 	transferRepo        repositories.EDILoadTenderTransferRepository
-	documentRepo        repositories.EDIDocumentRepository
+	documentTypeRepo    repositories.EDIDocumentTypeRepository
+	sourceContextRepo   repositories.EDISourceContextRepository
+	partnerSettingRepo  repositories.EDIPartnerSettingRepository
+	templateRepo        repositories.EDITemplateRepository
+	documentProfileRepo repositories.EDIPartnerDocumentProfileRepository
+	controlNumberRepo   repositories.EDIControlNumberRepository
+	messageRepo         repositories.EDIMessageRepository
+	testCaseRepo        repositories.EDITestCaseRepository
 	invoiceRepo         repositories.InvoiceRepository
 	shipmentEventRepo   repositories.ShipmentEventRepository
 	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
@@ -81,10 +98,18 @@ func New(p Params) *Service {
 	return &Service{
 		l:                   p.Logger.Named("service.edi"),
 		partnerRepo:         p.PartnerRepo,
+		mappingProfileRepo:  p.MappingProfileRepo,
 		connectionRepo:      p.ConnectionRepo,
 		profileRepo:         p.ProfileRepo,
 		transferRepo:        p.TransferRepo,
-		documentRepo:        p.DocumentRepo,
+		documentTypeRepo:    p.DocumentTypeRepo,
+		sourceContextRepo:   p.SourceContextRepo,
+		partnerSettingRepo:  p.PartnerSettingRepo,
+		templateRepo:        p.TemplateRepo,
+		documentProfileRepo: p.DocumentProfileRepo,
+		controlNumberRepo:   p.ControlNumberRepo,
+		messageRepo:         p.MessageRepo,
+		testCaseRepo:        p.TestCaseRepo,
 		invoiceRepo:         p.InvoiceRepo,
 		shipmentEventRepo:   p.ShipmentEventRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,
@@ -196,28 +221,28 @@ func (s *Service) GetMappingProfile(
 	ctx context.Context,
 	req repositories.GetMappingProfileRequest,
 ) (*edi.EDIMappingProfile, error) {
-	return s.partnerRepo.GetMappingProfile(ctx, req)
+	return s.mappingProfileRepo.GetMappingProfile(ctx, req)
 }
 
 func (s *Service) ListMappingProfiles(
 	ctx context.Context,
 	req *repositories.ListEDIMappingProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	return s.partnerRepo.ListMappingProfiles(ctx, req)
+	return s.mappingProfileRepo.ListMappingProfiles(ctx, req)
 }
 
 func (s *Service) SelectMappingProfileOptions(
 	ctx context.Context,
 	req *repositories.EDIMappingProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	return s.partnerRepo.SelectMappingProfileOptions(ctx, req)
+	return s.mappingProfileRepo.SelectMappingProfileOptions(ctx, req)
 }
 
 func (s *Service) GetMappingProfileByID(
 	ctx context.Context,
 	req repositories.GetMappingProfileByIDRequest,
 ) (*edi.EDIMappingProfile, error) {
-	return s.partnerRepo.GetMappingProfileByID(ctx, req)
+	return s.mappingProfileRepo.GetMappingProfileByID(ctx, req)
 }
 
 func (s *Service) SaveMappingProfile(
@@ -228,7 +253,7 @@ func (s *Service) SaveMappingProfile(
 		return nil, multiErr
 	}
 
-	return s.partnerRepo.SaveMappingItems(ctx, req)
+	return s.mappingProfileRepo.SaveMappingItems(ctx, req)
 }
 
 func (s *Service) SaveMappingProfileItems(
@@ -239,23 +264,24 @@ func (s *Service) SaveMappingProfileItems(
 		return nil, multiErr
 	}
 
-	return s.partnerRepo.SaveMappingProfileItems(ctx, req)
+	return s.mappingProfileRepo.SaveMappingProfileItems(ctx, req)
 }
 
 func (s *Service) DeleteMappingItem(
 	ctx context.Context,
 	req repositories.DeleteMappingItemRequest,
 ) error {
-	return s.partnerRepo.DeleteMappingItem(ctx, req)
+	return s.mappingProfileRepo.DeleteMappingItem(ctx, req)
 }
 
 func (s *Service) DeleteMappingProfileItem(
 	ctx context.Context,
 	req repositories.DeleteMappingProfileItemRequest,
 ) error {
-	return s.partnerRepo.DeleteMappingProfileItem(ctx, req)
+	return s.mappingProfileRepo.DeleteMappingProfileItem(ctx, req)
 }
 
+//nolint:cyclop,funlen,nestif // Tender submission keeps the transaction and non-transaction paths explicit.
 func (s *Service) SubmitLoadTender(
 	ctx context.Context,
 	req *SubmitLoadTenderRequest,
@@ -384,7 +410,7 @@ func (s *Service) SubmitLoadTender(
 	}
 
 	payload := buildTenderPayload(sourceShipment)
-	preview, err := s.buildMappingPreview(ctx, targetPartner, payload, nil)
+	preview, err := s.buildMappingPreview(ctx, targetPartner, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -416,12 +442,12 @@ func (s *Service) SubmitLoadTender(
 		}
 	} else {
 		err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-			lockedShipment, err := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
-			if err != nil {
-				return err
+			lockedShipment, lockErr := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
+			if lockErr != nil {
+				return lockErr
 			}
-			if err = validateTenderEligibility(lockedShipment); err != nil {
-				return err
+			if validateErr := validateTenderEligibility(lockedShipment); validateErr != nil {
+				return validateErr
 			}
 
 			created, err = s.transferRepo.CreateTransfer(txCtx, entity)
@@ -496,9 +522,10 @@ func (s *Service) MappingPreview(
 		return nil, err
 	}
 
-	return s.buildMappingPreview(ctx, targetPartner, transfer.TenderPayload, nil)
+	return s.buildMappingPreview(ctx, targetPartner, transfer.TenderPayload)
 }
 
+//nolint:funlen // Approval coordinates validation, mapping, shipment creation, and transfer updates atomically.
 func (s *Service) ApproveTransfer(
 	ctx context.Context,
 	req *ApproveTransferRequest,
@@ -556,7 +583,7 @@ func (s *Service) ApproveTransfer(
 			return err
 		}
 
-		preview, err = s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload, nil)
+		preview, err = s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload)
 		if err != nil {
 			return err
 		}
@@ -685,6 +712,7 @@ func buildLoadTenderApprovalWorkflowID(transferID pulid.ID) string {
 	return "edi-load-tender-approve-" + transferID.String()
 }
 
+//nolint:cyclop,funlen,gocognit // Temporal approval processing mirrors the workflow states explicitly.
 func (s *Service) ProcessLoadTenderApproval(
 	ctx context.Context,
 	payload *ApproveLoadTenderTransferWorkflowPayload,
@@ -716,6 +744,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			return nil
 		}
 
+		//nolint:exhaustive // Only terminal and processing states require special approval handling.
 		switch transfer.Status {
 		case edi.TransferStatusRejected,
 			edi.TransferStatusExpired,
@@ -748,7 +777,7 @@ func (s *Service) ProcessLoadTenderApproval(
 			return err
 		}
 
-		preview, err := s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload, nil)
+		preview, err := s.buildMappingPreview(txCtx, targetPartner, transfer.TenderPayload)
 		if err != nil {
 			return err
 		}
@@ -1192,7 +1221,14 @@ func (s *Service) reviewTransferChange(
 		return nil, err
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI transfer change reviewed")
+	s.logAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		&original,
+		updated,
+		"EDI transfer change reviewed",
+	)
 	return updated, nil
 }
 
@@ -1251,11 +1287,10 @@ func (s *Service) buildMappingPreview(
 	ctx context.Context,
 	partner *edi.EDIPartner,
 	payload edi.LoadTenderPayload,
-	overrides []*edi.EDIMappingProfileItem,
 ) (*MappingPreview, error) {
 	required := payload.RequiredMappingEntityIDs
 	sourceIDs := flattenRequiredIDs(required)
-	items, err := s.partnerRepo.GetMappingItems(ctx, repositories.GetMappingItemsRequest{
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, repositories.GetMappingItemsRequest{
 		PartnerID: partner.ID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: partner.OrganizationID,
@@ -1270,15 +1305,6 @@ func (s *Service) buildMappingPreview(
 
 	index := mappingIndex(items)
 	sourceLabels := sourceLabelIndex(&payload)
-	for _, item := range overrides {
-		if item == nil {
-			continue
-		}
-		if _, ok := index[item.EntityType]; !ok {
-			index[item.EntityType] = map[pulid.ID]*edi.EDIMappingProfileItem{}
-		}
-		index[item.EntityType][item.SourceID] = item
-	}
 
 	all := make([]edi.MappingResolution, 0, len(sourceIDs))
 	for _, entityType := range requiredEntityTypes(required) {
@@ -1291,7 +1317,10 @@ func (s *Service) buildMappingPreview(
 				SourceLabel: sourceLabels[entityType][sourceID],
 			}
 			if item := index[entityType][sourceID]; item != nil && item.TargetID.IsNotNil() {
-				resolution.SourceLabel = stringutils.FirstNonEmpty(item.SourceLabel, resolution.SourceLabel)
+				resolution.SourceLabel = stringutils.FirstNonEmpty(
+					item.SourceLabel,
+					resolution.SourceLabel,
+				)
 				resolution.TargetID = item.TargetID
 				resolution.TargetLabel = item.TargetLabel
 				resolution.Resolved = true
@@ -1317,6 +1346,7 @@ func (s *Service) buildMappingPreview(
 	}, nil
 }
 
+//nolint:funlen // Shipment reconstruction maps each payload section directly into the shipment aggregate.
 func (s *Service) buildTargetShipment(
 	transfer *edi.EDITransfer,
 	businessUnitID pulid.ID,
@@ -1386,9 +1416,14 @@ func (s *Service) buildTargetShipment(
 			Distance:       move.Distance,
 			Stops:          make([]*shipment.Stop, 0, len(move.Stops)),
 		}
-		for _, stop := range move.Stops {
-			locationID, ok := mappedID(mappings, edi.MappingEntityTypeLocation, stop.LocationID)
-			if !ok {
+		for idx := range move.Stops {
+			stop := move.Stops[idx]
+			locationID, locationOK := mappedID(
+				mappings,
+				edi.MappingEntityTypeLocation,
+				stop.LocationID,
+			)
+			if !locationOK {
 				return nil, fmt.Errorf("location mapping is missing for %s", stop.LocationID)
 			}
 			targetMove.Stops = append(targetMove.Stops, &shipment.Stop{
@@ -1410,8 +1445,12 @@ func (s *Service) buildTargetShipment(
 	}
 
 	for _, commodity := range payload.Commodities {
-		commodityID, ok := mappedID(mappings, edi.MappingEntityTypeCommodity, commodity.CommodityID)
-		if !ok {
+		commodityID, commodityOK := mappedID(
+			mappings,
+			edi.MappingEntityTypeCommodity,
+			commodity.CommodityID,
+		)
+		if !commodityOK {
 			return nil, fmt.Errorf("commodity mapping is missing for %s", commodity.CommodityID)
 		}
 		target.Commodities = append(target.Commodities, &shipment.ShipmentCommodity{
@@ -1424,12 +1463,12 @@ func (s *Service) buildTargetShipment(
 	}
 
 	for _, charge := range payload.AdditionalCharges {
-		chargeID, ok := mappedID(
+		chargeID, chargeOK := mappedID(
 			mappings,
 			edi.MappingEntityTypeAccessorialCharge,
 			charge.AccessorialChargeID,
 		)
-		if !ok {
+		if !chargeOK {
 			return nil, fmt.Errorf(
 				"accessorial charge mapping is missing for %s",
 				charge.AccessorialChargeID,
@@ -1500,7 +1539,11 @@ func mapEDICommunicationProfileConstraint(err error) error {
 	multiErr := errortypes.NewMultiError()
 	switch dberror.ExtractConstraintName(err) {
 	case "idx_edi_communication_profiles_name_org":
-		multiErr.Add("name", errortypes.ErrDuplicate, "EDI communication profile with this name already exists")
+		multiErr.Add(
+			"name",
+			errortypes.ErrDuplicate,
+			"EDI communication profile with this name already exists",
+		)
 	default:
 		return err
 	}

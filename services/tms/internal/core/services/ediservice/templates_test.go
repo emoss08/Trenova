@@ -242,7 +242,7 @@ func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
 		}).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -275,7 +275,7 @@ func TestService_CertifyTemplateVersionMarksDraftCertified(t *testing.T) {
 		})).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	updated, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -299,7 +299,7 @@ func TestService_ActivateTemplateVersionRequiresCertified(t *testing.T) {
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.ActivateTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -333,7 +333,7 @@ func TestService_ActivateTemplateVersionPromotesCertified(t *testing.T) {
 		})).
 		Return(&active, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	updated, err := service.ActivateTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -377,7 +377,7 @@ func TestService_ReplaceDraftScriptLibrariesReplacesAuthoritatively(t *testing.T
 		).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	updated, err := service.ReplaceDraftScriptLibraries(
 		t.Context(),
 		&ReplaceEDITemplateScriptLibrariesRequest{
@@ -412,7 +412,7 @@ func TestService_ReplaceDraftScriptLibrariesRejectsNonDraft(t *testing.T) {
 		GetTemplateVersionByID(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.ReplaceDraftScriptLibraries(
 		t.Context(),
 		&ReplaceEDITemplateScriptLibrariesRequest{
@@ -461,7 +461,7 @@ func TestService_CreateDraftVersionClonesScriptLibraries(t *testing.T) {
 		).
 		Return(&edi.EDITemplateVersion{Status: edi.TemplateStatusDraft}, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.CreateDraftVersion(
 		t.Context(),
 		&CreateEDITemplateDraftRequest{
@@ -552,7 +552,7 @@ func TestService_CertifyTemplateVersionAcceptsValidScriptLibraries(t *testing.T)
 		UpdateTemplateVersionMetadata(mock.Anything, mock.Anything).
 		Return(version, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.CertifyTemplateVersion(
 		t.Context(),
 		&EDIActionNotesRequest{
@@ -600,7 +600,7 @@ func TestService_CreateTemplateAcceptsMatchingDocumentType(t *testing.T) {
 			nil,
 		)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -630,7 +630,7 @@ func TestService_CreateTemplateRejectsMismatchedDocumentType(t *testing.T) {
 		}).
 		Return([]*edi.EDIDocumentType{{ID: pulid.MustNew("edidt_")}}, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -674,7 +674,7 @@ func TestService_CreateTemplateReturnsDraftWithoutActiveVersion(t *testing.T) {
 			nil,
 		)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -719,7 +719,7 @@ func TestService_CreateTemplateReturnsActiveVersionWhenRepositoryCreatesActiveVe
 			nil,
 		)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	created, err := service.CreateTemplate(
 		t.Context(),
 		&CreateEDITemplateRequest{
@@ -750,7 +750,7 @@ func TestService_UpdateTemplateRejectsUnknownStatus(t *testing.T) {
 			Status:         edi.TemplateStatusDraft,
 		}, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.UpdateTemplate(
 		t.Context(),
 		&UpdateEDITemplateRequest{
@@ -780,7 +780,7 @@ func TestService_UpdateTemplateRejectsArchivedTemplate(t *testing.T) {
 			Status:         edi.TemplateStatusArchived,
 		}, nil)
 
-	service := &Service{documentRepo: repo}
+	service := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 	_, err := service.UpdateTemplate(
 		t.Context(),
 		&UpdateEDITemplateRequest{

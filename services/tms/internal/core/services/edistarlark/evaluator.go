@@ -1,3 +1,4 @@
+//nolint:gocritic // EvalRequest is an immutable script-evaluation contract used across helpers.
 package edistarlark
 
 import (
@@ -211,6 +212,7 @@ func (e *Evaluator) Evaluate(ctx context.Context, req EvalRequest) EvalResult {
 	}
 }
 
+//nolint:funlen // Evaluation must keep panic recovery, execution, and diagnostic conversion in one boundary.
 func (e *Evaluator) evaluateOnThread(thread *starlark.Thread, req EvalRequest) (result EvalResult) {
 	result.Diagnostics = []Diagnostic{}
 	defer func() {

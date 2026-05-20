@@ -68,20 +68,26 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/edi")
+	catalog := api.Group("/catalog")
 
 	h.registerPartnerRoutes(api.Group("/partners"))
 	h.registerMappingProfileRoutes(api.Group("/mapping-profiles"))
 	h.registerConnectionRoutes(api.Group("/connections"))
 	h.registerCommunicationProfileRoutes(api.Group("/communication-profiles"))
-	h.registerDocumentTypeRoutes(api.Group("/document-types"))
-	h.registerSourceContextRoutes(api.Group("/source-context"))
-	h.registerPartnerSettingsRoutes(api.Group("/partner-settings"))
+	h.registerDocumentTypeRoutes(catalog.Group("/document-types"))
+	h.registerSourceContextRoutes(catalog.Group("/source-context"))
+	h.registerPartnerSettingsRoutes(catalog.Group("/partner-settings"))
 	h.registerTemplateRoutes(api.Group("/templates"))
 	h.registerDocumentProfileRoutes(api.Group("/document-profiles"))
 	h.registerDocumentRoutes(api.Group("/documents"))
 	h.registerMessageRoutes(api.Group("/messages"))
 	h.registerX12Routes(api.Group("/x12"))
 	h.registerTestCaseRoutes(api.Group("/test-cases"))
+	api.POST(
+		"/load-tenders/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
+		h.submitLoadTender,
+	)
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
 	h.registerTransferChangeRoutes(api.Group("/transfer-changes"))
@@ -502,20 +508,10 @@ func (h *Handler) registerTestCaseRoutes(testCases *gin.RouterGroup) {
 }
 
 func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
-	transfers.POST(
-		"/load-tenders/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
-		h.submitLoadTender,
-	)
 	transfers.GET(
-		"/inbound/",
+		"/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.listInboundTransfers,
-	)
-	transfers.GET(
-		"/outbound/",
-		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
-		h.listOutboundTransfers,
+		h.listTransfers,
 	)
 	transfers.GET(
 		"/:transferID/",
@@ -1046,19 +1042,19 @@ func (h *Handler) getConnection(c *gin.Context) {
 }
 
 func (h *Handler) acceptConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.AcceptConnection, http.StatusOK)
+	h.connectionAction(c, h.service.AcceptConnection)
 }
 
 func (h *Handler) rejectConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.RejectConnection, http.StatusOK)
+	h.connectionAction(c, h.service.RejectConnection)
 }
 
 func (h *Handler) suspendConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.SuspendConnection, http.StatusOK)
+	h.connectionAction(c, h.service.SuspendConnection)
 }
 
 func (h *Handler) revokeConnection(c *gin.Context) {
-	h.connectionAction(c, h.service.RevokeConnection, http.StatusOK)
+	h.connectionAction(c, h.service.RevokeConnection)
 }
 
 func (h *Handler) connectionAction(
@@ -1068,7 +1064,6 @@ func (h *Handler) connectionAction(
 		*ediservice.EDIConnectionActionRequest,
 		*services.RequestActor,
 	) (*edi.EDIConnection, error),
-	status int,
 ) {
 	authCtx := authctx.GetAuthContext(c)
 	connectionID, err := pulid.MustParse(c.Param("connectionID"))
@@ -1097,7 +1092,7 @@ func (h *Handler) connectionAction(
 		return
 	}
 
-	c.JSON(status, connection)
+	c.JSON(http.StatusOK, connection)
 }
 
 func (h *Handler) listCommunicationProfiles(c *gin.Context) {
@@ -2304,6 +2299,22 @@ func (h *Handler) listInboundTransfers(c *gin.Context) {
 			&repositories.ListEDITransfersRequest{Filter: req},
 		)
 	})
+}
+
+func (h *Handler) listTransfers(c *gin.Context) {
+	direction := c.Query("direction")
+	switch direction {
+	case "inbound":
+		h.listInboundTransfers(c)
+	case "outbound":
+		h.listOutboundTransfers(c)
+	default:
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"direction",
+			errortypes.ErrInvalid,
+			"Direction must be inbound or outbound",
+		))
+	}
 }
 
 func (h *Handler) listOutboundTransfers(c *gin.Context) {

@@ -1,9 +1,9 @@
 package fiscaljobs
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -54,7 +54,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}
 }
 
-func AutoCloseFiscalPeriodsWorkflow(ctx workflow.Context) error {
+func AutoCloseFiscalPeriodsWorkflow(ctx workflow.Context) (*FiscalTenantRunResult, error) {
 	logger := workflow.GetLogger(ctx)
 
 	fetchCtx := workflow.WithActivityOptions(ctx, fetchActivityOptions)
@@ -66,64 +66,58 @@ func AutoCloseFiscalPeriodsWorkflow(ctx workflow.Context) error {
 		Get(ctx, &tenantsResult)
 	if err != nil {
 		logger.Error("Failed to get tenants with auto-close enabled", "error", err)
-		return err
+		return nil, err
 	}
 
+	summary := &FiscalTenantRunResult{}
 	if len(tenantsResult.Tenants) == 0 {
 		logger.Info("No tenants with auto-close enabled")
-		return nil
+		return summary, nil
 	}
+	summary.TenantsScanned = len(tenantsResult.Tenants)
 
 	closeCtx := workflow.WithActivityOptions(ctx, closeActivityOptions)
-	totalClosed := 0
 	totalErrors := 0
-	activityErrors := 0
 
 	for _, tenant := range tenantsResult.Tenants {
+		item := temporaljobs.TenantWorkItem{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+		}
 		payload := &AutoClosePeriodsPayload{
 			OrganizationID: tenant.OrganizationID,
 			BusinessUnitID: tenant.BusinessUnitID,
 		}
 
-		var result *AutoClosePeriodsResult
+		var closeResult *AutoClosePeriodsResult
 		err = workflow.ExecuteActivity(closeCtx, a.CloseExpiredPeriodsActivity, payload).
-			Get(ctx, &result)
+			Get(ctx, &closeResult)
 		if err != nil {
 			logger.Error("Failed to close expired periods for tenant",
 				"orgId", tenant.OrganizationID.String(),
 				"error", err,
 			)
-			activityErrors++
+			summary.AddFailure(item, err)
 			totalErrors++
 			continue
 		}
 
-		totalClosed += result.ClosedCount
-		totalErrors += len(result.Errors)
+		summary.AddTenantResult(closeResult.ClosedCount, 0)
+		summary.Closed += closeResult.ClosedCount
+		totalErrors += len(closeResult.Errors)
 	}
 
 	logger.Info("Auto-close fiscal periods workflow completed",
 		"tenantsProcessed", len(tenantsResult.Tenants),
-		"totalClosed", totalClosed,
+		"totalClosed", summary.Closed,
 		"totalErrors", totalErrors,
+		"failureCount", summary.FailureCount,
 	)
 
-	if activityErrors > 0 {
-		return temporal.NewApplicationError(
-			fmt.Sprintf(
-				"Workflow completed with %d activity errors out of %d tenants",
-				activityErrors,
-				len(tenantsResult.Tenants),
-			),
-			"PartialFailure",
-			nil,
-		)
-	}
-
-	return nil
+	return summary, nil
 }
 
-func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) error {
+func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) (*FiscalTenantRunResult, error) {
 	logger := workflow.GetLogger(ctx)
 
 	fetchCtx := workflow.WithActivityOptions(ctx, fetchActivityOptions)
@@ -135,42 +129,47 @@ func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) error {
 		Get(ctx, &tenantsResult)
 	if err != nil {
 		logger.Error("Failed to get tenants", "error", err)
-		return err
+		return nil, err
 	}
 
+	summary := &FiscalTenantRunResult{}
 	if len(tenantsResult.Tenants) == 0 {
 		logger.Info("No tenants found")
-		return nil
+		return summary, nil
 	}
+	summary.TenantsScanned = len(tenantsResult.Tenants)
 
 	createCtx := workflow.WithActivityOptions(ctx, createActivityOptions)
-	totalCreated := 0
 	totalSkipped := 0
-	activityErrors := 0
 
 	for _, tenant := range tenantsResult.Tenants {
+		item := temporaljobs.TenantWorkItem{
+			OrganizationID: tenant.OrganizationID,
+			BusinessUnitID: tenant.BusinessUnitID,
+		}
 		payload := &AutoCreateFiscalYearPayload{
 			OrganizationID: tenant.OrganizationID,
 			BusinessUnitID: tenant.BusinessUnitID,
 		}
 
-		var result *AutoCreateFiscalYearResult
+		var createResult *AutoCreateFiscalYearResult
 		err = workflow.ExecuteActivity(createCtx, a.CheckAndCreateNextFiscalYearActivity, payload).
-			Get(ctx, &result)
+			Get(ctx, &createResult)
 		if err != nil {
 			logger.Error("Failed to check/create next fiscal year",
 				"orgId", tenant.OrganizationID.String(),
 				"error", err,
 			)
-			activityErrors++
+			summary.AddFailure(item, err)
 			continue
 		}
 
-		if result.Created {
-			totalCreated++
+		summary.AddTenantResult(0, 0)
+		if createResult.Created {
+			summary.Created++
 			logger.Info("Created next fiscal year",
 				"orgId", tenant.OrganizationID.String(),
-				"year", result.FiscalYear,
+				"year", createResult.FiscalYear,
 			)
 		} else {
 			totalSkipped++
@@ -179,21 +178,10 @@ func AutoCreateNextFiscalYearWorkflow(ctx workflow.Context) error {
 
 	logger.Info("Auto-create next fiscal year workflow completed",
 		"tenantsProcessed", len(tenantsResult.Tenants),
-		"created", totalCreated,
+		"created", summary.Created,
 		"skipped", totalSkipped,
+		"failureCount", summary.FailureCount,
 	)
 
-	if activityErrors > 0 {
-		return temporal.NewApplicationError(
-			fmt.Sprintf(
-				"Workflow completed with %d activity errors out of %d tenants",
-				activityErrors,
-				len(tenantsResult.Tenants),
-			),
-			"PartialFailure",
-			nil,
-		)
-	}
-
-	return nil
+	return summary, nil
 }

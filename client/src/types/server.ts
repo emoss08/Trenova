@@ -74,9 +74,9 @@ export type BaseEndpoint =
   | "/edi/partners/"
   | "/edi/communication-profiles/"
   | "/edi/mapping-profiles/"
-  | "/edi/document-types/"
-  | "/edi/source-context/fields/"
-  | "/edi/partner-settings/fields/"
+  | "/edi/catalog/document-types/"
+  | "/edi/catalog/source-context/fields/"
+  | "/edi/catalog/partner-settings/fields/"
   | "/edi/templates/"
   | "/edi/document-profiles/"
   | "/edi/documents/preview/"
@@ -84,8 +84,7 @@ export type BaseEndpoint =
   | "/edi/messages/"
   | "/edi/test-cases/"
   | "/edi/transfers/"
-  | "/edi/transfers/inbound/"
-  | "/edi/transfers/outbound/";
+  | "/edi/load-tenders/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -162,6 +163,74 @@ func (a *Activities) AutoDelayShipmentsActivity(
 	}, nil
 }
 
+func (a *Activities) ListAutoDelayShipmentTenantsActivity(
+	ctx context.Context,
+	payload *ListShipmentTenantsPayload,
+) (*ListShipmentTenantsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
+	tenants, err := a.repo.ListAutoDelayShipmentTenants(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListShipmentTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, temporaljobs.DefaultTenantRecordLimit),
+	}, nil
+}
+
+func (a *Activities) AutoDelayTenantShipmentsActivity(
+	ctx context.Context,
+	payload *ShipmentTenantWorkPayload,
+) (*AutoDelayShipmentsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
+	tenantInfo := payload.TenantInfo()
+
+	a.logger.Info(
+		"Starting tenant shipment auto delay activity",
+		zap.String("orgID", tenantInfo.OrgID.String()),
+		zap.String("buID", tenantInfo.BuID.String()),
+		zap.Int("limit", limit),
+	)
+	recordActivityHeartbeat(ctx, "auto-delaying-tenant-shipments", tenantInfo.OrgID.String())
+
+	delayedShipments, err := a.repo.RunAutoDelayShipmentsForTenant(ctx, tenantInfo, limit)
+	if err != nil {
+		a.logger.Error("Tenant shipment auto delay failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(delayedShipments))
+	for _, entity := range delayedShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+
+		if publishErr := realtimeinvalidation.Publish(
+			ctx,
+			a.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: entity.OrganizationID,
+				BusinessUnitID: entity.BusinessUnitID,
+				Resource:       "shipments",
+				Action:         "delayed",
+				RecordID:       entity.ID,
+				Entity:         entity,
+			},
+		); publishErr != nil {
+			a.logger.Warn("failed to publish shipment delay invalidation", zap.Error(publishErr))
+		}
+	}
+
+	return &AutoDelayShipmentsResult{
+		ShipmentIDs:  shipmentIDs,
+		DelayedCount: len(delayedShipments),
+		CompletedAt:  timeutils.NowUnix(),
+		TenantRunResult: temporaljobs.TenantRunResult{
+			TenantsScanned:   1,
+			TenantsProcessed: 1,
+			RecordsProcessed: len(delayedShipments),
+		},
+	}, nil
+}
+
 func (a *Activities) AutoCancelShipmentsActivity(
 	ctx context.Context,
 ) (*AutoCancelShipmentsResult, error) {
@@ -203,6 +272,77 @@ func (a *Activities) AutoCancelShipmentsActivity(
 		ShipmentIDs:   shipmentIDs,
 		CanceledCount: len(canceledShipments),
 		CompletedAt:   timeutils.NowUnix(),
+	}, nil
+}
+
+func (a *Activities) ListAutoCancelShipmentTenantsActivity(
+	ctx context.Context,
+	payload *ListShipmentTenantsPayload,
+) (*ListShipmentTenantsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
+	tenants, err := a.repo.ListAutoCancelShipmentTenants(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListShipmentTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, temporaljobs.DefaultTenantRecordLimit),
+	}, nil
+}
+
+func (a *Activities) AutoCancelTenantShipmentsActivity(
+	ctx context.Context,
+	payload *ShipmentTenantWorkPayload,
+) (*AutoCancelShipmentsResult, error) {
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
+	tenantInfo := payload.TenantInfo()
+
+	a.logger.Info(
+		"Starting tenant shipment auto cancel activity",
+		zap.String("orgID", tenantInfo.OrgID.String()),
+		zap.String("buID", tenantInfo.BuID.String()),
+		zap.Int("limit", limit),
+	)
+	recordActivityHeartbeat(ctx, "auto-canceling-tenant-shipments", tenantInfo.OrgID.String())
+
+	canceledShipments, err := a.repo.RunAutoCancelShipmentsForTenant(ctx, tenantInfo, limit)
+	if err != nil {
+		a.logger.Error("Tenant shipment auto cancel failed", zap.Error(err))
+		return nil, err
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(canceledShipments))
+	for _, entity := range canceledShipments {
+		shipmentIDs = append(shipmentIDs, entity.ID)
+	}
+
+	if len(canceledShipments) > 0 {
+		if publishErr := realtimeinvalidation.Publish(
+			ctx,
+			a.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: tenantInfo.OrgID,
+				BusinessUnitID: tenantInfo.BuID,
+				Resource:       "shipments",
+				Action:         "bulk_canceled",
+			},
+		); publishErr != nil {
+			a.logger.Warn(
+				"failed to publish shipment auto cancel invalidation",
+				zap.Error(publishErr),
+			)
+		}
+	}
+
+	return &AutoCancelShipmentsResult{
+		ShipmentIDs:   shipmentIDs,
+		CanceledCount: len(canceledShipments),
+		CompletedAt:   timeutils.NowUnix(),
+		TenantRunResult: temporaljobs.TenantRunResult{
+			TenantsScanned:   1,
+			TenantsProcessed: 1,
+			RecordsProcessed: len(canceledShipments),
+		},
 	}, nil
 }
 

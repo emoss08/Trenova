@@ -34,51 +34,52 @@ func (s *Service) ListDocumentTypes(
 	ctx context.Context,
 	req repositories.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
-	return s.documentRepo.ListDocumentTypes(ctx, req)
+	return s.documentTypeRepo.ListDocumentTypes(ctx, req)
 }
 
 func (s *Service) SelectDocumentTypeOptions(
 	ctx context.Context,
 	req *repositories.EDIDocumentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-	return s.documentRepo.SelectDocumentTypeOptions(ctx, req)
+	return s.documentTypeRepo.SelectDocumentTypeOptions(ctx, req)
 }
 
 func (s *Service) ListTemplates(
 	ctx context.Context,
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return s.documentRepo.ListTemplates(ctx, req)
+	return s.templateRepo.ListTemplates(ctx, req)
 }
 
 func (s *Service) SelectTemplateOptions(
 	ctx context.Context,
 	req *repositories.EDITemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return s.documentRepo.SelectTemplateOptions(ctx, req)
+	return s.templateRepo.SelectTemplateOptions(ctx, req)
 }
 
 func (s *Service) ListPartnerDocumentProfiles(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerDocumentProfilesRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return s.documentRepo.ListPartnerDocumentProfiles(ctx, req)
+	return s.documentProfileRepo.ListPartnerDocumentProfiles(ctx, req)
 }
 
 func (s *Service) SelectPartnerDocumentProfileOptions(
 	ctx context.Context,
 	req *repositories.EDIPartnerDocumentProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
-	return s.documentRepo.SelectPartnerDocumentProfileOptions(ctx, req)
+	return s.documentProfileRepo.SelectPartnerDocumentProfileOptions(ctx, req)
 }
 
 func (s *Service) GetPartnerDocumentProfile(
 	ctx context.Context,
 	req repositories.GetEDIPartnerDocumentProfileByIDRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
-	return s.documentRepo.GetPartnerDocumentProfileByID(ctx, req)
+	return s.documentProfileRepo.GetPartnerDocumentProfileByID(ctx, req)
 }
 
+//nolint:cyclop,funlen // The profile upsert validates several independent EDI profile invariants explicitly.
 func (s *Service) UpsertPartnerDocumentProfile(
 	ctx context.Context,
 	req *UpsertEDIPartnerDocumentProfileRequest,
@@ -94,7 +95,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		return nil, multiErr
 	}
 	if req.TemplateID.IsNil() {
-		base, _, err := s.documentRepo.EnsureBase204Template(ctx, req.TenantInfo)
+		base, _, err := s.templateRepo.EnsureBase204Template(ctx, req.TenantInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +108,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if err = validateProfileTemplateVersionCompatibility(req.Status, templateVersion); err != nil {
 		return nil, err
 	}
-	template, err := s.documentRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
+	template, err := s.templateRepo.GetTemplateByID(ctx, repositories.GetEDITemplateByIDRequest{
 		ID:         req.TemplateID,
 		TenantInfo: req.TenantInfo,
 	})
@@ -116,11 +117,14 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	}
 	documentType := template.DocumentType
 	if documentType == nil {
-		documentTypes, listErr := s.documentRepo.ListDocumentTypes(ctx, repositories.ListEDIDocumentTypesRequest{
-			Standard:       template.Standard,
-			TransactionSet: template.TransactionSet,
-			Direction:      template.Direction,
-		})
+		documentTypes, listErr := s.documentTypeRepo.ListDocumentTypes(
+			ctx,
+			repositories.ListEDIDocumentTypesRequest{
+				Standard:       template.Standard,
+				TransactionSet: template.TransactionSet,
+				Direction:      template.Direction,
+			},
+		)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -163,7 +167,10 @@ func (s *Service) UpsertPartnerDocumentProfile(
 	if profile.Status == "" {
 		profile.Status = edi.DocumentStatusActive
 	}
-	if err = validateProfileTemplateVersionCompatibility(profile.Status, templateVersion); err != nil {
+	if err = validateProfileTemplateVersionCompatibility(
+		profile.Status,
+		templateVersion,
+	); err != nil {
 		return nil, err
 	}
 	if profile.ValidationMode == "" {
@@ -189,7 +196,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		return nil, partnerSettingsValidationError(partnerDiagnostics)
 	}
 	if profile.ID.IsNil() {
-		created, createErr := s.documentRepo.CreatePartnerDocumentProfile(ctx, profile)
+		created, createErr := s.documentProfileRepo.CreatePartnerDocumentProfile(ctx, profile)
 		if createErr != nil {
 			return nil, createErr
 		}
@@ -203,7 +210,7 @@ func (s *Service) UpsertPartnerDocumentProfile(
 		)
 		return created, nil
 	}
-	updated, err := s.documentRepo.UpdatePartnerDocumentProfile(ctx, profile)
+	updated, err := s.documentProfileRepo.UpdatePartnerDocumentProfile(ctx, profile)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +223,7 @@ func (s *Service) resolveProfileTemplateVersion(
 	req *UpsertEDIPartnerDocumentProfileRequest,
 ) (*edi.EDITemplateVersion, error) {
 	if req.TemplateVersionID.IsNotNil() {
-		return s.documentRepo.GetTemplateVersionByID(
+		return s.templateRepo.GetTemplateVersionByID(
 			ctx,
 			repositories.GetEDITemplateVersionByIDRequest{
 				TemplateID: req.TemplateID,
@@ -226,7 +233,7 @@ func (s *Service) resolveProfileTemplateVersion(
 		)
 	}
 
-	version, err := s.documentRepo.GetActiveTemplateVersion(
+	version, err := s.templateRepo.GetActiveTemplateVersion(
 		ctx,
 		repositories.GetActiveEDITemplateVersionRequest{
 			TemplateID: req.TemplateID,
@@ -248,7 +255,7 @@ func (s *Service) resolveProfileTemplateVersion(
 		)
 	}
 
-	versions, listErr := s.documentRepo.ListTemplateVersions(
+	versions, listErr := s.templateRepo.ListTemplateVersions(
 		ctx,
 		repositories.ListEDITemplateVersionsRequest{
 			TemplateID: req.TemplateID,
@@ -364,6 +371,7 @@ func (s *Service) PreviewDocument(
 	}, nil
 }
 
+//nolint:funlen // Document generation keeps the validation, render, persist, and audit flow together transactionally.
 func (s *Service) GenerateDocument(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
@@ -413,7 +421,7 @@ func (s *Service) GenerateDocument(
 		return nil, diagnosticsToValidationError(provisionalDiagnostics)
 	}
 
-	controlNumbers, err := s.documentRepo.AllocateControlNumbers(
+	controlNumbers, err := s.controlNumberRepo.AllocateControlNumbers(
 		ctx,
 		repositories.AllocateEDIControlNumbersRequest{
 			TenantInfo:     req.TenantInfo,
@@ -485,7 +493,7 @@ func (s *Service) GenerateDocument(
 			SuggestedFix:    diagnostic.SuggestedFix,
 		})
 	}
-	return s.documentRepo.CreateMessageWithDiagnostics(
+	return s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
 		repositories.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
@@ -498,14 +506,14 @@ func (s *Service) ListMessages(
 	ctx context.Context,
 	req *repositories.ListEDIMessagesRequest,
 ) (*pagination.ListResult[*edi.EDIMessage], error) {
-	return s.documentRepo.ListMessages(ctx, req)
+	return s.messageRepo.ListMessages(ctx, req)
 }
 
 func (s *Service) GetMessage(
 	ctx context.Context,
 	req repositories.GetEDIMessageByIDRequest,
 ) (*edi.EDIMessage, error) {
-	return s.documentRepo.GetMessageByID(ctx, req)
+	return s.messageRepo.GetMessageByID(ctx, req)
 }
 
 func (s *Service) InspectX12(
@@ -533,7 +541,7 @@ func (s *Service) InspectMessage(
 	ctx context.Context,
 	req repositories.GetEDIMessageByIDRequest,
 ) (*EDIMessageInspection, error) {
-	message, err := s.documentRepo.GetMessageByID(ctx, req)
+	message, err := s.messageRepo.GetMessageByID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +582,7 @@ func (s *Service) ListTestCases(
 	ctx context.Context,
 	req *repositories.ListEDITestCasesRequest,
 ) (*pagination.ListResult[*edi.EDITestCase], error) {
-	return s.documentRepo.ListTestCases(ctx, req)
+	return s.testCaseRepo.ListTestCases(ctx, req)
 }
 
 func (s *Service) PreviewTestCase(
@@ -582,7 +590,7 @@ func (s *Service) PreviewTestCase(
 	testCaseID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*EDIDocumentPreview, error) {
-	testCase, err := s.documentRepo.GetTestCaseByID(ctx, repositories.GetEDITestCaseByIDRequest{
+	testCase, err := s.testCaseRepo.GetTestCaseByID(ctx, repositories.GetEDITestCaseByIDRequest{
 		ID:         testCaseID,
 		TenantInfo: tenantInfo,
 	})
@@ -625,7 +633,7 @@ func (s *Service) resolveDocumentContext(
 	if err != nil {
 		return nil, err
 	}
-	templateVersion, err := s.documentRepo.GetActiveTemplateVersion(
+	templateVersion, err := s.templateRepo.GetActiveTemplateVersion(
 		ctx,
 		repositories.GetActiveEDITemplateVersionRequest{
 			TemplateID: profile.TemplateID,
@@ -671,7 +679,7 @@ func (s *Service) resolveProfile(
 	req *PreviewEDIDocumentRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	if !req.PartnerDocumentProfileID.IsNil() {
-		return s.documentRepo.GetPartnerDocumentProfileByID(
+		return s.documentProfileRepo.GetPartnerDocumentProfileByID(
 			ctx,
 			repositories.GetEDIPartnerDocumentProfileByIDRequest{
 				ID:         req.PartnerDocumentProfileID,
@@ -686,7 +694,7 @@ func (s *Service) resolveProfile(
 			"EDI partner or document profile is required",
 		)
 	}
-	profile, err := s.documentRepo.GetActivePartnerDocumentProfile(
+	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
 		ctx,
 		repositories.GetActiveEDIPartnerDocumentProfileRequest{
 			PartnerID:      req.EDIPartnerID,
@@ -705,6 +713,7 @@ func (s *Service) resolveProfile(
 	return profile, err
 }
 
+//nolint:cyclop,funlen,gocognit // Payload resolution is explicit per transaction set to preserve validation behavior.
 func (s *Service) resolvePayload(
 	ctx context.Context,
 	req *PreviewEDIDocumentRequest,
@@ -861,6 +870,7 @@ func sourceTransactionSetError(
 }
 
 func missingSourceError(transactionSet edi.TransactionSet) error {
+	//nolint:exhaustive // Only transaction sets with source-specific validation need custom errors.
 	switch transactionSet {
 	case edi.TransactionSet210:
 		return errortypes.NewValidationError(

@@ -372,8 +372,8 @@ func (_c *MockDocumentUploadSessionRepository_ListActive_Call) RunAndReturn(run 
 }
 
 // ListForReconciliation provides a mock function for the type MockDocumentUploadSessionRepository
-func (_mock *MockDocumentUploadSessionRepository) ListForReconciliation(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.DocumentUploadSession, error) {
-	ret := _mock.Called(ctx, staleBefore, expiresBefore, limit)
+func (_mock *MockDocumentUploadSessionRepository) ListForReconciliation(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest) ([]*documentupload.DocumentUploadSession, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListForReconciliation")
@@ -381,18 +381,18 @@ func (_mock *MockDocumentUploadSessionRepository) ListForReconciliation(ctx cont
 
 	var r0 []*documentupload.DocumentUploadSession
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) ([]*documentupload.DocumentUploadSession, error)); ok {
-		return returnFunc(ctx, staleBefore, expiresBefore, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) ([]*documentupload.DocumentUploadSession, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int64, int) []*documentupload.DocumentUploadSession); ok {
-		r0 = returnFunc(ctx, staleBefore, expiresBefore, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) []*documentupload.DocumentUploadSession); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*documentupload.DocumentUploadSession)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int64, int) error); ok {
-		r1 = returnFunc(ctx, staleBefore, expiresBefore, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -406,36 +406,24 @@ type MockDocumentUploadSessionRepository_ListForReconciliation_Call struct {
 
 // ListForReconciliation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - staleBefore int64
-//   - expiresBefore int64
-//   - limit int
-func (_e *MockDocumentUploadSessionRepository_Expecter) ListForReconciliation(ctx interface{}, staleBefore interface{}, expiresBefore interface{}, limit interface{}) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
-	return &MockDocumentUploadSessionRepository_ListForReconciliation_Call{Call: _e.mock.On("ListForReconciliation", ctx, staleBefore, expiresBefore, limit)}
+//   - req *repositories.ListDocumentUploadReconciliationRequest
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListForReconciliation(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+	return &MockDocumentUploadSessionRepository_ListForReconciliation_Call{Call: _e.mock.On("ListForReconciliation", ctx, req)}
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Run(run func(ctx context.Context, staleBefore int64, expiresBefore int64, limit int)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Run(run func(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 *repositories.ListDocumentUploadReconciliationRequest
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int64
-		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		var arg3 int
-		if args[3] != nil {
-			arg3 = args[3].(int)
+			arg1 = args[1].(*repositories.ListDocumentUploadReconciliationRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -446,7 +434,75 @@ func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) Return
 	return _c
 }
 
-func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) RunAndReturn(run func(ctx context.Context, staleBefore int64, expiresBefore int64, limit int) ([]*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+func (_c *MockDocumentUploadSessionRepository_ListForReconciliation_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest) ([]*documentupload.DocumentUploadSession, error)) *MockDocumentUploadSessionRepository_ListForReconciliation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListReconciliationTenants provides a mock function for the type MockDocumentUploadSessionRepository
+func (_mock *MockDocumentUploadSessionRepository) ListReconciliationTenants(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReconciliationTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentUploadReconciliationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentUploadSessionRepository_ListReconciliationTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReconciliationTenants'
+type MockDocumentUploadSessionRepository_ListReconciliationTenants_Call struct {
+	*mock.Call
+}
+
+// ListReconciliationTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListDocumentUploadReconciliationRequest
+func (_e *MockDocumentUploadSessionRepository_Expecter) ListReconciliationTenants(ctx interface{}, req interface{}) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
+	return &MockDocumentUploadSessionRepository_ListReconciliationTenants_Call{Call: _e.mock.On("ListReconciliationTenants", ctx, req)}
+}
+
+func (_c *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call) Run(run func(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest)) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListDocumentUploadReconciliationRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListDocumentUploadReconciliationRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentUploadReconciliationRequest) ([]pagination.TenantInfo, error)) *MockDocumentUploadSessionRepository_ListReconciliationTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }

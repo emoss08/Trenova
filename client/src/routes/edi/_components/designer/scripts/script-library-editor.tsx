@@ -1,6 +1,7 @@
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { EDITemplateScriptLibrary } from "@/types/edi";
 import { json } from "@codemirror/lang-json";
@@ -8,30 +9,43 @@ import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   getEDIScriptPresetsByCategory,
   insertScriptPresetCode,
   type EDIScriptPreset,
 } from "../../edi-script-presets";
 import { InputBlock, ScriptPresetPicker } from "../components/designer-shared";
+import { useSaveEDITemplateScriptsMutation } from "../hooks/use-edi-template-mutations";
+import {
+  useCurrentTemplateInvalidation,
+  useSelectedTemplateDesignerData,
+  useSelectedTemplateDesignerIds,
+} from "@/hooks/use-template-designer-state";
+import { useTemplateDesignerStore } from "@/stores/template-designer-store";
+import { isTemplateVersionEditable } from "../utils/edi-designer-utils";
 
-export function ScriptLibraryEditor({
-  libraries,
-  isEditable,
-  onChange,
-  onSave,
-  isSaving,
-}: {
-  libraries: EDITemplateScriptLibrary[];
-  isEditable: boolean;
-  onChange: (libraries: EDITemplateScriptLibrary[]) => void;
-  onSave: () => void;
-  isSaving: boolean;
-}) {
+export function ScriptLibraryEditor() {
   const { theme } = useTheme();
   const editorTheme = theme === "dark" ? darkTheme : lightTheme;
+  const { selectedTemplateId, selectedVersionId } = useSelectedTemplateDesignerIds();
+  const { selectedVersion } = useSelectedTemplateDesignerData();
+  const libraries = useTemplateDesignerStore((state) => state.scriptDraft);
+  const replaceScripts = useTemplateDesignerStore((state) => state.replaceScripts);
+  const clearScriptsDirty = useTemplateDesignerStore((state) => state.clearScriptsDirty);
+  const invalidateTemplateQueries = useCurrentTemplateInvalidation();
+  const isEditable = isTemplateVersionEditable(selectedVersion);
   const [selectedId, setSelectedId] = useState("");
   const selected = libraries.find((library) => library.id === selectedId) ?? libraries[0];
+
+  const saveScriptsMutation = useSaveEDITemplateScriptsMutation({
+    onSuccess: async () => {
+      toast.success("Script libraries saved");
+      clearScriptsDirty();
+      await invalidateTemplateQueries();
+    },
+    onError: () => toast.error("Failed to save script libraries"),
+  });
 
   useEffect(() => {
     if (!selectedId && libraries[0]) setSelectedId(libraries[0].id);
@@ -39,7 +53,7 @@ export function ScriptLibraryEditor({
 
   const updateSelected = (patch: Partial<EDITemplateScriptLibrary>) => {
     if (!selected) return;
-    onChange(
+    replaceScripts(
       libraries.map((library) => (library.id === selected.id ? { ...library, ...patch } : library)),
     );
   };
@@ -49,8 +63,8 @@ export function ScriptLibraryEditor({
   };
 
   return (
-    <div className="grid h-full grid-cols-[260px_minmax(0,1fr)]">
-      <div className="min-h-0 overflow-auto border-r">
+    <div className="grid h-full min-h-0 grid-cols-[260px_minmax(0,1fr)] overflow-hidden">
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden border-r">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-xs font-semibold">Libraries</span>
           <Button
@@ -60,7 +74,7 @@ export function ScriptLibraryEditor({
             disabled={!isEditable}
             onClick={() => {
               const id = `draft-${Date.now()}`;
-              onChange([
+              replaceScripts([
                 ...libraries,
                 {
                   id,
@@ -80,26 +94,28 @@ export function ScriptLibraryEditor({
             <PlusIcon className="size-4" />
           </Button>
         </div>
-        {libraries.map((library) => (
-          <button
-            key={library.id}
-            type="button"
-            onClick={() => setSelectedId(library.id)}
-            className={cn(
-              "block w-full border-b px-3 py-2 text-left hover:bg-muted",
-              selected?.id === library.id && "bg-muted",
-            )}
-          >
-            <div className="truncate text-sm font-medium">{library.name}</div>
-            <div className="truncate text-xs text-muted-foreground">
-              {library.functionNames.length > 0
-                ? library.functionNames.join(", ")
-                : "No functions discovered"}
-            </div>
-          </button>
-        ))}
+        <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+          {libraries.map((library) => (
+            <button
+              key={library.id}
+              type="button"
+              onClick={() => setSelectedId(library.id)}
+              className={cn(
+                "block w-full border-b px-3 py-2 text-left hover:bg-muted",
+                selected?.id === library.id && "bg-muted",
+              )}
+            >
+              <div className="truncate text-sm font-medium">{library.name}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {library.functionNames.length > 0
+                  ? library.functionNames.join(", ")
+                  : "No functions discovered"}
+              </div>
+            </button>
+          ))}
+        </ScrollArea>
       </div>
-      <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)]">
+      <div className="grid min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] overflow-hidden">
         <div className="flex items-end justify-between gap-3 border-b p-3">
           <div className="grid flex-1 grid-cols-2 gap-2">
             <InputBlock
@@ -121,13 +137,28 @@ export function ScriptLibraryEditor({
               variant="outline"
               disabled={!isEditable || !selected}
               onClick={() =>
-                selected && onChange(libraries.filter((library) => library.id !== selected.id))
+                selected &&
+                replaceScripts(libraries.filter((library) => library.id !== selected.id))
               }
             >
               <Trash2Icon className="size-4" />
               Remove
             </Button>
-            <Button type="button" disabled={!isEditable} isLoading={isSaving} onClick={onSave}>
+            <Button
+              type="button"
+              disabled={!isEditable}
+              isLoading={saveScriptsMutation.isPending}
+              onClick={() =>
+                saveScriptsMutation.mutate({
+                  templateId: selectedTemplateId,
+                  versionId: selectedVersionId,
+                  request: {
+                    scriptLibraries: libraries,
+                    version: selectedVersion?.version,
+                  },
+                })
+              }
+            >
               <SaveIcon className="size-4" />
               Save Scripts
             </Button>

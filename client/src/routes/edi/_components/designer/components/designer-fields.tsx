@@ -1,22 +1,14 @@
-import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { AutocompleteCommandContent } from "@/components/fields/autocomplete/autocomplete-content";
 import { AutocompleteTrigger } from "@/components/fields/autocomplete/autocomplete-input";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { SelectField } from "@/components/fields/select-field";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type {
-  EDIDocumentType,
-  EDIPartner,
-  EDIPartnerDocumentProfile,
-  EDIPartnerSettingField,
-  EDISourceContextField,
-  EDITemplate,
-} from "@/types/edi";
+import type { EDIPartnerSettingField, EDISourceContextField } from "@/types/edi";
 import type { SelectOption } from "@/types/fields";
-import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import type { SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import { SearchIcon } from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { useForm, type FieldValues } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { insertPathReference } from "../utils/edi-designer-utils";
 
 type ControlledSelectFormValues = {
@@ -64,214 +56,6 @@ export function ControlledSelectField({
       isReadOnly={disabled}
       isClearable={clearable}
       onValueChange={onValueChange}
-    />
-  );
-}
-
-export function ControlledAutocompleteField<TOption>({
-  label,
-  value,
-  onValueChange,
-  onOptionChange,
-  description,
-  link,
-  selectedValueLink,
-  renderOption,
-  getOptionValue,
-  getDisplayValue,
-  placeholder = "Select...",
-  disabled,
-  clearable = true,
-  extraSearchParams,
-  initialLimit = 20,
-  noResultsMessage,
-}: {
-  label: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  onOptionChange?: (option: TOption | null) => void;
-  description?: string;
-  link: SELECT_OPTIONS_ENDPOINTS;
-  selectedValueLink?: API_ENDPOINTS;
-  renderOption: (option: TOption) => React.ReactNode;
-  getOptionValue: (option: TOption) => string | number;
-  getDisplayValue: (option: TOption) => React.ReactNode;
-  placeholder?: string;
-  disabled?: boolean;
-  clearable?: boolean;
-  extraSearchParams?: Record<string, string | string[]>;
-  initialLimit?: number;
-  noResultsMessage?: string;
-}) {
-  return (
-    <FieldWrapper label={label} description={description}>
-      <Autocomplete<TOption, FieldValues>
-        link={link}
-        selectedValueLink={selectedValueLink}
-        value={value}
-        onChange={(nextValue) => onValueChange(nextValue ? String(nextValue) : "")}
-        onOptionChange={onOptionChange}
-        label={label}
-        renderOption={renderOption}
-        getOptionValue={getOptionValue}
-        getDisplayValue={getDisplayValue}
-        placeholder={placeholder}
-        disabled={!!disabled}
-        clearable={clearable}
-        extraSearchParams={extraSearchParams}
-        initialLimit={initialLimit}
-        noResultsMessage={noResultsMessage}
-      />
-    </FieldWrapper>
-  );
-}
-
-export function EDIDocumentTypeAutocompleteField({
-  value,
-  onValueChange,
-  onOptionChange,
-  disabled,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  onOptionChange?: (option: EDIDocumentType | null) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <ControlledAutocompleteField<EDIDocumentType>
-      label="Document Type"
-      value={value}
-      onValueChange={onValueChange}
-      onOptionChange={onOptionChange}
-      link="/edi/document-types/select-options/"
-      renderOption={(option) => (
-        <OptionStack
-          primary={`${option.code} - ${option.name}`}
-          secondary={`${option.transactionSet} / ${option.direction} / ${option.defaultVersion}`}
-        />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
-      disabled={disabled}
-    />
-  );
-}
-
-export function EDIPartnerAutocompleteField({
-  value,
-  onValueChange,
-  disabled,
-  label = "Partner",
-  placeholder,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  disabled?: boolean;
-  label?: string;
-  placeholder?: string;
-}) {
-  return (
-    <ControlledAutocompleteField<EDIPartner>
-      label={label}
-      value={value}
-      onValueChange={onValueChange}
-      link="/edi/partners/select-options/"
-      selectedValueLink="/edi/partners/"
-      extraSearchParams={{ kind: "External" }}
-      initialLimit={50}
-      placeholder={placeholder}
-      renderOption={(option) => (
-        <OptionStack primary={`${option.code} - ${option.name}`} secondary={option.kind} />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => `${option.code} - ${option.name}`}
-      disabled={disabled}
-    />
-  );
-}
-
-export function EDITemplateAutocompleteField({
-  value,
-  onValueChange,
-  disabled,
-  transactionSet,
-  direction,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  disabled?: boolean;
-  transactionSet?: string;
-  direction?: string;
-}) {
-  return (
-    <ControlledAutocompleteField<EDITemplate>
-      label="Template"
-      value={value}
-      onValueChange={onValueChange}
-      link="/edi/templates/select-options/"
-      selectedValueLink="/edi/templates/"
-      extraSearchParams={{
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-      }}
-      renderOption={(option) => (
-        <OptionStack primary={option.name} secondary={option.description ?? option.status} />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.name}
-      disabled={disabled}
-    />
-  );
-}
-
-export function EDIDocumentProfileAutocompleteField({
-  value,
-  onValueChange,
-  onOptionChange,
-  disabled,
-  description,
-  placeholder,
-  noResultsMessage,
-  partnerId,
-  transactionSet,
-  direction,
-}: {
-  value: string;
-  onValueChange: (value: string) => void;
-  onOptionChange?: (option: EDIPartnerDocumentProfile | null) => void;
-  disabled?: boolean;
-  description?: string;
-  placeholder?: string;
-  noResultsMessage?: string;
-  partnerId?: string;
-  transactionSet?: string;
-  direction?: string;
-}) {
-  return (
-    <ControlledAutocompleteField<EDIPartnerDocumentProfile>
-      label="Document Profile"
-      value={value}
-      onValueChange={onValueChange}
-      onOptionChange={onOptionChange}
-      link="/edi/document-profiles/select-options/"
-      selectedValueLink="/edi/document-profiles/"
-      extraSearchParams={{
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-        ...(partnerId ? { partnerId } : {}),
-      }}
-      renderOption={(option) => (
-        <OptionStack
-          primary={option.name}
-          secondary={option.partner ? `${option.partner.code} - ${option.partner.name}` : undefined}
-        />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.name}
-      disabled={disabled}
-      description={description}
-      placeholder={placeholder}
-      noResultsMessage={noResultsMessage}
     />
   );
 }
@@ -430,7 +214,7 @@ function SourceContextPicker({
 }) {
   return (
     <PathPicker<EDISourceContextField>
-      link="/edi/source-context/fields/select-options/"
+      link="/edi/catalog/source-context/fields/select-options/"
       label="Source Fields"
       disabled={disabled}
       placeholder={placeholder}
@@ -470,7 +254,7 @@ function PartnerSettingPicker({
 }) {
   return (
     <PathPicker<EDIPartnerSettingField>
-      link="/edi/partner-settings/fields/select-options/"
+      link="/edi/catalog/partner-settings/fields/select-options/"
       label="Partner Settings"
       disabled={disabled}
       placeholder={placeholder}

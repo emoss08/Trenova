@@ -3,6 +3,7 @@ package weatheralertjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -34,9 +35,46 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}
 }
 
-func PollNWSAlertsWorkflow(ctx workflow.Context) error {
-	ctx = workflow.WithActivityOptions(ctx, pollNWSAlertsActivityOptions)
+func PollNWSAlertsWorkflow(ctx workflow.Context) (*PollNWSAlertsResult, error) {
+	activityCtx := workflow.WithActivityOptions(ctx, pollNWSAlertsActivityOptions)
+	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	return workflow.ExecuteActivity(ctx, a.PollNWSAlertsActivity).Get(ctx, nil)
+	var tenantsResult *ListWeatherAlertTenantsResult
+	if err := workflow.ExecuteActivity(
+		activityCtx,
+		a.ListWeatherAlertTenantsActivity,
+		&ListWeatherAlertTenantsPayload{Limit: temporaljobs.DefaultTenantScanLimit},
+	).Get(ctx, &tenantsResult); err != nil {
+		return nil, err
+	}
+
+	result := &PollNWSAlertsResult{}
+	result.TenantsScanned = len(tenantsResult.Tenants)
+	for _, tenant := range tenantsResult.Tenants {
+		if err := workflow.ExecuteActivity(
+			activityCtx,
+			a.PollNWSAlertsForTenantActivity,
+			&PollNWSAlertsTenantPayload{TenantWorkItem: tenant},
+		).Get(ctx, nil); err != nil {
+			logger.Error("Weather alert tenant poll failed",
+				"orgId", tenant.OrganizationID.String(),
+				"buId", tenant.BusinessUnitID.String(),
+				"error", err,
+			)
+			result.AddFailure(tenant, err)
+			continue
+		}
+
+		result.AddTenantResult(1, 0)
+	}
+
+	if err := workflow.ExecuteActivity(
+		activityCtx,
+		a.ExpireStaleWeatherAlertsActivity,
+	).Get(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

@@ -39,6 +39,57 @@ func (_m *MockWeatherAlertService) EXPECT() *MockWeatherAlertService_Expecter {
 	return &MockWeatherAlertService_Expecter{mock: &_m.Mock}
 }
 
+// ExpireStaleWeatherAlerts provides a mock function for the type MockWeatherAlertService
+func (_mock *MockWeatherAlertService) ExpireStaleWeatherAlerts(ctx context.Context) error {
+	ret := _mock.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExpireStaleWeatherAlerts")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWeatherAlertService_ExpireStaleWeatherAlerts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExpireStaleWeatherAlerts'
+type MockWeatherAlertService_ExpireStaleWeatherAlerts_Call struct {
+	*mock.Call
+}
+
+// ExpireStaleWeatherAlerts is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockWeatherAlertService_Expecter) ExpireStaleWeatherAlerts(ctx interface{}) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
+	return &MockWeatherAlertService_ExpireStaleWeatherAlerts_Call{Call: _e.mock.On("ExpireStaleWeatherAlerts", ctx)}
+}
+
+func (_c *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call) Run(run func(ctx context.Context)) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call) Return(err error) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call) RunAndReturn(run func(ctx context.Context) error) *MockWeatherAlertService_ExpireStaleWeatherAlerts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetActiveAlerts provides a mock function for the type MockWeatherAlertService
 func (_mock *MockWeatherAlertService) GetActiveAlerts(ctx context.Context, tenantInfo pagination.TenantInfo) (*services.WeatherAlertFeatureCollection, error) {
 	ret := _mock.Called(ctx, tenantInfo)
@@ -175,6 +226,74 @@ func (_c *MockWeatherAlertService_GetAlertDetail_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// ListWeatherAlertTenants provides a mock function for the type MockWeatherAlertService
+func (_mock *MockWeatherAlertService) ListWeatherAlertTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListWeatherAlertTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockWeatherAlertService_ListWeatherAlertTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWeatherAlertTenants'
+type MockWeatherAlertService_ListWeatherAlertTenants_Call struct {
+	*mock.Call
+}
+
+// ListWeatherAlertTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockWeatherAlertService_Expecter) ListWeatherAlertTenants(ctx interface{}, limit interface{}) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
+	return &MockWeatherAlertService_ListWeatherAlertTenants_Call{Call: _e.mock.On("ListWeatherAlertTenants", ctx, limit)}
+}
+
+func (_c *MockWeatherAlertService_ListWeatherAlertTenants_Call) Run(run func(ctx context.Context, limit int)) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWeatherAlertService_ListWeatherAlertTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockWeatherAlertService_ListWeatherAlertTenants_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]pagination.TenantInfo, error)) *MockWeatherAlertService_ListWeatherAlertTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PollNWSAlerts provides a mock function for the type MockWeatherAlertService
 func (_mock *MockWeatherAlertService) PollNWSAlerts(ctx context.Context) error {
 	ret := _mock.Called(ctx)
@@ -222,6 +341,63 @@ func (_c *MockWeatherAlertService_PollNWSAlerts_Call) Return(err error) *MockWea
 }
 
 func (_c *MockWeatherAlertService_PollNWSAlerts_Call) RunAndReturn(run func(ctx context.Context) error) *MockWeatherAlertService_PollNWSAlerts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PollNWSAlertsForTenant provides a mock function for the type MockWeatherAlertService
+func (_mock *MockWeatherAlertService) PollNWSAlertsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+	ret := _mock.Called(ctx, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PollNWSAlertsForTenant")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) error); ok {
+		r0 = returnFunc(ctx, tenantInfo)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockWeatherAlertService_PollNWSAlertsForTenant_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PollNWSAlertsForTenant'
+type MockWeatherAlertService_PollNWSAlertsForTenant_Call struct {
+	*mock.Call
+}
+
+// PollNWSAlertsForTenant is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockWeatherAlertService_Expecter) PollNWSAlertsForTenant(ctx interface{}, tenantInfo interface{}) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
+	return &MockWeatherAlertService_PollNWSAlertsForTenant_Call{Call: _e.mock.On("PollNWSAlertsForTenant", ctx, tenantInfo)}
+}
+
+func (_c *MockWeatherAlertService_PollNWSAlertsForTenant_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockWeatherAlertService_PollNWSAlertsForTenant_Call) Return(err error) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockWeatherAlertService_PollNWSAlertsForTenant_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) error) *MockWeatherAlertService_PollNWSAlertsForTenant_Call {
 	_c.Call.Return(run)
 	return _c
 }

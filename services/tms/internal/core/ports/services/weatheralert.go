@@ -60,6 +60,9 @@ type GetWeatherAlertDetailRequest struct {
 
 type WeatherAlertService interface {
 	PollNWSAlerts(ctx context.Context) error
+	ListWeatherAlertTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	PollNWSAlertsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo) error
+	ExpireStaleWeatherAlerts(ctx context.Context) error
 	GetActiveAlerts(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

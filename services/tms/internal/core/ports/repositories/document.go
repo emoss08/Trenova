@@ -61,6 +61,12 @@ type UpdateDocumentIntelligenceRequest struct {
 	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
 }
 
+type ListPendingPreviewReconciliationRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	OlderThan  int64                 `json:"olderThan"`
+	Limit      int                   `json:"limit"`
+}
+
 type ListDocumentVersionsRequest struct {
 	LineageID  pulid.ID              `json:"lineageId"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -111,9 +117,12 @@ type DocumentRepository interface {
 	) ([]*document.Document, error)
 	ListPendingPreviewReconciliation(
 		ctx context.Context,
-		olderThan int64,
-		limit int,
+		req *ListPendingPreviewReconciliationRequest,
 	) ([]*document.Document, error)
+	ListPendingPreviewReconciliationTenants(
+		ctx context.Context,
+		req *ListPendingPreviewReconciliationRequest,
+	) ([]pagination.TenantInfo, error)
 	Create(ctx context.Context, entity *document.Document) (*document.Document, error)
 	Update(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error

@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -9,12 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import type {
-  EDIDiagnostic,
-  EDITemplateElement,
-  EDITemplateSegment,
-  EDITemplateVersion,
-} from "@/types/edi";
+import type { EDITemplateElement, EDITemplateSegment } from "@/types/edi";
 import { useState } from "react";
 import {
   buildConditionString,
@@ -36,50 +32,32 @@ import {
   templateElementSourceLabel,
 } from "../components/designer-shared";
 import {
+  useSelectedTemplateDesignerData,
+  useSelectedTemplateDesignerSegmentElement,
+  useTemplateDesignerUrlActions,
+} from "@/hooks/use-template-designer-state";
+import { useTemplateDesignerStore } from "@/stores/template-designer-store";
+import {
   conditionModeOptions,
   conditionOperatorOptions,
   mappingEntityTypeOptions,
   templateElementSourceOptions,
 } from "../utils/edi-designer-options";
+import { isTemplateVersionEditable } from "../utils/edi-designer-utils";
 
-export function ElementDesigner({
-  version,
-  x12Version,
-  functionalGroupId,
-  notes,
-  onMetadataChange,
-  segment,
-  element,
-  diagnostics,
-  isEditable,
-  onSegmentChange,
-  onElementSelect,
-  onElementChange,
-}: {
-  version?: EDITemplateVersion;
-  x12Version: string;
-  functionalGroupId: string;
-  notes: string;
-  onMetadataChange: (patch: {
-    x12Version?: string;
-    functionalGroupId?: string;
-    notes?: string;
-  }) => void;
-  segment?: EDITemplateSegment;
-  element?: EDITemplateElement;
-  diagnostics: EDIDiagnostic[];
-  isEditable: boolean;
-  onSegmentChange: (
-    segmentId: string,
-    updater: (segment: EDITemplateSegment) => EDITemplateSegment,
-  ) => void;
-  onElementSelect: (position: number) => void;
-  onElementChange: (
-    position: number,
-    updater: (element: EDITemplateElement) => EDITemplateElement,
-  ) => void;
-}) {
-  if (!version || !segment) {
+export function ElementDesigner() {
+  const { selectedVersion } = useSelectedTemplateDesignerData();
+  const { selectedSegment: segment, selectedElement: element } =
+    useSelectedTemplateDesignerSegmentElement();
+  const metadataDraft = useTemplateDesignerStore((state) => state.metadataDraft);
+  const diagnostics = useTemplateDesignerStore((state) => state.diagnostics);
+  const updateMetadata = useTemplateDesignerStore((state) => state.updateMetadata);
+  const updateSegment = useTemplateDesignerStore((state) => state.updateSegment);
+  const updateElement = useTemplateDesignerStore((state) => state.updateElement);
+  const { patchTemplateUrlState } = useTemplateDesignerUrlActions();
+  const isEditable = isTemplateVersionEditable(selectedVersion);
+
+  if (!selectedVersion || !segment) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-sm text-muted-foreground">
         Select a template version and segment to edit.
@@ -88,104 +66,116 @@ export function ElementDesigner({
   }
 
   return (
-    <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)]">
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
       <div className="sticky top-0 z-10 grid grid-cols-4 gap-2 border-b bg-background p-3 max-xl:grid-cols-2 max-sm:grid-cols-1">
         <InputBlock
           label="X12 Version"
-          value={x12Version}
-          onChange={(value) => onMetadataChange({ x12Version: value })}
+          value={metadataDraft.x12Version}
+          onChange={(value) => {
+            if (!isEditable) return;
+            updateMetadata({ x12Version: value });
+          }}
           disabled={!isEditable}
         />
         <InputBlock
           label="Functional Group"
-          value={functionalGroupId}
-          onChange={(value) => onMetadataChange({ functionalGroupId: value })}
+          value={metadataDraft.functionalGroupId}
+          onChange={(value) => {
+            if (!isEditable) return;
+            updateMetadata({ functionalGroupId: value });
+          }}
           disabled={!isEditable}
         />
         <InputBlock
           label="Notes"
-          value={notes}
-          onChange={(value) => onMetadataChange({ notes: value })}
+          value={metadataDraft.versionNotes}
+          onChange={(value) => {
+            if (!isEditable) return;
+            updateMetadata({ versionNotes: value });
+          }}
           disabled={!isEditable}
         />
         <InputBlock
           label="Segment Condition"
           value={segment.condition ?? ""}
-          onChange={(condition) =>
-            onSegmentChange(segment.id, (current) => ({ ...current, condition }))
-          }
+          onChange={(condition) => {
+            if (!isEditable) return;
+            updateSegment(segment.id, (current) => ({ ...current, condition }));
+          }}
           disabled={!isEditable}
         />
       </div>
-      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_360px] max-lg:grid-cols-1">
-        <div className="min-h-0 overflow-auto p-3">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <Badge variant={segment.required ? "active" : "outline"}>{segment.segmentId}</Badge>
-            <Badge variant="outline">{segment.required ? "Required" : "Optional"}</Badge>
-            <div>
-              <div className="text-sm font-semibold">{segment.name}</div>
-              <div className="text-xs text-muted-foreground">
-                Sequence {segment.sequence}
-                {segment.repeatPath ? ` / repeats ${segment.repeatPath}` : ""}
+      <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_360px] overflow-hidden max-lg:grid-cols-1">
+        <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+          <div className="p-3">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Badge variant={segment.required ? "active" : "outline"}>{segment.segmentId}</Badge>
+              <Badge variant="outline">{segment.required ? "Required" : "Optional"}</Badge>
+              <div>
+                <div className="text-sm font-semibold">{segment.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  Sequence {segment.sequence}
+                  {segment.repeatPath ? ` / repeats ${segment.repeatPath}` : ""}
+                </div>
               </div>
             </div>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-14">Pos</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Path / Value</TableHead>
-                <TableHead className="w-20">Issues</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {segment.elements.map((item) => {
-                const itemDiagnostics = diagnosticsForElement(diagnostics, segment, item);
-                return (
-                  <TableRow
-                    key={`${segment.id}-${item.position}`}
-                    onClick={() => onElementSelect(item.position)}
-                    className={cn(
-                      "cursor-pointer",
-                      element?.position === item.position && "bg-muted",
-                    )}
-                  >
-                    <TableCell className="font-mono">{item.position}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={item.validation.required ? "warning" : "outline"}>
-                        {item.source}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {templateElementSourceLabel(item)}
-                    </TableCell>
-                    <TableCell>
-                      {itemDiagnostics.length > 0 ? (
-                        <Badge
-                          variant={
-                            itemDiagnostics.some((diagnostic) => diagnostic.severity === "Error")
-                              ? "inactive"
-                              : "warning"
-                          }
-                        >
-                          {itemDiagnostics.length}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-14">Pos</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Source</TableHead>
+                  <TableHead>Path / Value</TableHead>
+                  <TableHead className="w-20">Issues</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {segment.elements.map((item) => {
+                  const itemDiagnostics = diagnosticsForElement(diagnostics, segment, item);
+                  return (
+                    <TableRow
+                      key={`${segment.id}-${item.position}`}
+                      onClick={() => patchTemplateUrlState({ elementPosition: item.position })}
+                      className={cn(
+                        "cursor-pointer",
+                        element?.position === item.position && "bg-muted",
+                      )}
+                    >
+                      <TableCell className="font-mono">{item.position}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={item.validation.required ? "warning" : "outline"}>
+                          {item.source}
                         </Badge>
-                      ) : null}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {templateElementSourceLabel(item)}
+                      </TableCell>
+                      <TableCell>
+                        {itemDiagnostics.length > 0 ? (
+                          <Badge
+                            variant={
+                              itemDiagnostics.some((diagnostic) => diagnostic.severity === "Error")
+                                ? "inactive"
+                                : "warning"
+                            }
+                          >
+                            {itemDiagnostics.length}
+                          </Badge>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
         <ElementInspector
           segment={segment}
           element={element}
           isEditable={isEditable}
-          onChange={onElementChange}
+          onChange={(position, updater) => updateElement(segment.id, position, updater)}
         />
       </div>
     </div>
@@ -217,66 +207,71 @@ function ElementInspector({
     onChange(element.position, (current) => ({ ...current, ...patch }));
 
   return (
-    <div className="min-h-0 space-y-3 overflow-auto border-l p-3 max-lg:border-t max-lg:border-l-0">
-      <div>
-        <div className="text-sm font-semibold">
-          {segment.segmentId}
-          {element.position.toString().padStart(2, "0")} {element.name}
-        </div>
-        <div className="text-xs text-muted-foreground">Element source and validation rules</div>
-      </div>
-      <ControlledSelectField
-        label="Source"
-        value={element.source}
-        onValueChange={(source) => update({ source: source as EDITemplateElement["source"] })}
-        disabled={!isEditable}
-        options={templateElementSourceOptions}
-      />
-      <SourceEditor element={element} isEditable={isEditable} onChange={update} />
-      <ConditionEditor
-        key={`${segment.id}-${element.position}`}
-        condition={element.condition ?? ""}
-        disabled={!isEditable}
-        onChange={(condition) => update({ condition })}
-      />
-      <div className="grid grid-cols-2 gap-2">
-        <InputBlock
-          label="Default"
-          value={element.default ?? ""}
-          onChange={(value) => update({ default: value })}
-          disabled={!isEditable}
-        />
-        <InputBlock
-          label="Max Length"
-          value={String(element.validation.maxLength || "")}
-          onChange={(value) =>
-            update({
-              validation: { ...element.validation, maxLength: Number(value) || 0 },
-            })
-          }
-          disabled={!isEditable}
-        />
-      </div>
-      <div className="flex items-center justify-between rounded-md border p-2">
+    <ScrollArea
+      className="min-h-0 border-l max-lg:border-t max-lg:border-l-0"
+      viewportClassName="min-h-0"
+    >
+      <div className="space-y-3 p-3">
         <div>
-          <div className="text-xs font-medium">Required</div>
-          <div className="text-xs text-muted-foreground">Backend validation rule</div>
+          <div className="text-sm font-semibold">
+            {segment.segmentId}
+            {element.position.toString().padStart(2, "0")} {element.name}
+          </div>
+          <div className="text-xs text-muted-foreground">Element source and validation rules</div>
         </div>
-        <Switch
-          checked={element.validation.required}
+        <ControlledSelectField
+          label="Source"
+          value={element.source}
+          onValueChange={(source) => update({ source: source as EDITemplateElement["source"] })}
           disabled={!isEditable}
-          onCheckedChange={(required) =>
-            update({ validation: { ...element.validation, required } })
-          }
+          options={templateElementSourceOptions}
+        />
+        <SourceEditor element={element} isEditable={isEditable} onChange={update} />
+        <ConditionEditor
+          key={`${segment.id}-${element.position}`}
+          condition={element.condition ?? ""}
+          disabled={!isEditable}
+          onChange={(condition) => update({ condition })}
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <InputBlock
+            label="Default"
+            value={element.default ?? ""}
+            onChange={(value) => update({ default: value })}
+            disabled={!isEditable}
+          />
+          <InputBlock
+            label="Max Length"
+            value={String(element.validation.maxLength || "")}
+            onChange={(value) =>
+              update({
+                validation: { ...element.validation, maxLength: Number(value) || 0 },
+              })
+            }
+            disabled={!isEditable}
+          />
+        </div>
+        <div className="flex items-center justify-between rounded-md border p-2">
+          <div>
+            <div className="text-xs font-medium">Required</div>
+            <div className="text-xs text-muted-foreground">Backend validation rule</div>
+          </div>
+          <Switch
+            checked={element.validation.required}
+            disabled={!isEditable}
+            onCheckedChange={(required) =>
+              update({ validation: { ...element.validation, required } })
+            }
+          />
+        </div>
+        <TextareaBlock
+          label="Implementation Guide Note"
+          value={element.implementationGuideNote ?? ""}
+          onChange={(value) => update({ implementationGuideNote: value })}
+          disabled={!isEditable}
         />
       </div>
-      <TextareaBlock
-        label="Implementation Guide Note"
-        value={element.implementationGuideNote ?? ""}
-        onChange={(value) => update({ implementationGuideNote: value })}
-        disabled={!isEditable}
-      />
-    </div>
+    </ScrollArea>
   );
 }
 

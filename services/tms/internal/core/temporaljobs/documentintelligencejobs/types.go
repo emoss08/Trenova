@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -142,9 +143,11 @@ type ReconcileDocumentIntelligencePayload struct {
 	temporaltype.BasePayload
 
 	OlderThanSeconds int64 `json:"olderThanSeconds"`
+	Limit            int   `json:"limit"`
 }
 
 type ReconcileDocumentIntelligenceResult struct {
+	temporaljobs.TenantRunResult
 	Queued int `json:"queued"`
 }
 
@@ -155,9 +158,14 @@ type PollPendingDocumentAIExtractionsPayload struct {
 }
 
 type PollPendingDocumentAIExtractionsResult struct {
+	temporaljobs.TenantRunResult
 	Completed int `json:"completed"`
 	Pending   int `json:"pending"`
 	Failed    int `json:"failed"`
+}
+
+type ListDocumentIntelligenceTenantsResult struct {
+	Tenants []temporaljobs.TenantWorkItem `json:"tenants"`
 }
 
 type ClassificationResult struct {

@@ -1,3 +1,4 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package edirepository
 
 import (
@@ -23,7 +24,12 @@ func (r *repository) ListProfiles(
 		Model(&entities).
 		Relation("Partner").
 		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFilters(query, "ecp", req.Filter, (*edi.EDICommunicationProfile)(nil))
+			return querybuilder.ApplyFilters(
+				query,
+				"ecp",
+				req.Filter,
+				(*edi.EDICommunicationProfile)(nil),
+			)
 		}).
 		Where("ecp.organization_id = ?", req.Filter.TenantInfo.OrgID).
 		Where("ecp.business_unit_id = ?", req.Filter.TenantInfo.BuID).
@@ -45,7 +51,11 @@ func (r *repository) SelectProfileOptions(
 	ctx context.Context,
 	req *repositories.EDICommunicationProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-	entities := make([]*edi.EDICommunicationProfile, 0, req.SelectQueryRequest.Pagination.SafeLimit())
+	entities := make(
+		[]*edi.EDICommunicationProfile,
+		0,
+		req.SelectQueryRequest.Pagination.SafeLimit(),
+	)
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
@@ -149,7 +159,11 @@ func (r *repository) CreateProfile(
 	ctx context.Context,
 	entity *edi.EDICommunicationProfile,
 ) (*edi.EDICommunicationProfile, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -185,7 +199,11 @@ func (r *repository) UpdateProfile(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(results, "EDICommunicationProfile", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EDICommunicationProfile",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

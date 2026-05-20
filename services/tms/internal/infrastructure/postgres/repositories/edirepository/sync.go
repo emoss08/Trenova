@@ -95,7 +95,11 @@ func (r *repository) CreateShipmentLink(
 	ctx context.Context,
 	entity *edi.ShipmentLink,
 ) (*edi.ShipmentLink, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -161,7 +165,11 @@ func (r *repository) CreateTransferChange(
 	ctx context.Context,
 	entity *edi.TransferChange,
 ) (*edi.TransferChange, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -185,7 +193,11 @@ func (r *repository) UpdateTransferChange(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(results, "EDITransferChange", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EDITransferChange",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

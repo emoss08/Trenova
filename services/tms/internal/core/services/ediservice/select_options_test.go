@@ -97,7 +97,7 @@ func TestService_SelectOptionsDelegateRequests(t *testing.T) {
 		Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{Items: []*edi.EDIPartnerSettingField{{Path: "carrier.scac"}}, Total: 1}, nil).
 		Once()
 
-	svc := &Service{documentRepo: repo}
+	svc := &Service{documentTypeRepo: repo, sourceContextRepo: repo, partnerSettingRepo: repo, templateRepo: repo, documentProfileRepo: repo, controlNumberRepo: repo, messageRepo: repo, testCaseRepo: repo}
 
 	documentTypes, err := svc.SelectDocumentTypeOptions(t.Context(), documentTypeReq)
 	require.NoError(t, err)

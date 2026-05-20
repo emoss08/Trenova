@@ -3,6 +3,7 @@ package minio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -57,9 +58,12 @@ func New(p Params) (storage.Client, error) {
 	var publicClient *minio.Client
 	var publicCore *minio.Core
 	if cfg.PublicEndpoint != "" {
-		publicEndpoint, publicUseSSL, err := normalizeStorageEndpoint(cfg.PublicEndpoint, false)
-		if err != nil {
-			return nil, fmt.Errorf("invalid public storage endpoint: %w", err)
+		publicEndpoint, publicUseSSL, publicEndpointErr := normalizeStorageEndpoint(
+			cfg.PublicEndpoint,
+			false,
+		)
+		if publicEndpointErr != nil {
+			return nil, fmt.Errorf("invalid public storage endpoint: %w", publicEndpointErr)
 		}
 
 		publicOpts := newMinioOptions(cfg, publicUseSSL, storageCfg.region, storageCfg.bucketLookup)
@@ -122,7 +126,7 @@ func newStorageClientConfig(cfg *config.StorageConfig) (*storageClientConfig, er
 	case config.StorageProviderMinio:
 	case config.StorageProviderR2:
 		if cfg.PublicEndpoint != "" {
-			return nil, fmt.Errorf(
+			return nil, errors.New(
 				"storage public endpoint cannot be set for R2; private R2 presigned URLs must use the R2 S3 API endpoint",
 			)
 		}
@@ -148,13 +152,13 @@ func newStorageClientConfig(cfg *config.StorageConfig) (*storageClientConfig, er
 func normalizeStorageEndpoint(rawEndpoint string, defaultSecure bool) (string, bool, error) {
 	endpoint := strings.TrimSpace(rawEndpoint)
 	if endpoint == "" {
-		return "", false, fmt.Errorf("endpoint is required")
+		return "", false, errors.New("endpoint is required")
 	}
 
 	if !strings.Contains(endpoint, "://") {
 		endpoint = strings.TrimRight(endpoint, "/")
 		if strings.Contains(endpoint, "/") {
-			return "", false, fmt.Errorf("endpoint path must be empty")
+			return "", false, errors.New("endpoint path must be empty")
 		}
 		return endpoint, defaultSecure, nil
 	}
@@ -174,15 +178,15 @@ func normalizeStorageEndpoint(rawEndpoint string, defaultSecure bool) (string, b
 	}
 
 	if u.Host == "" {
-		return "", false, fmt.Errorf("endpoint host is required")
+		return "", false, errors.New("endpoint host is required")
 	}
 
 	if u.Path != "" && u.Path != "/" {
-		return "", false, fmt.Errorf("endpoint path must be empty")
+		return "", false, errors.New("endpoint path must be empty")
 	}
 
 	if u.RawQuery != "" || u.Fragment != "" {
-		return "", false, fmt.Errorf("endpoint query and fragment must be empty")
+		return "", false, errors.New("endpoint query and fragment must be empty")
 	}
 
 	return u.Host, defaultSecure, nil

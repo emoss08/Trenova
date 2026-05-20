@@ -66,6 +66,11 @@ const (
 
 func (s TransferStatus) IsFinal() bool {
 	switch s {
+	case TransferStatusSubmitted,
+		TransferStatusMappingRequired,
+		TransferStatusPendingApproval,
+		TransferStatusProcessing:
+		return false
 	case TransferStatusApproved,
 		TransferStatusRejected,
 		TransferStatusExpired,

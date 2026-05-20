@@ -1010,6 +1010,142 @@ func (_c *MockShipmentRepository_List_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// ListAutoCancelShipmentTenants provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) ListAutoCancelShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAutoCancelShipmentTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_ListAutoCancelShipmentTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAutoCancelShipmentTenants'
+type MockShipmentRepository_ListAutoCancelShipmentTenants_Call struct {
+	*mock.Call
+}
+
+// ListAutoCancelShipmentTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockShipmentRepository_Expecter) ListAutoCancelShipmentTenants(ctx interface{}, limit interface{}) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
+	return &MockShipmentRepository_ListAutoCancelShipmentTenants_Call{Call: _e.mock.On("ListAutoCancelShipmentTenants", ctx, limit)}
+}
+
+func (_c *MockShipmentRepository_ListAutoCancelShipmentTenants_Call) Run(run func(ctx context.Context, limit int)) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListAutoCancelShipmentTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListAutoCancelShipmentTenants_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]pagination.TenantInfo, error)) *MockShipmentRepository_ListAutoCancelShipmentTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListAutoDelayShipmentTenants provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) ListAutoDelayShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAutoDelayShipmentTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_ListAutoDelayShipmentTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAutoDelayShipmentTenants'
+type MockShipmentRepository_ListAutoDelayShipmentTenants_Call struct {
+	*mock.Call
+}
+
+// ListAutoDelayShipmentTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit int
+func (_e *MockShipmentRepository_Expecter) ListAutoDelayShipmentTenants(ctx interface{}, limit interface{}) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
+	return &MockShipmentRepository_ListAutoDelayShipmentTenants_Call{Call: _e.mock.On("ListAutoDelayShipmentTenants", ctx, limit)}
+}
+
+func (_c *MockShipmentRepository_ListAutoDelayShipmentTenants_Call) Run(run func(ctx context.Context, limit int)) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListAutoDelayShipmentTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_ListAutoDelayShipmentTenants_Call) RunAndReturn(run func(ctx context.Context, limit int) ([]pagination.TenantInfo, error)) *MockShipmentRepository_ListAutoDelayShipmentTenants_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RunAutoCancelShipments provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx)
@@ -1068,6 +1204,154 @@ func (_c *MockShipmentRepository_RunAutoCancelShipments_Call) Return(shipments [
 }
 
 func (_c *MockShipmentRepository_RunAutoCancelShipments_Call) RunAndReturn(run func(ctx context.Context) ([]*shipment.Shipment, error)) *MockShipmentRepository_RunAutoCancelShipments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RunAutoCancelShipmentsForTenant provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) RunAutoCancelShipmentsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo, limit int) ([]*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, tenantInfo, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RunAutoCancelShipmentsForTenant")
+	}
+
+	var r0 []*shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int) ([]*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, tenantInfo, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int) []*shipment.Shipment); ok {
+		r0 = returnFunc(ctx, tenantInfo, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, int) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RunAutoCancelShipmentsForTenant'
+type MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call struct {
+	*mock.Call
+}
+
+// RunAutoCancelShipmentsForTenant is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - limit int
+func (_e *MockShipmentRepository_Expecter) RunAutoCancelShipmentsForTenant(ctx interface{}, tenantInfo interface{}, limit interface{}) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
+	return &MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call{Call: _e.mock.On("RunAutoCancelShipmentsForTenant", ctx, tenantInfo, limit)}
+}
+
+func (_c *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, limit int)) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call) Return(shipments []*shipment.Shipment, err error) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
+	_c.Call.Return(shipments, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, limit int) ([]*shipment.Shipment, error)) *MockShipmentRepository_RunAutoCancelShipmentsForTenant_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RunAutoDelayShipmentsForTenant provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) RunAutoDelayShipmentsForTenant(ctx context.Context, tenantInfo pagination.TenantInfo, limit int) ([]*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, tenantInfo, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RunAutoDelayShipmentsForTenant")
+	}
+
+	var r0 []*shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int) ([]*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, tenantInfo, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, int) []*shipment.Shipment); ok {
+		r0 = returnFunc(ctx, tenantInfo, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, int) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RunAutoDelayShipmentsForTenant'
+type MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call struct {
+	*mock.Call
+}
+
+// RunAutoDelayShipmentsForTenant is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - limit int
+func (_e *MockShipmentRepository_Expecter) RunAutoDelayShipmentsForTenant(ctx interface{}, tenantInfo interface{}, limit interface{}) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
+	return &MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call{Call: _e.mock.On("RunAutoDelayShipmentsForTenant", ctx, tenantInfo, limit)}
+}
+
+func (_c *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, limit int)) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call) Return(shipments []*shipment.Shipment, err error) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
+	_c.Call.Return(shipments, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, limit int) ([]*shipment.Shipment, error)) *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call {
 	_c.Call.Return(run)
 	return _c
 }

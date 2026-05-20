@@ -38,7 +38,21 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentuploadrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dothazmatreferencerepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edirepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicommunicationprofilerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ediconnectionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edicontrolnumberrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edidocumenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edimappingprofilerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edimessagerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edipartnerdocumentprofilerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edipartnerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edipartnersettingrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edishipmentlinkrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edisourcecontextrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editemplaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editestcaserepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentcontinuityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
@@ -160,13 +174,21 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	hazardousmaterialrepository.New,
 	hazmatsegregationrulerepository.New,
 	dothazmatreferencerepository.New,
-	edirepository.New,
-	edirepository.NewTransferRepository,
-	edirepository.NewConnectionRepository,
-	edirepository.NewCommunicationProfileRepository,
-	edirepository.NewShipmentLinkRepository,
-	edirepository.NewTransferChangeRepository,
-	edirepository.NewDocumentRepository,
+	edipartnerrepository.New,
+	edimappingprofilerepository.New,
+	editransferrepository.New,
+	ediconnectionrepository.New,
+	edicommunicationprofilerepository.New,
+	edishipmentlinkrepository.New,
+	editransferchangerepository.New,
+	edidocumenttyperepository.New,
+	edisourcecontextrepository.New,
+	edipartnersettingrepository.New,
+	editemplaterepository.New,
+	edipartnerdocumentprofilerepository.New,
+	edicontrolnumberrepository.New,
+	edimessagerepository.New,
+	editestcaserepository.New,
 	commodityrepository.New,
 	customerpaymentrepository.New,
 	customerledgerrepository.New,

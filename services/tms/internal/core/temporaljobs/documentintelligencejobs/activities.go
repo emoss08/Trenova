@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -494,7 +495,17 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 	}
 
 	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
-	docs, err := a.contentRepo.ListPendingExtraction(ctx, olderThan, a.cfg.GetReconcileBatchSize())
+	docs, err := a.contentRepo.ListPendingExtraction(
+		ctx,
+		&repositories.ListPendingDocumentExtractionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: payload.OrganizationID,
+				BuID:  payload.BusinessUnitID,
+			},
+			OlderThan: olderThan,
+			Limit:     payload.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -529,6 +540,27 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 	}
 
 	return result, nil
+}
+
+func (a *Activities) ListDocumentIntelligenceTenantsActivity(
+	ctx context.Context,
+	payload *ReconcileDocumentIntelligencePayload,
+) (*ListDocumentIntelligenceTenantsResult, error) {
+	olderThan := time.Now().Add(-time.Duration(payload.OlderThanSeconds) * time.Second).Unix()
+	tenants, err := a.contentRepo.ListPendingExtractionTenants(
+		ctx,
+		&repositories.ListPendingDocumentExtractionRequest{
+			OlderThan: olderThan,
+			Limit:     temporaljobs.DefaultTenantScanLimit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ListDocumentIntelligenceTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, a.cfg.GetReconcileBatchSize()),
+	}, nil
 }
 
 func (a *Activities) extractContent(

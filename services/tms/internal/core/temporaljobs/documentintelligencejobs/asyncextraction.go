@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/boolutils"
@@ -256,8 +257,14 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 	now := time.Now()
 	rows, err := a.aiExtractionRepo.ListPollable(
 		ctx,
-		now.Add(-documentAIExtractionPollInterval).Unix(),
-		payload.Limit,
+		&repositories.ListPollableDocumentAIExtractionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: payload.OrganizationID,
+				BuID:  payload.BusinessUnitID,
+			},
+			OlderThan: now.Add(-documentAIExtractionPollInterval).Unix(),
+			Limit:     payload.Limit,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -379,6 +386,31 @@ func (a *Activities) PollPendingDocumentAIExtractionsActivity( //nolint:gocognit
 	}
 
 	return result, nil
+}
+
+func (a *Activities) ListPollableDocumentAIExtractionTenantsActivity(
+	ctx context.Context,
+	payload *PollPendingDocumentAIExtractionsPayload,
+) (*ListDocumentIntelligenceTenantsResult, error) {
+	if a.aiExtractionRepo == nil {
+		return &ListDocumentIntelligenceTenantsResult{}, nil
+	}
+
+	tenants, err := a.aiExtractionRepo.ListPollableTenants(
+		ctx,
+		&repositories.ListPollableDocumentAIExtractionRequest{
+			OlderThan: time.Now().Add(-documentAIExtractionPollInterval).Unix(),
+			Limit:     temporaljobs.DefaultTenantScanLimit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	tenantLimit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantRecordLimit)
+	return &ListDocumentIntelligenceTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, tenantLimit),
+	}, nil
 }
 
 func (a *Activities) ApplyDocumentAIExtractionResultActivity(

@@ -3,6 +3,7 @@ package documentintelligencejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -83,21 +84,55 @@ func ProcessDocumentIntelligenceWorkflow(
 func ReconcileDocumentIntelligenceWorkflow(
 	ctx workflow.Context,
 ) (*ReconcileDocumentIntelligenceResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, defaultActivityOptions)
+	activityCtx := workflow.WithActivityOptions(ctx, defaultActivityOptions)
+	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	var result *ReconcileDocumentIntelligenceResult
-	if err := workflow.ExecuteActivity(
-		ctx,
-		a.ReconcileDocumentIntelligenceActivity,
-		&ReconcileDocumentIntelligencePayload{
-			BasePayload: temporaltype.BasePayload{
-				Timestamp: workflow.Now(ctx).Unix(),
-			},
-			OlderThanSeconds: int64((10 * time.Minute).Seconds()),
+	payload := &ReconcileDocumentIntelligencePayload{
+		BasePayload: temporaltype.BasePayload{
+			Timestamp: workflow.Now(ctx).Unix(),
 		},
-	).Get(ctx, &result); err != nil {
+		OlderThanSeconds: int64((10 * time.Minute).Seconds()),
+		Limit:            temporaljobs.DefaultTenantRecordLimit,
+	}
+
+	var tenantsResult *ListDocumentIntelligenceTenantsResult
+	if err := workflow.ExecuteActivity(
+		activityCtx,
+		a.ListDocumentIntelligenceTenantsActivity,
+		payload,
+	).Get(ctx, &tenantsResult); err != nil {
 		return nil, err
+	}
+
+	result := &ReconcileDocumentIntelligenceResult{}
+	result.TenantsScanned = len(tenantsResult.Tenants)
+	for _, tenant := range tenantsResult.Tenants {
+		tenantPayload := *payload
+		tenantPayload.OrganizationID = tenant.OrganizationID
+		tenantPayload.BusinessUnitID = tenant.BusinessUnitID
+		tenantPayload.Limit = temporaljobs.NormalizeLimit(
+			tenant.Limit,
+			temporaljobs.DefaultTenantRecordLimit,
+		)
+
+		var tenantResult *ReconcileDocumentIntelligenceResult
+		if err := workflow.ExecuteActivity(
+			activityCtx,
+			a.ReconcileDocumentIntelligenceActivity,
+			&tenantPayload,
+		).Get(ctx, &tenantResult); err != nil {
+			logger.Error("Document intelligence reconciliation tenant failed",
+				"orgId", tenant.OrganizationID.String(),
+				"buId", tenant.BusinessUnitID.String(),
+				"error", err,
+			)
+			result.AddFailure(tenant, err)
+			continue
+		}
+
+		result.AddTenantResult(tenantResult.Queued, 0)
+		result.Queued += tenantResult.Queued
 	}
 
 	return result, nil
@@ -142,14 +177,53 @@ func PollPendingDocumentAIExtractionsWorkflow(
 	ctx workflow.Context,
 	payload *PollPendingDocumentAIExtractionsPayload,
 ) (*PollPendingDocumentAIExtractionsResult, error) {
-	ctx = workflow.WithActivityOptions(ctx, pollPendingAIExtractionsActivityOptions)
+	activityCtx := workflow.WithActivityOptions(ctx, pollPendingAIExtractionsActivityOptions)
+	logger := workflow.GetLogger(ctx)
+	if payload == nil {
+		payload = &PollPendingDocumentAIExtractionsPayload{}
+	}
 
 	var a *Activities
-	var result *PollPendingDocumentAIExtractionsResult
+	var tenantsResult *ListDocumentIntelligenceTenantsResult
 	if err := workflow.ExecuteActivity(
-		ctx, a.PollPendingDocumentAIExtractionsActivity, payload,
-	).Get(ctx, &result); err != nil {
+		activityCtx,
+		a.ListPollableDocumentAIExtractionTenantsActivity,
+		payload,
+	).Get(ctx, &tenantsResult); err != nil {
 		return nil, err
+	}
+
+	result := &PollPendingDocumentAIExtractionsResult{}
+	result.TenantsScanned = len(tenantsResult.Tenants)
+	for _, tenant := range tenantsResult.Tenants {
+		tenantPayload := *payload
+		tenantPayload.OrganizationID = tenant.OrganizationID
+		tenantPayload.BusinessUnitID = tenant.BusinessUnitID
+		tenantPayload.Limit = temporaljobs.NormalizeLimit(
+			tenant.Limit,
+			temporaljobs.DefaultTenantRecordLimit,
+		)
+
+		var tenantResult *PollPendingDocumentAIExtractionsResult
+		if err := workflow.ExecuteActivity(
+			activityCtx,
+			a.PollPendingDocumentAIExtractionsActivity,
+			&tenantPayload,
+		).Get(ctx, &tenantResult); err != nil {
+			logger.Error("Document AI extraction polling tenant failed",
+				"orgId", tenant.OrganizationID.String(),
+				"buId", tenant.BusinessUnitID.String(),
+				"error", err,
+			)
+			result.AddFailure(tenant, err)
+			continue
+		}
+
+		processed := tenantResult.Completed + tenantResult.Pending + tenantResult.Failed
+		result.AddTenantResult(processed, 0)
+		result.Completed += tenantResult.Completed
+		result.Pending += tenantResult.Pending
+		result.Failed += tenantResult.Failed
 	}
 
 	return result, nil

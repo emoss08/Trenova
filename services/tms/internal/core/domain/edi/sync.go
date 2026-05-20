@@ -159,10 +159,22 @@ func (l *ShipmentLink) GetPostgresSearchConfig() domaintypes.PostgresSearchConfi
 	return domaintypes.PostgresSearchConfig{
 		TableAlias: "esl",
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "source_shipment_id", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "target_shipment_id", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "source_shipment_id",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
+			{
+				Name:   "target_shipment_id",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
-			{Name: "sync_policy", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "sync_policy",
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }
@@ -180,10 +192,18 @@ func (c *TransferChange) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 		TableAlias:      "etc",
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
-			{Name: "change_type", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "change_type",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightA,
+			},
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
 			{Name: "direction", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
-			{Name: "conflict_reason", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
+			{
+				Name:   "conflict_reason",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightC,
+			},
 		},
 	}
 }

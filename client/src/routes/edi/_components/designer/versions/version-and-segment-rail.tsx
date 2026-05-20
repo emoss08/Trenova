@@ -1,32 +1,27 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  useSelectedTemplateDesignerData,
+  useSelectedTemplateDesignerIds,
+  useTemplateDesignerUrlActions,
+} from "@/hooks/use-template-designer-state";
 import { cn } from "@/lib/utils";
-import type { EDIDiagnostic, EDITemplateSegment, EDITemplateVersion } from "@/types/edi";
+import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { VersionStatusBadge } from "../components/designer-shared";
 import { diagnosticsForSegment } from "../utils/edi-designer-utils";
 
-type VersionAndSegmentRailProps = {
-  versions: EDITemplateVersion[];
-  selectedVersionId: string;
-  onVersionSelect: (versionId: string) => void;
-  segments: EDITemplateSegment[];
-  diagnostics: EDIDiagnostic[];
-  selectedSegmentId: string;
-  onSegmentSelect: (segment: EDITemplateSegment) => void;
-};
+export default function VersionAndSegmentRail() {
+  const { versions } = useSelectedTemplateDesignerData();
+  const { selectedVersionId, selectedSegmentId, selectedElementPosition } =
+    useSelectedTemplateDesignerIds();
+  const segments = useTemplateDesignerStore((state) => state.segmentsDraft);
+  const diagnostics = useTemplateDesignerStore((state) => state.diagnostics);
+  const resetDraftState = useTemplateDesignerStore((state) => state.resetDraftState);
+  const { patchTemplateUrlState } = useTemplateDesignerUrlActions();
 
-export default function VersionAndSegmentRail({
-  versions,
-  selectedVersionId,
-  onVersionSelect,
-  segments,
-  diagnostics,
-  selectedSegmentId,
-  onSegmentSelect,
-}: VersionAndSegmentRailProps) {
   return (
-    <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] border-r">
-      <div className="min-h-0 overflow-auto border-b">
+    <div className="grid min-h-0 grid-rows-[180px_minmax(0,1fr)] overflow-hidden border-r">
+      <ScrollArea className="min-h-0 border-b" viewportClassName="min-h-0">
         <div className="sticky top-0 z-10 border-b bg-sidebar px-3 py-2">
           <div className="text-sm font-semibold">Versions</div>
           <div className="text-xs text-muted-foreground">{versions.length} available</div>
@@ -38,7 +33,15 @@ export default function VersionAndSegmentRail({
             <button
               key={version.id}
               type="button"
-              onClick={() => onVersionSelect(version.id)}
+              onClick={() => {
+                if (selectedVersionId === version.id) return;
+                resetDraftState();
+                patchTemplateUrlState({
+                  versionId: version.id,
+                  segmentId: "",
+                  elementPosition: 0,
+                });
+              }}
               className={cn(
                 "flex w-full items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
                 selectedVersionId === version.id && "bg-muted",
@@ -49,13 +52,13 @@ export default function VersionAndSegmentRail({
             </button>
           ))
         )}
-      </div>
-      <div className="min-h-0 overflow-auto">
+      </ScrollArea>
+      <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
         <div className="sticky top-0 z-10 border-b bg-background px-3 py-2">
           <div className="text-xs font-semibold">Segment Outline</div>
           <div className="text-xs text-muted-foreground">{segments.length} segments</div>
         </div>
-        <ScrollArea className="flex h-[calc(100vh-30rem)] flex-col">
+        <ScrollArea className="min-h-0" viewportClassName="min-h-0">
           {segments.length === 0 ? (
             <div className="p-3 text-sm text-muted-foreground">No segments in this version.</div>
           ) : (
@@ -65,7 +68,19 @@ export default function VersionAndSegmentRail({
                 <button
                   key={segment.id}
                   type="button"
-                  onClick={() => onSegmentSelect(segment)}
+                  onClick={() => {
+                    const firstElementPosition = segment.elements[0]?.position ?? 0;
+                    if (
+                      selectedSegmentId === segment.id &&
+                      selectedElementPosition === firstElementPosition
+                    ) {
+                      return;
+                    }
+                    patchTemplateUrlState({
+                      segmentId: segment.id,
+                      elementPosition: firstElementPosition,
+                    });
+                  }}
                   className={cn(
                     "flex w-full cursor-pointer items-center justify-between gap-2 border-b px-3 py-2 text-left hover:bg-muted",
                     selectedSegmentId === segment.id && "bg-muted ring-1 ring-border ring-inset",

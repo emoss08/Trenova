@@ -20,6 +20,7 @@ func toFrozenStarlarkValue(value any) (starlark.Value, error) {
 	return converted, nil
 }
 
+//nolint:cyclop // Starlark conversion must enumerate supported scalar and collection types.
 func toStarlarkValue(value any) (starlark.Value, error) {
 	switch typed := value.(type) {
 	case nil:

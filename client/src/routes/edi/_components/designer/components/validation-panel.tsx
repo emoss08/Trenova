@@ -1,24 +1,21 @@
 import { Button } from "@/components/ui/button";
-import type { EDIDiagnostic } from "@/types/edi";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { ListChecksIcon } from "lucide-react";
+import {
+  useSelectDiagnostic,
+  useTemplateDesignerValidationAction,
+} from "@/hooks/use-template-designer-state";
+import { useTemplateDesignerStore } from "@/stores/template-designer-store";
 import { DiagnosticsList } from "./designer-shared";
 
-export function ValidationPanel({
-  diagnostics,
-  onSelectDiagnostic,
-  onValidate,
-  isLoading,
-  disabled,
-}: {
-  diagnostics: EDIDiagnostic[];
-  onSelectDiagnostic: (diagnostic: EDIDiagnostic) => void;
-  onValidate: () => void;
-  isLoading: boolean;
-  disabled: boolean;
-}) {
+export function ValidationPanel() {
+  const diagnostics = useTemplateDesignerStore((state) => state.diagnostics);
+  const selectDiagnostic = useSelectDiagnostic();
+  const { validate, isValidating, canValidate } = useTemplateDesignerValidationAction();
+
   return (
-    <div className="min-h-0 overflow-auto p-3">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden">
+      <div className="flex items-center justify-between border-b p-3">
         <div>
           <div className="text-sm font-semibold">Validation Diagnostics</div>
           <div className="text-xs text-muted-foreground">
@@ -28,15 +25,17 @@ export function ValidationPanel({
         <Button
           type="button"
           variant="outline"
-          onClick={onValidate}
-          isLoading={isLoading}
-          disabled={disabled}
+          onClick={validate}
+          isLoading={isValidating}
+          disabled={!canValidate}
         >
           <ListChecksIcon className="size-4" />
           Run
         </Button>
       </div>
-      <DiagnosticsList diagnostics={diagnostics} onSelect={onSelectDiagnostic} />
+      <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+        <DiagnosticsList diagnostics={diagnostics} onSelect={selectDiagnostic} />
+      </ScrollArea>
     </div>
   );
 }

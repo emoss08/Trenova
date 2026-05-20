@@ -25,6 +25,7 @@ func (r *repository) GetDelayedShipments(
 		req.TenantInfo,
 		thresholdMinutes,
 		timeutils.NowUnix(),
+		req.Limit,
 	)
 }
 
@@ -44,6 +45,7 @@ func (r *repository) DelayShipments(
 			req.TenantInfo,
 			thresholdMinutes,
 			currentTime,
+			req.Limit,
 		)
 		if err != nil || len(entities) == 0 {
 			return err
@@ -104,14 +106,103 @@ func (r *repository) AutoDelayShipments(ctx context.Context) ([]*shipment.Shipme
 	return entities, nil
 }
 
+func (r *repository) ListAutoDelayShipmentTenants(
+	ctx context.Context,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	type tenantRow struct {
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+
+	rows := make([]tenantRow, 0, limit)
+	cols := buncolgen.ShipmentControlColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		TableExpr(buncolgen.ShipmentControlTable.Name+" AS sc").
+		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Where(cols.AutoDelayShipments.Eq(), true).
+		Order(cols.OrganizationID.OrderAsc()).
+		Order(cols.BusinessUnitID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
+}
+
+func (r *repository) RunAutoDelayShipmentsForTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	limit int,
+) ([]*shipment.Shipment, error) {
+	currentTime := timeutils.NowUnix()
+	entities := make([]*shipment.Shipment, 0)
+
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		var err error
+		entities, err = r.getAutoDelayedShipmentsForTenant(
+			c,
+			tx,
+			tenantInfo,
+			currentTime,
+			limit,
+		)
+		if err != nil || len(entities) == 0 {
+			return err
+		}
+
+		cols := buncolgen.ShipmentColumns
+		shipmentIDs := shipmentIDsFromEntities(entities)
+		_, err = tx.NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Set(cols.Status.Set(), shipment.StatusDelayed).
+			Set(cols.UpdatedAt.Set(), currentTime).
+			Where(cols.ID.In(), bun.List(shipmentIDs)).
+			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
+			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+			Exec(c)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entity := range entities {
+		entity.Status = shipment.StatusDelayed
+		entity.UpdatedAt = currentTime
+	}
+
+	return entities, nil
+}
+
 func (r *repository) getDelayedShipments(
 	ctx context.Context,
 	dba bun.IDB,
 	tenantInfo pagination.TenantInfo,
 	thresholdMinutes int16,
 	currentTime int64,
+	limit int,
 ) ([]*shipment.Shipment, error) {
-	entities := make([]*shipment.Shipment, 0)
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*shipment.Shipment, 0, limit)
 	stopCte, moveCte := buildDelayedShipmentCTEs(dba, currentTime, thresholdMinutes)
 
 	err := dba.NewSelect().
@@ -122,6 +213,40 @@ func (r *repository) getDelayedShipments(
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
 		Where("sp.status NOT IN (?)", bun.List(nonDelayedEligibleShipmentStatuses())).
+		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *repository) getAutoDelayedShipmentsForTenant(
+	ctx context.Context,
+	dba bun.IDB,
+	tenantInfo pagination.TenantInfo,
+	currentTime int64,
+	limit int,
+) ([]*shipment.Shipment, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*shipment.Shipment, 0, limit)
+	delayedCte := buildAutoDelayedShipmentCTE(dba, currentTime).
+		Where("sp.organization_id = ?", tenantInfo.OrgID).
+		Where("sp.business_unit_id = ?", tenantInfo.BuID).
+		Limit(limit)
+
+	err := dba.NewSelect().
+		Model(&entities).
+		With("delayed_cte", delayedCte).
+		Where("sp.id IN (SELECT shipment_id FROM delayed_cte)").
+		Where("sp.organization_id = ?", tenantInfo.OrgID).
+		Where("sp.business_unit_id = ?", tenantInfo.BuID).
+		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -136,7 +261,22 @@ func (r *repository) getAutoDelayedShipments(
 	currentTime int64,
 ) ([]*shipment.Shipment, error) {
 	entities := make([]*shipment.Shipment, 0)
-	delayedCte := dba.NewSelect().
+	delayedCte := buildAutoDelayedShipmentCTE(dba, currentTime)
+
+	err := dba.NewSelect().
+		Model(&entities).
+		With("delayed_cte", delayedCte).
+		Where("sp.id IN (SELECT shipment_id FROM delayed_cte)").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func buildAutoDelayedShipmentCTE(dba bun.IDB, currentTime int64) *bun.SelectQuery {
+	return dba.NewSelect().
 		TableExpr("stops AS stp").
 		ColumnExpr("DISTINCT sm.shipment_id").
 		Join("JOIN shipment_moves AS sm ON sm.id = stp.shipment_move_id").
@@ -155,17 +295,6 @@ func (r *repository) getAutoDelayedShipments(
 			shipment.MoveStatusCanceled,
 		})).
 		Where("sp.status NOT IN (?)", bun.List(nonDelayedEligibleShipmentStatuses()))
-
-	err := dba.NewSelect().
-		Model(&entities).
-		With("delayed_cte", delayedCte).
-		Where("sp.id IN (SELECT shipment_id FROM delayed_cte)").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return entities, nil
 }
 
 func buildDelayedShipmentCTEs(

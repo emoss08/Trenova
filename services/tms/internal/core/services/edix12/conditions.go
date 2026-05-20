@@ -1,3 +1,4 @@
+//nolint:gocritic // Condition evaluation params are immutable renderer context values.
 package edix12
 
 import (
@@ -59,7 +60,7 @@ func evaluateConditionValue(params conditionEvalParams, condition string) (bool,
 		return evaluateStarlarkCondition(params, condition)
 	}
 	if strings.Contains(condition, "&&") || strings.Contains(condition, "||") {
-		return false, fmt.Errorf("boolean operators are not supported in EDI template conditions")
+		return false, errors.New("boolean operators are not supported in EDI template conditions")
 	}
 
 	operator, left, right, hasComparison, err := splitConditionComparison(condition)
@@ -70,9 +71,9 @@ func evaluateConditionValue(params conditionEvalParams, condition string) (bool,
 		if err = validateConditionPath(left); err != nil {
 			return false, err
 		}
-		target, err := parseConditionStringLiteral(right)
-		if err != nil {
-			return false, err
+		target, parseErr := parseConditionStringLiteral(right)
+		if parseErr != nil {
+			return false, parseErr
 		}
 
 		value := valueToString(maputils.Path(params.Env, left))
@@ -83,7 +84,7 @@ func evaluateConditionValue(params conditionEvalParams, condition string) (bool,
 	}
 
 	if strings.ContainsAny(condition, "=<>") {
-		return false, fmt.Errorf("unsupported condition operator")
+		return false, errors.New("unsupported condition operator")
 	}
 
 	negated := strings.HasPrefix(condition, "!")
@@ -125,7 +126,7 @@ func ValidateConditionSyntax(condition string) *Diagnostic {
 			diagnostic := conditionErrorDiagnostic(
 				params,
 				starlarkConditionPath(),
-				fmt.Errorf("Starlark condition script is required"),
+				errors.New("starlark condition script is required"),
 			)
 			return &diagnostic
 		}
@@ -153,7 +154,7 @@ func ValidateConditionSyntax(condition string) *Diagnostic {
 		diagnostic := conditionErrorDiagnostic(
 			params,
 			conditionDiagnosticPath(condition),
-			fmt.Errorf("unsupported condition operator"),
+			errors.New("unsupported condition operator"),
 		)
 		return &diagnostic
 	}
@@ -191,11 +192,13 @@ func DeclarativeConditionPaths(condition string) []string {
 	return []string{path}
 }
 
-func splitConditionComparison(condition string) (string, string, string, bool, error) {
+func splitConditionComparison(
+	condition string,
+) (operator string, left string, right string, hasComparison bool, err error) {
 	eqIndex := strings.Index(condition, "==")
 	neIndex := strings.Index(condition, "!=")
 	if eqIndex >= 0 && neIndex >= 0 {
-		return "", "", "", false, fmt.Errorf("condition must contain only one comparison operator")
+		return "", "", "", false, errors.New("condition must contain only one comparison operator")
 	}
 	if eqIndex >= 0 {
 		return splitConditionOperator(condition, "==", eqIndex)
@@ -210,18 +213,18 @@ func splitConditionOperator(
 	condition string,
 	operator string,
 	index int,
-) (string, string, string, bool, error) {
-	left := strings.TrimSpace(condition[:index])
-	right := strings.TrimSpace(condition[index+len(operator):])
-	if left == "" || right == "" {
-		return "", "", "", false, fmt.Errorf("condition comparison is incomplete")
+) (parsedOperator string, left string, right string, hasComparison bool, err error) {
+	parsedLeft := strings.TrimSpace(condition[:index])
+	parsedRight := strings.TrimSpace(condition[index+len(operator):])
+	if parsedLeft == "" || parsedRight == "" {
+		return "", "", "", false, errors.New("condition comparison is incomplete")
 	}
-	return operator, left, right, true, nil
+	return operator, parsedLeft, parsedRight, true, nil
 }
 
 func validateConditionPath(path string) error {
 	if path == "" {
-		return fmt.Errorf("condition path is required")
+		return errors.New("condition path is required")
 	}
 
 	parts := strings.Split(path, ".")
@@ -262,15 +265,15 @@ func isConditionPathPart(part string) bool {
 
 func parseConditionStringLiteral(value string) (string, error) {
 	if len(value) < 2 {
-		return "", fmt.Errorf("condition comparison value must be a quoted string")
+		return "", errors.New("condition comparison value must be a quoted string")
 	}
 
 	quote := value[0]
 	if quote != '"' && quote != '\'' {
-		return "", fmt.Errorf("condition comparison value must be a quoted string")
+		return "", errors.New("condition comparison value must be a quoted string")
 	}
 	if value[len(value)-1] != quote {
-		return "", fmt.Errorf("condition comparison value must be a quoted string")
+		return "", errors.New("condition comparison value must be a quoted string")
 	}
 
 	var builder strings.Builder
@@ -296,14 +299,14 @@ func parseConditionStringLiteral(value string) (string, error) {
 			continue
 		}
 		if char == quote {
-			return "", fmt.Errorf(
+			return "", errors.New(
 				"condition comparison value must be a single quoted string literal",
 			)
 		}
 		builder.WriteByte(char)
 	}
 	if escaped {
-		return "", fmt.Errorf("condition comparison value has an incomplete escape sequence")
+		return "", errors.New("condition comparison value has an incomplete escape sequence")
 	}
 	return builder.String(), nil
 }
@@ -376,7 +379,7 @@ func starlarkConditionTruthy(value starlark.Value) (bool, error) {
 	case starlark.Float:
 		return true, nil
 	default:
-		return false, fmt.Errorf("Starlark include returned unsupported %s result", value.Type())
+		return false, fmt.Errorf("starlark include returned unsupported %s result", value.Type())
 	}
 }
 

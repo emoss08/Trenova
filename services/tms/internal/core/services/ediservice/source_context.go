@@ -12,68 +12,68 @@ func (s *Service) ListSourceContextSchemas(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextSchemasRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextSchema], error) {
-	return s.documentRepo.ListSourceContextSchemas(ctx, req)
+	return s.sourceContextRepo.ListSourceContextSchemas(ctx, req)
 }
 
 func (s *Service) ListPartnerSettingSchemas(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerSettingSchemasRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error) {
-	return s.documentRepo.ListPartnerSettingSchemas(ctx, req)
+	return s.partnerSettingRepo.ListPartnerSettingSchemas(ctx, req)
 }
 
 func (s *Service) GetPartnerSettingSchema(
 	ctx context.Context,
 	req repositories.GetEDIPartnerSettingSchemaRequest,
 ) (*edi.EDIPartnerSettingSchema, error) {
-	return s.documentRepo.GetPartnerSettingSchema(ctx, req)
+	return s.partnerSettingRepo.GetPartnerSettingSchema(ctx, req)
 }
 
 func (s *Service) ListPartnerSettingFields(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-	return s.documentRepo.ListPartnerSettingFields(ctx, req)
+	return s.partnerSettingRepo.ListPartnerSettingFields(ctx, req)
 }
 
 func (s *Service) SearchPartnerSettingFields(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-	return s.documentRepo.SearchPartnerSettingFields(ctx, req)
+	return s.partnerSettingRepo.SearchPartnerSettingFields(ctx, req)
 }
 
 func (s *Service) SelectPartnerSettingFieldOptions(
 	ctx context.Context,
 	req *repositories.ListEDIPartnerSettingFieldsRequest,
 ) (*pagination.ListResult[*edi.EDIPartnerSettingField], error) {
-	return s.documentRepo.SelectPartnerSettingFieldOptions(ctx, req)
+	return s.partnerSettingRepo.SelectPartnerSettingFieldOptions(ctx, req)
 }
 
 func (s *Service) GetSourceContextSchema(
 	ctx context.Context,
 	req repositories.GetEDISourceContextSchemaRequest,
 ) (*edi.EDISourceContextSchema, error) {
-	return s.documentRepo.GetSourceContextSchema(ctx, req)
+	return s.sourceContextRepo.GetSourceContextSchema(ctx, req)
 }
 
 func (s *Service) ListSourceContextFields(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
-	return s.documentRepo.ListSourceContextFields(ctx, req)
+	return s.sourceContextRepo.ListSourceContextFields(ctx, req)
 }
 
 func (s *Service) SearchSourceContextFields(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
-	return s.documentRepo.SearchSourceContextFields(ctx, req)
+	return s.sourceContextRepo.SearchSourceContextFields(ctx, req)
 }
 
 func (s *Service) SelectSourceContextFieldOptions(
 	ctx context.Context,
 	req *repositories.ListEDISourceContextFieldsRequest,
 ) (*pagination.ListResult[*edi.EDISourceContextField], error) {
-	return s.documentRepo.SelectSourceContextFieldOptions(ctx, req)
+	return s.sourceContextRepo.SelectSourceContextFieldOptions(ctx, req)
 }

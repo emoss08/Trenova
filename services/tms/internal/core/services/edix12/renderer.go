@@ -1,3 +1,4 @@
+//nolint:gocritic // Renderer source descriptors are small immutable value contracts.
 package edix12
 
 import (
@@ -282,10 +283,10 @@ func resolveElement(params elementResolveParams) (string, []Diagnostic) {
 func resolveElementValue(params elementResolveParams) (any, []Diagnostic, error) {
 	element := params.Element
 	if isDirectElementSource(element.Source) {
-		value, _ := resolveDirectSource(elementDirectSource(element), params.Env)
-		return value, nil, nil
+		return resolveDirectSource(elementDirectSource(element), params.Env), nil, nil
 	}
 
+	//nolint:exhaustive // Direct sources are handled before this switch.
 	switch element.Source {
 	case edi.TemplateElementSourceTransform:
 		return resolveTransformElementValue(params.Segment, element, params.Env)
@@ -298,6 +299,7 @@ func resolveElementValue(params elementResolveParams) (any, []Diagnostic, error)
 }
 
 func isDirectElementSource(source edi.TemplateElementSource) bool {
+	//nolint:exhaustive // Transform and Starlark sources are intentionally not direct.
 	switch source {
 	case edi.TemplateElementSourceConstant,
 		edi.TemplateElementSourceFieldPath,
@@ -347,26 +349,27 @@ func baseDirectSource(source *edi.TemplateElementBaseSource) directSource {
 	}
 }
 
-func resolveDirectSource(source directSource, env map[string]any) (any, bool) {
+func resolveDirectSource(source directSource, env map[string]any) any {
+	//nolint:exhaustive // Transform and Starlark sources are resolved by their dedicated paths.
 	switch source.Source {
 	case edi.TemplateElementSourceConstant:
-		return source.Value, true
+		return source.Value
 	case edi.TemplateElementSourceFieldPath:
-		return maputils.Path(env, qualifyFieldPath(source.FieldPath)), true
+		return maputils.Path(env, qualifyFieldPath(source.FieldPath))
 	case edi.TemplateElementSourcePartnerSetting:
 		path := stringutils.FirstNonEmpty(source.PartnerSettingPath, source.Name)
 		if strings.TrimSpace(path) == "" {
-			return nil, true
+			return nil
 		}
-		return maputils.Path(env, "partner."+path), true
+		return maputils.Path(env, "partner."+path)
 	case edi.TemplateElementSourceRuntime:
-		return maputils.Path(env, "runtime."+source.RuntimeKey), true
+		return maputils.Path(env, "runtime."+source.RuntimeKey)
 	case edi.TemplateElementSourceRepeat:
-		return maputils.Path(env, "repeat."+source.RepeatPath), true
+		return maputils.Path(env, "repeat."+source.RepeatPath)
 	case edi.TemplateElementSourceMapping:
-		return maputils.Path(env, "mapping."+source.MappingSourcePath), true
+		return maputils.Path(env, "mapping."+source.MappingSourcePath)
 	default:
-		return nil, false
+		return nil
 	}
 }
 
@@ -831,6 +834,7 @@ func baseSourcePath(source *edi.TemplateElementBaseSource) string {
 }
 
 func suggestedFixForSource(source edi.TemplateElementSource) string {
+	//nolint:exhaustive // Only sources with specialized diagnostics need custom suggestions.
 	switch source {
 	case edi.TemplateElementSourceTransform:
 		return transformSuggestedFix

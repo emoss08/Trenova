@@ -24,7 +24,17 @@ type LatestRatesResult struct {
 }
 
 type ExchangeRateService interface {
-	Convert(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency, toCurrency string, amount decimal.Decimal, date time.Time) (*RateConversionResult, error)
-	GetLatestRates(ctx context.Context, tenantInfo pagination.TenantInfo, baseCurrency string) (*LatestRatesResult, error)
+	Convert(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		fromCurrency, toCurrency string,
+		amount decimal.Decimal,
+		date time.Time,
+	) (*RateConversionResult, error)
+	GetLatestRates(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		baseCurrency string,
+	) (*LatestRatesResult, error)
 	RefreshRates(ctx context.Context, tenantInfo pagination.TenantInfo, baseCurrency string) error
 }

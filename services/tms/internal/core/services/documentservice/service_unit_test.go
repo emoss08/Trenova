@@ -104,13 +104,19 @@ func (m *mockDocRepo) GetByResourceID(
 
 func (m *mockDocRepo) ListPendingPreviewReconciliation(
 	ctx context.Context,
-	olderThan int64,
-	limit int,
+	req *repositories.ListPendingPreviewReconciliationRequest,
 ) ([]*document.Document, error) {
 	if m.ListPendingPreviewReconciliationFn == nil {
 		return nil, nil
 	}
-	return m.ListPendingPreviewReconciliationFn(ctx, olderThan, limit)
+	return m.ListPendingPreviewReconciliationFn(ctx, req.OlderThan, req.Limit)
+}
+
+func (m *mockDocRepo) ListPendingPreviewReconciliationTenants(
+	context.Context,
+	*repositories.ListPendingPreviewReconciliationRequest,
+) ([]pagination.TenantInfo, error) {
+	return []pagination.TenantInfo{}, nil
 }
 
 func (m *mockDocRepo) Create(

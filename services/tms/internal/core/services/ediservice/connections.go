@@ -1,3 +1,4 @@
+//nolint:gocritic // EDI service value params are kept stable across handler and test contracts.
 package ediservice
 
 import (
@@ -142,7 +143,14 @@ func (s *Service) AcceptConnection(
 		return nil, mapEDIPartnerConstraint(mapEDIConnectionConstraint(err))
 	}
 
-	s.logAction(accepted, actor, permission.OpUpdate, &original, accepted, "EDI connection accepted")
+	s.logAction(
+		accepted,
+		actor,
+		permission.OpUpdate,
+		&original,
+		accepted,
+		"EDI connection accepted",
+	)
 	return accepted, nil
 }
 

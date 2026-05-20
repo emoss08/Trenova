@@ -2,6 +2,7 @@ import { DocumentSourceControls } from "@/components/edi/document-source-control
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -40,13 +41,13 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { formatUnix } from "../../edi-display-utils";
 import {
-  ControlledSelectField,
-  EDIDocumentProfileAutocompleteField,
-  EDIPartnerAutocompleteField,
-  EDITemplateAutocompleteField,
-} from "../components/designer-fields";
+  ControlledEDIDocumentProfileAutocompleteField,
+  ControlledEDIPartnerAutocompleteField,
+  ControlledEDITemplateAutocompleteField,
+} from "@/components/autocomplete-fields";
+import { formatUnix } from "../../edi-display-utils";
+import { ControlledSelectField } from "../components/designer-fields";
 import {
   InputBlock,
   PanelHeader,
@@ -263,162 +264,167 @@ export function DocumentPreviewArchiveTab() {
   };
 
   return (
-    <div className="grid min-h-[calc(100vh-14rem)] grid-cols-[360px_minmax(0,1fr)] gap-3">
-      <aside className="flex min-h-0 flex-col rounded-md border bg-background">
+    <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-3 overflow-hidden">
+      <aside className="flex min-h-0 flex-col overflow-hidden rounded-md border bg-background">
         <PanelHeader icon={<ShieldCheckIcon />} title="Document Profile" />
-        <div className="flex min-h-0 flex-col gap-3 overflow-auto p-3">
-          <EDIPartnerAutocompleteField
-            value={partnerId}
-            onValueChange={(nextPartnerId) => {
-              setPartnerId(nextPartnerId);
-              setProfileId("");
-              setSelectedProfile(null);
-              setRawPartnerSettings("{}");
-              setProfileDraft(
-                buildNewPartnerDocumentProfileDraft({
-                  defaultDraft: defaultProfileDraft,
-                  partnerId: nextPartnerId,
-                  templateId: firstTemplateId,
-                  status: templatesQuery.data?.results[0]?.activeVersion ? "Active" : "Inactive",
-                }),
-              );
-            }}
-          />
-          <EDIDocumentProfileAutocompleteField
-            value={profileId}
-            onValueChange={(nextProfileId) => {
-              setProfileId(nextProfileId);
-              setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
-            }}
-            onOptionChange={setSelectedProfile}
-            partnerId={partnerId}
-            transactionSet={archiveTransactionSet}
-            direction={archiveDirection}
-            disabled={!partnerId}
-            placeholder={partnerId ? "Select document profile" : "Select a partner first."}
-            description={!partnerId ? "Select a partner first." : undefined}
-            noResultsMessage="No document profiles match this partner and document context."
-          />
-          {selectedPartnerHasNoProfiles && (
-            <Alert variant="info" className="py-2 text-xs">
-              <InfoIcon className="size-4" />
-              <AlertDescription className="text-xs">
-                No document profiles exist for this partner yet. Fill the profile details below and
-                click Save Profile.
-              </AlertDescription>
-            </Alert>
-          )}
-          {isCreatingProfile && (
-            <Alert variant="info" className="py-2 text-xs">
-              <InfoIcon className="size-4" />
-              <AlertDescription className="text-xs">
-                New profile for selected partner. Save Profile will create and select it.
-              </AlertDescription>
-            </Alert>
-          )}
-          <InputBlock
-            label="Profile Name"
-            value={profileDraft.name}
-            onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
-          />
-          <EDITemplateAutocompleteField
-            value={selectedTemplateId}
-            transactionSet={archiveTransactionSet}
-            direction={archiveDirection}
-            onValueChange={(templateId) => {
-              const selectedTemplateHasProductionVersion = !!templatesQuery.data?.results.find(
-                (template) => template.id === templateId,
-              )?.activeVersion;
-              setProfileDraft((current) => ({
-                ...current,
-                templateId,
-                templateVersionId: undefined,
-                status:
-                  selectedTemplateHasProductionVersion || current.status === "Inactive"
-                    ? current.status
-                    : "Inactive",
-              }));
-            }}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <InputBlock
-              label="Version Override"
-              value={profileDraft.x12VersionOverride ?? ""}
-              onChange={(x12VersionOverride) =>
-                setProfileDraft((current) => ({ ...current, x12VersionOverride }))
-              }
+        <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
+          <div className="flex flex-col gap-3 p-3">
+            <ControlledEDIPartnerAutocompleteField
+              value={partnerId}
+              onValueChange={(nextPartnerId) => {
+                setPartnerId(nextPartnerId);
+                setProfileId("");
+                setSelectedProfile(null);
+                setRawPartnerSettings("{}");
+                setProfileDraft(
+                  buildNewPartnerDocumentProfileDraft({
+                    defaultDraft: defaultProfileDraft,
+                    partnerId: nextPartnerId,
+                    templateId: firstTemplateId,
+                    status: templatesQuery.data?.results[0]?.activeVersion ? "Active" : "Inactive",
+                  }),
+                );
+              }}
             />
-            <InputBlock
-              label="Group"
-              value={profileDraft.functionalGroupId}
-              onChange={(functionalGroupId) =>
-                setProfileDraft((current) => ({ ...current, functionalGroupId }))
-              }
+            <ControlledEDIDocumentProfileAutocompleteField
+              value={profileId}
+              onValueChange={(nextProfileId) => {
+                setProfileId(nextProfileId);
+                setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
+              }}
+              onOptionChange={setSelectedProfile}
+              partnerId={partnerId}
+              transactionSet={archiveTransactionSet}
+              direction={archiveDirection}
+              disabled={!partnerId}
+              placeholder={partnerId ? "Select document profile" : "Select a partner first."}
+              description={!partnerId ? "Select a partner first." : undefined}
+              noResultsMessage="No document profiles match this partner and document context."
             />
+            {selectedPartnerHasNoProfiles && (
+              <Alert variant="info" className="py-2 text-xs">
+                <InfoIcon className="size-4" />
+                <AlertDescription className="text-xs">
+                  No document profiles exist for this partner yet. Fill the profile details below
+                  and click Save Profile.
+                </AlertDescription>
+              </Alert>
+            )}
+            {isCreatingProfile && (
+              <Alert variant="info" className="py-2 text-xs">
+                <InfoIcon className="size-4" />
+                <AlertDescription className="text-xs">
+                  New profile for selected partner. Save Profile will create and select it.
+                </AlertDescription>
+              </Alert>
+            )}
+            <InputBlock
+              label="Profile Name"
+              value={profileDraft.name}
+              onChange={(name) => setProfileDraft((current) => ({ ...current, name }))}
+            />
+            <ControlledEDITemplateAutocompleteField
+              value={selectedTemplateId}
+              transactionSet={archiveTransactionSet}
+              direction={archiveDirection}
+              onValueChange={(templateId) => {
+                const selectedTemplateHasProductionVersion = !!templatesQuery.data?.results.find(
+                  (template) => template.id === templateId,
+                )?.activeVersion;
+                setProfileDraft((current) => ({
+                  ...current,
+                  templateId,
+                  templateVersionId: undefined,
+                  status:
+                    selectedTemplateHasProductionVersion || current.status === "Inactive"
+                      ? current.status
+                      : "Inactive",
+                }));
+              }}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <InputBlock
+                label="Version Override"
+                value={profileDraft.x12VersionOverride ?? ""}
+                onChange={(x12VersionOverride) =>
+                  setProfileDraft((current) => ({ ...current, x12VersionOverride }))
+                }
+              />
+              <InputBlock
+                label="Group"
+                value={profileDraft.functionalGroupId}
+                onChange={(functionalGroupId) =>
+                  setProfileDraft((current) => ({ ...current, functionalGroupId }))
+                }
+              />
+            </div>
+            <ControlledSelectField
+              label="Status"
+              value={profileDraft.status}
+              onValueChange={(status) =>
+                setProfileDraft((current) => ({
+                  ...current,
+                  status: status as UpsertEDIPartnerDocumentProfileRequest["status"],
+                }))
+              }
+              options={documentStatusOptions}
+              clearable={false}
+            />
+            <ControlledSelectField
+              label="Validation"
+              value={profileDraft.validationMode}
+              onValueChange={(validationMode) =>
+                setProfileDraft((current) => ({
+                  ...current,
+                  validationMode:
+                    validationMode as UpsertEDIPartnerDocumentProfileRequest["validationMode"],
+                }))
+              }
+              options={validationModeOptions}
+            />
+            <EnvelopeEditor
+              envelope={profileDraft.envelope}
+              onChange={(envelope) => setProfileDraft((current) => ({ ...current, envelope }))}
+            />
+            <AckEditor profile={profileDraft} onChange={setProfileDraft} />
+            <TextareaBlock
+              label="Partner Settings"
+              value={rawPartnerSettings}
+              onChange={setRawPartnerSettings}
+            />
+            <Button
+              type="button"
+              onClick={() =>
+                saveProfileMutation.mutate({
+                  profileId,
+                  request: {
+                    ...profileDraft,
+                    ediPartnerId: partnerId,
+                    templateId: selectedTemplateId || undefined,
+                    partnerSettings: parseSettings(rawPartnerSettings),
+                  },
+                })
+              }
+              isLoading={saveProfileMutation.isPending}
+              disabled={!partnerId}
+            >
+              <ShieldCheckIcon className="size-4" />
+              Save Profile
+            </Button>
           </div>
-          <ControlledSelectField
-            label="Status"
-            value={profileDraft.status}
-            onValueChange={(status) =>
-              setProfileDraft((current) => ({
-                ...current,
-                status: status as UpsertEDIPartnerDocumentProfileRequest["status"],
-              }))
-            }
-            options={documentStatusOptions}
-            clearable={false}
-          />
-          <ControlledSelectField
-            label="Validation"
-            value={profileDraft.validationMode}
-            onValueChange={(validationMode) =>
-              setProfileDraft((current) => ({
-                ...current,
-                validationMode:
-                  validationMode as UpsertEDIPartnerDocumentProfileRequest["validationMode"],
-              }))
-            }
-            options={validationModeOptions}
-          />
-          <EnvelopeEditor
-            envelope={profileDraft.envelope}
-            onChange={(envelope) => setProfileDraft((current) => ({ ...current, envelope }))}
-          />
-          <AckEditor profile={profileDraft} onChange={setProfileDraft} />
-          <TextareaBlock
-            label="Partner Settings"
-            value={rawPartnerSettings}
-            onChange={setRawPartnerSettings}
-          />
-          <Button
-            type="button"
-            onClick={() =>
-              saveProfileMutation.mutate({
-                profileId,
-                request: {
-                  ...profileDraft,
-                  ediPartnerId: partnerId,
-                  templateId: selectedTemplateId || undefined,
-                  partnerSettings: parseSettings(rawPartnerSettings),
-                },
-              })
-            }
-            isLoading={saveProfileMutation.isPending}
-            disabled={!partnerId}
-          >
-            <ShieldCheckIcon className="size-4" />
-            Save Profile
-          </Button>
-        </div>
+        </ScrollArea>
       </aside>
-      <main className="min-h-0 rounded-md border bg-background">
+      <main className="min-h-0 overflow-hidden rounded-md border bg-background">
         <Tabs
           defaultValue="preview"
           className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0"
         >
           <div className="grid gap-2 border-b px-3 py-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <TabsList variant="underline" className="grid w-fit grid-cols-2 border-b border-border">
+              <TabsList
+                variant="underline"
+                className="grid w-fit grid-cols-2 border-b border-border"
+              >
                 <TabsTrigger value="preview">
                   <FileCode2Icon data-icon="inline-start" />
                   Preview
@@ -492,10 +498,10 @@ export function DocumentPreviewArchiveTab() {
               </div>
             </div>
           </div>
-          <TabsContent value="preview" className="min-h-0">
+          <TabsContent value="preview" className="m-0 min-h-0 overflow-hidden">
             <PreviewPane preview={previewMutation.data} isLoading={previewMutation.isPending} />
           </TabsContent>
-          <TabsContent value="archive" className="min-h-0">
+          <TabsContent value="archive" className="m-0 min-h-0 overflow-hidden">
             <MessageArchive
               messages={messagesQuery.data?.results ?? []}
               isLoading={messagesQuery.isLoading}
@@ -588,7 +594,7 @@ function MessageArchive({
   return (
     <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)]">
       <div className="grid grid-cols-1 gap-2 border-b p-3 md:grid-cols-2 xl:grid-cols-[repeat(4,minmax(140px,1fr))_minmax(220px,1.4fr)]">
-        <EDIPartnerAutocompleteField
+        <ControlledEDIPartnerAutocompleteField
           value={filters.partnerId}
           onValueChange={(partnerId) => onFiltersChange({ partnerId })}
           placeholder="All partners"
@@ -633,7 +639,7 @@ function MessageArchive({
           placeholder="YYYY-MM-DD"
         />
       </div>
-      <div className="min-h-0 overflow-auto">
+      <ScrollArea className="min-h-0" viewportClassName="min-h-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -748,7 +754,7 @@ function MessageArchive({
             )}
           </TableBody>
         </Table>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

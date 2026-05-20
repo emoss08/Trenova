@@ -3,10 +3,10 @@ package integration
 type Type string
 
 const (
-	TypeGoogleMaps     = Type("GoogleMaps")
-	TypeSamsara        = Type("Samsara")
-	TypeHERE           = Type("HERE")
-	TypeOpenAI         = Type("OpenAI")
+	TypeGoogleMaps      = Type("GoogleMaps")
+	TypeSamsara         = Type("Samsara")
+	TypeHERE            = Type("HERE")
+	TypeOpenAI          = Type("OpenAI")
 	TypeOpenWeatherMap  = Type("OpenWeatherMap")
 	TypeExchangeRateAPI = Type("ExchangeRateAPI")
 	// TypePCMiler    Type = "PCMiler"

@@ -1,6 +1,7 @@
 package documentuploadjobs
 
 import (
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,10 +28,15 @@ type ReconcileUploadsPayload struct {
 }
 
 type ReconcileUploadsResult struct {
+	temporaljobs.TenantRunResult
 	StaleSessionsProcessed int `json:"staleSessionsProcessed"`
 	FinalizationsStarted   int `json:"finalizationsStarted"`
 	SessionsExpired        int `json:"sessionsExpired"`
 	PreviewRetriesStarted  int `json:"previewRetriesStarted"`
+}
+
+type ListReconcileUploadsTenantsResult struct {
+	Tenants []temporaljobs.TenantWorkItem `json:"tenants"`
 }
 
 type CleanupDocumentStoragePayload struct {

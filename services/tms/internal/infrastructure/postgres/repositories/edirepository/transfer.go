@@ -1,3 +1,4 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package edirepository
 
 import (
@@ -127,7 +128,11 @@ func (r *repository) CreateTransfer(
 	ctx context.Context,
 	entity *edi.EDITransfer,
 ) (*edi.EDITransfer, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -151,7 +156,11 @@ func (r *repository) UpdateTransfer(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(results, "EDITenderTransfer", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EDITenderTransfer",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 

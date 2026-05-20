@@ -150,16 +150,15 @@ func (r *repository) ReplacePages(
 
 func (r *repository) ListPendingExtraction(
 	ctx context.Context,
-	olderThan int64,
-	limit int,
+	req *repositories.ListPendingDocumentExtractionRequest,
 ) ([]*document.Document, error) {
+	limit := req.Limit
 	if limit <= 0 {
 		limit = 100
 	}
 
 	items := make([]*document.Document, 0, limit)
 	docCols := buncolgen.DocumentColumns
-	contentCols := buncolgen.ContentColumns
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
@@ -168,20 +167,10 @@ func (r *repository) ListPendingExtraction(
 			ON dc.document_id = doc.id
 			AND dc.organization_id = doc.organization_id
 			AND dc.business_unit_id = doc.business_unit_id`).
-		Where(docCols.Status.Eq(), document.StatusActive).
-		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(contentCols.DocumentID.IsNull()).
-				WhereOr(contentCols.Status.In(), bun.List([]documentcontent.Status{
-					documentcontent.StatusPending,
-					documentcontent.StatusExtracting,
-				})).
-				WhereOr(docCols.ContentStatus.In(), bun.List([]document.ContentStatus{
-					document.ContentStatusPending,
-					document.ContentStatusExtracting,
-				}))
-		}).
-		Where(docCols.UpdatedAt.Lte(), olderThan).
+		Apply(applyPendingDocumentExtractionFilters).
+		Where(docCols.UpdatedAt.Lte(), req.OlderThan).
+		Where(docCols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(docCols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Order(docCols.UpdatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
@@ -190,6 +179,76 @@ func (r *repository) ListPendingExtraction(
 	}
 
 	return items, nil
+}
+
+func (r *repository) ListPendingExtractionTenants(
+	ctx context.Context,
+	req *repositories.ListPendingDocumentExtractionRequest,
+) ([]pagination.TenantInfo, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	type tenantRow struct {
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+
+	rows := make([]tenantRow, 0, limit)
+	docCols := buncolgen.DocumentColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*document.Document)(nil)).
+		ColumnExpr(docCols.OrganizationID.Qualified()+" AS organization_id").
+		ColumnExpr(docCols.BusinessUnitID.Qualified()+" AS business_unit_id").
+		Join(`LEFT JOIN document_contents AS dc
+			ON dc.document_id = doc.id
+			AND dc.organization_id = doc.organization_id
+			AND dc.business_unit_id = doc.business_unit_id`).
+		Apply(applyPendingDocumentExtractionFilters).
+		Where(docCols.UpdatedAt.Lte(), req.OlderThan).
+		GroupExpr(docCols.OrganizationID.Qualified()).
+		GroupExpr(docCols.BusinessUnitID.Qualified()).
+		Order(docCols.OrganizationID.OrderAsc()).
+		Order(docCols.BusinessUnitID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
+}
+
+func applyPendingDocumentExtractionFilters(q *bun.SelectQuery) *bun.SelectQuery {
+	docCols := buncolgen.DocumentColumns
+	contentCols := buncolgen.ContentColumns
+
+	return q.
+		Where(docCols.Status.Eq(), document.StatusActive).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
+				return orq.
+					Where(contentCols.DocumentID.IsNull()).
+					WhereOr(contentCols.Status.In(), bun.List([]documentcontent.Status{
+						documentcontent.StatusPending,
+						documentcontent.StatusExtracting,
+					})).
+					WhereOr(docCols.ContentStatus.In(), bun.List([]document.ContentStatus{
+						document.ContentStatusPending,
+						document.ContentStatusExtracting,
+					}))
+			})
+		})
 }
 
 func (r *repository) SearchByResource(

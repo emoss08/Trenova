@@ -1,6 +1,9 @@
 package fiscaljobs
 
-import "github.com/emoss08/trenova/shared/pulid"
+import (
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 const (
 	DefaultDaysBeforeYearEnd int = 60
@@ -35,4 +38,10 @@ type OrgTenant struct {
 
 type GetAutoCloseTenantsResult struct {
 	Tenants []OrgTenant `json:"tenants"`
+}
+
+type FiscalTenantRunResult struct {
+	temporaljobs.TenantRunResult
+	Closed  int `json:"closed,omitempty"`
+	Created int `json:"created,omitempty"`
 }

@@ -75,7 +75,11 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
   return (
     <DataTable<EDITransfer>
       name="EDI Transfer"
-      link={direction === "inbound" ? "/edi/transfers/inbound/" : "/edi/transfers/outbound/"}
+      link={
+        direction === "inbound"
+          ? "/edi/transfers/?direction=inbound"
+          : "/edi/transfers/?direction=outbound"
+      }
       detailLink="/edi/transfers/"
       queryKey={
         direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"

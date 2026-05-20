@@ -1,8 +1,10 @@
 package shipmentjobs
 
 import (
+	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -65,6 +67,13 @@ func (s *ShipmentWorkflowTestSuite) TestBulkDuplicateShipmentsWorkflow() {
 }
 
 func (s *ShipmentWorkflowTestSuite) TestAutoDelayShipmentsWorkflow() {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	item := temporaljobs.TenantWorkItem{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Limit:          temporaljobs.DefaultTenantRecordLimit,
+	}
 	expected := &AutoDelayShipmentsResult{
 		ShipmentIDs:  []pulid.ID{pulid.MustNew("shp_")},
 		DelayedCount: 1,
@@ -72,7 +81,16 @@ func (s *ShipmentWorkflowTestSuite) TestAutoDelayShipmentsWorkflow() {
 	}
 
 	var a *Activities
-	s.env.OnActivity(a.AutoDelayShipmentsActivity, mock.Anything).
+	s.env.OnActivity(
+		a.ListAutoDelayShipmentTenantsActivity,
+		mock.Anything,
+		&ListShipmentTenantsPayload{Limit: temporaljobs.DefaultTenantScanLimit},
+	).Return(&ListShipmentTenantsResult{Tenants: []temporaljobs.TenantWorkItem{item}}, nil)
+	s.env.OnActivity(
+		a.AutoDelayTenantShipmentsActivity,
+		mock.Anything,
+		&ShipmentTenantWorkPayload{TenantWorkItem: item},
+	).
 		Return(expected, nil)
 
 	s.env.ExecuteWorkflow(AutoDelayShipmentsWorkflow)
@@ -86,6 +104,13 @@ func (s *ShipmentWorkflowTestSuite) TestAutoDelayShipmentsWorkflow() {
 }
 
 func (s *ShipmentWorkflowTestSuite) TestAutoCancelShipmentsWorkflow() {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	item := temporaljobs.TenantWorkItem{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Limit:          temporaljobs.DefaultTenantRecordLimit,
+	}
 	expected := &AutoCancelShipmentsResult{
 		ShipmentIDs:   []pulid.ID{pulid.MustNew("shp_")},
 		CanceledCount: 1,
@@ -93,7 +118,16 @@ func (s *ShipmentWorkflowTestSuite) TestAutoCancelShipmentsWorkflow() {
 	}
 
 	var a *Activities
-	s.env.OnActivity(a.AutoCancelShipmentsActivity, mock.Anything).
+	s.env.OnActivity(
+		a.ListAutoCancelShipmentTenantsActivity,
+		mock.Anything,
+		&ListShipmentTenantsPayload{Limit: temporaljobs.DefaultTenantScanLimit},
+	).Return(&ListShipmentTenantsResult{Tenants: []temporaljobs.TenantWorkItem{item}}, nil)
+	s.env.OnActivity(
+		a.AutoCancelTenantShipmentsActivity,
+		mock.Anything,
+		&ShipmentTenantWorkPayload{TenantWorkItem: item},
+	).
 		Return(expected, nil)
 
 	s.env.ExecuteWorkflow(AutoCancelShipmentsWorkflow)
@@ -104,6 +138,56 @@ func (s *ShipmentWorkflowTestSuite) TestAutoCancelShipmentsWorkflow() {
 	var result *AutoCancelShipmentsResult
 	s.NoError(s.env.GetWorkflowResult(&result))
 	s.Equal(1, result.CanceledCount)
+}
+
+func (s *ShipmentWorkflowTestSuite) TestAutoDelayShipmentsWorkflow_ContinuesAfterTenantFailure() {
+	first := temporaljobs.TenantWorkItem{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Limit:          temporaljobs.DefaultTenantRecordLimit,
+	}
+	second := temporaljobs.TenantWorkItem{
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Limit:          temporaljobs.DefaultTenantRecordLimit,
+	}
+	shipmentID := pulid.MustNew("shp_")
+
+	var a *Activities
+	s.env.OnActivity(
+		a.ListAutoDelayShipmentTenantsActivity,
+		mock.Anything,
+		&ListShipmentTenantsPayload{Limit: temporaljobs.DefaultTenantScanLimit},
+	).Return(&ListShipmentTenantsResult{
+		Tenants: []temporaljobs.TenantWorkItem{first, second},
+	}, nil)
+	s.env.OnActivity(
+		a.AutoDelayTenantShipmentsActivity,
+		mock.Anything,
+		&ShipmentTenantWorkPayload{TenantWorkItem: first},
+	).Return(nil, errors.New("tenant unavailable"))
+	s.env.OnActivity(
+		a.AutoDelayTenantShipmentsActivity,
+		mock.Anything,
+		&ShipmentTenantWorkPayload{TenantWorkItem: second},
+	).Return(&AutoDelayShipmentsResult{
+		ShipmentIDs:  []pulid.ID{shipmentID},
+		DelayedCount: 1,
+		CompletedAt:  timeutils.NowUnix(),
+	}, nil)
+
+	s.env.ExecuteWorkflow(AutoDelayShipmentsWorkflow)
+
+	s.True(s.env.IsWorkflowCompleted())
+	s.NoError(s.env.GetWorkflowError())
+
+	var result *AutoDelayShipmentsResult
+	s.NoError(s.env.GetWorkflowResult(&result))
+	s.Equal(2, result.TenantsScanned)
+	s.Equal(1, result.TenantsProcessed)
+	s.Equal(1, result.FailureCount)
+	s.Equal(1, result.DelayedCount)
+	s.Equal([]pulid.ID{shipmentID}, result.ShipmentIDs)
 }
 
 func TestShipmentWorkflowTestSuite(t *testing.T) {

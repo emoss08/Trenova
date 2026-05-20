@@ -18,8 +18,9 @@ export function DesignerWorkspace() {
     <Tabs
       value={designerTab}
       onValueChange={(tab) => void setDesignerUrlState({ designerTab: tab as typeof designerTab })}
+      className="grid h-[calc(100vh-11rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden"
     >
-      <TabsList variant="underline" className="w-full border-border border-b justify-start">
+      <TabsList variant="underline" className="w-full justify-start border-b border-border">
         <TabsTrigger value="templates" className="max-w-34">
           <Layers3Icon data-icon="inline-start" />
           Templates
@@ -29,12 +30,12 @@ export function DesignerWorkspace() {
           Document Preview & Archive
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="templates" className="min-h-0">
+      <TabsContent value="templates" className="m-0 min-h-0 overflow-hidden pt-3">
         <Suspense fallback={<DesignerLoadingBlock />}>
           <TemplateDesignerTab />
         </Suspense>
       </TabsContent>
-      <TabsContent value="documents" className="min-h-0">
+      <TabsContent value="documents" className="m-0 min-h-0 overflow-hidden pt-3">
         <Suspense fallback={<DesignerLoadingBlock />}>
           <DocumentPreviewArchiveTab />
         </Suspense>

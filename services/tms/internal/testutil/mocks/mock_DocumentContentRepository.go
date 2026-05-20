@@ -191,8 +191,8 @@ func (_c *MockDocumentContentRepository_ListPagesByDocumentID_Call) RunAndReturn
 }
 
 // ListPendingExtraction provides a mock function for the type MockDocumentContentRepository
-func (_mock *MockDocumentContentRepository) ListPendingExtraction(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error) {
-	ret := _mock.Called(ctx, olderThan, limit)
+func (_mock *MockDocumentContentRepository) ListPendingExtraction(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest) ([]*document.Document, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPendingExtraction")
@@ -200,18 +200,18 @@ func (_mock *MockDocumentContentRepository) ListPendingExtraction(ctx context.Co
 
 	var r0 []*document.Document
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) ([]*document.Document, error)); ok {
-		return returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) ([]*document.Document, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) []*document.Document); ok {
-		r0 = returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) []*document.Document); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*document.Document)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int) error); ok {
-		r1 = returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -225,30 +225,24 @@ type MockDocumentContentRepository_ListPendingExtraction_Call struct {
 
 // ListPendingExtraction is a helper method to define mock.On call
 //   - ctx context.Context
-//   - olderThan int64
-//   - limit int
-func (_e *MockDocumentContentRepository_Expecter) ListPendingExtraction(ctx interface{}, olderThan interface{}, limit interface{}) *MockDocumentContentRepository_ListPendingExtraction_Call {
-	return &MockDocumentContentRepository_ListPendingExtraction_Call{Call: _e.mock.On("ListPendingExtraction", ctx, olderThan, limit)}
+//   - req *repositories.ListPendingDocumentExtractionRequest
+func (_e *MockDocumentContentRepository_Expecter) ListPendingExtraction(ctx interface{}, req interface{}) *MockDocumentContentRepository_ListPendingExtraction_Call {
+	return &MockDocumentContentRepository_ListPendingExtraction_Call{Call: _e.mock.On("ListPendingExtraction", ctx, req)}
 }
 
-func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) Run(run func(ctx context.Context, olderThan int64, limit int)) *MockDocumentContentRepository_ListPendingExtraction_Call {
+func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) Run(run func(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest)) *MockDocumentContentRepository_ListPendingExtraction_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 *repositories.ListPendingDocumentExtractionRequest
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
+			arg1 = args[1].(*repositories.ListPendingDocumentExtractionRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -259,7 +253,75 @@ func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) Return(docum
 	return _c
 }
 
-func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) RunAndReturn(run func(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)) *MockDocumentContentRepository_ListPendingExtraction_Call {
+func (_c *MockDocumentContentRepository_ListPendingExtraction_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest) ([]*document.Document, error)) *MockDocumentContentRepository_ListPendingExtraction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListPendingExtractionTenants provides a mock function for the type MockDocumentContentRepository
+func (_mock *MockDocumentContentRepository) ListPendingExtractionTenants(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPendingExtractionTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListPendingDocumentExtractionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentContentRepository_ListPendingExtractionTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPendingExtractionTenants'
+type MockDocumentContentRepository_ListPendingExtractionTenants_Call struct {
+	*mock.Call
+}
+
+// ListPendingExtractionTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListPendingDocumentExtractionRequest
+func (_e *MockDocumentContentRepository_Expecter) ListPendingExtractionTenants(ctx interface{}, req interface{}) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
+	return &MockDocumentContentRepository_ListPendingExtractionTenants_Call{Call: _e.mock.On("ListPendingExtractionTenants", ctx, req)}
+}
+
+func (_c *MockDocumentContentRepository_ListPendingExtractionTenants_Call) Run(run func(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest)) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListPendingDocumentExtractionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListPendingDocumentExtractionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ListPendingExtractionTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockDocumentContentRepository_ListPendingExtractionTenants_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPendingDocumentExtractionRequest) ([]pagination.TenantInfo, error)) *MockDocumentContentRepository_ListPendingExtractionTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }

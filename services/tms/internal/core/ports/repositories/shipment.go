@@ -234,6 +234,7 @@ func (r *BulkDuplicateShipmentRequest) Validate() *errortypes.MultiError {
 
 type GetDelayedShipmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
 }
 
 func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
@@ -265,6 +266,7 @@ func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
 
 type DelayShipmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
 }
 
 func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
@@ -296,6 +298,7 @@ func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
 
 type GetAutoCancelableShipmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
 }
 
 func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
@@ -327,6 +330,7 @@ func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
 
 type AutoCancelShipmentsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
+	Limit      int                   `json:"limit"`
 }
 
 func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
@@ -516,6 +520,18 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *AutoCancelShipmentsRequest,
 		thresholdDays int8,
+	) ([]*shipment.Shipment, error)
+	ListAutoDelayShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	ListAutoCancelShipmentTenants(ctx context.Context, limit int) ([]pagination.TenantInfo, error)
+	RunAutoDelayShipmentsForTenant(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
+	) ([]*shipment.Shipment, error)
+	RunAutoCancelShipmentsForTenant(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		limit int,
 	) ([]*shipment.Shipment, error)
 	AutoDelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	RunAutoCancelShipments(ctx context.Context) ([]*shipment.Shipment, error)

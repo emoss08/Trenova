@@ -1,14 +1,21 @@
+import { FormCreateModal } from "@/components/form-create-modal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createTemplateDraftSchema, type EDITemplate } from "@/types/edi";
-import { FileCode2Icon, SearchIcon } from "lucide-react";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  useCreateEDITemplateMutation,
-  useInvalidateEDITemplateQueries,
-} from "../hooks/use-edi-template-mutations";
-import CreateTemplateForm from "../templates/create-template-form";
+  useCurrentTemplateInvalidation,
+  useTemplateDesignerUrlActions,
+} from "@/hooks/use-template-designer-state";
+import { useTemplateDesignerStore } from "@/stores/template-designer-store";
+import type { EDITemplate } from "@/types/edi";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FileCode2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
+import { CreateTemplateForm, createTemplateFormSchema } from "../templates/create-template-form";
 import TemplateList from "../templates/template-list";
 import {
   documentDirectionOptions,
@@ -18,35 +25,12 @@ import {
 import { ControlledSelectField } from "./designer-fields";
 import { PanelHeader } from "./designer-shared";
 
-type TemplateDesignerAsideProps = {
-  templates: EDITemplate[];
-  selectedTemplateId: string;
-  selectedVersionId: string;
-  onSelectTemplate: (templateId: string) => void;
-  onTemplateCreated: (templateId: string, versionId: string) => void;
-};
-
-function createDefaultTemplateDraft() {
-  return createTemplateDraftSchema.parse({
-    documentTypeId: "",
-    name: "",
-    description: "",
-    x12Version: "004010",
-    functionalGroupId: "SM",
-    notes: "",
-  });
-}
-
-export default function TemplateDesignerAside({
-  templates,
-  selectedTemplateId,
-  selectedVersionId,
-  onSelectTemplate,
-  onTemplateCreated,
-}: TemplateDesignerAsideProps) {
+export default function TemplateDesignerAside() {
   const [templateUrlState, setTemplateUrlState] = useTemplateDesignerUrlState();
   const { templateSearch, templateStatus, templateTransactionSet, templateDirection } =
     templateUrlState;
+  const { patchTemplateUrlState } = useTemplateDesignerUrlActions();
+  const resetDraftState = useTemplateDesignerStore((state) => state.resetDraftState);
 
   const setTemplateSearch = useCallback(
     (value: string) => void setTemplateUrlState({ templateSearch: value }),
@@ -64,85 +48,183 @@ export default function TemplateDesignerAside({
     (value: string) => void setTemplateUrlState({ templateDirection: value }),
     [setTemplateUrlState],
   );
-  const [newTemplate, setNewTemplate] = useState(createDefaultTemplateDraft);
-
-  const invalidateTemplateQueries = useInvalidateEDITemplateQueries(
-    selectedTemplateId,
-    selectedVersionId,
+  const resetTemplateFilters = useCallback(
+    () =>
+      void setTemplateUrlState({
+        templateStatus: "",
+        templateTransactionSet: "",
+        templateDirection: "",
+      }),
+    [setTemplateUrlState],
   );
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const activeFilterCount = [templateStatus, templateTransactionSet, templateDirection].filter(
+    Boolean,
+  ).length;
 
-  const createTemplateMutation = useCreateEDITemplateMutation({
-    onSuccess: async (template) => {
-      toast.success("EDI template created");
-      onTemplateCreated(template.id, template.versions[0]?.id ?? template.activeVersion?.id ?? "");
-      setNewTemplate(createDefaultTemplateDraft());
-      await invalidateTemplateQueries();
+  const invalidateTemplateQueries = useCurrentTemplateInvalidation();
+  const createTemplateForm = useForm({
+    resolver: zodResolver(createTemplateFormSchema),
+    defaultValues: {
+      documentTypeId: "",
+      name: "",
+      description: "",
+      direction: "Outbound",
+      standard: "X12",
+      transactionSet: "204",
+      x12Version: "004010",
+      functionalGroupId: "SM",
+      notes: "",
     },
-    onError: () => toast.error("Failed to create EDI template"),
   });
 
+  const handleCreateDialogOpenChange = (open: boolean) => setIsCreateDialogOpen(open);
+
+  const handleTemplateCreated = async (template: EDITemplate) => {
+    const versionId = template.versions[0]?.id ?? template.activeVersion?.id ?? "";
+    resetDraftState();
+    patchTemplateUrlState({
+      templateId: template.id,
+      versionId,
+      segmentId: "",
+      elementPosition: 0,
+    });
+    await invalidateTemplateQueries();
+  };
+
   return (
-    <aside className="flex min-h-0 flex-col rounded-md border bg-background">
-      <PanelHeader icon={<FileCode2Icon />} title="Templates" />
-      <div className="space-y-3 border-b p-3">
-        <div className="flex items-center gap-2">
-          <SearchIcon className="size-4 text-muted-foreground" />
+    <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border bg-background">
+      <PanelHeader
+        icon={<FileCode2Icon />}
+        title="Templates"
+        actions={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setIsCreateDialogOpen(true)}
+          >
+            <PlusIcon className="size-3.5" />
+            New
+          </Button>
+        }
+      />
+      <div className="border-b p-3">
+        <div className="flex w-full items-center gap-2">
           <Input
             value={templateSearch}
             onChange={(event) => setTemplateSearch(event.target.value)}
             placeholder="Search templates"
-            className="h-8"
+            inputContainerClassName="w-full"
+            leftElement={<SearchIcon className="size-3 text-muted-foreground" />}
+          />
+          <TemplateFilterPopover
+            activeFilterCount={activeFilterCount}
+            templateStatus={templateStatus}
+            templateTransactionSet={templateTransactionSet}
+            templateDirection={templateDirection}
+            onStatusChange={setTemplateStatus}
+            onTransactionSetChange={setTemplateTransactionSet}
+            onDirectionChange={setTemplateDirection}
+            onReset={resetTemplateFilters}
           />
         </div>
-        <ControlledSelectField
-          label="Status"
-          value={templateStatus}
-          onValueChange={setTemplateStatus}
-          options={templateStatusOptions}
-          placeholder="All statuses"
-        />
-        <div className="grid grid-cols-2 gap-2">
+      </div>
+      <ScrollArea className="min-h-0 flex-1" viewportClassName="min-h-0">
+        <TemplateList />
+      </ScrollArea>
+      <FormCreateModal
+        open={isCreateDialogOpen}
+        onOpenChange={handleCreateDialogOpenChange}
+        title="EDI Template"
+        description="Choose a document type and name the EDI template before editing its version details."
+        url="/edi/templates/"
+        queryKey="templates"
+        form={createTemplateForm}
+        formComponent={<CreateTemplateForm />}
+        className="sm:max-w-120"
+        submitText="Create Template"
+        loadingText="Creating..."
+        onSuccess={handleTemplateCreated}
+      />
+    </aside>
+  );
+}
+
+function TemplateFilterPopover({
+  activeFilterCount,
+  templateStatus,
+  templateTransactionSet,
+  templateDirection,
+  onStatusChange,
+  onTransactionSetChange,
+  onDirectionChange,
+  onReset,
+}: {
+  activeFilterCount: number;
+  templateStatus: string;
+  templateTransactionSet: string;
+  templateDirection: string;
+  onStatusChange: (value: string) => void;
+  onTransactionSetChange: (value: string) => void;
+  onDirectionChange: (value: string) => void;
+  onReset: () => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button type="button" variant="outline" className="shrink-0">
+            <FilterIcon className="size-4" />
+            <span className="text-xs">Filter</span>
+            {activeFilterCount > 0 ? (
+              <Badge variant="active" className="ml-0.5 px-1.5 py-0 text-[10px]">
+                {activeFilterCount}
+              </Badge>
+            ) : null}
+          </Button>
+        }
+      />
+      <PopoverContent align="end" className="w-72 p-0">
+        <div className="border-b px-3 py-2">
+          <div className="text-sm font-semibold">Template Filters</div>
+          <div className="text-xs text-muted-foreground">Narrow the template list.</div>
+        </div>
+        <div className="space-y-3 p-3">
+          <ControlledSelectField
+            label="Status"
+            value={templateStatus}
+            onValueChange={onStatusChange}
+            options={templateStatusOptions}
+            placeholder="All statuses"
+          />
           <ControlledSelectField
             label="Set"
             value={templateTransactionSet}
-            onValueChange={setTemplateTransactionSet}
+            onValueChange={onTransactionSetChange}
             options={transactionSetOptions}
             placeholder="All sets"
           />
           <ControlledSelectField
             label="Direction"
             value={templateDirection}
-            onValueChange={setTemplateDirection}
+            onValueChange={onDirectionChange}
             options={documentDirectionOptions}
             placeholder="All"
           />
         </div>
-      </div>
-      <TemplateList
-        templates={templates}
-        selectedTemplateId={selectedTemplateId}
-        onSelect={(templateId) => {
-          onSelectTemplate(templateId);
-        }}
-      />
-      <CreateTemplateForm
-        draft={newTemplate}
-        onChange={setNewTemplate}
-        onCreate={() =>
-          createTemplateMutation.mutate({
-            documentTypeId: newTemplate.documentTypeId,
-            name: newTemplate.name,
-            description: newTemplate.description,
-            direction: newTemplate.direction,
-            standard: "X12",
-            transactionSet: newTemplate.transactionSet,
-            x12Version: newTemplate.x12Version,
-            functionalGroupId: newTemplate.functionalGroupId,
-            notes: newTemplate.notes,
-          })
-        }
-        isLoading={createTemplateMutation.isPending}
-      />
-    </aside>
+        <div className="flex justify-end border-t p-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onReset}
+            disabled={activeFilterCount === 0}
+          >
+            Reset
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

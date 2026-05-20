@@ -59,8 +59,8 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-	partnerRepo.EXPECT().
+	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo.EXPECT().
 		GetMappingItems(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingItemsRequest) bool {
 			return req.PartnerID == partnerID &&
 				req.TenantInfo.OrgID == orgID &&
@@ -68,7 +68,9 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 		})).
 		Return([]*edi.EDIMappingProfileItem{}, nil)
 
-	service := &Service{partnerRepo: partnerRepo}
+	service := &Service{
+		mappingProfileRepo: mappingProfileRepo,
+	}
 	preview, err := service.buildMappingPreview(
 		t.Context(),
 		&edi.EDIPartner{
@@ -94,7 +96,6 @@ func TestBuildMappingPreviewUsesTenderSourceLabelsForUnresolvedRows(t *testing.T
 				edi.MappingEntityTypeLocation: {locationID},
 			},
 		},
-		nil,
 	)
 
 	require.NoError(t, err)
@@ -110,8 +111,8 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
-	partnerRepo.EXPECT().
+	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo.EXPECT().
 		GetMappingItems(mock.Anything, mock.Anything).
 		Return([]*edi.EDIMappingProfileItem{
 			{
@@ -123,7 +124,9 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 			},
 		}, nil)
 
-	service := &Service{partnerRepo: partnerRepo}
+	service := &Service{
+		mappingProfileRepo: mappingProfileRepo,
+	}
 	preview, err := service.buildMappingPreview(
 		t.Context(),
 		&edi.EDIPartner{
@@ -138,7 +141,6 @@ func TestBuildMappingPreviewKeepsSavedTargetLabelForResolvedRows(t *testing.T) {
 				edi.MappingEntityTypeCustomer: {sourceID},
 			},
 		},
-		nil,
 	)
 
 	require.NoError(t, err)

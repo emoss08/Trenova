@@ -225,6 +225,7 @@ var readOnlyOps = []OperationDefinition{
 	{Operation: OpRead, DisplayName: "Read", Description: "View records"},
 }
 
+//nolint:funlen // Permission registry setup is intentionally grouped by administration resource.
 func (r *Registry) registerAdministrationResources() {
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceOrganization.String(),

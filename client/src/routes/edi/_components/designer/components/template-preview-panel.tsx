@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { DocumentSourceControls } from "@/components/edi/document-source-controls";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ControlledEDIDocumentProfileAutocompleteField } from "@/components/autocomplete-fields";
 import {
   buildEDIDocumentResolutionRequest,
   hasEDIDocumentSourceValue,
@@ -12,7 +14,6 @@ import { RefreshCwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { usePreviewEDIDocumentMutation } from "../hooks/use-edi-document-mutations";
-import { EDIDocumentProfileAutocompleteField } from "./designer-fields";
 import { PreviewPane, parsePayload } from "./designer-shared";
 
 export default function TemplatePreviewPanel() {
@@ -35,43 +36,45 @@ export default function TemplatePreviewPanel() {
   };
 
   return (
-    <div className="grid h-full grid-cols-[360px_minmax(0,1fr)]">
-      <div className="space-y-3 border-r p-3">
-        <EDIDocumentProfileAutocompleteField
-          value={profileId}
-          onValueChange={(nextProfileId) => {
-            setProfileId(nextProfileId);
-            setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
-          }}
-          onOptionChange={setSelectedProfile}
-        />
-        <DocumentSourceControls
-          transactionSet={transactionSet}
-          values={sourceValues}
-          onChange={setSourceValue}
-        />
-        <Button
-          type="button"
-          onClick={() => {
-            const payloadResult = parsePayload(sourceValues.payload ?? "");
-            if (!payloadResult.ok) return;
-            previewMutation.mutate(
-              buildEDIDocumentResolutionRequest({
-                partnerDocumentProfileId: profileId || undefined,
-                sourceValues,
-                transactionSet,
-                direction,
-                payload: payloadResult.payload,
-              }),
-            );
-          }}
-          isLoading={previewMutation.isPending}
-          disabled={!canPreview}
-        >
-          <RefreshCwIcon className="size-4" />
-          Preview
-        </Button>
-      </div>
+    <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] overflow-hidden">
+      <ScrollArea className="min-h-0 border-r" viewportClassName="min-h-0">
+        <div className="space-y-3 p-3">
+          <ControlledEDIDocumentProfileAutocompleteField
+            value={profileId}
+            onValueChange={(nextProfileId) => {
+              setProfileId(nextProfileId);
+              setSelectedProfile((current) => (current?.id === nextProfileId ? current : null));
+            }}
+            onOptionChange={setSelectedProfile}
+          />
+          <DocumentSourceControls
+            transactionSet={transactionSet}
+            values={sourceValues}
+            onChange={setSourceValue}
+          />
+          <Button
+            type="button"
+            onClick={() => {
+              const payloadResult = parsePayload(sourceValues.payload ?? "");
+              if (!payloadResult.ok) return;
+              previewMutation.mutate(
+                buildEDIDocumentResolutionRequest({
+                  partnerDocumentProfileId: profileId || undefined,
+                  sourceValues,
+                  transactionSet,
+                  direction,
+                  payload: payloadResult.payload,
+                }),
+              );
+            }}
+            isLoading={previewMutation.isPending}
+            disabled={!canPreview}
+          >
+            <RefreshCwIcon className="size-4" />
+            Preview
+          </Button>
+        </div>
+      </ScrollArea>
       <PreviewPane preview={previewMutation.data} isLoading={previewMutation.isPending} />
     </div>
   );

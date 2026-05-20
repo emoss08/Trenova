@@ -72,7 +72,6 @@ func TestSearchPartnerSettingFields_AppliesSchemaSearchAndRequiredFilters(t *tes
 
 	bunDB := bun.NewDB(db, pgdialect.New())
 	t.Cleanup(func() {
-		require.NoError(t, bunDB.Close())
 		require.NoError(t, sqlMock.ExpectationsWereMet())
 	})
 
@@ -118,9 +117,6 @@ func TestSearchPartnerSettingFields_AppliesSchemaSearchAndRequiredFilters(t *tes
 			10,
 			edi.PartnerSettingStatusActive,
 		))
-	sqlMock.ExpectClose()
-	sqlMock.ExpectClose()
-
 	result, err := repo.SearchPartnerSettingFields(
 		t.Context(),
 		&repositories.ListEDIPartnerSettingFieldsRequest{

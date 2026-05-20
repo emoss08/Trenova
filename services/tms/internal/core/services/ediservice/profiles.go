@@ -73,7 +73,14 @@ func (s *Service) CreateCommunicationProfile(
 		return nil, mapEDICommunicationProfileConstraint(err)
 	}
 
-	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI communication profile created")
+	s.logAction(
+		created,
+		actor,
+		permission.OpCreate,
+		nil,
+		created,
+		"EDI communication profile created",
+	)
 	return profileWithSecretState(created), nil
 }
 
@@ -107,7 +114,14 @@ func (s *Service) UpdateCommunicationProfile(
 		return nil, mapEDICommunicationProfileConstraint(err)
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI communication profile updated")
+	s.logAction(
+		updated,
+		actor,
+		permission.OpUpdate,
+		&original,
+		updated,
+		"EDI communication profile updated",
+	)
 	return profileWithSecretState(updated), nil
 }
 

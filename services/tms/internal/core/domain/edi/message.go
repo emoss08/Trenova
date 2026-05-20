@@ -11,33 +11,33 @@ import (
 type EDIMessage struct {
 	bun.BaseModel `json:"-" bun:"table:edi_messages,alias:emsg"`
 
-	ID                       pulid.ID          `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID           pulid.ID          `json:"businessUnitId"            bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID          `json:"organizationId"            bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EDIPartnerID             pulid.ID          `json:"ediPartnerId"              bun:"edi_partner_id,type:VARCHAR(100),notnull"`
-	DocumentTypeID           pulid.ID          `json:"documentTypeId"            bun:"document_type_id,type:VARCHAR(100),notnull"`
-	PartnerDocumentProfileID pulid.ID          `json:"partnerDocumentProfileId"  bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
-	TemplateID               pulid.ID          `json:"templateId"                bun:"template_id,type:VARCHAR(100),notnull"`
-	TemplateVersionID        pulid.ID          `json:"templateVersionId"         bun:"template_version_id,type:VARCHAR(100),notnull"`
-	ShipmentID               pulid.ID          `json:"shipmentId"                bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	TransferID               pulid.ID          `json:"transferId"                bun:"transfer_id,type:VARCHAR(100),nullzero"`
-	Direction                DocumentDirection `json:"direction"             bun:"direction,type:edi_document_direction_enum,notnull"`
-	Standard                 EDIStandard       `json:"standard"                  bun:"standard,type:edi_standard_enum,notnull"`
-	TransactionSet           TransactionSet    `json:"transactionSet"            bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
-	X12Version               string            `json:"x12Version"                bun:"x12_version,type:VARCHAR(20),notnull"`
-	Status                   MessageStatus     `json:"status"                    bun:"status,type:edi_message_status_enum,notnull"`
-	ValidationMode           ValidationMode    `json:"validationMode"            bun:"validation_mode,type:edi_validation_mode_enum,notnull"`
-	InterchangeControlNumber string            `json:"interchangeControlNumber"  bun:"interchange_control_number,type:VARCHAR(20),notnull"`
-	GroupControlNumber       string            `json:"groupControlNumber"        bun:"group_control_number,type:VARCHAR(20),notnull"`
-	TransactionControlNumber string            `json:"transactionControlNumber"  bun:"transaction_control_number,type:VARCHAR(20),notnull"`
-	SegmentCount             int64             `json:"segmentCount"              bun:"segment_count,type:BIGINT,notnull"`
-	RawX12                   string            `json:"rawX12"                    bun:"raw_x12,type:TEXT,notnull"`
-	PayloadSnapshot          DocumentPayload   `json:"payloadSnapshot"        bun:"payload_snapshot,type:JSONB,notnull"`
-	GeneratedByID            pulid.ID          `json:"generatedById"             bun:"generated_by_id,type:VARCHAR(100),nullzero"`
-	GeneratedAt              int64             `json:"generatedAt"               bun:"generated_at,type:BIGINT,notnull"`
-	Version                  int64             `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt                int64             `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64             `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                       pulid.ID          `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID           pulid.ID          `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID           pulid.ID          `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	EDIPartnerID             pulid.ID          `json:"ediPartnerId"             bun:"edi_partner_id,type:VARCHAR(100),notnull"`
+	DocumentTypeID           pulid.ID          `json:"documentTypeId"           bun:"document_type_id,type:VARCHAR(100),notnull"`
+	PartnerDocumentProfileID pulid.ID          `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
+	TemplateID               pulid.ID          `json:"templateId"               bun:"template_id,type:VARCHAR(100),notnull"`
+	TemplateVersionID        pulid.ID          `json:"templateVersionId"        bun:"template_version_id,type:VARCHAR(100),notnull"`
+	ShipmentID               pulid.ID          `json:"shipmentId"               bun:"shipment_id,type:VARCHAR(100),nullzero"`
+	TransferID               pulid.ID          `json:"transferId"               bun:"transfer_id,type:VARCHAR(100),nullzero"`
+	Direction                DocumentDirection `json:"direction"                bun:"direction,type:edi_document_direction_enum,notnull"`
+	Standard                 EDIStandard       `json:"standard"                 bun:"standard,type:edi_standard_enum,notnull"`
+	TransactionSet           TransactionSet    `json:"transactionSet"           bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
+	X12Version               string            `json:"x12Version"               bun:"x12_version,type:VARCHAR(20),notnull"`
+	Status                   MessageStatus     `json:"status"                   bun:"status,type:edi_message_status_enum,notnull"`
+	ValidationMode           ValidationMode    `json:"validationMode"           bun:"validation_mode,type:edi_validation_mode_enum,notnull"`
+	InterchangeControlNumber string            `json:"interchangeControlNumber" bun:"interchange_control_number,type:VARCHAR(20),notnull"`
+	GroupControlNumber       string            `json:"groupControlNumber"       bun:"group_control_number,type:VARCHAR(20),notnull"`
+	TransactionControlNumber string            `json:"transactionControlNumber" bun:"transaction_control_number,type:VARCHAR(20),notnull"`
+	SegmentCount             int64             `json:"segmentCount"             bun:"segment_count,type:BIGINT,notnull"`
+	RawX12                   string            `json:"rawX12"                   bun:"raw_x12,type:TEXT,notnull"`
+	PayloadSnapshot          DocumentPayload   `json:"payloadSnapshot"          bun:"payload_snapshot,type:JSONB,notnull"`
+	GeneratedByID            pulid.ID          `json:"generatedById"            bun:"generated_by_id,type:VARCHAR(100),nullzero"`
+	GeneratedAt              int64             `json:"generatedAt"              bun:"generated_at,type:BIGINT,notnull"`
+	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt                int64             `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                int64             `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	DiagnosticCount int64 `json:"diagnosticCount" bun:"diagnostic_count,scanonly"`
 
@@ -69,18 +69,18 @@ func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error
 type EDIMessageValidationError struct {
 	bun.BaseModel `json:"-" bun:"table:edi_message_validation_errors,alias:emve"`
 
-	ID              pulid.ID           `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID           `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	MessageID       pulid.ID           `json:"messageId"      bun:"message_id,type:VARCHAR(100),notnull"`
-	Severity        ValidationSeverity `json:"severity"       bun:"severity,type:edi_validation_severity_enum,notnull"`
-	Code            string             `json:"code"           bun:"code,type:VARCHAR(100),notnull"`
-	SegmentID       string             `json:"segmentId"      bun:"segment_id,type:VARCHAR(10),nullzero"`
+	ID              pulid.ID           `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID  pulid.ID           `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID  pulid.ID           `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	MessageID       pulid.ID           `json:"messageId"       bun:"message_id,type:VARCHAR(100),notnull"`
+	Severity        ValidationSeverity `json:"severity"        bun:"severity,type:edi_validation_severity_enum,notnull"`
+	Code            string             `json:"code"            bun:"code,type:VARCHAR(100),notnull"`
+	SegmentID       string             `json:"segmentId"       bun:"segment_id,type:VARCHAR(10),nullzero"`
 	ElementPosition int                `json:"elementPosition" bun:"element_position,type:INTEGER,notnull,default:0"`
-	Path            string             `json:"path"           bun:"path,type:TEXT,nullzero"`
-	Message         string             `json:"message"        bun:"message,type:TEXT,notnull"`
-	SuggestedFix    string             `json:"suggestedFix"   bun:"suggested_fix,type:TEXT,nullzero"`
-	CreatedAt       int64              `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Path            string             `json:"path"            bun:"path,type:TEXT,nullzero"`
+	Message         string             `json:"message"         bun:"message,type:TEXT,notnull"`
+	SuggestedFix    string             `json:"suggestedFix"    bun:"suggested_fix,type:TEXT,nullzero"`
+	CreatedAt       int64              `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
 func (e *EDIMessageValidationError) BeforeAppendModel(_ context.Context, query bun.Query) error {

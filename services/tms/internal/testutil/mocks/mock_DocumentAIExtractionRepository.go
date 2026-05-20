@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/documentaiextraction"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -108,8 +109,8 @@ func (_c *MockDocumentAIExtractionRepository_GetByDocumentExtractedAt_Call) RunA
 }
 
 // ListPollable provides a mock function for the type MockDocumentAIExtractionRepository
-func (_mock *MockDocumentAIExtractionRepository) ListPollable(ctx context.Context, olderThan int64, limit int) ([]*documentaiextraction.Extraction, error) {
-	ret := _mock.Called(ctx, olderThan, limit)
+func (_mock *MockDocumentAIExtractionRepository) ListPollable(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest) ([]*documentaiextraction.Extraction, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPollable")
@@ -117,18 +118,18 @@ func (_mock *MockDocumentAIExtractionRepository) ListPollable(ctx context.Contex
 
 	var r0 []*documentaiextraction.Extraction
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) ([]*documentaiextraction.Extraction, error)); ok {
-		return returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) ([]*documentaiextraction.Extraction, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, int64, int) []*documentaiextraction.Extraction); ok {
-		r0 = returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) []*documentaiextraction.Extraction); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*documentaiextraction.Extraction)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, int64, int) error); ok {
-		r1 = returnFunc(ctx, olderThan, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -142,30 +143,24 @@ type MockDocumentAIExtractionRepository_ListPollable_Call struct {
 
 // ListPollable is a helper method to define mock.On call
 //   - ctx context.Context
-//   - olderThan int64
-//   - limit int
-func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollable(ctx interface{}, olderThan interface{}, limit interface{}) *MockDocumentAIExtractionRepository_ListPollable_Call {
-	return &MockDocumentAIExtractionRepository_ListPollable_Call{Call: _e.mock.On("ListPollable", ctx, olderThan, limit)}
+//   - req *repositories.ListPollableDocumentAIExtractionRequest
+func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollable(ctx interface{}, req interface{}) *MockDocumentAIExtractionRepository_ListPollable_Call {
+	return &MockDocumentAIExtractionRepository_ListPollable_Call{Call: _e.mock.On("ListPollable", ctx, req)}
 }
 
-func (_c *MockDocumentAIExtractionRepository_ListPollable_Call) Run(run func(ctx context.Context, olderThan int64, limit int)) *MockDocumentAIExtractionRepository_ListPollable_Call {
+func (_c *MockDocumentAIExtractionRepository_ListPollable_Call) Run(run func(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest)) *MockDocumentAIExtractionRepository_ListPollable_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 int64
+		var arg1 *repositories.ListPollableDocumentAIExtractionRequest
 		if args[1] != nil {
-			arg1 = args[1].(int64)
-		}
-		var arg2 int
-		if args[2] != nil {
-			arg2 = args[2].(int)
+			arg1 = args[1].(*repositories.ListPollableDocumentAIExtractionRequest)
 		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -176,7 +171,75 @@ func (_c *MockDocumentAIExtractionRepository_ListPollable_Call) Return(extractio
 	return _c
 }
 
-func (_c *MockDocumentAIExtractionRepository_ListPollable_Call) RunAndReturn(run func(ctx context.Context, olderThan int64, limit int) ([]*documentaiextraction.Extraction, error)) *MockDocumentAIExtractionRepository_ListPollable_Call {
+func (_c *MockDocumentAIExtractionRepository_ListPollable_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest) ([]*documentaiextraction.Extraction, error)) *MockDocumentAIExtractionRepository_ListPollable_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListPollableTenants provides a mock function for the type MockDocumentAIExtractionRepository
+func (_mock *MockDocumentAIExtractionRepository) ListPollableTenants(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListPollableTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListPollableDocumentAIExtractionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDocumentAIExtractionRepository_ListPollableTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPollableTenants'
+type MockDocumentAIExtractionRepository_ListPollableTenants_Call struct {
+	*mock.Call
+}
+
+// ListPollableTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListPollableDocumentAIExtractionRequest
+func (_e *MockDocumentAIExtractionRepository_Expecter) ListPollableTenants(ctx interface{}, req interface{}) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
+	return &MockDocumentAIExtractionRepository_ListPollableTenants_Call{Call: _e.mock.On("ListPollableTenants", ctx, req)}
+}
+
+func (_c *MockDocumentAIExtractionRepository_ListPollableTenants_Call) Run(run func(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest)) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListPollableDocumentAIExtractionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListPollableDocumentAIExtractionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentAIExtractionRepository_ListPollableTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockDocumentAIExtractionRepository_ListPollableTenants_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPollableDocumentAIExtractionRequest) ([]pagination.TenantInfo, error)) *MockDocumentAIExtractionRepository_ListPollableTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }

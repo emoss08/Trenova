@@ -40,9 +40,16 @@ func setupEDIHandler(
 		ErrorHandler:     errorHandler,
 	})
 	params := ediservice.Params{
-		Logger:       logger,
-		DocumentRepo: repo,
-		Validator:    ediservice.NewValidator(),
+		Logger:              logger,
+		DocumentTypeRepo:    repo,
+		SourceContextRepo:   repo,
+		PartnerSettingRepo:  repo,
+		TemplateRepo:        repo,
+		DocumentProfileRepo: repo,
+		ControlNumberRepo:   repo,
+		MessageRepo:         repo,
+		TestCaseRepo:        repo,
+		Validator:           ediservice.NewValidator(),
 	}
 	for _, apply := range applyParams {
 		apply(&params)
@@ -134,12 +141,12 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 
 	handler := setupEDIHandler(t, repo)
 
-	runEDIRequest(t, handler, http.MethodGet, "/api/v1/edi/partner-settings/schemas/", nil, nil, http.StatusOK)
+	runEDIRequest(t, handler, http.MethodGet, "/api/v1/edi/catalog/partner-settings/schemas/", nil, nil, http.StatusOK)
 	runEDIRequest(
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/partner-settings/schemas/"+schemaID.String()+"/",
+		"/api/v1/edi/catalog/partner-settings/schemas/"+schemaID.String()+"/",
 		nil,
 		nil,
 		http.StatusOK,
@@ -148,7 +155,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/partner-settings/schemas/"+schemaID.String()+"/fields/",
+		"/api/v1/edi/catalog/partner-settings/schemas/"+schemaID.String()+"/fields/",
 		nil,
 		nil,
 		http.StatusOK,
@@ -157,7 +164,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/partner-settings/fields/",
+		"/api/v1/edi/catalog/partner-settings/fields/",
 		map[string]string{"query": "referenceQualifiers", "pathPrefix": "carrier."},
 		nil,
 		http.StatusOK,
@@ -166,7 +173,7 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/partner-settings/fields/",
+		"/api/v1/edi/catalog/partner-settings/fields/",
 		map[string]string{"query": "contact"},
 		nil,
 		http.StatusOK,
@@ -207,7 +214,7 @@ func TestEDIHandler_ValidatePartnerSettings(t *testing.T) {
 		t,
 		handler,
 		http.MethodPost,
-		"/api/v1/edi/partner-settings/validate/",
+		"/api/v1/edi/catalog/partner-settings/validate/",
 		nil,
 		map[string]any{"settings": map[string]any{}},
 		http.StatusOK,
@@ -328,7 +335,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/document-types/select-options/",
+		"/api/v1/edi/catalog/document-types/select-options/",
 		map[string]string{"query": "204", "transactionSet": "204", "direction": "Outbound"},
 		nil,
 		http.StatusOK,
@@ -360,7 +367,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/source-context/fields/select-options/",
+		"/api/v1/edi/catalog/source-context/fields/select-options/",
 		map[string]string{"query": "bol", "status": "Active", "transactionSet": "204"},
 		nil,
 		http.StatusOK,
@@ -369,7 +376,7 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/partner-settings/fields/select-options/",
+		"/api/v1/edi/catalog/partner-settings/fields/select-options/",
 		map[string]string{"query": "receiver", "status": "Active", "transactionSet": "204"},
 		nil,
 		http.StatusOK,
@@ -431,6 +438,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 	repo := mocks.NewMockEDIDocumentRepository(t)
 	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
 	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
+	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
 
 	profileRepo.EXPECT().
 		SelectProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDICommunicationProfileSelectOptionsRequest) bool {
@@ -450,7 +458,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 			Total: 1,
 		}, nil).
 		Once()
-	partnerRepo.EXPECT().
+	mappingProfileRepo.EXPECT().
 		SelectMappingProfileOptions(mock.Anything, mock.MatchedBy(func(req *repositories.EDIMappingProfileSelectOptionsRequest) bool {
 			return req.SelectQueryRequest.Query == "carrier" && req.PartnerID == partnerID
 		})).
@@ -467,6 +475,7 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
 		params.ProfileRepo = profileRepo
 		params.PartnerRepo = partnerRepo
+		params.MappingProfileRepo = mappingProfileRepo
 	})
 
 	runEDIRequest(
@@ -491,6 +500,57 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 		map[string]string{"query": "carrier", "partnerId": partnerID.String()},
 		nil,
 		http.StatusOK,
+	)
+}
+
+func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockEDIDocumentRepository(t)
+	transferRepo := mocks.NewMockEDILoadTenderTransferRepository(t)
+	transferRepo.EXPECT().
+		ListInbound(mock.Anything, mock.MatchedBy(func(req *repositories.ListEDITransfersRequest) bool {
+			return req.Filter != nil
+		})).
+		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
+		Once()
+	transferRepo.EXPECT().
+		ListOutbound(mock.Anything, mock.MatchedBy(func(req *repositories.ListEDITransfersRequest) bool {
+			return req.Filter != nil
+		})).
+		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
+		Once()
+
+	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
+		params.TransferRepo = transferRepo
+	})
+
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/transfers/",
+		map[string]string{"direction": "inbound"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/transfers/",
+		map[string]string{"direction": "outbound"},
+		nil,
+		http.StatusOK,
+	)
+	runEDIRequest(
+		t,
+		handler,
+		http.MethodGet,
+		"/api/v1/edi/transfers/",
+		map[string]string{"direction": "sideways"},
+		nil,
+		http.StatusBadRequest,
 	)
 }
 
@@ -568,6 +628,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 	repo := mocks.NewMockEDIDocumentRepository(t)
 	partnerRepo := mocks.NewMockEDIPartnerRepository(t)
 	profileRepo := mocks.NewMockEDICommunicationProfileRepository(t)
+	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
 
 	partnerRepo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req repositories.GetEDIPartnerByIDRequest) bool {
@@ -632,7 +693,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 			Name:   "Carrier SFTP",
 		}, nil).
 		Once()
-	partnerRepo.EXPECT().
+	mappingProfileRepo.EXPECT().
 		GetMappingProfileByID(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingProfileByIDRequest) bool {
 			return req.ProfileID == mappingProfileID && req.TenantInfo.OrgID.IsNotNil() && req.TenantInfo.BuID.IsNotNil()
 		})).
@@ -644,6 +705,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 
 	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {
 		params.PartnerRepo = partnerRepo
+		params.MappingProfileRepo = mappingProfileRepo
 		params.ProfileRepo = profileRepo
 	})
 
@@ -700,7 +762,7 @@ func TestEDIHandler_SelectedValueRoutesReturnAutocompleteFields(t *testing.T) {
 		t,
 		handler,
 		http.MethodGet,
-		"/api/v1/edi/document-types/select-options/"+documentTypeID.String(),
+		"/api/v1/edi/catalog/document-types/select-options/"+documentTypeID.String(),
 		nil,
 		nil,
 		http.StatusOK,

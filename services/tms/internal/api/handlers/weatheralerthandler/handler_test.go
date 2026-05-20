@@ -26,21 +26,32 @@ func (s *weatherAlertServiceStub) PollNWSAlerts(context.Context) error {
 	return nil
 }
 
-func (s *weatherAlertServiceStub) GetActiveAlerts(context.Context, pagination.TenantInfo) (*serviceports.WeatherAlertFeatureCollection, error) {
+func (s *weatherAlertServiceStub) GetActiveAlerts(
+	context.Context,
+	pagination.TenantInfo,
+) (*serviceports.WeatherAlertFeatureCollection, error) {
 	return s.collection, nil
 }
 
-func (s *weatherAlertServiceStub) GetAlertDetail(context.Context, *serviceports.GetWeatherAlertDetailRequest) (*serviceports.WeatherAlertDetail, error) {
+func (s *weatherAlertServiceStub) GetAlertDetail(
+	context.Context,
+	*serviceports.GetWeatherAlertDetailRequest,
+) (*serviceports.WeatherAlertDetail, error) {
 	return s.detail, nil
 }
 
-func setupHandler(t *testing.T, service serviceports.WeatherAlertService) *weatheralerthandler.Handler {
+func setupHandler(
+	t *testing.T,
+	service serviceports.WeatherAlertService,
+) *weatheralerthandler.Handler {
 	t.Helper()
 
 	logger := zap.NewNop()
 	cfg := &config.Config{App: config.AppConfig{Debug: true}}
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{Logger: logger, Config: cfg})
-	return weatheralerthandler.New(weatheralerthandler.Params{Service: service, ErrorHandler: errorHandler})
+	return weatheralerthandler.New(
+		weatheralerthandler.Params{Service: service, ErrorHandler: errorHandler},
+	)
 }
 
 func TestListWeatherAlerts(t *testing.T) {
@@ -67,7 +78,10 @@ func TestListWeatherAlerts(t *testing.T) {
 		},
 	})
 
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/weather-alerts/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/weather-alerts/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
@@ -99,7 +113,10 @@ func TestGetWeatherAlertDetail(t *testing.T) {
 		},
 	})
 
-	ginCtx := sharedtestutil.NewGinTestContext().WithMethod(http.MethodGet).WithPath("/api/v1/weather-alerts/" + alertID.String() + "/").WithDefaultAuthContext()
+	ginCtx := sharedtestutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/weather-alerts/" + alertID.String() + "/").
+		WithDefaultAuthContext()
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 

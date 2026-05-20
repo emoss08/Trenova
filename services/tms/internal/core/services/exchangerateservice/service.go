@@ -2,13 +2,13 @@ package exchangerateservice
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -116,7 +116,11 @@ func (s *Service) getRate(
 		return cached.Rate, nil
 	}
 
-	cfg, apiErr := s.integrationService.GetRuntimeConfig(ctx, tenantInfo, integration.TypeExchangeRateAPI)
+	cfg, apiErr := s.integrationService.GetRuntimeConfig(
+		ctx,
+		tenantInfo,
+		integration.TypeExchangeRateAPI,
+	)
 	if apiErr != nil {
 		return decimal.Zero, apiErr
 	}
@@ -161,7 +165,11 @@ func (s *Service) fetchAndCacheRates(
 	tenantInfo pagination.TenantInfo,
 	baseCurrency string,
 ) (*services.LatestRatesResult, error) {
-	cfg, err := s.integrationService.GetRuntimeConfig(ctx, tenantInfo, integration.TypeExchangeRateAPI)
+	cfg, err := s.integrationService.GetRuntimeConfig(
+		ctx,
+		tenantInfo,
+		integration.TypeExchangeRateAPI,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -169,25 +177,29 @@ func (s *Service) fetchAndCacheRates(
 	apiKey := cfg.Config["apiKey"]
 	url := fmt.Sprintf("https://v6.exchangerate-api.com/v6/%s/latest/%s", apiKey, baseCurrency)
 
-	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if reqErr != nil {
-		return nil, errortypes.NewBusinessError("failed to create exchange rate request").WithInternal(reqErr)
+		return nil, errortypes.NewBusinessError("failed to create exchange rate request").
+			WithInternal(reqErr)
 	}
 
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
-		return nil, errortypes.NewBusinessError("failed to fetch exchange rates").WithInternal(respErr)
+		return nil, errortypes.NewBusinessError("failed to fetch exchange rates").
+			WithInternal(respErr)
 	}
 	defer resp.Body.Close()
 
 	body, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
-		return nil, errortypes.NewBusinessError("failed to read exchange rate response").WithInternal(readErr)
+		return nil, errortypes.NewBusinessError("failed to read exchange rate response").
+			WithInternal(readErr)
 	}
 
 	var apiResp exchangeRateAPIResponse
-	if jsonErr := json.Unmarshal(body, &apiResp); jsonErr != nil {
-		return nil, errortypes.NewBusinessError("failed to parse exchange rate response").WithInternal(jsonErr)
+	if jsonErr := sonic.Unmarshal(body, &apiResp); jsonErr != nil {
+		return nil, errortypes.NewBusinessError("failed to parse exchange rate response").
+			WithInternal(jsonErr)
 	}
 
 	if apiResp.Result != "success" {
@@ -232,27 +244,36 @@ func (s *Service) fetchPairRate(
 	ctx context.Context,
 	apiKey, fromCurrency, toCurrency string,
 ) (decimal.Decimal, error) {
-	url := fmt.Sprintf("https://v6.exchangerate-api.com/v6/%s/pair/%s/%s", apiKey, fromCurrency, toCurrency)
+	url := fmt.Sprintf(
+		"https://v6.exchangerate-api.com/v6/%s/pair/%s/%s",
+		apiKey,
+		fromCurrency,
+		toCurrency,
+	)
 
-	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if reqErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to create pair rate request").WithInternal(reqErr)
+		return decimal.Zero, errortypes.NewBusinessError("failed to create pair rate request").
+			WithInternal(reqErr)
 	}
 
 	resp, respErr := http.DefaultClient.Do(req)
 	if respErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to fetch pair rate").WithInternal(respErr)
+		return decimal.Zero, errortypes.NewBusinessError("failed to fetch pair rate").
+			WithInternal(respErr)
 	}
 	defer resp.Body.Close()
 
 	body, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to read pair rate response").WithInternal(readErr)
+		return decimal.Zero, errortypes.NewBusinessError("failed to read pair rate response").
+			WithInternal(readErr)
 	}
 
 	var apiResp exchangeRateAPIResponse
-	if jsonErr := json.Unmarshal(body, &apiResp); jsonErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to parse pair rate response").WithInternal(jsonErr)
+	if jsonErr := sonic.Unmarshal(body, &apiResp); jsonErr != nil {
+		return decimal.Zero, errortypes.NewBusinessError("failed to parse pair rate response").
+			WithInternal(jsonErr)
 	}
 
 	if apiResp.Result != "success" {
@@ -263,5 +284,3 @@ func (s *Service) fetchPairRate(
 
 	return decimal.NewFromFloat(apiResp.ConversionRate), nil
 }
-
-

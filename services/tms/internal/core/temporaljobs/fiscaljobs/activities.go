@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -57,8 +58,13 @@ func (a *Activities) GetAutoCloseTenantsActivity(
 			ToTemporalError()
 	}
 
-	tenants := make([]OrgTenant, 0, len(controls))
-	for _, ac := range controls {
+	limit := temporaljobs.DefaultTenantScanLimit
+	if len(controls) < limit {
+		limit = len(controls)
+	}
+
+	tenants := make([]OrgTenant, 0, limit)
+	for _, ac := range controls[:limit] {
 		tenants = append(tenants, OrgTenant{
 			OrganizationID: ac.OrganizationID,
 			BusinessUnitID: ac.BusinessUnitID,

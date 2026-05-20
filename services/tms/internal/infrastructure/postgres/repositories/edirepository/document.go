@@ -1,3 +1,4 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package edirepository
 
 import (
@@ -17,6 +18,71 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
+
+func NewDocumentRepository(p Params) repositories.EDIDocumentRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-document-repository"),
+	}
+}
+
+func NewDocumentTypeRepository(p Params) repositories.EDIDocumentTypeRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-document-type-repository"),
+	}
+}
+
+func NewSourceContextRepository(p Params) repositories.EDISourceContextRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-source-context-repository"),
+	}
+}
+
+func NewPartnerSettingRepository(p Params) repositories.EDIPartnerSettingRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-partner-setting-repository"),
+	}
+}
+
+func NewTemplateRepository(p Params) repositories.EDITemplateRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-template-repository"),
+	}
+}
+
+func NewPartnerDocumentProfileRepository(
+	p Params,
+) repositories.EDIPartnerDocumentProfileRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-partner-document-profile-repository"),
+	}
+}
+
+func NewControlNumberRepository(p Params) repositories.EDIControlNumberRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-control-number-repository"),
+	}
+}
+
+func NewMessageRepository(p Params) repositories.EDIMessageRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-message-repository"),
+	}
+}
+
+func NewTestCaseRepository(p Params) repositories.EDITestCaseRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-test-case-repository"),
+	}
+}
 
 func (r *repository) ListDocumentTypes(
 	ctx context.Context,
@@ -170,11 +236,19 @@ func (r *repository) CreateTemplate(
 	req *repositories.CreateEDITemplateRequest,
 ) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, err := r.db.DBForContext(c).NewInsert().Model(req.Template).Returning("*").Exec(c); err != nil {
+		if _, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(req.Template).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 		req.Version.TemplateID = req.Template.ID
-		if _, err := r.db.DBForContext(c).NewInsert().Model(req.Version).Returning("*").Exec(c); err != nil {
+		if _, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(req.Version).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 		for _, segment := range req.Segments {
@@ -189,7 +263,10 @@ func (r *repository) CreateTemplate(
 		}
 		prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
 		if len(req.ScriptLibraries) > 0 {
-			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+			if _, err := r.db.DBForContext(c).
+				NewInsert().
+				Model(&req.ScriptLibraries).
+				Exec(c); err != nil {
 				return err
 			}
 		}
@@ -305,7 +382,11 @@ func (r *repository) CreateTemplateVersion(
 ) (*edi.EDITemplateVersion, error) {
 	version := req.Version
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, err := r.db.DBForContext(c).NewInsert().Model(version).Returning("*").Exec(c); err != nil {
+		if _, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(version).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 		for _, segment := range req.Segments {
@@ -320,7 +401,10 @@ func (r *repository) CreateTemplateVersion(
 		}
 		prepareTemplateScriptLibraries(version, req.ScriptLibraries)
 		if len(req.ScriptLibraries) > 0 {
-			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+			if _, err := r.db.DBForContext(c).
+				NewInsert().
+				Model(&req.ScriptLibraries).
+				Exec(c); err != nil {
 				return err
 			}
 		}
@@ -374,7 +458,11 @@ func (r *repository) UpdateTemplateVersionMetadata(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(results, "EDITemplateVersion", version.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EDITemplateVersion",
+		version.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	if version.Status != edi.TemplateStatusDraft {
@@ -468,7 +556,10 @@ func (r *repository) ReplaceTemplateVersionScriptLibraries(
 		}
 		prepareTemplateScriptLibraries(req.Version, req.ScriptLibraries)
 		if len(req.ScriptLibraries) > 0 {
-			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.ScriptLibraries).Exec(c); err != nil {
+			if _, err := r.db.DBForContext(c).
+				NewInsert().
+				Model(&req.ScriptLibraries).
+				Exec(c); err != nil {
 				return err
 			}
 		}
@@ -481,6 +572,7 @@ func (r *repository) ReplaceTemplateVersionScriptLibraries(
 	return req.Version, nil
 }
 
+//nolint:funlen // Template activation updates version state and seed profiles in one transaction.
 func (r *repository) ActivateTemplateVersion(
 	ctx context.Context,
 	req repositories.ActivateEDITemplateVersionRequest,
@@ -541,7 +633,11 @@ func (r *repository) ActivateTemplateVersion(
 				Exec(c); err != nil {
 				return err
 			}
-			if err := r.updateTemplateScriptLibraryStatus(c, current, edi.TemplateStatusSuperseded); err != nil {
+			if err := r.updateTemplateScriptLibraryStatus(
+				c,
+				current,
+				edi.TemplateStatusSuperseded,
+			); err != nil {
 				return err
 			}
 		}
@@ -569,7 +665,11 @@ func (r *repository) ActivateTemplateVersion(
 			Exec(c); err != nil {
 			return err
 		}
-		if err := r.updateTemplateScriptLibraryStatus(c, version, edi.TemplateStatusActive); err != nil {
+		if err := r.updateTemplateScriptLibraryStatus(
+			c,
+			version,
+			edi.TemplateStatusActive,
+		); err != nil {
 			return err
 		}
 		return nil
@@ -624,7 +724,11 @@ func (r *repository) ArchiveTemplateVersion(
 			Exec(c); err != nil {
 			return err
 		}
-		if err := r.updateTemplateScriptLibraryStatus(c, version, edi.TemplateStatusArchived); err != nil {
+		if err := r.updateTemplateScriptLibraryStatus(
+			c,
+			version,
+			edi.TemplateStatusArchived,
+		); err != nil {
 			return err
 		}
 		return nil
@@ -670,6 +774,7 @@ func (r *repository) updateTemplateScriptLibraryStatus(
 	return err
 }
 
+//nolint:funlen // Base template seeding is a declarative create-or-update repository operation.
 func (r *repository) EnsureBase204Template(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -732,7 +837,11 @@ func (r *repository) EnsureBase204Template(
 			TransactionSet: edi.TransactionSet204,
 			Status:         edi.TemplateStatusActive,
 		}
-		if _, err = r.db.DBForContext(c).NewInsert().Model(template).Returning("*").Exec(c); err != nil {
+		if _, err = r.db.DBForContext(c).
+			NewInsert().
+			Model(template).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 
@@ -749,7 +858,11 @@ func (r *repository) EnsureBase204Template(
 			Notes:             "Seeded base 004010 Motor Carrier Load Tender profile",
 			ActivatedAt:       &activatedAt,
 		}
-		if _, err = r.db.DBForContext(c).NewInsert().Model(version).Returning("*").Exec(c); err != nil {
+		if _, err = r.db.DBForContext(c).
+			NewInsert().
+			Model(version).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 
@@ -944,7 +1057,11 @@ func (r *repository) CreatePartnerDocumentProfile(
 	ctx context.Context,
 	entity *edi.EDIPartnerDocumentProfile,
 ) (*edi.EDIPartnerDocumentProfile, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -986,7 +1103,11 @@ func (r *repository) UpdatePartnerDocumentProfile(
 	if err != nil {
 		return nil, err
 	}
-	if err = dberror.CheckRowsAffected(results, "EDIPartnerDocumentProfile", entity.ID.String()); err != nil {
+	if err = dberror.CheckRowsAffected(
+		results,
+		"EDIPartnerDocumentProfile",
+		entity.ID.String(),
+	); err != nil {
 		return nil, err
 	}
 	return entity, nil
@@ -1197,7 +1318,11 @@ func (r *repository) CreateMessageWithDiagnostics(
 	req repositories.CreateEDIMessageWithDiagnosticsRequest,
 ) (*edi.EDIMessage, error) {
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, err := r.db.DBForContext(c).NewInsert().Model(req.Message).Returning("*").Exec(c); err != nil {
+		if _, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(req.Message).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 		for _, diagnostic := range req.Diagnostics {
@@ -1206,7 +1331,10 @@ func (r *repository) CreateMessageWithDiagnostics(
 			diagnostic.OrganizationID = req.Message.OrganizationID
 		}
 		if len(req.Diagnostics) > 0 {
-			if _, err := r.db.DBForContext(c).NewInsert().Model(&req.Diagnostics).Exec(c); err != nil {
+			if _, err := r.db.DBForContext(c).
+				NewInsert().
+				Model(&req.Diagnostics).
+				Exec(c); err != nil {
 				return err
 			}
 		}
@@ -1282,7 +1410,11 @@ func (r *repository) CreateTestCase(
 	ctx context.Context,
 	entity *edi.EDITestCase,
 ) (*edi.EDITestCase, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 	return entity, nil

@@ -25,10 +25,8 @@ func newEDISelectOptionsTestRepository(t *testing.T) (*repository, sqlmock.Sqlmo
 
 	bunDB := bun.NewDB(db, pgdialect.New())
 	t.Cleanup(func() {
-		sqlMock.ExpectClose()
-		sqlMock.ExpectClose()
-		require.NoError(t, bunDB.Close())
 		require.NoError(t, sqlMock.ExpectationsWereMet())
+		_ = bunDB.Close()
 	})
 
 	return &repository{

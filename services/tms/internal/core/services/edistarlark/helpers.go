@@ -1,18 +1,22 @@
 package edistarlark
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/shopspring/decimal"
 	"go.starlark.net/starlark"
 )
 
 var nonDigitPattern = regexp.MustCompile(`\D+`)
+
+const maxDecimalPlaces = 1<<31 - 1
 
 func approvedHelpers() starlark.StringDict {
 	return starlark.StringDict{
@@ -41,7 +45,12 @@ func approvedHelpers() starlark.StringDict {
 	}
 }
 
-func trimHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func trimHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("trim", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -49,7 +58,12 @@ func trimHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kw
 	return starlark.String(strings.TrimSpace(stringify(value))), nil
 }
 
-func upperHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func upperHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("upper", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -57,7 +71,12 @@ func upperHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 	return starlark.String(strings.ToUpper(stringify(value))), nil
 }
 
-func lowerHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func lowerHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("lower", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -65,9 +84,14 @@ func lowerHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 	return starlark.String(strings.ToLower(stringify(value))), nil
 }
 
-func concatHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func concatHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	if len(kwargs) > 0 {
-		return nil, fmt.Errorf("concat: got unexpected keyword arguments")
+		return nil, errors.New("concat: got unexpected keyword arguments")
 	}
 
 	var builder strings.Builder
@@ -77,7 +101,12 @@ func concatHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, 
 	return starlark.String(builder.String()), nil
 }
 
-func substringHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func substringHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	var start int
 	end := -1
@@ -111,7 +140,12 @@ func substringHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tupl
 	return starlark.String(string(runes[start:end])), nil
 }
 
-func leftPadHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func leftPadHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	params, err := unpackPadArgs("left_pad", args, kwargs)
 	if err != nil {
 		return nil, err
@@ -119,10 +153,17 @@ func leftPadHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple,
 	if len([]rune(params.value)) >= params.length {
 		return starlark.String(params.value), nil
 	}
-	return starlark.String(strings.Repeat(params.pad, params.length-len([]rune(params.value))) + params.value), nil
+	return starlark.String(
+		strings.Repeat(params.pad, params.length-len([]rune(params.value))) + params.value,
+	), nil
 }
 
-func rightPadHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func rightPadHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	params, err := unpackPadArgs("right_pad", args, kwargs)
 	if err != nil {
 		return nil, err
@@ -130,13 +171,28 @@ func rightPadHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple
 	if len([]rune(params.value)) >= params.length {
 		return starlark.String(params.value), nil
 	}
-	return starlark.String(params.value + strings.Repeat(params.pad, params.length-len([]rune(params.value)))), nil
+	return starlark.String(
+		params.value + strings.Repeat(params.pad, params.length-len([]rune(params.value))),
+	), nil
 }
 
-func truncateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func truncateHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	var length int
-	if err := starlark.UnpackArgs("truncate", args, kwargs, "value", &value, "length", &length); err != nil {
+	if err := starlark.UnpackArgs(
+		"truncate",
+		args,
+		kwargs,
+		"value",
+		&value,
+		"length",
+		&length,
+	); err != nil {
 		return nil, err
 	}
 	if length <= 0 {
@@ -150,7 +206,12 @@ func truncateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple
 	return starlark.String(string(runes[:length])), nil
 }
 
-func removePunctuationHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func removePunctuationHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("remove_punctuation", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -165,9 +226,14 @@ func removePunctuationHelper(_ *starlark.Thread, _ *starlark.Builtin, args starl
 	return starlark.String(cleaned), nil
 }
 
-func coalesceHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func coalesceHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	if len(kwargs) > 0 {
-		return nil, fmt.Errorf("coalesce: got unexpected keyword arguments")
+		return nil, errors.New("coalesce: got unexpected keyword arguments")
 	}
 	for _, arg := range args {
 		if !isEmptyValue(arg) {
@@ -177,10 +243,23 @@ func coalesceHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple
 	return starlark.None, nil
 }
 
-func defaultHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func defaultHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	var fallback starlark.Value
-	if err := starlark.UnpackArgs("default", args, kwargs, "value", &value, "fallback", &fallback); err != nil {
+	if err := starlark.UnpackArgs(
+		"default",
+		args,
+		kwargs,
+		"value",
+		&value,
+		"fallback",
+		&fallback,
+	); err != nil {
 		return nil, err
 	}
 	if isEmptyValue(value) {
@@ -189,7 +268,12 @@ func defaultHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple,
 	return value, nil
 }
 
-func existsHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func existsHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("exists", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -197,10 +281,23 @@ func existsHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, 
 	return starlark.Bool(!isEmptyValue(value)), nil
 }
 
-func requiredHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func requiredHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	message := "required value is missing"
-	if err := starlark.UnpackArgs("required", args, kwargs, "value", &value, "message?", &message); err != nil {
+	if err := starlark.UnpackArgs(
+		"required",
+		args,
+		kwargs,
+		"value",
+		&value,
+		"message?",
+		&message,
+	); err != nil {
 		return nil, err
 	}
 	if isEmptyValue(value) {
@@ -209,7 +306,12 @@ func requiredHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple
 	return value, nil
 }
 
-func formatDateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func formatDateHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("format_date", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -222,7 +324,12 @@ func formatDateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tup
 	return starlark.String(timestamp.UTC().Format("20060102")), nil
 }
 
-func formatTimeHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func formatTimeHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("format_time", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -235,20 +342,41 @@ func formatTimeHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tup
 	return starlark.String(timestamp.UTC().Format("1504")), nil
 }
 
-func formatDecimalHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func formatDecimalHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	places := 2
-	if err := starlark.UnpackArgs("format_decimal", args, kwargs, "value", &value, "places?", &places); err != nil {
+	if err := starlark.UnpackArgs(
+		"format_decimal",
+		args,
+		kwargs,
+		"value",
+		&value,
+		"places?",
+		&places,
+	); err != nil {
 		return nil, err
 	}
 	number, ok := decimalFromValue(value)
 	if !ok {
 		return starlark.String(""), nil
 	}
+	if places < 0 || places > maxDecimalPlaces {
+		return nil, errors.New("format_decimal places must fit in int32")
+	}
 	return starlark.String(number.StringFixed(int32(places))), nil
 }
 
-func formatIntHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func formatIntHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("format_int", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -260,7 +388,12 @@ func formatIntHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tupl
 	return starlark.String(number.Round(0).StringFixed(0)), nil
 }
 
-func normalizePhoneHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func normalizePhoneHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("normalize_phone", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -272,7 +405,12 @@ func normalizePhoneHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark
 	return starlark.String(digits), nil
 }
 
-func normalizeStateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func normalizeStateHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("normalize_state", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -284,7 +422,12 @@ func normalizeStateHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark
 	return starlark.String(normalized), nil
 }
 
-func normalizePostalHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func normalizePostalHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("normalize_postal", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -292,7 +435,12 @@ func normalizePostalHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlar
 	return starlark.String(alnumUpper(stringify(value))), nil
 }
 
-func qualifierHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func qualifierHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	var mapping *starlark.Dict
 	fallback := ""
@@ -323,7 +471,12 @@ func qualifierHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tupl
 	return starlark.String(fallback), nil
 }
 
-func emptyIfNoneHelper(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func emptyIfNoneHelper(
+	_ *starlark.Thread,
+	_ *starlark.Builtin,
+	args starlark.Tuple,
+	kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var value starlark.Value
 	if err := starlark.UnpackArgs("empty_if_none", args, kwargs, "value", &value); err != nil {
 		return nil, err
@@ -360,10 +513,11 @@ func unpackPadArgs(name string, args starlark.Tuple, kwargs []starlark.Tuple) (p
 	if pad == "" {
 		pad = " "
 	}
+	r, _ := utf8.DecodeRuneInString(pad)
 	return padParams{
 		value:  stringify(value),
 		length: length,
-		pad:    string([]rune(pad)[0]),
+		pad:    string(r),
 	}, nil
 }
 

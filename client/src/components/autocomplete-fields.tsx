@@ -8,7 +8,14 @@ import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
-import type { EDICommunicationProfile, EDIMappingProfile, EDIPartner } from "@/types/edi";
+import type {
+  EDICommunicationProfile,
+  EDIDocumentType,
+  EDIMappingProfile,
+  EDIPartner,
+  EDIPartnerDocumentProfile,
+  EDITemplate,
+} from "@/types/edi";
 import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
 import type { EquipmentType } from "@/types/equipment-type";
 import type { FleetCode } from "@/types/fleet-code";
@@ -18,7 +25,7 @@ import type { HazardousMaterial } from "@/types/hazardous-material";
 import type { Location } from "@/types/location";
 import type { LocationCategory } from "@/types/location-category";
 import type { OrganizationSelectOption } from "@/types/organization";
-import type { API_ENDPOINTS } from "@/types/server";
+import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
 import type { Tractor } from "@/types/tractor";
@@ -26,8 +33,10 @@ import type { Trailer } from "@/types/trailer";
 import type { UsState } from "@/types/us-state";
 import type { User, UserRoleAssignment } from "@/types/user";
 import type { Worker } from "@/types/worker";
+import type { ReactNode } from "react";
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
-import { AutocompleteField } from "./fields/autocomplete/autocomplete";
+import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
+import { FieldWrapper } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -44,6 +53,25 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   extraSearchParams?: Record<string, string | string[]>;
   selectedValueLink?: API_ENDPOINTS;
   onOptionChange?: (option: TOption | null) => void;
+};
+
+type ControlledAutocompleteFieldProps<TOption> = {
+  label: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onOptionChange?: (option: TOption | null) => void;
+  description?: string;
+  link: SELECT_OPTIONS_ENDPOINTS;
+  selectedValueLink?: API_ENDPOINTS;
+  renderOption: (option: TOption) => ReactNode;
+  getOptionValue: (option: TOption) => string | number;
+  getDisplayValue: (option: TOption) => ReactNode;
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  extraSearchParams?: Record<string, string | string[]>;
+  initialLimit?: number;
+  noResultsMessage?: string;
 };
 
 type BaseMultiSelectAutocompleteFieldProps<
@@ -66,6 +94,58 @@ function getDocumentLabel(option: Document) {
   const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
 
   return documentTypeLabel ? `${fileName} · ${documentTypeLabel}` : fileName;
+}
+
+function ControlledAutocompleteField<TOption>({
+  label,
+  value,
+  onValueChange,
+  onOptionChange,
+  description,
+  link,
+  selectedValueLink,
+  renderOption,
+  getOptionValue,
+  getDisplayValue,
+  placeholder = "Select...",
+  disabled,
+  clearable = true,
+  extraSearchParams,
+  initialLimit = 20,
+  noResultsMessage,
+}: ControlledAutocompleteFieldProps<TOption>) {
+  return (
+    <FieldWrapper label={label} description={description}>
+      <Autocomplete<TOption, FieldValues>
+        link={link}
+        selectedValueLink={selectedValueLink}
+        value={value}
+        onChange={(nextValue) => onValueChange(nextValue ? String(nextValue) : "")}
+        onOptionChange={onOptionChange}
+        label={label}
+        renderOption={renderOption}
+        getOptionValue={getOptionValue}
+        getDisplayValue={getDisplayValue}
+        placeholder={placeholder}
+        disabled={!!disabled}
+        clearable={clearable}
+        extraSearchParams={extraSearchParams}
+        initialLimit={initialLimit}
+        noResultsMessage={noResultsMessage}
+      />
+    </FieldWrapper>
+  );
+}
+
+function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?: ReactNode }) {
+  return (
+    <div className="flex size-full min-w-0 flex-col items-start pr-4">
+      <span className="w-full truncate">{primary}</span>
+      {secondary ? (
+        <span className="w-full truncate text-2xs text-muted-foreground">{secondary}</span>
+      ) : null}
+    </div>
+  );
 }
 
 export function RoleAutocompleteField<T extends FieldValues>({
@@ -476,6 +556,218 @@ export function EDIPartnerAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      {...props}
+    />
+  );
+}
+
+export function EDIDocumentTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EDIDocumentType, T>) {
+  return (
+    <AutocompleteField<EDIDocumentType, T>
+      link="/edi/catalog/document-types/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>
+            {option.code} - {option.name}
+          </span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.transactionSet} / {option.direction} / {option.defaultVersion}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EDITemplateAutocompleteField<T extends FieldValues>({
+  transactionSet,
+  direction,
+  extraSearchParams,
+  ...props
+}: BaseAutocompleteFieldProps<EDITemplate, T> & {
+  transactionSet?: string;
+  direction?: string;
+}) {
+  return (
+    <AutocompleteField<EDITemplate, T>
+      link="/edi/templates/select-options/"
+      selectedValueLink="/edi/templates/"
+      extraSearchParams={{
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+        ...extraSearchParams,
+      }}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.description ?? option.status}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
+  partnerId,
+  transactionSet,
+  direction,
+  extraSearchParams,
+  ...props
+}: BaseAutocompleteFieldProps<EDIPartnerDocumentProfile, T> & {
+  partnerId?: string;
+  transactionSet?: string;
+  direction?: string;
+}) {
+  return (
+    <AutocompleteField<EDIPartnerDocumentProfile, T>
+      link="/edi/document-profiles/select-options/"
+      selectedValueLink="/edi/document-profiles/"
+      extraSearchParams={{
+        ...(partnerId ? { partnerId } : {}),
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+        ...extraSearchParams,
+      }}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span>{option.name}</span>
+          {option.partner ? (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.partner.code} - {option.partner.name}
+            </span>
+          ) : null}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ControlledEDIPartnerAutocompleteField({
+  label = "Partner",
+  placeholder,
+  ...props
+}: Omit<
+  ControlledAutocompleteFieldProps<EDIPartner>,
+  | "label"
+  | "link"
+  | "renderOption"
+  | "getOptionValue"
+  | "getDisplayValue"
+  | "selectedValueLink"
+  | "initialLimit"
+> & {
+  label?: string;
+  placeholder?: string;
+}) {
+  return (
+    <ControlledAutocompleteField<EDIPartner>
+      label={label}
+      link="/edi/partners/select-options/"
+      selectedValueLink="/edi/partners/"
+      initialLimit={50}
+      placeholder={placeholder}
+      renderOption={(option) => (
+        <EDIOptionStack primary={`${option.code} - ${option.name}`} secondary={option.kind} />
+      )}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      {...props}
+    />
+  );
+}
+
+export function ControlledEDITemplateAutocompleteField({
+  transactionSet,
+  direction,
+  extraSearchParams,
+  ...props
+}: Omit<
+  ControlledAutocompleteFieldProps<EDITemplate>,
+  | "label"
+  | "link"
+  | "renderOption"
+  | "getOptionValue"
+  | "getDisplayValue"
+  | "selectedValueLink"
+  | "extraSearchParams"
+> & {
+  transactionSet?: string;
+  direction?: string;
+  extraSearchParams?: Record<string, string | string[]>;
+}) {
+  return (
+    <ControlledAutocompleteField<EDITemplate>
+      label="Template"
+      link="/edi/templates/select-options/"
+      selectedValueLink="/edi/templates/"
+      extraSearchParams={{
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+        ...extraSearchParams,
+      }}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.name} secondary={option.description ?? option.status} />
+      )}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.name}
+      {...props}
+    />
+  );
+}
+
+export function ControlledEDIDocumentProfileAutocompleteField({
+  partnerId,
+  transactionSet,
+  direction,
+  extraSearchParams,
+  ...props
+}: Omit<
+  ControlledAutocompleteFieldProps<EDIPartnerDocumentProfile>,
+  | "label"
+  | "link"
+  | "renderOption"
+  | "getOptionValue"
+  | "getDisplayValue"
+  | "selectedValueLink"
+  | "extraSearchParams"
+> & {
+  partnerId?: string;
+  transactionSet?: string;
+  direction?: string;
+  extraSearchParams?: Record<string, string | string[]>;
+}) {
+  return (
+    <ControlledAutocompleteField<EDIPartnerDocumentProfile>
+      label="Document Profile"
+      link="/edi/document-profiles/select-options/"
+      selectedValueLink="/edi/document-profiles/"
+      extraSearchParams={{
+        ...(transactionSet ? { transactionSet } : {}),
+        ...(direction ? { direction } : {}),
+        ...(partnerId ? { partnerId } : {}),
+        ...extraSearchParams,
+      }}
+      renderOption={(option) => (
+        <EDIOptionStack
+          primary={option.name}
+          secondary={option.partner ? `${option.partner.code} - ${option.partner.name}` : undefined}
+        />
+      )}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.name}
       {...props}
     />
   );

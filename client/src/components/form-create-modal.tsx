@@ -15,14 +15,10 @@ import type { TableSheetProps } from "@/types/data-table";
 import type { API_ENDPOINTS } from "@/types/server";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import {
-  type FieldValues,
-  FormProvider,
-  type UseFormReturn,
-} from "react-hook-form";
+import { type FieldValues, FormProvider, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 
-type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
+type FormCreateModalProps<T extends FieldValues, TResponse = unknown> = TableSheetProps & {
   url: API_ENDPOINTS;
   title: string;
   queryKey: string;
@@ -31,9 +27,12 @@ type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   form: UseFormReturn<T>;
   className?: string;
   notice?: React.ReactNode;
+  onSuccess?: (data: TResponse, values: T) => void | Promise<void>;
+  submitText?: string;
+  loadingText?: string;
 };
 
-export function FormCreateModal<T extends FieldValues>({
+export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
   open,
   onOpenChange,
   description,
@@ -44,7 +43,10 @@ export function FormCreateModal<T extends FieldValues>({
   url,
   queryKey,
   notice,
-}: FormCreateModalProps<T>) {
+  onSuccess,
+  submitText = "Save and Close",
+  loadingText = "Saving...",
+}: FormCreateModalProps<T, TResponse>) {
   const queryClient = useQueryClient();
 
   const {
@@ -61,14 +63,15 @@ export function FormCreateModal<T extends FieldValues>({
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: T) => {
-      return api.post<T>(url, values);
+      return api.post<TResponse>(url, values);
     },
-    onSuccess: (data) => {
+    onSuccess: async (data, values) => {
       toast.success("Changes have been saved.", {
         description: `${title} created successfully`,
       });
       onOpenChange(false);
       reset();
+      await onSuccess?.(data, values);
 
       queryClient.setQueryData([queryKey], data);
     },
@@ -85,12 +88,7 @@ export function FormCreateModal<T extends FieldValues>({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        open &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "Enter" &&
-        !isSubmitting
-      ) {
+      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
         void handleSubmit(onSubmit)();
       }
@@ -101,14 +99,21 @@ export function FormCreateModal<T extends FieldValues>({
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          onOpenChange(true);
+          return;
+        }
+        handleClose();
+      }}
+    >
       <DialogContent className={cn("max-w-[450px]", className)}>
         <DialogHeader>
           <DialogTitle>Add New {title}</DialogTitle>
           <DialogDescription>
-            {description
-              ? description
-              : `Please fill out the form below to create a new ${title}.`}
+            {description ? description : `Please fill out the form below to create a new ${title}.`}
           </DialogDescription>
         </DialogHeader>
         {notice ? notice : null}
@@ -119,12 +124,8 @@ export function FormCreateModal<T extends FieldValues>({
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                isLoading={isSubmitting}
-                loadingText="Saving..."
-              >
-                Save and Close
+              <Button type="submit" isLoading={isSubmitting} loadingText={loadingText}>
+                {submitText}
               </Button>
             </DialogFooter>
           </Form>

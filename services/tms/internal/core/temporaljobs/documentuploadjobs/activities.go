@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -344,9 +345,12 @@ func (a *Activities) ReconcileUploadsActivity(
 
 	sessions, err := a.sessionRepo.ListForReconciliation(
 		ctx,
-		staleBefore,
-		expiresBefore,
-		payload.Limit,
+		&repositories.ListDocumentUploadReconciliationRequest{
+			TenantInfo:    documentUploadReconcileTenantInfo(payload),
+			StaleBefore:   staleBefore,
+			ExpiresBefore: expiresBefore,
+			Limit:         payload.Limit,
+		},
 	)
 	if err != nil {
 		return nil, err
@@ -371,7 +375,14 @@ func (a *Activities) ReconcileUploadsActivity(
 		}
 	}
 
-	docs, err := a.documentRepo.ListPendingPreviewReconciliation(ctx, previewBefore, payload.Limit)
+	docs, err := a.documentRepo.ListPendingPreviewReconciliation(
+		ctx,
+		&repositories.ListPendingPreviewReconciliationRequest{
+			TenantInfo: documentUploadReconcileTenantInfo(payload),
+			OlderThan:  previewBefore,
+			Limit:      payload.Limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -384,6 +395,59 @@ func (a *Activities) ReconcileUploadsActivity(
 	}
 
 	return result, nil
+}
+
+func (a *Activities) ListReconcileUploadsTenantsActivity(
+	ctx context.Context,
+	payload *ReconcileUploadsPayload,
+) (*ListReconcileUploadsTenantsResult, error) {
+	now := time.Now()
+	staleBefore := now.Add(-time.Duration(payload.StaleAfterSeconds) * time.Second).Unix()
+	expiresBefore := now.Unix()
+	previewBefore := now.Add(-time.Duration(payload.PendingAfterSeconds) * time.Second).Unix()
+	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
+
+	seen := make(map[string]pagination.TenantInfo, limit)
+	sessionTenants, err := a.sessionRepo.ListReconciliationTenants(
+		ctx,
+		&repositories.ListDocumentUploadReconciliationRequest{
+			StaleBefore:   staleBefore,
+			ExpiresBefore: expiresBefore,
+			Limit:         limit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, tenantInfo := range sessionTenants {
+		seen[documentUploadReconcileTenantKey(tenantInfo)] = tenantInfo
+	}
+
+	previewTenants, err := a.documentRepo.ListPendingPreviewReconciliationTenants(
+		ctx,
+		&repositories.ListPendingPreviewReconciliationRequest{
+			OlderThan: previewBefore,
+			Limit:     limit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	for _, tenantInfo := range previewTenants {
+		if len(seen) >= limit {
+			break
+		}
+		seen[documentUploadReconcileTenantKey(tenantInfo)] = tenantInfo
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(seen))
+	for _, tenantInfo := range seen {
+		tenants = append(tenants, tenantInfo)
+	}
+
+	return &ListReconcileUploadsTenantsResult{
+		Tenants: temporaljobs.BuildTenantWorkItems(tenants, temporaljobs.DefaultTenantRecordLimit),
+	}, nil
 }
 
 func (a *Activities) CleanupDocumentStorageActivity(
@@ -401,6 +465,17 @@ func (a *Activities) CleanupDocumentStorageActivity(
 	}
 
 	return nil
+}
+
+func documentUploadReconcileTenantInfo(payload *ReconcileUploadsPayload) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: payload.OrganizationID,
+		BuID:  payload.BusinessUnitID,
+	}
+}
+
+func documentUploadReconcileTenantKey(tenantInfo pagination.TenantInfo) string {
+	return tenantInfo.OrgID.String() + ":" + tenantInfo.BuID.String()
 }
 
 func (a *Activities) deleteStoredObject(ctx context.Context, key string) error {

@@ -50,7 +50,10 @@ func (h *Handler) convert(c *gin.Context) {
 	dateStr := c.DefaultQuery("date", time.Now().Format(defaultDateLayout))
 
 	if fromCurrency == "" || toCurrency == "" || amountStr == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "from, to, and amount query parameters are required"})
+		c.JSON(
+			http.StatusBadRequest,
+			gin.H{"error": "from, to, and amount query parameters are required"},
+		)
 		return
 	}
 

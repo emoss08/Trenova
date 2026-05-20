@@ -1,8 +1,8 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package edirepository
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -40,6 +40,13 @@ func New(p Params) repositories.EDIPartnerRepository {
 	}
 }
 
+func NewMappingProfileRepository(p Params) repositories.EDIMappingProfileRepository {
+	return &repository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.edi-mapping-profile-repository"),
+	}
+}
+
 func NewTransferRepository(p Params) repositories.EDILoadTenderTransferRepository {
 	return &repository{
 		db: p.DB,
@@ -72,13 +79,6 @@ func NewTransferChangeRepository(p Params) repositories.EDITransferChangeReposit
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.edi-transfer-change-repository"),
-	}
-}
-
-func NewDocumentRepository(p Params) repositories.EDIDocumentRepository {
-	return &repository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.edi-document-repository"),
 	}
 }
 
@@ -188,7 +188,11 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-		if _, err := r.db.DBForContext(c).NewInsert().Model(entity).Returning("*").Exec(c); err != nil {
+		if _, err := r.db.DBForContext(c).
+			NewInsert().
+			Model(entity).
+			Returning("*").
+			Exec(c); err != nil {
 			return err
 		}
 		_, err := r.ensureMappingProfile(c, entity)
@@ -502,10 +506,10 @@ func (r *repository) GetMappingItems(
 		Where("empi.organization_id = ?", req.TenantInfo.OrgID).
 		Where("empi.business_unit_id = ?", req.TenantInfo.BuID).
 		Where("empi.edi_partner_id = ?", req.PartnerID).
-		Where("empi.source_id IN (?)", bun.In(req.SourceIDs))
+		Where("empi.source_id IN (?)", bun.List(req.SourceIDs))
 
 	if len(req.EntityTypes) > 0 {
-		query = query.Where("empi.entity_type IN (?)", bun.In(req.EntityTypes))
+		query = query.Where("empi.entity_type IN (?)", bun.List(req.EntityTypes))
 	}
 
 	if err := query.Scan(ctx); err != nil {
@@ -542,7 +546,11 @@ func (r *repository) ensureMappingProfile(
 		Name:           partner.Name + " Mapping Profile",
 	}
 
-	if _, err = r.db.DBForContext(ctx).NewInsert().Model(profile).Returning("*").Exec(ctx); err != nil {
+	if _, err = r.db.DBForContext(ctx).
+		NewInsert().
+		Model(profile).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -572,19 +580,4 @@ func (r *repository) ensureTargetOrganizationInBusinessUnit(
 		errortypes.ErrInvalid,
 		"Target organization must belong to the current business unit",
 	)
-}
-
-func applyMappingProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
-	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr("lower(emp.name) LIKE ?", term).
-			WhereOr("lower(emp.description) LIKE ?", term).
-			WhereOr("lower(partner.code) LIKE ?", term).
-			WhereOr("lower(partner.name) LIKE ?", term)
-	})
 }

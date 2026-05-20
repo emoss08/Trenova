@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { darkTheme, lightTheme } from "@/components/formula-editor/editor-theme";
 import { useTheme } from "@/components/theme-provider";
@@ -73,7 +74,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
 
   return (
     <>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] overflow-hidden">
         <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-zinc-950">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2 text-xs text-zinc-300">
             <span>Preview render</span>
@@ -99,11 +100,15 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
               </Button>
             </div>
           </div>
-          <pre className="min-h-0 overflow-auto p-3 font-mono text-xs text-zinc-100">
-            {isLoading ? "Rendering preview..." : previewContent}
-          </pre>
+          <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+            <pre className="p-3 font-mono text-xs text-zinc-100">
+              {isLoading ? "Rendering preview..." : previewContent}
+            </pre>
+          </ScrollArea>
         </div>
-        <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
+        <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+          <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
+        </ScrollArea>
       </div>
       <PreviewInspectorSheet
         preview={preview}
@@ -135,7 +140,7 @@ function DiagnosticsList({
     Info: diagnostics.filter((diagnostic) => diagnostic.severity === "Info"),
   };
   return (
-    <div className="min-h-0 overflow-auto p-3">
+    <div className="p-3">
       {diagnostics.length === 0 ? (
         <div className="text-sm text-muted-foreground">No diagnostics.</div>
       ) : (
@@ -174,11 +179,22 @@ function DiagnosticsList({
   );
 }
 
-function PanelHeader({ icon, title }: { icon: ReactNode; title: string }) {
+function PanelHeader({
+  icon,
+  title,
+  actions,
+}: {
+  icon: ReactNode;
+  title: string;
+  actions?: ReactNode;
+}) {
   return (
-    <div className="flex h-11 items-center gap-2 border-b px-3">
-      <span className="text-muted-foreground [&_svg]:size-4">{icon}</span>
-      <span className="text-sm font-semibold">{title}</span>
+    <div className="flex h-11 items-center justify-between gap-2 border-b px-3">
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-muted-foreground [&_svg]:size-4">{icon}</span>
+        <span className="truncate text-sm font-semibold">{title}</span>
+      </div>
+      {actions ? <div className="shrink-0">{actions}</div> : null}
     </div>
   );
 }

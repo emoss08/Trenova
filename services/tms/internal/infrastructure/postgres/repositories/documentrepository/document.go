@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -227,9 +228,9 @@ func (r *repository) GetByResourceID(
 
 func (r *repository) ListPendingPreviewReconciliation(
 	ctx context.Context,
-	olderThan int64,
-	limit int,
+	req *repositories.ListPendingPreviewReconciliationRequest,
 ) ([]*document.Document, error) {
+	limit := req.Limit
 	if limit <= 0 {
 		limit = 100
 	}
@@ -239,14 +240,10 @@ func (r *repository) ListPendingPreviewReconciliation(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where(cols.IsCurrentVersion.Eq(), true).
-		Where(cols.PreviewStatus.Eq(), document.PreviewStatusPending).
-		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(cols.PreviewStoragePath.IsNull()).
-				WhereOr(cols.PreviewStoragePath.Eq(), "")
-		}).
-		Where(cols.UpdatedAt.Lte(), olderThan).
+		Apply(applyPendingPreviewReconciliationFilters).
+		Where(cols.UpdatedAt.Lte(), req.OlderThan).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Order(cols.UpdatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
@@ -256,6 +253,64 @@ func (r *repository) ListPendingPreviewReconciliation(
 	}
 
 	return entities, nil
+}
+
+func (r *repository) ListPendingPreviewReconciliationTenants(
+	ctx context.Context,
+	req *repositories.ListPendingPreviewReconciliationRequest,
+) ([]pagination.TenantInfo, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	type tenantRow struct {
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+
+	rows := make([]tenantRow, 0, limit)
+	cols := buncolgen.DocumentColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*document.Document)(nil)).
+		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Apply(applyPendingPreviewReconciliationFilters).
+		Where(cols.UpdatedAt.Lte(), req.OlderThan).
+		Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Order(cols.OrganizationID.OrderAsc()).
+		Order(cols.BusinessUnitID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx, &rows)
+	if err != nil {
+		r.l.Error("failed to list document preview reconciliation tenants", zap.Error(err))
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
+}
+
+func applyPendingPreviewReconciliationFilters(q *bun.SelectQuery) *bun.SelectQuery {
+	cols := buncolgen.DocumentColumns
+
+	return q.
+		Where(cols.IsCurrentVersion.Eq(), true).
+		Where(cols.PreviewStatus.Eq(), document.PreviewStatusPending).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
+				return orq.
+					Where(cols.PreviewStoragePath.IsNull()).
+					WhereOr(cols.PreviewStoragePath.Eq(), "")
+			})
+		})
 }
 
 func (r *repository) Create(

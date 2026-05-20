@@ -25,6 +25,13 @@ type ListRelatedDocumentUploadSessionsRequest struct {
 	LineageID  pulid.ID              `json:"lineageId"`
 }
 
+type ListDocumentUploadReconciliationRequest struct {
+	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
+	StaleBefore   int64                 `json:"staleBefore"`
+	ExpiresBefore int64                 `json:"expiresBefore"`
+	Limit         int                   `json:"limit"`
+}
+
 type DocumentUploadSessionRepository interface {
 	Create(
 		ctx context.Context,
@@ -40,10 +47,12 @@ type DocumentUploadSessionRepository interface {
 	) (*documentupload.DocumentUploadSession, error)
 	ListForReconciliation(
 		ctx context.Context,
-		staleBefore int64,
-		expiresBefore int64,
-		limit int,
+		req *ListDocumentUploadReconciliationRequest,
 	) ([]*documentupload.DocumentUploadSession, error)
+	ListReconciliationTenants(
+		ctx context.Context,
+		req *ListDocumentUploadReconciliationRequest,
+	) ([]pagination.TenantInfo, error)
 	ClearDocumentReference(
 		ctx context.Context,
 		documentID pulid.ID,

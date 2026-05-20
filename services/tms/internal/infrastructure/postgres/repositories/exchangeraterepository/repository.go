@@ -32,7 +32,10 @@ func New(p Params) repositories.ExchangeRateRepository {
 	}
 }
 
-func (r *repository) GetRate(ctx context.Context, req *repositories.GetExchangeRateRequest) (*exchangerate.ExchangeRate, error) {
+func (r *repository) GetRate(
+	ctx context.Context,
+	req *repositories.GetExchangeRateRequest,
+) (*exchangerate.ExchangeRate, error) {
 	entity := new(exchangerate.ExchangeRate)
 	err := r.db.DB().
 		NewSelect().
@@ -49,7 +52,10 @@ func (r *repository) GetRate(ctx context.Context, req *repositories.GetExchangeR
 	return entity, nil
 }
 
-func (r *repository) UpsertRates(ctx context.Context, req *repositories.UpsertExchangeRatesRequest) error {
+func (r *repository) UpsertRates(
+	ctx context.Context,
+	req *repositories.UpsertExchangeRatesRequest,
+) error {
 	return r.db.DB().RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
 		for idx := range req.Rates {
 			rate := req.Rates[idx]
@@ -67,7 +73,10 @@ func (r *repository) UpsertRates(ctx context.Context, req *repositories.UpsertEx
 	})
 }
 
-func (r *repository) GetLatestDate(ctx context.Context, tenantInfo pagination.TenantInfo) (*time.Time, error) {
+func (r *repository) GetLatestDate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Time, error) {
 	var latestDate time.Time
 	err := r.db.DB().
 		NewSelect().

@@ -310,7 +310,7 @@ func (l *Loader) validateConfig(config *Config) error {
 	}
 
 	if config.Storage.GetProvider() == StorageProviderR2 && config.Storage.PublicEndpoint != "" {
-		return fmt.Errorf(
+		return errors.New(
 			"storage.publicEndpoint cannot be set when storage.provider is r2; private R2 presigned URLs must use the R2 S3 API endpoint",
 		)
 	}

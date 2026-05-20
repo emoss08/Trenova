@@ -322,23 +322,19 @@ func (a *Activities) FlushFromRedisActivity(
 		Batches: make([][]*audit.Entry, 0),
 	}
 
-	totalFetched := 0
-	for totalFetched < defaultMaxEntries {
-		entries, err := a.abr.Pop(ctx, defaultBatchSize)
-		if err != nil {
-			logger.Error("Failed to pop from Redis buffer", "error", err)
-			break
-		}
+	batches, err := a.abr.PopTenantBatches(ctx, defaultBatchSize, defaultMaxEntries)
+	if err != nil {
+		logger.Error("Failed to pop tenant audit batches from Redis buffer", "error", err)
+		return nil, err
+	}
 
+	for _, entries := range batches {
 		if len(entries) == 0 {
-			break
+			continue
 		}
-
 		result.Batches = append(result.Batches, entries)
-		totalFetched += len(entries)
 		result.EntryCount += len(entries)
-
-		activity.RecordHeartbeat(ctx, fmt.Sprintf("Fetched %d entries", totalFetched))
+		activity.RecordHeartbeat(ctx, fmt.Sprintf("Fetched %d entries", result.EntryCount))
 	}
 
 	duration := time.Since(startTime)

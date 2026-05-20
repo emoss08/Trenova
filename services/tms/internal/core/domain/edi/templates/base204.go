@@ -50,7 +50,7 @@ func (base204Builder) el(
 	name string,
 	source edi.TemplateElementSource,
 	value string,
-	required bool,
+	required ...bool,
 ) edi.TemplateElement {
 	return edi.TemplateElement{
 		Position: position,
@@ -58,7 +58,7 @@ func (base204Builder) el(
 		Source:   source,
 		Value:    value,
 		Validation: edi.TemplateValidationRule{
-			Required: required,
+			Required: firstRequired(required),
 			Code:     "required",
 			Message:  name + " is required",
 		},
@@ -68,9 +68,9 @@ func (base204Builder) el(
 func (b base204Builder) field(
 	position int,
 	name, path, fallback string,
-	required bool,
+	required ...bool,
 ) edi.TemplateElement {
-	element := b.el(position, name, edi.TemplateElementSourceFieldPath, "", required)
+	element := b.el(position, name, edi.TemplateElementSourceFieldPath, "", firstRequired(required))
 	element.FieldPath = path
 	element.Default = fallback
 	return element
@@ -79,9 +79,8 @@ func (b base204Builder) field(
 func (b base204Builder) partner(
 	position int,
 	name, path string,
-	required bool,
 ) edi.TemplateElement {
-	element := b.el(position, name, edi.TemplateElementSourcePartnerSetting, "", required)
+	element := b.el(position, name, edi.TemplateElementSourcePartnerSetting, "")
 	element.PartnerSettingPath = path
 	return element
 }
@@ -89,18 +88,26 @@ func (b base204Builder) partner(
 func (b base204Builder) repeat(
 	position int,
 	name, path, fallback string,
-	required bool,
+	required ...bool,
 ) edi.TemplateElement {
-	element := b.el(position, name, edi.TemplateElementSourceRepeat, "", required)
+	element := b.el(position, name, edi.TemplateElementSourceRepeat, "", firstRequired(required))
 	element.RepeatPath = path
 	element.Default = fallback
 	return element
 }
 
-func (b base204Builder) runtime(position int, name, key string, required bool) edi.TemplateElement {
-	element := b.el(position, name, edi.TemplateElementSourceRuntime, "", required)
+func (b base204Builder) runtime(
+	position int,
+	name, key string,
+	required ...bool,
+) edi.TemplateElement {
+	element := b.el(position, name, edi.TemplateElementSourceRuntime, "", firstRequired(required))
 	element.RuntimeKey = key
 	return element
+}
+
+func firstRequired(required []bool) bool {
+	return len(required) > 0 && required[0]
 }
 
 func (b base204Builder) envelopeSegments() []*edi.EDITemplateSegment {
@@ -127,7 +134,7 @@ func (b base204Builder) envelopeSegments() []*edi.EDITemplateSegment {
 				"00",
 				true,
 			),
-			b.el(4, "Security Information", edi.TemplateElementSourceConstant, "          ", false),
+			b.el(4, "Security Information", edi.TemplateElementSourceConstant, "          "),
 			b.el(5, "Interchange ID Qualifier", edi.TemplateElementSourceConstant, "ZZ", true),
 			b.runtime(6, "Interchange Sender ID", "interchangeSenderId", true),
 			b.el(7, "Interchange ID Qualifier", edi.TemplateElementSourceConstant, "ZZ", true),
@@ -173,16 +180,16 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 			"",
 			true,
 			[]edi.TemplateElement{
-				b.partner(1, "Standard Carrier Alpha Code", "carrier.scac", false),
+				b.partner(1, "Standard Carrier Alpha Code", "carrier.scac"),
 				b.field(2, "Shipment Identification Number", "shipmentId", "", true),
-				b.field(4, "Shipment Method of Payment", "ratingDetail.paymentMethod", "PP", false),
+				b.field(4, "Shipment Method of Payment", "ratingDetail.paymentMethod", "PP"),
 			},
 		),
 		b.segment(50, "B2A", "Set Purpose", "", true, []edi.TemplateElement{
 			b.el(1, "Transaction Set Purpose Code", edi.TemplateElementSourceConstant, "00", true),
 		}),
 		b.segment(60, "L11", "Reference Identification", "", false, []edi.TemplateElement{
-			b.field(1, "Reference Identification", "bol", "", false),
+			b.field(1, "Reference Identification", "bol", ""),
 			b.el(
 				2,
 				"Reference Identification Qualifier",
@@ -192,14 +199,14 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 			),
 		}),
 		b.segment(70, "G62", "Date Time", "moves.0.stops", false, []edi.TemplateElement{
-			b.el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "37", false),
-			b.repeat(2, "Date", "scheduledWindowStart", "", false),
-			b.el(3, "Time Qualifier", edi.TemplateElementSourceConstant, "I", false),
-			b.repeat(4, "Time", "scheduledWindowStart", "", false),
+			b.el(1, "Date Qualifier", edi.TemplateElementSourceConstant, "37"),
+			b.repeat(2, "Date", "scheduledWindowStart", ""),
+			b.el(3, "Time Qualifier", edi.TemplateElementSourceConstant, "I"),
+			b.repeat(4, "Time", "scheduledWindowStart", ""),
 		}),
 		b.segment(80, "NTE", "Note", "", false, []edi.TemplateElement{
-			b.el(1, "Note Reference Code", edi.TemplateElementSourceConstant, "ADD", false),
-			b.field(2, "Description", "ratingDetail.note", "", false),
+			b.el(1, "Note Reference Code", edi.TemplateElementSourceConstant, "ADD"),
+			b.field(2, "Description", "ratingDetail.note", ""),
 		}),
 	}
 }
@@ -207,21 +214,21 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 func (b base204Builder) stopSegments() []*edi.EDITemplateSegment {
 	return []*edi.EDITemplateSegment{
 		b.segment(90, "N1", "Name", "moves.0.stops", false, []edi.TemplateElement{
-			b.repeat(1, "Entity Identifier Code", "type", "SF", false),
-			b.repeat(2, "Name", "locationName", "", false),
+			b.repeat(1, "Entity Identifier Code", "type", "SF"),
+			b.repeat(2, "Name", "locationName", ""),
 		}),
 		b.segment(100, "N3", "Address", "moves.0.stops", false, []edi.TemplateElement{
-			b.repeat(1, "Address Information", "locationAddressLine1", "", false),
-			b.repeat(2, "Address Information", "locationAddressLine2", "", false),
+			b.repeat(1, "Address Information", "locationAddressLine1", ""),
+			b.repeat(2, "Address Information", "locationAddressLine2", ""),
 		}),
 		b.segment(110, "N4", "Geographic Location", "moves.0.stops", false, []edi.TemplateElement{
-			b.repeat(1, "City Name", "locationCity", "", false),
-			b.repeat(2, "State or Province Code", "locationStateCode", "", false),
-			b.repeat(3, "Postal Code", "locationPostalCode", "", false),
+			b.repeat(1, "City Name", "locationCity", ""),
+			b.repeat(2, "State or Province Code", "locationStateCode", ""),
+			b.repeat(3, "Postal Code", "locationPostalCode", ""),
 		}),
 		b.segment(120, "G61", "Contact", "", false, []edi.TemplateElement{
-			b.el(1, "Contact Function Code", edi.TemplateElementSourceConstant, "IC", false),
-			b.partner(2, "Name", "contact.name", false),
+			b.el(1, "Contact Function Code", edi.TemplateElementSourceConstant, "IC"),
+			b.partner(2, "Name", "contact.name"),
 			b.el(
 				3,
 				"Communication Number Qualifier",
@@ -229,14 +236,14 @@ func (b base204Builder) stopSegments() []*edi.EDITemplateSegment {
 				"TE",
 				false,
 			),
-			b.partner(4, "Communication Number", "contact.phone", false),
+			b.partner(4, "Communication Number", "contact.phone"),
 		}),
 		b.segment(130, "S5", "Stop Off Details", "moves.0.stops", true, []edi.TemplateElement{
 			b.repeat(1, "Stop Sequence Number", "sequence", "", true),
 			b.repeat(2, "Stop Reason Code", "type", "LD", true),
-			b.repeat(3, "Weight", "weight", "", false),
-			b.el(4, "Weight Unit Code", edi.TemplateElementSourceConstant, "L", false),
-			b.repeat(5, "Number of Units Shipped", "pieces", "", false),
+			b.repeat(3, "Weight", "weight", ""),
+			b.el(4, "Weight Unit Code", edi.TemplateElementSourceConstant, "L"),
+			b.repeat(5, "Number of Units Shipped", "pieces", ""),
 			b.el(
 				6,
 				"Unit or Basis for Measurement Code",
@@ -257,10 +264,10 @@ func (b base204Builder) summarySegments() []*edi.EDITemplateSegment {
 			"",
 			false,
 			[]edi.TemplateElement{
-				b.el(1, "Weight Qualifier", edi.TemplateElementSourceConstant, "G", false),
-				b.el(2, "Weight Unit Code", edi.TemplateElementSourceConstant, "L", false),
-				b.field(3, "Weight", "weight", "", false),
-				b.field(4, "Lading Quantity", "pieces", "", false),
+				b.el(1, "Weight Qualifier", edi.TemplateElementSourceConstant, "G"),
+				b.el(2, "Weight Unit Code", edi.TemplateElementSourceConstant, "L"),
+				b.field(3, "Weight", "weight", ""),
+				b.field(4, "Lading Quantity", "pieces", ""),
 			},
 		),
 		b.segment(
@@ -270,14 +277,14 @@ func (b base204Builder) summarySegments() []*edi.EDITemplateSegment {
 			"commodities",
 			false,
 			[]edi.TemplateElement{
-				b.repeat(1, "Lading Line Item Number", "sequence", "", false),
-				b.repeat(2, "Lading Description", "commodityDescription", "", false),
+				b.repeat(1, "Lading Line Item Number", "sequence", ""),
+				b.repeat(2, "Lading Description", "commodityDescription", ""),
 			},
 		),
 		b.segment(160, "L3", "Total Weight and Charges", "", false, []edi.TemplateElement{
-			b.field(1, "Weight", "weight", "", false),
-			b.el(2, "Weight Qualifier", edi.TemplateElementSourceConstant, "G", false),
-			b.field(5, "Charge", "totalChargeAmount", "", false),
+			b.field(1, "Weight", "weight", ""),
+			b.el(2, "Weight Qualifier", edi.TemplateElementSourceConstant, "G"),
+			b.field(5, "Charge", "totalChargeAmount", ""),
 		}),
 	}
 }
@@ -285,7 +292,7 @@ func (b base204Builder) summarySegments() []*edi.EDITemplateSegment {
 func (b base204Builder) trailerSegments() []*edi.EDITemplateSegment {
 	return []*edi.EDITemplateSegment{
 		b.segment(170, "SE", "Transaction Set Trailer", "", true, []edi.TemplateElement{
-			b.runtime(1, "Segment Count", "transactionSegmentCount", false),
+			b.runtime(1, "Segment Count", "transactionSegmentCount"),
 			b.runtime(2, "Transaction Control Number", "transactionControlNumber", true),
 		}),
 		b.segment(180, "GE", "Functional Group Trailer", "", true, []edi.TemplateElement{

@@ -20,23 +20,23 @@ type CommunicationProfileSecretState struct {
 type EDICommunicationProfile struct {
 	bun.BaseModel `json:"-" bun:"table:edi_communication_profiles,alias:ecp"`
 
-	ID               pulid.ID                          `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID   pulid.ID                          `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID   pulid.ID                          `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EDIConnectionID  pulid.ID                          `json:"ediConnectionId"  bun:"edi_connection_id,type:VARCHAR(100),nullzero"`
-	EDIPartnerID     pulid.ID                          `json:"ediPartnerId"     bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
-	Method           ConnectionMethod                  `json:"method"           bun:"method,type:edi_connection_method_enum,notnull"`
-	Status           domaintypes.Status                `json:"status"           bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name             string                            `json:"name"             bun:"name,type:VARCHAR(200),notnull"`
-	Description      string                            `json:"description"      bun:"description,type:TEXT,nullzero"`
-	Config           map[string]any                    `json:"config"           bun:"config,type:JSONB,notnull,default:'{}'::jsonb"`
-	EncryptedSecrets map[string]string                 `json:"-"                bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'::jsonb"`
-	SecretState      []CommunicationProfileSecretState `json:"secretState"      bun:"-"`
-	SearchVector     string                            `json:"-"                bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank             string                            `json:"-"                bun:"rank,type:VARCHAR(100),scanonly"`
-	Version          int64                             `json:"version"          bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt        int64                             `json:"createdAt"        bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt        int64                             `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID               pulid.ID                          `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID   pulid.ID                          `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID   pulid.ID                          `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	EDIConnectionID  pulid.ID                          `json:"ediConnectionId" bun:"edi_connection_id,type:VARCHAR(100),nullzero"`
+	EDIPartnerID     pulid.ID                          `json:"ediPartnerId"    bun:"edi_partner_id,type:VARCHAR(100),nullzero"`
+	Method           ConnectionMethod                  `json:"method"          bun:"method,type:edi_connection_method_enum,notnull"`
+	Status           domaintypes.Status                `json:"status"          bun:"status,type:status_enum,notnull,default:'Active'"`
+	Name             string                            `json:"name"            bun:"name,type:VARCHAR(200),notnull"`
+	Description      string                            `json:"description"     bun:"description,type:TEXT,nullzero"`
+	Config           map[string]any                    `json:"config"          bun:"config,type:JSONB,notnull,default:'{}'::jsonb"`
+	EncryptedSecrets map[string]string                 `json:"-"               bun:"encrypted_secrets,type:JSONB,notnull,default:'{}'::jsonb"`
+	SecretState      []CommunicationProfileSecretState `json:"secretState"     bun:"-"`
+	SearchVector     string                            `json:"-"               bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank             string                            `json:"-"               bun:"rank,type:VARCHAR(100),scanonly"`
+	Version          int64                             `json:"version"         bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt        int64                             `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64                             `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -88,7 +88,11 @@ func (p *EDICommunicationProfile) GetPostgresSearchConfig() domaintypes.Postgres
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{Name: "description", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
 			{Name: "method", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
 		},

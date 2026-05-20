@@ -1,3 +1,4 @@
+//nolint:gocritic // EDI payload value APIs are shared contracts across services and renderers.
 package edi
 
 import (

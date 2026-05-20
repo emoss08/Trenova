@@ -112,6 +112,51 @@ func (s *Service) PollNWSAlerts(ctx context.Context) error {
 	return nil
 }
 
+func (s *Service) ListWeatherAlertTenants(
+	ctx context.Context,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	tenants, err := s.repo.ListTenants(ctx)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to list tenants for weather alerts").
+			WithInternal(err)
+	}
+	if limit > 0 && len(tenants) > limit {
+		tenants = tenants[:limit]
+	}
+
+	return tenants, nil
+}
+
+func (s *Service) PollNWSAlertsForTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) error {
+	alerts, err := s.fetchActiveAlerts(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, alert := range alerts {
+		entity := cloneAlertForTenant(alert, tenantInfo)
+		if _, err = s.repo.UpsertAlert(ctx, entity); err != nil {
+			return errortypes.NewBusinessError("failed to upsert weather alert").
+				WithInternal(err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) ExpireStaleWeatherAlerts(ctx context.Context) error {
+	if _, err := s.repo.ExpireStaleAlerts(ctx); err != nil {
+		return errortypes.NewBusinessError("failed to expire stale weather alerts").
+			WithInternal(err)
+	}
+
+	return nil
+}
+
 func (s *Service) GetActiveAlerts(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

@@ -16,6 +16,7 @@ export type EDIDocumentContextFilters = {
   status?: string;
   query?: string;
   limit?: number;
+  offset?: number;
 };
 
 export const functionalGroupByTransactionSet: Record<string, string> = {
@@ -33,6 +34,7 @@ export function functionalGroupForTransactionSet(transactionSet?: string | null)
 
 export function buildEDIDocumentContextQuery(filters: EDIDocumentContextFilters) {
   const params = new URLSearchParams({ limit: String(filters.limit ?? 100) });
+  if (filters.offset !== undefined) params.set("offset", String(filters.offset));
   if (filters.partnerId) params.set("partnerId", filters.partnerId);
   if (filters.transactionSet) params.set("transactionSet", filters.transactionSet);
   if (filters.direction) params.set("direction", filters.direction);

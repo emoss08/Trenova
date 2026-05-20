@@ -118,6 +118,18 @@ func (m *mockBufferRepository) Pop(ctx context.Context, count int) ([]*audit.Ent
 	return args.Get(0).([]*audit.Entry), args.Error(1)
 }
 
+func (m *mockBufferRepository) PopTenantBatches(
+	ctx context.Context,
+	batchSize int,
+	totalLimit int,
+) ([][]*audit.Entry, error) {
+	args := m.Called(ctx, batchSize, totalLimit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([][]*audit.Entry), args.Error(1)
+}
+
 func (m *mockBufferRepository) Size(ctx context.Context) (int64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(int64), args.Error(1)

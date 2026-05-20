@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -114,9 +116,9 @@ func (r *repository) Update(
 
 func (r *repository) ListPollable(
 	ctx context.Context,
-	olderThan int64,
-	limit int,
+	req *repositories.ListPollableDocumentAIExtractionRequest,
 ) ([]*documentaiextraction.Extraction, error) {
+	limit := req.Limit
 	if limit <= 0 {
 		limit = 50
 	}
@@ -126,16 +128,72 @@ func (r *repository) ListPollable(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		Where(cols.Status.Eq(), documentaiextraction.StatusPending).
-		Where(cols.ResponseID.NotEq(), "").
-		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(cols.LastPolledAt.IsNull()).
-				WhereOr(cols.LastPolledAt.Lte(), olderThan)
-		}).
+		Apply(applyPollableDocumentAIExtractionFilters(req)).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		OrderExpr("COALESCE(dae.last_polled_at, 0) ASC").
 		Order(cols.CreatedAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
 	return items, err
+}
+
+func (r *repository) ListPollableTenants(
+	ctx context.Context,
+	req *repositories.ListPollableDocumentAIExtractionRequest,
+) ([]pagination.TenantInfo, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	type tenantRow struct {
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+
+	rows := make([]tenantRow, 0, limit)
+	cols := buncolgen.ExtractionColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*documentaiextraction.Extraction)(nil)).
+		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Apply(applyPollableDocumentAIExtractionFilters(req)).
+		Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Order(cols.OrganizationID.OrderAsc()).
+		Order(cols.BusinessUnitID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
+}
+
+func applyPollableDocumentAIExtractionFilters(
+	req *repositories.ListPollableDocumentAIExtractionRequest,
+) func(*bun.SelectQuery) *bun.SelectQuery {
+	return func(q *bun.SelectQuery) *bun.SelectQuery {
+		cols := buncolgen.ExtractionColumns
+
+		return q.
+			Where(cols.Status.Eq(), documentaiextraction.StatusPending).
+			Where(cols.ResponseID.NotEq(), "").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.WhereGroup(" OR ", func(orq *bun.SelectQuery) *bun.SelectQuery {
+					return orq.
+						Where(cols.LastPolledAt.IsNull()).
+						WhereOr(cols.LastPolledAt.Lte(), req.OlderThan)
+				})
+			})
+	}
 }

@@ -161,6 +161,18 @@ func (m *mockAuditBufferRepository) Pop(
 	return args.Get(0).([]*audit.Entry), args.Error(1)
 }
 
+func (m *mockAuditBufferRepository) PopTenantBatches(
+	ctx context.Context,
+	batchSize int,
+	totalLimit int,
+) ([][]*audit.Entry, error) {
+	args := m.Called(ctx, batchSize, totalLimit)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([][]*audit.Entry), args.Error(1)
+}
+
 func (m *mockAuditBufferRepository) Size(ctx context.Context) (int64, error) {
 	args := m.Called(ctx)
 	return args.Get(0).(int64), args.Error(1)
@@ -350,8 +362,12 @@ func TestFlushFromRedisActivity_WithEntries(t *testing.T) {
 		{ID: pulid.MustNew("ael_")},
 	}
 
-	mockBufferRepo.On("Pop", mock.Anything, defaultBatchSize).Return(entries, nil).Once()
-	mockBufferRepo.On("Pop", mock.Anything, defaultBatchSize).Return([]*audit.Entry{}, nil).Once()
+	mockBufferRepo.On(
+		"PopTenantBatches",
+		mock.Anything,
+		defaultBatchSize,
+		defaultMaxEntries,
+	).Return([][]*audit.Entry{entries}, nil).Once()
 
 	env.RegisterActivity(activities.FlushFromRedisActivity)
 	result, err := env.ExecuteActivity(activities.FlushFromRedisActivity)
@@ -377,7 +393,12 @@ func TestFlushFromRedisActivity_Empty(t *testing.T) {
 		abr: mockBufferRepo,
 	}
 
-	mockBufferRepo.On("Pop", mock.Anything, defaultBatchSize).Return([]*audit.Entry{}, nil)
+	mockBufferRepo.On(
+		"PopTenantBatches",
+		mock.Anything,
+		defaultBatchSize,
+		defaultMaxEntries,
+	).Return([][]*audit.Entry{}, nil)
 
 	env.RegisterActivity(activities.FlushFromRedisActivity)
 	result, err := env.ExecuteActivity(activities.FlushFromRedisActivity)

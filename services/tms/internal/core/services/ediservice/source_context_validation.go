@@ -1,3 +1,4 @@
+//nolint:gocritic // Diagnostic parameter structs are passed by value for immutable validation flow.
 package ediservice
 
 import (

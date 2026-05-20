@@ -63,7 +63,7 @@ func (s *Service) ResolvePartnerSettingSchema(
 		)
 	}
 	if profile.PartnerSettingsSchemaID.IsNotNil() {
-		schema, err := s.documentRepo.GetPartnerSettingSchema(
+		schema, err := s.partnerSettingRepo.GetPartnerSettingSchema(
 			ctx,
 			repositories.GetEDIPartnerSettingSchemaRequest{
 				ID:         profile.PartnerSettingsSchemaID,
@@ -84,7 +84,7 @@ func (s *Service) ResolvePartnerSettingSchema(
 		return schema, nil
 	}
 
-	return s.documentRepo.GetActivePartnerSettingSchema(
+	return s.partnerSettingRepo.GetActivePartnerSettingSchema(
 		ctx,
 		repositories.GetActiveEDIPartnerSettingSchemaRequest{
 			TenantInfo:     tenantInfo,
@@ -133,7 +133,7 @@ func (s *Service) validateProfilePartnerSettings(
 		}
 		return nil, err
 	}
-	fields, err := s.documentRepo.ListPartnerSettingFields(
+	fields, err := s.partnerSettingRepo.ListPartnerSettingFields(
 		ctx,
 		&repositories.ListEDIPartnerSettingFieldsRequest{
 			Filter: &pagination.QueryOptions{
@@ -154,7 +154,7 @@ func (s *Service) partnerSettingsValidationProfile(
 	req *ValidatePartnerSettingsRequest,
 ) (*edi.EDIPartnerDocumentProfile, error) {
 	if req.PartnerDocumentProfileID.IsNotNil() {
-		profile, err := s.documentRepo.GetPartnerDocumentProfileByID(
+		profile, err := s.documentProfileRepo.GetPartnerDocumentProfileByID(
 			ctx,
 			repositories.GetEDIPartnerDocumentProfileByIDRequest{
 				ID:         req.PartnerDocumentProfileID,
@@ -171,13 +171,16 @@ func (s *Service) partnerSettingsValidationProfile(
 	}
 
 	return &edi.EDIPartnerDocumentProfile{
-		BusinessUnitID:               req.TenantInfo.BuID,
-		OrganizationID:               req.TenantInfo.OrgID,
-		DocumentTypeID:               req.DocumentTypeID,
-		Standard:                     defaultEDIStandard(req.Standard),
-		TransactionSet:               defaultTransactionSet(req.TransactionSet),
-		Direction:                    defaultDocumentDirection(req.Direction),
-		X12VersionOverride:           stringutils.FirstNonEmpty(req.X12Version, edi.DefaultX12204Version),
+		BusinessUnitID: req.TenantInfo.BuID,
+		OrganizationID: req.TenantInfo.OrgID,
+		DocumentTypeID: req.DocumentTypeID,
+		Standard:       defaultEDIStandard(req.Standard),
+		TransactionSet: defaultTransactionSet(req.TransactionSet),
+		Direction:      defaultDocumentDirection(req.Direction),
+		X12VersionOverride: stringutils.FirstNonEmpty(
+			req.X12Version,
+			edi.DefaultX12204Version,
+		),
 		PartnerSettingsSchemaID:      req.PartnerSettingsSchemaID,
 		PartnerSettingsSchemaVersion: req.PartnerSettingsSchemaVersion,
 		PartnerSettings:              req.Settings,
@@ -220,7 +223,10 @@ func validatePartnerSettingsWithIndex(
 			edi.ValidationSeverityWarning,
 			partnerSettingUnknownCode,
 			path,
-			fmt.Sprintf("Partner setting %s is not registered in the partner settings schema", path),
+			fmt.Sprintf(
+				"Partner setting %s is not registered in the partner settings schema",
+				path,
+			),
 			"Register this partner setting in schema metadata if templates should depend on it.",
 		))
 	}
@@ -252,6 +258,7 @@ func validatePartnerSettingValue(
 	}
 
 	valueString, isString := value.(string)
+	//nolint:nestif // String validations are grouped to keep each field's diagnostics together.
 	if isString {
 		trimmed := strings.TrimSpace(valueString)
 		if field.MinLength > 0 && len(trimmed) < field.MinLength {
@@ -290,7 +297,11 @@ func validatePartnerSettingValue(
 			edi.ValidationSeverityError,
 			partnerSettingEnumInvalidCode,
 			field.Path,
-			fmt.Sprintf("%s must be one of %s", field.Label, strings.Join(field.AllowedValues, ", ")),
+			fmt.Sprintf(
+				"%s must be one of %s",
+				field.Label,
+				strings.Join(field.AllowedValues, ", "),
+			),
 			"Choose an allowed partner setting value.",
 		))
 	}
@@ -502,7 +513,10 @@ func validateTemplatePartnerSettings(
 			element := &segment.Elements[idx]
 			diagnostics = append(
 				diagnostics,
-				validatePartnerSettingReferences(index, elementSourceReferences(segment, element))...,
+				validatePartnerSettingReferences(
+					index,
+					elementSourceReferences(segment, element),
+				)...,
 			)
 		}
 	}
@@ -526,12 +540,17 @@ func validatePartnerSettingReferences(
 				reference,
 				edi.ValidationSeverityWarning,
 				partnerSettingUnknownCode,
-				fmt.Sprintf("Partner setting %s is not registered in the partner settings schema", path),
+				fmt.Sprintf(
+					"Partner setting %s is not registered in the partner settings schema",
+					path,
+				),
 				"Register this partner setting path before depending on it in templates.",
 			))
 			continue
 		}
-		diagnostics = append(diagnostics, templatePartnerSettingStatusDiagnostics(reference, field)...)
+		diagnostics = append(
+			diagnostics,
+			templatePartnerSettingStatusDiagnostics(reference, field)...)
 	}
 	return diagnostics
 }

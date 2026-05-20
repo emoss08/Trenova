@@ -17,6 +17,12 @@ type DocumentContentSearchRequest struct {
 	Limit        int
 }
 
+type ListPendingDocumentExtractionRequest struct {
+	TenantInfo pagination.TenantInfo
+	OlderThan  int64
+	Limit      int
+}
+
 type DocumentContentRepository interface {
 	GetByDocumentID(
 		ctx context.Context,
@@ -36,9 +42,12 @@ type DocumentContentRepository interface {
 	Upsert(ctx context.Context, entity *documentcontent.Content) (*documentcontent.Content, error)
 	ListPendingExtraction(
 		ctx context.Context,
-		olderThan int64,
-		limit int,
+		req *ListPendingDocumentExtractionRequest,
 	) ([]*document.Document, error)
+	ListPendingExtractionTenants(
+		ctx context.Context,
+		req *ListPendingDocumentExtractionRequest,
+	) ([]pagination.TenantInfo, error)
 	SearchByResource(
 		ctx context.Context,
 		req *DocumentContentSearchRequest,

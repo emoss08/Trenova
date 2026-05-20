@@ -137,14 +137,13 @@ func (r *repository) GetByID(
 
 func (r *repository) ListForReconciliation(
 	ctx context.Context,
-	staleBefore int64,
-	expiresBefore int64,
-	limit int,
+	req *repositories.ListDocumentUploadReconciliationRequest,
 ) ([]*documentupload.DocumentUploadSession, error) {
-	sessions := make([]*documentupload.DocumentUploadSession, 0, limit)
+	limit := req.Limit
 	if limit <= 0 {
 		limit = 100
 	}
+	sessions := make([]*documentupload.DocumentUploadSession, 0, limit)
 
 	cols := buncolgen.DocumentUploadSessionColumns
 
@@ -162,7 +161,7 @@ func (r *repository) ListForReconciliation(
 						documentupload.StatusUploading,
 						documentupload.StatusPaused,
 					})).
-					Where(cols.LastActivityAt.Lte(), staleBefore)
+					Where(cols.LastActivityAt.Lte(), req.StaleBefore)
 			}).WhereGroup(" AND ", func(expired *bun.SelectQuery) *bun.SelectQuery {
 				return expired.
 					Where(cols.Status.In(), bun.List([]documentupload.Status{
@@ -170,9 +169,11 @@ func (r *repository) ListForReconciliation(
 						documentupload.StatusUploading,
 						documentupload.StatusPaused,
 					})).
-					Where(cols.ExpiresAt.Lte(), expiresBefore)
+					Where(cols.ExpiresAt.Lte(), req.ExpiresBefore)
 			})
 		}).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Order(cols.LastActivityAt.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
@@ -181,6 +182,68 @@ func (r *repository) ListForReconciliation(
 	}
 
 	return sessions, nil
+}
+
+func (r *repository) ListReconciliationTenants(
+	ctx context.Context,
+	req *repositories.ListDocumentUploadReconciliationRequest,
+) ([]pagination.TenantInfo, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	type tenantRow struct {
+		OrganizationID pulid.ID `bun:"organization_id"`
+		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	}
+
+	rows := make([]tenantRow, 0, limit)
+	cols := buncolgen.DocumentUploadSessionColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*documentupload.DocumentUploadSession)(nil)).
+		Column(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		WhereGroup(" OR ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereGroup(" AND ", func(active *bun.SelectQuery) *bun.SelectQuery {
+				return active.
+					Where(cols.Status.In(), bun.List([]documentupload.Status{
+						documentupload.StatusUploaded,
+						documentupload.StatusVerifying,
+						documentupload.StatusFinalizing,
+						documentupload.StatusInitiated,
+						documentupload.StatusUploading,
+						documentupload.StatusPaused,
+					})).
+					Where(cols.LastActivityAt.Lte(), req.StaleBefore)
+			}).WhereGroup(" AND ", func(expired *bun.SelectQuery) *bun.SelectQuery {
+				return expired.
+					Where(cols.Status.In(), bun.List([]documentupload.Status{
+						documentupload.StatusInitiated,
+						documentupload.StatusUploading,
+						documentupload.StatusPaused,
+					})).
+					Where(cols.ExpiresAt.Lte(), req.ExpiresBefore)
+			})
+		}).
+		Group(cols.OrganizationID.Name, cols.BusinessUnitID.Name).
+		Order(cols.OrganizationID.OrderAsc()).
+		Order(cols.BusinessUnitID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+
+	tenants := make([]pagination.TenantInfo, 0, len(rows))
+	for _, row := range rows {
+		tenants = append(tenants, pagination.TenantInfo{
+			OrgID: row.OrganizationID,
+			BuID:  row.BusinessUnitID,
+		})
+	}
+
+	return tenants, nil
 }
 
 func (r *repository) ClearDocumentReference(

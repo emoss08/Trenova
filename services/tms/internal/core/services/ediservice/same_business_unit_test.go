@@ -58,7 +58,8 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 				req.BusinessUnitID == buID
 		})).
 		Return(targetPartner, nil)
-	partnerRepo.EXPECT().
+	mappingProfileRepo := mocks.NewMockEDIMappingProfileRepository(t)
+	mappingProfileRepo.EXPECT().
 		GetMappingItems(mock.Anything, mock.MatchedBy(func(req repositories.GetMappingItemsRequest) bool {
 			return req.PartnerID == targetPartnerID &&
 				req.TenantInfo.OrgID == targetOrgID &&
@@ -136,12 +137,13 @@ func TestService_SubmitLoadTenderRequiresReciprocalPartnerInSameBusinessUnit(t *
 		}, nil)
 
 	service := &Service{
-		l:              zap.NewNop(),
-		partnerRepo:    partnerRepo,
-		connectionRepo: connectionRepo,
-		profileRepo:    profileRepo,
-		transferRepo:   transferRepo,
-		shipmentSvc:    shipmentSvc,
+		l:                  zap.NewNop(),
+		partnerRepo:        partnerRepo,
+		mappingProfileRepo: mappingProfileRepo,
+		connectionRepo:     connectionRepo,
+		profileRepo:        profileRepo,
+		transferRepo:       transferRepo,
+		shipmentSvc:        shipmentSvc,
 	}
 
 	transfer, err := service.SubmitLoadTender(ctx, &SubmitLoadTenderRequest{

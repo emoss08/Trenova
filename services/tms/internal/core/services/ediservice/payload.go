@@ -19,6 +19,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+//nolint:funlen // Tender payload construction intentionally mirrors the outbound document shape.
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
 		ShipmentID:               source.ID,
@@ -151,12 +152,18 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 
 func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 	payload := edi.FreightInvoicePayload{
-		InvoiceID:          source.ID,
-		InvoiceNumber:      source.Number,
-		InvoiceDate:        source.InvoiceDate,
-		ShipmentID:         source.ShipmentID,
-		BOL:                stringutils.FirstNonEmpty(source.ShipmentBOL, shipmentBOL(source.Shipment)),
-		ProNumber:          stringutils.FirstNonEmpty(source.ShipmentProNumber, shipmentProNumber(source.Shipment)),
+		InvoiceID:     source.ID,
+		InvoiceNumber: source.Number,
+		InvoiceDate:   source.InvoiceDate,
+		ShipmentID:    source.ShipmentID,
+		BOL: stringutils.FirstNonEmpty(
+			source.ShipmentBOL,
+			shipmentBOL(source.Shipment),
+		),
+		ProNumber: stringutils.FirstNonEmpty(
+			source.ShipmentProNumber,
+			shipmentProNumber(source.Shipment),
+		),
 		BillToName:         source.BillToName,
 		BillToAddressLine1: source.BillToAddressLine1,
 		BillToAddressLine2: source.BillToAddressLine2,
@@ -171,9 +178,15 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 		},
 		LineCharges: make([]edi.FreightInvoiceCharge, 0, len(source.Lines)),
 		ReferenceNumbers: map[string]string{
-			"qualifier":  "BM",
-			"bol":        stringutils.FirstNonEmpty(source.ShipmentBOL, shipmentBOL(source.Shipment)),
-			"pro":        stringutils.FirstNonEmpty(source.ShipmentProNumber, shipmentProNumber(source.Shipment)),
+			"qualifier": "BM",
+			"bol": stringutils.FirstNonEmpty(
+				source.ShipmentBOL,
+				shipmentBOL(source.Shipment),
+			),
+			"pro": stringutils.FirstNonEmpty(
+				source.ShipmentProNumber,
+				shipmentProNumber(source.Shipment),
+			),
 			"shipmentId": source.ShipmentID.String(),
 		},
 	}
@@ -300,6 +313,7 @@ func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {
 }
 
 func shipmentEventStatusCode(event *shipmentevent.Event) string {
+	//nolint:exhaustive // Unmapped shipment events intentionally fall back to the generic status code.
 	switch event.Type {
 	case shipmentevent.TypeMoveDeparted:
 		return "AF"
@@ -310,6 +324,7 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 	case shipmentevent.TypeShipmentCanceled:
 		return "A7"
 	case shipmentevent.TypeStatusChanged:
+		//nolint:exhaustive // Only statuses with EDI 214-specific codes need overrides.
 		switch shipment.Status(metadataString(event.Metadata, "newStatus")) {
 		case shipment.StatusInTransit:
 			return "AF"
@@ -388,7 +403,7 @@ func (s *Service) buildAcknowledgmentPayload(
 	req *PreviewEDIDocumentRequest,
 	transactionSet edi.TransactionSet,
 ) (edi.DocumentPayload, error) {
-	message, err := s.documentRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
+	message, err := s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
 		ID:         req.SourceMessageID,
 		TenantInfo: req.TenantInfo,
 	})

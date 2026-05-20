@@ -1,3 +1,4 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
 package edirepository
 
 import (
@@ -145,7 +146,11 @@ func (r *repository) CreateConnection(
 		return nil, err
 	}
 
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
 		return nil, err
 	}
 

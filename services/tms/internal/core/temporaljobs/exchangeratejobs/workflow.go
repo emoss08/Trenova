@@ -3,6 +3,7 @@ package exchangeratejobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -34,9 +35,49 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	}
 }
 
-func RefreshExchangeRatesWorkflow(ctx workflow.Context) error {
-	ctx = workflow.WithActivityOptions(ctx, refreshExchangeRatesActivityOptions)
+func RefreshExchangeRatesWorkflow(ctx workflow.Context) (*RefreshExchangeRatesResult, error) {
+	activityCtx := workflow.WithActivityOptions(ctx, refreshExchangeRatesActivityOptions)
+	logger := workflow.GetLogger(ctx)
 
 	var a *Activities
-	return workflow.ExecuteActivity(ctx, a.RefreshExchangeRatesActivity).Get(ctx, nil)
+	var tenantsResult *ListExchangeRateTenantsResult
+	if err := workflow.ExecuteActivity(
+		activityCtx,
+		a.ListExchangeRateTenantsActivity,
+		&ListExchangeRateTenantsPayload{Limit: temporaljobs.DefaultTenantScanLimit},
+	).Get(ctx, &tenantsResult); err != nil {
+		return nil, err
+	}
+
+	result := &RefreshExchangeRatesResult{}
+	result.TenantsScanned = len(tenantsResult.Tenants)
+	for _, tenant := range tenantsResult.Tenants {
+		payload := &RefreshExchangeRateTenantPayload{
+			TenantWorkItem: tenant,
+			BaseCurrency:   "USD",
+		}
+		if err := workflow.ExecuteActivity(
+			activityCtx,
+			a.RefreshExchangeRatesForTenantActivity,
+			payload,
+		).Get(ctx, nil); err != nil {
+			logger.Error("Exchange rate refresh tenant failed",
+				"orgId", tenant.OrganizationID.String(),
+				"buId", tenant.BusinessUnitID.String(),
+				"error", err,
+			)
+			result.AddFailure(tenant, err)
+			continue
+		}
+
+		result.AddTenantResult(1, 0)
+	}
+
+	logger.Info("Exchange rate refresh workflow completed",
+		"tenantsScanned", result.TenantsScanned,
+		"tenantsProcessed", result.TenantsProcessed,
+		"failureCount", result.FailureCount,
+	)
+
+	return result, nil
 }

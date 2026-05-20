@@ -510,6 +510,9 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req GetReciprocalInternalPartnerRequest,
 	) (*edi.EDIPartner, error)
+}
+
+type EDIMappingProfileRepository interface {
 	GetMappingProfile(
 		ctx context.Context,
 		req GetMappingProfileRequest,
@@ -609,30 +612,9 @@ type EDIDocumentTypeRepository interface {
 		ctx context.Context,
 		req *EDIDocumentTypeSelectOptionsRequest,
 	) (*pagination.ListResult[*edi.EDIDocumentType], error)
-	ListPartnerSettingSchemas(
-		ctx context.Context,
-		req *ListEDIPartnerSettingSchemasRequest,
-	) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error)
-	GetPartnerSettingSchema(
-		ctx context.Context,
-		req GetEDIPartnerSettingSchemaRequest,
-	) (*edi.EDIPartnerSettingSchema, error)
-	GetActivePartnerSettingSchema(
-		ctx context.Context,
-		req GetActiveEDIPartnerSettingSchemaRequest,
-	) (*edi.EDIPartnerSettingSchema, error)
-	ListPartnerSettingFields(
-		ctx context.Context,
-		req *ListEDIPartnerSettingFieldsRequest,
-	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
-	SearchPartnerSettingFields(
-		ctx context.Context,
-		req *ListEDIPartnerSettingFieldsRequest,
-	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
-	SelectPartnerSettingFieldOptions(
-		ctx context.Context,
-		req *ListEDIPartnerSettingFieldsRequest,
-	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
+}
+
+type EDISourceContextRepository interface {
 	ListSourceContextSchemas(
 		ctx context.Context,
 		req *ListEDISourceContextSchemasRequest,
@@ -657,6 +639,33 @@ type EDIDocumentTypeRepository interface {
 		ctx context.Context,
 		req *ListEDISourceContextFieldsRequest,
 	) (*pagination.ListResult[*edi.EDISourceContextField], error)
+}
+
+type EDIPartnerSettingRepository interface {
+	ListPartnerSettingSchemas(
+		ctx context.Context,
+		req *ListEDIPartnerSettingSchemasRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error)
+	GetPartnerSettingSchema(
+		ctx context.Context,
+		req GetEDIPartnerSettingSchemaRequest,
+	) (*edi.EDIPartnerSettingSchema, error)
+	GetActivePartnerSettingSchema(
+		ctx context.Context,
+		req GetActiveEDIPartnerSettingSchemaRequest,
+	) (*edi.EDIPartnerSettingSchema, error)
+	ListPartnerSettingFields(
+		ctx context.Context,
+		req *ListEDIPartnerSettingFieldsRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
+	SearchPartnerSettingFields(
+		ctx context.Context,
+		req *ListEDIPartnerSettingFieldsRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
+	SelectPartnerSettingFieldOptions(
+		ctx context.Context,
+		req *ListEDIPartnerSettingFieldsRequest,
+	) (*pagination.ListResult[*edi.EDIPartnerSettingField], error)
 }
 
 type EDITemplateRepository interface {
@@ -777,6 +786,8 @@ type EDITestCaseRepository interface {
 
 type EDIDocumentRepository interface {
 	EDIDocumentTypeRepository
+	EDISourceContextRepository
+	EDIPartnerSettingRepository
 	EDITemplateRepository
 	EDIPartnerDocumentProfileRepository
 	EDIControlNumberRepository
