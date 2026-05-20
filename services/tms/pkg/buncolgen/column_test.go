@@ -17,6 +17,7 @@ func TestColumnBasicAccessors(t *testing.T) {
 	assert.Equal(t, "first_name", testCol.String())
 	assert.Equal(t, "first_name", testCol.Bare())
 	assert.Equal(t, "wrk.first_name", testCol.Qualified())
+	assert.Equal(t, "alt.first_name", testCol.WithAlias("alt").Qualified())
 }
 
 func TestColumnWhereFragments(t *testing.T) {
@@ -37,6 +38,10 @@ func TestColumnWhereFragments(t *testing.T) {
 	assert.Equal(t, "wrk.first_name NOT LIKE ?", testCol.NotLike())
 	assert.Equal(t, "wrk.first_name NOT ILIKE ?", testCol.NotILike())
 	assert.Equal(t, "wrk.first_name BETWEEN ? AND ?", testCol.Between())
+	assert.Equal(t, "wrk.first_name = TRUE", testCol.IsTrue())
+	assert.Equal(t, "wrk.first_name = FALSE", testCol.IsFalse())
+	assert.Equal(t, "lower(wrk.first_name) LIKE ?", testCol.LowerLike())
+	assert.Equal(t, "wrk.first_name::text ILIKE ?", testCol.TextILike())
 }
 
 func TestColumnOrderFragments(t *testing.T) {
@@ -51,6 +56,18 @@ func TestColumnSelectAndUpdateHelpers(t *testing.T) {
 	assert.Equal(t, "first_name = EXCLUDED.first_name", testCol.SetExcluded())
 	assert.Equal(t, "first_name = EXCLUDED.first_name", testCol.SetExpr("EXCLUDED.first_name"))
 	assert.Equal(t, "first_name = COALESCE(first_name, ?)", testCol.SetExpr("COALESCE({}, ?)"))
+}
+
+func TestTableInfoHelpers(t *testing.T) {
+	table := TableInfo{
+		Name:       "workers",
+		Alias:      "wrk",
+		PrimaryKey: []string{"id"},
+	}
+
+	assert.Equal(t, "workers AS active_workers", table.As("active_workers"))
+	assert.Equal(t, "wrk.*", table.All())
+	assert.Panics(t, func() { table.As("workers.evil") })
 }
 
 func TestColumnInc(t *testing.T) {

@@ -1,0 +1,12 @@
+package repositories
+
+type EDIDocumentRepository interface {
+	EDIDocumentTypeRepository
+	EDISourceContextRepository
+	EDIPartnerSettingRepository
+	EDITemplateRepository
+	EDIPartnerDocumentProfileRepository
+	EDIControlNumberRepository
+	EDIMessageRepository
+	EDITestCaseRepository
+}

@@ -56,6 +56,10 @@ type Column struct {
 	notLike   string
 	notILike  string
 	between   string
+	isTrue    string
+	isFalse   string
+	lowerLike string
+	textILike string
 }
 
 // TableInfo holds metadata about a database table parsed from the bun.BaseModel tag.
@@ -114,6 +118,10 @@ func NewColumn(name, alias string) Column {
 		notLike:   q + " NOT LIKE ?",
 		notILike:  q + " NOT ILIKE ?",
 		between:   q + " BETWEEN ? AND ?",
+		isTrue:    q + " = TRUE",
+		isFalse:   q + " = FALSE",
+		lowerLike: "lower(" + q + ") LIKE ?",
+		textILike: q + "::text ILIKE ?",
 	}
 }
 
@@ -135,6 +143,20 @@ func (c Column) String() string { return c.Name }
 //	q.ColumnExpr("CONCAT(" + WorkerColumns.FirstName.Qualified() + ", ' ', " + WorkerColumns.LastName.Qualified() + ")")
 //	// CONCAT(wrk.first_name, ' ', wrk.last_name)
 func (c Column) Qualified() string { return c.qualified }
+
+// WithAlias returns the same column name bound to a different table alias.
+// Use this for self-joins and explicit custom aliases.
+func (c Column) WithAlias(alias string) Column { return NewColumn(c.Name, alias) }
+
+// As returns "table AS alias" for TableExpr/ModelTableExpr calls.
+func (t TableInfo) As(alias string) string {
+	assertValidIdentifier(t.Name, "table name")
+	assertValidIdentifier(alias, "table alias")
+	return t.Name + " AS " + alias
+}
+
+// All returns "alias.*" for selecting all columns from a table alias.
+func (t TableInfo) All() string { return t.Alias + ".*" }
 
 // ---------------------------------------------------------------------------
 // WHERE clause fragments — each returns a string with ? bind placeholders
@@ -186,6 +208,12 @@ func (c Column) IsNull() string { return c.isNull }
 // IsNotNull returns a "alias.column IS NOT NULL" fragment. No bind parameter needed.
 func (c Column) IsNotNull() string { return c.isNotNull }
 
+// IsTrue returns a "alias.column = TRUE" fragment for boolean predicates.
+func (c Column) IsTrue() string { return c.isTrue }
+
+// IsFalse returns a "alias.column = FALSE" fragment for boolean predicates.
+func (c Column) IsFalse() string { return c.isFalse }
+
 // Like returns a "alias.column LIKE ?" fragment for case-sensitive pattern matching.
 //
 //	q.Where(WorkerColumns.FirstName.Like(), "%john%")
@@ -209,6 +237,12 @@ func (c Column) NotLike() string { return c.notLike }
 
 // NotILike returns a "alias.column NOT ILIKE ?" fragment.
 func (c Column) NotILike() string { return c.notILike }
+
+// LowerLike returns a "LOWER(alias.column) LIKE ?" fragment.
+func (c Column) LowerLike() string { return c.lowerLike }
+
+// TextILike returns a "alias.column::text ILIKE ?" fragment.
+func (c Column) TextILike() string { return c.textILike }
 
 // ---------------------------------------------------------------------------
 // ORDER BY fragments
