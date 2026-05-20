@@ -518,7 +518,7 @@ func (s *Service) GetViewURL(
 	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
 		Key:                doc.StoragePath,
 		Expiry:             s.config.GetPresignedURLExpiry(),
-		ContentDisposition: fmt.Sprintf("inline; filename=\"%q\"", doc.OriginalName),
+		ContentDisposition: viewContentDisposition(doc),
 	})
 	if err != nil {
 		log.Error("failed to generate presigned URL for viewing", zap.Error(err))
@@ -526,6 +526,24 @@ func (s *Service) GetViewURL(
 	}
 
 	return url, nil
+}
+
+func viewContentDisposition(doc *document.Document) string {
+	disposition := "inline"
+	if isActiveContentType(doc.FileType) {
+		disposition = "attachment"
+	}
+
+	return fmt.Sprintf("%s; filename=\"%q\"", disposition, doc.OriginalName)
+}
+
+func isActiveContentType(contentType string) bool {
+	switch strings.ToLower(strings.TrimSpace(contentType)) {
+	case "text/html", "application/xhtml+xml", "image/svg+xml":
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *Service) Delete(

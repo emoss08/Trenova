@@ -27,19 +27,42 @@ type Params struct {
 	Logger             *zap.Logger
 	IntegrationService *integrationservice.Service
 	ExchangeRateRepo   repositories.ExchangeRateRepository
+	HTTPClient         *http.Client `optional:"true"`
 }
 
 type Service struct {
 	l                  *zap.Logger
 	integrationService *integrationservice.Service
 	repo               repositories.ExchangeRateRepository
+	httpClient         *http.Client
 }
 
 func New(p Params) *Service {
+	httpClient := p.HTTPClient
+	if httpClient == nil {
+		httpClient = newDefaultHTTPClient()
+	}
+
 	return &Service{
 		l:                  p.Logger.Named("service.exchange-rate"),
 		integrationService: p.IntegrationService,
 		repo:               p.ExchangeRateRepo,
+		httpClient:         httpClient,
+	}
+}
+
+func newDefaultHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			MaxIdleConns:          100,
+			MaxIdleConnsPerHost:   10,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 10 * time.Second,
+			ExpectContinueTimeout: time.Second,
+		},
 	}
 }
 
@@ -183,7 +206,7 @@ func (s *Service) fetchAndCacheRates(
 			WithInternal(reqErr)
 	}
 
-	resp, respErr := http.DefaultClient.Do(req)
+	resp, respErr := s.httpClient.Do(req)
 	if respErr != nil {
 		return nil, errortypes.NewBusinessError("failed to fetch exchange rates").
 			WithInternal(respErr)
@@ -257,7 +280,7 @@ func (s *Service) fetchPairRate(
 			WithInternal(reqErr)
 	}
 
-	resp, respErr := http.DefaultClient.Do(req)
+	resp, respErr := s.httpClient.Do(req)
 	if respErr != nil {
 		return decimal.Zero, errortypes.NewBusinessError("failed to fetch pair rate").
 			WithInternal(respErr)

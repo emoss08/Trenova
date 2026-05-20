@@ -11,14 +11,15 @@ import (
 )
 
 type ServerConfig struct {
-	Host            string        `mapstructure:"host"            validate:"required,hostname|ip"`
-	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
-	Mode            string        `mapstructure:"mode"            validate:"required,oneof=debug release test"`
-	ReadTimeout     time.Duration `mapstructure:"readTimeout"`
-	WriteTimeout    time.Duration `mapstructure:"writeTimeout"`
-	IdleTimeout     time.Duration `mapstructure:"idleTimeout"`
-	ShutdownTimeout time.Duration `mapstructure:"shutdownTimeout"`
-	CORS            CORSConfig    `mapstructure:"cors,omitempty"`
+	Host              string        `mapstructure:"host"              validate:"required,hostname|ip"`
+	Port              int           `mapstructure:"port"              validate:"required,min=1,max=65535"`
+	Mode              string        `mapstructure:"mode"              validate:"required,oneof=debug release test"`
+	ReadTimeout       time.Duration `mapstructure:"readTimeout"`
+	ReadHeaderTimeout time.Duration `mapstructure:"readHeaderTimeout"`
+	WriteTimeout      time.Duration `mapstructure:"writeTimeout"`
+	IdleTimeout       time.Duration `mapstructure:"idleTimeout"`
+	ShutdownTimeout   time.Duration `mapstructure:"shutdownTimeout"`
+	CORS              CORSConfig    `mapstructure:"cors,omitempty"`
 }
 
 type MonitoringConfig struct {
@@ -148,6 +149,27 @@ type RateLimitConfig struct {
 	RequestsPerMinute int           `mapstructure:"requestsPerMinute" validate:"min=1,max=10000"`
 	BurstSize         int           `mapstructure:"burstSize"         validate:"min=1,max=1000"`
 	CleanupInterval   time.Duration `mapstructure:"cleanupInterval"`
+}
+
+func (c *RateLimitConfig) GetRequestsPerMinute() int {
+	if c.RequestsPerMinute == 0 {
+		return 60
+	}
+	return c.RequestsPerMinute
+}
+
+func (c *RateLimitConfig) GetBurstSize() int {
+	if c.BurstSize == 0 {
+		return 10
+	}
+	return c.BurstSize
+}
+
+func (c *RateLimitConfig) GetCleanupInterval() time.Duration {
+	if c.CleanupInterval == 0 {
+		return time.Minute
+	}
+	return c.CleanupInterval
 }
 
 type CSRFConfig struct {
@@ -498,6 +520,7 @@ type StorageConfig struct {
 	Region             string        `mapstructure:"region"`
 	AutoCreateBucket   *bool         `mapstructure:"autoCreateBucket"`
 	MaxFileSize        int64         `mapstructure:"maxFileSize"`
+	MaxFilesPerUpload  int           `mapstructure:"maxFilesPerUpload"  validate:"min=0,max=100"`
 	PresignedURLExpiry time.Duration `mapstructure:"presignedUrlExpiry"`
 	AllowedMIMETypes   []string      `mapstructure:"allowedMimeTypes"`
 }
@@ -528,6 +551,13 @@ func (c *StorageConfig) GetMaxFileSize() int64 {
 	return c.MaxFileSize
 }
 
+func (c *StorageConfig) GetMaxFilesPerUpload() int {
+	if c.MaxFilesPerUpload == 0 {
+		return 10
+	}
+	return c.MaxFilesPerUpload
+}
+
 func (c *StorageConfig) GetPresignedURLExpiry() time.Duration {
 	if c.PresignedURLExpiry == 0 {
 		return 15 * time.Minute
@@ -549,7 +579,6 @@ func (c *StorageConfig) GetAllowedMIMETypes() []string {
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			"text/plain",
 			"text/csv",
-			"text/html",
 		}
 	}
 
@@ -682,11 +711,12 @@ func (c *PlatformConfig) IsDevelopmentDeployment() bool {
 }
 
 type PlatformControlPlaneConfig struct {
-	Enabled         bool          `mapstructure:"enabled"`
-	Endpoint        string        `mapstructure:"endpoint"        validate:"omitempty,url,no_trailing_slash"`
-	APIKey          string        `mapstructure:"apiKey"`
-	Timeout         time.Duration `mapstructure:"timeout"`
-	FailOpenOnError bool          `mapstructure:"failOpenOnError"`
+	Enabled           bool          `mapstructure:"enabled"`
+	Endpoint          string        `mapstructure:"endpoint"          validate:"omitempty,url,no_trailing_slash"`
+	APIKey            string        `mapstructure:"apiKey"`
+	Timeout           time.Duration `mapstructure:"timeout"`
+	HeartbeatInterval time.Duration `mapstructure:"heartbeatInterval"`
+	FailOpenOnError   bool          `mapstructure:"failOpenOnError"`
 }
 
 func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
@@ -695,6 +725,14 @@ func (c *PlatformControlPlaneConfig) GetTimeout() time.Duration {
 	}
 
 	return c.Timeout
+}
+
+func (c *PlatformControlPlaneConfig) GetHeartbeatInterval() time.Duration {
+	if c.HeartbeatInterval <= 0 {
+		return 5 * time.Minute
+	}
+
+	return c.HeartbeatInterval
 }
 
 type SystemConfig struct {

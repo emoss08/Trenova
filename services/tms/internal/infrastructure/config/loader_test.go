@@ -272,7 +272,7 @@ func TestApplyEnvironmentOverrides(t *testing.T) {
 		cfg.Logging.Stacktrace = true
 		cfg.Database.SSLMode = "disable"
 
-		l.applyEnvironmentOverrides(cfg)
+		require.NoError(t, l.applyEnvironmentOverrides(cfg))
 
 		assert.False(t, cfg.App.Debug)
 		assert.Equal(t, "release", cfg.Server.Mode)
@@ -291,7 +291,7 @@ func TestApplyEnvironmentOverrides(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.Database.SSLMode = "verify-full"
 
-		l.applyEnvironmentOverrides(cfg)
+		require.NoError(t, l.applyEnvironmentOverrides(cfg))
 
 		assert.Equal(t, "verify-full", cfg.Database.SSLMode)
 	})
@@ -306,7 +306,7 @@ func TestApplyEnvironmentOverrides(t *testing.T) {
 		cfg.Server.Mode = "release"
 		cfg.Logging.Stacktrace = false
 
-		l.applyEnvironmentOverrides(cfg)
+		require.NoError(t, l.applyEnvironmentOverrides(cfg))
 
 		assert.True(t, cfg.App.Debug)
 		assert.Equal(t, "debug", cfg.Server.Mode)
@@ -321,7 +321,7 @@ func TestApplyEnvironmentOverrides(t *testing.T) {
 		_ = l.determineEnvironment()
 		cfg := newValidConfig()
 
-		l.applyEnvironmentOverrides(cfg)
+		require.NoError(t, l.applyEnvironmentOverrides(cfg))
 
 		assert.Equal(t, "staging", cfg.App.Env)
 	})
@@ -477,6 +477,7 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, 8080, l.viper.GetInt("server.port"))
 		assert.Equal(t, "release", l.viper.GetString("server.mode"))
 		assert.Equal(t, "30s", l.viper.GetString("server.readTimeout"))
+		assert.Equal(t, "5s", l.viper.GetString("server.readHeaderTimeout"))
 		assert.Equal(t, "30s", l.viper.GetString("server.writeTimeout"))
 		assert.Equal(t, "120s", l.viper.GetString("server.idleTimeout"))
 		assert.Equal(t, "10s", l.viper.GetString("server.shutdownTimeout"))
@@ -751,7 +752,11 @@ monitoring:
 			configPath := t.TempDir()
 			require.NoError(
 				t,
-				os.WriteFile(filepath.Join(configPath, "config.yaml"), []byte(validConfigYAML()), 0o600),
+				os.WriteFile(
+					filepath.Join(configPath, "config.yaml"),
+					[]byte(validConfigYAML()),
+					0o600,
+				),
 			)
 			require.NoError(
 				t,
@@ -987,6 +992,7 @@ func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
 	t.Setenv("TRENOVA_CONTROL_PLANE_ENDPOINT", "https://control.trenova.test")
 	t.Setenv("TRENOVA_INSTANCE_ID", "inst_01")
 	t.Setenv("TRENOVA_CONTROL_PLANE_API_KEY", "cp_test_key")
+	t.Setenv("TRENOVA_CONTROL_PLANE_HEARTBEAT_INTERVAL", "30s")
 	t.Setenv("TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR", "true")
 
 	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
@@ -999,6 +1005,7 @@ func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
 	assert.Equal(t, "https://control.trenova.test", cfg.Platform.ControlPlane.Endpoint)
 	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
 	assert.Equal(t, "cp_test_key", cfg.Platform.ControlPlane.APIKey)
+	assert.Equal(t, 30*time.Second, cfg.Platform.ControlPlane.GetHeartbeatInterval())
 	assert.True(t, cfg.Platform.ControlPlane.FailOpenOnError)
 }
 

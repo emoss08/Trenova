@@ -86,7 +86,9 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	l.applyEnvironmentOverrides(config)
+	if err := l.applyEnvironmentOverrides(config); err != nil {
+		return nil, fmt.Errorf("apply environment overrides: %w", err)
+	}
 
 	return config, nil
 }
@@ -144,6 +146,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.port", 8080)
 	l.viper.SetDefault("server.mode", "release")
 	l.viper.SetDefault("server.readTimeout", "30s")
+	l.viper.SetDefault("server.readHeaderTimeout", "5s")
 	l.viper.SetDefault("server.writeTimeout", "30s")
 	l.viper.SetDefault("server.idleTimeout", "120s")
 	l.viper.SetDefault("server.shutdownTimeout", "10s")
@@ -235,6 +238,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("platform.mode", string(PlatformModeSelfHosted))
 	l.viper.SetDefault("platform.controlPlane.enabled", false)
 	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
+	l.viper.SetDefault("platform.controlPlane.heartbeatInterval", "5m")
 	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
 
 	// Storage defaults
@@ -248,6 +252,10 @@ func (l *Loader) bindControlPlaneEnvAliases() {
 	_ = l.viper.BindEnv("platform.controlPlane.enabled", "TRENOVA_CONTROL_PLANE_ENABLED")
 	_ = l.viper.BindEnv("platform.controlPlane.endpoint", "TRENOVA_CONTROL_PLANE_ENDPOINT")
 	_ = l.viper.BindEnv("platform.controlPlane.apiKey", "TRENOVA_CONTROL_PLANE_API_KEY")
+	_ = l.viper.BindEnv(
+		"platform.controlPlane.heartbeatInterval",
+		"TRENOVA_CONTROL_PLANE_HEARTBEAT_INTERVAL",
+	)
 	_ = l.viper.BindEnv(
 		"platform.controlPlane.failOpenOnError",
 		"TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR",
@@ -309,17 +317,17 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	if config.Platform.ControlPlane.Enabled {
 		if config.Platform.ControlPlane.Endpoint == "" {
-			return fmt.Errorf(
+			return errors.New(
 				"platform.controlplane.endpoint is required when control plane is enabled",
 			)
 		}
 		if config.Platform.ControlPlane.APIKey == "" {
-			return fmt.Errorf(
+			return errors.New(
 				"platform.controlplane.apikey is required when control plane is enabled",
 			)
 		}
 		if config.Platform.InstanceID == "" {
-			return fmt.Errorf(
+			return errors.New(
 				"platform.instanceid is required when control plane is enabled",
 			)
 		}
@@ -334,7 +342,7 @@ func (l *Loader) validateConfig(config *Config) error {
 	return nil
 }
 
-func (l *Loader) applyEnvironmentOverrides(config *Config) {
+func (l *Loader) applyEnvironmentOverrides(config *Config) error {
 	if l.env == "production" {
 		config.App.Debug = false
 		config.Server.Mode = "release"
@@ -351,7 +359,10 @@ func (l *Loader) applyEnvironmentOverrides(config *Config) {
 
 	config.App.Env = l.env
 
-	os.Setenv("GIN_MODE", config.Server.Mode)
+	if err := os.Setenv("GIN_MODE", config.Server.Mode); err != nil {
+		return fmt.Errorf("set gin mode: %w", err)
+	}
+	return nil
 }
 
 func (l *Loader) registerValidators() {

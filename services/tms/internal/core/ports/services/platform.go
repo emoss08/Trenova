@@ -86,6 +86,24 @@ type UsageRecordResult struct {
 	IdempotencyKey string                   `json:"idempotencyKey,omitempty"`
 }
 
+type InstanceHeartbeatRequest struct {
+	InstanceID     string                    `json:"instanceId"`
+	AppVersion     string                    `json:"appVersion"`
+	DeploymentMode string                    `json:"deploymentMode"`
+	Metadata       map[string]string         `json:"metadata"`
+	CatalogHash    string                    `json:"catalogHash"`
+	Products       []platformcatalog.Product `json:"products"`
+	Features       []platformcatalog.Feature `json:"features"`
+	Meters         []platformcatalog.Meter   `json:"meters"`
+	SentAt         int64                     `json:"sentAt"`
+}
+
+type InstanceHeartbeatResult struct {
+	Accepted   bool   `json:"accepted"`
+	InstanceID string `json:"instanceId"`
+	ReceivedAt int64  `json:"receivedAt"`
+}
+
 type EntitlementProvider interface {
 	CheckFeature(context.Context, *FeatureCheckRequest) (*FeatureCheckResult, error)
 	ListEntitlements(context.Context, *EntitlementsRequest) (*EntitlementsResult, error)

@@ -410,6 +410,7 @@ func (r *Router) setupMiddleware() {
 	)
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())
+	r.s.router.Use(middleware.NewRateLimiter(r.cfg, r.errorHandler).Middleware())
 }
 
 func (r *Router) setupRoutes() {
@@ -428,6 +429,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
+	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
 
 	r.organizationHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)

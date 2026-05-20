@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
@@ -34,11 +33,12 @@ func NewServer(p Params) *Server {
 	router := gin.New()
 
 	httpServer := &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", p.Config.Server.Host, p.Config.Server.Port),
-		Handler:      router,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 0,
-		IdleTimeout:  120 * time.Second,
+		Addr:              fmt.Sprintf("%s:%d", p.Config.Server.Host, p.Config.Server.Port),
+		Handler:           router,
+		ReadTimeout:       p.Config.Server.ReadTimeout,
+		ReadHeaderTimeout: p.Config.Server.ReadHeaderTimeout,
+		WriteTimeout:      p.Config.Server.WriteTimeout,
+		IdleTimeout:       p.Config.Server.IdleTimeout,
 	}
 
 	server := &Server{

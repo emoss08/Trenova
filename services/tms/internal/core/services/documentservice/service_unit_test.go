@@ -833,6 +833,7 @@ func TestUnit_GetViewURL_Success(t *testing.T) {
 		ID:           pulid.MustNew("doc_"),
 		StoragePath:  "org/trailer/file.pdf",
 		OriginalName: "view-file.pdf",
+		FileType:     "application/pdf",
 	}
 	repo := &mockDocRepo{
 		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
@@ -842,6 +843,38 @@ func TestUnit_GetViewURL_Success(t *testing.T) {
 	sc := &mockStorageClient{
 		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
 			assert.Contains(t, params.ContentDisposition, "inline")
+			return "https://storage.example.com/view-url", nil
+		},
+	}
+	svc := newUnitTestService(t, repo, sc)
+
+	url, err := svc.GetViewURL(t.Context(), repositories.GetDocumentByIDRequest{
+		ID:         doc.ID,
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, "https://storage.example.com/view-url", url)
+}
+
+func TestUnit_GetViewURL_ActiveContentUsesAttachmentDisposition(t *testing.T) {
+	t.Parallel()
+
+	doc := &document.Document{
+		ID:           pulid.MustNew("doc_"),
+		StoragePath:  "org/trailer/file.html",
+		OriginalName: "view-file.html",
+		FileType:     "text/html",
+	}
+	repo := &mockDocRepo{
+		GetByIDFn: func(_ context.Context, _ repositories.GetDocumentByIDRequest) (*document.Document, error) {
+			return doc, nil
+		},
+	}
+	sc := &mockStorageClient{
+		GetPresignedURLFn: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
+			assert.Contains(t, params.ContentDisposition, "attachment")
+			assert.NotContains(t, params.ContentDisposition, "inline")
 			return "https://storage.example.com/view-url", nil
 		},
 	}

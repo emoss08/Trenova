@@ -29,6 +29,10 @@ type Client interface {
 		*services.UsageLimitCheckRequest,
 	) (*services.UsageLimitCheckResult, error)
 	RecordUsage(context.Context, *services.UsageRecordRequest) (*services.UsageRecordResult, error)
+	Heartbeat(
+		context.Context,
+		*services.InstanceHeartbeatRequest,
+	) (*services.InstanceHeartbeatResult, error)
 }
 
 type HTTPControlPlaneClientParams struct {
@@ -89,6 +93,17 @@ func (c *HTTPControlPlaneClient) RecordUsage(
 ) (*services.UsageRecordResult, error) {
 	var result services.UsageRecordResult
 	if err := c.post(ctx, "/v1/usage/record", req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *HTTPControlPlaneClient) Heartbeat(
+	ctx context.Context,
+	req *services.InstanceHeartbeatRequest,
+) (*services.InstanceHeartbeatResult, error) {
+	var result services.InstanceHeartbeatResult
+	if err := c.post(ctx, "/v1/instances/heartbeat", req, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil

@@ -8,9 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -28,10 +30,15 @@ func newTestConfig() *config.Config {
 		Security: config.SecurityConfig{
 			Session: config.SessionConfig{
 				Name:     "session_id",
+				Secret:   "test-session-secret",
 				Path:     "/",
 				Domain:   "localhost",
 				Secure:   false,
 				HTTPOnly: true,
+			},
+			CSRF: config.CSRFConfig{
+				TokenName:  "csrf_token",
+				HeaderName: "X-CSRF-Token",
 			},
 		},
 	}
@@ -98,15 +105,22 @@ func TestLogin_Success(t *testing.T) {
 
 	cookies := w.Result().Cookies()
 	var found bool
+	var csrfFound bool
 	for _, c := range cookies {
 		if c.Name == "session_id" {
 			found = true
 			assert.Equal(t, sessionID.String(), c.Value)
 			assert.True(t, c.HttpOnly)
-			break
+			continue
+		}
+		if c.Name == "csrf_token" {
+			csrfFound = true
+			assert.Equal(t, csrf.Token(sessionID.String(), "test-session-secret"), c.Value)
+			assert.False(t, c.HttpOnly)
 		}
 	}
 	assert.True(t, found, "session cookie should be set")
+	assert.True(t, csrfFound, "csrf cookie should be set")
 }
 
 func TestLogin_InvalidJSON(t *testing.T) {
@@ -125,6 +139,37 @@ func TestLogin_InvalidJSON(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	assert.GreaterOrEqual(t, w.Code, 400)
+}
+
+func TestRedirectSSOError_UsesRelativeFallbackWithoutAllowedOrigins(t *testing.T) {
+	t.Parallel()
+
+	svc := mocks.NewMockAuthService(t)
+	h, r := newTestHandler(svc)
+
+	r.GET("/sso/error", func(c *gin.Context) {
+		h.redirectSSOError(c, nil, errors.New("callback failed"))
+	})
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/sso/error", nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusFound, w.Code)
+	assert.Contains(t, w.Header().Get("Location"), "/login?sso_error=")
+}
+
+func TestResolveSSOErrorOrigin_PrefersReturnToOrigin(t *testing.T) {
+	t.Parallel()
+
+	svc := mocks.NewMockAuthService(t)
+	h, _ := newTestHandler(svc)
+
+	origin := h.resolveSSOErrorOrigin(&repositories.SSOLoginState{
+		ReturnTo: "https://app.example.test/shipments",
+	})
+
+	assert.Equal(t, "https://app.example.test", origin)
 }
 
 func TestLogin_ServiceError(t *testing.T) {

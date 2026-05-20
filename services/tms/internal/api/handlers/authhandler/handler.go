@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/api/csrf"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -266,17 +267,25 @@ func (h *Handler) redirectSSOError(
 
 	userMsg := "Sign-in failed. Please try again or contact your administrator."
 
-	origin := h.cfg.Server.CORS.AllowedOrigins[0]
-	if loginState != nil {
-		if returnURL, err := url.Parse(
-			loginState.ReturnTo,
-		); err == nil && returnURL.Scheme != "" &&
-			returnURL.Host != "" {
-			origin = returnURL.Scheme + "://" + returnURL.Host
-		}
-	}
+	origin := h.resolveSSOErrorOrigin(loginState)
 	redirectURL := fmt.Sprintf("%s%s?sso_error=%s", origin, loginPath, url.QueryEscape(userMsg))
 	c.Redirect(http.StatusFound, redirectURL)
+}
+
+func (h *Handler) resolveSSOErrorOrigin(loginState *repositories.SSOLoginState) string {
+	if loginState != nil {
+		if returnURL, err := url.Parse(loginState.ReturnTo); err == nil &&
+			(returnURL.Scheme == "http" || returnURL.Scheme == "https") &&
+			returnURL.Host != "" {
+			return returnURL.Scheme + "://" + returnURL.Host
+		}
+	}
+
+	if len(h.cfg.Server.CORS.AllowedOrigins) > 0 {
+		return h.cfg.Server.CORS.AllowedOrigins[0]
+	}
+
+	return ""
 }
 
 func (h *Handler) clearSessionCookie(c *gin.Context) {
@@ -290,6 +299,15 @@ func (h *Handler) clearSessionCookie(c *gin.Context) {
 		sessionCfg.Domain,
 		sessionCfg.Secure,
 		sessionCfg.HTTPOnly,
+	)
+	c.SetCookie(
+		h.cfg.Security.CSRF.TokenName,
+		"",
+		-1,
+		sessionCfg.Path,
+		sessionCfg.Domain,
+		sessionCfg.Secure,
+		false,
 	)
 }
 
@@ -306,5 +324,14 @@ func (h *Handler) setSessionCookie(c *gin.Context, sessionID string, expiresAt i
 		sessionCfg.Domain,
 		sessionCfg.Secure,
 		sessionCfg.HTTPOnly,
+	)
+	c.SetCookie(
+		h.cfg.Security.CSRF.TokenName,
+		csrf.Token(sessionID, sessionCfg.Secret),
+		maxAge,
+		sessionCfg.Path,
+		sessionCfg.Domain,
+		sessionCfg.Secure,
+		false,
 	)
 }

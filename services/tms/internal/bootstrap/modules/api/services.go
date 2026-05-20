@@ -135,6 +135,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	controlplane.NewCloudEntitlementProvider,
 	controlplane.NewCloudUsageProvider,
+	controlplane.NewHeartbeatReporter,
 	SelectEntitlementProvider,
 	SelectUsageProvider,
 	roleassignmentservice.New,
@@ -231,4 +232,4 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		apikeyservice.NewUsageBufferWithLifecycle,
 		fx.As(new(services.UsageRecorder)),
 	),
-))
+), fx.Invoke(func(*controlplane.HeartbeatReporter) {}))

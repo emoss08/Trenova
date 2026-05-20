@@ -13,6 +13,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,6 +31,7 @@ type Params struct {
 	ImportAssistant        serviceports.ShipmentImportAssistantService
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
+	Config                 *config.Config `optional:"true"`
 }
 
 type Handler struct {
@@ -39,9 +41,17 @@ type Handler struct {
 	importAssistant serviceports.ShipmentImportAssistantService
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
+	storageConfig   config.StorageConfig
 }
 
+const multipartFormOverheadBytes int64 = 1 << 20
+
 func New(p Params) *Handler {
+	storageConfig := config.StorageConfig{}
+	if p.Config != nil {
+		storageConfig = p.Config.Storage
+	}
+
 	return &Handler{
 		service:         p.Service,
 		uploadService:   p.UploadService,
@@ -49,7 +59,31 @@ func New(p Params) *Handler {
 		importAssistant: p.ImportAssistant,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
+		storageConfig:   storageConfig,
 	}
+}
+
+func (h *Handler) limitUploadBody(maxFiles int) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		limit := h.maxUploadBodyBytes(maxFiles)
+		if c.Request.ContentLength > limit {
+			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
+				"error": "request body too large",
+			})
+			return
+		}
+
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
+		c.Next()
+	}
+}
+
+func (h *Handler) maxUploadBodyBytes(maxFiles int) int64 {
+	if maxFiles < 1 {
+		maxFiles = 1
+	}
+
+	return int64(maxFiles) * (h.storageConfig.GetMaxFileSize() + multipartFormOverheadBytes)
 }
 
 func NewTestHandler(
@@ -58,9 +92,24 @@ func NewTestHandler(
 	pm *middleware.PermissionMiddleware,
 	importAssistant ...serviceports.ShipmentImportAssistantService,
 ) *Handler {
+	return NewTestHandlerWithConfig(service, eh, pm, &config.Config{}, importAssistant...)
+}
+
+func NewTestHandlerWithConfig(
+	service *documentservice.Service,
+	eh *helpers.ErrorHandler,
+	pm *middleware.PermissionMiddleware,
+	cfg *config.Config,
+	importAssistant ...serviceports.ShipmentImportAssistantService,
+) *Handler {
 	var assistant serviceports.ShipmentImportAssistantService
 	if len(importAssistant) > 0 {
 		assistant = importAssistant[0]
+	}
+
+	storageConfig := config.StorageConfig{}
+	if cfg != nil {
+		storageConfig = cfg.Storage
 	}
 
 	return &Handler{
@@ -68,6 +117,7 @@ func NewTestHandler(
 		importAssistant: assistant,
 		eh:              eh,
 		pm:              pm,
+		storageConfig:   storageConfig,
 	}
 }
 
@@ -180,11 +230,13 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST(
 		"/upload/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.limitUploadBody(1),
 		h.upload,
 	)
 	api.POST(
 		"/upload-bulk/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.limitUploadBody(h.storageConfig.GetMaxFilesPerUpload()),
 		h.uploadBulk,
 	)
 	api.DELETE(
@@ -823,7 +875,26 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 
 	files := form.File["files"]
 	if len(files) == 0 {
-		h.eh.HandleError(c, err)
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"files",
+				errortypes.ErrRequired,
+				"At least one file is required",
+			),
+		)
+		return
+	}
+
+	if len(files) > h.storageConfig.GetMaxFilesPerUpload() {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"files",
+				errortypes.ErrInvalidLength,
+				"Too many files in upload request",
+			),
+		)
 		return
 	}
 

@@ -34,6 +34,13 @@ func (c failingClient) RecordUsage(
 	return nil, errors.New("unavailable")
 }
 
+func (c failingClient) Heartbeat(
+	context.Context,
+	*services.InstanceHeartbeatRequest,
+) (*services.InstanceHeartbeatResult, error) {
+	return nil, errors.New("unavailable")
+}
+
 func TestCloudUsageProvider_RequiresIdempotencyKey(t *testing.T) {
 	t.Parallel()
 

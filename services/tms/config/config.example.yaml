@@ -9,11 +9,27 @@ app:
   version: 1.0.0 # Application version
   problemTypeBaseUri: https://api.trenova.app/problems/ # RFC 9457 problem type base URI
 
+platform:
+  mode: self_hosted # community/self_hosted/development/cloud/enterprise
+  instanceId: "" # Set from TRENOVA_INSTANCE_ID when control plane is enabled
+  controlPlane:
+    enabled: false
+    endpoint: "" # Example: http://localhost:8090
+    apiKey: "" # Set from TRENOVA_CONTROL_PLANE_API_KEY
+    timeout: 5s
+    heartbeatInterval: 5m
+    failOpenOnError: false # Development only
+
 # HTTP Server configuration
 server:
   host: 0.0.0.0 # Server host
   port: 8080 # Server port
   mode: debug # Gin mode: debug, release, test
+  readTimeout: 30s # Maximum duration for reading the full request
+  readHeaderTimeout: 5s # Maximum duration for reading request headers
+  writeTimeout: 30s # Maximum duration before timing out response writes
+  idleTimeout: 120s # Maximum keep-alive idle connection duration
+  shutdownTimeout: 10s # Maximum graceful shutdown duration
   cors:
     enabled: true # Enable CORS
     allowedOrigins: # Allowed origins for CORS
@@ -30,6 +46,7 @@ server:
       - Authorization
       - Content-Type
       - Accept
+      - X-CSRF-Token
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
     credentials: true # Allow credentials
@@ -69,6 +86,8 @@ storage:
   region: us-east-1 # Use auto for Cloudflare R2
   useSSL: false # true for Cloudflare R2
   autoCreateBucket: true # false for Cloudflare R2 production
+  maxFileSize: 52428800 # Maximum size per uploaded file in bytes
+  maxFilesPerUpload: 10 # Maximum files accepted by a bulk upload request
 
 # Cloudflare R2 production environment variables:
 # TRENOVA_STORAGE_PROVIDER=r2

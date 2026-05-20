@@ -198,8 +198,6 @@ func setupHandler(
 ) *documenthandler.Handler {
 	t.Helper()
 
-	logger := zap.NewNop()
-
 	cfg := &config.Config{
 		App: config.AppConfig{Debug: true},
 		Storage: config.StorageConfig{
@@ -212,6 +210,19 @@ func setupHandler(
 			PresignedURLExpiry: 15 * time.Minute,
 		},
 	}
+
+	return setupHandlerWithConfig(t, repo, storageClient, cfg)
+}
+
+func setupHandlerWithConfig(
+	t *testing.T,
+	repo *mocks.MockDocumentRepository,
+	storageClient *mockStorageClient,
+	cfg *config.Config,
+) *documenthandler.Handler {
+	t.Helper()
+
+	logger := zap.NewNop()
 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
 	thumbnailGen := thumbnailservice.NewGenerator()
@@ -246,7 +257,7 @@ func setupHandler(
 		ErrorHandler:     errorHandler,
 	})
 
-	return documenthandler.NewTestHandler(service, errorHandler, pm)
+	return documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg)
 }
 
 func TestDocumentHandler_List_Success(t *testing.T) {
@@ -849,6 +860,45 @@ func TestDocumentHandler_Upload_MissingFile(t *testing.T) {
 	assert.True(t, ginCtx.ResponseCode() >= 400)
 }
 
+func TestDocumentHandler_Upload_RequestBodyTooLarge(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockDocumentRepository(t)
+	cfg := &config.Config{
+		App: config.AppConfig{Debug: true},
+		Storage: config.StorageConfig{
+			MaxFileSize:        8,
+			MaxFilesPerUpload:  1,
+			AllowedMIMETypes:   []string{"application/pdf"},
+			PresignedURLExpiry: 15 * time.Minute,
+		},
+	}
+	handler := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
+
+	resourceID := pulid.MustNew("tr_").String()
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/documents/upload/").
+		WithDefaultAuthContext().
+		WithMultipartForm(
+			map[string]string{
+				"resourceId":   resourceID,
+				"resourceType": "trailer",
+			},
+			testutil.MultipartFile{
+				FieldName:   "file",
+				Filename:    "oversized.pdf",
+				ContentType: "application/pdf",
+				Data:        make([]byte, 2<<20),
+			},
+		)
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusRequestEntityTooLarge, ginCtx.ResponseCode())
+}
+
 func TestDocumentHandler_Upload_StorageError(t *testing.T) {
 	t.Parallel()
 
@@ -1034,7 +1084,45 @@ func TestDocumentHandler_UploadBulk_NoFiles(t *testing.T) {
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
-	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+}
+
+func TestDocumentHandler_UploadBulk_TooManyFiles(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockDocumentRepository(t)
+	cfg := &config.Config{
+		App: config.AppConfig{Debug: true},
+		Storage: config.StorageConfig{
+			MaxFileSize:        50 * 1024 * 1024,
+			MaxFilesPerUpload:  1,
+			AllowedMIMETypes:   []string{"application/pdf"},
+			PresignedURLExpiry: 15 * time.Minute,
+		},
+	}
+	handler := setupHandlerWithConfig(t, repo, &mockStorageClient{}, cfg)
+
+	resourceID := pulid.MustNew("tr_").String()
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/documents/upload-bulk/").
+		WithDefaultAuthContext().
+		WithMultipartFormFiles(
+			map[string]string{
+				"resourceId":   resourceID,
+				"resourceType": "trailer",
+			},
+			"files",
+			[]testutil.MultipartFile{
+				{Filename: "bulk1.pdf", ContentType: "application/pdf", Data: []byte("content1")},
+				{Filename: "bulk2.pdf", ContentType: "application/pdf", Data: []byte("content2")},
+			},
+		)
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
 }
 
 func TestDocumentHandler_Delete_Success(t *testing.T) {
