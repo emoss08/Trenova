@@ -185,6 +185,8 @@ func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
+	entity.ApplyEntryMethodDefault(nil)
+
 	multiErr := v.validator.ValidateCreate(ctx, entity)
 	return errortypes.MergeMultiErrors(
 		multiErr,
@@ -196,6 +198,8 @@ func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
+	entity.ApplyEntryMethodDefault(nil)
+
 	return errortypes.MergeMultiErrors(
 		v.validator.ValidateUpdate(ctx, entity),
 		validateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, false),
@@ -207,6 +211,8 @@ func (v *Validator) ValidateUpdateWithOriginal(
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
 ) *errortypes.MultiError {
+	entity.ApplyEntryMethodDefault(original)
+
 	return errortypes.MergeMultiErrors(
 		v.validator.ValidateUpdate(ctx, entity),
 		validateResourceActualTimeline(ctx, v.assignmentRepo, original, entity, false),

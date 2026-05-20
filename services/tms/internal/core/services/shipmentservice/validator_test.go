@@ -33,6 +33,18 @@ func TestValidateCreate_RejectsNestedIDs(t *testing.T) {
 	assertErrorField(t, multiErr, "moves[0].stops[0].shipmentMoveId")
 }
 
+func TestValidateCreate_DefaultsMissingEntryMethod(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator(t)
+	entity := validShipmentForValidation()
+
+	multiErr := v.ValidateCreate(t.Context(), entity)
+
+	require.Nil(t, multiErr)
+	assert.Equal(t, shipment.EntryMethodManual, entity.EntryMethod)
+}
+
 func TestValidateUpdate_RejectsDuplicateMoveIDs(t *testing.T) {
 	t.Parallel()
 
@@ -783,6 +795,24 @@ func TestValidateUpdateWithOriginal_SkipsExternalTimelineLookupForUnchangedActua
 	multiErr := v.ValidateUpdateWithOriginal(t.Context(), original, updated)
 
 	assert.Nil(t, multiErr)
+}
+
+func TestValidateUpdateWithOriginal_PreservesOriginalEntryMethod(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator(t)
+	original := validShipmentForValidation()
+	original.ID = pulid.MustNew("shp_")
+	original.Version = 1
+	original.EntryMethod = shipment.EntryMethodEDI
+
+	updated := cloneShipment(original)
+	updated.EntryMethod = ""
+
+	multiErr := v.ValidateUpdateWithOriginal(t.Context(), original, updated)
+
+	require.Nil(t, multiErr)
+	assert.Equal(t, shipment.EntryMethodEDI, updated.EntryMethod)
 }
 
 func validShipmentForValidation() *shipment.Shipment {

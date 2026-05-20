@@ -215,6 +215,8 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	entity.ApplyEntryMethodDefault(nil)
+
 	if multiErr := s.coordinator.PrepareForCreateWithDelayThreshold(
 		entity,
 		delayThresholdMinutes(control),
@@ -325,6 +327,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		return nil, err
 	}
 
+	entity.ApplyEntryMethodDefault(original)
 	s.restoreAssignmentsForExistingMoves(original, entity)
 	s.restoreAdditionalChargeSystemGeneration(original, entity)
 

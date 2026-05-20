@@ -144,6 +144,19 @@ func (s *Shipment) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {
+	if s == nil || s.EntryMethod != "" {
+		return
+	}
+
+	if original != nil && original.EntryMethod != "" {
+		s.EntryMethod = original.EntryMethod
+		return
+	}
+
+	s.EntryMethod = EntryMethodManual
+}
+
 func (s *Shipment) GetID() pulid.ID {
 	return s.ID
 }
@@ -278,9 +291,7 @@ func (s *Shipment) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	switch query.(type) {
 	case *bun.InsertQuery:
-		if s.EntryMethod == "" {
-			s.EntryMethod = EntryMethodManual
-		}
+		s.ApplyEntryMethodDefault(nil)
 		if s.ID.IsNil() {
 			s.ID = pulid.MustNew("shp_")
 		}

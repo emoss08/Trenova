@@ -18,6 +18,28 @@ type FeatureCheckRequest struct {
 	CheckedAt      int64                      `json:"checkedAt"`
 }
 
+type AccessAuthorizeRequest struct {
+	OrganizationID pulid.ID                   `json:"organizationId"`
+	BusinessUnitID pulid.ID                   `json:"businessUnitId"`
+	PrincipalType  PrincipalType              `json:"principalType"`
+	PrincipalID    pulid.ID                   `json:"principalId"`
+	UserID         pulid.ID                   `json:"userId"`
+	APIKeyID       pulid.ID                   `json:"apiKeyId"`
+	HTTPMethod     string                     `json:"httpMethod"`
+	HTTPPath       string                     `json:"httpPath"`
+	RoutePattern   string                     `json:"routePattern"`
+	FeatureKey     platformcatalog.FeatureKey `json:"featureKey"`
+	CheckedAt      int64                      `json:"checkedAt"`
+}
+
+type AccessAuthorizeResult struct {
+	FeatureKey platformcatalog.FeatureKey `json:"featureKey"`
+	Allowed    bool                       `json:"allowed"`
+	Reason     string                     `json:"reason,omitempty"`
+	CheckedAt  int64                      `json:"checkedAt"`
+	FailOpen   bool                       `json:"failOpen"`
+}
+
 type FeatureCheckResult struct {
 	FeatureKey platformcatalog.FeatureKey `json:"featureKey"`
 	Allowed    bool                       `json:"allowed"`
@@ -104,9 +126,66 @@ type InstanceHeartbeatResult struct {
 	ReceivedAt int64  `json:"receivedAt"`
 }
 
+type TenantSyncMode string
+
+const (
+	TenantSyncModeFull  TenantSyncMode = "full"
+	TenantSyncModeDelta TenantSyncMode = "delta"
+)
+
+type TenantSyncBusinessUnit struct {
+	ID        pulid.ID          `json:"id"`
+	Name      string            `json:"name"`
+	Code      string            `json:"code"`
+	Metadata  map[string]string `json:"metadata,omitempty"`
+	CreatedAt int64             `json:"createdAt"`
+	UpdatedAt int64             `json:"updatedAt"`
+}
+
+type TenantSyncOrganization struct {
+	ID             pulid.ID          `json:"id"`
+	BusinessUnitID pulid.ID          `json:"businessUnitId"`
+	Name           string            `json:"name"`
+	LoginSlug      string            `json:"loginSlug,omitempty"`
+	ScacCode       string            `json:"scacCode"`
+	DOTNumber      string            `json:"dotNumber"`
+	Metadata       map[string]string `json:"metadata,omitempty"`
+	CreatedAt      int64             `json:"createdAt"`
+	UpdatedAt      int64             `json:"updatedAt"`
+}
+
+type TenantSyncRequest struct {
+	Mode          TenantSyncMode              `json:"mode"`
+	BusinessUnits []TenantSyncBusinessUnit    `json:"businessUnits"`
+	Organizations []TenantSyncOrganization    `json:"organizations"`
+	SentAt        int64                       `json:"sentAt"`
+}
+
+type TenantSyncResult struct {
+	Accepted             bool   `json:"accepted"`
+	Mode                 string `json:"mode"`
+	BusinessUnitsUpserted int    `json:"businessUnitsUpserted"`
+	OrganizationsUpserted int    `json:"organizationsUpserted"`
+	ReceivedAt           int64  `json:"receivedAt"`
+}
+
+type TenantSyncDelta struct {
+	BusinessUnitIDs []pulid.ID
+	OrganizationIDs []pulid.ID
+}
+
 type EntitlementProvider interface {
 	CheckFeature(context.Context, *FeatureCheckRequest) (*FeatureCheckResult, error)
 	ListEntitlements(context.Context, *EntitlementsRequest) (*EntitlementsResult, error)
+}
+
+type AccessAuthorizer interface {
+	AuthorizeAccess(context.Context, *AccessAuthorizeRequest) (*AccessAuthorizeResult, error)
+}
+
+type TenantSyncService interface {
+	SyncFull(context.Context) error
+	SyncDelta(context.Context, TenantSyncDelta) error
 }
 
 type UsageProvider interface {
