@@ -6,6 +6,12 @@ import {
 } from "@/types/errors";
 import { API_BASE_URL } from "./constants";
 
+const CSRF_COOKIE_NAME =
+  (import.meta.env.VITE_CSRF_COOKIE_NAME as string | undefined) ?? "csrf_token";
+const CSRF_HEADER_NAME =
+  (import.meta.env.VITE_CSRF_HEADER_NAME as string | undefined) ?? "X-CSRF-Token";
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
 export class ApiRequestError extends Error {
   status: number;
   data: ApiErrorResponse;
@@ -85,20 +91,63 @@ export class ApiRequestError extends Error {
   }
 }
 
+function readCookie(name: string): string | null {
+  if (typeof document === "undefined" || !document.cookie) {
+    return null;
+  }
+
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const cookies = document.cookie.split(";");
+
+  for (const cookie of cookies) {
+    const trimmed = cookie.trim();
+    if (!trimmed.startsWith(encodedName)) {
+      continue;
+    }
+
+    const value = trimmed.slice(encodedName.length);
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function isUnsafeMethod(method: string | undefined): boolean {
+  return UNSAFE_METHODS.has((method ?? "GET").toUpperCase());
+}
+
+export function withCsrfHeader(method: string | undefined, headers?: HeadersInit): Headers {
+  const nextHeaders = new Headers(headers);
+
+  if (!isUnsafeMethod(method) || nextHeaders.has(CSRF_HEADER_NAME)) {
+    return nextHeaders;
+  }
+
+  const token = readCookie(CSRF_COOKIE_NAME);
+  if (token) {
+    nextHeaders.set(CSRF_HEADER_NAME, token);
+  }
+
+  return nextHeaders;
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+  const method = options.method ?? "GET";
+  const headers = new Headers(options.headers);
+
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const response = await fetch(url, {
     ...options,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers instanceof Headers
-        ? Object.fromEntries(options.headers.entries())
-        : Array.isArray(options.headers)
-          ? Object.fromEntries(options.headers)
-          : (options.headers as Record<string, string> | undefined)),
-    },
+    headers: withCsrfHeader(method, headers),
   });
 
   if (!response.ok) {
@@ -126,12 +175,14 @@ async function uploadRequest<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
+  const method = "POST";
 
   const response = await fetch(url, {
     ...options,
-    method: "POST",
+    method,
     credentials: "include",
     body: formData,
+    headers: withCsrfHeader(method, options.headers),
   });
 
   if (!response.ok) {
@@ -220,6 +271,10 @@ function uploadWithProgress<T>(
 
     xhr.open("POST", url);
     xhr.withCredentials = true;
+    const headers = withCsrfHeader("POST");
+    headers.forEach((value, key) => {
+      xhr.setRequestHeader(key, value);
+    });
     xhr.send(formData);
   });
 }

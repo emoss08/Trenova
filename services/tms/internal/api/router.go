@@ -106,6 +106,7 @@ type RouterParams struct {
 	ObservabilityMiddleware *observability.Middleware
 
 	AuthMiddleware                  *middleware.AuthMiddleware
+	ControlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	PermissionMiddleware            *middleware.PermissionMiddleware
 	ErrorHandler                    *helpers.ErrorHandler
 	DocsHandler                     *docshandler.Handler
@@ -194,6 +195,7 @@ type Router struct {
 	l                               *zap.Logger
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
+	controlPlaneAccessMiddleware    *middleware.ControlPlaneAccessMiddleware
 	permissionMiddleware            *middleware.PermissionMiddleware
 	cfg                             *config.Config
 	errorHandler                    *helpers.ErrorHandler
@@ -286,6 +288,7 @@ func NewRouter(p RouterParams) *Router {
 		l:                               p.Logger,
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
+		controlPlaneAccessMiddleware:    p.ControlPlaneAccessMiddleware,
 		permissionMiddleware:            p.PermissionMiddleware,
 		errorHandler:                    p.ErrorHandler,
 		docsHandler:                     p.DocsHandler,
@@ -430,6 +433,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected := rg.Group("")
 	protected.Use(r.authMiddleware.RequireAuth())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
+	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
 
 	r.organizationHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)

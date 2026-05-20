@@ -49,6 +49,7 @@ import { ManualJournalService } from "./manual-journal";
 import { NotificationService } from "./notification";
 import { OrganizationService } from "./organization";
 import { PageFavoriteService } from "./page-favorite";
+import { PlatformBillingService } from "./platform-billing";
 import { RealtimeService } from "./realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceTypeService } from "./service-type";
@@ -134,6 +135,7 @@ class APIService {
   public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
   public ediService: EDIService;
+  public platformBillingService: PlatformBillingService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -203,6 +205,7 @@ class APIService {
     this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
     this.ediService = new EDIService();
+    this.platformBillingService = new PlatformBillingService();
   }
 }
 

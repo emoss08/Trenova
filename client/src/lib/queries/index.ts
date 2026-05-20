@@ -27,6 +27,7 @@ import { invoiceAdjustmentControl } from "./invoice-adjustment-control";
 import { location } from "./location";
 import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
+import { platformBilling } from "./platform-billing";
 import { sequenceConfig } from "./sequence-config";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
@@ -58,6 +59,7 @@ export const queries = mergeQueryKeys(
   documentParsingRule,
   userOrganization,
   pageFavoite,
+  platformBilling,
   tableConfiguration,
   user,
   worker,

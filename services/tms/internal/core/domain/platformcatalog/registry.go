@@ -84,6 +84,24 @@ func (r *Registry) GetFeature(key FeatureKey) (Feature, bool) {
 	return feature, ok
 }
 
+func (r *Registry) FeatureForRoute(method, routePattern string) (Feature, bool) {
+	method = strings.ToUpper(strings.TrimSpace(method))
+	routePattern = normalizeRoutePath(routePattern)
+	if routePattern == "" {
+		return Feature{}, false
+	}
+
+	for _, feature := range r.ListFeatures() {
+		for _, route := range feature.Routes {
+			if routeMatches(method, routePattern, route) {
+				return feature, true
+			}
+		}
+	}
+
+	return Feature{}, false
+}
+
 func (r *Registry) GetMeter(key MeterKey) (Meter, bool) {
 	meter, ok := r.meters[key]
 	return meter, ok
@@ -267,4 +285,34 @@ func (r *Registry) validateMeters() error {
 	}
 
 	return nil
+}
+
+func normalizeRoutePath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return ""
+	}
+	if !strings.HasPrefix(path, "/") {
+		return "/" + path
+	}
+	return path
+}
+
+func routeMatches(method, routePattern string, ref RouteRef) bool {
+	refMethod := strings.ToUpper(strings.TrimSpace(ref.Method))
+	if refMethod != "" && refMethod != "*" && refMethod != method {
+		return false
+	}
+
+	refPath := normalizeRoutePath(ref.Path)
+	if refPath == "" {
+		return false
+	}
+	if strings.HasSuffix(refPath, "*") {
+		return strings.HasPrefix(routePattern, strings.TrimSuffix(refPath, "*"))
+	}
+	if strings.HasSuffix(refPath, "/") {
+		return routePattern == refPath || strings.HasPrefix(routePattern, refPath)
+	}
+	return routePattern == refPath
 }

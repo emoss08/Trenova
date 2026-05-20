@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -61,6 +62,58 @@ type EntitlementsRequest struct {
 type EntitlementsResult struct {
 	Features  []FeatureCheckResult `json:"features"`
 	CheckedAt int64                `json:"checkedAt"`
+}
+
+type BillingSummaryRequest struct {
+	OrganizationID pulid.ID      `json:"organizationId"`
+	BusinessUnitID pulid.ID      `json:"businessUnitId"`
+	PrincipalType  PrincipalType `json:"principalType"`
+	PrincipalID    pulid.ID      `json:"principalId"`
+	UserID         pulid.ID      `json:"userId"`
+	APIKeyID       pulid.ID      `json:"apiKeyId"`
+	CheckedAt      int64         `json:"checkedAt"`
+}
+
+type BillingPlanSummary struct {
+	ID     string `json:"id"`
+	Key    string `json:"key"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
+
+type BillingSubscriptionSummary struct {
+	ID                 string `json:"id"`
+	PlanID             string `json:"planId"`
+	Status             string `json:"status"`
+	CurrentPeriodStart int64  `json:"currentPeriodStart"`
+	CurrentPeriodEnd   int64  `json:"currentPeriodEnd"`
+}
+
+type BillingFeatureSummary struct {
+	FeatureKey platformcatalog.FeatureKey `json:"featureKey"`
+	Allowed    bool                       `json:"allowed"`
+}
+
+type BillingUsageSummary struct {
+	MeterKey    platformcatalog.MeterKey `json:"meterKey"`
+	Unit        string                   `json:"unit"`
+	Limit       int64                    `json:"limit"`
+	Used        int64                    `json:"used"`
+	Remaining   int64                    `json:"remaining"`
+	WindowStart int64                    `json:"windowStart"`
+	WindowEnd   int64                    `json:"windowEnd"`
+}
+
+type BillingSummaryResult struct {
+	BusinessUnitID pulid.ID                    `json:"businessUnitId"`
+	OrganizationID pulid.ID                    `json:"organizationId"`
+	Active         bool                        `json:"active"`
+	Reason         string                      `json:"reason,omitempty"`
+	Plan           *BillingPlanSummary         `json:"plan,omitempty"`
+	Subscription   *BillingSubscriptionSummary `json:"subscription,omitempty"`
+	Features       []BillingFeatureSummary     `json:"features"`
+	Usage          []BillingUsageSummary       `json:"usage"`
+	CheckedAt      int64                       `json:"checkedAt"`
 }
 
 type UsageLimitCheckRequest struct {
@@ -133,40 +186,23 @@ const (
 	TenantSyncModeDelta TenantSyncMode = "delta"
 )
 
-type TenantSyncBusinessUnit struct {
-	ID        pulid.ID          `json:"id"`
-	Name      string            `json:"name"`
-	Code      string            `json:"code"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
-	CreatedAt int64             `json:"createdAt"`
-	UpdatedAt int64             `json:"updatedAt"`
-}
+type TenantSyncBusinessUnit = tenant.SyncBusinessUnit
 
-type TenantSyncOrganization struct {
-	ID             pulid.ID          `json:"id"`
-	BusinessUnitID pulid.ID          `json:"businessUnitId"`
-	Name           string            `json:"name"`
-	LoginSlug      string            `json:"loginSlug,omitempty"`
-	ScacCode       string            `json:"scacCode"`
-	DOTNumber      string            `json:"dotNumber"`
-	Metadata       map[string]string `json:"metadata,omitempty"`
-	CreatedAt      int64             `json:"createdAt"`
-	UpdatedAt      int64             `json:"updatedAt"`
-}
+type TenantSyncOrganization = tenant.SyncOrganization
 
 type TenantSyncRequest struct {
-	Mode          TenantSyncMode              `json:"mode"`
-	BusinessUnits []TenantSyncBusinessUnit    `json:"businessUnits"`
-	Organizations []TenantSyncOrganization    `json:"organizations"`
-	SentAt        int64                       `json:"sentAt"`
+	Mode          TenantSyncMode           `json:"mode"`
+	BusinessUnits []TenantSyncBusinessUnit `json:"businessUnits"`
+	Organizations []TenantSyncOrganization `json:"organizations"`
+	SentAt        int64                    `json:"sentAt"`
 }
 
 type TenantSyncResult struct {
-	Accepted             bool   `json:"accepted"`
-	Mode                 string `json:"mode"`
+	Accepted              bool   `json:"accepted"`
+	Mode                  string `json:"mode"`
 	BusinessUnitsUpserted int    `json:"businessUnitsUpserted"`
 	OrganizationsUpserted int    `json:"organizationsUpserted"`
-	ReceivedAt           int64  `json:"receivedAt"`
+	ReceivedAt            int64  `json:"receivedAt"`
 }
 
 type TenantSyncDelta struct {
@@ -177,6 +213,10 @@ type TenantSyncDelta struct {
 type EntitlementProvider interface {
 	CheckFeature(context.Context, *FeatureCheckRequest) (*FeatureCheckResult, error)
 	ListEntitlements(context.Context, *EntitlementsRequest) (*EntitlementsResult, error)
+}
+
+type BillingProvider interface {
+	GetBillingSummary(context.Context, *BillingSummaryRequest) (*BillingSummaryResult, error)
 }
 
 type AccessAuthorizer interface {

@@ -3,19 +3,19 @@ package repositories
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type TenantSyncRepository interface {
-	ListBusinessUnits(ctx context.Context) ([]services.TenantSyncBusinessUnit, error)
-	ListOrganizations(ctx context.Context) ([]services.TenantSyncOrganization, error)
+	ListBusinessUnits(ctx context.Context) ([]tenant.SyncBusinessUnit, error)
+	ListOrganizations(ctx context.Context) ([]tenant.SyncOrganization, error)
 	ListBusinessUnitsByID(
 		ctx context.Context,
 		ids []pulid.ID,
-	) ([]services.TenantSyncBusinessUnit, error)
+	) ([]tenant.SyncBusinessUnit, error)
 	ListOrganizationsByID(
 		ctx context.Context,
 		ids []pulid.ID,
-	) ([]services.TenantSyncOrganization, error)
+	) ([]tenant.SyncOrganization, error)
 }

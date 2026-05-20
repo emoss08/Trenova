@@ -26,6 +26,13 @@ func (c *heartbeatClient) CheckFeature(
 	return nil, nil
 }
 
+func (c *heartbeatClient) AuthorizeAccess(
+	context.Context,
+	*services.AccessAuthorizeRequest,
+) (*services.AccessAuthorizeResult, error) {
+	return nil, nil
+}
+
 func (c *heartbeatClient) CheckLimit(
 	context.Context,
 	*services.UsageLimitCheckRequest,
@@ -50,6 +57,20 @@ func (c *heartbeatClient) Heartbeat(
 		return nil, c.err
 	}
 	return &services.InstanceHeartbeatResult{Accepted: true}, nil
+}
+
+func (c *heartbeatClient) SyncTenants(
+	context.Context,
+	*services.TenantSyncRequest,
+) (*services.TenantSyncResult, error) {
+	return nil, nil
+}
+
+func (c *heartbeatClient) GetBillingSummary(
+	context.Context,
+	*services.BillingSummaryRequest,
+) (*services.BillingSummaryResult, error) {
+	return nil, nil
 }
 
 func TestHeartbeatReporter_StartOnlyWhenControlPlaneEnabled(t *testing.T) {

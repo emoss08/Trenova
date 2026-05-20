@@ -69,6 +69,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
+	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/realtimeservice"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
@@ -128,15 +129,26 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	platformcatalog.NewRegistry,
 	entitlementservice.NewLocalEntitlementProvider,
+	platformbillingservice.NewLocalBillingProvider,
 	usageservice.NewNoopUsageProvider,
 	fx.Annotate(
 		controlplane.NewHTTPControlPlaneClient,
 		fx.As(new(controlplane.Client)),
 	),
 	controlplane.NewCloudEntitlementProvider,
+	controlplane.NewCloudBillingProvider,
 	controlplane.NewCloudUsageProvider,
+	fx.Annotate(
+		controlplane.NewCloudAccessAuthorizer,
+		fx.As(new(services.AccessAuthorizer)),
+	),
 	controlplane.NewHeartbeatReporter,
+	fx.Annotate(
+		controlplane.NewTenantSyncer,
+		fx.As(new(services.TenantSyncService)),
+	),
 	SelectEntitlementProvider,
+	SelectBillingProvider,
 	SelectUsageProvider,
 	roleassignmentservice.New,
 	usstateservice.New,
@@ -232,4 +244,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		apikeyservice.NewUsageBufferWithLifecycle,
 		fx.As(new(services.UsageRecorder)),
 	),
-), fx.Invoke(func(*controlplane.HeartbeatReporter) {}))
+), fx.Invoke(
+	func(*controlplane.HeartbeatReporter) {},
+	func(services.TenantSyncService) {},
+))

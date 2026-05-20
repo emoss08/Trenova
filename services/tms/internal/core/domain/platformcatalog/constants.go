@@ -9,20 +9,22 @@ const (
 )
 
 const (
-	FeatureCoreTMS               FeatureKey = "tms.core"
-	FeatureDispatch              FeatureKey = "tms.dispatch"
-	FeatureBilling               FeatureKey = "tms.billing"
-	FeatureAccounting            FeatureKey = "tms.accounting"
-	FeatureFleetMaintenance      FeatureKey = "tms.fleet"
-	FeatureDocumentManagement    FeatureKey = "document_management"
-	FeatureDocumentIntelligence  FeatureKey = "document_intelligence.ai"
-	FeatureGlobalSearch          FeatureKey = "platform.global_search"
-	FeatureAnalytics             FeatureKey = "analytics.workspace"
-	FeatureAPIKeys               FeatureKey = "platform.api_keys"
-	FeatureTableChangeAlerts     FeatureKey = "platform.table_change_alerts"
-	FeatureSamsaraIntegration    FeatureKey = "integrations.samsara"
-	FeatureGoogleMapsIntegration FeatureKey = "integrations.google_maps"
-	FeatureRealtimeNotifications FeatureKey = "platform.realtime_notifications"
+	FeatureCoreTMS                 FeatureKey = "tms.core"
+	FeatureDispatch                FeatureKey = "tms.dispatch"
+	FeatureBilling                 FeatureKey = "tms.billing"
+	FeatureAccounting              FeatureKey = "tms.accounting"
+	FeatureFleetMaintenance        FeatureKey = "tms.fleet"
+	FeatureDocumentManagement      FeatureKey = "document_management"
+	FeatureDocumentIntelligence    FeatureKey = "document_intelligence.ai"
+	FeatureGlobalSearch            FeatureKey = "platform.global_search"
+	FeatureAnalytics               FeatureKey = "analytics.workspace"
+	FeatureAPIKeys                 FeatureKey = "platform.api_keys"
+	FeatureTableChangeAlerts       FeatureKey = "platform.table_change_alerts"
+	FeatureEDIIntegration          FeatureKey = "integrations.edi"
+	FeatureExchangeRateIntegration FeatureKey = "integrations.exchange_rates"
+	FeatureSamsaraIntegration      FeatureKey = "integrations.samsara"
+	FeatureGoogleMapsIntegration   FeatureKey = "integrations.google_maps"
+	FeatureRealtimeNotifications   FeatureKey = "platform.realtime_notifications"
 )
 
 const (

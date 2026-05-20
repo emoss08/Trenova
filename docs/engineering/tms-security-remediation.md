@@ -26,6 +26,41 @@ backup/restore testing, and periodic risk assessment.
 
 ## Findings And Remediation
 
+### Targeted TMS CI Remediation - 2026-05-20
+
+- Scope: shipment entry-method defaulting and control-plane lint remediation.
+- Affected packages:
+  - `internal/core/domain/shipment`
+  - `internal/core/domain/shipmentstate`
+  - `internal/core/services/assignmentservice`
+  - `internal/core/services/shipmentservice`
+  - `internal/core/services/trailerservice`
+  - `internal/infrastructure/controlplane`
+- Sanitized failure categories:
+  - shipment creates and updates without an explicit entry method failed domain
+    validation before persistence defaults could apply.
+  - update payloads that omitted entry method risked losing the persisted
+    source value for existing EDI shipments.
+  - control-plane lint flagged unnecessary conversion and timestamp formatting.
+- Remediation:
+  - apply shipment entry-method defaults before validation and persistence.
+  - preserve the original shipment entry method on updates when the payload
+    omits the field.
+  - keep non-empty invalid entry-method values subject to validation.
+  - replace control-plane lint findings with direct string usage and
+    `strconv.FormatInt`.
+- Status:
+  - unit remediation: complete.
+  - integration remediation: complete for the targeted shipmentservice tests.
+  - race remediation: complete for the targeted assignmentservice,
+    shipmentservice, and trailerservice packages.
+  - lint remediation: complete for the targeted control-plane, shipment domain,
+    shipmentstate, assignmentservice, shipmentservice, and trailerservice
+    packages.
+  - smoke remediation: blocked locally because `services/tms/scripts/smoke_ci.sh`
+    is not present; the only matching `smoke_ci.sh` is under
+    `services/samsara-sim`.
+
 ### API Server Timeouts
 
 - Severity: Medium

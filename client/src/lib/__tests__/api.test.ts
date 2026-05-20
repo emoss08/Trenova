@@ -1,6 +1,65 @@
-import { describe, expect, it } from "vitest";
-import { ApiRequestError } from "../api";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiRequestError, api } from "../api";
 import type { ApiErrorResponse } from "@/types/errors";
+
+function createJsonResponse(data: unknown = { ok: true }): Response {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+class MockXMLHttpRequest {
+  static instances: MockXMLHttpRequest[] = [];
+
+  headers = new Map<string, string>();
+  method = "";
+  responseText = JSON.stringify({ ok: true });
+  status = 200;
+  upload = { addEventListener: vi.fn() };
+  url = "";
+  withCredentials = false;
+
+  private listeners = new Map<string, EventListenerOrEventListenerObject[]>();
+
+  constructor() {
+    MockXMLHttpRequest.instances.push(this);
+  }
+
+  abort(): void {}
+
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void {
+    const listeners = this.listeners.get(type) ?? [];
+    listeners.push(listener);
+    this.listeners.set(type, listeners);
+  }
+
+  open(method: string, url: string): void {
+    this.method = method;
+    this.url = url;
+  }
+
+  send(): void {
+    queueMicrotask(() => {
+      this.dispatch("load");
+    });
+  }
+
+  setRequestHeader(name: string, value: string): void {
+    this.headers.set(name.toLowerCase(), value);
+  }
+
+  private dispatch(type: string): void {
+    const event = new Event(type);
+    for (const listener of this.listeners.get(type) ?? []) {
+      if (typeof listener === "function") {
+        listener.call(this, event);
+      } else {
+        listener.handleEvent(event);
+      }
+    }
+  }
+}
 
 function makeError(
   overrides: Partial<ApiErrorResponse> & { status?: number } = {},
@@ -14,6 +73,108 @@ function makeError(
   };
   return new ApiRequestError(status, data);
 }
+
+describe("api csrf headers", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    document.cookie = "csrf_token=; Max-Age=0; path=/";
+    MockXMLHttpRequest.instances = [];
+    fetchMock = vi.fn(async () => createJsonResponse());
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    document.cookie = "csrf_token=; Max-Age=0; path=/";
+    vi.unstubAllGlobals();
+  });
+
+  function headersForLastFetch(): Headers {
+    const init = fetchMock.mock.calls.at(-1)?.[1] as RequestInit | undefined;
+    return new Headers(init?.headers);
+  }
+
+  it("adds the CSRF token from the cookie to unsafe JSON requests", async () => {
+    document.cookie = "csrf_token=unsafe-token; path=/";
+
+    await api.post("/widgets/", { name: "Widget" });
+
+    expect(headersForLastFetch().get("X-CSRF-Token")).toBe("unsafe-token");
+  });
+
+  it("does not add the CSRF token to safe JSON requests", async () => {
+    document.cookie = "csrf_token=safe-token; path=/";
+
+    await api.get("/widgets/");
+
+    expect(headersForLastFetch().has("X-CSRF-Token")).toBe(false);
+  });
+
+  it("does not add an empty CSRF header when the cookie is missing", async () => {
+    await api.post("/widgets/", { name: "Widget" });
+
+    expect(headersForLastFetch().has("X-CSRF-Token")).toBe(false);
+  });
+
+  it("preserves an explicit caller-provided CSRF header", async () => {
+    document.cookie = "csrf_token=cookie-token; path=/";
+
+    await api.post(
+      "/widgets/",
+      { name: "Widget" },
+      { headers: { "X-CSRF-Token": "explicit-token" } },
+    );
+
+    expect(headersForLastFetch().get("X-CSRF-Token")).toBe("explicit-token");
+  });
+
+  it("adds the CSRF token to internal multipart uploads", async () => {
+    document.cookie = "csrf_token=upload-token; path=/";
+    const formData = new FormData();
+    formData.append("file", new Blob(["content"]), "document.txt");
+
+    await api.upload("/documents/upload/", formData);
+
+    const headers = headersForLastFetch();
+    expect(headers.get("X-CSRF-Token")).toBe("upload-token");
+    expect(headers.has("Content-Type")).toBe(false);
+  });
+
+  it("adds the CSRF token to internal XHR uploads", async () => {
+    document.cookie = "csrf_token=progress-token; path=/";
+    vi.stubGlobal("XMLHttpRequest", MockXMLHttpRequest);
+
+    const formData = new FormData();
+    formData.append("file", new Blob(["content"]), "document.txt");
+    await api.uploadWithProgress("/documents/upload/", formData);
+
+    const xhr = MockXMLHttpRequest.instances.at(-1);
+    expect(xhr?.method).toBe("POST");
+    expect(xhr?.url).toContain("/documents/upload/");
+    expect(xhr?.withCredentials).toBe(true);
+    expect(xhr?.headers.get("x-csrf-token")).toBe("progress-token");
+  });
+
+  it("does not add the CSRF token to external file upload targets", async () => {
+    document.cookie = "csrf_token=external-token; path=/";
+    vi.stubGlobal("XMLHttpRequest", MockXMLHttpRequest);
+
+    await api.putFileWithProgress(
+      "https://storage.example.com/upload",
+      new Blob(["content"]),
+      undefined,
+      undefined,
+      "application/pdf",
+    );
+
+    const xhr = MockXMLHttpRequest.instances.at(-1);
+    expect(xhr?.method).toBe("PUT");
+    expect(xhr?.url).toBe("https://storage.example.com/upload");
+    expect(xhr?.withCredentials).toBe(false);
+    expect(xhr?.headers.get("content-type")).toBe("application/pdf");
+    expect(xhr?.headers.has("x-csrf-token")).toBe(false);
+  });
+});
 
 describe("ApiRequestError constructor", () => {
   it("uses detail as message when present", () => {

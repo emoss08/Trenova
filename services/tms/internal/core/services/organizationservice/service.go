@@ -36,6 +36,7 @@ type Params struct {
 	Config       *config.Config
 	Validator    *Validator
 	Encryption   *encryptionservice.Service
+	TenantSync   services.TenantSyncService `optional:"true"`
 }
 
 type service struct {
@@ -47,6 +48,7 @@ type service struct {
 	storageCfg   *config.StorageConfig
 	v            *Validator
 	enc          *encryptionservice.Service
+	tenantSync   services.TenantSyncService
 }
 
 func New(p Params) services.OrganizationService {
@@ -59,6 +61,7 @@ func New(p Params) services.OrganizationService {
 		storageCfg:   p.Config.GetStorageConfig(),
 		v:            p.Validator,
 		enc:          p.Encryption,
+		tenantSync:   p.TenantSync,
 	}
 }
 
@@ -90,6 +93,17 @@ func (s *service) Update(
 	if err != nil {
 		log.Error("failed to update organization", zap.Error(err))
 		return nil, mapOrganizationUniqueConstraint(err)
+	}
+
+	if s.tenantSync != nil {
+		if err = s.tenantSync.SyncDelta(ctx, services.TenantSyncDelta{
+			BusinessUnitIDs: []pulid.ID{updatedEntity.BusinessUnitID},
+			OrganizationIDs: []pulid.ID{updatedEntity.ID},
+		}); err != nil {
+			log.Error("failed to sync organization with control plane", zap.Error(err))
+			return nil, errortypes.NewBusinessError("Failed to sync organization with control plane").
+				WithInternal(err)
+		}
 	}
 
 	return updatedEntity, nil

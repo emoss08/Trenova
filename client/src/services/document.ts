@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api, withCsrfHeader } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
 import { safeParse } from "@/lib/parse";
 import {
@@ -264,7 +264,7 @@ export class DocumentService {
       `${API_BASE_URL}/documents/${documentId}/import-assistant/chat-stream/`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: withCsrfHeader("POST", { "Content-Type": "application/json" }),
         body: JSON.stringify(params),
         credentials: "include",
       },

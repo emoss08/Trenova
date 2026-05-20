@@ -20,6 +20,13 @@ func (c failingClient) CheckFeature(
 	return nil, errors.New("unavailable")
 }
 
+func (c failingClient) AuthorizeAccess(
+	context.Context,
+	*services.AccessAuthorizeRequest,
+) (*services.AccessAuthorizeResult, error) {
+	return nil, errors.New("unavailable")
+}
+
 func (c failingClient) CheckLimit(
 	context.Context,
 	*services.UsageLimitCheckRequest,
@@ -38,6 +45,20 @@ func (c failingClient) Heartbeat(
 	context.Context,
 	*services.InstanceHeartbeatRequest,
 ) (*services.InstanceHeartbeatResult, error) {
+	return nil, errors.New("unavailable")
+}
+
+func (c failingClient) SyncTenants(
+	context.Context,
+	*services.TenantSyncRequest,
+) (*services.TenantSyncResult, error) {
+	return nil, errors.New("unavailable")
+}
+
+func (c failingClient) GetBillingSummary(
+	context.Context,
+	*services.BillingSummaryRequest,
+) (*services.BillingSummaryResult, error) {
 	return nil, errors.New("unavailable")
 }
 

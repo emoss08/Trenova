@@ -123,7 +123,7 @@ func (r *HeartbeatReporter) buildRequest() (*services.InstanceHeartbeatRequest, 
 		DeploymentMode: string(r.cfg.Platform.GetMode()),
 		Metadata: map[string]string{
 			"appName": r.cfg.App.Name,
-			"env":     string(r.cfg.App.Env),
+			"env":     r.cfg.App.Env,
 		},
 		CatalogHash: hash,
 		Products:    products,

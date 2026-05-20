@@ -17,6 +17,7 @@ type Params struct {
 
 	Registry             *platformcatalog.Registry
 	EntitlementProvider  services.EntitlementProvider
+	BillingProvider      services.BillingProvider
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -24,6 +25,7 @@ type Params struct {
 type Handler struct {
 	registry     *platformcatalog.Registry
 	entitlements services.EntitlementProvider
+	billing      services.BillingProvider
 	eh           *helpers.ErrorHandler
 	pm           *middleware.PermissionMiddleware
 }
@@ -32,6 +34,7 @@ func New(p Params) *Handler {
 	return &Handler{
 		registry:     p.Registry,
 		entitlements: p.EntitlementProvider,
+		billing:      p.BillingProvider,
 		eh:           p.ErrorHandler,
 		pm:           p.PermissionMiddleware,
 	}
@@ -41,6 +44,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	me := rg.Group("/me")
 	me.GET("/platform-catalog", h.getMePlatformCatalog)
 	me.GET("/entitlements", h.getMeEntitlements)
+	me.GET("/billing", h.getMeBilling)
 
 	admin := rg.Group("/platform-catalog")
 	admin.Use(h.pm.RequirePlatformAdmin())
@@ -60,6 +64,28 @@ func (h *Handler) getMeEntitlements(c *gin.Context) {
 	result, err := h.entitlements.ListEntitlements(
 		c.Request.Context(),
 		&services.EntitlementsRequest{
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+			PrincipalID:    authCtx.PrincipalID,
+			UserID:         authCtx.UserID,
+			APIKeyID:       authCtx.APIKeyID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) getMeBilling(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	result, err := h.billing.GetBillingSummary(
+		c.Request.Context(),
+		&services.BillingSummaryRequest{
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,
 			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),

@@ -10,4 +10,5 @@ var MiddlewareModule = fx.Module("api-middleware", fx.Provide(
 	middleware.NewAuthMiddleware,
 	middleware.NewPermissionMiddleware,
 	middleware.NewEntitlementMiddleware,
+	middleware.NewControlPlaneAccessMiddleware,
 ))

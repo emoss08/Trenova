@@ -163,6 +163,14 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/billing/subscription",
+            loader: protectedLoader,
+            async lazy() {
+              const { PlatformBillingPage } = await import("@/routes/platform-billing/page");
+              return { Component: PlatformBillingPage };
+            },
+          },
+          {
             path: "/billing/invoices",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {

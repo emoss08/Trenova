@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -33,6 +34,15 @@ type Client interface {
 		context.Context,
 		*services.InstanceHeartbeatRequest,
 	) (*services.InstanceHeartbeatResult, error)
+	SyncTenants(context.Context, *services.TenantSyncRequest) (*services.TenantSyncResult, error)
+	AuthorizeAccess(
+		context.Context,
+		*services.AccessAuthorizeRequest,
+	) (*services.AccessAuthorizeResult, error)
+	GetBillingSummary(
+		context.Context,
+		*services.BillingSummaryRequest,
+	) (*services.BillingSummaryResult, error)
 }
 
 type HTTPControlPlaneClientParams struct {
@@ -76,6 +86,17 @@ func (c *HTTPControlPlaneClient) CheckFeature(
 	return &result, nil
 }
 
+func (c *HTTPControlPlaneClient) AuthorizeAccess(
+	ctx context.Context,
+	req *services.AccessAuthorizeRequest,
+) (*services.AccessAuthorizeResult, error) {
+	var result services.AccessAuthorizeResult
+	if err := c.post(ctx, "/v1/access/authorize", req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
 func (c *HTTPControlPlaneClient) CheckLimit(
 	ctx context.Context,
 	req *services.UsageLimitCheckRequest,
@@ -104,6 +125,28 @@ func (c *HTTPControlPlaneClient) Heartbeat(
 ) (*services.InstanceHeartbeatResult, error) {
 	var result services.InstanceHeartbeatResult
 	if err := c.post(ctx, "/v1/instances/heartbeat", req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *HTTPControlPlaneClient) SyncTenants(
+	ctx context.Context,
+	req *services.TenantSyncRequest,
+) (*services.TenantSyncResult, error) {
+	var result services.TenantSyncResult
+	if err := c.post(ctx, "/v1/tenants/sync", req, &result); err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *HTTPControlPlaneClient) GetBillingSummary(
+	ctx context.Context,
+	req *services.BillingSummaryRequest,
+) (*services.BillingSummaryResult, error) {
+	var result services.BillingSummaryResult
+	if err := c.post(ctx, "/v1/billing/summary", req, &result); err != nil {
 		return nil, err
 	}
 	return &result, nil
@@ -164,7 +207,7 @@ func missingIdempotencyKeyError() error {
 }
 
 func (c *HTTPControlPlaneClient) signRequest(req *http.Request, path string, body []byte) {
-	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 	bodyHash := bodySHA256(body)
 
 	req.Header.Set("X-Trenova-Instance-ID", c.instanceID)
