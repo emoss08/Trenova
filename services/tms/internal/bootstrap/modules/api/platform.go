@@ -2,8 +2,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
@@ -25,23 +23,17 @@ type PlatformProviderSelectorParams struct {
 func SelectEntitlementProvider(
 	p PlatformProviderSelectorParams,
 ) (services.EntitlementProvider, error) {
-	switch p.Config.Platform.GetMode() {
-	case config.PlatformModeCommunity:
-		return p.LocalEntitlement, nil
-	case config.PlatformModeCloud, config.PlatformModeEnterprise:
+	if p.Config.Platform.ControlPlane.Enabled {
 		return p.CloudEntitlement, nil
-	default:
-		return nil, fmt.Errorf("unsupported platform mode %q", p.Config.Platform.GetMode())
 	}
+
+	return p.LocalEntitlement, nil
 }
 
 func SelectUsageProvider(p PlatformProviderSelectorParams) (services.UsageProvider, error) {
-	switch p.Config.Platform.GetMode() {
-	case config.PlatformModeCommunity:
-		return p.NoopUsage, nil
-	case config.PlatformModeCloud, config.PlatformModeEnterprise:
+	if p.Config.Platform.ControlPlane.Enabled {
 		return p.CloudUsage, nil
-	default:
-		return nil, fmt.Errorf("unsupported platform mode %q", p.Config.Platform.GetMode())
 	}
+
+	return p.NoopUsage, nil
 }

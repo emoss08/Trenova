@@ -977,6 +977,31 @@ storage:
 	})
 }
 
+func TestLoad_ControlPlaneEnvAliases(t *testing.T) {
+	tmpDir := t.TempDir()
+	err := os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(validConfigYAML()), 0o600)
+	require.NoError(t, err)
+
+	t.Setenv("TRENOVA_DEPLOYMENT_MODE", "development")
+	t.Setenv("TRENOVA_CONTROL_PLANE_ENABLED", "true")
+	t.Setenv("TRENOVA_CONTROL_PLANE_ENDPOINT", "https://control.trenova.test")
+	t.Setenv("TRENOVA_INSTANCE_ID", "inst_01")
+	t.Setenv("TRENOVA_CONTROL_PLANE_API_KEY", "cp_test_key")
+	t.Setenv("TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR", "true")
+
+	l := NewLoader(WithConfigPath(tmpDir), WithEnvironment("test"))
+
+	cfg, err := l.Load()
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Equal(t, PlatformModeDevelopment, cfg.Platform.GetMode())
+	assert.True(t, cfg.Platform.ControlPlane.Enabled)
+	assert.Equal(t, "https://control.trenova.test", cfg.Platform.ControlPlane.Endpoint)
+	assert.Equal(t, "inst_01", cfg.Platform.InstanceID)
+	assert.Equal(t, "cp_test_key", cfg.Platform.ControlPlane.APIKey)
+	assert.True(t, cfg.Platform.ControlPlane.FailOpenOnError)
+}
+
 func validConfigYAML() string {
 	return `
 app:

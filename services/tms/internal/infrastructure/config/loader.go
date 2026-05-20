@@ -130,6 +130,7 @@ func (l *Loader) configureViper() {
 	l.viper.AllowEmptyEnv(false)
 
 	l.setDefaults()
+	l.bindControlPlaneEnvAliases()
 }
 
 func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
@@ -231,7 +232,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("documentIntelligence.maxConcurrentActivities", 2)
 
 	// Platform defaults
-	l.viper.SetDefault("platform.mode", string(PlatformModeCommunity))
+	l.viper.SetDefault("platform.mode", string(PlatformModeSelfHosted))
 	l.viper.SetDefault("platform.controlPlane.enabled", false)
 	l.viper.SetDefault("platform.controlPlane.timeout", "5s")
 	l.viper.SetDefault("platform.controlPlane.failOpenOnError", false)
@@ -239,6 +240,18 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	// Storage defaults
 	l.viper.SetDefault("storage.provider", StorageProviderMinio)
 	l.viper.SetDefault("storage.autoCreateBucket", true)
+}
+
+func (l *Loader) bindControlPlaneEnvAliases() {
+	_ = l.viper.BindEnv("platform.mode", "TRENOVA_DEPLOYMENT_MODE")
+	_ = l.viper.BindEnv("platform.instanceId", "TRENOVA_INSTANCE_ID")
+	_ = l.viper.BindEnv("platform.controlPlane.enabled", "TRENOVA_CONTROL_PLANE_ENABLED")
+	_ = l.viper.BindEnv("platform.controlPlane.endpoint", "TRENOVA_CONTROL_PLANE_ENDPOINT")
+	_ = l.viper.BindEnv("platform.controlPlane.apiKey", "TRENOVA_CONTROL_PLANE_API_KEY")
+	_ = l.viper.BindEnv(
+		"platform.controlPlane.failOpenOnError",
+		"TRENOVA_CONTROL_PLANE_FAIL_OPEN_ON_ERROR",
+	)
 }
 
 // loadConfigFiles loads base and environment-specific config files
@@ -287,24 +300,27 @@ func (l *Loader) validateConfig(config *Config) error {
 		return ErrLoggingOutputIsFileButFileConfigIsMissing
 	}
 
-	if config.Platform.GetMode() == PlatformModeCloud ||
-		config.Platform.GetMode() == PlatformModeEnterprise {
-		if !config.Platform.ControlPlane.Enabled {
-			return fmt.Errorf(
-				"platform.controlplane.enabled is required for %s platform mode",
-				config.Platform.GetMode(),
-			)
-		}
+	if config.Platform.GetMode() == PlatformModeCloud && !config.Platform.ControlPlane.Enabled {
+		return fmt.Errorf(
+			"platform.controlplane.enabled is required for %s platform mode",
+			config.Platform.GetMode(),
+		)
+	}
+
+	if config.Platform.ControlPlane.Enabled {
 		if config.Platform.ControlPlane.Endpoint == "" {
 			return fmt.Errorf(
-				"platform.controlplane.endpoint is required for %s platform mode",
-				config.Platform.GetMode(),
+				"platform.controlplane.endpoint is required when control plane is enabled",
 			)
 		}
 		if config.Platform.ControlPlane.APIKey == "" {
 			return fmt.Errorf(
-				"platform.controlplane.apikey is required for %s platform mode",
-				config.Platform.GetMode(),
+				"platform.controlplane.apikey is required when control plane is enabled",
+			)
+		}
+		if config.Platform.InstanceID == "" {
+			return fmt.Errorf(
+				"platform.instanceid is required when control plane is enabled",
 			)
 		}
 	}

@@ -32,10 +32,6 @@ func (p *CloudUsageProvider) CheckLimit(
 	ctx context.Context,
 	req *services.UsageLimitCheckRequest,
 ) (*services.UsageLimitCheckResult, error) {
-	if req.IdempotencyKey == "" {
-		return nil, missingIdempotencyKeyError()
-	}
-
 	result, err := p.client.CheckLimit(ctx, req)
 	if err == nil {
 		return result, nil

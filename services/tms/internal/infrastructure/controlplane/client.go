@@ -3,7 +3,11 @@ package controlplane
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -37,6 +41,7 @@ type HTTPControlPlaneClientParams struct {
 type HTTPControlPlaneClient struct {
 	endpoint   string
 	apiKey     string
+	instanceID string
 	httpClient *http.Client
 }
 
@@ -51,6 +56,7 @@ func NewHTTPControlPlaneClient(p HTTPControlPlaneClientParams) *HTTPControlPlane
 	return &HTTPControlPlaneClient{
 		endpoint:   strings.TrimRight(p.Config.Platform.ControlPlane.Endpoint, "/"),
 		apiKey:     p.Config.Platform.ControlPlane.APIKey,
+		instanceID: p.Config.Platform.InstanceID,
 		httpClient: httpClient,
 	}
 }
@@ -106,6 +112,7 @@ func (c *HTTPControlPlaneClient) post(ctx context.Context, path string, payload,
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	c.signRequest(req, path, body)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -125,7 +132,8 @@ func (c *HTTPControlPlaneClient) post(ctx context.Context, path string, payload,
 }
 
 func failOpenAllowed(cfg *config.Config) bool {
-	return cfg.App.IsDevelopment() && cfg.Platform.ControlPlane.FailOpenOnError
+	return (cfg.App.IsDevelopment() || cfg.Platform.IsDevelopmentDeployment()) &&
+		cfg.Platform.ControlPlane.FailOpenOnError
 }
 
 func nowUnix() int64 {
@@ -138,4 +146,34 @@ func missingIdempotencyKeyError() error {
 		errortypes.ErrInvalid,
 		"idempotency key is required for cloud usage recording",
 	)
+}
+
+func (c *HTTPControlPlaneClient) signRequest(req *http.Request, path string, body []byte) {
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	bodyHash := bodySHA256(body)
+
+	req.Header.Set("X-Trenova-Instance-ID", c.instanceID)
+	req.Header.Set("X-Trenova-Timestamp", timestamp)
+	req.Header.Set("X-Trenova-Body-SHA256", bodyHash)
+	req.Header.Set(
+		"X-Trenova-Signature",
+		computeSignature(c.apiKey, req.Method, path, bodyHash, timestamp),
+	)
+}
+
+func bodySHA256(body []byte) string {
+	sum := sha256.Sum256(body)
+	return hex.EncodeToString(sum[:])
+}
+
+func computeSignature(secret, method, path, bodyHash, timestamp string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = io.WriteString(mac, method)
+	_, _ = io.WriteString(mac, "\n")
+	_, _ = io.WriteString(mac, path)
+	_, _ = io.WriteString(mac, "\n")
+	_, _ = io.WriteString(mac, bodyHash)
+	_, _ = io.WriteString(mac, "\n")
+	_, _ = io.WriteString(mac, timestamp)
+	return hex.EncodeToString(mac.Sum(nil))
 }

@@ -19,7 +19,9 @@ const (
 type PlatformMode string
 
 const (
-	PlatformModeCommunity  = PlatformMode("community")
-	PlatformModeCloud      = PlatformMode("cloud")
-	PlatformModeEnterprise = PlatformMode("enterprise")
+	PlatformModeCommunity   = PlatformMode("community")
+	PlatformModeSelfHosted  = PlatformMode("self_hosted")
+	PlatformModeDevelopment = PlatformMode("development")
+	PlatformModeCloud       = PlatformMode("cloud")
+	PlatformModeEnterprise  = PlatformMode("enterprise")
 )

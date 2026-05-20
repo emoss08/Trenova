@@ -656,20 +656,29 @@ func (c *UpdateConfig) GetGitHubRepo() string {
 }
 
 type PlatformConfig struct {
-	Mode         PlatformMode               `mapstructure:"mode"         validate:"omitempty,oneof=community cloud enterprise"`
+	Mode         PlatformMode               `mapstructure:"mode"         validate:"omitempty,oneof=community self_hosted development cloud enterprise"`
+	InstanceID   string                     `mapstructure:"instanceId"`
 	ControlPlane PlatformControlPlaneConfig `mapstructure:"controlPlane"`
 }
 
 func (c *PlatformConfig) IsCloudBacked() bool {
-	return c.Mode == PlatformModeCloud || c.Mode == PlatformModeEnterprise
+	return c.ControlPlane.Enabled
 }
 
 func (c *PlatformConfig) GetMode() PlatformMode {
 	if c.Mode == "" {
-		return PlatformModeCommunity
+		return PlatformModeSelfHosted
+	}
+
+	if c.Mode == PlatformModeCommunity || c.Mode == PlatformModeEnterprise {
+		return PlatformModeSelfHosted
 	}
 
 	return c.Mode
+}
+
+func (c *PlatformConfig) IsDevelopmentDeployment() bool {
+	return c.GetMode() == PlatformModeDevelopment
 }
 
 type PlatformControlPlaneConfig struct {
