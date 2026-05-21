@@ -51,6 +51,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("login", h.login)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
+	api.GET("csrf", h.csrfToken)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
 	api.GET("microsoft/start/:slug", h.startSSOLogin(tenant.SSOProviderAzureAD))
 	api.GET("microsoft/callback", h.ssoCallback(tenant.SSOProviderAzureAD))
@@ -91,6 +92,7 @@ func (h *Handler) login(c *gin.Context) {
 	)
 
 	h.setSessionCookie(c, resp.SessionID, resp.ExpiresAt)
+	resp.CSRFToken = csrf.Token(resp.SessionID, h.cfg.Security.Session.Secret)
 
 	c.JSON(http.StatusOK, resp)
 }
@@ -152,6 +154,30 @@ func (h *Handler) validateSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"valid": true})
+}
+
+func (h *Handler) csrfToken(c *gin.Context) {
+	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || sessionIDstr == "" {
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
+		return
+	}
+
+	sessionID, err := pulid.MustParse(sessionIDstr)
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
+		return
+	}
+
+	if _, err = h.service.ValidateSession(c.Request.Context(), sessionID); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"csrfToken":  csrf.Token(sessionIDstr, h.cfg.Security.Session.Secret),
+		"headerName": h.cfg.Security.CSRF.HeaderName,
+	})
 }
 
 func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
@@ -300,15 +326,6 @@ func (h *Handler) clearSessionCookie(c *gin.Context) {
 		sessionCfg.Secure,
 		sessionCfg.HTTPOnly,
 	)
-	c.SetCookie(
-		h.cfg.Security.CSRF.TokenName,
-		"",
-		-1,
-		sessionCfg.Path,
-		sessionCfg.Domain,
-		sessionCfg.Secure,
-		false,
-	)
 }
 
 func (h *Handler) setSessionCookie(c *gin.Context, sessionID string, expiresAt int64) {
@@ -324,14 +341,5 @@ func (h *Handler) setSessionCookie(c *gin.Context, sessionID string, expiresAt i
 		sessionCfg.Domain,
 		sessionCfg.Secure,
 		sessionCfg.HTTPOnly,
-	)
-	c.SetCookie(
-		h.cfg.Security.CSRF.TokenName,
-		csrf.Token(sessionID, sessionCfg.Secret),
-		maxAge,
-		sessionCfg.Path,
-		sessionCfg.Domain,
-		sessionCfg.Secure,
-		false,
 	)
 }

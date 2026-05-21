@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -82,12 +83,12 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
-	if err := l.validateConfig(config); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
-	}
-
 	if err := l.applyEnvironmentOverrides(config); err != nil {
 		return nil, fmt.Errorf("apply environment overrides: %w", err)
+	}
+
+	if err := l.validateConfig(config); err != nil {
+		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	return config, nil
@@ -174,6 +175,11 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	// CSRF defaults
 	l.viper.SetDefault("security.csrf.tokenName", "csrf_token")
 	l.viper.SetDefault("security.csrf.headerName", "X-CSRF-Token")
+	if l.env == EnvProduction || l.env == EnvStaging {
+		l.viper.SetDefault("security.csrf.browserGuard.mode", "enforce")
+	} else {
+		l.viper.SetDefault("security.csrf.browserGuard.mode", "report")
+	}
 
 	// Rate limit defaults
 	l.viper.SetDefault("security.rateLimit.enabled", true)
@@ -278,6 +284,11 @@ func (l *Loader) loadConfigFiles() error {
 
 	if l.env != EnvDevelopment {
 		envConfig := filepath.Join(l.configPath, fmt.Sprintf("config.%s.yaml", l.env))
+		if l.env == EnvProduction {
+			if _, err := os.Stat(envConfig); os.IsNotExist(err) {
+				envConfig = filepath.Join(l.configPath, "config.prod.yaml")
+			}
+		}
 		if _, err := os.Stat(envConfig); err == nil {
 			l.viper.SetConfigFile(envConfig)
 			if err = l.viper.MergeInConfig(); err != nil {
@@ -302,6 +313,22 @@ func (l *Loader) validateConfig(config *Config) error {
 		if len(config.Server.CORS.AllowedOrigins) == 0 {
 			return ErrCorsEnabledButNoAllowedOrigins
 		}
+	}
+
+	if isProductionLike(l.env) &&
+		config.Server.CORS.Enabled &&
+		config.Server.CORS.Credentials &&
+		slices.Contains(config.Server.CORS.AllowedOrigins, "*") {
+		return ErrCredentialedWildcardCORS
+	}
+
+	if strings.HasPrefix(config.Security.Session.Name, "__Host-") &&
+		(!config.Security.Session.Secure ||
+			!config.Security.Session.HTTPOnly ||
+			config.Security.Session.Domain != "" ||
+			config.Security.Session.Path != "/" ||
+			!strings.EqualFold(config.Security.Session.SameSite, "strict")) {
+		return ErrInvalidHostPrefixCookie
 	}
 
 	if config.Logging.Output == "file" && config.Logging.File == nil {
@@ -343,15 +370,19 @@ func (l *Loader) validateConfig(config *Config) error {
 }
 
 func (l *Loader) applyEnvironmentOverrides(config *Config) error {
-	if l.env == "production" {
+	if isProductionLike(l.env) {
 		config.App.Debug = false
 		config.Server.Mode = "release"
+		config.Security.Session.Name = "__Host-trenova_session"
 		config.Security.Session.HTTPOnly = true
 		config.Security.Session.Secure = true
+		config.Security.Session.SameSite = "strict"
+		config.Security.Session.Path = "/"
+		config.Security.Session.Domain = ""
 		config.Logging.Stacktrace = false
 	}
 
-	if l.env == "development" {
+	if l.env == EnvDevelopment {
 		config.App.Debug = true
 		config.Server.Mode = "debug"
 		config.Logging.Stacktrace = true
@@ -363,6 +394,10 @@ func (l *Loader) applyEnvironmentOverrides(config *Config) error {
 		return fmt.Errorf("set gin mode: %w", err)
 	}
 	return nil
+}
+
+func isProductionLike(env string) bool {
+	return env == EnvProduction || env == EnvStaging
 }
 
 func (l *Loader) registerValidators() {
@@ -385,6 +420,27 @@ func (l *Loader) registerValidators() {
 	_ = l.validator.RegisterValidation("no_trailing_slash", func(fl validator.FieldLevel) bool {
 		addr := fl.Field().String()
 		return !strings.HasSuffix(addr, "/")
+	})
+
+	_ = l.validator.RegisterValidation("origin_or_wildcard", func(fl validator.FieldLevel) bool {
+		raw := strings.TrimSpace(fl.Field().String())
+		if raw == "*" {
+			return true
+		}
+
+		origin, err := url.Parse(raw)
+		if err != nil || origin.Scheme == "" || origin.Host == "" {
+			return false
+		}
+
+		if origin.Scheme != "http" && origin.Scheme != "https" {
+			return false
+		}
+
+		return origin.Path == "" &&
+			origin.RawQuery == "" &&
+			origin.Fragment == "" &&
+			!strings.HasSuffix(raw, "/")
 	})
 }
 

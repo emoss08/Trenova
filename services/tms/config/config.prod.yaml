@@ -5,29 +5,54 @@ app:
 server:
   mode: release
   cors:
-    allowed_origins:
+    enabled: true
+    allowedOrigins:
       - https://app.trenova.io
       - https://trenova.io
+    allowedMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowedHeaders:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-CSRF-Token
+    credentials: true
+    maxAge: 86400
 
 database:
-  sslmode: require
-  max_idle_conns: 25
-  max_open_conns: 200
+  sslMode: require
+  maxIdleConns: 25
+  maxOpenConns: 200
 
-redis:
-  pool_size: 50
-  min_idle_conns: 10
+cache:
+  poolSize: 50
+  minIdleConns: 10
 
 security:
   session:
+    name: __Host-trenova_session
     secure: true # Force HTTPS cookies in production
-    same_site: strict # Stricter CSRF protection
-  rate_limit:
-    requests_per_minute: 30
+    httpOnly: true
+    sameSite: strict # Stricter CSRF protection
+    path: /
+    domain: ""
+  rateLimit:
+    requestsPerMinute: 30
+  csrf:
+    trustedOrigins:
+      - https://app.trenova.io
+      - https://trenova.io
+    browserGuard:
+      mode: enforce
 
 logging:
   level: info
-  output: file
+  output: stdout
 
 monitoring:
   metrics:

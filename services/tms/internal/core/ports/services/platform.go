@@ -205,6 +205,22 @@ type TenantSyncResult struct {
 	ReceivedAt            int64  `json:"receivedAt"`
 }
 
+type TenantProvisioningCustomer = tenant.ProvisioningCustomer
+
+type TenantProvisioningWorkspace = tenant.ProvisioningWorkspace
+
+type TenantProvisioningAssignment = tenant.ProvisioningAssignment
+
+type TenantProvisioningSubscription = tenant.ProvisioningSubscription
+
+type TenantProvisioningEntitlement = tenant.ProvisioningEntitlement
+
+type TenantProvisioningLimit = tenant.ProvisioningLimit
+
+type TenantProvisioningRequest = tenant.ProvisioningRequest
+
+type TenantProvisioningResult = tenant.ProvisioningResult
+
 type TenantSyncDelta struct {
 	BusinessUnitIDs []pulid.ID
 	OrganizationIDs []pulid.ID
@@ -226,6 +242,10 @@ type AccessAuthorizer interface {
 type TenantSyncService interface {
 	SyncFull(context.Context) error
 	SyncDelta(context.Context, TenantSyncDelta) error
+}
+
+type TenantProvisioningService interface {
+	ProvisionTenant(context.Context, *TenantProvisioningRequest) (*TenantProvisioningResult, error)
 }
 
 type UsageProvider interface {

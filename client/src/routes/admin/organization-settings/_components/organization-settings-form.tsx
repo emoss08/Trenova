@@ -10,10 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
-import {
-  IMAGE_UPLOAD_ACCEPT,
-  organizationLogoCropConfig,
-} from "@/lib/images/upload-config";
+import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
 import { queries } from "@/lib/queries";
 import { isAbsoluteUrl } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -21,16 +18,17 @@ import { useAuthStore } from "@/stores/auth-store";
 import { organizationSettingsSchema, type OrganizationSettings } from "@/types/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2Icon, CircleXIcon, ShieldIcon, UploadIcon } from "lucide-react";
+import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { BillingUsageTab } from "./billing-usage-tab";
 import { MicrosoftSSOCard } from "./microsoft-sso-card";
 import { OktaSSOCard } from "./okta-sso-card";
 
-const tabValues = ["general", "security"] as const;
+const tabValues = ["general", "security", "billing-usage"] as const;
 const emptyOrganizationDefaults: OrganizationSettings = {
   id: "",
   version: 0,
@@ -159,6 +157,10 @@ export default function OrganizationSettingsForm() {
           <ShieldIcon size={16} />
           Security
         </TabsTab>
+        <TabsTab value="billing-usage">
+          <CreditCardIcon size={16} />
+          Billing & Usage
+        </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
         <FormProvider {...form}>
@@ -174,6 +176,9 @@ export default function OrganizationSettingsForm() {
       <TabsContent value="security" className="space-y-4">
         <MicrosoftSSOCard organizationId={organizationId} />
         <OktaSSOCard organizationId={organizationId} />
+      </TabsContent>
+      <TabsContent value="billing-usage" className="pb-10">
+        <BillingUsageTab />
       </TabsContent>
     </Tabs>
   );
@@ -224,16 +229,23 @@ function LogoForm({
       setIsCropOpen(true);
     } catch (error) {
       toast.error("Unsupported logo file", {
-        description: error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
+        description:
+          error instanceof Error ? error.message : "Please choose a JPG, PNG, or WEBP file.",
       });
     }
   }, []);
 
-  const handleLogoUpload = useCallback(async (file: File) => {
-    const updatedOrganization = await apiService.organizationService.uploadLogo(organizationId, file);
-    await onLogoUpdated(updatedOrganization);
-    toast.success("Organization logo updated");
-  }, [onLogoUpdated, organizationId]);
+  const handleLogoUpload = useCallback(
+    async (file: File) => {
+      const updatedOrganization = await apiService.organizationService.uploadLogo(
+        organizationId,
+        file,
+      );
+      await onLogoUpdated(updatedOrganization);
+      toast.success("Organization logo updated");
+    },
+    [onLogoUpdated, organizationId],
+  );
 
   const handleRemoveLogo = useCallback(async () => {
     if (isRemovingLogo) {

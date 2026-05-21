@@ -44,6 +44,17 @@ type Handler struct {
 	storageConfig   config.StorageConfig
 }
 
+func requestActorFromAuthContext(authCtx *authctx.AuthContext) serviceports.RequestActor {
+	return serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalType(authCtx.PrincipalType),
+		PrincipalID:    authCtx.PrincipalID,
+		UserID:         authCtx.UserID,
+		APIKeyID:       authCtx.APIKeyID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		OrganizationID: authCtx.OrganizationID,
+	}
+}
+
 const multipartFormOverheadBytes int64 = 1 << 20
 
 func New(p Params) *Handler {
@@ -650,6 +661,7 @@ func (h *Handler) upload(c *gin.Context) {
 				BuID:   authCtx.BusinessUnitID,
 				UserID: authCtx.UserID,
 			},
+			Actor:             requestActorFromAuthContext(authCtx),
 			File:              file,
 			ResourceID:        req.ResourceID,
 			ResourceType:      req.ResourceType,
@@ -685,6 +697,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 				BuID:   authCtx.BusinessUnitID,
 				UserID: authCtx.UserID,
 			},
+			Actor:             requestActorFromAuthContext(authCtx),
 			ResourceID:        req.ResourceID,
 			ResourceType:      req.ResourceType,
 			ProcessingProfile: req.ProcessingProfile,
@@ -803,6 +816,7 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 				BuID:   authCtx.BusinessUnitID,
 				UserID: authCtx.UserID,
 			},
+			Actor:     requestActorFromAuthContext(authCtx),
 			SessionID: id,
 		},
 	)
@@ -906,6 +920,7 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 				BuID:   authCtx.BusinessUnitID,
 				UserID: authCtx.UserID,
 			},
+			Actor:        requestActorFromAuthContext(authCtx),
 			Files:        files,
 			ResourceID:   req.ResourceID,
 			ResourceType: req.ResourceType,

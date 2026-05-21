@@ -9,6 +9,7 @@ import (
 
 type CreateSessionRequest struct {
 	TenantInfo        pagination.TenantInfo
+	Actor             RequestActor
 	ResourceID        string
 	ResourceType      string
 	ProcessingProfile string
@@ -31,6 +32,7 @@ type PartRequest struct {
 
 type CompletionRequest struct {
 	TenantInfo pagination.TenantInfo
+	Actor      RequestActor
 	SessionID  pulid.ID
 }
 

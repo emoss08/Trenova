@@ -6,6 +6,14 @@ type FeatureKey string
 
 type MeterKey string
 
+type RouteAccessClass string
+
+const (
+	RouteAccessClassAccountShell RouteAccessClass = "account_shell"
+	RouteAccessClassProduct      RouteAccessClass = "product"
+	RouteAccessClassUnclassified RouteAccessClass = "unclassified"
+)
+
 type Product struct {
 	Key         ProductKey   `json:"key"`
 	Name        string       `json:"name"`
@@ -41,6 +49,11 @@ type RouteRef struct {
 type PermissionRef struct {
 	Resource  string `json:"resource"`
 	Operation string `json:"operation"`
+}
+
+type RoutePolicy struct {
+	AccessClass RouteAccessClass `json:"accessClass"`
+	FeatureKey  FeatureKey       `json:"featureKey,omitempty"`
 }
 
 type UsageLimit struct {

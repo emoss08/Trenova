@@ -23,6 +23,7 @@ type LoginResponse struct {
 	User      *tenant.User `json:"user"`
 	ExpiresAt int64        `json:"expiresAt"`
 	SessionID string       `json:"sessionId"`
+	CSRFToken string       `json:"csrfToken,omitempty"`
 }
 
 type TenantLoginMetadataResponse struct {

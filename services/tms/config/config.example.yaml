@@ -137,6 +137,9 @@ security:
   csrf:
     tokenName: csrf_token # Name for CSRF token in session
     headerName: X-CSRF-Token # Header name for CSRF token
+    trustedOrigins: [] # Optional override; defaults to server.cors.allowedOrigins
+    browserGuard:
+      mode: report # enforce, report, or off
   encryption:
     key: super-secret-key # Encryption key (min 32 chars)
 

@@ -101,26 +101,49 @@ func TestLogin_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sessionID.String(), resp.SessionID)
 	assert.Equal(t, int64(9999999999), resp.ExpiresAt)
+	assert.Equal(t, csrf.Token(sessionID.String(), "test-session-secret"), resp.CSRFToken)
 	assert.Equal(t, "test@example.com", resp.User.EmailAddress)
 
 	cookies := w.Result().Cookies()
 	var found bool
-	var csrfFound bool
 	for _, c := range cookies {
 		if c.Name == "session_id" {
 			found = true
 			assert.Equal(t, sessionID.String(), c.Value)
 			assert.True(t, c.HttpOnly)
-			continue
 		}
-		if c.Name == "csrf_token" {
-			csrfFound = true
-			assert.Equal(t, csrf.Token(sessionID.String(), "test-session-secret"), c.Value)
-			assert.False(t, c.HttpOnly)
-		}
+		assert.NotEqual(t, "csrf_token", c.Name)
 	}
 	assert.True(t, found, "session cookie should be set")
-	assert.True(t, csrfFound, "csrf cookie should be set")
+}
+
+func TestCSRFToken_Success(t *testing.T) {
+	t.Parallel()
+
+	sessionID := pulid.MustNew("ses_")
+
+	svc := mocks.NewMockAuthService(t)
+	svc.On("ValidateSession", mock.Anything, sessionID).Return(&session.Session{
+		ID: sessionID,
+	}, nil)
+
+	_, r := newTestHandler(svc)
+
+	req := httptest.NewRequest(http.MethodGet, "/auth/csrf", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "session_id",
+		Value: sessionID.String(),
+	})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp map[string]string
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "X-CSRF-Token", resp["headerName"])
+	assert.Equal(t, csrf.Token(sessionID.String(), "test-session-secret"), resp["csrfToken"])
 }
 
 func TestLogin_InvalidJSON(t *testing.T) {

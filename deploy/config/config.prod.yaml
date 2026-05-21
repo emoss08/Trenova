@@ -14,7 +14,24 @@ server:
   idleTimeout: 120s
   shutdownTimeout: 15s
   cors:
-    enabled: false
+    enabled: true
+    allowedOrigins:
+      - https://trenova.app
+      - https://app.trenova.app
+    allowedMethods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowedHeaders:
+      - Authorization
+      - Content-Type
+      - Accept
+      - X-CSRF-Token
+    credentials: true
+    maxAge: 86400
 
 database:
   host: postgres
@@ -36,11 +53,11 @@ cache:
 security:
   session:
     secret: placeholder-secret-min-32-characters-long
-    name: trenova_session
+    name: __Host-trenova_session
     maxAge: 24h
     httpOnly: true
     secure: true
-    sameSite: lax
+    sameSite: strict
     path: /
     domain: ""
     refreshWindow: 1h
@@ -51,6 +68,11 @@ security:
   csrf:
     tokenName: csrf_token
     headerName: X-CSRF-Token
+    trustedOrigins:
+      - https://trenova.app
+      - https://app.trenova.app
+    browserGuard:
+      mode: enforce
   encryption:
     key: placeholder-encryption-key-min-32-chars
 

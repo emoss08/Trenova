@@ -1,4 +1,3 @@
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +25,7 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
 });
 
-export function PlatformBillingPage() {
+export function BillingUsageTab() {
   const summaryQuery = useQuery({
     ...queries.platformBilling.summary(),
   });
@@ -36,138 +35,135 @@ export function PlatformBillingPage() {
   const deniedFeatures = summary?.features.filter((feature) => !feature.allowed).length ?? 0;
   const trackedMeters = summary?.usage.length ?? 0;
 
+  if (summaryQuery.isLoading) {
+    return <BillingSkeleton />;
+  }
+
+  if (summaryQuery.isError) {
+    return (
+      <Alert variant="destructive">
+        <CircleAlertIcon className="size-4" />
+        <AlertTitle>Unable to load billing status</AlertTitle>
+        <AlertDescription>The subscription and usage summary could not be loaded.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!summary) {
+    return null;
+  }
+
   return (
-    <PageLayout
-      pageHeaderProps={{
-        title: "Subscription & Usage",
-        description: "Current subscription state, enabled features, and tenant usage.",
-      }}
-    >
-      <div className="mx-4 mt-3 mb-4 space-y-4">
-        {summaryQuery.isLoading ? (
-          <BillingSkeleton />
-        ) : summaryQuery.isError ? (
-          <Alert variant="destructive">
-            <CircleAlertIcon className="size-4" />
-            <AlertTitle>Unable to load billing status</AlertTitle>
-            <AlertDescription>
-              The subscription and usage summary could not be loaded.
-            </AlertDescription>
-          </Alert>
-        ) : summary ? (
-          <>
-            {!summary.active ? (
-              <Alert variant="warning">
-                <CircleAlertIcon className="size-4" />
-                <AlertTitle>Access is not active</AlertTitle>
-                <AlertDescription>{formatReason(summary.reason)}</AlertDescription>
-              </Alert>
-            ) : null}
+    <div className="space-y-4">
+      {!summary.active ? (
+        <Alert variant="warning">
+          <CircleAlertIcon className="size-4" />
+          <AlertTitle>Access is not active</AlertTitle>
+          <AlertDescription>{formatReason(summary.reason)}</AlertDescription>
+        </Alert>
+      ) : null}
 
-            <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-              <SummaryCard
-                icon={ShieldCheckIcon}
-                label="Access State"
-                value={summary.active ? "Active" : "Blocked"}
-                detail={formatReason(summary.reason)}
-                tone={summary.active ? "active" : "inactive"}
-              />
-              <SummaryCard
-                icon={KeyRoundIcon}
-                label="Plan"
-                value={summary.plan?.name ?? "Not assigned"}
-                detail={summary.plan?.key ?? "No plan key"}
-                tone="info"
-              />
-              <SummaryCard
-                icon={CheckCircle2Icon}
-                label="Features"
-                value={numberFormatter.format(allowedFeatures)}
-                detail={
-                  deniedFeatures > 0
-                    ? `${numberFormatter.format(deniedFeatures)} denied`
-                    : "All listed features enabled"
-                }
-                tone="teal"
-              />
-              <SummaryCard
-                icon={GaugeIcon}
-                label="Tracked Usage"
-                value={numberFormatter.format(trackedMeters)}
-                detail={formatPeriod(
-                  summary.subscription?.currentPeriodStart,
-                  summary.subscription?.currentPeriodEnd,
-                )}
-                tone="orange"
-              />
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
-              <Card className="rounded-md">
-                <CardHeader className="flex flex-row items-center justify-between gap-3">
-                  <CardTitle className="text-sm font-semibold">Usage This Period</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void summaryQuery.refetch()}
-                    disabled={summaryQuery.isFetching}
-                  >
-                    <RefreshCcwIcon className="size-3.5" />
-                    Refresh
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  {summary.usage.length > 0 ? (
-                    <div className="grid gap-2.5 lg:grid-cols-2">
-                      {summary.usage.map((usage) => (
-                        <UsageMeter key={usage.meterKey} usage={usage} />
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={ActivityIcon}
-                      title="No metered usage"
-                      description="This tenant does not have any metered usage configured."
-                    />
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card className="rounded-md">
-                <CardHeader>
-                  <CardTitle className="text-sm font-semibold">Enabled Features</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {summary.features.length > 0 ? (
-                    <div className="space-y-1.5">
-                      {summary.features.map((feature) => (
-                        <div
-                          key={feature.featureKey}
-                          className="flex min-h-9 items-center justify-between gap-3 rounded-md border border-border bg-background px-2.5"
-                        >
-                          <span className="truncate text-sm font-medium">
-                            {formatCatalogKey(feature.featureKey)}
-                          </span>
-                          <Badge variant={feature.allowed ? "active" : "inactive"}>
-                            {feature.allowed ? "Enabled" : "Denied"}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyState
-                      icon={ShieldCheckIcon}
-                      title="No feature data"
-                      description="No entitlement records were returned for this tenant."
-                    />
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </>
-        ) : null}
+      <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+        <SummaryCard
+          icon={ShieldCheckIcon}
+          label="Access State"
+          value={summary.active ? "Active" : "Blocked"}
+          detail={formatReason(summary.reason)}
+          tone={summary.active ? "active" : "inactive"}
+        />
+        <SummaryCard
+          icon={KeyRoundIcon}
+          label="Plan"
+          value={summary.plan?.name ?? "Not assigned"}
+          detail={summary.plan?.key ?? "No plan key"}
+          tone="info"
+        />
+        <SummaryCard
+          icon={CheckCircle2Icon}
+          label="Features"
+          value={numberFormatter.format(allowedFeatures)}
+          detail={
+            deniedFeatures > 0
+              ? `${numberFormatter.format(deniedFeatures)} denied`
+              : "All listed features enabled"
+          }
+          tone="teal"
+        />
+        <SummaryCard
+          icon={GaugeIcon}
+          label="Tracked Usage"
+          value={numberFormatter.format(trackedMeters)}
+          detail={formatPeriod(
+            summary.subscription?.currentPeriodStart,
+            summary.subscription?.currentPeriodEnd,
+          )}
+          tone="orange"
+        />
       </div>
-    </PageLayout>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
+        <Card className="rounded-md">
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <CardTitle className="text-sm font-semibold">Usage This Period</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void summaryQuery.refetch()}
+              disabled={summaryQuery.isFetching}
+            >
+              <RefreshCcwIcon className="size-3.5" />
+              Refresh
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {summary.usage.length > 0 ? (
+              <div className="grid gap-2.5 lg:grid-cols-2">
+                {summary.usage.map((usage) => (
+                  <UsageMeter key={usage.meterKey} usage={usage} />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={ActivityIcon}
+                title="No metered usage"
+                description="This tenant does not have any metered usage configured."
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-md">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Enabled Features</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {summary.features.length > 0 ? (
+              <div className="space-y-1.5">
+                {summary.features.map((feature) => (
+                  <div
+                    key={feature.featureKey}
+                    className="flex min-h-9 items-center justify-between gap-3 rounded-md border border-border bg-background px-2.5"
+                  >
+                    <span className="truncate text-sm font-medium">
+                      {formatCatalogKey(feature.featureKey)}
+                    </span>
+                    <Badge variant={feature.allowed ? "active" : "inactive"}>
+                      {feature.allowed ? "Enabled" : "Denied"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={ShieldCheckIcon}
+                title="No feature data"
+                description="No entitlement records were returned for this tenant."
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }
 

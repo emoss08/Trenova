@@ -173,8 +173,14 @@ func (c *RateLimitConfig) GetCleanupInterval() time.Duration {
 }
 
 type CSRFConfig struct {
-	TokenName  string `mapstructure:"tokenName"  validate:"required"`
-	HeaderName string `mapstructure:"headerName" validate:"required"`
+	TokenName      string                 `mapstructure:"tokenName"      validate:"required"`
+	HeaderName     string                 `mapstructure:"headerName"     validate:"required"`
+	TrustedOrigins []string               `mapstructure:"trustedOrigins" validate:"omitempty,dive,origin_or_wildcard"`
+	BrowserGuard   CSRFBrowserGuardConfig `mapstructure:"browserGuard"`
+}
+
+type CSRFBrowserGuardConfig struct {
+	Mode string `mapstructure:"mode" validate:"required,oneof=enforce report off"`
 }
 
 type DatabaseConfig struct {
@@ -193,7 +199,7 @@ type DatabaseConfig struct {
 
 type CORSConfig struct {
 	Enabled        bool     `mapstructure:"enabled"`
-	AllowedOrigins []string `mapstructure:"allowedOrigins" validate:"required_if=Enabled true,dive,url,no_trailing_slash|eq=*"`
+	AllowedOrigins []string `mapstructure:"allowedOrigins" validate:"required_if=Enabled true,dive,origin_or_wildcard"`
 	AllowedMethods []string `mapstructure:"allowedMethods" validate:"required_if=Enabled true"`
 	AllowedHeaders []string `mapstructure:"allowedHeaders" validate:"required_if=Enabled true"`
 	ExposeHeaders  []string `mapstructure:"exposeHeaders"`

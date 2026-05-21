@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -44,7 +45,8 @@ type ActivitiesParams struct {
 	SearchProjection     services.DocumentSearchProjectionService
 	ThumbnailGenerator   *thumbnailservice.Generator
 	WorkflowStarter      services.WorkflowStarter
-	Redis                *goredis.Client `optional:"true"`
+	UsageProvider        services.UsageProvider `optional:"true"`
+	Redis                *goredis.Client        `optional:"true"`
 	DocumentIntelligence services.DocumentContentService
 	ShipmentService      services.ShipmentService `optional:"true"`
 }
@@ -57,6 +59,7 @@ type Activities struct {
 	searchProjection     services.DocumentSearchProjectionService
 	thumbnailGenerator   *thumbnailservice.Generator
 	workflowStarter      services.WorkflowStarter
+	usageProvider        services.UsageProvider
 	redis                *goredis.Client
 	documentIntelligence services.DocumentContentService
 	shipmentService      services.ShipmentService
@@ -87,6 +90,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		searchProjection:     searchProjection,
 		thumbnailGenerator:   p.ThumbnailGenerator,
 		workflowStarter:      workflowStarter,
+		usageProvider:        p.UsageProvider,
 		redis:                p.Redis,
 		documentIntelligence: documentIntelligence,
 		shipmentService:      p.ShipmentService,
@@ -279,6 +283,7 @@ func (a *Activities) finalizeUploadPersistDocument(
 	if doc.ProcessingProfile.SupportsIntelligence() {
 		_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
 	}
+	a.recordDocumentUploadUsage(ctx, doc, payload)
 	a.tryAutoMarkShipmentReadyToInvoice(
 		ctx,
 		doc.ResourceType,
@@ -296,6 +301,42 @@ func (a *Activities) finalizeUploadPersistDocument(
 		Status:      session.Status.String(),
 		PreviewPath: previewPath,
 	}, nil
+}
+
+func (a *Activities) recordDocumentUploadUsage(
+	ctx context.Context,
+	doc *document.Document,
+	payload *FinalizeUploadPayload,
+) {
+	actor := services.RequestActor{
+		PrincipalType:  payload.PrincipalType,
+		PrincipalID:    payload.PrincipalID,
+		UserID:         payload.UserID,
+		APIKeyID:       payload.APIKeyID,
+		BusinessUnitID: payload.BusinessUnitID,
+		OrganizationID: payload.OrganizationID,
+	}
+	if _, err := usageservice.RecordDocumentUpload(
+		ctx,
+		a.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  payload.OrganizationID,
+				BuID:   payload.BusinessUnitID,
+				UserID: payload.UserID,
+			},
+			Actor:      actor,
+			DocumentID: doc.ID,
+		},
+	); err != nil {
+		activity.GetLogger(ctx).Warn(
+			"failed to record document upload usage",
+			"documentId",
+			doc.ID.String(),
+			"error",
+			err,
+		)
+	}
 }
 
 func (a *Activities) tryAutoMarkShipmentReadyToInvoice(

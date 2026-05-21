@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -53,6 +54,7 @@ type Params struct {
 	Config             *config.Config
 	ThumbnailGenerator *thumbnailservice.Generator
 	WorkflowStarter    services.WorkflowStarter
+	UsageProvider      services.UsageProvider `optional:"true"`
 	DocTypeRepo        repositories.DocumentTypeRepository
 	Redis              *goredis.Client `optional:"true"`
 }
@@ -67,6 +69,7 @@ type Service struct {
 	config             *config.StorageConfig
 	thumbnailGenerator *thumbnailservice.Generator
 	workflowStarter    services.WorkflowStarter
+	usageProvider      services.UsageProvider
 	docTypeRepo        repositories.DocumentTypeRepository
 	redis              *goredis.Client
 }
@@ -83,6 +86,7 @@ func New(p Params) *Service {
 		config:             p.Config.GetStorageConfig(),
 		thumbnailGenerator: p.ThumbnailGenerator,
 		workflowStarter:    p.WorkflowStarter,
+		usageProvider:      p.UsageProvider,
 		docTypeRepo:        p.DocTypeRepo,
 		redis:              p.Redis,
 	}
@@ -112,6 +116,7 @@ func (s *Service) CreateSession(
 
 	tags := make([]string, 0, len(req.Tags))
 	session := &documentupload.DocumentUploadSession{
+		ID:                pulid.MustNew("dus_"),
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
 		ResourceID:        req.ResourceID,
@@ -132,6 +137,18 @@ func (s *Service) CreateSession(
 		LastActivityAt: timeutils.NowUnix(),
 	}
 	session.Tags = append(session.Tags, req.Tags...)
+
+	if err = usageservice.CheckDocumentUploadLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo:     req.TenantInfo,
+			Actor:          req.Actor,
+			IdempotencyKey: "document-upload-session:" + session.ID.String(),
+		},
+	); err != nil {
+		return nil, err
+	}
 
 	if strings.TrimSpace(req.LineageID) != "" {
 		lineageID, lineageErr := pulid.MustParse(req.LineageID)
@@ -332,6 +349,18 @@ func (s *Service) Complete(
 		s.ensureThumbnailForSession(ctx, session)
 		normalizeSession(session)
 		return session, nil
+	}
+
+	if err = usageservice.CheckDocumentUploadLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo:     req.TenantInfo,
+			Actor:          req.Actor,
+			IdempotencyKey: "document-upload-session:" + req.SessionID.String(),
+		},
+	); err != nil {
+		return nil, err
 	}
 
 	if superseded, supersededErr := s.cancelSupersededSession(ctx, session); supersededErr != nil {
@@ -576,7 +605,10 @@ func (s *Service) startFinalizeWorkflow(
 				UserID:         req.TenantInfo.UserID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			SessionID: session.ID,
+			SessionID:     session.ID,
+			PrincipalType: req.Actor.PrincipalType,
+			PrincipalID:   req.Actor.PrincipalID,
+			APIKeyID:      req.Actor.APIKeyID,
 		},
 	)
 	if err != nil {
@@ -672,8 +704,32 @@ func (s *Service) runSynchronousFinalization(
 	if s.thumbnailGenerator.SupportsThumbnail(createdDoc.FileType) {
 		s.startThumbnailWorkflow(ctx, createdDoc)
 	}
+	s.recordDocumentUploadUsage(ctx, createdDoc, req.TenantInfo, req.Actor)
 
 	return createdDoc, nil
+}
+
+func (s *Service) recordDocumentUploadUsage(
+	ctx context.Context,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	actor services.RequestActor,
+) {
+	if _, err := usageservice.RecordDocumentUpload(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: tenantInfo,
+			Actor:      actor,
+			DocumentID: doc.ID,
+		},
+	); err != nil {
+		s.l.Warn(
+			"failed to record document upload usage",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func completionLeaseKey(sessionID string) string {

@@ -21,6 +21,12 @@ var (
 	ErrCorsEnabledButNoAllowedOrigins = errors.New(
 		"CORS enabled but no allowed origins specified",
 	)
+	ErrCredentialedWildcardCORS = errors.New(
+		"production and staging cannot allow wildcard CORS with credentials",
+	)
+	ErrInvalidHostPrefixCookie = errors.New(
+		"__Host- session cookies require secure=true, httpOnly=true, sameSite=strict, path=/, and an empty domain",
+	)
 	ErrLoggingOutputIsFileButFileConfigIsMissing = errors.New(
 		"logging output is 'file' but file config is missing",
 	)

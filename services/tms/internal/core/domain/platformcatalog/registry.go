@@ -91,6 +91,36 @@ func (r *Registry) FeatureForRoute(method, routePattern string) (Feature, bool) 
 		return Feature{}, false
 	}
 
+	if routeMatchesAny(method, routePattern, accountShellRouteRefs()) {
+		return Feature{}, false
+	}
+
+	return r.featureForRoute(method, routePattern)
+}
+
+func (r *Registry) PolicyForRoute(method, routePattern string) RoutePolicy {
+	method = strings.ToUpper(strings.TrimSpace(method))
+	routePattern = normalizeRoutePath(routePattern)
+	if routePattern == "" {
+		return RoutePolicy{AccessClass: RouteAccessClassUnclassified}
+	}
+
+	if routeMatchesAny(method, routePattern, accountShellRouteRefs()) {
+		return RoutePolicy{AccessClass: RouteAccessClassAccountShell}
+	}
+
+	feature, ok := r.featureForRoute(method, routePattern)
+	if !ok {
+		return RoutePolicy{AccessClass: RouteAccessClassUnclassified}
+	}
+
+	return RoutePolicy{
+		AccessClass: RouteAccessClassProduct,
+		FeatureKey:  feature.Key,
+	}
+}
+
+func (r *Registry) featureForRoute(method, routePattern string) (Feature, bool) {
 	for _, feature := range r.ListFeatures() {
 		for _, route := range feature.Routes {
 			if routeMatches(method, routePattern, route) {
@@ -130,7 +160,11 @@ func (r *Registry) Validate() error {
 		return err
 	}
 
-	return r.validateMeters()
+	if err := r.validateMeters(); err != nil {
+		return err
+	}
+
+	return r.validateRoutes()
 }
 
 func (r *Registry) registerProvider(provider CatalogProvider) error {
@@ -287,6 +321,36 @@ func (r *Registry) validateMeters() error {
 	return nil
 }
 
+func (r *Registry) validateRoutes() error {
+	routeOwners := make(map[string]FeatureKey)
+	for _, feature := range r.features {
+		for _, route := range feature.Routes {
+			method := strings.ToUpper(strings.TrimSpace(route.Method))
+			path := normalizeRoutePath(route.Path)
+			if method == "" {
+				return fmt.Errorf("platform catalog feature %q route method is required", feature.Key)
+			}
+			if path == "" {
+				return fmt.Errorf("platform catalog feature %q route path is required", feature.Key)
+			}
+
+			routeKey := method + " " + path
+			owner, exists := routeOwners[routeKey]
+			if exists {
+				return fmt.Errorf(
+					"platform catalog route %q is assigned to both feature %q and feature %q",
+					routeKey,
+					owner,
+					feature.Key,
+				)
+			}
+			routeOwners[routeKey] = feature.Key
+		}
+	}
+
+	return nil
+}
+
 func normalizeRoutePath(path string) string {
 	path = strings.TrimSpace(path)
 	if path == "" {
@@ -315,4 +379,14 @@ func routeMatches(method, routePattern string, ref RouteRef) bool {
 		return routePattern == refPath || strings.HasPrefix(routePattern, refPath)
 	}
 	return routePattern == refPath
+}
+
+func routeMatchesAny(method, routePattern string, refs []RouteRef) bool {
+	for _, ref := range refs {
+		if routeMatches(method, routePattern, ref) {
+			return true
+		}
+	}
+
+	return false
 }

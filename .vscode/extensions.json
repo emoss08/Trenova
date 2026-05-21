@@ -1,8 +1,0 @@
-{
-    "recommendations": [
-        "oxc.oxc-vscode",
-        "golang.go",
-        "bradlc.vscode-tailwindcss",
-        "task.vscode-task"
-    ]
-}

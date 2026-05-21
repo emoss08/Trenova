@@ -264,7 +264,11 @@ export class DocumentService {
       `${API_BASE_URL}/documents/${documentId}/import-assistant/chat-stream/`,
       {
         method: "POST",
-        headers: withCsrfHeader("POST", { "Content-Type": "application/json" }),
+        headers: await withCsrfHeader(
+          "POST",
+          { "Content-Type": "application/json" },
+          `/documents/${documentId}/import-assistant/chat-stream/`,
+        ),
         body: JSON.stringify(params),
         credentials: "include",
       },

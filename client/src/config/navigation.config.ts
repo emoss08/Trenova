@@ -4,7 +4,6 @@ import {
   BarChart3Icon,
   CalculatorIcon,
   ContainerIcon,
-  CreditCardIcon,
   FileSlidersIcon,
   HomeIcon,
   Package,
@@ -183,12 +182,6 @@ const billingModule: NavModule = {
       label: "Billing Queue",
       path: "/billing/queue",
       resource: Resource.BillingQueue,
-    },
-    {
-      id: "subscription-usage",
-      label: "Subscription & Usage",
-      path: "/billing/subscription",
-      icon: CreditCardIcon,
     },
     {
       id: "invoices",

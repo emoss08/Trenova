@@ -13,8 +13,9 @@ BEGIN
           AND c.relname NOT LIKE 'pg_%'
           AND c.relname NOT LIKE 'gtc_%'
           AND c.relname NOT LIKE 'seed_%'
+          AND c.relname <> 'spatial_ref_sys'
     LOOP
-        EXECUTE format('ALTER TABLE %I REPLICA IDENTITY FULL', tbl.table_name);
+        EXECUTE format('ALTER TABLE public.%I REPLICA IDENTITY FULL', tbl.table_name);
         RAISE NOTICE 'Set REPLICA IDENTITY FULL on %', tbl.table_name;
     END LOOP;
 END;

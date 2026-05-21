@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
@@ -57,6 +58,7 @@ type Params struct {
 	DocumentIntelligence services.DocumentContentService
 	SearchProjection     services.DocumentSearchProjectionService
 	WorkflowStarter      services.WorkflowStarter
+	UsageProvider        services.UsageProvider `optional:"true"`
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
 }
@@ -77,6 +79,7 @@ type Service struct {
 	documentIntelligence services.DocumentContentService
 	searchProjection     services.DocumentSearchProjectionService
 	workflowStarter      services.WorkflowStarter
+	usageProvider        services.UsageProvider
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
 }
@@ -113,6 +116,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		documentIntelligence: documentIntelligence,
 		searchProjection:     searchProjection,
 		workflowStarter:      workflowStarter,
+		usageProvider:        p.UsageProvider,
 		config:               p.Config.GetStorageConfig(),
 		thumbnailGenerator:   p.ThumbnailGenerator,
 	}
@@ -120,6 +124,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 
 type UploadRequest struct {
 	TenantInfo        pagination.TenantInfo
+	Actor             services.RequestActor
 	File              *multipart.FileHeader
 	ResourceID        string
 	ResourceType      string
@@ -136,6 +141,7 @@ type UploadResult struct {
 
 type BulkUploadRequest struct {
 	TenantInfo   pagination.TenantInfo
+	Actor        services.RequestActor
 	Files        []*multipart.FileHeader
 	ResourceID   string
 	ResourceType string
@@ -230,6 +236,18 @@ func (s *Service) Upload(
 		req.File.Filename,
 	)
 	docID := pulid.MustNew("doc_")
+	if err = usageservice.CheckDocumentUploadLimit(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: req.TenantInfo,
+			Actor:      req.Actor,
+			DocumentID: docID,
+		},
+	); err != nil {
+		return nil, err
+	}
+
 	lineageID := docID
 	var lineageInfo *document.Document
 	if strings.TrimSpace(req.LineageID) != "" {
@@ -347,8 +365,33 @@ func (s *Service) Upload(
 		req.TenantInfo,
 		req.TenantInfo.UserID,
 	)
+	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, req.Actor)
 
 	return &UploadResult{Document: createdDoc}, nil
+}
+
+func (s *Service) recordDocumentUploadUsage(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	actor services.RequestActor,
+) {
+	if _, err := usageservice.RecordDocumentUpload(
+		ctx,
+		s.usageProvider,
+		usageservice.DocumentUploadUsageParams{
+			TenantInfo: tenantInfo,
+			Actor:      actor,
+			DocumentID: doc.ID,
+		},
+	); err != nil {
+		log.Warn(
+			"failed to record document upload usage",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) startThumbnailWorkflow(
@@ -454,6 +497,7 @@ func (s *Service) BulkUpload(
 	for _, file := range req.Files {
 		uploadResult, err := s.Upload(ctx, &UploadRequest{
 			TenantInfo:   req.TenantInfo,
+			Actor:        req.Actor,
 			File:         file,
 			ResourceID:   req.ResourceID,
 			ResourceType: req.ResourceType,

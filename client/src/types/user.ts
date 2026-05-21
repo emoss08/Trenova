@@ -109,6 +109,7 @@ export const loginResponseSchema = z.object({
   user: userSchema,
   sessionId: z.string(),
   expiresAt: z.number(),
+  csrfToken: z.string(),
 });
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;

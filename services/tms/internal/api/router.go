@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueuehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/commodityhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/controlplaneprovisioninghandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
@@ -139,6 +140,7 @@ type RouterParams struct {
 	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	VersionHandler                  *versionhandler.Handler
+	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
 	SequenceConfigHandler           *sequenceconfighandler.Handler
@@ -235,6 +237,7 @@ type Router struct {
 	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	versionHandler                  *versionhandler.Handler
+	controlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	weatherAlertHandler             *weatheralerthandler.Handler
 	shipmentTypeHandler             *shipmenttypehandler.Handler
 	hazardousMaterialHandler        *hazardousmaterialhandler.Handler
@@ -327,6 +330,7 @@ func NewRouter(p RouterParams) *Router {
 		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		versionHandler:                  p.VersionHandler,
+		controlPlaneProvisioningHandler: p.ControlPlaneProvisioningHandler,
 		weatherAlertHandler:             p.WeatherAlertHandler,
 		shipmentTypeHandler:             p.ShipmentTypeHandler,
 		hazardousMaterialHandler:        p.HazardousMaterialHandler,
@@ -408,6 +412,7 @@ func (r *Router) setupMiddleware() {
 
 	r.s.router.Use(gin.Recovery())
 	r.s.router.Use(requestid.New())
+	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
 	r.s.router.Use(
 		gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/metrics", "/health"})),
 	)
@@ -426,6 +431,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.docsHandler.RegisterRoutes(rg)
 	r.authHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
+	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together

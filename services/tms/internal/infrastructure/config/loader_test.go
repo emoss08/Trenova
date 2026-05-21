@@ -136,6 +136,9 @@ func newValidConfig() *Config {
 			CSRF: CSRFConfig{
 				TokenName:  "csrf_token",
 				HeaderName: "X-CSRF-Token",
+				BrowserGuard: CSRFBrowserGuardConfig{
+					Mode: "report",
+				},
 			},
 			RateLimit: RateLimitConfig{
 				RequestsPerMinute: 60,
@@ -239,6 +242,56 @@ func TestValidateConfig(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "allowedorigins")
+	})
+
+	t.Run("production rejects wildcard credentialed CORS", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment(EnvProduction))
+		cfg := newValidConfig()
+		cfg.Server.CORS.Enabled = true
+		cfg.Server.CORS.Credentials = true
+		cfg.Server.CORS.AllowedOrigins = []string{"*"}
+		cfg.Server.CORS.AllowedMethods = []string{"GET", "POST"}
+		cfg.Server.CORS.AllowedHeaders = []string{"Content-Type", "X-CSRF-Token"}
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrCredentialedWildcardCORS)
+	})
+
+	t.Run("invalid host prefix cookie settings fail validation", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Security.Session.Name = "__Host-trenova_session"
+		cfg.Security.Session.Secure = false
+		cfg.Security.Session.HTTPOnly = true
+		cfg.Security.Session.SameSite = "strict"
+		cfg.Security.Session.Path = "/"
+		cfg.Security.Session.Domain = ""
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrInvalidHostPrefixCookie)
+	})
+
+	t.Run("production overrides session cookie to host prefix settings", func(t *testing.T) {
+		l := NewLoader(WithEnvironment(EnvProduction))
+		cfg := newValidConfig()
+
+		err := l.applyEnvironmentOverrides(cfg)
+
+		require.NoError(t, err)
+		assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
+		assert.True(t, cfg.Security.Session.Secure)
+		assert.True(t, cfg.Security.Session.HTTPOnly)
+		assert.Equal(t, "strict", cfg.Security.Session.SameSite)
+		assert.Equal(t, "/", cfg.Security.Session.Path)
+		assert.Empty(t, cfg.Security.Session.Domain)
 	})
 
 	t.Run("logging output file but no file config", func(t *testing.T) {
@@ -522,6 +575,27 @@ func TestSetDefaults(t *testing.T) {
 
 		assert.Equal(t, "csrf_token", l.viper.GetString("security.csrf.tokenName"))
 		assert.Equal(t, "X-CSRF-Token", l.viper.GetString("security.csrf.headerName"))
+		assert.Equal(t, "report", l.viper.GetString("security.csrf.browserGuard.mode"))
+	})
+
+	t.Run("production csrf browser guard default", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment("production"))
+		_ = l.determineEnvironment()
+		l.configureViper()
+
+		assert.Equal(t, "enforce", l.viper.GetString("security.csrf.browserGuard.mode"))
+	})
+
+	t.Run("staging csrf browser guard default", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader(WithEnvironment("staging"))
+		_ = l.determineEnvironment()
+		l.configureViper()
+
+		assert.Equal(t, "enforce", l.viper.GetString("security.csrf.browserGuard.mode"))
 	})
 
 	t.Run("rate limit defaults", func(t *testing.T) {
@@ -980,6 +1054,19 @@ storage:
 		assert.Nil(t, cfg)
 		assert.Contains(t, err.Error(), "storage.publicEndpoint cannot be set")
 	})
+}
+
+func TestProductionConfigFileLoads(t *testing.T) {
+	l := NewLoader(WithConfigPath("../../../config"), WithEnvironment(EnvProduction))
+
+	cfg, err := l.Load()
+
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
+	assert.Equal(t, EnvProduction, cfg.App.Env)
+	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
+	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
+	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
 }
 
 func TestLoad_ControlPlaneEnvAliases(t *testing.T) {

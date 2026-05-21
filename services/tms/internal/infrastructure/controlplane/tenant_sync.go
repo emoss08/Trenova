@@ -18,7 +18,6 @@ type TenantSyncerParams struct {
 	Config *config.Config
 	Client Client
 	Repo   repositories.TenantSyncRepository
-	LC     fx.Lifecycle
 	Logger *zap.Logger
 }
 
@@ -39,26 +38,7 @@ func NewTenantSyncer(p TenantSyncerParams) *TenantSyncer {
 		logger: p.Logger.Named("control-plane-tenant-sync"),
 	}
 
-	p.LC.Append(fx.Hook{
-		OnStart: syncer.start,
-	})
-
 	return syncer
-}
-
-func (s *TenantSyncer) start(ctx context.Context) error {
-	if !s.cfg.Platform.ControlPlane.Enabled {
-		return nil
-	}
-
-	if err := s.SyncFull(ctx); err != nil {
-		if !failOpenAllowed(s.cfg) {
-			return err
-		}
-		s.logger.Warn("control plane startup tenant sync failed", zap.Error(err))
-	}
-
-	return nil
 }
 
 func (s *TenantSyncer) SyncFull(ctx context.Context) error {

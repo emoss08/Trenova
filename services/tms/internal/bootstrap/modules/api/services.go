@@ -86,6 +86,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
+	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
@@ -143,10 +144,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.As(new(services.AccessAuthorizer)),
 	),
 	controlplane.NewHeartbeatReporter,
-	fx.Annotate(
-		controlplane.NewTenantSyncer,
-		fx.As(new(services.TenantSyncService)),
-	),
+	tenantprovisioningservice.New,
 	SelectEntitlementProvider,
 	SelectBillingProvider,
 	SelectUsageProvider,
@@ -246,5 +244,4 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 ), fx.Invoke(
 	func(*controlplane.HeartbeatReporter) {},
-	func(services.TenantSyncService) {},
 ))

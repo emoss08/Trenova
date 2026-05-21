@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiRequestError, api } from "../api";
+import { ApiRequestError, api, clearCsrfToken, setCsrfToken } from "../api";
 import type { ApiErrorResponse } from "@/types/errors";
 
 function createJsonResponse(data: unknown = { ok: true }): Response {
@@ -78,14 +78,14 @@ describe("api csrf headers", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    document.cookie = "csrf_token=; Max-Age=0; path=/";
+    clearCsrfToken();
     MockXMLHttpRequest.instances = [];
     fetchMock = vi.fn(async () => createJsonResponse());
     vi.stubGlobal("fetch", fetchMock);
   });
 
   afterEach(() => {
-    document.cookie = "csrf_token=; Max-Age=0; path=/";
+    clearCsrfToken();
     vi.unstubAllGlobals();
   });
 
@@ -94,8 +94,8 @@ describe("api csrf headers", () => {
     return new Headers(init?.headers);
   }
 
-  it("adds the CSRF token from the cookie to unsafe JSON requests", async () => {
-    document.cookie = "csrf_token=unsafe-token; path=/";
+  it("adds the in-memory CSRF token to unsafe JSON requests", async () => {
+    setCsrfToken("unsafe-token");
 
     await api.post("/widgets/", { name: "Widget" });
 
@@ -103,21 +103,39 @@ describe("api csrf headers", () => {
   });
 
   it("does not add the CSRF token to safe JSON requests", async () => {
-    document.cookie = "csrf_token=safe-token; path=/";
+    setCsrfToken("safe-token");
 
     await api.get("/widgets/");
 
     expect(headersForLastFetch().has("X-CSRF-Token")).toBe(false);
   });
 
-  it("does not add an empty CSRF header when the cookie is missing", async () => {
+  it("bootstraps a missing CSRF token before unsafe JSON requests", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        createJsonResponse({
+          csrfToken: "bootstrapped-token",
+          headerName: "X-CSRF-Token",
+        }),
+      )
+      .mockResolvedValueOnce(createJsonResponse());
+
     await api.post("/widgets/", { name: "Widget" });
 
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("/auth/csrf");
+    expect(headersForLastFetch().get("X-CSRF-Token")).toBe("bootstrapped-token");
+  });
+
+  it("does not bootstrap CSRF for login", async () => {
+    await api.post("/auth/login", { emailAddress: "test@example.com", password: "password" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(headersForLastFetch().has("X-CSRF-Token")).toBe(false);
   });
 
   it("preserves an explicit caller-provided CSRF header", async () => {
-    document.cookie = "csrf_token=cookie-token; path=/";
+    setCsrfToken("memory-token");
 
     await api.post(
       "/widgets/",
@@ -129,7 +147,7 @@ describe("api csrf headers", () => {
   });
 
   it("adds the CSRF token to internal multipart uploads", async () => {
-    document.cookie = "csrf_token=upload-token; path=/";
+    setCsrfToken("upload-token");
     const formData = new FormData();
     formData.append("file", new Blob(["content"]), "document.txt");
 
@@ -141,7 +159,7 @@ describe("api csrf headers", () => {
   });
 
   it("adds the CSRF token to internal XHR uploads", async () => {
-    document.cookie = "csrf_token=progress-token; path=/";
+    setCsrfToken("progress-token");
     vi.stubGlobal("XMLHttpRequest", MockXMLHttpRequest);
 
     const formData = new FormData();
@@ -156,7 +174,7 @@ describe("api csrf headers", () => {
   });
 
   it("does not add the CSRF token to external file upload targets", async () => {
-    document.cookie = "csrf_token=external-token; path=/";
+    setCsrfToken("external-token");
     vi.stubGlobal("XMLHttpRequest", MockXMLHttpRequest);
 
     await api.putFileWithProgress(

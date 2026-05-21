@@ -1,4 +1,4 @@
-import { ApiRequestError } from "@/lib/api";
+import { ApiRequestError, clearCsrfToken } from "@/lib/api";
 import { apiService } from "@/services/api";
 import { authService } from "@/services/auth";
 import { usePermissionStore } from "@/stores/permission-store";
@@ -46,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
           await authService.logout();
         } finally {
           apiService.realtimeService.safeClose();
+          clearCsrfToken();
           set({ user: null, isAuthenticated: false });
           usePermissionStore.getState().clearPermissions();
         }
@@ -60,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
         } catch (error) {
           if (error instanceof ApiRequestError && error.status === 401) {
             set({ user: null, isAuthenticated: false });
+            clearCsrfToken();
             usePermissionStore.getState().clearPermissions();
           }
           return false;
@@ -71,6 +73,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       clearAuth: () => {
+        clearCsrfToken();
         set({ user: null, isAuthenticated: false, isLoading: false });
         usePermissionStore.getState().clearPermissions();
       },

@@ -71,6 +71,76 @@ func TestCSRFMiddleware_AllowsSessionUnsafeMethodWithToken(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func TestCSRFBrowserGuard_AllowsTrustedOrigin(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "enforce")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Origin", "https://app.example.test")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCSRFBrowserGuard_RejectsUntrustedOriginInEnforceMode(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "enforce")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Origin", "https://evil.example.test")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestCSRFBrowserGuard_RejectsCrossSiteFetchMetadataInEnforceMode(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "enforce")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Sec-Fetch-Site", "cross-site")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestCSRFBrowserGuard_ReportModeAllowsViolation(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "report")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Origin", "https://evil.example.test")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestCSRFBrowserGuard_RejectsMissingOriginAndRefererWithSessionCookie(t *testing.T) {
+	t.Parallel()
+	gin.SetMode(gin.TestMode)
+
+	router := newCSRFBrowserGuardRouter(t, "enforce")
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.AddCookie(&http.Cookie{Name: "session_id", Value: "session-value"})
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusForbidden, w.Code)
+}
+
 func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 	t.Helper()
 
@@ -84,6 +154,9 @@ func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 			CSRF: config.CSRFConfig{
 				HeaderName: "X-CSRF-Token",
 				TokenName:  "csrf_token",
+				BrowserGuard: config.CSRFBrowserGuardConfig{
+					Mode: "report",
+				},
 			},
 		},
 	}
@@ -116,6 +189,45 @@ func newCSRFMiddlewareRouter(t *testing.T, principalType string) *gin.Engine {
 		c.Next()
 	})
 	router.Use(middleware.RequireToken())
+	router.Any("/test", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	return router
+}
+
+func newCSRFBrowserGuardRouter(t *testing.T, mode string) *gin.Engine {
+	t.Helper()
+
+	cfg := &config.Config{
+		Server: config.ServerConfig{
+			CORS: config.CORSConfig{
+				AllowedOrigins: []string{"https://app.example.test"},
+			},
+		},
+		Security: config.SecurityConfig{
+			Session: config.SessionConfig{
+				Name: "session_id",
+			},
+			CSRF: config.CSRFConfig{
+				HeaderName: "X-CSRF-Token",
+				TokenName:  "csrf_token",
+				BrowserGuard: config.CSRFBrowserGuardConfig{
+					Mode: mode,
+				},
+			},
+		},
+	}
+
+	router := gin.New()
+	router.Use(NewCSRFBrowserGuard(
+		cfg,
+		helpers.NewErrorHandler(helpers.ErrorHandlerParams{
+			Logger: zap.NewNop(),
+			Config: cfg,
+		}),
+		zap.NewNop(),
+	).Guard())
 	router.Any("/test", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

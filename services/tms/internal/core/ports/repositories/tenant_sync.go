@@ -19,3 +19,10 @@ type TenantSyncRepository interface {
 		ids []pulid.ID,
 	) ([]tenant.SyncOrganization, error)
 }
+
+type TenantProvisioningRepository interface {
+	UpsertProvisioningSnapshot(
+		ctx context.Context,
+		req *tenant.ProvisioningRequest,
+	) (*tenant.ProvisioningResult, error)
+}
