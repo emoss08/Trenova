@@ -1188,3 +1188,15 @@ export const createTemplateDraftSchema = z.object({
 });
 
 export type CreateTemplateDraft = z.infer<typeof createTemplateDraftSchema>;
+
+export const createTemplateFormSchema = createTemplateDraftSchema.extend({
+  documentTypeId: z.string().min(1, "Document type is required"),
+  name: z.string().trim().min(1, "Name is required"),
+  standard: ediStandardSchema.default("X12"),
+  x12Version: z.string().trim().min(1, "X12 version is required"),
+  functionalGroupId: z.string().trim().min(1, "Functional group is required"),
+});
+
+export type CreateTemplateFormValues = z.infer<typeof createTemplateFormSchema>;
+
+export type TemplateFormValues = CreateTemplateFormValues & Partial<Pick<EDITemplate, "status">>;

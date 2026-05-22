@@ -113,3 +113,7 @@ export function useDataTable<TData, TValue>() {
 
   return context as DataTableContextType<TData, TValue>;
 }
+
+export function useOptionalDataTable<TData, TValue>() {
+  return useContext(DataTableContext) as DataTableContextType<TData, TValue> | null;
+}

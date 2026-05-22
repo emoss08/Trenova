@@ -1,25 +1,20 @@
 import { EDIDocumentTypeAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
+import { SelectField } from "@/components/fields/select-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { createTemplateDraftSchema, type EDIDocumentType, ediStandardSchema } from "@/types/edi";
+import { type EDIDocumentType, type TemplateFormValues } from "@/types/edi";
 import { useFormContext } from "react-hook-form";
-import { z } from "zod";
 import { functionalGroupForTransactionSet } from "../utils/edi-designer-utils";
+import { templateStatusOptions } from "../utils/edi-designer-options";
 
-const createTemplateFormSchema = createTemplateDraftSchema.extend({
-  documentTypeId: z.string().min(1, "Document type is required"),
-  name: z.string().trim().min(1, "Name is required"),
-  standard: ediStandardSchema.default("X12"),
-  x12Version: z.string().trim().min(1, "X12 version is required"),
-  functionalGroupId: z.string().trim().min(1, "Functional group is required"),
-});
-
-export type CreateTemplateFormValues = z.infer<typeof createTemplateFormSchema>;
-
-export { createTemplateFormSchema };
-
-export function CreateTemplateForm({ disabled }: { disabled?: boolean }) {
-  const { control, getValues, setValue } = useFormContext<CreateTemplateFormValues>();
+export function CreateTemplateForm({
+  disabled,
+  mode = "create",
+}: {
+  disabled?: boolean;
+  mode?: "create" | "edit";
+}) {
+  const { control, getValues, setValue } = useFormContext<TemplateFormValues>();
 
   const handleDocumentTypeChange = (documentType: EDIDocumentType | null) => {
     if (!documentType) return;
@@ -39,20 +34,22 @@ export function CreateTemplateForm({ disabled }: { disabled?: boolean }) {
   };
 
   return (
-    <FormGroup cols={2}>
-      <FormControl cols="full">
-        <EDIDocumentTypeAutocompleteField<CreateTemplateFormValues>
-          control={control}
-          name="documentTypeId"
-          label="Document Type"
-          rules={{ required: true }}
-          clearable
-          disabled={disabled}
-          description="The EDI document type that seeds the template direction and transaction set."
-          placeholder="Document Type"
-          onOptionChange={handleDocumentTypeChange}
-        />
-      </FormControl>
+    <FormGroup cols={2} className="pb-2">
+      {mode === "create" ? (
+        <FormControl cols="full">
+          <EDIDocumentTypeAutocompleteField<TemplateFormValues>
+            control={control}
+            name="documentTypeId"
+            label="Document Type"
+            rules={{ required: true }}
+            clearable
+            disabled={disabled}
+            description="The EDI document type that seeds the template direction and transaction set."
+            placeholder="Document Type"
+            onOptionChange={handleDocumentTypeChange}
+          />
+        </FormControl>
+      ) : null}
       <FormControl cols="full">
         <InputField
           control={control}
@@ -74,28 +71,45 @@ export function CreateTemplateForm({ disabled }: { disabled?: boolean }) {
           disabled={disabled}
         />
       </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="x12Version"
-          label="X12 Version"
-          placeholder="004010"
-          description="The X12 version for the first draft."
-          disabled={disabled}
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="functionalGroupId"
-          label="Group"
-          placeholder="SM"
-          description="The functional group identifier."
-          disabled={disabled}
-        />
-      </FormControl>
+      {mode === "create" ? (
+        <>
+          <FormControl>
+            <InputField
+              control={control}
+              rules={{ required: true }}
+              name="x12Version"
+              label="X12 Version"
+              placeholder="004010"
+              description="The X12 version for the first draft."
+              disabled={disabled}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              rules={{ required: true }}
+              name="functionalGroupId"
+              label="Group"
+              placeholder="SM"
+              description="The functional group identifier."
+              disabled={disabled}
+            />
+          </FormControl>
+        </>
+      ) : (
+        <FormControl cols="full">
+          <SelectField
+            control={control}
+            rules={{ required: true }}
+            name="status"
+            label="Status"
+            placeholder="Status"
+            description="The template status."
+            options={templateStatusOptions}
+            isReadOnly={disabled}
+          />
+        </FormControl>
+      )}
     </FormGroup>
   );
 }

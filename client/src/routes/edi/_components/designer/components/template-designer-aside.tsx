@@ -4,18 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  useCurrentTemplateInvalidation,
-  useTemplateDesignerUrlActions,
-} from "@/hooks/use-template-designer-state";
+import { useTemplateDesignerUrlActions } from "@/hooks/use-template-designer-state";
 import { useTemplateDesignerStore } from "@/stores/template-designer-store";
-import type { EDITemplate } from "@/types/edi";
+import { createTemplateFormSchema, type EDITemplate } from "@/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileCode2Icon, FilterIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTemplateDesignerUrlState } from "../hooks/use-edi-designer-url-state";
-import { CreateTemplateForm, createTemplateFormSchema } from "../templates/create-template-form";
+import { CreateTemplateForm } from "../templates/create-template-form";
 import TemplateList from "../templates/template-list";
 import {
   documentDirectionOptions,
@@ -24,6 +21,8 @@ import {
 } from "../utils/edi-designer-options";
 import { ControlledSelectField } from "./designer-fields";
 import { PanelHeader } from "./designer-shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { queries } from "@/lib/queries";
 
 export default function TemplateDesignerAside() {
   const [templateUrlState, setTemplateUrlState] = useTemplateDesignerUrlState();
@@ -31,6 +30,7 @@ export default function TemplateDesignerAside() {
     templateUrlState;
   const { patchTemplateUrlState } = useTemplateDesignerUrlActions();
   const resetDraftState = useTemplateDesignerStore((state) => state.resetDraftState);
+  const queryClient = useQueryClient();
 
   const setTemplateSearch = useCallback(
     (value: string) => void setTemplateUrlState({ templateSearch: value }),
@@ -62,7 +62,6 @@ export default function TemplateDesignerAside() {
     Boolean,
   ).length;
 
-  const invalidateTemplateQueries = useCurrentTemplateInvalidation();
   const createTemplateForm = useForm({
     resolver: zodResolver(createTemplateFormSchema),
     defaultValues: {
@@ -89,7 +88,7 @@ export default function TemplateDesignerAside() {
       segmentId: "",
       elementPosition: 0,
     });
-    await invalidateTemplateQueries();
+    await queryClient.invalidateQueries({ queryKey: queries.edi.templates._def });
   };
 
   return (
