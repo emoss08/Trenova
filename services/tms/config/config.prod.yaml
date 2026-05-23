@@ -31,6 +31,7 @@ database:
   maxOpenConns: 75
   statementTimeout: 10s
   lockTimeout: 5s
+  idleInTransactionSessionTimeout: 30s
 
 cache:
   poolSize: 50

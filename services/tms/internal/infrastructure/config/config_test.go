@@ -452,6 +452,8 @@ func TestConfig_GetDSN(t *testing.T) {
 		assert.Contains(t, dsn, "sslmode=disable")
 		assert.Contains(t, dsn, "application_name=trenova")
 		assert.Contains(t, dsn, "connect_timeout=10")
+		assert.NotContains(t, dsn, "statement_timeout")
+		assert.NotContains(t, dsn, "idle_in_transaction_session_timeout")
 	})
 
 	t.Run("special characters in password", func(t *testing.T) {

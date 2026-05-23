@@ -17,6 +17,7 @@ database:
   maxOpenConns: 10
   statementTimeout: 10s
   lockTimeout: 5s
+  idleInTransactionSessionTimeout: 30s
 
 cache:
   host: localhost

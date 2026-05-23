@@ -160,6 +160,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.connMaxIdleTime", "10m")
 	l.viper.SetDefault("database.statementTimeout", "10s")
 	l.viper.SetDefault("database.lockTimeout", "5s")
+	l.viper.SetDefault("database.idleInTransactionSessionTimeout", "30s")
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")

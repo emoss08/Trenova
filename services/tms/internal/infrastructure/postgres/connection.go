@@ -143,6 +143,15 @@ func (c *Connection) configureSessionTimeouts(ctx context.Context, conn *pgx.Con
 		return fmt.Errorf("set lock_timeout: %w", err)
 	}
 
+	idleTxTimeoutMS := max(c.cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)
+	if _, err := conn.Exec(
+		ctx,
+		"SELECT set_config('idle_in_transaction_session_timeout', $1, false)",
+		fmt.Sprintf("%dms", idleTxTimeoutMS),
+	); err != nil {
+		return fmt.Errorf("set idle_in_transaction_session_timeout: %w", err)
+	}
+
 	return nil
 }
 

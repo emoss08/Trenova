@@ -548,6 +548,9 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, 100, l.viper.GetInt("database.maxOpenConns"))
 		assert.Equal(t, "1h", l.viper.GetString("database.connMaxLifetime"))
 		assert.Equal(t, "10m", l.viper.GetString("database.connMaxIdleTime"))
+		assert.Equal(t, "10s", l.viper.GetString("database.statementTimeout"))
+		assert.Equal(t, "5s", l.viper.GetString("database.lockTimeout"))
+		assert.Equal(t, "30s", l.viper.GetString("database.idleInTransactionSessionTimeout"))
 	})
 
 	t.Run("session defaults", func(t *testing.T) {

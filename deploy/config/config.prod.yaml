@@ -61,6 +61,7 @@ database:
   connMaxIdleTime: 10m
   statementTimeout: 10s
   lockTimeout: 5s
+  idleInTransactionSessionTimeout: 30s
 
 cache:
   host: redis

@@ -205,6 +205,7 @@ type DatabaseConfig struct {
 	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
 	StatementTimeout time.Duration `mapstructure:"statementTimeout"`
 	LockTimeout      time.Duration `mapstructure:"lockTimeout"`
+	IdleTxTimeout    time.Duration `mapstructure:"idleInTransactionSessionTimeout"`
 }
 
 func (c *DatabaseConfig) GetStatementTimeout() time.Duration {
@@ -219,6 +220,13 @@ func (c *DatabaseConfig) GetLockTimeout() time.Duration {
 		return 5 * time.Second
 	}
 	return c.LockTimeout
+}
+
+func (c *DatabaseConfig) GetIdleTxTimeout() time.Duration {
+	if c.IdleTxTimeout <= 0 {
+		return 30 * time.Second
+	}
+	return c.IdleTxTimeout
 }
 
 type CORSConfig struct {
@@ -824,7 +832,7 @@ func (c *Config) GetDSN(password string) string {
 
 	dsn += fmt.Sprintf("&application_name=%s", url.QueryEscape(c.App.Name))
 
-	dsn += "&connect_timeout=10&statement_timeout=30000&idle_in_transaction_session_timeout=30000"
+	dsn += "&connect_timeout=10"
 
 	return dsn
 }

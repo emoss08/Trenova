@@ -62,6 +62,7 @@ database:
   sslMode: disable # SSL mode: disable, require, verify-ca, verify-full
   statementTimeout: 10s # Per-statement database deadline
   lockTimeout: 5s # Maximum time a statement may wait for a lock
+  idleInTransactionSessionTimeout: 30s # Maximum time a transaction may sit idle
 
 # Search configuration
 search:
