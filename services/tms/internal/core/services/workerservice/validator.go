@@ -43,12 +43,7 @@ func NewValidator(p ValidatorParams) *Validator {
 				func(w *worker.Worker) pulid.ID { return w.FleetCodeID },
 				createFleetCodeCheck(p.DB),
 			).
-			WithCustomRule(createAgeComplianceRule(p.DispatchControlRepo)).
-			WithCustomRule(createCDLComplianceRule(p.DispatchControlRepo)).
-			WithCustomRule(createMedicalCertComplianceRule(p.DispatchControlRepo)).
-			WithCustomRule(createMVRComplianceRule(p.DispatchControlRepo)).
-			WithCustomRule(createDrugTestComplianceRule(p.DispatchControlRepo)).
-			WithCustomRule(createHazmatComplianceRule(p.DispatchControlRepo)).
+			WithCustomRule(createWorkerComplianceRule(p.DispatchControlRepo)).
 			Build(),
 	}
 }

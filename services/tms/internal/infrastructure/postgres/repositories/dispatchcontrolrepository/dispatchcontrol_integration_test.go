@@ -4,6 +4,7 @@ package dispatchcontrolrepository
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -75,4 +76,53 @@ func TestGetOrCreateParticipatesInOuterTransaction(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, visibleAfterCommit)
+}
+
+func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	conn := postgres.NewTestConnection(db)
+	repo := New(Params{
+		DB:     conn,
+		Logger: zap.NewNop(),
+	})
+
+	const calls = 8
+	results := make([]string, calls)
+	errs := make([]error, calls)
+
+	var wg sync.WaitGroup
+	wg.Add(calls)
+	for idx := range calls {
+		go func() {
+			defer wg.Done()
+
+			entity, err := repo.GetOrCreate(ctx, data.Organization.ID, data.BusinessUnit.ID)
+			if err != nil {
+				errs[idx] = err
+				return
+			}
+			results[idx] = entity.ID.String()
+		}()
+	}
+	wg.Wait()
+
+	for _, err := range errs {
+		require.NoError(t, err)
+	}
+
+	for _, id := range results {
+		require.NotEmpty(t, id)
+		assert.Equal(t, results[0], id)
+	}
+
+	count, err := db.NewSelect().
+		TableExpr("dispatch_controls").
+		Where("organization_id = ?", data.Organization.ID).
+		Where("business_unit_id = ?", data.BusinessUnit.ID).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
 }

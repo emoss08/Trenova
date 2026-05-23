@@ -51,6 +51,11 @@ func (r *organizationRepository) GetByID(
 
 	org := new(tenant.Organization)
 	if err := redishelpers.GetJSON(ctx, r.client, key, org); err != nil {
+		if redishelpers.IsRedisNil(err) {
+			log.Debug("organization cache miss")
+			return nil, err
+		}
+
 		log.Error("failed to get organization from redis", zap.Error(err))
 		return nil, err
 	}

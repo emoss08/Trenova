@@ -114,6 +114,24 @@ func runComplianceRule(
 	return multiErr
 }
 
+func TestWorkerComplianceRuleFetchesDispatchControlOnce(t *testing.T) {
+	t.Parallel()
+
+	dcRepo := new(mockDispatchControlRepo)
+	w := newComplianceWorker()
+	w.Profile.DOB = time.Now().AddDate(-19, 0, 0).Unix()
+	w.Profile.LicenseExpiry = time.Now().AddDate(-1, 0, 0).Unix()
+	dc := newDispatchControl()
+	dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil).Once()
+
+	rule := createWorkerComplianceRule(dcRepo)
+	multiErr := runComplianceRule(t, rule, w)
+
+	require.True(t, multiErr.HasErrors())
+	assert.GreaterOrEqual(t, len(multiErr.Errors), 2)
+	dcRepo.AssertExpectations(t)
+}
+
 func TestAgeComplianceRule(t *testing.T) {
 	t.Parallel()
 

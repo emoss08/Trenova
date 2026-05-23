@@ -4,12 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -119,42 +117,29 @@ func (r *repository) GetOrCreate(
 		zap.String("orgId", orgID.String()),
 	)
 
-	entity := new(dispatchcontrol.DispatchControl)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("dc.organization_id = ?", orgID).
-				Where("dc.business_unit_id = ?", buID)
-		}).
-		Scan(ctx)
-
-	if err == nil {
-		return entity, nil
-	}
-
-	if !dberror.IsNotFoundError(err) {
-		log.Error("failed to get dispatch control", zap.Error(err))
-		return nil, err
-	}
-
 	newEntity := dispatchcontrol.NewDefaultDispatchControl(orgID, buID)
-	err = r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-		if _, insertErr := r.db.DBForContext(c).NewInsert().
-			Model(newEntity).
-			Returning("*").
-			Exec(c); insertErr != nil {
-			log.Error("failed to create default dispatch control", zap.Error(insertErr))
-			return insertErr
-		}
-		return nil
-	})
-	if err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(newEntity).
+		On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+		Exec(ctx); err != nil {
+		log.Error("failed to create default dispatch control", zap.Error(err))
 		return nil, dberror.MapRetryableTransactionError(
 			err,
 			"Dispatch control is busy. Retry the request.",
 		)
 	}
 
-	return newEntity, nil
+	entity := new(dispatchcontrol.DispatchControl)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("dc.organization_id = ?", orgID).
+		Where("dc.business_unit_id = ?", buID).
+		Scan(ctx); err != nil {
+		log.Error("failed to get dispatch control", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "DispatchControl")
+	}
+
+	return entity, nil
 }
