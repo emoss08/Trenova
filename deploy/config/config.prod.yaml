@@ -56,9 +56,11 @@ database:
   password: placeholder
   sslMode: disable
   maxIdleConns: 25
-  maxOpenConns: 200
+  maxOpenConns: 75
   connMaxLifetime: 1h
   connMaxIdleTime: 10m
+  statementTimeout: 10s
+  lockTimeout: 5s
 
 cache:
   host: redis
@@ -163,8 +165,9 @@ security:
 monitoring:
   metrics:
     enabled: false
+    host: 127.0.0.1
     port: 9090
-    path: /metrics
+    path: /internal/metricsz
   tracing:
     enabled: false
     provider: stdout

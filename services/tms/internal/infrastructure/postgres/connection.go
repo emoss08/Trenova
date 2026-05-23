@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/domainregistry"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
@@ -79,17 +80,7 @@ func (c *Connection) connect(ctx context.Context) error {
 		return fmt.Errorf("failed to parse database configuration: %w", err)
 	}
 
-	if poolCfg.ConnConfig.RuntimeParams == nil {
-		poolCfg.ConnConfig.RuntimeParams = make(map[string]string)
-	}
-	poolCfg.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf(
-		"%dms",
-		max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1),
-	)
-	poolCfg.ConnConfig.RuntimeParams["lock_timeout"] = fmt.Sprintf(
-		"%dms",
-		max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1),
-	)
+	poolCfg.AfterConnect = c.configureSessionTimeouts
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 	if err != nil {
@@ -129,6 +120,20 @@ func (c *Connection) connect(ctx context.Context) error {
 		zap.Int("max_open_conns", c.cfg.Database.MaxOpenConns),
 		zap.Int("max_idle_conns", c.cfg.Database.MaxIdleConns),
 	)
+
+	return nil
+}
+
+func (c *Connection) configureSessionTimeouts(ctx context.Context, conn *pgx.Conn) error {
+	statementTimeoutMS := max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1)
+	if _, err := conn.Exec(ctx, "SET statement_timeout = $1", fmt.Sprintf("%dms", statementTimeoutMS)); err != nil {
+		return fmt.Errorf("set statement_timeout: %w", err)
+	}
+
+	lockTimeoutMS := max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1)
+	if _, err := conn.Exec(ctx, "SET lock_timeout = $1", fmt.Sprintf("%dms", lockTimeoutMS)); err != nil {
+		return fmt.Errorf("set lock_timeout: %w", err)
+	}
 
 	return nil
 }
