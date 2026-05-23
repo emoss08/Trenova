@@ -338,12 +338,51 @@ type RuntimeConfig struct {
 	Config  map[string]string
 }
 
+var clientRuntimeConfigFields = map[integration.Type]map[string]struct{}{
+	integration.TypeGoogleMaps: {
+		"apiKey": {},
+	},
+	integration.TypeOpenWeatherMap: {
+		"apiKey": {},
+	},
+}
+
 func (s *Service) GetRuntimeConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*RuntimeConfig, error) {
 	return s.getRuntimeConfig(ctx, tenantInfo, typ, true)
+}
+
+func (s *Service) GetClientRuntimeConfig(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	typ integration.Type,
+) (*RuntimeConfig, error) {
+	allowedFields, ok := clientRuntimeConfigFields[typ]
+	if !ok {
+		return nil, errortypes.NewBusinessError(
+			string(typ) + " runtime configuration is not available to clients",
+		)
+	}
+
+	runtimeCfg, err := s.getRuntimeConfig(ctx, tenantInfo, typ, true)
+	if err != nil {
+		return nil, err
+	}
+
+	clientCfg := make(map[string]string, len(allowedFields))
+	for key := range allowedFields {
+		if value := strings.TrimSpace(runtimeCfg.Config[key]); value != "" {
+			clientCfg[key] = value
+		}
+	}
+
+	return &RuntimeConfig{
+		Enabled: runtimeCfg.Enabled,
+		Config:  clientCfg,
+	}, nil
 }
 
 func (s *Service) getRuntimeConfig(

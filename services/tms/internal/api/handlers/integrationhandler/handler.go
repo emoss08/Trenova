@@ -195,7 +195,7 @@ func (h *Handler) getRuntimeConfig(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	typ := integration.Type(c.Param("type"))
 
-	result, err := h.integrationService.GetRuntimeConfig(
+	result, err := h.integrationService.GetClientRuntimeConfig(
 		c.Request.Context(),
 		pagination.TenantInfo{
 			OrgID:  authCtx.OrganizationID,

@@ -37,7 +37,7 @@ func New(p Params) repositories.EDIPartnerRepository {
 	}
 }
 
-func (r *repository) filterPartnersQuery(
+func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListEDIPartnersRequest,
 ) *bun.SelectQuery {
@@ -69,7 +69,7 @@ func (r *repository) List(
 		NewSelect().
 		Model(&entities).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterPartnersQuery(sq, req)
+			return r.filterQuery(sq, req)
 		}).
 		ScanAndCount(ctx)
 	if err != nil {
