@@ -5,11 +5,23 @@ app:
   version: 0.0.1
   problemTypeBaseUri: https://api.trenova.app/problems/
 
+platform:
+  mode: self_hosted
+  instanceId: ""
+  controlPlane:
+    enabled: false
+    endpoint: ""
+    apiKey: ""
+    timeout: 5s
+    heartbeatInterval: 5m
+    failOpenOnError: false
+
 server:
   host: 0.0.0.0
   port: 8080
   mode: release
   readTimeout: 30s
+  readHeaderTimeout: 5s
   writeTimeout: 30s
   idleTimeout: 120s
   shutdownTimeout: 15s
@@ -30,6 +42,8 @@ server:
       - Content-Type
       - Accept
       - X-CSRF-Token
+    exposeHeaders:
+      - X-Request-Id
     credentials: true
     maxAge: 86400
 
@@ -42,13 +56,72 @@ database:
   sslMode: disable
   maxIdleConns: 25
   maxOpenConns: 200
+  connMaxLifetime: 1h
+  connMaxIdleTime: 10m
 
 cache:
   host: redis
   port: 6379
+  password: ""
   db: 0
   poolSize: 50
   minIdleConns: 10
+  maxRetries: 3
+  minRetryBackoff: 100ms
+  maxRetryBackoff: 1s
+  dialTimeout: 5s
+  readTimeout: 3s
+  writeTimeout: 3s
+  poolTimeout: 10s
+  connMaxIdleTime: 10m
+  connMaxLifetime: 1h
+
+search:
+  enabled: true
+  defaultLimit: 8
+  meilisearch:
+    url: http://meilisearch:7700
+    apiKey: placeholder
+    timeout: 3s
+    indexes:
+      shipments: shipments
+      customers: customers
+      workers: workers
+      documents: documents
+
+storage:
+  provider: minio
+  endpoint: minio:9000
+  publicEndpoint: ""
+  accessKey: placeholder
+  secretKey: placeholder
+  bucket: trenova
+  region: us-east-1
+  useSSL: false
+  autoCreateBucket: true
+  maxFileSize: 52428800
+  maxFilesPerUpload: 10
+  presignedUrlExpiry: 15m
+
+documentIntelligence:
+  enabled: true
+  ocrCommand: tesseract
+  ocrLanguage: eng
+  ocrTimeout: 45s
+  enableAI: false
+  aiTimeout: 20s
+  aiMaxInputChars: 24000
+  aiExtractionMaxTokens: 5000
+  aiClassificationModel: gpt-5-nano-2025-08-07
+  aiExtractionModel: gpt-5-mini-2025-08-07
+  aiMaxRetries: 2
+  enableOCRPreprocessing: true
+  ocrPreprocessingMode: standard
+  ocrMaxImageDimension: 2400
+  maxOCRPages: 25
+  maxExtractedChars: 200000
+  reconcileBatchSize: 100
+  maxConcurrentActivities: 2
 
 security:
   session:
@@ -61,10 +134,19 @@ security:
     path: /
     domain: ""
     refreshWindow: 1h
+  apiToken:
+    enabled: true
+    defaultExpiry: 0s
+    maxExpiry: 8760h
+    maxTokensPerUser: 100
+    usageFlushInterval: 10s
+    usageUpdateTimeout: 3s
+    usageMaxPending: 10000
   rateLimit:
     enabled: true
     requestsPerMinute: 60
     burstSize: 10
+    cleanupInterval: 1m
   csrf:
     tokenName: csrf_token
     headerName: X-CSRF-Token
@@ -86,11 +168,20 @@ monitoring:
     provider: stdout
     endpoint: localhost:4317
     serviceName: trenova-tms
+    samplingRate: 0
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+    checkInterval: 30s
+    timeout: 5s
 
 logging:
   level: info
   format: json
   output: stdout
+  sampling: false
+  stacktrace: false
 
 temporal:
   hostPort: temporal:7233
@@ -99,9 +190,19 @@ temporal:
   security:
     enableEncryption: false
     encryptionKeyID: unused
+    enableCompression: false
+    compressionThreshold: 0
+  interceptors:
+    enableLogging: false
+    logLevel: info
+  schedule:
+    persistOnStop: true
   worker:
     maxConcurrentActivities: 20
     maxConcurrentWorkflows: 10
+    maxActivityPollers: 2
+    maxWorkflowPollers: 2
+    workerStopTimeout: 30s
 
 audit:
   bufferFlushInterval: 1m
@@ -110,33 +211,17 @@ audit:
   dlqRetryInterval: 5m
   dlqMaxRetries: 5
 
-storage:
-  provider: minio
-  endpoint: minio:9000
-  publicEndpoint: ""
-  accessKey: placeholder
-  secretKey: placeholder
-  bucket: trenova
-  region: us-east-1
-  useSSL: false
-  autoCreateBucket: true
-
-google:
-  apiKey: placeholder
-
 system:
   systemUserPassword: placeholder
 
-samsara:
-  token: placeholder
-  baseURL: https://api.samsara.com
-  timeout: 30s
-  userAgent: trenova-tms/1.0
-  retry:
-    enabled: true
-    maxAttempts: 4
-    initialBackoff: 500ms
-    maxBackoff: 10s
+ably:
+  apiKey: placeholder
+
+twilio:
+  enabled: false
+  accountSID: ""
+  authToken: ""
+  fromNumber: ""
 
 update:
   enabled: true
@@ -144,4 +229,5 @@ update:
   githubOwner: emoss08
   githubRepo: trenova
   allowPrerelease: false
+  proxyUrl: ""
   offlineMode: false
