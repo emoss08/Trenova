@@ -41,8 +41,16 @@ type AblyConfig struct {
 
 type MetricsConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
+	Host    string `mapstructure:"host"    validate:"omitempty,hostname|ip"`
 	Port    int    `mapstructure:"port"    validate:"required_if=Enabled true,min=1,max=65535"`
 	Path    string `mapstructure:"path"    validate:"required_if=Enabled true"`
+}
+
+func (c *MetricsConfig) GetHost() string {
+	if strings.TrimSpace(c.Host) == "" {
+		return "127.0.0.1"
+	}
+	return c.Host
 }
 
 type TracingConfig struct {
@@ -184,17 +192,33 @@ type CSRFBrowserGuardConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host            string        `mapstructure:"host"            validate:"required"`
-	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
-	Name            string        `mapstructure:"name"            validate:"required,min=1,max=63"`
-	User            string        `mapstructure:"user"            validate:"required,min=1,max=63"`
-	Password        string        `mapstructure:"password"        validate:"required"`
-	SSLMode         string        `mapstructure:"sslMode"         validate:"required,oneof=disable require verify-ca verify-full"`
-	MaxIdleConns    int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
-	MaxOpenConns    int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
-	Verbose         bool          `mapstructure:"verbose"`
-	ConnMaxLifetime time.Duration `mapstructure:"connMaxLifetime"`
-	ConnMaxIdleTime time.Duration `mapstructure:"connMaxIdleTime"`
+	Host             string        `mapstructure:"host"            validate:"required"`
+	Port             int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
+	Name             string        `mapstructure:"name"            validate:"required,min=1,max=63"`
+	User             string        `mapstructure:"user"            validate:"required,min=1,max=63"`
+	Password         string        `mapstructure:"password"        validate:"required"`
+	SSLMode          string        `mapstructure:"sslMode"         validate:"required,oneof=disable require verify-ca verify-full"`
+	MaxIdleConns     int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
+	MaxOpenConns     int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
+	Verbose          bool          `mapstructure:"verbose"`
+	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
+	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
+	StatementTimeout time.Duration `mapstructure:"statementTimeout"`
+	LockTimeout      time.Duration `mapstructure:"lockTimeout"`
+}
+
+func (c *DatabaseConfig) GetStatementTimeout() time.Duration {
+	if c.StatementTimeout <= 0 {
+		return 10 * time.Second
+	}
+	return c.StatementTimeout
+}
+
+func (c *DatabaseConfig) GetLockTimeout() time.Duration {
+	if c.LockTimeout <= 0 {
+		return 5 * time.Second
+	}
+	return c.LockTimeout
 }
 
 type CORSConfig struct {

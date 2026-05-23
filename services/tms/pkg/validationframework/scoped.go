@@ -53,6 +53,7 @@ type ScopedRule[T ScopedEntity] interface {
 	Name() string
 	Stage() ValidationStage
 	Priority() ValidationPriority
+	ExecutionMode() ValidationExecutionMode
 	ShouldRun(valCtx *ScopedValidationContext) bool
 	Validate(
 		ctx context.Context,
@@ -63,21 +64,23 @@ type ScopedRule[T ScopedEntity] interface {
 }
 
 type BaseScopedRule[T ScopedEntity] struct {
-	name       string
-	stage      ValidationStage
-	priority   ValidationPriority
-	onCreate   bool
-	onUpdate   bool
-	validateFn ScopedValidateFn[T]
+	name          string
+	stage         ValidationStage
+	priority      ValidationPriority
+	executionMode ValidationExecutionMode
+	onCreate      bool
+	onUpdate      bool
+	validateFn    ScopedValidateFn[T]
 }
 
 func NewScopedRule[T ScopedEntity](name string) *BaseScopedRule[T] {
 	return &BaseScopedRule[T]{
-		name:     name,
-		stage:    ValidationStageBusinessRules,
-		priority: ValidationPriorityMedium,
-		onCreate: true,
-		onUpdate: true,
+		name:          name,
+		stage:         ValidationStageBusinessRules,
+		priority:      ValidationPriorityMedium,
+		executionMode: ValidationExecutionModeSerial,
+		onCreate:      true,
+		onUpdate:      true,
 	}
 }
 
@@ -121,11 +124,27 @@ func (r *BaseScopedRule[T]) WithPriority(priority ValidationPriority) *BaseScope
 	return r
 }
 
+func (r *BaseScopedRule[T]) WithExecutionMode(
+	mode ValidationExecutionMode,
+) *BaseScopedRule[T] {
+	r.executionMode = mode
+	return r
+}
+
+func (r *BaseScopedRule[T]) WithParallelSafeExecution() *BaseScopedRule[T] {
+	r.executionMode = ValidationExecutionModeParallelSafe
+	return r
+}
+
 func (r *BaseScopedRule[T]) WithValidation(
 	fn ScopedValidateFn[T],
 ) *BaseScopedRule[T] {
 	r.validateFn = fn
 	return r
+}
+
+func (r *BaseScopedRule[T]) ExecutionMode() ValidationExecutionMode {
+	return r.executionMode
 }
 
 func (r *BaseScopedRule[T]) ShouldRun(valCtx *ScopedValidationContext) bool {
@@ -305,6 +324,7 @@ func (v *ScopedValidator[T]) createDomainValidationRule(entity T) ValidationRule
 	return NewConcreteRule("domain_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			entity.Validate(multiErr)
 			return nil
@@ -315,6 +335,7 @@ func (v *ScopedValidator[T]) createIDValidationRule(entity T) ValidationRule {
 	return NewConcreteRule("id_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			if entity.GetID().IsNotNil() {
 				multiErr.Add("id", errortypes.ErrInvalid, "ID must not be set on create")
@@ -395,6 +416,7 @@ func (v *ScopedValidator[T]) wrapScopedRule(
 	return NewConcreteRule(rule.Name()).
 		WithStage(rule.Stage()).
 		WithPriority(rule.Priority()).
+		WithExecutionMode(rule.ExecutionMode()).
 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
 			return rule.Validate(ctx, entity, valCtx, multiErr)
 		})

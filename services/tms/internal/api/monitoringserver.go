@@ -45,7 +45,7 @@ type monitoringResponse struct {
 }
 
 func NewMonitoringServer(p MonitoringServerParams) *MonitoringServer {
-	addr := fmt.Sprintf("%s:%d", p.Config.Server.Host, p.Config.Monitoring.Metrics.Port)
+	addr := fmt.Sprintf("%s:%d", p.Config.Monitoring.Metrics.GetHost(), p.Config.Monitoring.Metrics.Port)
 
 	s := &MonitoringServer{
 		cfg:      p.Config,

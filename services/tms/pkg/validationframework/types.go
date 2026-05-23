@@ -24,6 +24,17 @@ type ValidationRule interface {
 	Validate(ctx context.Context, multiErr *errortypes.MultiError) error
 }
 
+type ValidationExecutionMode int
+
+const (
+	ValidationExecutionModeSerial ValidationExecutionMode = iota
+	ValidationExecutionModeParallelSafe
+)
+
+type RuleExecutionMode interface {
+	ExecutionMode() ValidationExecutionMode
+}
+
 type ValidationRuleFunc struct {
 	StageFunc    func() ValidationStage
 	PriorityFunc func() ValidationPriority

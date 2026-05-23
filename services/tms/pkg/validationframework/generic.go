@@ -64,20 +64,22 @@ func (fv *FieldValidator[T, F]) Validate(entity T) *errortypes.MultiError {
 }
 
 type ConcreteRule struct {
-	name        string
-	stage       ValidationStage
-	priority    ValidationPriority
-	validateFn  func(context.Context, *errortypes.MultiError) error
-	condition   func() bool
-	description string
+	name          string
+	stage         ValidationStage
+	priority      ValidationPriority
+	executionMode ValidationExecutionMode
+	validateFn    func(context.Context, *errortypes.MultiError) error
+	condition     func() bool
+	description   string
 }
 
 func NewConcreteRule(name string) *ConcreteRule {
 	return &ConcreteRule{
-		name:      name,
-		stage:     ValidationStageBasic,
-		priority:  ValidationPriorityMedium,
-		condition: func() bool { return true }, // Default: always execute
+		name:          name,
+		stage:         ValidationStageBasic,
+		priority:      ValidationPriorityMedium,
+		executionMode: ValidationExecutionModeSerial,
+		condition:     func() bool { return true },
 	}
 }
 
@@ -88,6 +90,16 @@ func (r *ConcreteRule) WithStage(stage ValidationStage) *ConcreteRule {
 
 func (r *ConcreteRule) WithPriority(priority ValidationPriority) *ConcreteRule {
 	r.priority = priority
+	return r
+}
+
+func (r *ConcreteRule) WithExecutionMode(mode ValidationExecutionMode) *ConcreteRule {
+	r.executionMode = mode
+	return r
+}
+
+func (r *ConcreteRule) WithParallelSafeExecution() *ConcreteRule {
+	r.executionMode = ValidationExecutionModeParallelSafe
 	return r
 }
 
@@ -116,8 +128,11 @@ func (r *ConcreteRule) Priority() ValidationPriority {
 	return r.priority
 }
 
+func (r *ConcreteRule) ExecutionMode() ValidationExecutionMode {
+	return r.executionMode
+}
+
 func (r *ConcreteRule) Validate(ctx context.Context, multiErr *errortypes.MultiError) error {
-	// Check condition first
 	if !r.condition() {
 		return nil
 	}

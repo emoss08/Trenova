@@ -1,6 +1,7 @@
 package dberror
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -380,6 +381,8 @@ func TestIsRetryableTransactionError(t *testing.T) {
 		{name: "serialization failure", err: &pgconn.PgError{Code: pgerrcode.SerializationFailure}, want: true},
 		{name: "deadlock detected", err: &pgconn.PgError{Code: pgerrcode.DeadlockDetected}, want: true},
 		{name: "lock not available", err: &pgconn.PgError{Code: pgerrcode.LockNotAvailable}, want: true},
+		{name: "query canceled", err: &pgconn.PgError{Code: pgerrcode.QueryCanceled}, want: true},
+		{name: "context deadline", err: context.DeadlineExceeded, want: true},
 		{name: "other pg error", err: &pgconn.PgError{Code: pgerrcode.UniqueViolation}, want: false},
 		{name: "generic error", err: errors.New("boom"), want: false},
 	}
@@ -412,6 +415,18 @@ func TestMapRetryableTransactionError(t *testing.T) {
 
 		original := errors.New("plain")
 		assert.Same(t, original, MapRetryableTransactionError(original, "ignored"))
+	})
+
+	t.Run("maps context deadline to conflict error", func(t *testing.T) {
+		t.Parallel()
+
+		err := MapRetryableTransactionError(context.DeadlineExceeded, "deadline")
+		require.Error(t, err)
+
+		var conflictErr *errortypes.ConflictError
+		require.True(t, errors.As(err, &conflictErr))
+		assert.Equal(t, "deadline", conflictErr.Message)
+		assert.ErrorIs(t, conflictErr.Internal, context.DeadlineExceeded)
 	})
 }
 

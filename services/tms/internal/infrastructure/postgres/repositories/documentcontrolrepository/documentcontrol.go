@@ -45,7 +45,7 @@ func (r *repository) Get(
 	)
 
 	entity := new(tenant.DocumentControl)
-	if err := r.db.DB().
+	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -63,7 +63,7 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *tenant.DocumentControl,
 ) (*tenant.DocumentControl, error) {
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (r *repository) Update(
 	entity.Version++
 	cols := buncolgen.DocumentControlColumns
 
-	result, err := r.db.DB().
+	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
@@ -100,27 +100,20 @@ func (r *repository) GetOrCreate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*tenant.DocumentControl, error) {
-	entity, err := r.Get(ctx, repositories.GetDocumentControlRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: orgID,
-			BuID:  buID,
-		},
-	})
-	if err == nil {
-		return entity, nil
-	}
-	if !dberror.IsNotFoundError(err) {
-		return nil, err
-	}
-
 	defaultEntity := tenant.NewDefaultDocumentControl(orgID, buID)
-	created, createErr := r.Create(ctx, defaultEntity)
-	if createErr == nil {
-		return created, nil
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(defaultEntity).
+		On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
+		Exec(ctx); err != nil {
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Document control is busy. Retry the request.",
+		)
 	}
 
-	entity = new(tenant.DocumentControl)
-	if err = r.db.DB().
+	entity := new(tenant.DocumentControl)
+	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

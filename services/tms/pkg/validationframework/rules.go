@@ -43,6 +43,7 @@ type TenantedRule[T TenantedEntity] interface {
 	Name() string
 	Stage() ValidationStage
 	Priority() ValidationPriority
+	ExecutionMode() ValidationExecutionMode
 	ShouldRun(valCtx *TenantedValidationContext) bool
 	Validate(
 		ctx context.Context,
@@ -60,12 +61,13 @@ type TenantedValidateFn[T TenantedEntity] func(
 ) error
 
 type BaseTenantedRule[T TenantedEntity] struct {
-	name       string
-	stage      ValidationStage
-	priority   ValidationPriority
-	onCreate   bool
-	onUpdate   bool
-	validateFn TenantedValidateFn[T]
+	name          string
+	stage         ValidationStage
+	priority      ValidationPriority
+	executionMode ValidationExecutionMode
+	onCreate      bool
+	onUpdate      bool
+	validateFn    TenantedValidateFn[T]
 }
 
 // NewTenantedRule returns a tenanted rule with default stage (business rules), medium priority,
@@ -73,11 +75,12 @@ type BaseTenantedRule[T TenantedEntity] struct {
 // to attach validation logic.
 func NewTenantedRule[T TenantedEntity](name string) *BaseTenantedRule[T] {
 	return &BaseTenantedRule[T]{
-		name:     name,
-		stage:    ValidationStageBusinessRules,
-		priority: ValidationPriorityMedium,
-		onCreate: true,
-		onUpdate: true,
+		name:          name,
+		stage:         ValidationStageBusinessRules,
+		priority:      ValidationPriorityMedium,
+		executionMode: ValidationExecutionModeSerial,
+		onCreate:      true,
+		onUpdate:      true,
 	}
 }
 
@@ -129,12 +132,28 @@ func (r *BaseTenantedRule[T]) WithPriority(priority ValidationPriority) *BaseTen
 	return r
 }
 
+func (r *BaseTenantedRule[T]) WithExecutionMode(
+	mode ValidationExecutionMode,
+) *BaseTenantedRule[T] {
+	r.executionMode = mode
+	return r
+}
+
+func (r *BaseTenantedRule[T]) WithParallelSafeExecution() *BaseTenantedRule[T] {
+	r.executionMode = ValidationExecutionModeParallelSafe
+	return r
+}
+
 // WithValidation attaches the function that performs the rule's validation. If unset, Validate is a no-op.
 func (r *BaseTenantedRule[T]) WithValidation(
 	fn TenantedValidateFn[T],
 ) *BaseTenantedRule[T] {
 	r.validateFn = fn
 	return r
+}
+
+func (r *BaseTenantedRule[T]) ExecutionMode() ValidationExecutionMode {
+	return r.executionMode
 }
 
 // ShouldRun reports whether this rule applies to the given validation context (create vs update),

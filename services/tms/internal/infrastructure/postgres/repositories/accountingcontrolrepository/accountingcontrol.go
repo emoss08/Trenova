@@ -41,7 +41,7 @@ func (r *repository) GetByOrgID(
 	)
 
 	entity := new(accountingcontrol.AccountingControl)
-	if err := r.db.DB().NewSelect().
+	if err := r.db.DBForContext(ctx).NewSelect().
 		Model(entity).
 		Where("ac.organization_id = ?", orgID).
 		Scan(ctx); err != nil {
@@ -58,7 +58,7 @@ func (r *repository) ListWithScheduledPeriodClose(
 	log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 
 	entities := make([]*accountingcontrol.AccountingControl, 0)
-	if err := r.db.DB().
+	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		Where("ac.period_close_mode = ?", accountingcontrol.PeriodCloseModeSystemScheduled).
@@ -83,7 +83,7 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	result, err := r.db.DB().
+	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().

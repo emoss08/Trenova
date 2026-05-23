@@ -2,6 +2,7 @@
 package metrics
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -47,6 +48,53 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 	m.mustRegister(m.concurrencyTotal, m.operatorActions)
 
 	return m
+}
+
+func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
+	m.ifEnabled(func() {
+		m.mustRegister(
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "open_connections",
+				Help:      "Number of established database connections.",
+			}, func() float64 {
+				return float64(stats().OpenConnections)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "in_use_connections",
+				Help:      "Number of database connections currently in use.",
+			}, func() float64 {
+				return float64(stats().InUse)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "idle_connections",
+				Help:      "Number of idle database connections.",
+			}, func() float64 {
+				return float64(stats().Idle)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "wait_count_total",
+				Help:      "Total number of database connection pool waits.",
+			}, func() float64 {
+				return float64(stats().WaitCount)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "wait_duration_seconds_total",
+				Help:      "Total time spent waiting for database connections.",
+			}, func() float64 {
+				return stats().WaitDuration.Seconds()
+			}),
+		)
+	})
 }
 
 func (m *Database) RecordConcurrencyEvent(event dberror.ConcurrencyEvent) {

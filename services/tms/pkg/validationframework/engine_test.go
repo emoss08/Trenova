@@ -3,7 +3,9 @@ package validationframework
 import (
 	"context"
 	"errors"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
@@ -232,6 +234,68 @@ func TestEngine_Validate_ParallelExecution(t *testing.T) {
 
 	require.NotNil(t, result)
 	assert.Len(t, result.Errors, 2)
+}
+
+func TestEngine_Validate_ExecutionModeControlsParallelism(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		mode      ValidationExecutionMode
+		wantMax   int32
+		configMax int
+	}{
+		{
+			name:      "serial rules do not overlap",
+			mode:      ValidationExecutionModeSerial,
+			wantMax:   1,
+			configMax: 4,
+		},
+		{
+			name:      "parallel-safe rules can overlap",
+			mode:      ValidationExecutionModeParallelSafe,
+			wantMax:   2,
+			configMax: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := &EngineConfig{MaxParallel: tt.configMax}
+			engine := NewEngine(cfg)
+
+			var active atomic.Int32
+			var maxActive atomic.Int32
+			for idx := range 2 {
+				rule := NewConcreteRule("rule").
+					WithStage(ValidationStageBasic).
+					WithPriority(ValidationPriorityHigh).
+					WithExecutionMode(tt.mode).
+					WithValidation(func(_ context.Context, _ *errortypes.MultiError) error {
+						current := active.Add(1)
+						for {
+							observed := maxActive.Load()
+							if current <= observed || maxActive.CompareAndSwap(observed, current) {
+								break
+							}
+						}
+						time.Sleep(10 * time.Millisecond)
+						active.Add(-1)
+						return nil
+					})
+				if idx == 1 {
+					rule = rule.WithPriority(ValidationPriorityHigh)
+				}
+				engine.AddRule(rule)
+			}
+
+			engine.Validate(t.Context())
+
+			assert.Equal(t, tt.wantMax, maxActive.Load())
+		})
+	}
 }
 
 func TestEngine_Validate_ParallelWithSystemError(t *testing.T) {

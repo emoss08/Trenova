@@ -89,7 +89,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	const calls = 8
+	const calls = 50
 	results := make([]string, calls)
 	errs := make([]error, calls)
 

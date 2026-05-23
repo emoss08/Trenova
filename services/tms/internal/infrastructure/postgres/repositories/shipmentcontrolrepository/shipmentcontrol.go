@@ -41,7 +41,7 @@ func (r *repository) Get(
 	)
 
 	entity := new(tenant.ShipmentControl)
-	if err := r.db.DB().NewSelect().
+	if err := r.db.DBForContext(ctx).NewSelect().
 		Model(entity).
 		Where("sc.organization_id = ?", req.TenantInfo.OrgID).
 		Where("sc.business_unit_id = ?", req.TenantInfo.BuID).
@@ -65,7 +65,7 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	result, err := r.db.DB().
+	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().

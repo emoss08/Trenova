@@ -368,6 +368,7 @@ func (v *TenantedValidator[T]) createDomainValidationRule(entity T) ValidationRu
 	return NewConcreteRule("domain_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			entity.Validate(multiErr)
 			return nil
@@ -378,6 +379,7 @@ func (v *TenantedValidator[T]) createIDValidationRule(entity T) ValidationRule {
 	return NewConcreteRule("id_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			if entity.GetID().IsNotNil() {
 				multiErr.Add("id", errortypes.ErrInvalid, "ID must not be set on create")
@@ -570,6 +572,7 @@ func (v *TenantedValidator[T]) createImmutableFieldRule(entity, original T) Vali
 	return NewConcreteRule("immutable_field_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, field := range v.immutableFields {
 				newValue := field.GetValue(entity)
@@ -604,6 +607,7 @@ func (v *TenantedValidator[T]) createDateComparisonRule(entity T) ValidationRule
 	return NewConcreteRule("date_comparison_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, config := range v.dateComparisons {
 				startDate := config.GetStartDate(entity)
@@ -639,6 +643,7 @@ func (v *TenantedValidator[T]) createNumericRangeRule(entity T) ValidationRule {
 	return NewConcreteRule("numeric_range_validation").
 		WithStage(ValidationStageBasic).
 		WithPriority(ValidationPriorityHigh).
+		WithParallelSafeExecution().
 		WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 			for _, config := range v.numericRanges {
 				value := config.GetValue(entity)
@@ -683,6 +688,7 @@ func (v *TenantedValidator[T]) wrapTenantedRule(
 	return NewConcreteRule(rule.Name()).
 		WithStage(rule.Stage()).
 		WithPriority(rule.Priority()).
+		WithExecutionMode(rule.ExecutionMode()).
 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
 			return rule.Validate(ctx, entity, valCtx, multiErr)
 		})

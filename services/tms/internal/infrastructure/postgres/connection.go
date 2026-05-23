@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -29,12 +30,14 @@ type ConnectionParams struct {
 	Lifecycle fx.Lifecycle
 	Config    *config.Config
 	Logger    *zap.Logger
+	Metrics   *metrics.Registry `optional:"true"`
 }
 
 type Connection struct {
-	db     *bun.DB
-	cfg    *config.Config
-	logger *observability.ContextLogger
+	db      *bun.DB
+	cfg     *config.Config
+	logger  *observability.ContextLogger
+	metrics *metrics.Registry
 }
 
 type txContextKey struct{}
@@ -43,8 +46,9 @@ func NewConnection(p ConnectionParams) (*Connection, error) {
 	logger := observability.NewContextLogger(p.Logger.With(zap.String("component", "postgres")))
 
 	conn := &Connection{
-		cfg:    p.Config,
-		logger: logger,
+		cfg:     p.Config,
+		logger:  logger,
+		metrics: p.Metrics,
 	}
 
 	p.Lifecycle.Append(fx.Hook{
@@ -75,6 +79,18 @@ func (c *Connection) connect(ctx context.Context) error {
 		return fmt.Errorf("failed to parse database configuration: %w", err)
 	}
 
+	if poolCfg.ConnConfig.RuntimeParams == nil {
+		poolCfg.ConnConfig.RuntimeParams = make(map[string]string)
+	}
+	poolCfg.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf(
+		"%dms",
+		max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1),
+	)
+	poolCfg.ConnConfig.RuntimeParams["lock_timeout"] = fmt.Sprintf(
+		"%dms",
+		max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1),
+	)
+
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create database pool: %w", err)
@@ -96,6 +112,9 @@ func (c *Connection) connect(ctx context.Context) error {
 	}
 
 	c.db = bun.NewDB(sqldb, pgdialect.New())
+	if c.metrics != nil && c.metrics.Database != nil {
+		c.metrics.Database.RegisterSQLStats(c.db.Stats)
+	}
 
 	c.setupHooks()
 

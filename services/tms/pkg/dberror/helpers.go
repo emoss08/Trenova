@@ -1,6 +1,7 @@
 package dberror
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -150,10 +151,15 @@ func IsCheckConstraintViolation(err error) bool {
 }
 
 func IsRetryableTransactionError(err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+
 	code := ExtractCode(err)
 	return code == pgerrcode.SerializationFailure ||
 		code == pgerrcode.DeadlockDetected ||
-		code == pgerrcode.LockNotAvailable
+		code == pgerrcode.LockNotAvailable ||
+		code == pgerrcode.QueryCanceled
 }
 
 func NewConcurrentAccessError(message string, err error) error {
@@ -165,9 +171,14 @@ func MapRetryableTransactionError(err error, message string) error {
 		return err
 	}
 
+	code := ExtractCode(err)
+	if code == "" && errors.Is(err, context.DeadlineExceeded) {
+		code = "context_deadline_exceeded"
+	}
+
 	emitConcurrencyEvent(ConcurrencyEvent{
 		Kind: "retryable_transaction",
-		Code: ExtractCode(err),
+		Code: code,
 	})
 
 	if message == "" {

@@ -60,6 +60,8 @@ database:
   user: postgres # Database user
   password: postgres # Database password
   sslMode: disable # SSL mode: disable, require, verify-ca, verify-full
+  statementTimeout: 10s # Per-statement database deadline
+  lockTimeout: 5s # Maximum time a statement may wait for a lock
 
 # Search configuration
 search:

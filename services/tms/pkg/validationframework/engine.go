@@ -177,13 +177,62 @@ func (v *Engine) executeRulesOptimized(
 			// Set the priority context for all errors added during this priority level
 			multiErr.SetPriority(v.priorityToErrorPriority(priority))
 
-			if v.config.MaxParallel > 1 && len(rules) > 1 {
-				v.executeRulesParallel(ctx, rules, multiErr, priority)
-			} else {
-				v.executeRulesSequential(ctx, rules, multiErr, priority)
-			}
+			v.executeRulesByMode(ctx, rules, multiErr, priority)
 		}
 	}
+}
+
+func (v *Engine) executeRulesByMode(
+	ctx context.Context,
+	rules []ValidationRule,
+	multiErr *errortypes.MultiError,
+	priority ValidationPriority,
+) {
+	parallelRules := make([]ValidationRule, 0, len(rules))
+
+	for _, rule := range rules {
+		if ruleExecutionMode(rule) == ValidationExecutionModeParallelSafe {
+			parallelRules = append(parallelRules, rule)
+			continue
+		}
+
+		v.flushParallelRules(ctx, parallelRules, multiErr, priority)
+		parallelRules = parallelRules[:0]
+		if v.config.FailFast && multiErr.HasErrors() {
+			return
+		}
+
+		v.executeRulesSequential(ctx, []ValidationRule{rule}, multiErr, priority)
+		if v.config.FailFast && multiErr.HasErrors() {
+			return
+		}
+	}
+
+	v.flushParallelRules(ctx, parallelRules, multiErr, priority)
+}
+
+func (v *Engine) flushParallelRules(
+	ctx context.Context,
+	rules []ValidationRule,
+	multiErr *errortypes.MultiError,
+	priority ValidationPriority,
+) {
+	if len(rules) == 0 {
+		return
+	}
+
+	if v.config.MaxParallel > 1 && len(rules) > 1 {
+		v.executeRulesParallel(ctx, rules, multiErr, priority)
+	} else {
+		v.executeRulesSequential(ctx, rules, multiErr, priority)
+	}
+}
+
+func ruleExecutionMode(rule ValidationRule) ValidationExecutionMode {
+	if modeRule, ok := rule.(RuleExecutionMode); ok {
+		return modeRule.ExecutionMode()
+	}
+	return ValidationExecutionModeSerial
 }
 
 func (v *Engine) executeRulesSequential(
