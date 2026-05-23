@@ -154,7 +154,7 @@ On the server, over Tailscale SSH:
 ```bash
 mkdir -p /opt
 cd /opt
-git clone https://github.com/emoss08/trenova-2.git trenova
+git clone https://github.com/emoss08/Trenova.git trenova
 cd /opt/trenova/deploy
 cp .env.example .env
 ```

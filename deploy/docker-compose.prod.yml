@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: ghcr.io/emoss08/trenova-2/postgres:${TRENOVA_VERSION:-latest}
+    image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_VERSION:-latest}
     environment:
       POSTGRES_USER: ${TRENOVA_DATABASE_USER}
       POSTGRES_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
@@ -155,7 +155,7 @@ services:
       - trenova
 
   tms-migrate:
-    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:-latest}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
@@ -206,7 +206,7 @@ services:
       - trenova
 
   tms-api:
-    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:-latest}
     command: ["api", "run"]
     environment:
       APP_ENV: production
@@ -260,7 +260,7 @@ services:
       - trenova
 
   tms-worker:
-    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:-latest}
     command: ["worker", "run"]
     environment:
       APP_ENV: production
@@ -304,7 +304,7 @@ services:
       - trenova
 
   caddy:
-    image: ghcr.io/emoss08/trenova-2/client:${TRENOVA_VERSION:-latest}
+    image: ghcr.io/emoss08/trenova/client:${TRENOVA_VERSION:-latest}
     environment:
       DOMAIN: ${DOMAIN}
     ports:

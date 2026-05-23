@@ -143,9 +143,9 @@ The deployment uses the following resource limits:
 
 | Image | Registry | Purpose |
 |-------|----------|---------|
-| `ghcr.io/emoss08/trenova-2/tms` | GitHub Container Registry | TMS API and Worker |
-| `ghcr.io/emoss08/trenova-2/client` | GitHub Container Registry | Web frontend (Caddy) |
-| `ghcr.io/emoss08/trenova-2/postgres` | GitHub Container Registry | PostgreSQL with PostGIS |
+| `ghcr.io/emoss08/trenova/tms` | GitHub Container Registry | TMS API and Worker |
+| `ghcr.io/emoss08/trenova/client` | GitHub Container Registry | Web frontend (Caddy) |
+| `ghcr.io/emoss08/trenova/postgres` | GitHub Container Registry | PostgreSQL with PostGIS |
 | `redis/redis-stack` | Docker Hub | Redis with modules |
 | `getmeili/meilisearch` | Docker Hub | Meilisearch |
 | `quay.io/minio/minio` | Quay.io | MinIO object storage |
@@ -197,8 +197,8 @@ newgrp docker
 #### Deploy Trenova
 
 ```bash
-git clone https://github.com/emoss08/trenova-2.git
-cd trenova-2/deploy
+git clone https://github.com/emoss08/Trenova.git trenova
+cd trenova/deploy
 ./setup.sh
 ```
 
@@ -262,8 +262,8 @@ Restart-Computer
 Open PowerShell:
 
 ```powershell
-git clone https://github.com/emoss08/trenova-2.git
-cd trenova-2\deploy
+git clone https://github.com/emoss08/Trenova.git trenova
+cd trenova\deploy
 
 # Convert line endings if needed (Git may have converted them)
 dos2unix setup.sh  # Or use: (Get-Content setup.sh -Raw) -replace "`r`n", "`n" | Set-Content setup.sh -NoNewline
@@ -284,8 +284,8 @@ Use NSSM (Non-Sucking Service Manager) to run as a Windows service:
 
 ```powershell
 # Download NSSM from https://nssm.cc/download
-nssm install Trenova "docker" "compose -f C:\path\to\trenova-2\deploy\docker-compose.yml up"
-nssm set Trenova AppDirectory "C:\path\to\trenova-2\deploy"
+nssm install Trenova "docker" "compose -f C:\path\to\trenova\deploy\docker-compose.yml up"
+nssm set Trenova AppDirectory "C:\path\to\trenova\deploy"
 nssm set Trenova Start SERVICE_AUTO_START
 nssm start Trenova
 ```
@@ -1270,4 +1270,4 @@ All services run on an internal Docker bridge network (`trenova`). Only Caddy ex
 - [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 - [Temporal Documentation](https://docs.temporal.io/)
 
-For support, open an issue at: <https://github.com/emoss08/trenova-2/issues>
+For support, open an issue at: <https://github.com/emoss08/Trenova/issues>

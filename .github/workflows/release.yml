@@ -6,8 +6,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  TMS_IMAGE_NAME: ${{ github.repository }}/tms
-  CLIENT_IMAGE_NAME: ${{ github.repository }}/client
+  IMAGE_NAMESPACE: emoss08/trenova
+  TMS_IMAGE_NAME: emoss08/trenova/tms
+  CLIENT_IMAGE_NAME: emoss08/trenova/client
 
 jobs:
   build-and-push-tms:
@@ -42,7 +43,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push TMS image
         uses: docker/build-push-action@v6
@@ -88,7 +89,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push Client image
         uses: docker/build-push-action@v6
@@ -132,11 +133,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/postgres
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/postgres
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       - name: Build and push Postgres image
         uses: docker/build-push-action@v6
@@ -149,4 +150,3 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
-
