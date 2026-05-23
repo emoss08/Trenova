@@ -126,12 +126,20 @@ func (c *Connection) connect(ctx context.Context) error {
 
 func (c *Connection) configureSessionTimeouts(ctx context.Context, conn *pgx.Conn) error {
 	statementTimeoutMS := max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1)
-	if _, err := conn.Exec(ctx, "SET statement_timeout = $1", fmt.Sprintf("%dms", statementTimeoutMS)); err != nil {
+	if _, err := conn.Exec(
+		ctx,
+		"SELECT set_config('statement_timeout', $1, false)",
+		fmt.Sprintf("%dms", statementTimeoutMS),
+	); err != nil {
 		return fmt.Errorf("set statement_timeout: %w", err)
 	}
 
 	lockTimeoutMS := max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1)
-	if _, err := conn.Exec(ctx, "SET lock_timeout = $1", fmt.Sprintf("%dms", lockTimeoutMS)); err != nil {
+	if _, err := conn.Exec(
+		ctx,
+		"SELECT set_config('lock_timeout', $1, false)",
+		fmt.Sprintf("%dms", lockTimeoutMS),
+	); err != nil {
 		return fmt.Errorf("set lock_timeout: %w", err)
 	}
 
