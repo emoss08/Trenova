@@ -30,6 +30,7 @@ server:
     allowedOrigins:
       - https://trenova.app
       - https://app.trenova.app
+      - https://cloud.trenova.app
     allowedMethods:
       - GET
       - POST
@@ -153,6 +154,7 @@ security:
     trustedOrigins:
       - https://trenova.app
       - https://app.trenova.app
+      - https://cloud.trenova.app
     browserGuard:
       mode: enforce
   encryption:
