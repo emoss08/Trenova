@@ -66,6 +66,23 @@ services:
       - trenova
     restart: unless-stopped
 
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${TRENOVA_STORAGE_ACCESSKEY}
+      MINIO_ROOT_PASSWORD: ${TRENOVA_STORAGE_SECRETKEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - trenova
+    restart: unless-stopped
+
   meilisearch:
     image: getmeili/meilisearch:v1.16
     environment:
@@ -163,6 +180,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
       meilisearch:
         condition: service_healthy
       temporal:
@@ -212,6 +231,7 @@ volumes:
   postgres_data:
   redis_data:
   meili_data:
+  minio_data:
 
 networks:
   trenova:
