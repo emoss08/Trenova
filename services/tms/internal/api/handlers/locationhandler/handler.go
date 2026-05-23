@@ -48,7 +48,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.list,
 	)
 	api.GET(
-		"/:locationID",
+		"/:locationID/",
 		h.pm.RequirePermission(permission.ResourceLocation.String(), permission.OpRead),
 		h.get,
 	)
