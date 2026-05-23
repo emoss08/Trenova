@@ -218,6 +218,16 @@ docker compose -f docker-compose.api.yml pull
 docker compose -f docker-compose.api.yml up -d
 ```
 
+For repeatable deploys after the first setup, use the deploy script:
+
+```bash
+cd /opt/trenova/deploy
+./deploy-api.sh 0.0.6
+```
+
+The script pulls `master`, pulls Docker images for the selected tag, starts infrastructure,
+runs migrations, recreates the API/worker/tunnel containers, and prints service status.
+
 Check status:
 
 ```bash
