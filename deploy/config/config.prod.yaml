@@ -2,7 +2,7 @@ app:
   name: trenova
   env: production
   debug: false
-  version: 0.0.1
+  version: 0.0.7
   problemTypeBaseUri: https://api.trenova.app/problems/
 
 platform:
@@ -145,8 +145,8 @@ security:
     usageMaxPending: 10000
   rateLimit:
     enabled: true
-    requestsPerMinute: 60
-    burstSize: 10
+    requestsPerMinute: 600
+    burstSize: 100
     cleanupInterval: 1m
   csrf:
     tokenName: csrf_token
