@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
       POSTGRES_DB: ${TRENOVA_DATABASE_NAME}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./config/init-temporal-db.sh:/docker-entrypoint-initdb.d/init-temporal-db.sh:ro
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
