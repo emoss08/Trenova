@@ -17,6 +17,9 @@ Examples:
 Environment:
   SKIP_GIT_PULL=true   Do not pull the latest master before deploying.
   TRENOVA_VERSION      Image tag to deploy when [version] is not provided.
+  TRENOVA_POSTGRES_VERSION
+                       Postgres image tag. Defaults to latest because Postgres
+                       is released independently from the TMS image.
 USAGE
 }
 
@@ -39,8 +42,10 @@ if [[ "${SKIP_GIT_PULL:-false}" != "true" && -d "${REPO_DIR}/.git" ]]; then
 fi
 
 export TRENOVA_VERSION="${VERSION}"
+export TRENOVA_POSTGRES_VERSION="${TRENOVA_POSTGRES_VERSION:-latest}"
 
 echo "Deploying Trenova API stack with image tag: ${TRENOVA_VERSION}"
+echo "Using Postgres image tag: ${TRENOVA_POSTGRES_VERSION}"
 echo "Using compose file: ${COMPOSE_FILE}"
 
 cd "${SCRIPT_DIR}"

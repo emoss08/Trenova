@@ -11,6 +11,48 @@ env:
   CLIENT_IMAGE_NAME: emoss08/trenova/client
 
 jobs:
+  detect-postgres-changes:
+    name: Detect Postgres Image Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_build: ${{ steps.detect.outputs.should_build }}
+      previous_tag: ${{ steps.detect.outputs.previous_tag }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Postgres image changes
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_ref="${GITHUB_REF_NAME}"
+          previous_tag="$(git tag --sort=-v:refname | grep -v "^${current_ref}$" | head -n 1 || true)"
+
+          if [[ -z "${previous_tag}" ]]; then
+            echo "No previous tag found; building Postgres image."
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
+            echo "previous_tag=" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          changed_files="$(git diff --name-only "${previous_tag}" "${current_ref}" -- deploy/Dockerfile.postgres)"
+          if [[ -n "${changed_files}" ]]; then
+            echo "Postgres image inputs changed since ${previous_tag}:"
+            echo "${changed_files}"
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Postgres image inputs did not change since ${previous_tag}; skipping Postgres image build."
+            echo "should_build=false" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "previous_tag=${previous_tag}" >> "${GITHUB_OUTPUT}"
+
   build-and-push-tms:
     name: Build and Push TMS Image
     runs-on: ubuntu-latest
@@ -108,6 +150,8 @@ jobs:
   build-and-push-postgres:
     name: Build and Push Postgres Image
     runs-on: ubuntu-latest
+    needs: detect-postgres-changes
+    if: needs.detect-postgres-changes.outputs.should_build == 'true'
     permissions:
       contents: read
       packages: write
