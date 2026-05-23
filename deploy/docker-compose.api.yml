@@ -136,7 +136,11 @@ services:
           echo "Migration attempt $$i failed, retrying in 3s..."
           sleep 3
         done
-        trenova db seed --ignore-errors
+        if [ "$${TRENOVA_RUN_SEEDS:-false}" = "true" ]; then
+          trenova db seed --ignore-errors
+        else
+          echo "Skipping database seeds because TRENOVA_RUN_SEEDS is not true"
+        fi
     environment: &tms-env
       APP_ENV: production
       TRENOVA_DATABASE_HOST: pgbouncer
@@ -160,6 +164,7 @@ services:
       TRENOVA_STORAGE_PUBLICENDPOINT: ${TRENOVA_STORAGE_PUBLICENDPOINT:-}
       TRENOVA_MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY}
       TRENOVA_SEARCH_MEILISEARCH_APIKEY: ${TRENOVA_MEILI_MASTER_KEY}
+      TRENOVA_RUN_SEEDS: ${TRENOVA_RUN_SEEDS:-false}
     volumes:
       - ./config/config.prod.yaml:/app/config/config.yaml:ro
     depends_on:
