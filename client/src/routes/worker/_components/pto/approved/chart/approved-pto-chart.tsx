@@ -204,5 +204,5 @@ export default function ApprovedPTOChart({
   );
 }
 function ChartOuter({ children }: { children: React.ReactNode }) {
-  return <div className="relative h-[300px] w-full">{children}</div>;
+  return <div className="relative h-75 w-full">{children}</div>;
 }

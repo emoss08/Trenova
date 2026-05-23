@@ -25,7 +25,7 @@ export function DocumentSourceControls({
   const sourceInputs = getEDIDocumentSourceInputs(transactionSet);
 
   return (
-    <>
+    <div className="flex flex-row gap-1">
       {sourceInputs.map((input) => {
         const value = values[input.field] ?? "";
         if (input.field === "payload") {
@@ -59,7 +59,7 @@ export function DocumentSourceControls({
           />
         );
       })}
-    </>
+    </div>
   );
 }
 

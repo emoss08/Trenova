@@ -202,7 +202,7 @@ export function DocumentPreviewArchiveTab() {
   const documentContextLabel = [
     selectedPartnerLabel || "No partner selected",
     selectedDocumentProfile?.name ??
-      (!!partnerId && !profileId ? "New profile draft" : "No profile"),
+    (!!partnerId && !profileId ? "New profile draft" : "No profile"),
     activeTemplate?.name ?? "No template",
     activeTemplate?.activeVersion?.versionNumber
       ? `v${activeTemplate.activeVersion.versionNumber}`
@@ -419,11 +419,11 @@ export function DocumentPreviewArchiveTab() {
           defaultValue="preview"
           className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-0"
         >
-          <div className="grid gap-2 border-b px-3 py-2">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="grid gap-2 border-b py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border">
               <TabsList
                 variant="underline"
-                className="grid w-fit grid-cols-2 border-b border-border"
+                className="grid w-fit grid-cols-2 border-b border-border px-2"
               >
                 <TabsTrigger value="preview">
                   <FileCode2Icon data-icon="inline-start" />
@@ -438,63 +438,61 @@ export function DocumentPreviewArchiveTab() {
                 {documentContextLabel}
               </div>
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-row items-start justify-between gap-2">
               <DocumentSourceControls
                 transactionSet={sourceTransactionSet}
                 values={sourceValues}
                 onChange={setSourceValue}
                 layout="toolbar"
               />
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="rounded-md border bg-muted/30 p-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const payloadResult = parsePayload(sourceValues.payload ?? "");
-                      if (!payloadResult.ok) return;
-                      previewMutation.mutate(
-                        buildEDIDocumentResolutionRequest({
-                          partnerDocumentProfileId: profileId || undefined,
-                          ediPartnerId: partnerId || undefined,
-                          sourceValues,
-                          transactionSet: sourceTransactionSet,
-                          direction: sourceDirection,
-                          payload: payloadResult.payload,
-                        }),
-                      );
-                    }}
-                    isLoading={previewMutation.isPending}
-                    disabled={(!profileId && !partnerId) || !hasSourceValue}
-                  >
-                    <RefreshCwIcon className="size-4" />
-                    Preview provisional controls
-                  </Button>
-                </div>
-                <div className="rounded-md border border-primary/20 bg-background p-1">
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      const payloadResult = parsePayload(sourceValues.payload ?? "");
-                      if (!payloadResult.ok) return;
-                      generateMutation.mutate(
-                        buildEDIDocumentResolutionRequest({
-                          partnerDocumentProfileId: profileId || undefined,
-                          ediPartnerId: partnerId || undefined,
-                          sourceValues,
-                          transactionSet: sourceTransactionSet,
-                          direction: sourceDirection,
-                          payload: payloadResult.payload,
-                        }),
-                      );
-                    }}
-                    isLoading={generateMutation.isPending}
-                    disabled={!profileId || !hasSourceValue}
-                  >
-                    <PlayIcon className="size-4" />
-                    Generate archive message
-                  </Button>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const payloadResult = parsePayload(sourceValues.payload ?? "");
+                    if (!payloadResult.ok) return;
+                    previewMutation.mutate(
+                      buildEDIDocumentResolutionRequest({
+                        partnerDocumentProfileId: profileId || undefined,
+                        ediPartnerId: partnerId || undefined,
+                        sourceValues,
+                        transactionSet: sourceTransactionSet,
+                        direction: sourceDirection,
+                        payload: payloadResult.payload,
+                      }),
+                    );
+                  }}
+                  isLoading={previewMutation.isPending}
+                  disabled={(!profileId && !partnerId) || !hasSourceValue}
+                >
+                  <RefreshCwIcon className="size-4" />
+                  Preview provisional controls
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    const payloadResult = parsePayload(sourceValues.payload ?? "");
+                    if (!payloadResult.ok) return;
+                    generateMutation.mutate(
+                      buildEDIDocumentResolutionRequest({
+                        partnerDocumentProfileId: profileId || undefined,
+                        ediPartnerId: partnerId || undefined,
+                        sourceValues,
+                        transactionSet: sourceTransactionSet,
+                        direction: sourceDirection,
+                        payload: payloadResult.payload,
+                      }),
+                    );
+                  }}
+                  isLoading={generateMutation.isPending}
+                  disabled={!profileId || !hasSourceValue}
+                >
+                  <PlayIcon className="size-4" />
+                  Generate archive message
+                </Button>
               </div>
             </div>
           </div>

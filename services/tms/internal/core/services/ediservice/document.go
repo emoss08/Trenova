@@ -48,7 +48,7 @@ func (s *Service) ListTemplates(
 	ctx context.Context,
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
-	return s.templateRepo.ListTemplates(ctx, req)
+	return s.templateRepo.List(ctx, req)
 }
 
 func (s *Service) SelectTemplateOptions(

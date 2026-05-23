@@ -74,9 +74,9 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
 
   return (
     <>
-      <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] overflow-hidden">
-        <div className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] bg-zinc-950">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 px-3 py-2 text-xs text-zinc-300">
+      <div className="grid flex-1 grid-cols-[minmax(0,1fr)_300px] gap-2 h-full p-3">
+        <div className="grid grid-rows-[auto_minmax(0,1fr)] bg-foreground rounded-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-background/10 px-3 py-2 text-xs text-background">
             <span>Preview render</span>
             <div className="flex min-w-0 flex-wrap items-center justify-end gap-2">
               {preview ? (
@@ -93,7 +93,7 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
                 size="sm"
                 disabled={!preview}
                 onClick={() => setInspectorOpen(true)}
-                className="h-7 border-zinc-700 bg-zinc-900 text-xs text-zinc-100 hover:bg-zinc-800"
+                className="h-7 border-background/10 bg-foreground text-xs text-background hover:bg-background/20"
               >
                 <SearchIcon className="size-3.5" />
                 Inspect
@@ -101,12 +101,12 @@ function PreviewPane({ preview, isLoading }: { preview?: EDIDocumentPreview; isL
             </div>
           </div>
           <ScrollArea className="min-h-0" viewportClassName="min-h-0">
-            <pre className="p-3 font-mono text-xs text-zinc-100">
+            <pre className="p-3 font-mono text-xs text-background">
               {isLoading ? "Rendering preview..." : previewContent}
             </pre>
           </ScrollArea>
         </div>
-        <ScrollArea className="min-h-0" viewportClassName="min-h-0">
+        <ScrollArea>
           <DiagnosticsList diagnostics={preview?.diagnostics ?? []} />
         </ScrollArea>
       </div>
@@ -140,7 +140,7 @@ function DiagnosticsList({
     Info: diagnostics.filter((diagnostic) => diagnostic.severity === "Info"),
   };
   return (
-    <div className="p-3">
+    <div className="p-3 h-full">
       {diagnostics.length === 0 ? (
         <div className="text-sm text-muted-foreground">No diagnostics.</div>
       ) : (

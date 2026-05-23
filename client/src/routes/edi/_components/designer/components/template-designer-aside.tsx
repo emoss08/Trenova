@@ -80,7 +80,7 @@ export default function TemplateDesignerAside() {
   const handleCreateDialogOpenChange = (open: boolean) => setIsCreateDialogOpen(open);
 
   const handleTemplateCreated = async (template: EDITemplate) => {
-    const versionId = template.versions[0]?.id ?? template.activeVersion?.id ?? "";
+    const versionId = template.activeVersion?.id ?? template.versions?.[0]?.id ?? "";
     resetDraftState();
     patchTemplateUrlState({
       templateId: template.id,
@@ -173,8 +173,8 @@ function TemplateFilterPopover({
     <Popover>
       <PopoverTrigger
         render={
-          <Button type="button" variant="outline" className="shrink-0">
-            <FilterIcon className="size-4" />
+          <Button type="button" variant="outline" className="shrink-0 h-7">
+            <FilterIcon className="size-3" />
             <span className="text-xs">Filter</span>
             {activeFilterCount > 0 ? (
               <Badge variant="active" className="ml-0.5 px-1.5 py-0 text-[10px]">
@@ -184,12 +184,12 @@ function TemplateFilterPopover({
           </Button>
         }
       />
-      <PopoverContent align="end" className="w-72 p-0">
+      <PopoverContent align="start" className="w-72 p-0 dark">
         <div className="border-b px-3 py-2">
           <div className="text-sm font-semibold">Template Filters</div>
           <div className="text-xs text-muted-foreground">Narrow the template list.</div>
         </div>
-        <div className="space-y-3 p-3">
+        <div className=" px-3 flex flex-col gap-1">
           <ControlledSelectField
             label="Status"
             value={templateStatus}

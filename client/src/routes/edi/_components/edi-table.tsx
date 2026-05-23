@@ -30,7 +30,7 @@ function PartnersWorkspace() {
   const columns = useMemo(() => getPartnerColumns(), []);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 px-3">
       <PendingConnectionsPanel />
       <DataTable<EDIPartner>
         name="EDI Connection"
@@ -50,16 +50,18 @@ function CommunicationProfilesWorkspace() {
   const columns = useMemo(() => getCommunicationProfileColumns(), []);
 
   return (
-    <DataTable<EDICommunicationProfile>
-      name="EDI Communication Profile"
-      link="/edi/communication-profiles/"
-      queryKey="edi-communication-profile-list"
-      exportModelName="edi-communication-profile"
-      resource={Resource.EDI}
-      columns={columns}
-      TablePanel={CommunicationProfilePanel}
-      preferDetailRowForEdit
-    />
+    <Outer>
+      <DataTable<EDICommunicationProfile>
+        name="EDI Communication Profile"
+        link="/edi/communication-profiles/"
+        queryKey="edi-communication-profile-list"
+        exportModelName="edi-communication-profile"
+        resource={Resource.EDI}
+        columns={columns}
+        TablePanel={CommunicationProfilePanel}
+        preferDetailRowForEdit
+      />
+    </Outer>
   );
 }
 
@@ -73,24 +75,30 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
   );
 
   return (
-    <DataTable<EDITransfer>
-      name="EDI Transfer"
-      link={
-        direction === "inbound"
-          ? "/edi/transfers/?direction=inbound"
-          : "/edi/transfers/?direction=outbound"
-      }
-      detailLink="/edi/transfers/"
-      queryKey={
-        direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"
-      }
-      exportModelName={`edi-${direction}-transfer`}
-      resource={Resource.EDI}
-      columns={columns}
-      TablePanel={TransferPanel}
-      preferDetailRowForEdit
-      enableCreateAction={false}
-      enableReadOnlyPanel
-    />
+    <Outer>
+      <DataTable<EDITransfer>
+        name="EDI Transfer"
+        link={
+          direction === "inbound"
+            ? "/edi/transfers/?direction=inbound"
+            : "/edi/transfers/?direction=outbound"
+        }
+        detailLink="/edi/transfers/"
+        queryKey={
+          direction === "inbound" ? "edi-inbound-transfer-list" : "edi-outbound-transfer-list"
+        }
+        exportModelName={`edi-${direction}-transfer`}
+        resource={Resource.EDI}
+        columns={columns}
+        TablePanel={TransferPanel}
+        preferDetailRowForEdit
+        enableCreateAction={false}
+        enableReadOnlyPanel
+      />
+    </Outer>
   );
+}
+
+function Outer({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col px-3">{children}</div>;
 }

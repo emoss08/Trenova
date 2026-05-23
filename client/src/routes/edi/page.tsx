@@ -1,7 +1,7 @@
+import { ComponentLoader } from "@/components/component-loader";
 import { DataTableLazyComponent } from "@/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { lazy } from "react";
-import { DesignerWorkspaceSkeleton } from "./_components/designer/components/designer-workspace-skeleton";
 import type { EDIPageKind } from "./_components/edi-types";
 
 const Table = lazy(() => import("./_components/edi-table"));
@@ -46,9 +46,12 @@ function EDIPage({ kind }: { kind: EDIPageKind }) {
         title: pageTitles[kind],
         description: "Internal load tender exchange, mapping, and lifecycle visibility",
       }}
+      className="p-0"
     >
       <DataTableLazyComponent
-        fallback={kind === "designer" ? <DesignerWorkspaceSkeleton /> : undefined}
+        fallback={
+          kind === "designer" ? <ComponentLoader message="Loading Template Designer" /> : undefined
+        }
       >
         <Table kind={kind} />
       </DataTableLazyComponent>

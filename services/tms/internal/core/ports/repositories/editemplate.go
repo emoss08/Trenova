@@ -91,7 +91,7 @@ type ArchiveEDITemplateVersionRequest struct {
 }
 
 type EDITemplateRepository interface {
-	ListTemplates(
+	List(
 		ctx context.Context,
 		req *ListEDITemplatesRequest,
 	) (*pagination.ListResult[*edi.EDITemplate], error)

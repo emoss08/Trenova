@@ -135,6 +135,22 @@ describe("template designer store", () => {
     expect(store.getState().segmentsDraft[0]?.condition).toBe("");
   });
 
+  it("refreshes an empty same-version draft when full version details arrive", () => {
+    const store = createTemplateDesignerStore();
+    const version = createVersion();
+
+    store.getState().hydrateVersion({
+      ...version,
+      segments: [],
+      scriptLibraries: [],
+    });
+    store.getState().hydrateVersion(version);
+
+    expect(store.getState().hydratedVersionKey).toBe("version-1:7");
+    expect(store.getState().segmentsDraft).toHaveLength(1);
+    expect(store.getState().scriptDraft).toHaveLength(1);
+  });
+
   it("clears diagnostics and dirty flags on reset", () => {
     const store = createTemplateDesignerStore();
     const diagnostics: EDIDiagnostic[] = [
@@ -265,9 +281,7 @@ function createSegment(overrides: Partial<EDITemplateSegment> = {}): EDITemplate
   };
 }
 
-function createScript(
-  overrides: Partial<EDITemplateScriptLibrary> = {},
-): EDITemplateScriptLibrary {
+function createScript(overrides: Partial<EDITemplateScriptLibrary> = {}): EDITemplateScriptLibrary {
   return {
     id: "script-1",
     businessUnitId: "bu-1",

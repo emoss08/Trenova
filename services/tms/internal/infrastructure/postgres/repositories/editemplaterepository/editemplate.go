@@ -40,10 +40,22 @@ func New(p Params) repositories.EDITemplateRepository {
 	}
 }
 
-func (r *repository) ListTemplates(
+func (r *repository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListEDITemplatesRequest,
+) *bun.SelectQuery {
+	return nil
+}
+
+func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListEDITemplatesRequest,
 ) (*pagination.ListResult[*edi.EDITemplate], error) {
+	log := r.l.With(
+		zap.String("operation", "List"),
+		zap.Any("req", req),
+	)
+
 	entities := make([]*edi.EDITemplate, 0, req.Filter.Pagination.SafeLimit())
 	cols := buncolgen.EDITemplateColumns
 
@@ -61,13 +73,14 @@ func (r *repository) ListTemplates(
 	if req.Status != "" {
 		query = query.Where(cols.Status.Eq(), req.Status)
 	}
+
 	query = applyTemplateSearch(query, req.Filter.Query)
 	total, err := query.
-		Order(cols.CreatedAt.OrderDesc()).
 		Limit(req.Filter.Pagination.SafeLimit()).
 		Offset(req.Filter.Pagination.SafeOffset()).
 		ScanAndCount(ctx)
 	if err != nil {
+		log.Error("failed to scan and count edi templates", zap.Error(err))
 		return nil, err
 	}
 

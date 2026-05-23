@@ -17,7 +17,6 @@ export function WeatherAlertLegendPanel({
   collapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
 }) {
-
   const categoryCounts = useMemo(() => {
     const counts = new Map<WeatherAlertCategory, number>();
     for (const feature of features) {
@@ -31,7 +30,7 @@ export function WeatherAlertLegendPanel({
 
   return (
     <MapControl position={ControlPosition.LEFT_BOTTOM}>
-      <div className="m-2.5 rounded-lg border bg-background shadow-sm">
+      <div className="mx-3 my-4 rounded-lg border bg-background shadow-sm">
         <button
           type="button"
           onClick={() => onCollapsedChange(!collapsed)}
@@ -39,9 +38,7 @@ export function WeatherAlertLegendPanel({
         >
           <div className="flex items-center gap-1.5">
             <TriangleAlertIcon className="size-3.5 text-muted-foreground" />
-            <span className="text-xs font-semibold text-foreground">
-              Public Alerts
-            </span>
+            <span className="text-xs font-semibold text-foreground">Public Alerts</span>
             <span className="text-2xs text-muted-foreground tabular-nums">({totalCount})</span>
           </div>
           <ChevronDownIcon

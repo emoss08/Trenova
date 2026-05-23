@@ -77,9 +77,12 @@ export function MappingProfilePanel({
 
   return (
     <Tabs defaultValue="Customer" className="gap-3">
-      <TabsList className="flex-wrap">
+      <TabsList
+        className="flex-wrap border-b border-border px-1 w-full justify-start!"
+        variant="underline"
+      >
         {mappingEntityTypes.map((entityType) => (
-          <TabsTrigger key={entityType} value={entityType}>
+          <TabsTrigger key={entityType} value={entityType} className="max-w-30">
             {entityType}
           </TabsTrigger>
         ))}
@@ -87,7 +90,11 @@ export function MappingProfilePanel({
       {mappingEntityTypes.map((entityType) => {
         const entries = (data?.entries ?? []).filter((entry) => entry.entityType === entityType);
         return (
-          <TabsContent key={entityType} value={entityType} className="flex flex-col gap-3">
+          <TabsContent
+            key={entityType}
+            value={entityType}
+            className="flex flex-col gap-3 px-3 pb-3"
+          >
             {canUpdate && (
               <div className="grid gap-2 md:grid-cols-5">
                 <Input
@@ -187,7 +194,7 @@ export function MappingProfilesWorkspace() {
   const selectedPartnerId = useWatch({ control, name: "partnerId" });
 
   return (
-    <div className="grid min-h-0 gap-4 lg:grid-cols-[18rem_1fr]">
+    <div className="grid min-h-0 gap-4 lg:grid-cols-[18rem_1fr] p-3">
       <div className="rounded-md border bg-background">
         <div className="border-b px-3 py-2">
           <div className="text-sm font-medium">Partner</div>
@@ -211,7 +218,7 @@ export function MappingProfilesWorkspace() {
           )}
         </div>
       </div>
-      <div className="min-w-0 rounded-md border bg-background p-3">
+      <div className="min-w-0 rounded-md border bg-background">
         {selectedPartnerId ? (
           <MappingProfilePanel partnerId={selectedPartnerId} canUpdate={canUpdate} />
         ) : (

@@ -83,8 +83,13 @@ export function createTemplateDesignerStore() {
       if (!versionKey || !version) return;
 
       const state = get();
-      if (state.hydratedVersionKey === versionKey) return;
       if (state.segmentsDirty || state.scriptsDirty || state.metadataDirty) return;
+      if (
+        state.hydratedVersionKey === versionKey &&
+        !shouldRefreshHydratedVersionDraft(state, version)
+      ) {
+        return;
+      }
 
       set({
         segmentsDraft: cloneSegments(version.segments),
@@ -163,6 +168,16 @@ export function createTemplateDesignerStore() {
       set({ diagnostics: diagnostics.map((diagnostic) => ({ ...diagnostic })) });
     },
   }));
+}
+
+function shouldRefreshHydratedVersionDraft(
+  state: TemplateDesignerDraftState,
+  version: EDITemplateVersion,
+) {
+  return (
+    (state.segmentsDraft.length === 0 && version.segments.length > 0) ||
+    (state.scriptDraft.length === 0 && version.scriptLibraries.length > 0)
+  );
 }
 
 const TemplateDesignerStoreContext = createContext<StoreApi<TemplateDesignerStore> | null>(null);

@@ -62,8 +62,7 @@ func (et *EquipmentType) Validate(multiErr *errortypes.MultiError) {
 		})),
 	)
 	if err != nil {
-		var validationErrs validation.Errors
-		if errors.As(err, &validationErrs) {
+		if validationErrs, ok := errors.AsType[validation.Errors](err); ok {
 			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}

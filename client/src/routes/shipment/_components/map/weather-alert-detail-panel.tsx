@@ -93,7 +93,7 @@ export function WeatherAlertDetailPanel({
 
   return (
     <MapControl position={ControlPosition.LEFT_TOP}>
-      <div className="m-2.5 w-72 overflow-hidden rounded-lg border bg-background shadow-sm">
+      <div className="my-12 mx-3.5 w-72 overflow-hidden rounded-lg border bg-background shadow-sm">
         <div className="flex items-start justify-between gap-2 p-3 pb-2">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5">
