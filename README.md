@@ -43,3 +43,7 @@ Trenova operates under the [Fair Source](https://fair.io/) licensing model, spec
 Under this licensing framework, organizations and individuals are free to utilize Trenova and deploy it across any infrastructure, including enterprise environments. However, the license explicitly restricts the commercialization of self-hosted Trenova deployments - meaning you cannot offer it as a Software-as-a-Service platform or monetize it through other business models. Additionally, you cannot leverage Trenova's FSL-licensed codebase to build competing services or products.
 
 All source code for Trenova, along with its supporting infrastructure and deployment libraries, is publicly accessible through our GitHub repositories.
+
+## Production Deployment
+
+Trenova Cloud production servers use the private `emoss08/trenova-cloud-deploy` repository as the deployment source of truth. This repository remains the source of truth for application code, Dockerfiles, database migrations, and released container images. The deployment repository pins released image tags and contains only server runtime configuration, Compose files, and deployment scripts.

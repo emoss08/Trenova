@@ -87,7 +87,7 @@ func init() {
 	applyCmd.Flags().
 		BoolVar(&forceUpdate, "force", false, "Force update even if already on latest version")
 	applyCmd.Flags().
-		StringVar(&composeFile, "compose-file", "docker-compose.prod.yml", "Docker compose file to use")
+		StringVar(&composeFile, "compose-file", "compose.yml", "Docker compose file to use")
 }
 
 func runCheck(_ *cobra.Command, _ []string) error {
