@@ -281,5 +281,10 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Permissions-Policy")).toBe("camera=(), microphone=(), geolocation=()");
   expect(headers.get("Content-Security-Policy")).toContain("default-src 'self'");
   expect(headers.get("Content-Security-Policy")).toContain("https://api.trenova.app");
+  expect(headers.get("Content-Security-Policy")).toContain("https://static.cloudflareinsights.com");
+  expect(headers.get("Content-Security-Policy")).toContain("https://cloudflareinsights.com");
+  expect(headers.get("Content-Security-Policy")).toContain("https://storage.trenova.app");
+  expect(headers.get("Content-Security-Policy")).toContain("https://*.ably.net");
+  expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably.net");
   expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably-realtime.com");
 }

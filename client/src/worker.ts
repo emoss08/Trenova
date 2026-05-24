@@ -1,6 +1,7 @@
 const scriptSources = [
   "'self'",
   "'unsafe-eval'",
+  "https://static.cloudflareinsights.com",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
 ] as const;
@@ -15,17 +16,22 @@ const imageSources = [
   "https://*.googleapis.com",
   "https://*.gstatic.com",
   "https://*.googleusercontent.com",
+  "https://storage.trenova.app",
 ] as const;
 const connectSources = [
   "'self'",
   "https://api.trenova.app",
   "https://api.rainviewer.com",
+  "https://cloudflareinsights.com",
+  "https://storage.trenova.app",
   "https://maps.googleapis.com",
   "https://*.googleapis.com",
   "https://*.gstatic.com",
   "https://*.ably.io",
+  "https://*.ably.net",
   "https://*.ably-realtime.com",
   "wss://*.ably.io",
+  "wss://*.ably.net",
   "wss://*.ably-realtime.com",
 ] as const;
 const localDevelopmentConnectSources = [
