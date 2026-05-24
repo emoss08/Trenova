@@ -23,8 +23,8 @@ const STATUS_TONE: Record<ShipmentStatus, PinTone | null> = {
   Canceled: null,
 };
 
-export function ShipmentRouteOverlay() {
-  const { data } = useMapShipments();
+export function ShipmentRouteOverlay({ enabled = true }: { enabled?: boolean }) {
+  const { data } = useMapShipments(enabled);
   const highlightId = useCommandCenterStore.use.highlightId();
   const setHighlightId = useCommandCenterStore.use.setHighlightId();
   const [, setUrl] = useCommandCenterUrl();

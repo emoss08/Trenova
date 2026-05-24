@@ -37,6 +37,7 @@ export const ProblemType = z.enum([
   "resource-not-found",
   "rate-limit-exceeded",
   "resource-conflict",
+  "request-timeout",
   "internal-error",
 ]);
 

@@ -37,7 +37,7 @@ function exceptionFilters(category: ExceptionCategory): FieldFilter[] {
   }
 }
 
-export function useUnassignedShipments(pageSize = DEFAULT_LIMIT) {
+export function useUnassignedShipments(pageSize = DEFAULT_LIMIT, enabled = true) {
   return useInfiniteQuery({
     queryKey: [...queries.shipment.listUnassigned._def, { pageSize }],
     queryFn: ({ pageParam }) =>
@@ -50,10 +50,17 @@ export function useUnassignedShipments(pageSize = DEFAULT_LIMIT) {
       return undefined;
     },
     staleTime: 30_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled,
   });
 }
 
-export function useExceptionShipments(category: ExceptionCategory, limit = DEFAULT_LIMIT) {
+export function useExceptionShipments(
+  category: ExceptionCategory,
+  limit = DEFAULT_LIMIT,
+  enabled = true,
+) {
   return useQuery({
     queryKey: ["shipment-list", "right-stack", "exceptions", category, { limit }],
     queryFn: () =>
@@ -65,7 +72,10 @@ export function useExceptionShipments(category: ExceptionCategory, limit = DEFAU
           fieldFilters: exceptionFilters(category),
           extraSearchParams: { expandShipmentDetails: true },
         },
-      ),
+    ),
     staleTime: 30_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled,
   });
 }

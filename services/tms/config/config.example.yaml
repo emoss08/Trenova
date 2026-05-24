@@ -30,6 +30,7 @@ server:
   writeTimeout: 30s # Maximum duration before timing out response writes
   idleTimeout: 120s # Maximum keep-alive idle connection duration
   shutdownTimeout: 10s # Maximum graceful shutdown duration
+  requestTimeout: 60s # Maximum app-controlled handler duration
   cors:
     enabled: true # Enable CORS
     allowedOrigins: # Allowed origins for CORS
@@ -50,7 +51,13 @@ server:
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
     credentials: true # Allow credentials
-    maxAge: 86400 # Preflight cache duration in seconds
+  maxAge: 86400 # Preflight cache duration in seconds
+
+monitoring:
+  pprof:
+    enabled: false
+    host: 127.0.0.1
+    port: 6060
 
 # PostgreSQL database configuration
 database:

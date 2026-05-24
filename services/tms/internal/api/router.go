@@ -413,6 +413,7 @@ func (r *Router) setupMiddleware() {
 	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.cfg))
 	r.s.router.Use(gin.Recovery())
 	r.s.router.Use(requestid.New())
+	r.s.router.Use(middleware.NewRequestTimeoutMiddleware(r.cfg, r.errorHandler))
 	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
 	r.s.router.Use(
 		gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/metrics", "/health"})),

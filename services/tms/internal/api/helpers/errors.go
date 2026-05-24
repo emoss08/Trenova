@@ -1,9 +1,12 @@
 package helpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -29,6 +32,13 @@ type ErrorHandler struct {
 	sanitizer  *Sanitizer
 }
 
+type TimeoutResponseContext struct {
+	RequestID string
+	Method    string
+	Path      string
+	IP        string
+}
+
 func NewErrorHandler(params ErrorHandlerParams) *ErrorHandler {
 	return &ErrorHandler{
 		logger:     params.Logger.Named("error-handler"),
@@ -40,6 +50,18 @@ func NewErrorHandler(params ErrorHandlerParams) *ErrorHandler {
 
 func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 	if err == nil {
+		return
+	}
+	if h.isClientCancellation(c, err) {
+		requestID := extractRequestID(c)
+		h.logger.Warn("Request canceled by client",
+			zap.String("request_id", requestID),
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.String("ip", c.ClientIP()),
+			zap.Error(err),
+		)
+		c.Abort()
 		return
 	}
 
@@ -67,6 +89,28 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 	c.Abort()
 }
 
+func (h *ErrorHandler) WriteRequestTimeout(
+	w http.ResponseWriter,
+	ctx TimeoutResponseContext,
+	err error,
+) {
+	problemType := h.classifier.Classify(err)
+	h.logTimeoutError(ctx, err, problemType)
+
+	problem := NewProblemBuilder(h.baseURI).
+		WithType(problemType).
+		WithDetail(h.sanitizer.SanitizeMessage(err, problemType)).
+		WithInstance(ctx.Path, ctx.RequestID).
+		WithTraceID(ctx.RequestID).
+		Build()
+
+	w.Header().Set("Content-Type", ProblemJSONContentType)
+	w.WriteHeader(problem.Status)
+	if bytes, marshalErr := sonic.Marshal(problem); marshalErr == nil {
+		_, _ = w.Write(bytes)
+	}
+}
+
 func (h *ErrorHandler) logError(
 	c *gin.Context,
 	err error,
@@ -92,11 +136,49 @@ func (h *ErrorHandler) logError(
 		fields = append(fields, zap.String("query", c.Request.URL.RawQuery))
 	}
 
-	if info.StatusCode >= 500 {
+	if problemType == ProblemTypeTimeout {
+		h.logger.Warn("Request timed out", fields...)
+	} else if info.StatusCode >= 500 {
 		h.logger.Error("Server error", fields...)
 	} else {
 		h.logger.Warn("Client error", fields...)
 	}
+}
+
+func (h *ErrorHandler) logTimeoutError(
+	ctx TimeoutResponseContext,
+	err error,
+	problemType ProblemType,
+) {
+	info := problemType.Info()
+	if !info.ShouldLog {
+		return
+	}
+
+	fields := []zap.Field{
+		zap.String("request_id", ctx.RequestID),
+		zap.String("method", ctx.Method),
+		zap.String("path", ctx.Path),
+		zap.String("ip", ctx.IP),
+		zap.Int("status", info.StatusCode),
+		zap.String("problem_type", string(problemType)),
+		zap.Error(err),
+	}
+
+	h.logger.Warn("Request timed out", fields...)
+}
+
+func (h *ErrorHandler) isClientCancellation(c *gin.Context, err error) bool {
+	if errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if !errors.Is(err, context.Canceled) {
+		return false
+	}
+	if c.Request.Context().Err() == context.DeadlineExceeded {
+		return false
+	}
+	return true
 }
 
 func (h *ErrorHandler) Middleware() gin.HandlerFunc {

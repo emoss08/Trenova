@@ -1,0 +1,10 @@
+[databases]
+trenova_go_db = host=127.0.0.1 port=5432 dbname=trenova_go_db
+
+[pgbouncer]
+listen_addr = 127.0.0.1
+listen_port = 6432
+auth_type = scram-sha-256
+auth_file = /etc/pgbouncer/userlist.txt
+admin_users = pgbouncer_admin
+stats_users = pgbouncer_admin, pgbouncer_stats

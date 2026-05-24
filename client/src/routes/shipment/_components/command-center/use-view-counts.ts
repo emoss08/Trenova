@@ -7,7 +7,7 @@ import { getMandatoryFieldFilters, SAVED_VIEWS, type SavedViewId } from "./saved
 const SHIPMENTS_LINK = "/shipments/";
 const COUNT_PAGE_SIZE = 1; // backend min limit; we only read `count` from the response
 
-export function useSavedViewCounts(): Record<SavedViewId, number | undefined> {
+export function useSavedViewCounts(enabled = true): Record<SavedViewId, number | undefined> {
   const queries = useMemo(
     () =>
       SAVED_VIEWS.map((view) => {
@@ -22,9 +22,12 @@ export function useSavedViewCounts(): Record<SavedViewId, number | undefined> {
               { fieldFilters },
             ),
           staleTime: 30_000,
+          retry: false,
+          refetchOnWindowFocus: false,
+          enabled,
         };
       }),
-    [],
+    [enabled],
   );
 
   // useQueries returns a new array reference each render, so use the

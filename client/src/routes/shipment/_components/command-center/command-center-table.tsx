@@ -165,6 +165,7 @@ export function CommandCenterTable({
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
+  const backgroundQueriesEnabled = dataQuery.isSuccess;
 
   useEffect(() => {
     if (!dataQuery.data) return;
@@ -261,7 +262,7 @@ export function CommandCenterTable({
   if (viewMode === "timeline") {
     return (
       <section className="flex flex-col rounded-md border border-border bg-card">
-        <SavedViewsBar rightSlot={rightSlot} />
+        <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
         <div className="p-4">
           <TimelinePlaceholder />
         </div>
@@ -279,7 +280,7 @@ export function CommandCenterTable({
 
   return (
     <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
-      <SavedViewsBar rightSlot={rightSlot} />
+      <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
 
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>

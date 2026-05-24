@@ -33,13 +33,17 @@ const MODULE_LABEL: Record<RightStackModuleId, string> = {
   hos: "HOS watch",
 };
 
-const RENDERERS: Record<RightStackModuleId, () => React.ReactElement> = {
-  unassigned: UnassignedQueue,
-  exceptions: ExceptionsInbox,
-  hos: HosWatchPlaceholder,
+type RendererProps = {
+  enabled: boolean;
 };
 
-export default function RightStack() {
+const RENDERERS: Record<RightStackModuleId, (props: RendererProps) => React.ReactElement> = {
+  unassigned: UnassignedQueue,
+  exceptions: ExceptionsInbox,
+  hos: () => <HosWatchPlaceholder />,
+};
+
+export default function RightStack({ backgroundEnabled = true }: { backgroundEnabled?: boolean }) {
   const order = useRightStackStore.use.order();
   const hidden = useRightStackStore.use.hidden();
   const show = useRightStackStore.use.show();
@@ -115,7 +119,7 @@ export default function RightStack() {
           <div className="flex min-h-0 flex-1 flex-col gap-2">
             {visible.map((id) => {
               const Renderer = RENDERERS[id];
-              return <Renderer key={id} />;
+              return <Renderer key={id} enabled={backgroundEnabled} />;
             })}
           </div>
         </SortableContext>

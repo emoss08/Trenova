@@ -46,9 +46,9 @@ const PILL_TONE: Record<"danger" | "warning" | "muted", string> = {
   muted: "bg-muted text-muted-foreground",
 };
 
-export function UnassignedQueue() {
+export function UnassignedQueue({ enabled = true }: { enabled?: boolean }) {
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useUnassignedShipments();
+    useUnassignedShipments(undefined, enabled);
   const [, setUrl] = useCommandCenterUrl();
 
   const shipments = useMemo(

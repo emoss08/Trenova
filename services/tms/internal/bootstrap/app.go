@@ -82,6 +82,7 @@ func APIOptions() fx.Option {
 		api.HandlersModule,
 		api.MiddlewareModule,
 		api.ServerModule,
+		api.PprofServerModule,
 		api.MonitoringServerModule,
 		api.RouterModule,
 		api.ServiceModule,

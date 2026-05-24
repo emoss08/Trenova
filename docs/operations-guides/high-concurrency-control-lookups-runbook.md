@@ -57,6 +57,15 @@ SHOW SERVERS;
 
 Focus on high `cl_waiting`, long `avg_wait_time`, saturated `sv_active`, and clients waiting on the application database.
 
+Use a dedicated PgBouncer admin or stats identity for these commands. The app database user should not be listed in `admin_users` or `stats_users`.
+
+```ini
+admin_users = pgbouncer_admin
+stats_users = pgbouncer_admin, pgbouncer_stats
+```
+
+See `config/pgbouncer.ini.example` and `config/pgbouncer.userlist.example.txt` for the deployment template. This observability setup does not require changing `pool_mode`, pool sizing, or application database connection settings.
+
 ## Control Tables
 
 These controls are tenant-scoped and must have one row per `(organization_id, business_unit_id)`:

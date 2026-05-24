@@ -13,6 +13,7 @@ type CachedResourcePermission struct {
 }
 
 type CachedPermissions struct {
+	IsPlatformAdmin     bool                                 `json:"isPlatformAdmin"`
 	IsOrgAdmin          bool                                 `json:"isOrgAdmin"`
 	IsBusinessUnitAdmin bool                                 `json:"isBusinessUnitAdmin"`
 	MaxSensitivity      string                               `json:"maxSensitivity"`

@@ -19,6 +19,7 @@ type ServerConfig struct {
 	WriteTimeout      time.Duration `mapstructure:"writeTimeout"`
 	IdleTimeout       time.Duration `mapstructure:"idleTimeout"`
 	ShutdownTimeout   time.Duration `mapstructure:"shutdownTimeout"`
+	RequestTimeout    time.Duration `mapstructure:"requestTimeout"`
 	CORS              CORSConfig    `mapstructure:"cors,omitempty"`
 }
 
@@ -26,6 +27,7 @@ type MonitoringConfig struct {
 	Metrics MetricsConfig `mapstructure:"metrics,omitempty"`
 	Tracing TracingConfig `mapstructure:"tracing,omitempty"`
 	Health  HealthConfig  `mapstructure:"health"`
+	Pprof   PprofConfig   `mapstructure:"pprof"`
 }
 
 type TwilioConfig struct {
@@ -67,6 +69,26 @@ type HealthConfig struct {
 	LivenessPath  string        `mapstructure:"livenessPath"`
 	CheckInterval time.Duration `mapstructure:"checkInterval"`
 	Timeout       time.Duration `mapstructure:"timeout"`
+}
+
+type PprofConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Host    string `mapstructure:"host"    validate:"omitempty,hostname|ip"`
+	Port    int    `mapstructure:"port"    validate:"omitempty,min=1,max=65535"`
+}
+
+func (c *PprofConfig) GetHost() string {
+	if strings.TrimSpace(c.Host) == "" {
+		return "127.0.0.1"
+	}
+	return c.Host
+}
+
+func (c *PprofConfig) GetPort() int {
+	if c.Port <= 0 {
+		return 6060
+	}
+	return c.Port
 }
 
 type LoggingConfig struct {

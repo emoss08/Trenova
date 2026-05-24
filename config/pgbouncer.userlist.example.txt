@@ -1,0 +1,2 @@
+"pgbouncer_admin" "SCRAM-SHA-256$4096:<salt>$<stored-key>:<server-key>"
+"pgbouncer_stats" "SCRAM-SHA-256$4096:<salt>$<stored-key>:<server-key>"

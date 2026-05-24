@@ -45,12 +45,15 @@ func setupTestEngine(
 func TestCheck_PlatformAdminBypass(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
+	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil)
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
 		UserID:         userID,
@@ -66,6 +69,7 @@ func TestCheck_PlatformAdminBypass(t *testing.T) {
 	assert.False(t, result.CacheHit)
 
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestCheck_OrgAdminBypass(t *testing.T) {
@@ -217,12 +221,11 @@ func TestCheck_NoPermission(t *testing.T) {
 func TestCheck_CacheHit(t *testing.T) {
 	t.Parallel()
 
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
 		IsOrgAdmin:     false,
 		MaxSensitivity: string(permission.SensitivityInternal),
@@ -246,7 +249,6 @@ func TestCheck_CacheHit(t *testing.T) {
 	assert.True(t, result.Allowed)
 	assert.True(t, result.CacheHit)
 
-	userRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
 }
 
@@ -289,7 +291,18 @@ func TestCheckBatch(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil).Times(2)
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil).Once()
+	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil).Once()
+	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil).Once()
+	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
+		IsPlatformAdmin:     true,
+		IsOrgAdmin:          true,
+		IsBusinessUnitAdmin: true,
+		MaxSensitivity:      string(permission.SensitivityConfidential),
+		Resources:           map[string]*repositories.CachedResourcePermission{},
+		ExpiresAt:           timeutils.NowUnix() + 3600,
+	}, nil).Once()
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
 		UserID:         userID,
@@ -312,12 +325,15 @@ func TestCheckBatch(t *testing.T) {
 func TestGetLightManifest_PlatformAdmin(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
+	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
@@ -333,6 +349,7 @@ func TestGetLightManifest_PlatformAdmin(t *testing.T) {
 	assert.NotEmpty(t, manifest.RouteAccess)
 	assert.NotEmpty(t, manifest.Checksum)
 	assert.Len(t, manifest.AvailableOrgs, 1)
+	cacheRepo.AssertExpectations(t)
 
 	userRepo.AssertExpectations(t)
 }
@@ -526,12 +543,15 @@ func TestSimulatePermissions(t *testing.T) {
 func TestGetResourcePermissions_PlatformAdmin(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
+	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
 
@@ -543,24 +563,22 @@ func TestGetResourcePermissions_PlatformAdmin(t *testing.T) {
 	assert.NotEmpty(t, result.Operations)
 
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetResourcePermissions_UnknownResource(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, _, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
-
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "unknown_resource")
 
 	require.NoError(t, err)
 	assert.Nil(t, result)
 
-	userRepo.AssertExpectations(t)
 }
 
 func TestExpiredAssignmentsIgnored(t *testing.T) {
@@ -699,11 +717,12 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 func TestCheck_PlatformAdminCheckError(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("user repo error"))
 
 	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
@@ -716,17 +735,17 @@ func TestCheck_PlatformAdminCheckError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestCheck_OperationNotAllowed(t *testing.T) {
 	t.Parallel()
 
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
 		IsOrgAdmin:     false,
 		MaxSensitivity: string(permission.SensitivityInternal),
@@ -749,18 +768,18 @@ func TestCheck_OperationNotAllowed(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Allowed)
 	assert.Equal(t, "no_permission", result.Reason)
-	userRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
 }
 
 func TestCheckBatch_Error(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("db error"))
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
@@ -773,17 +792,19 @@ func TestCheckBatch_Error(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, result)
+	cacheRepo.AssertExpectations(t)
 	userRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_PlatformAdminCheckError(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("user error"))
 
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
@@ -791,17 +812,21 @@ func TestGetLightManifest_PlatformAdminCheckError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, manifest)
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
+	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
+		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).
 		Return(nil, errors.New("summaries error"))
 
@@ -810,6 +835,7 @@ func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, manifest)
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_OrgAdmin(t *testing.T) {
@@ -988,11 +1014,12 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 func TestGetResourcePermissions_PlatformAdminCheckError(t *testing.T) {
 	t.Parallel()
 
-	eng, _, _, userRepo := setupTestEngine(t)
+	eng, _, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
+	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("db error"))
 
 	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
@@ -1000,6 +1027,7 @@ func TestGetResourcePermissions_PlatformAdminCheckError(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	userRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetEffectivePermissions_Error(t *testing.T) {

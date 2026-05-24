@@ -14,6 +14,7 @@ type Database struct {
 	Base
 	concurrencyTotal *prometheus.CounterVec
 	operatorActions  *prometheus.CounterVec
+	stats            func() sql.DBStats
 }
 
 func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Database {
@@ -51,6 +52,7 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 }
 
 func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
+	m.stats = stats
 	m.ifEnabled(func() {
 		m.mustRegister(
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
@@ -95,6 +97,13 @@ func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
 			}),
 		)
 	})
+}
+
+func (m *Database) SQLStats() (sql.DBStats, bool) {
+	if m == nil || m.stats == nil {
+		return sql.DBStats{}, false
+	}
+	return m.stats(), true
 }
 
 func (m *Database) RecordConcurrencyEvent(event dberror.ConcurrencyEvent) {

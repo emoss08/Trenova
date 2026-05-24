@@ -14,6 +14,7 @@ const (
 	ProblemTypeNotFound       = ProblemType("resource-not-found")
 	ProblemTypeRateLimit      = ProblemType("rate-limit-exceeded")
 	ProblemTypeConflict       = ProblemType("resource-conflict")
+	ProblemTypeTimeout        = ProblemType("request-timeout")
 	ProblemTypeInternal       = ProblemType("internal-error")
 )
 
@@ -71,6 +72,12 @@ var problemTypeRegistry = map[ProblemType]ProblemTypeInfo{ //nolint:exhaustive /
 		Type:       ProblemTypeConflict,
 		Title:      "Resource Conflict",
 		StatusCode: http.StatusConflict,
+		ShouldLog:  true,
+	},
+	ProblemTypeTimeout: {
+		Type:       ProblemTypeTimeout,
+		Title:      "Gateway Timeout",
+		StatusCode: http.StatusGatewayTimeout,
 		ShouldLog:  true,
 	},
 	ProblemTypeInternal: {

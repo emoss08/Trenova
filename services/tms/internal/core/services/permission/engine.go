@@ -21,9 +21,18 @@ import (
 )
 
 const (
-	manifestVersion = "1.0"
-	cacheTTL        = 30 * time.Minute
+	manifestVersion              = "1.0"
+	cacheTTL                     = 30 * time.Minute
+	slowPermissionCheckThreshold = 250 * time.Millisecond
 )
+
+type permissionLoadResult struct {
+	perms                 *repositories.CachedPermissions
+	cacheHit              bool
+	cacheLookupDuration   time.Duration
+	computeDuration       time.Duration
+	platformAdminDuration time.Duration
+}
 
 type Params struct {
 	fx.In
@@ -76,44 +85,43 @@ func (e *engine) Check(
 		return e.checkAPIKeyPermission(ctx, req, start)
 	}
 
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, req.UserID)
+	load, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
 	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
+		log.Error("failed to get permissions", zap.Error(err))
+		e.logSlowPermissionCheck(log, start, load, false)
 		return nil, err
 	}
 
-	if isPlatformAdmin {
+	if load.perms.IsPlatformAdmin {
+		e.logSlowPermissionCheck(log, start, load, true)
 		return &services.PermissionCheckResult{
 			Allowed:       true,
 			Reason:        "platform_admin",
 			DataScope:     permission.DataScopeAll,
-			CacheHit:      false,
+			CacheHit:      load.cacheHit,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
 
-	perms, cacheHit, err := e.getOrComputePermissions(ctx, req.UserID, req.OrganizationID)
-	if err != nil {
-		log.Error("failed to get permissions", zap.Error(err))
-		return nil, err
-	}
-
+	perms := load.perms
 	if perms.IsOrgAdmin {
+		e.logSlowPermissionCheck(log, start, load, true)
 		return &services.PermissionCheckResult{
 			Allowed:       true,
 			Reason:        "org_admin",
 			DataScope:     permission.DataScopeOrganization,
-			CacheHit:      cacheHit,
+			CacheHit:      load.cacheHit,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
 
 	if perms.IsBusinessUnitAdmin {
+		e.logSlowPermissionCheck(log, start, load, true)
 		return &services.PermissionCheckResult{
 			Allowed:       true,
 			Reason:        "business_unit_admin",
 			DataScope:     permission.DataScopeOrganization,
-			CacheHit:      cacheHit,
+			CacheHit:      load.cacheHit,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
@@ -122,32 +130,56 @@ func (e *engine) Check(
 
 	resourcePerms, ok := perms.Resources[effectiveResource]
 	if !ok {
+		e.logSlowPermissionCheck(log, start, load, true)
 		return &services.PermissionCheckResult{
 			Allowed:       false,
 			Reason:        "no_permission",
 			DataScope:     "",
-			CacheHit:      cacheHit,
+			CacheHit:      load.cacheHit,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
 
 	if slices.Contains(resourcePerms.Operations, string(req.Operation)) {
+		e.logSlowPermissionCheck(log, start, load, true)
 		return &services.PermissionCheckResult{
 			Allowed:       true,
 			Reason:        "allowed",
 			DataScope:     permission.DataScope(resourcePerms.DataScope),
-			CacheHit:      cacheHit,
+			CacheHit:      load.cacheHit,
 			CheckDuration: time.Since(start).Milliseconds(),
 		}, nil
 	}
 
+	e.logSlowPermissionCheck(log, start, load, true)
 	return &services.PermissionCheckResult{
 		Allowed:       false,
 		Reason:        "no_permission",
 		DataScope:     "",
-		CacheHit:      cacheHit,
+		CacheHit:      load.cacheHit,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}, nil
+}
+
+func (e *engine) logSlowPermissionCheck(
+	log *zap.Logger,
+	start time.Time,
+	load permissionLoadResult,
+	completed bool,
+) {
+	total := time.Since(start)
+	if total <= slowPermissionCheckThreshold {
+		return
+	}
+
+	log.Warn("slow permission check",
+		zap.Duration("total_duration", total),
+		zap.Duration("platform_admin_lookup_duration", load.platformAdminDuration),
+		zap.Duration("cache_lookup_duration", load.cacheLookupDuration),
+		zap.Duration("permission_compute_duration", load.computeDuration),
+		zap.Bool("cache_hit", load.cacheHit),
+		zap.Bool("completed", completed),
+	)
 }
 
 func (e *engine) CheckBatch(
@@ -193,9 +225,9 @@ func (e *engine) GetLightManifest(
 		zap.String("orgID", orgID.String()),
 	)
 
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, userID)
+	load, err := e.getOrComputePermissions(ctx, userID, orgID)
 	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
+		log.Error("failed to get permissions", zap.Error(err))
 		return nil, err
 	}
 
@@ -206,7 +238,7 @@ func (e *engine) GetLightManifest(
 	}
 	expiresAt := timeutils.NowUnix() + int64(cacheTTL.Seconds())
 
-	if isPlatformAdmin {
+	if load.perms.IsPlatformAdmin {
 		return e.newLightManifest(
 			userID,
 			orgID,
@@ -220,12 +252,7 @@ func (e *engine) GetLightManifest(
 		), nil
 	}
 
-	perms, _, err := e.getOrComputePermissions(ctx, userID, orgID)
-	if err != nil {
-		log.Error("failed to get permissions", zap.Error(err))
-		return nil, err
-	}
-
+	perms := load.perms
 	permissions := e.lightResourceBitmasks(perms)
 	return e.newLightManifest(
 		userID,
@@ -329,12 +356,6 @@ func (e *engine) GetResourcePermissions(
 		zap.String("resource", resource),
 	)
 
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, userID)
-	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
-		return nil, err
-	}
-
 	def, ok := e.registry.Get(resource)
 	if !ok {
 		def, ok = e.registry.Get(e.registry.GetEffectiveResource(resource))
@@ -343,7 +364,13 @@ func (e *engine) GetResourcePermissions(
 		}
 	}
 
-	if isPlatformAdmin {
+	load, err := e.getOrComputePermissions(ctx, userID, orgID)
+	if err != nil {
+		log.Error("failed to get permissions", zap.Error(err))
+		return nil, err
+	}
+
+	if load.perms.IsPlatformAdmin {
 		ops := make([]permission.Operation, len(def.Operations))
 		for i, opDef := range def.Operations {
 			ops[i] = opDef.Operation
@@ -360,12 +387,7 @@ func (e *engine) GetResourcePermissions(
 		}, nil
 	}
 
-	perms, _, err := e.getOrComputePermissions(ctx, userID, orgID)
-	if err != nil {
-		log.Error("failed to get permissions", zap.Error(err))
-		return nil, err
-	}
-
+	perms := load.perms
 	maxSensitivity := permission.FieldSensitivity(perms.MaxSensitivity)
 
 	if perms.IsOrgAdmin || perms.IsBusinessUnitAdmin {
@@ -551,6 +573,7 @@ func (e *engine) computeAPIKeyPermissions(
 	}
 
 	return &repositories.CachedPermissions{
+		IsPlatformAdmin:     false,
 		IsOrgAdmin:          false,
 		IsBusinessUnitAdmin: false,
 		MaxSensitivity:      string(permission.SensitivityRestricted),
@@ -562,35 +585,63 @@ func (e *engine) computeAPIKeyPermissions(
 func (e *engine) getOrComputePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*repositories.CachedPermissions, bool, error) {
+) (permissionLoadResult, error) {
+	result := permissionLoadResult{}
+
+	cacheStart := time.Now()
 	cached, err := e.cacheRepo.Get(ctx, userID, orgID)
+	result.cacheLookupDuration = time.Since(cacheStart)
 	if err != nil {
 		e.l.Warn("cache lookup failed, computing fresh", zap.Error(err))
 	}
 
 	if cached != nil && cached.ExpiresAt > timeutils.NowUnix() {
-		return cached, true, nil
+		result.perms = cached
+		result.cacheHit = true
+		return result, nil
 	}
 
-	perms, err := e.computePermissions(ctx, userID, orgID)
+	computeStart := time.Now()
+	perms, platformAdminDuration, err := e.computePermissions(ctx, userID, orgID)
+	result.computeDuration = time.Since(computeStart)
+	result.platformAdminDuration = platformAdminDuration
 	if err != nil {
-		return nil, false, err
+		return result, err
 	}
 
 	if cacheErr := e.cacheRepo.Set(ctx, userID, orgID, perms, cacheTTL); cacheErr != nil {
 		e.l.Warn("failed to cache permissions", zap.Error(cacheErr))
 	}
 
-	return perms, false, nil
+	result.perms = perms
+	return result, nil
 }
 
 func (e *engine) computePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*repositories.CachedPermissions, error) {
+) (*repositories.CachedPermissions, time.Duration, error) {
+	platformAdminStart := time.Now()
+	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, userID)
+	platformAdminDuration := time.Since(platformAdminStart)
+	if err != nil {
+		return nil, platformAdminDuration, err
+	}
+
+	if isPlatformAdmin {
+		return &repositories.CachedPermissions{
+			IsPlatformAdmin:     true,
+			IsOrgAdmin:          true,
+			IsBusinessUnitAdmin: true,
+			MaxSensitivity:      string(permission.SensitivityConfidential),
+			Resources:           make(map[string]*repositories.CachedResourcePermission),
+			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		}, platformAdminDuration, nil
+	}
+
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 	if err != nil {
-		return nil, err
+		return nil, platformAdminDuration, err
 	}
 
 	roleIDs := make([]pulid.ID, 0, len(assignments))
@@ -602,17 +653,18 @@ func (e *engine) computePermissions(
 
 	if len(roleIDs) == 0 {
 		return &repositories.CachedPermissions{
+			IsPlatformAdmin:     false,
 			IsOrgAdmin:          false,
 			IsBusinessUnitAdmin: false,
 			MaxSensitivity:      string(permission.SensitivityPublic),
 			Resources:           make(map[string]*repositories.CachedResourcePermission),
 			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-		}, nil
+		}, platformAdminDuration, nil
 	}
 
 	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
 	if err != nil {
-		return nil, err
+		return nil, platformAdminDuration, err
 	}
 
 	isOrgAdmin := false
@@ -627,19 +679,20 @@ func (e *engine) computePermissions(
 
 	hasBUAdminAccess, err := e.roleRepo.HasBusinessUnitAdminAccess(ctx, userID, orgID)
 	if err != nil {
-		return nil, err
+		return nil, platformAdminDuration, err
 	}
 	if hasBUAdminAccess {
 		isBusinessUnitAdmin = true
 	}
 
 	return &repositories.CachedPermissions{
+		IsPlatformAdmin:     false,
 		IsOrgAdmin:          isOrgAdmin,
 		IsBusinessUnitAdmin: isBusinessUnitAdmin,
 		MaxSensitivity:      string(maxSensitivity),
 		Resources:           resources,
 		ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-	}, nil
+	}, platformAdminDuration, nil
 }
 
 func (e *engine) applyRoleMeta(

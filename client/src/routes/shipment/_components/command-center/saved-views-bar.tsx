@@ -44,9 +44,15 @@ function ViewTab({
   );
 }
 
-export function SavedViewsBar({ rightSlot }: { rightSlot?: ReactNode }) {
+export function SavedViewsBar({
+  rightSlot,
+  countsEnabled = true,
+}: {
+  rightSlot?: ReactNode;
+  countsEnabled?: boolean;
+}) {
   const [{ view }, setUrl] = useCommandCenterUrl();
-  const counts = useSavedViewCounts();
+  const counts = useSavedViewCounts(countsEnabled);
 
   // Switching tabs resets pagination + collapses the open expansion so the
   // dispatcher lands on a clean page within the new view.

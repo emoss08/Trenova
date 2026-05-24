@@ -39,6 +39,7 @@ export class ApiRequestError extends Error {
       "resource-not-found",
       "rate-limit-exceeded",
       "resource-conflict",
+      "request-timeout",
       "internal-error",
     ];
     return validTypes.includes(suffix as ProblemType) ? (suffix as ProblemType) : null;
@@ -76,6 +77,10 @@ export class ApiRequestError extends Error {
 
   isConflictError(): boolean {
     return this.status === 409 || this.getProblemType() === "resource-conflict";
+  }
+
+  isTimeoutError(): boolean {
+    return this.status === 504 || this.getProblemType() === "request-timeout";
   }
 
   getUsageStats(): unknown {

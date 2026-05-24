@@ -7,3 +7,8 @@ import (
 )
 
 var ServerModule = fx.Module("api-server", fx.Provide(api.NewServer))
+
+var PprofServerModule = fx.Module("api-pprof-server",
+	fx.Provide(api.NewPprofServer),
+	fx.Invoke(func(_ *api.PprofServer) {}),
+)

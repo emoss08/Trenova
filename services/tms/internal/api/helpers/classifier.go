@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"context"
 	"encoding/json" //nolint:depguard // this is fine
 	"errors"
 	"io"
@@ -43,6 +44,7 @@ func (c *ChainClassifier) Classify(err error) ProblemType {
 
 func NewDefaultClassifier() *ChainClassifier {
 	return NewChainClassifier(
+		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyBadRequest),
 		ClassifierFunc(classifyBusiness),
@@ -53,6 +55,19 @@ func NewDefaultClassifier() *ChainClassifier {
 		ClassifierFunc(classifyRateLimit),
 		ClassifierFunc(classifyConflict),
 	)
+}
+
+func classifyTimeout(err error) (ProblemType, bool) {
+	var timeoutErr *RequestTimeoutError
+	if errors.As(err, &timeoutErr) {
+		return ProblemTypeTimeout, true
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) {
+		return ProblemTypeTimeout, true
+	}
+
+	return "", false
 }
 
 func classifyValidation(err error) (ProblemType, bool) {

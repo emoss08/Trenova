@@ -94,8 +94,8 @@ function deriveException(s: Shipment): DerivedException | null {
   };
 }
 
-export function ExceptionsInbox() {
-  const { data, isLoading } = useExceptionShipments("all");
+export function ExceptionsInbox({ enabled = true }: { enabled?: boolean }) {
+  const { data, isLoading } = useExceptionShipments("all", undefined, enabled);
   const [, setUrl] = useCommandCenterUrl();
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 

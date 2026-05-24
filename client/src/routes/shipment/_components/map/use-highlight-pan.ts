@@ -8,10 +8,10 @@ import { useMapShipments } from "./use-map-shipments";
 const HIGHLIGHT_PAN_DELAY_MS = 120;
 const VIEWPORT_MARGIN_RATIO = 0.1;
 
-export function useHighlightPan(mapInstanceId: string) {
+export function useHighlightPan(mapInstanceId: string, enabled = true) {
   const map = useMap(mapInstanceId);
   const highlightId = useCommandCenterStore.use.highlightId();
-  const { data } = useMapShipments();
+  const { data } = useMapShipments(enabled);
 
   const highlightedPoint = useMemo(() => {
     if (!highlightId) return null;
@@ -35,8 +35,14 @@ export function useHighlightPan(mapInstanceId: string) {
   }, [highlightId, highlightedPoint, map]);
 }
 
-export function HighlightAutoPan({ mapInstanceId }: { mapInstanceId: string }) {
-  useHighlightPan(mapInstanceId);
+export function HighlightAutoPan({
+  mapInstanceId,
+  enabled = true,
+}: {
+  mapInstanceId: string;
+  enabled?: boolean;
+}) {
+  useHighlightPan(mapInstanceId, enabled);
   return null;
 }
 

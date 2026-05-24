@@ -151,6 +151,7 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.writeTimeout", "30s")
 	l.viper.SetDefault("server.idleTimeout", "120s")
 	l.viper.SetDefault("server.shutdownTimeout", "10s")
+	l.viper.SetDefault("server.requestTimeout", "60s")
 
 	// Database defaults
 	l.viper.SetDefault("database.sslMode", "prefer")
@@ -203,6 +204,9 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("monitoring.health.livenessPath", "/live")
 	l.viper.SetDefault("monitoring.health.checkInterval", "30s")
 	l.viper.SetDefault("monitoring.health.timeout", "5s")
+	l.viper.SetDefault("monitoring.pprof.enabled", false)
+	l.viper.SetDefault("monitoring.pprof.host", "127.0.0.1")
+	l.viper.SetDefault("monitoring.pprof.port", 6060)
 
 	// Cache defaults
 	l.viper.SetDefault("cache.host", "localhost")

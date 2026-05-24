@@ -34,6 +34,7 @@ export function ShipmentsPage() {
     if (!summary) return null;
     return new Intl.NumberFormat().format(summary.totalCount);
   }, [summary]);
+  const backgroundQueriesEnabled = summary !== null;
 
   const handleCreateShipment = useCallback(() => {
     void setSearchParams({ panelType: "create", panelEntityId: null });
@@ -43,8 +44,7 @@ export function ShipmentsPage() {
     setIsRefreshing(true);
     try {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["shipment-list"] }),
-        queryClient.invalidateQueries({ queryKey: queries.shipment.listUnassigned._def }),
+        queryClient.invalidateQueries({ queryKey: ["shipment-list", "command-center"] }),
         queryClient.invalidateQueries({
           queryKey: analytics.get("shipment-management").queryKey,
         }),
@@ -107,11 +107,11 @@ export function ShipmentsPage() {
         </LazyComponent>
         <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
           <ShipmentMapPanelBoundary>
-            <ShipmentMapPanel />
+            <ShipmentMapPanel backgroundEnabled={backgroundQueriesEnabled} />
           </ShipmentMapPanelBoundary>
           <div className="relative h-[clamp(420px,calc(100vh-380px),540px)] min-h-0">
             <LazyComponent>
-              <RightStack />
+              <RightStack backgroundEnabled={backgroundQueriesEnabled} />
             </LazyComponent>
           </div>
         </div>

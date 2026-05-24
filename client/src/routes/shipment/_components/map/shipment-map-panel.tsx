@@ -32,17 +32,20 @@ const OWM_LAYER_MAP: Record<string, OWMLayerId> = {
   pressure: "pressure_new",
 };
 
-export default function ShipmentMapPanel() {
+export default function ShipmentMapPanel({ backgroundEnabled = true }: { backgroundEnabled?: boolean }) {
   const mapId = useMapId();
   const { data } = useSuspenseQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
   });
-  const mapShipmentsQuery = useMapShipments();
+  const mapShipmentsQuery = useMapShipments(backgroundEnabled);
   const [selectedGeofenceId, setSelectedGeofenceId] = useState<string | null>(null);
 
   const locationsQuery = useQuery({
     ...queries.location.geofences(),
     staleTime: 5 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: backgroundEnabled,
   });
   const locations = useMemo(() => locationsQuery.data?.results ?? [], [locationsQuery.data]);
   const allGeofences = useMemo(() => collectGeofencesFromLocations(locations), [locations]);
@@ -67,6 +70,9 @@ export default function ShipmentMapPanel() {
   const owmQuery = useQuery({
     ...queries.integration.runtimeConfig("OpenWeatherMap"),
     staleTime: 5 * 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled: backgroundEnabled,
   });
 
   const owmApiKey = owmQuery.data?.apiKey ?? "";
@@ -179,8 +185,8 @@ export default function ShipmentMapPanel() {
               />
             )}
             {overlays.alerts && <WeatherAlertLayer />}
-            <ShipmentRouteOverlay />
-            <HighlightAutoPan mapInstanceId={LIVE_MAP_INSTANCE_ID} />
+            <ShipmentRouteOverlay enabled={backgroundEnabled} />
+            <HighlightAutoPan mapInstanceId={LIVE_MAP_INSTANCE_ID} enabled={backgroundEnabled} />
             <MapZoomControls />
           </Map>
           <LiveMapSyncOverlay

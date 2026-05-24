@@ -1,6 +1,8 @@
 package observability
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -137,13 +139,54 @@ func (m *Middleware) TracingMiddleware() gin.HandlerFunc { //nolint:gocognit,cyc
 			(strings.Contains(path, "/live") || strings.Contains(path, "/live-mode"))
 
 		if duration > 1.0 && !isWebSocket && !isLiveMode {
-			m.logger.Warn("Slow request detected",
+			fields := []zap.Field{
 				zap.String("method", c.Request.Method),
 				zap.String("path", path),
 				zap.Int("status", status),
 				zap.Float64("duration_seconds", duration),
 				zap.String("trace_id", c.GetString("trace_id")),
-			)
+			}
+
+			fields = append(fields, slowRequestQueryFields(c.Request.URL.RawQuery)...)
+			fields = append(fields, m.dbPoolFields()...)
+
+			m.logger.Warn("Slow request detected", fields...)
 		}
+	}
+}
+
+func slowRequestQueryFields(query string) []zap.Field {
+	if query == "" {
+		return nil
+	}
+
+	hash := sha256.Sum256([]byte(query))
+	fields := []zap.Field{
+		zap.String("query_hash", hex.EncodeToString(hash[:8])),
+	}
+	if len(query) > 512 {
+		query = query[:512]
+	}
+	fields = append(fields, zap.String("query", query))
+	return fields
+}
+
+func (m *Middleware) dbPoolFields() []zap.Field {
+	if m == nil || m.metrics == nil || m.metrics.Database == nil {
+		return nil
+	}
+
+	stats, ok := m.metrics.Database.SQLStats()
+	if !ok {
+		return nil
+	}
+
+	return []zap.Field{
+		zap.Int("db_pool_open", stats.OpenConnections),
+		zap.Int("db_pool_in_use", stats.InUse),
+		zap.Int("db_pool_idle", stats.Idle),
+		zap.Int64("db_pool_wait_count", stats.WaitCount),
+		zap.Duration("db_pool_wait_duration", stats.WaitDuration),
+		zap.Int("db_pool_max_open", stats.MaxOpenConnections),
 	}
 }
