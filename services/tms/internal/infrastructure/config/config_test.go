@@ -451,7 +451,7 @@ func TestConfig_GetDSN(t *testing.T) {
 		assert.Contains(t, dsn, "postgres://user:password123@localhost:5432/testdb")
 		assert.Contains(t, dsn, "sslmode=disable")
 		assert.Contains(t, dsn, "application_name=trenova")
-		assert.Contains(t, dsn, "connect_timeout=10")
+		assert.Contains(t, dsn, "dial_timeout=10s")
 		assert.NotContains(t, dsn, "statement_timeout")
 		assert.NotContains(t, dsn, "idle_in_transaction_session_timeout")
 	})

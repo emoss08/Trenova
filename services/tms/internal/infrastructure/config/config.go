@@ -854,7 +854,7 @@ func (c *Config) GetDSN(password string) string {
 
 	dsn += fmt.Sprintf("&application_name=%s", url.QueryEscape(c.App.Name))
 
-	dsn += "&connect_timeout=10"
+	dsn += "&dial_timeout=10s"
 
 	return dsn
 }

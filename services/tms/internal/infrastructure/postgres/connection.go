@@ -11,11 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/domainregistry"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
 	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/otel"
@@ -75,19 +73,10 @@ func (c *Connection) connect(ctx context.Context) error {
 		zap.String("database", c.cfg.Database.Name),
 	)
 
-	poolCfg, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		return fmt.Errorf("failed to parse database configuration: %w", err)
-	}
-
-	poolCfg.AfterConnect = c.configureSessionTimeouts
-
-	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
-	if err != nil {
-		return fmt.Errorf("failed to create database pool: %w", err)
-	}
-
-	sqldb := stdlib.OpenDBFromPool(pool)
+	sqldb := sql.OpenDB(pgdriver.NewConnector(
+		pgdriver.WithDSN(dsn),
+		pgdriver.WithConnParams(c.databaseConnParams()),
+	))
 
 	if c.cfg.Database.MaxOpenConns > 0 {
 		sqldb.SetMaxOpenConns(c.cfg.Database.MaxOpenConns)
@@ -111,7 +100,7 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	c.db.RegisterModel(domainregistry.RegisterEntities()...)
 
-	if err = c.HealthCheck(ctx); err != nil {
+	if err := c.HealthCheck(ctx); err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -124,35 +113,12 @@ func (c *Connection) connect(ctx context.Context) error {
 	return nil
 }
 
-func (c *Connection) configureSessionTimeouts(ctx context.Context, conn *pgx.Conn) error {
-	statementTimeoutMS := max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1)
-	if _, err := conn.Exec(
-		ctx,
-		"SELECT set_config('statement_timeout', $1, false)",
-		fmt.Sprintf("%dms", statementTimeoutMS),
-	); err != nil {
-		return fmt.Errorf("set statement_timeout: %w", err)
+func (c *Connection) databaseConnParams() map[string]any {
+	return map[string]any{
+		"statement_timeout":                   fmt.Sprintf("%dms", max(c.cfg.Database.GetStatementTimeout().Milliseconds(), 1)),
+		"lock_timeout":                        fmt.Sprintf("%dms", max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1)),
+		"idle_in_transaction_session_timeout": fmt.Sprintf("%dms", max(c.cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)),
 	}
-
-	lockTimeoutMS := max(c.cfg.Database.GetLockTimeout().Milliseconds(), 1)
-	if _, err := conn.Exec(
-		ctx,
-		"SELECT set_config('lock_timeout', $1, false)",
-		fmt.Sprintf("%dms", lockTimeoutMS),
-	); err != nil {
-		return fmt.Errorf("set lock_timeout: %w", err)
-	}
-
-	idleTxTimeoutMS := max(c.cfg.Database.GetIdleTxTimeout().Milliseconds(), 1)
-	if _, err := conn.Exec(
-		ctx,
-		"SELECT set_config('idle_in_transaction_session_timeout', $1, false)",
-		fmt.Sprintf("%dms", idleTxTimeoutMS),
-	); err != nil {
-		return fmt.Errorf("set idle_in_transaction_session_timeout: %w", err)
-	}
-
-	return nil
 }
 
 func (c *Connection) setupHooks() {
