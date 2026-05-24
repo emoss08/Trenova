@@ -27,6 +27,7 @@
     "@elements": "https://www.tryelements.dev/r/{name}.json",
     "@efferd": "https://efferd.com/r/{style}/{name}.json",
     "@shadcn-space": "https://shadcnspace.com/r/{name}.json",
-    "@magicui": "https://magicui.design/r/{name}"
+    "@magicui": "https://magicui.design/r/{name}",
+    "@intentui": "https://intentui.com/r/{name}"
   }
 }

@@ -5,6 +5,8 @@ import { Skeleton } from "./ui/skeleton";
 export type PageHeaderProps = {
   title: string;
   description: string;
+  context?: React.ReactNode;
+  actions?: React.ReactNode;
   includeMetadata?: boolean;
   className?: string;
   // Simple flag to include inner padding for the title and description (Mainly used for admin pages)
@@ -14,6 +16,8 @@ export type PageHeaderProps = {
 export function PageHeader({
   title,
   description,
+  context,
+  actions,
   includeMetadata = true,
   includeInnerPadding = false,
   className,
@@ -21,10 +25,21 @@ export function PageHeader({
   return (
     <div className={cn("border-b border-border p-4", className)}>
       <div
-        className={cn("flex flex-col items-start leading-none", includeInnerPadding ? "px-4" : "")}
+        className={cn(
+          "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+          includeInnerPadding ? "px-4" : "",
+        )}
       >
-        <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-        <p className="text-muted-foreground">{description}</p>
+        <div className="flex min-w-0 flex-col items-start leading-none">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            {context}
+          </div>
+          <p className="text-muted-foreground">{description}</p>
+        </div>
+        {actions ? (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        ) : null}
       </div>
       {includeMetadata && <Metadata title={title} description={description} />}
     </div>

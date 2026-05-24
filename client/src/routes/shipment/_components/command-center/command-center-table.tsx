@@ -88,12 +88,19 @@ type CommandCenterTableProps = {
   columns: ColumnDef<Shipment>[];
   mandatoryFieldFilters: FieldFilter[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
+  onSummaryChange?: (summary: CommandCenterTableSummary) => void;
+};
+
+export type CommandCenterTableSummary = {
+  totalCount: number;
+  dataUpdatedAt: number;
 };
 
 export function CommandCenterTable({
   columns,
   mandatoryFieldFilters,
   onUploadDocument,
+  onSummaryChange,
 }: CommandCenterTableProps) {
   const [{ mode: viewMode, expanded: expandedId, page, size: pageSize, q: query }, setUrl] =
     useCommandCenterUrl();
@@ -158,6 +165,14 @@ export function CommandCenterTable({
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
+
+  useEffect(() => {
+    if (!dataQuery.data) return;
+    onSummaryChange?.({
+      totalCount,
+      dataUpdatedAt: dataQuery.dataUpdatedAt,
+    });
+  }, [dataQuery.data, dataQuery.dataUpdatedAt, onSummaryChange, totalCount]);
 
   const sortingState = useMemo<SortingState>(
     () => sort.map((s) => ({ id: s.field, desc: s.direction === "desc" })),
@@ -444,7 +459,7 @@ function RowFragment({
       <tr
         className={cn(
           "group/row h-9 cursor-pointer border-b border-border/70 transition-colors hover:bg-muted/30",
-          isExpanded && "bg-brand/10 hover:bg-brand/20 outline-1 outline-brand -outline-offset-1",
+          isExpanded && "bg-brand/10 outline-1 -outline-offset-1 outline-brand hover:bg-brand/20",
           isHighlighted && "bg-muted/50",
         )}
         onClick={onClick}
@@ -452,7 +467,7 @@ function RowFragment({
         onMouseLeave={onMouseLeave}
       >
         {row.getVisibleCells().map((cell) => (
-          <td key={cell.id} className="px-2.5 py-1.5 text-[11.5px] align-middle">
+          <td key={cell.id} className="px-2.5 py-1.5 align-middle text-[11.5px]">
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </td>
         ))}

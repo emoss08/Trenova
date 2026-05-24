@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@/stores/permission-store";
+import type { PanelMode } from "@/types/data-table";
 import { Operation, Resource } from "@/types/permission";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,7 +14,10 @@ import type { Row } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CommandCenterTable } from "./command-center/command-center-table";
+import {
+  CommandCenterTable,
+  type CommandCenterTableSummary,
+} from "./command-center/command-center-table";
 import type { ShipmentDocumentUploadContext } from "./command-center/expanded-row/document-stack";
 import { buildShipmentRowActions } from "./command-center/row-actions";
 import { getMandatoryFieldFilters } from "./command-center/saved-views";
@@ -27,7 +31,11 @@ import { ShipmentTransferOwnershipDialog } from "./shipment-transfer-ownership-d
 
 const SHIPMENT_DETAIL_PARAMS = "?expandShipmentDetails=true";
 
-export default function ShipmentTable() {
+type ShipmentTableProps = {
+  onSummaryChange?: (summary: CommandCenterTableSummary) => void;
+};
+
+export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
   const [duplicateShipmentId, setDuplicateShipmentId] = useState<string | null>(null);
   const [cancelShipmentId, setCancelShipmentId] = useState<string | null>(null);
   const [transferOwnershipShipmentId, setTransferOwnershipShipmentId] = useState<string | null>(
@@ -38,9 +46,8 @@ export default function ShipmentTable() {
     state.hasPermission(Resource.EDI, Operation.Create),
   );
   const [uploadShipment, setUploadShipment] = useState<Shipment | null>(null);
-  const [uploadDocumentType, setUploadDocumentType] = useState<ShipmentDocumentUploadContext | null>(
-    null,
-  );
+  const [uploadDocumentType, setUploadDocumentType] =
+    useState<ShipmentDocumentUploadContext | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -50,6 +57,7 @@ export default function ShipmentTable() {
   // ?panelType=edit&panelEntityId=<id> still open the shipment editor.
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { panelType, panelEntityId } = searchParams;
+  const panelMode: PanelMode = panelType ?? "create";
   const uploadShipmentId = uploadShipment?.id ?? "";
   const uploadDocumentsQueryKey = useMemo(
     () => ["documents", "shipment", uploadShipmentId] as const,
@@ -61,7 +69,7 @@ export default function ShipmentTable() {
   }, [uploadDocumentType]);
   const uploadBillingReadinessQuery = queries.shipment.billingReadiness(uploadShipmentId);
 
-  const isPanelOpen = panelType === "edit";
+  const isPanelOpen = panelType === "edit" || panelType === "create";
 
   const { data: panelRow } = useQuery({
     queryKey: ["shipment-list", "detail", panelEntityId],
@@ -213,7 +221,10 @@ export default function ShipmentTable() {
     (row: Row<Shipment>) => setTransferOwnershipShipmentId(row.original.id || ""),
     [],
   );
-  const handleSendEDI = useCallback((row: Row<Shipment>) => setEDIShipmentId(row.original.id || ""), []);
+  const handleSendEDI = useCallback(
+    (row: Row<Shipment>) => setEDIShipmentId(row.original.id || ""),
+    [],
+  );
 
   const rowActions = useMemo(
     () =>
@@ -267,12 +278,13 @@ export default function ShipmentTable() {
         columns={columns}
         mandatoryFieldFilters={mandatoryFieldFilters}
         onUploadDocument={handleUploadDocument}
+        onSummaryChange={onSummaryChange}
       />
       <ShipmentPanel
         open={isPanelOpen}
         onOpenChange={handlePanelOpenChange}
-        mode="edit"
-        row={panelRow ?? null}
+        mode={panelMode}
+        row={panelMode === "edit" ? (panelRow ?? null) : null}
       />
       <UploadPanel
         isOpen={isUploadOpen}

@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trenova — Shipments Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --radius: 6px;
+        /* Light mode tokens — matched to client/src/styles/app.css */
+        --bg: oklch(0.99 0 0);
+        --bg-elev: oklch(1 0 0);
+        --card: oklch(1 0 0);
+        --card-2: oklch(0.985 0 0);
+        --border: oklch(0.92 0 0);
+        --border-2: oklch(0.95 0 0);
+        --fg: oklch(0.145 0 0);
+        --fg-muted: oklch(0.45 0 0);
+        --fg-subtle: oklch(0.62 0 0);
+        --brand: oklch(0.55 0.22 263);
+        --brand-soft: oklch(0.55 0.22 263 / 0.10);
+        --success: oklch(0.66 0.17 152);
+        --success-soft: oklch(0.66 0.17 152 / 0.12);
+        --warning: oklch(0.78 0.16 80);
+        --warning-soft: oklch(0.78 0.16 80 / 0.16);
+        --danger: oklch(0.62 0.22 27);
+        --danger-soft: oklch(0.62 0.22 27 / 0.12);
+        --info: oklch(0.62 0.22 280);
+        --grid: oklch(0.93 0 0);
+        --map-bg: oklch(0.97 0 0);
+        --map-land: oklch(0.94 0 0);
+        --map-water: oklch(0.91 0.01 230);
+        --map-route: oklch(0.55 0.22 263);
+      }
+      .dark {
+        --bg: oklch(0.06 0 0);
+        --bg-elev: oklch(0.09 0 0);
+        --card: oklch(0.10 0 0);
+        --card-2: oklch(0.13 0 0);
+        --border: oklch(0.20 0 0);
+        --border-2: oklch(0.16 0 0);
+        --fg: oklch(0.98 0 0);
+        --fg-muted: oklch(0.72 0 0);
+        --fg-subtle: oklch(0.50 0 0);
+        --brand: oklch(0.62 0.20 263);
+        --brand-soft: oklch(0.62 0.20 263 / 0.14);
+        --success: oklch(0.74 0.18 152);
+        --success-soft: oklch(0.74 0.18 152 / 0.14);
+        --warning: oklch(0.82 0.16 82);
+        --warning-soft: oklch(0.82 0.16 82 / 0.16);
+        --danger: oklch(0.70 0.20 27);
+        --danger-soft: oklch(0.70 0.20 27 / 0.14);
+        --info: oklch(0.72 0.18 280);
+        --grid: oklch(0.18 0 0);
+        --map-bg: oklch(0.08 0 0);
+        --map-land: oklch(0.11 0 0);
+        --map-water: oklch(0.07 0.01 240);
+        --map-route: oklch(0.72 0.18 263);
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'Inter', system-ui, sans-serif;
+        font-feature-settings: "ss01", "cv11";
+        -webkit-font-smoothing: antialiased;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      body { min-height: 100vh; }
+      .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-feature-settings: "tnum" 1; }
+      .tabular { font-variant-numeric: tabular-nums; }
+      .label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-subtle); }
+      .hairline { border: 1px solid var(--border); }
+      .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+      ::selection { background: oklch(0.78 0.16 86); color: black; }
+
+      /* scrollbar */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+
+      /* density */
+      .density-compact { --row-h: 28px; --pad-y: 4px; --pad-x: 8px; --kpi-h: 96px; --kpi-h-sm: 86px; }
+      .density-cozy    { --row-h: 36px; --pad-y: 6px; --pad-x: 10px; --kpi-h: 108px; --kpi-h-sm: 96px; }
+      .density-comfortable { --row-h: 44px; --pad-y: 10px; --pad-x: 12px; --kpi-h: 120px; --kpi-h-sm: 106px; }
+
+      /* status-dot */
+      .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+      .pulse { box-shadow: 0 0 0 0 currentColor; animation: pulse 2s infinite; }
+      @keyframes pulse {
+        0%   { box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 60%, transparent); }
+        70%  { box-shadow: 0 0 0 6px color-mix(in oklch, currentColor 0%, transparent); }
+        100% { box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 0%, transparent); }
+      }
+      .truck-glide { animation: glide 8s linear infinite; }
+      @keyframes glide { 0% { offset-distance: 0%; } 100% { offset-distance: 100%; } }
+
+      /* tooltip */
+      [data-tip] { position: relative; }
+      [data-tip]:hover::after {
+        content: attr(data-tip);
+        position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+        background: var(--fg); color: var(--bg);
+        font-size: 11px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 50;
+      }
+
+      /* row hover */
+      .row { transition: background 80ms ease; }
+      .row:hover { background: color-mix(in oklch, var(--fg) 4%, transparent); cursor: pointer; }
+      .row.is-expanded { background: color-mix(in oklch, var(--brand) 5%, transparent); }
+      .row.is-highlighted { background: color-mix(in oklch, var(--brand) 7%, transparent); }
+
+      /* sparkline */
+      .spark path { fill: none; stroke-width: 1.5; }
+
+      /* drag */
+      .draggable { cursor: grab; }
+      .draggable:active { cursor: grabbing; }
+      .drop-target.is-over { outline: 2px dashed var(--brand); outline-offset: -2px; background: var(--brand-soft); }
+
+      /* hide scrollbar utility */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { scrollbar-width: none; }
+
+      /* inputs */
+      input, select, button { font-family: inherit; font-size: inherit; color: inherit; }
+      .input {
+        background: var(--card-2); border: 1px solid var(--border); border-radius: 4px;
+        padding: 5px 8px; outline: none; color: var(--fg); height: 26px;
+      }
+      .input:focus { border-color: var(--brand); }
+      .btn {
+        height: 26px; padding: 0 10px; border-radius: 4px; border: 1px solid var(--border);
+        background: var(--card-2); color: var(--fg); display: inline-flex; align-items: center; gap: 6px;
+        cursor: pointer; font-weight: 500; font-size: 12px; transition: all 80ms ease;
+      }
+      .btn:hover { background: color-mix(in oklch, var(--fg) 6%, var(--card-2)); }
+      .btn-primary { background: var(--brand); color: white; border-color: var(--brand); }
+      .btn-primary:hover { filter: brightness(1.05); background: var(--brand); }
+      .btn-ghost { background: transparent; border-color: transparent; }
+      .btn-ghost:hover { background: color-mix(in oklch, var(--fg) 6%, transparent); }
+
+      /* sparkline grid */
+      .grid-bg {
+        background-image:
+          linear-gradient(to right, var(--grid) 1px, transparent 1px),
+          linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+
+      /* page chrome */
+      .chrome-grid { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+      @media (max-width: 1100px) { .chrome-grid { grid-template-columns: 56px 1fr; } }
+
+      /* expanded row content */
+      details > summary { list-style: none; cursor: pointer; }
+      details > summary::-webkit-details-marker { display: none; }
+
+      /* small badges */
+      .pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 1px 6px; border-radius: 999px; font-size: 10px; font-weight: 600;
+        letter-spacing: 0.02em; line-height: 1.5;
+      }
+      .pill-soft-success { background: var(--success-soft); color: var(--success); }
+      .pill-soft-warning { background: var(--warning-soft); color: var(--warning); }
+      .pill-soft-danger  { background: var(--danger-soft); color: var(--danger); }
+      .pill-soft-brand   { background: var(--brand-soft); color: var(--brand); }
+      .pill-soft-muted   { background: color-mix(in oklch, var(--fg) 8%, transparent); color: var(--fg-muted); }
+
+      /* fade in */
+      .fade-in { animation: fadeIn 180ms ease both; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(2px);} to { opacity:1; transform:none;} }
+
+      /* progress */
+      .lane-bar { position: relative; height: 4px; background: color-mix(in oklch, var(--fg) 8%, transparent); border-radius: 999px; overflow: hidden; }
+      .lane-bar > span { position: absolute; left:0; top:0; bottom:0; background: var(--brand); border-radius: 999px; }
+      .lane-bar.is-late > span { background: var(--danger); }
+      .lane-bar.is-warn > span { background: var(--warning); }
+      .lane-bar.is-done > span { background: var(--success); }
+
+      /* mini chart */
+      .heat-cell { transition: background 80ms ease; }
+
+      /* keyboard chip */
+      kbd {
+        font-family: 'Geist Mono', monospace; font-size: 10px;
+        background: var(--card-2); border: 1px solid var(--border); border-bottom-width: 2px;
+        padding: 1px 5px; border-radius: 3px; color: var(--fg-muted);
+      }
+
+      /* live ticker */
+      .ticker-dot { background: var(--success); }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+    <script type="text/babel" src="tweaks-panel.jsx"></script>
+    <script type="text/babel" src="data.jsx"></script>
+    <script type="text/babel" src="icons.jsx"></script>
+    <script type="text/babel" src="components.jsx"></script>
+    <script type="text/babel" src="map.jsx"></script>
+    <script type="text/babel" src="timeline.jsx"></script>
+    <script type="text/babel" src="app.jsx"></script>
+  </body>
+</html>
