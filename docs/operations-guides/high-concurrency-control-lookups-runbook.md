@@ -11,6 +11,26 @@ curl -fsS http://127.0.0.1:8080/api/v1/system/version
 curl -fsS http://127.0.0.1:9090/internal/metricsz >/tmp/trenova.metrics
 ```
 
+If pprof is explicitly enabled, capture goroutines from the host only:
+
+```bash
+curl -fsS 'http://127.0.0.1:6060/debug/pprof/goroutine?debug=2' >/tmp/trenova.goroutines.txt
+```
+
+Verify PostgreSQL role-level timeout defaults for the application database user. These role
+settings are the most reliable guard when PgBouncer transaction pooling is in front of
+PostgreSQL:
+
+```sql
+SELECT rolname, rolconfig
+FROM pg_roles
+WHERE rolname = current_user;
+
+ALTER ROLE app_database_user SET statement_timeout = '10s';
+ALTER ROLE app_database_user SET lock_timeout = '5s';
+ALTER ROLE app_database_user SET idle_in_transaction_session_timeout = '30s';
+```
+
 Check for blocked PostgreSQL sessions:
 
 ```sql

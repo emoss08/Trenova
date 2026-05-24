@@ -30,4 +30,7 @@ var (
 	ErrLoggingOutputIsFileButFileConfigIsMissing = errors.New(
 		"logging output is 'file' but file config is missing",
 	)
+	ErrRequestTimeoutExceedsWriteTimeout = errors.New(
+		"server request timeout must be shorter than server write timeout",
+	)
 )

@@ -157,13 +157,14 @@ func (c *Connection) configureSessionTimeouts(ctx context.Context, conn *pgx.Con
 
 func (c *Connection) setupHooks() {
 	if c.cfg.App.IsDevelopment() && c.cfg.App.Debug {
-		c.db.AddQueryHook(bundebug.NewQueryHook(
+		c.db = c.db.WithQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(c.cfg.Database.Verbose),
 			bundebug.FromEnv("BUNDEBUG"),
 		))
 	}
 
-	c.db.WithQueryHook(
+	c.db = c.db.WithQueryHook(newSlowQueryHook(time.Second, c.logger))
+	c.db = c.db.WithQueryHook(
 		bunotel.NewQueryHook(
 			bunotel.WithDBName(c.cfg.Database.Name),
 			bunotel.WithTracerProvider(otel.GetTracerProvider()),

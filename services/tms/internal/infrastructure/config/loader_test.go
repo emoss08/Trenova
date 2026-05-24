@@ -228,6 +228,20 @@ func TestValidateConfig(t *testing.T) {
 		assert.ErrorIs(t, err, ErrMaxIdleConnsExceedsMaxOpenConns)
 	})
 
+	t.Run("request timeout must be shorter than write timeout", func(t *testing.T) {
+		t.Parallel()
+
+		l := NewLoader()
+		cfg := newValidConfig()
+		cfg.Server.WriteTimeout = 30 * time.Second
+		cfg.Server.RequestTimeout = time.Minute
+
+		err := l.validateConfig(cfg)
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrRequestTimeoutExceedsWriteTimeout)
+	})
+
 	t.Run("CORS enabled but no allowed origins", func(t *testing.T) {
 		t.Parallel()
 
@@ -531,9 +545,10 @@ func TestSetDefaults(t *testing.T) {
 		assert.Equal(t, "release", l.viper.GetString("server.mode"))
 		assert.Equal(t, "30s", l.viper.GetString("server.readTimeout"))
 		assert.Equal(t, "5s", l.viper.GetString("server.readHeaderTimeout"))
-		assert.Equal(t, "30s", l.viper.GetString("server.writeTimeout"))
+		assert.Equal(t, "75s", l.viper.GetString("server.writeTimeout"))
 		assert.Equal(t, "120s", l.viper.GetString("server.idleTimeout"))
 		assert.Equal(t, "10s", l.viper.GetString("server.shutdownTimeout"))
+		assert.Equal(t, "55s", l.viper.GetString("server.requestTimeout"))
 	})
 
 	t.Run("database defaults", func(t *testing.T) {

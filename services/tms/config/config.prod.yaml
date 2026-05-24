@@ -4,6 +4,12 @@ app:
 
 server:
   mode: release
+  readTimeout: 30s
+  readHeaderTimeout: 5s
+  writeTimeout: 75s
+  idleTimeout: 120s
+  shutdownTimeout: 10s
+  requestTimeout: 55s
   cors:
     enabled: true
     allowedOrigins:

@@ -27,10 +27,10 @@ server:
   mode: debug # Gin mode: debug, release, test
   readTimeout: 30s # Maximum duration for reading the full request
   readHeaderTimeout: 5s # Maximum duration for reading request headers
-  writeTimeout: 30s # Maximum duration before timing out response writes
+  writeTimeout: 75s # Must be longer than requestTimeout so app-controlled 504s can be written
   idleTimeout: 120s # Maximum keep-alive idle connection duration
   shutdownTimeout: 10s # Maximum graceful shutdown duration
-  requestTimeout: 60s # Maximum app-controlled handler duration
+  requestTimeout: 55s # Maximum app-controlled handler duration
   cors:
     enabled: true # Enable CORS
     allowedOrigins: # Allowed origins for CORS

@@ -148,10 +148,10 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.mode", "release")
 	l.viper.SetDefault("server.readTimeout", "30s")
 	l.viper.SetDefault("server.readHeaderTimeout", "5s")
-	l.viper.SetDefault("server.writeTimeout", "30s")
+	l.viper.SetDefault("server.writeTimeout", "75s")
 	l.viper.SetDefault("server.idleTimeout", "120s")
 	l.viper.SetDefault("server.shutdownTimeout", "10s")
-	l.viper.SetDefault("server.requestTimeout", "60s")
+	l.viper.SetDefault("server.requestTimeout", "55s")
 
 	// Database defaults
 	l.viper.SetDefault("database.sslMode", "prefer")
@@ -314,6 +314,12 @@ func (l *Loader) validateConfig(config *Config) error {
 
 	if config.Database.MaxIdleConns > config.Database.MaxOpenConns {
 		return ErrMaxIdleConnsExceedsMaxOpenConns
+	}
+
+	if config.Server.RequestTimeout > 0 &&
+		config.Server.WriteTimeout > 0 &&
+		config.Server.RequestTimeout >= config.Server.WriteTimeout {
+		return ErrRequestTimeoutExceedsWriteTimeout
 	}
 
 	if config.Server.CORS.Enabled {
