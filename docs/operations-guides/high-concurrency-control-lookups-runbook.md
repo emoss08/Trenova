@@ -2,6 +2,10 @@
 
 Use this when API latency rises, worker creation or shipment validation slows down, or Cloudflare reports 524s.
 
+For the 2026-05-24 production timeout incident caused by a nested `pgxpool`
+under `database/sql` and PgBouncer, see
+`docs/operations-guides/postgres-pgxpool-timeout-incident.md`.
+
 ## Fast Checks
 
 Verify the API and monitoring listener:
