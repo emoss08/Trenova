@@ -74,7 +74,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		h.getBillingReadiness,
 	)
 	api.GET(
-		"/:shipmentID",
+		"/:shipmentID/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.get,
 	)
