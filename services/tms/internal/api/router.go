@@ -410,6 +410,7 @@ func (r *Router) Setup() {
 func (r *Router) setupMiddleware() {
 	r.setupCors()
 
+	r.s.router.Use(middleware.NewSecurityHeadersMiddleware(r.cfg))
 	r.s.router.Use(gin.Recovery())
 	r.s.router.Use(requestid.New())
 	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())

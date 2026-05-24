@@ -7,6 +7,7 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 		X-XSS-Protection "1; mode=block"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.gstatic.com https://*.googleusercontent.com; connect-src 'self' https://api.trenova.app https://api.rainviewer.com https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://*.ably.io https://*.ably-realtime.com wss://*.ably.io wss://*.ably-realtime.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests"
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		-Server
 	}
@@ -15,24 +16,9 @@
 		reverse_proxy tms-api:8080
 	}
 
-	handle /temporal-ui/* {
-		uri strip_prefix /temporal-ui
-		reverse_proxy temporal-ui:8080
-	}
-
-	handle /minio/* {
-		uri strip_prefix /minio
-		reverse_proxy minio:9001
-	}
-
 	handle {
 		root * /srv
 		try_files {path} /index.html
 		file_server
 	}
-}
-
-storage.{$DOMAIN:trenova.app} {
-	tls internal
-	reverse_proxy minio:9000
 }

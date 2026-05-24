@@ -1,0 +1,48 @@
+# Optional self-hosted admin surface for operators.
+# Keep this file out of public ingress. The default localhost binding is meant
+# for SSH/Tailscale port forwarding from a trusted workstation.
+#
+# For a Tailscale-only hostname, set ADMIN_DOMAIN to that private hostname and
+# replace the bind line with the Tailscale interface address.
+
+{$ADMIN_DOMAIN:localhost} {
+	bind 127.0.0.1
+	tls internal
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	handle /temporal-ui/* {
+		uri strip_prefix /temporal-ui
+		reverse_proxy temporal-ui:8080
+	}
+
+	handle /minio/* {
+		uri strip_prefix /minio
+		reverse_proxy minio:9001
+	}
+
+	respond "not found" 404
+}
+
+storage-admin.{$ADMIN_DOMAIN:localhost} {
+	bind 127.0.0.1
+	tls internal
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	reverse_proxy minio:9000
+}
