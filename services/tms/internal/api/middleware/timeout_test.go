@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestRequestTimeoutMiddleware_ReturnsGatewayTimeoutWithHeaders(t *testing.T) {
+func TestRequestTimeoutHandler_ReturnsGatewayTimeoutWithHeaders(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
@@ -29,18 +29,20 @@ func TestRequestTimeoutMiddleware_ReturnsGatewayTimeoutWithHeaders(t *testing.T)
 		AllowCredentials: true,
 	}))
 	router.Use(NewSecurityHeadersMiddleware(cfg))
-	router.Use(NewRequestTimeoutMiddleware(cfg, newRequestTimeoutTestErrorHandler(cfg)))
 	router.GET("/slow", func(c *gin.Context) {
 		time.Sleep(200 * time.Millisecond)
 		c.JSON(http.StatusOK, gin.H{"ok": true})
 	})
+	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/slow", nil)
 	req.Header.Set("Origin", "https://cloud.trenova.app")
-	router.ServeHTTP(w, req)
+	start := time.Now()
+	handler.ServeHTTP(w, req)
 
 	require.Equal(t, http.StatusGatewayTimeout, w.Code)
+	assert.Less(t, time.Since(start), 100*time.Millisecond)
 	assert.Equal(t, "https://cloud.trenova.app", w.Header().Get("Access-Control-Allow-Origin"))
 	assert.Equal(t, "nosniff", w.Header().Get("X-Content-Type-Options"))
 
@@ -51,13 +53,12 @@ func TestRequestTimeoutMiddleware_ReturnsGatewayTimeoutWithHeaders(t *testing.T)
 	assert.Contains(t, body.Type, "request-timeout")
 }
 
-func TestRequestTimeoutMiddleware_SkipsLiveAndWebSocketRoutes(t *testing.T) {
+func TestRequestTimeoutHandler_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 	t.Parallel()
 	gin.SetMode(gin.TestMode)
 
 	cfg := newRequestTimeoutTestConfig(time.Nanosecond)
 	router := gin.New()
-	router.Use(NewRequestTimeoutMiddleware(cfg, newRequestTimeoutTestErrorHandler(cfg)))
 	router.GET("/api/v1/realtime/live", func(c *gin.Context) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
@@ -66,6 +67,7 @@ func TestRequestTimeoutMiddleware_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 		_, hasDeadline := c.Request.Context().Deadline()
 		c.JSON(http.StatusOK, gin.H{"hasDeadline": hasDeadline})
 	})
+	handler := NewRequestTimeoutHandler(router, cfg, newRequestTimeoutTestErrorHandler(cfg))
 
 	for _, path := range []string{"/api/v1/realtime/live", "/api/v1/realtime/ws/connect"} {
 		w := httptest.NewRecorder()
@@ -74,7 +76,7 @@ func TestRequestTimeoutMiddleware_SkipsLiveAndWebSocketRoutes(t *testing.T) {
 			req.Header.Set("Upgrade", "websocket")
 		}
 
-		router.ServeHTTP(w, req)
+		handler.ServeHTTP(w, req)
 
 		require.Equal(t, http.StatusOK, w.Code)
 		assert.JSONEq(t, `{"hasDeadline":false}`, w.Body.String())
@@ -91,6 +93,11 @@ func newRequestTimeoutTestConfig(timeout time.Duration) *config.Config {
 		},
 		Server: config.ServerConfig{
 			RequestTimeout: timeout,
+			CORS: config.CORSConfig{
+				Enabled:        true,
+				AllowedOrigins: []string{"https://cloud.trenova.app"},
+				Credentials:    true,
+			},
 		},
 	}
 }

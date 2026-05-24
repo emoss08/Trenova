@@ -19,10 +19,16 @@ type Props = {
   shipmentId?: string;
   pageSize?: number;
   emptyLabel?: string;
+  enabled?: boolean;
 };
 
-export function ActivityFeed({ shipmentId, pageSize, emptyLabel = "No activity yet" }: Props) {
-  const query = useShipmentEventsInfinite({ shipmentId, pageSize });
+export function ActivityFeed({
+  shipmentId,
+  pageSize,
+  emptyLabel = "No activity yet",
+  enabled = true,
+}: Props) {
+  const query = useShipmentEventsInfinite({ shipmentId, pageSize, enabled });
   const events = useMemo(
     () => query.data?.pages.flatMap((page) => page) ?? [],
     [query.data?.pages],

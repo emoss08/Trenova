@@ -42,6 +42,7 @@ describe("Cloudflare SPA worker", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("Strict-Transport-Security")).toBeNull();
     expect(response.headers.get("Content-Security-Policy")).toContain("'unsafe-inline'");
+    expect(response.headers.get("Content-Security-Policy")).not.toContain("sha256-");
     expect(response.headers.get("Content-Security-Policy")).toContain("ws://127.0.0.1:*");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:*");
   });

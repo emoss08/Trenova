@@ -6,6 +6,14 @@ const scriptSources = [
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
 ] as const;
+const localDevelopmentScriptSources = [
+  "'self'",
+  "'unsafe-eval'",
+  "'unsafe-inline'",
+  "https://static.cloudflareinsights.com",
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
+] as const;
 const styleSources = ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"] as const;
 const fontSources = ["'self'", "data:", "https://fonts.gstatic.com"] as const;
 const imageSources = [
@@ -228,7 +236,7 @@ function withSecurityHeaders(request: Request | null, response: Response): Respo
 function contentSecurityPolicy(request: Request | null): string {
   const isLocalDevelopment = request ? isLocalDevelopmentRequest(request) : false;
   const effectiveScriptSources = isLocalDevelopment
-    ? [...scriptSources, "'unsafe-inline'"]
+    ? [...localDevelopmentScriptSources]
     : [...scriptSources];
   const effectiveConnectSources = isLocalDevelopment
     ? [...connectSources, ...localDevelopmentConnectSources]

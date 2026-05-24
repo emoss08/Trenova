@@ -34,7 +34,7 @@ export function ShipmentsPage() {
     if (!summary) return null;
     return new Intl.NumberFormat().format(summary.totalCount);
   }, [summary]);
-  const backgroundQueriesEnabled = summary !== null;
+  const backgroundQueriesEnabled = summary?.backgroundQueriesEnabled ?? false;
 
   const handleCreateShipment = useCallback(() => {
     void setSearchParams({ panelType: "create", panelEntityId: null });
@@ -119,7 +119,7 @@ export function ShipmentsPage() {
           <Table onSummaryChange={setSummary} />
         </DataTableLazyComponent>
         <LazyComponent>
-          <BottomModules />
+          <BottomModules backgroundEnabled={backgroundQueriesEnabled} />
         </LazyComponent>
       </div>
     </PageLayout>

@@ -94,6 +94,7 @@ type CommandCenterTableProps = {
 export type CommandCenterTableSummary = {
   totalCount: number;
   dataUpdatedAt: number;
+  backgroundQueriesEnabled: boolean;
 };
 
 export function CommandCenterTable({
@@ -165,15 +166,22 @@ export function CommandCenterTable({
   const totalCount = dataQuery.data?.count ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const rows = (dataQuery.data?.results ?? []) as Shipment[];
-  const backgroundQueriesEnabled = dataQuery.isSuccess;
+  const backgroundQueriesEnabled = dataQuery.isSuccess && !dataQuery.isFetching;
 
   useEffect(() => {
     if (!dataQuery.data) return;
     onSummaryChange?.({
       totalCount,
       dataUpdatedAt: dataQuery.dataUpdatedAt,
+      backgroundQueriesEnabled,
     });
-  }, [dataQuery.data, dataQuery.dataUpdatedAt, onSummaryChange, totalCount]);
+  }, [
+    backgroundQueriesEnabled,
+    dataQuery.data,
+    dataQuery.dataUpdatedAt,
+    onSummaryChange,
+    totalCount,
+  ]);
 
   const sortingState = useMemo<SortingState>(
     () => sort.map((s) => ({ id: s.field, desc: s.direction === "desc" })),

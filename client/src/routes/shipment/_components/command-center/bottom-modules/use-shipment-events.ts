@@ -8,13 +8,19 @@ type Options = {
   shipmentId?: string;
   types?: ShipmentEventType[];
   pageSize?: number;
+  enabled?: boolean;
 };
 
 // Returns an infinite query of shipment events. The queryKey starts with
 // "shipment-events" so realtime invalidations published on the data-events
 // channel for the `shipmentEvents` resource (see realtime-patching.ts) match
 // and trigger a refetch.
-export function useShipmentEventsInfinite({ shipmentId, types, pageSize }: Options = {}) {
+export function useShipmentEventsInfinite({
+  shipmentId,
+  types,
+  pageSize,
+  enabled = true,
+}: Options = {}) {
   const limit = pageSize ?? ACTIVITY_FEED_PAGE_SIZE;
   const typesKey = types && types.length > 0 ? [...types].sort().join(",") : "";
 
@@ -36,5 +42,8 @@ export function useShipmentEventsInfinite({ shipmentId, types, pageSize }: Optio
       return lastPage[lastPage.length - 1]?.occurredAt ?? undefined;
     },
     staleTime: 5_000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled,
   });
 }

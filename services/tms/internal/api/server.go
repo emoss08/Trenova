@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -15,9 +17,10 @@ import (
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
-	LC     fx.Lifecycle
+	Config       *config.Config
+	Logger       *zap.Logger
+	ErrorHandler *helpers.ErrorHandler
+	LC           fx.Lifecycle
 }
 
 type Server struct {
@@ -31,10 +34,11 @@ func NewServer(p Params) *Server {
 	gin.SetMode(p.Config.Server.Mode)
 
 	router := gin.New()
+	handler := middleware.NewRequestTimeoutHandler(router, p.Config, p.ErrorHandler)
 
 	httpServer := &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", p.Config.Server.Host, p.Config.Server.Port),
-		Handler:           router,
+		Handler:           handler,
 		ReadTimeout:       p.Config.Server.ReadTimeout,
 		ReadHeaderTimeout: p.Config.Server.ReadHeaderTimeout,
 		WriteTimeout:      p.Config.Server.WriteTimeout,

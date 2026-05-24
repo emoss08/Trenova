@@ -18,6 +18,7 @@ type PickupStatus = TomorrowPickup["status"];
 type CustomerMixProps = {
   customerMix: ShipmentAnalyticsData["customerMix"];
   tomorrowsPickups: ShipmentAnalyticsData["tomorrowsPickups"];
+  enabled?: boolean;
 };
 
 const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant }> = {
@@ -37,7 +38,7 @@ const SHARE_BAR_COLORS = [
 
 const PICKUPS_PAGE_SIZE = 20;
 
-export function CustomerMix({ customerMix, tomorrowsPickups }: CustomerMixProps) {
+export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: CustomerMixProps) {
   return (
     <CustomerMixSection>
       <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
@@ -61,7 +62,7 @@ export function CustomerMix({ customerMix, tomorrowsPickups }: CustomerMixProps)
           <CustomersList entries={customerMix.entries} />
         </TabsPanel>
         <TabsPanel value="pickups" className="min-h-0 flex-1 overflow-y-auto">
-          <PickupsList initialData={tomorrowsPickups} />
+          <PickupsList initialData={tomorrowsPickups} enabled={enabled} />
         </TabsPanel>
       </Tabs>
     </CustomerMixSection>
@@ -115,7 +116,13 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
   );
 }
 
-function PickupsList({ initialData }: { initialData: TomorrowsPickupsCard }) {
+function PickupsList({
+  initialData,
+  enabled,
+}: {
+  initialData: TomorrowsPickupsCard;
+  enabled: boolean;
+}) {
   const [, setSearchParams] = useQueryStates(searchParamsParser);
   const observerTarget = useRef<HTMLLIElement>(null);
 
@@ -153,6 +160,9 @@ function PickupsList({ initialData }: { initialData: TomorrowsPickupsCard }) {
       return undefined;
     },
     staleTime: 60 * 1000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    enabled,
   });
 
   const pickups = useMemo(
