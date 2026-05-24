@@ -2,6 +2,7 @@ const scriptSources = [
   "'self'",
   "'unsafe-eval'",
   "https://static.cloudflareinsights.com",
+  "'sha256-Q9qAP4vtJuwS7pBhw9g2oS9FueKw67t+u398X99GROo='",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
 ] as const;

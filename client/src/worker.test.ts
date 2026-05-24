@@ -282,6 +282,9 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Content-Security-Policy")).toContain("default-src 'self'");
   expect(headers.get("Content-Security-Policy")).toContain("https://api.trenova.app");
   expect(headers.get("Content-Security-Policy")).toContain("https://static.cloudflareinsights.com");
+  expect(headers.get("Content-Security-Policy")).toContain(
+    "'sha256-Q9qAP4vtJuwS7pBhw9g2oS9FueKw67t+u398X99GROo='",
+  );
   expect(headers.get("Content-Security-Policy")).toContain("https://cloudflareinsights.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://storage.trenova.app");
   expect(headers.get("Content-Security-Policy")).toContain("https://*.ably.net");
