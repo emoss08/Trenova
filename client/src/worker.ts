@@ -25,6 +25,7 @@ const imageSources = [
   "https://*.googleapis.com",
   "https://*.gstatic.com",
   "https://*.googleusercontent.com",
+  "https://tilecache.rainviewer.com",
   "https://storage.trenova.app",
 ] as const;
 const connectSources = [
