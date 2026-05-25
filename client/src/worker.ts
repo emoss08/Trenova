@@ -3,6 +3,7 @@ const scriptSources = [
   "'unsafe-eval'",
   "https://static.cloudflareinsights.com",
   "'sha256-Q9qAP4vtJuwS7pBhw9g2oS9FueKw67t+u398X99GROo='",
+  "'sha256-XtR73bEqMUD7aevUCpctukznhxuFL3vHjrYpUg9FkbI='",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
 ] as const;
@@ -26,6 +27,7 @@ const imageSources = [
   "https://*.gstatic.com",
   "https://*.googleusercontent.com",
   "https://tilecache.rainviewer.com",
+  "https://tile.openweathermap.org",
   "https://storage.trenova.app",
 ] as const;
 const connectSources = [

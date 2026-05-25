@@ -286,9 +286,13 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("Content-Security-Policy")).toContain(
     "'sha256-Q9qAP4vtJuwS7pBhw9g2oS9FueKw67t+u398X99GROo='",
   );
+  expect(headers.get("Content-Security-Policy")).toContain(
+    "'sha256-XtR73bEqMUD7aevUCpctukznhxuFL3vHjrYpUg9FkbI='",
+  );
   expect(headers.get("Content-Security-Policy")).toContain("https://cloudflareinsights.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://storage.trenova.app");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");
+  expect(headers.get("Content-Security-Policy")).toContain("https://tile.openweathermap.org");
   expect(headers.get("Content-Security-Policy")).toContain("https://*.ably.net");
   expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably.net");
   expect(headers.get("Content-Security-Policy")).toContain("wss://*.ably-realtime.com");
