@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { searchParamsParser } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTime } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import {
@@ -82,11 +83,11 @@ import {
   UsersRoundIcon,
   XIcon,
 } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useQueryStates } from "nuqs";
+import { Activity, type ReactNode, useEffect, useMemo, useState } from "react";
 import { Controller, type Resolver, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 
-type SecurityTab = "sign-in" | "provisioning" | "policies" | "activity";
 type ActivityView = "auth" | "risk" | "identities" | "mfa";
 type IdentityProviderPanelMode = "create" | "edit";
 type IdentityProviderRecord = IdentityProvider & Record<string, unknown>;
@@ -183,7 +184,7 @@ function identityProviderEndpoint(organizationId: string) {
 }
 
 export function SecurityAccessWorkspace({ organizationId }: { organizationId: string }) {
-  const [tab, setTab] = useState<SecurityTab>("sign-in");
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
@@ -234,7 +235,6 @@ export function SecurityAccessWorkspace({ organizationId }: { organizationId: st
 
   return (
     <section className="space-y-4 pb-10">
-      <SecurityHeader />
       <SecurityOverview
         isLoading={overviewLoading}
         providerCount={providers.filter((provider) => provider.enabled).length}
@@ -244,7 +244,11 @@ export function SecurityAccessWorkspace({ organizationId }: { organizationId: st
         recentActivity={recentActivity}
       />
 
-      <Tabs value={tab} onValueChange={(value) => setTab(value as SecurityTab)} className="gap-4">
+      <Tabs
+        value={searchParams.securityTab}
+        onValueChange={(value) => setSearchParams({ securityTab: value })}
+        className="gap-4"
+      >
         <TabsList variant="underline">
           <TabsTab value="sign-in">
             <KeyRoundIcon size={16} />
@@ -263,40 +267,38 @@ export function SecurityAccessWorkspace({ organizationId }: { organizationId: st
             Activity
           </TabsTab>
         </TabsList>
-        <TabsContent value="sign-in">
-          <SignInTab organizationId={organizationId} />
+        <TabsContent value="sign-in" keepMounted>
+          <Activity mode={searchParams.securityTab === "sign-in" ? "visible" : "hidden"}>
+            <SignInTab organizationId={organizationId} />
+          </Activity>
         </TabsContent>
-        <TabsContent value="provisioning">
-          <ProvisioningTab organizationId={organizationId} />
+        <TabsContent value="provisioning" keepMounted>
+          <Activity mode={searchParams.securityTab === "provisioning" ? "visible" : "hidden"}>
+            <ProvisioningTab organizationId={organizationId} />
+          </Activity>
         </TabsContent>
-        <TabsContent value="policies">
-          <PoliciesTab organizationId={organizationId} />
+        <TabsContent value="policies" keepMounted>
+          <Activity mode={searchParams.securityTab === "policies" ? "visible" : "hidden"}>
+            <PoliciesTab organizationId={organizationId} />
+          </Activity>
         </TabsContent>
-        <TabsContent value="activity">
-          <ActivityTab organizationId={organizationId} />
+        <TabsContent value="activity" keepMounted>
+          <Activity mode={searchParams.securityTab === "activity" ? "visible" : "hidden"}>
+            <ActivityTab organizationId={organizationId} />
+          </Activity>
         </TabsContent>
       </Tabs>
     </section>
   );
 }
 
-function SecurityHeader() {
-  return (
-    <div className="flex flex-col gap-3 border-b pb-4 lg:flex-row lg:items-end lg:justify-between">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-md border bg-muted/60">
-            <ShieldCheckIcon className="size-4 text-primary" />
-          </span>
-          <h2 className="text-lg font-semibold tracking-tight">Security & Access</h2>
-        </div>
-        <p className="max-w-3xl text-sm text-muted-foreground">
-          Manage federated sign-in, SCIM provisioning, access policies, and security activity.
-        </p>
-      </div>
-    </div>
-  );
-}
+type RecentActivity = {
+  id: string;
+  label: string;
+  detail: string;
+  status: string;
+  occurredAt: number;
+};
 
 function SecurityOverview({
   isLoading,
@@ -311,13 +313,7 @@ function SecurityOverview({
   enforcedProviderName: string;
   directoryStatus: string;
   activePolicyCount: number;
-  recentActivity: Array<{
-    id: string;
-    label: string;
-    detail: string;
-    status: string;
-    occurredAt: number;
-  }>;
+  recentActivity: RecentActivity[];
 }) {
   if (isLoading) {
     return <OverviewSkeleton />;
@@ -904,15 +900,15 @@ function ProvisioningTab({ organizationId }: { organizationId: string }) {
     mutationFn: async (value: SCIMGroupRoleMapping) =>
       value.id
         ? apiService.organizationService.updateSCIMGroupRoleMapping(
-            organizationId,
-            directoryId,
-            value,
-          )
+          organizationId,
+          directoryId,
+          value,
+        )
         : apiService.organizationService.createSCIMGroupRoleMapping(
-            organizationId,
-            directoryId,
-            value,
-          ),
+          organizationId,
+          directoryId,
+          value,
+        ),
     onSuccess: async () => {
       toast.success("Group mapping saved");
       setMapping(emptyMapping);

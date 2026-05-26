@@ -1,13 +1,14 @@
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
-import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
+import { ImageCropUploadDialog } from "@/components/image-crop-upload-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
+import { searchParamsParser } from "@/hooks/use-organization-setting-state";
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
@@ -19,7 +20,7 @@ import { organizationSettingsSchema, type OrganizationSettings } from "@/types/o
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
@@ -27,7 +28,6 @@ import { toast } from "sonner";
 import { BillingUsageTab } from "./billing-usage-tab";
 import { SecurityAccessWorkspace } from "./security-access-workspace";
 
-const tabValues = ["general", "security", "billing-usage"] as const;
 const emptyOrganizationDefaults: OrganizationSettings = {
   id: "",
   version: 0,
@@ -64,12 +64,7 @@ export default function OrganizationSettingsForm() {
     defaultValues: emptyOrganizationDefaults,
   });
 
-  const [tab, setTab] = useQueryState(
-    "tab",
-    parseAsStringLiteral(tabValues)
-      .withOptions({ history: "push", shallow: true })
-      .withDefault("general"),
-  );
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
 
   const { handleSubmit, setError, reset } = form;
 
@@ -146,7 +141,11 @@ export default function OrganizationSettingsForm() {
   }
 
   return (
-    <Tabs value={tab} onValueChange={(value) => setTab(value)} className="gap-1 px-4">
+    <Tabs
+      value={searchParams.tab}
+      onValueChange={(value) => setSearchParams({ tab: value })}
+      className="gap-1 px-4"
+    >
       <TabsList variant="underline">
         <TabsTab value="general">
           <Building2Icon size={16} />
