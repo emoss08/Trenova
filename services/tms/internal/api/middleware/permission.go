@@ -37,14 +37,15 @@ func (m *PermissionMiddleware) RequirePermission(
 		authCtx := authctx.GetAuthContext(c)
 
 		result, err := m.permEngine.Check(c.Request.Context(), &services.PermissionCheckRequest{
-			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-			PrincipalID:    authCtx.PrincipalID,
-			UserID:         authCtx.UserID,
-			APIKeyID:       authCtx.APIKeyID,
-			BusinessUnitID: authCtx.BusinessUnitID,
-			OrganizationID: authCtx.OrganizationID,
-			Resource:       resource,
-			Operation:      operation,
+			PrincipalType:     services.PrincipalType(authCtx.PrincipalType),
+			PrincipalID:       authCtx.PrincipalID,
+			UserID:            authCtx.UserID,
+			APIKeyID:          authCtx.APIKeyID,
+			BusinessUnitID:    authCtx.BusinessUnitID,
+			OrganizationID:    authCtx.OrganizationID,
+			Resource:          resource,
+			Operation:         operation,
+			ContextAttributes: permissionContextAttributes(authCtx),
 		})
 		if err != nil {
 			m.errorHandler.HandleError(c, err)
@@ -73,14 +74,15 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...struct {
 
 		for _, check := range checks {
 			result, err := m.permEngine.Check(c.Request.Context(), &services.PermissionCheckRequest{
-				PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-				PrincipalID:    authCtx.PrincipalID,
-				UserID:         authCtx.UserID,
-				APIKeyID:       authCtx.APIKeyID,
-				BusinessUnitID: authCtx.BusinessUnitID,
-				OrganizationID: authCtx.OrganizationID,
-				Resource:       check.Resource,
-				Operation:      check.Operation,
+				PrincipalType:     services.PrincipalType(authCtx.PrincipalType),
+				PrincipalID:       authCtx.PrincipalID,
+				UserID:            authCtx.UserID,
+				APIKeyID:          authCtx.APIKeyID,
+				BusinessUnitID:    authCtx.BusinessUnitID,
+				OrganizationID:    authCtx.OrganizationID,
+				Resource:          check.Resource,
+				Operation:         check.Operation,
+				ContextAttributes: permissionContextAttributes(authCtx),
 			})
 			if err != nil {
 				continue
@@ -109,14 +111,15 @@ func (m *PermissionMiddleware) RequireAllPermissions(checks ...struct {
 
 		for _, check := range checks {
 			result, err := m.permEngine.Check(c.Request.Context(), &services.PermissionCheckRequest{
-				PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-				PrincipalID:    authCtx.PrincipalID,
-				UserID:         authCtx.UserID,
-				APIKeyID:       authCtx.APIKeyID,
-				BusinessUnitID: authCtx.BusinessUnitID,
-				OrganizationID: authCtx.OrganizationID,
-				Resource:       check.Resource,
-				Operation:      check.Operation,
+				PrincipalType:     services.PrincipalType(authCtx.PrincipalType),
+				PrincipalID:       authCtx.PrincipalID,
+				UserID:            authCtx.UserID,
+				APIKeyID:          authCtx.APIKeyID,
+				BusinessUnitID:    authCtx.BusinessUnitID,
+				OrganizationID:    authCtx.OrganizationID,
+				Resource:          check.Resource,
+				Operation:         check.Operation,
+				ContextAttributes: permissionContextAttributes(authCtx),
 			})
 			if err != nil {
 				m.errorHandler.HandleError(c, err)
@@ -135,37 +138,6 @@ func (m *PermissionMiddleware) RequireAllPermissions(checks ...struct {
 	}
 }
 
-func (m *PermissionMiddleware) RequirePlatformAdmin() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authCtx := authctx.GetAuthContext(c)
-		if authCtx.IsAPIKey() {
-			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
-				"API keys cannot perform platform admin actions",
-			))
-			return
-		}
-
-		manifest, err := m.permEngine.GetLightManifest(
-			c.Request.Context(),
-			authCtx.UserID,
-			authCtx.OrganizationID,
-		)
-		if err != nil {
-			m.errorHandler.HandleError(c, err)
-			return
-		}
-
-		if !manifest.IsPlatformAdmin {
-			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
-				"You don't have permission to perform this action",
-			))
-			return
-		}
-
-		c.Next()
-	}
-}
-
 func GetPermissionResult(c *gin.Context) *services.PermissionCheckResult {
 	if result, exists := c.Get("permission_result"); exists {
 		if pr, ok := result.(*services.PermissionCheckResult); ok {
@@ -173,4 +145,17 @@ func GetPermissionResult(c *gin.Context) *services.PermissionCheckResult {
 		}
 	}
 	return nil
+}
+
+func permissionContextAttributes(
+	authCtx *authctx.AuthContext,
+) services.RequestContextAttributes {
+	return services.RequestContextAttributes{
+		ActiveRoleIDs:         authCtx.ActiveRoleIDs,
+		AuthenticatorAAL:      authCtx.AuthenticatorAAL,
+		FederationFAL:         authCtx.FederationFAL,
+		MFAAuthenticatedAt:    authCtx.MFAAuthenticatedAt,
+		LastReauthenticatedAt: authCtx.LastReauthenticatedAt,
+		RiskDecision:          authCtx.RiskDecision,
+	}
 }

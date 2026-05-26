@@ -228,37 +228,6 @@ func (r *repository) GetUserRoleAssignments(
 	return assignments, nil
 }
 
-func (r *repository) HasBusinessUnitAdminAccess(
-	ctx context.Context,
-	userID, orgID pulid.ID,
-) (bool, error) {
-	log := r.l.With(
-		zap.String("operation", "HasBusinessUnitAdminAccess"),
-		zap.String("userId", userID.String()),
-		zap.String("orgId", orgID.String()),
-	)
-
-	count, err := r.db.DB().
-		NewSelect().
-		TableExpr("user_role_assignments AS ura").
-		Join("JOIN roles AS r ON r.id = ura.role_id").
-		Join("JOIN organizations AS target_org ON target_org.id = ?", orgID).
-		Where("ura.user_id = ?", userID).
-		Where("r.is_business_unit_admin = TRUE").
-		Where("r.business_unit_id = target_org.business_unit_id").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("ura.expires_at IS NULL").
-				WhereOr("ura.expires_at > extract(epoch from current_timestamp)::bigint")
-		}).
-		Count(ctx)
-	if err != nil {
-		log.Error("failed to check business unit admin access", zap.Error(err))
-		return false, err
-	}
-
-	return count > 0, nil
-}
-
 func (r *repository) Create(ctx context.Context, role *permission.Role) error {
 	log := r.l.With(
 		zap.String("operation", "Create"),

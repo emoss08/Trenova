@@ -16,6 +16,9 @@ const (
 	ResourceEDI                   Resource = "edi"
 	ResourceAPIKey                Resource = "api_key"
 	ResourceDataEntryControl      Resource = "data_entry_control"
+	ResourcePlatformCatalog       Resource = "platform_catalog"
+	ResourceDatabaseSession       Resource = "database_session"
+	ResourceDocumentOperation     Resource = "document_operation"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"

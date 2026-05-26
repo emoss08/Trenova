@@ -42,7 +42,6 @@ func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *rolehandler
 	userRepo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	userRepo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	userRepo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil, nil)
@@ -68,7 +67,6 @@ func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *rolehandler
 		Logger:           logger,
 		RoleRepo:         repo,
 		RBACRepo:         &rbactest.Repository{},
-		UserRepo:         userRepo,
 		PermissionCache:  permCacheRepo,
 		PermissionEngine: permEngine,
 		Validator:        roleservice.NewTestValidator(),
@@ -531,7 +529,7 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read", "create"},
 			"dataScope":  "organization",
 		})
@@ -543,7 +541,7 @@ func TestRoleHandler_AddPermission_Success(t *testing.T) {
 
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "shipments", resp["resource"])
+	assert.Equal(t, "shipment", resp["resource"])
 	assert.Equal(t, roleID.String(), resp["roleId"])
 }
 
@@ -558,7 +556,7 @@ func TestRoleHandler_AddPermission_InvalidRoleID(t *testing.T) {
 		WithPath("/api/v1/roles/invalid-id/permissions").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read"},
 			"dataScope":  "organization",
 		})
@@ -608,7 +606,7 @@ func TestRoleHandler_AddPermission_ServiceError(t *testing.T) {
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read"},
 			"dataScope":  "organization",
 		})
@@ -639,8 +637,8 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/" + permID.String()).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
-			"operations": []string{"read", "update", "delete"},
+			"resource":   "shipment",
+			"operations": []string{"read", "update"},
 			"dataScope":  "all",
 		})
 
@@ -651,7 +649,7 @@ func TestRoleHandler_UpdatePermission_Success(t *testing.T) {
 
 	var resp map[string]any
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "shipments", resp["resource"])
+	assert.Equal(t, "shipment", resp["resource"])
 	assert.Equal(t, roleID.String(), resp["roleId"])
 	assert.Equal(t, permID.String(), resp["id"])
 }
@@ -668,7 +666,7 @@ func TestRoleHandler_UpdatePermission_InvalidRoleID(t *testing.T) {
 		WithPath("/api/v1/roles/invalid-id/permissions/" + permID.String()).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read"},
 			"dataScope":  "organization",
 		})
@@ -691,7 +689,7 @@ func TestRoleHandler_UpdatePermission_InvalidPermID(t *testing.T) {
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/invalid-id").
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read"},
 			"dataScope":  "organization",
 		})
@@ -743,7 +741,7 @@ func TestRoleHandler_UpdatePermission_ServiceError(t *testing.T) {
 		WithPath("/api/v1/roles/" + roleID.String() + "/permissions/" + permID.String()).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]any{
-			"resource":   "shipments",
+			"resource":   "shipment",
 			"operations": []string{"read"},
 			"dataScope":  "organization",
 		})

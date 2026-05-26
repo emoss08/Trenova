@@ -50,7 +50,6 @@ type RoleRepository interface {
 		ctx context.Context,
 		userID, orgID pulid.ID,
 	) ([]*permission.UserRoleAssignment, error)
-	HasBusinessUnitAdminAccess(ctx context.Context, userID, orgID pulid.ID) (bool, error)
 	CreateAssignment(ctx context.Context, assignment *permission.UserRoleAssignment) error
 	DeleteAssignment(ctx context.Context, assignmentID pulid.ID) error
 	CreateResourcePermission(ctx context.Context, rp *permission.ResourcePermission) error

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/system"
 	"github.com/emoss08/trenova/internal/core/services/databasesessionservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -42,9 +43,16 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/admin/database-sessions")
-	api.Use(h.pm.RequirePlatformAdmin())
-	api.GET("/", h.listBlocked)
-	api.POST("/:pid/terminate/", h.terminate)
+	api.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceDatabaseSession.String(), permission.OpRead),
+		h.listBlocked,
+	)
+	api.POST(
+		"/:pid/terminate/",
+		h.pm.RequirePermission(permission.ResourceDatabaseSession.String(), permission.OpDelete),
+		h.terminate,
+	)
 }
 
 // @Summary List blocked database sessions

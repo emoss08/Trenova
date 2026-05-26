@@ -15,15 +15,11 @@ import (
 )
 
 var (
-	ErrCannotEscalatePrivileges      = errors.New("cannot grant permissions you don't have")
-	ErrCannotCreateOrgAdmin          = errors.New("only platform admins can create org admin roles")
-	ErrCannotCreateBusinessUnitAdmin = errors.New(
-		"only platform admins can create business unit admin roles",
-	)
-	ErrCannotModifySystemRole = errors.New("system roles cannot be modified")
-	ErrCannotDeleteSystemRole = errors.New("system roles cannot be deleted")
-	ErrCircularInheritance    = errors.New("role inheritance would create a cycle")
-	ErrRoleAlreadyAssigned    = errors.New("role is already assigned to this user")
+	ErrCannotEscalatePrivileges = errors.New("cannot grant permissions you don't have")
+	ErrCannotModifySystemRole   = errors.New("system roles cannot be modified")
+	ErrCannotDeleteSystemRole   = errors.New("system roles cannot be deleted")
+	ErrCircularInheritance      = errors.New("role inheritance would create a cycle")
+	ErrRoleAlreadyAssigned      = errors.New("role is already assigned to this user")
 )
 
 type Params struct {
@@ -32,7 +28,6 @@ type Params struct {
 	Logger           *zap.Logger
 	RoleRepo         repositories.RoleRepository
 	RBACRepo         repositories.RBACRepository
-	UserRepo         repositories.UserRepository
 	PermissionCache  repositories.PermissionCacheRepository
 	PermissionEngine services.PermissionEngine
 	Validator        *Validator
@@ -43,7 +38,6 @@ type Service struct {
 	l          *zap.Logger
 	roleRepo   repositories.RoleRepository
 	rbacRepo   repositories.RBACRepository
-	userRepo   repositories.UserRepository
 	permCache  repositories.PermissionCacheRepository
 	permEngine services.PermissionEngine
 	validator  *Validator
@@ -56,7 +50,6 @@ func New(p Params) *Service {
 		l:          p.Logger.Named("service.role"),
 		roleRepo:   p.RoleRepo,
 		rbacRepo:   p.RBACRepo,
-		userRepo:   p.UserRepo,
 		permCache:  p.PermissionCache,
 		permEngine: p.PermissionEngine,
 		validator:  p.Validator,
@@ -112,32 +105,21 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 		zap.String("roleName", req.Role.Name),
 	)
 
-	isPlatformAdmin, err := s.userRepo.IsPlatformAdmin(ctx, req.ActorID)
-	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
-		return err
+	if validateErr := s.validateNoEscalation(
+		ctx,
+		req.ActorID,
+		req.OrganizationID,
+		req.Role,
+	); validateErr != nil {
+		return validateErr
 	}
 
-	if req.Role.IsOrgAdmin && !isPlatformAdmin {
-		return ErrCannotCreateOrgAdmin
-	}
-	if req.Role.IsBusinessUnitAdmin && !isPlatformAdmin {
-		return ErrCannotCreateBusinessUnitAdmin
-	}
-
-	if !isPlatformAdmin {
-		if err = s.validateNoEscalation(
-			ctx,
-			req.ActorID,
-			req.OrganizationID,
-			req.Role,
-		); err != nil {
-			return err
-		}
-	}
-
-	if err = s.validateNoCircularInheritance(ctx, req.Role.ID, req.Role.ParentRoleIDs); err != nil {
-		return err
+	if inheritanceErr := s.validateNoCircularInheritance(
+		ctx,
+		req.Role.ID,
+		req.Role.ParentRoleIDs,
+	); inheritanceErr != nil {
+		return inheritanceErr
 	}
 
 	if valErr := s.validator.ValidateCreate(ctx, req.Role); valErr != nil {
@@ -148,7 +130,7 @@ func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
 	req.Role.CreatedBy = req.ActorID
 	req.Role.BusinessUnitID = req.BusinessUnitID
 
-	if err = s.roleRepo.Create(ctx, req.Role); err != nil {
+	if err := s.roleRepo.Create(ctx, req.Role); err != nil {
 		log.Error("failed to create role", zap.Error(err))
 		return err
 	}
@@ -178,32 +160,21 @@ func (s *Service) UpdateRole(ctx context.Context, req UpdateRoleRequest) error {
 		return ErrCannotModifySystemRole
 	}
 
-	isPlatformAdmin, err := s.userRepo.IsPlatformAdmin(ctx, req.ActorID)
-	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
-		return err
+	if validateErr := s.validateNoEscalation(
+		ctx,
+		req.ActorID,
+		req.OrganizationID,
+		req.Role,
+	); validateErr != nil {
+		return validateErr
 	}
 
-	if req.Role.IsOrgAdmin && !isPlatformAdmin {
-		return ErrCannotCreateOrgAdmin
-	}
-	if req.Role.IsBusinessUnitAdmin && !isPlatformAdmin {
-		return ErrCannotCreateBusinessUnitAdmin
-	}
-
-	if !isPlatformAdmin {
-		if err = s.validateNoEscalation(
-			ctx,
-			req.ActorID,
-			req.OrganizationID,
-			req.Role,
-		); err != nil {
-			return err
-		}
-	}
-
-	if err = s.validateNoCircularInheritance(ctx, req.Role.ID, req.Role.ParentRoleIDs); err != nil {
-		return err
+	if inheritanceErr := s.validateNoCircularInheritance(
+		ctx,
+		req.Role.ID,
+		req.Role.ParentRoleIDs,
+	); inheritanceErr != nil {
+		return inheritanceErr
 	}
 
 	if valErr := s.validator.ValidateUpdate(ctx, req.Role); valErr != nil {
@@ -308,53 +279,9 @@ func (s *Service) validateAssignmentPrivileges(
 		return err
 	}
 
-	isPlatformAdmin, err := s.userRepo.IsPlatformAdmin(ctx, req.ActorID)
-	if err != nil {
-		log.Error("failed to check platform admin status", zap.Error(err))
-		return err
-	}
-	if isPlatformAdmin {
-		return nil
-	}
-
-	if role.IsOrgAdmin || role.IsBusinessUnitAdmin {
-		actorPerms, permsErr := s.permEngine.GetEffectivePermissions(
-			ctx,
-			req.ActorID,
-			req.OrganizationID,
-		)
-		if permsErr != nil {
-			return permsErr
-		}
-		if role.IsOrgAdmin && !actorHasOrgAdminRole(actorPerms.Roles) {
-			return ErrCannotEscalatePrivileges
-		}
-		if role.IsBusinessUnitAdmin && !actorHasBusinessUnitAdminRole(actorPerms.Roles) {
-			return ErrCannotCreateBusinessUnitAdmin
-		}
-	}
-
 	return s.validateNoEscalation(ctx, req.ActorID, req.OrganizationID, &permission.Role{
 		Permissions: role.Permissions,
 	})
-}
-
-func actorHasOrgAdminRole(roles []services.RoleSummary) bool {
-	for _, role := range roles {
-		if role.IsOrgAdmin {
-			return true
-		}
-	}
-	return false
-}
-
-func actorHasBusinessUnitAdminRole(roles []services.RoleSummary) bool {
-	for _, role := range roles {
-		if role.IsBusinessUnitAdmin {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *Service) validateStaticSeparationOfDutyForAssignment(
@@ -700,18 +627,11 @@ func (s *Service) CreateResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
-	isPlatformAdmin, err := s.userRepo.IsPlatformAdmin(ctx, actorID)
-	if err != nil {
-		return err
+	tempRole := &permission.Role{
+		Permissions: []*permission.ResourcePermission{rp},
 	}
-
-	if !isPlatformAdmin {
-		tempRole := &permission.Role{
-			Permissions: []*permission.ResourcePermission{rp},
-		}
-		if err = s.validateNoEscalation(ctx, actorID, orgID, tempRole); err != nil {
-			return err
-		}
+	if validateErr := s.validateNoEscalation(ctx, actorID, orgID, tempRole); validateErr != nil {
+		return validateErr
 	}
 
 	if err = s.roleRepo.CreateResourcePermission(ctx, rp); err != nil {
@@ -750,18 +670,11 @@ func (s *Service) UpdateResourcePermission(
 		return ErrCannotModifySystemRole
 	}
 
-	isPlatformAdmin, err := s.userRepo.IsPlatformAdmin(ctx, actorID)
-	if err != nil {
-		return err
+	tempRole := &permission.Role{
+		Permissions: []*permission.ResourcePermission{rp},
 	}
-
-	if !isPlatformAdmin {
-		tempRole := &permission.Role{
-			Permissions: []*permission.ResourcePermission{rp},
-		}
-		if err = s.validateNoEscalation(ctx, actorID, orgID, tempRole); err != nil {
-			return err
-		}
+	if validateErr := s.validateNoEscalation(ctx, actorID, orgID, tempRole); validateErr != nil {
+		return validateErr
 	}
 
 	if err = s.roleRepo.UpdateResourcePermission(ctx, rp); err != nil {
@@ -826,8 +739,8 @@ func (s *Service) InitializeOrganizationRoles(
 		Description:    "Full access to all resources within the organization",
 		MaxSensitivity: permission.SensitivityConfidential,
 		IsSystem:       true,
-		IsOrgAdmin:     true,
 		CreatedBy:      creatorID,
+		Permissions:    s.allResourcePermissions(),
 	}
 
 	if err := s.roleRepo.Create(ctx, adminRole); err != nil {
@@ -849,4 +762,22 @@ func (s *Service) InitializeOrganizationRoles(
 
 	log.Info("initialized organization roles", zap.String("adminRoleID", adminRole.ID.String()))
 	return nil
+}
+
+func (s *Service) allResourcePermissions() []*permission.ResourcePermission {
+	definitions := s.registry.All()
+	permissions := make([]*permission.ResourcePermission, 0, len(definitions))
+	for _, def := range definitions {
+		operations := make([]permission.Operation, len(def.Operations))
+		for i, op := range def.Operations {
+			operations[i] = op.Operation
+		}
+
+		permissions = append(permissions, &permission.ResourcePermission{
+			Resource:   def.Resource,
+			Operations: operations,
+			DataScope:  permission.DataScopeAll,
+		})
+	}
+	return permissions
 }

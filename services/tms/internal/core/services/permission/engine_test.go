@@ -27,10 +27,6 @@ func setupTestEngine(
 	cacheRepo := mocks.NewMockPermissionCacheRepository(t)
 	userRepo := mocks.NewMockUserRepository(t)
 	logger := zap.NewNop()
-	roleRepo.
-		On("HasBusinessUnitAdminAccess", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(false, nil)
 
 	e := &engine{
 		roleRepo:      roleRepo,
@@ -45,79 +41,6 @@ func setupTestEngine(
 	return e, roleRepo, cacheRepo, userRepo
 }
 
-func TestCheck_PlatformAdminBypass(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
-		UserID:         userID,
-		OrganizationID: orgID,
-		Resource:       "shipment",
-		Operation:      permission.OpRead,
-	})
-
-	require.NoError(t, err)
-	assert.True(t, result.Allowed)
-	assert.Equal(t, "platform_admin", result.Reason)
-	assert.Equal(t, permission.DataScopeAll, result.DataScope)
-	assert.False(t, result.CacheHit)
-
-	userRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
-func TestCheck_OrgAdminBypass(t *testing.T) {
-	t.Parallel()
-
-	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
-	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
-			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
-		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
-		{
-			ID:             roleID,
-			Name:           "Admin",
-			IsOrgAdmin:     true,
-			MaxSensitivity: permission.SensitivityConfidential,
-		},
-	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
-		UserID:         userID,
-		OrganizationID: orgID,
-		Resource:       "shipment",
-		Operation:      permission.OpRead,
-	})
-
-	require.NoError(t, err)
-	assert.True(t, result.Allowed)
-	assert.Equal(t, "org_admin", result.Reason)
-	assert.Equal(t, permission.DataScopeOrganization, result.DataScope)
-
-	userRepo.AssertExpectations(t)
-	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
 func TestCheck_AllowedByPermission(t *testing.T) {
 	t.Parallel()
 
@@ -127,7 +50,6 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -137,7 +59,6 @@ func TestCheck_AllowedByPermission(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Driver Manager",
-			IsOrgAdmin:     false,
 			MaxSensitivity: permission.SensitivityInternal,
 			Permissions: []*permission.ResourcePermission{
 				{
@@ -179,7 +100,6 @@ func TestCheck_NoPermission(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -189,7 +109,6 @@ func TestCheck_NoPermission(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Reader",
-			IsOrgAdmin:     false,
 			MaxSensitivity: permission.SensitivityPublic,
 			Permissions: []*permission.ResourcePermission{
 				{
@@ -230,7 +149,6 @@ func TestCheck_CacheHit(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
-		IsOrgAdmin:     false,
 		MaxSensitivity: string(permission.SensitivityInternal),
 		Resources: map[string]*repositories.CachedResourcePermission{
 			"shipment": {
@@ -263,7 +181,6 @@ func TestCheck_NoRoles(t *testing.T) {
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
@@ -289,23 +206,22 @@ func TestCheck_NoRoles(t *testing.T) {
 func TestCheckBatch(t *testing.T) {
 	t.Parallel()
 
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil).Once()
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil).Once()
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil).
+		Once()
 	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil).
 		Once()
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
-		IsPlatformAdmin:     true,
-		IsOrgAdmin:          true,
-		IsBusinessUnitAdmin: true,
-		MaxSensitivity:      string(permission.SensitivityConfidential),
-		Resources:           map[string]*repositories.CachedResourcePermission{},
-		ExpiresAt:           timeutils.NowUnix() + 3600,
+		MaxSensitivity: string(permission.SensitivityConfidential),
+		Resources:      map[string]*repositories.CachedResourcePermission{},
+		ExpiresAt:      timeutils.NowUnix() + 3600,
 	}, nil).Once()
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
@@ -319,43 +235,10 @@ func TestCheckBatch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Len(t, result.Results, 2)
-	assert.True(t, result.Results[0].Allowed)
-	assert.True(t, result.Results[1].Allowed)
+	assert.False(t, result.Results[0].Allowed)
+	assert.False(t, result.Results[1].Allowed)
 
-	userRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
-}
-
-func TestGetLightManifest_PlatformAdmin(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
-		{ID: orgID, Name: "Test Org"},
-	}, nil)
-
-	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
-
-	require.NoError(t, err)
-	assert.Equal(t, manifestVersion, manifest.Version)
-	assert.True(t, manifest.IsPlatformAdmin)
-	assert.True(t, manifest.IsOrgAdmin)
-	assert.Equal(t, permission.SensitivityConfidential, manifest.MaxSensitivity)
-	assert.NotEmpty(t, manifest.Permissions)
-	assert.NotEmpty(t, manifest.RouteAccess)
-	assert.NotEmpty(t, manifest.Checksum)
-	assert.Len(t, manifest.AvailableOrgs, 1)
-	cacheRepo.AssertExpectations(t)
-
-	userRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_RegularUser(t *testing.T) {
@@ -367,7 +250,6 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
@@ -380,7 +262,6 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Dispatcher",
-			IsOrgAdmin:     false,
 			MaxSensitivity: permission.SensitivityRestricted,
 			Permissions: []*permission.ResourcePermission{
 				{
@@ -398,8 +279,6 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
 	require.NoError(t, err)
-	assert.False(t, manifest.IsPlatformAdmin)
-	assert.False(t, manifest.IsOrgAdmin)
 	assert.Equal(t, permission.SensitivityRestricted, manifest.MaxSensitivity)
 	assert.Contains(t, manifest.Permissions, "shipment")
 	assert.NotEmpty(t, manifest.Checksum)
@@ -423,12 +302,10 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 				ID:          roleID,
 				Name:        "Dispatcher",
 				Description: "Coordinates loads",
-				IsOrgAdmin:  true,
 			},
 		},
 	}
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
@@ -445,7 +322,6 @@ func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testi
 	assert.Empty(t, manifest.ActiveRoleIDs)
 	require.Len(t, manifest.AuthorizedRoles, 1)
 	assert.Equal(t, "Dispatcher", manifest.AuthorizedRoles[0].Name)
-	assert.True(t, manifest.AuthorizedRoles[0].IsOrgAdmin)
 	assert.Empty(t, manifest.ActiveRoles)
 
 	userRepo.AssertExpectations(t)
@@ -462,7 +338,6 @@ func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
 		{ID: orgID, Name: "Test Org"},
 	}, nil)
@@ -517,7 +392,6 @@ func TestGetEffectivePermissions(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Manager",
-			IsOrgAdmin:     false,
 			IsSystem:       true,
 			MaxSensitivity: permission.SensitivityRestricted,
 			Permissions: []*permission.ResourcePermission{
@@ -618,32 +492,6 @@ func TestSimulatePermissions(t *testing.T) {
 	roleRepo.AssertExpectations(t)
 }
 
-func TestGetResourcePermissions_PlatformAdmin(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-
-	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "shipment", result.Resource)
-	assert.Equal(t, permission.DataScopeAll, result.DataScope)
-	assert.Equal(t, permission.SensitivityConfidential, result.MaxSensitivity)
-	assert.NotEmpty(t, result.Operations)
-
-	userRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
 func TestGetResourcePermissions_UnknownResource(t *testing.T) {
 	t.Parallel()
 
@@ -662,7 +510,7 @@ func TestGetResourcePermissions_UnknownResource(t *testing.T) {
 func TestExpiredAssignmentsIgnored(t *testing.T) {
 	t.Parallel()
 
-	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -671,7 +519,6 @@ func TestExpiredAssignmentsIgnored(t *testing.T) {
 
 	expiredTime := timeutils.NowUnix() - 3600
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -718,7 +565,6 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 	role1ID := pulid.MustNew("rol_")
 	role2ID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -792,30 +638,6 @@ func TestMultipleRolesMergePermissions(t *testing.T) {
 	cacheRepo.AssertExpectations(t)
 }
 
-func TestCheck_PlatformAdminCheckError(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("user repo error"))
-
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
-		UserID:         userID,
-		OrganizationID: orgID,
-		Resource:       "shipment",
-		Operation:      permission.OpRead,
-	})
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	userRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
 func TestCheck_OperationNotAllowed(t *testing.T) {
 	t.Parallel()
 
@@ -825,7 +647,6 @@ func TestCheck_OperationNotAllowed(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
-		IsOrgAdmin:     false,
 		MaxSensitivity: string(permission.SensitivityInternal),
 		Resources: map[string]*repositories.CachedResourcePermission{
 			"shipment": {
@@ -852,13 +673,14 @@ func TestCheck_OperationNotAllowed(t *testing.T) {
 func TestCheckBatch_Error(t *testing.T) {
 	t.Parallel()
 
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("db error"))
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return(nil, errors.New("role lookup error"))
 
 	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
 		UserID:         userID,
@@ -871,38 +693,19 @@ func TestCheckBatch_Error(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 	cacheRepo.AssertExpectations(t)
-	userRepo.AssertExpectations(t)
-}
-
-func TestGetLightManifest_PlatformAdminCheckError(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("user error"))
-
-	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
-
-	require.Error(t, err)
-	assert.Nil(t, manifest)
-	userRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
 }
 
 func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	t.Parallel()
 
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
+	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
 	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
 	userRepo.On("GetUserOrganizationSummaries", ctx, userID).
@@ -916,85 +719,6 @@ func TestGetLightManifest_OrgSummariesError(t *testing.T) {
 	cacheRepo.AssertExpectations(t)
 }
 
-func TestGetLightManifest_OrgAdmin(t *testing.T) {
-	t.Parallel()
-
-	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
-	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
-		{ID: orgID, Name: "Test Org"},
-	}, nil)
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
-			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
-		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
-		{
-			ID:             roleID,
-			Name:           "Admin",
-			IsOrgAdmin:     true,
-			MaxSensitivity: permission.SensitivityConfidential,
-		},
-	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-
-	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
-
-	require.NoError(t, err)
-	assert.False(t, manifest.IsPlatformAdmin)
-	assert.True(t, manifest.IsOrgAdmin)
-	assert.NotEmpty(t, manifest.Permissions)
-	assert.NotEmpty(t, manifest.Checksum)
-	userRepo.AssertExpectations(t)
-	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
-func TestGetResourcePermissions_OrgAdmin(t *testing.T) {
-	t.Parallel()
-
-	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
-		Return([]*permission.UserRoleAssignment{
-			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
-		}, nil)
-	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
-		{
-			ID:             roleID,
-			Name:           "Admin",
-			IsOrgAdmin:     true,
-			MaxSensitivity: permission.SensitivityConfidential,
-		},
-	}, nil)
-	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil)
-
-	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, "shipment", result.Resource)
-	assert.Equal(t, permission.DataScopeOrganization, result.DataScope)
-	assert.NotEmpty(t, result.Operations)
-	userRepo.AssertExpectations(t)
-	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
 func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	t.Parallel()
 
@@ -1004,7 +728,6 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -1014,7 +737,6 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Viewer",
-			IsOrgAdmin:     false,
 			MaxSensitivity: permission.SensitivityInternal,
 			Permissions: []*permission.ResourcePermission{
 				{
@@ -1051,7 +773,6 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
@@ -1061,7 +782,6 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 		{
 			ID:             roleID,
 			Name:           "Viewer",
-			IsOrgAdmin:     false,
 			MaxSensitivity: permission.SensitivityPublic,
 			Permissions: []*permission.ResourcePermission{
 				{
@@ -1086,25 +806,6 @@ func TestGetResourcePermissions_NoPermissionForResource(t *testing.T) {
 	assert.Empty(t, result.DataScope)
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
-	cacheRepo.AssertExpectations(t)
-}
-
-func TestGetResourcePermissions_PlatformAdminCheckError(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, userRepo := setupTestEngine(t)
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, errors.New("db error"))
-
-	result, err := eng.GetResourcePermissions(ctx, userID, orgID, "shipment")
-
-	require.Error(t, err)
-	assert.Nil(t, result)
-	userRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
 }
 

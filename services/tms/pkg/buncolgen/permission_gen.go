@@ -157,35 +157,31 @@ var RoleTable = TableInfo{
 //	q.Where(RoleColumns.ID.Eq(), id)           // WHERE r.id = ?
 //	q.Order(RoleColumns.CreatedAt.OrderDesc())  // ORDER BY r.created_at DESC
 var RoleColumns = struct {
-	ID                  Column // "id" → qualified: "r.id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "r.business_unit_id"
-	OrganizationID      Column // "organization_id" → qualified: "r.organization_id"
-	Name                Column // "name" → qualified: "r.name"
-	Description         Column // "description" → qualified: "r.description"
-	CoreResponsibility  Column // "core_responsibility" → qualified: "r.core_responsibility"
-	ParentRoleIDs       Column // "parent_role_ids" → qualified: "r.parent_role_ids"
-	MaxSensitivity      Column // "max_sensitivity" → qualified: "r.max_sensitivity"
-	IsSystem            Column // "is_system" → qualified: "r.is_system"
-	IsOrgAdmin          Column // "is_org_admin" → qualified: "r.is_org_admin"
-	IsBusinessUnitAdmin Column // "is_business_unit_admin" → qualified: "r.is_business_unit_admin"
-	CreatedBy           Column // "created_by" → qualified: "r.created_by"
-	CreatedAt           Column // "created_at" → qualified: "r.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "r.updated_at"
+	ID                 Column // "id" → qualified: "r.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "r.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "r.organization_id"
+	Name               Column // "name" → qualified: "r.name"
+	Description        Column // "description" → qualified: "r.description"
+	CoreResponsibility Column // "core_responsibility" → qualified: "r.core_responsibility"
+	ParentRoleIDs      Column // "parent_role_ids" → qualified: "r.parent_role_ids"
+	MaxSensitivity     Column // "max_sensitivity" → qualified: "r.max_sensitivity"
+	IsSystem           Column // "is_system" → qualified: "r.is_system"
+	CreatedBy          Column // "created_by" → qualified: "r.created_by"
+	CreatedAt          Column // "created_at" → qualified: "r.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "r.updated_at"
 }{
-	ID:                  NewColumn("id", "r"),
-	BusinessUnitID:      NewColumn("business_unit_id", "r"),
-	OrganizationID:      NewColumn("organization_id", "r"),
-	Name:                NewColumn("name", "r"),
-	Description:         NewColumn("description", "r"),
-	CoreResponsibility:  NewColumn("core_responsibility", "r"),
-	ParentRoleIDs:       NewColumn("parent_role_ids", "r"),
-	MaxSensitivity:      NewColumn("max_sensitivity", "r"),
-	IsSystem:            NewColumn("is_system", "r"),
-	IsOrgAdmin:          NewColumn("is_org_admin", "r"),
-	IsBusinessUnitAdmin: NewColumn("is_business_unit_admin", "r"),
-	CreatedBy:           NewColumn("created_by", "r"),
-	CreatedAt:           NewColumn("created_at", "r"),
-	UpdatedAt:           NewColumn("updated_at", "r"),
+	ID:                 NewColumn("id", "r"),
+	BusinessUnitID:     NewColumn("business_unit_id", "r"),
+	OrganizationID:     NewColumn("organization_id", "r"),
+	Name:               NewColumn("name", "r"),
+	Description:        NewColumn("description", "r"),
+	CoreResponsibility: NewColumn("core_responsibility", "r"),
+	ParentRoleIDs:      NewColumn("parent_role_ids", "r"),
+	MaxSensitivity:     NewColumn("max_sensitivity", "r"),
+	IsSystem:           NewColumn("is_system", "r"),
+	CreatedBy:          NewColumn("created_by", "r"),
+	CreatedAt:          NewColumn("created_at", "r"),
+	UpdatedAt:          NewColumn("updated_at", "r"),
 }
 
 // RoleFieldMap maps JSON API field names to database column names.
@@ -193,20 +189,18 @@ var RoleColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Role.GetStaticFieldMap().
 var RoleFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"name":                "name",
-	"description":         "description",
-	"coreResponsibility":  "core_responsibility",
-	"parentRoleIds":       "parent_role_ids",
-	"maxSensitivity":      "max_sensitivity",
-	"isSystem":            "is_system",
-	"isOrgAdmin":          "is_org_admin",
-	"isBusinessUnitAdmin": "is_business_unit_admin",
-	"createdBy":           "created_by",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"name":               "name",
+	"description":        "description",
+	"coreResponsibility": "core_responsibility",
+	"parentRoleIds":      "parent_role_ids",
+	"maxSensitivity":     "max_sensitivity",
+	"isSystem":           "is_system",
+	"createdBy":          "created_by",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
 }
 
 // RoleInsertableColumns lists column names suitable for INSERT statements on the "roles" table.
@@ -221,8 +215,6 @@ var RoleInsertableColumns = []string{
 	"parent_role_ids",
 	"max_sensitivity",
 	"is_system",
-	"is_org_admin",
-	"is_business_unit_admin",
 	"created_by",
 	"created_at",
 	"updated_at",
@@ -289,20 +281,18 @@ func RoleApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Selec
 //	RoleFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RoleFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	CoreResponsibility  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coreResponsibility" → DB: "core_responsibility"
-	ParentRoleIDs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentRoleIds" → DB: "parent_role_ids"
-	MaxSensitivity      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxSensitivity" → DB: "max_sensitivity"
-	IsSystem            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
-	IsOrgAdmin          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isOrgAdmin" → DB: "is_org_admin"
-	IsBusinessUnitAdmin func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isBusinessUnitAdmin" → DB: "is_business_unit_admin"
-	CreatedBy           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	CoreResponsibility func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coreResponsibility" → DB: "core_responsibility"
+	ParentRoleIDs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentRoleIds" → DB: "parent_role_ids"
+	MaxSensitivity     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxSensitivity" → DB: "max_sensitivity"
+	IsSystem           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
+	CreatedBy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -330,12 +320,6 @@ var RoleFilter = struct {
 	},
 	IsSystem: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isSystem", op, value)
-	},
-	IsOrgAdmin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("isOrgAdmin", op, value)
-	},
-	IsBusinessUnitAdmin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("isBusinessUnitAdmin", op, value)
 	},
 	CreatedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdBy", op, value)

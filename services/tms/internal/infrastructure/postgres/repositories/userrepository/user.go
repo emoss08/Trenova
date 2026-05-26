@@ -461,27 +461,6 @@ func (ur *repository) UpdateCurrentOrganization(
 	return nil
 }
 
-func (ur *repository) IsPlatformAdmin(ctx context.Context, userID pulid.ID) (bool, error) {
-	log := ur.l.With(
-		zap.String("operation", "IsPlatformAdmin"),
-		zap.String("userID", userID.String()),
-	)
-
-	var isPlatformAdmin bool
-	err := ur.db.DB().
-		NewSelect().
-		Model((*tenant.User)(nil)).
-		Column("is_platform_admin").
-		Where("id = ?", userID).
-		Scan(ctx, &isPlatformAdmin)
-	if err != nil {
-		log.Error("failed to check if user is platform admin", zap.Error(err))
-		return false, err
-	}
-
-	return isPlatformAdmin, nil
-}
-
 func (ur *repository) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,

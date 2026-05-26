@@ -334,6 +334,43 @@ func (r *Registry) registerAdministrationResources() {
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourcePlatformCatalog.String(),
+		DisplayName:        "Platform Catalog",
+		Description:        "Platform catalog and entitlement metadata administration",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDatabaseSession.String(),
+		DisplayName: "Database Session",
+		Description: "Database session diagnostics and termination",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View database sessions"},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Terminate",
+				Description: "Terminate database sessions",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDocumentOperation.String(),
+		DisplayName: "Document Operation",
+		Description: "Document diagnostics, extraction, preview, and search operations",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View document diagnostics"},
+			{Operation: OpUpdate, DisplayName: "Run", Description: "Run document operations"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerEquipmentResources() {

@@ -2840,7 +2840,6 @@ var UserColumns = struct {
 	Timezone              Column // "timezone" → qualified: "usr.timezone"
 	IsLocked              Column // "is_locked" → qualified: "usr.is_locked"
 	MustChangePassword    Column // "must_change_password" → qualified: "usr.must_change_password"
-	IsPlatformAdmin       Column // "is_platform_admin" → qualified: "usr.is_platform_admin"
 	Version               Column // "version" → qualified: "usr.version"
 	CreatedAt             Column // "created_at" → qualified: "usr.created_at"
 	UpdatedAt             Column // "updated_at" → qualified: "usr.updated_at"
@@ -2860,7 +2859,6 @@ var UserColumns = struct {
 	Timezone:              NewColumn("timezone", "usr"),
 	IsLocked:              NewColumn("is_locked", "usr"),
 	MustChangePassword:    NewColumn("must_change_password", "usr"),
-	IsPlatformAdmin:       NewColumn("is_platform_admin", "usr"),
 	Version:               NewColumn("version", "usr"),
 	CreatedAt:             NewColumn("created_at", "usr"),
 	UpdatedAt:             NewColumn("updated_at", "usr"),
@@ -2885,7 +2883,6 @@ var UserFieldMap = map[string]string{
 	"timezone":              "timezone",
 	"isLocked":              "is_locked",
 	"mustChangePassword":    "must_change_password",
-	"isPlatformAdmin":       "is_platform_admin",
 	"version":               "version",
 	"createdAt":             "created_at",
 	"updatedAt":             "updated_at",
@@ -2909,7 +2906,6 @@ var UserInsertableColumns = []string{
 	"timezone",
 	"is_locked",
 	"must_change_password",
-	"is_platform_admin",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2954,7 +2950,6 @@ var UserFilter = struct {
 	Timezone              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
 	IsLocked              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isLocked" → DB: "is_locked"
 	MustChangePassword    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mustChangePassword" → DB: "must_change_password"
-	IsPlatformAdmin       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isPlatformAdmin" → DB: "is_platform_admin"
 	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2998,9 +2993,6 @@ var UserFilter = struct {
 	},
 	MustChangePassword: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("mustChangePassword", op, value)
-	},
-	IsPlatformAdmin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("isPlatformAdmin", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

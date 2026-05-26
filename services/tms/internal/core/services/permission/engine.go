@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -28,11 +29,20 @@ const (
 )
 
 type permissionLoadResult struct {
-	perms                 *repositories.CachedPermissions
-	cacheHit              bool
-	cacheLookupDuration   time.Duration
-	computeDuration       time.Duration
-	platformAdminDuration time.Duration
+	perms               *repositories.CachedPermissions
+	cacheHit            bool
+	cacheLookupDuration time.Duration
+	computeDuration     time.Duration
+}
+
+type permissionResultRequest struct {
+	log       *zap.Logger
+	start     time.Time
+	load      permissionLoadResult
+	req       *services.PermissionCheckRequest
+	allowed   bool
+	reason    string
+	dataScope permission.DataScope
 }
 
 type Params struct {
@@ -96,73 +106,68 @@ func (e *engine) Check(
 		return nil, err
 	}
 
-	if load.perms.IsPlatformAdmin {
-		e.logSlowPermissionCheck(log, start, load, true)
-		return &services.PermissionCheckResult{
-			Allowed:       true,
-			Reason:        "platform_admin",
-			DataScope:     permission.DataScopeAll,
-			CacheHit:      load.cacheHit,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
-	}
+	return e.checkUserPermission(log, start, load, req), nil
+}
 
+func (e *engine) checkUserPermission(
+	log *zap.Logger,
+	start time.Time,
+	load permissionLoadResult,
+	req *services.PermissionCheckRequest,
+) *services.PermissionCheckResult {
 	perms := load.perms
-	if perms.IsOrgAdmin {
-		e.logSlowPermissionCheck(log, start, load, true)
-		return &services.PermissionCheckResult{
-			Allowed:       true,
-			Reason:        "org_admin",
-			DataScope:     permission.DataScopeOrganization,
-			CacheHit:      load.cacheHit,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
-	}
-
-	if perms.IsBusinessUnitAdmin {
-		e.logSlowPermissionCheck(log, start, load, true)
-		return &services.PermissionCheckResult{
-			Allowed:       true,
-			Reason:        "business_unit_admin",
-			DataScope:     permission.DataScopeOrganization,
-			CacheHit:      load.cacheHit,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
-	}
-
 	effectiveResource := e.registry.GetEffectiveResource(req.Resource)
 
 	resourcePerms, ok := perms.Resources[effectiveResource]
 	if !ok {
-		e.logSlowPermissionCheck(log, start, load, true)
-		return &services.PermissionCheckResult{
-			Allowed:       false,
-			Reason:        "no_permission",
-			DataScope:     "",
-			CacheHit:      load.cacheHit,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
+		return e.permissionResult(&permissionResultRequest{
+			log:    log,
+			start:  start,
+			load:   load,
+			req:    req,
+			reason: "no_permission",
+		})
 	}
 
 	if slices.Contains(resourcePerms.Operations, string(req.Operation)) {
-		e.logSlowPermissionCheck(log, start, load, true)
-		return &services.PermissionCheckResult{
-			Allowed:       true,
-			Reason:        "allowed",
-			DataScope:     permission.DataScope(resourcePerms.DataScope),
-			CacheHit:      load.cacheHit,
-			CheckDuration: time.Since(start).Milliseconds(),
-		}, nil
+		return e.permissionResult(&permissionResultRequest{
+			log:       log,
+			start:     start,
+			load:      load,
+			req:       req,
+			allowed:   true,
+			reason:    "allowed",
+			dataScope: permission.DataScope(resourcePerms.DataScope),
+		})
 	}
 
-	e.logSlowPermissionCheck(log, start, load, true)
+	return e.permissionResult(&permissionResultRequest{
+		log:    log,
+		start:  start,
+		load:   load,
+		req:    req,
+		reason: "no_permission",
+	})
+}
+
+func (e *engine) permissionResult(p *permissionResultRequest) *services.PermissionCheckResult {
+	if p.allowed {
+		if result := enforceResourceAttributes(p.req, p.dataScope); result != nil {
+			e.logSlowPermissionCheck(p.log, p.start, p.load, true)
+			result.CacheHit = p.load.cacheHit
+			result.CheckDuration = time.Since(p.start).Milliseconds()
+			return result
+		}
+	}
+
+	e.logSlowPermissionCheck(p.log, p.start, p.load, true)
 	return &services.PermissionCheckResult{
-		Allowed:       false,
-		Reason:        "no_permission",
-		DataScope:     "",
-		CacheHit:      load.cacheHit,
-		CheckDuration: time.Since(start).Milliseconds(),
-	}, nil
+		Allowed:       p.allowed,
+		Reason:        p.reason,
+		DataScope:     p.dataScope,
+		CacheHit:      p.load.cacheHit,
+		CheckDuration: time.Since(p.start).Milliseconds(),
+	}
 }
 
 func (e *engine) logSlowPermissionCheck(
@@ -178,7 +183,6 @@ func (e *engine) logSlowPermissionCheck(
 
 	log.Warn("slow permission check",
 		zap.Duration("total_duration", total),
-		zap.Duration("platform_admin_lookup_duration", load.platformAdminDuration),
 		zap.Duration("cache_lookup_duration", load.cacheLookupDuration),
 		zap.Duration("permission_compute_duration", load.computeDuration),
 		zap.Bool("cache_hit", load.cacheHit),
@@ -196,15 +200,17 @@ func (e *engine) CheckBatch(
 
 	for i, check := range req.Checks {
 		result, err := e.Check(ctx, &services.PermissionCheckRequest{
-			PrincipalType:  req.PrincipalType,
-			PrincipalID:    req.PrincipalID,
-			UserID:         req.UserID,
-			APIKeyID:       req.APIKeyID,
-			BusinessUnitID: req.BusinessUnitID,
-			OrganizationID: req.OrganizationID,
-			Resource:       check.Resource,
-			Operation:      check.Operation,
-			ResourceID:     check.ResourceID,
+			PrincipalType:      req.PrincipalType,
+			PrincipalID:        req.PrincipalID,
+			UserID:             req.UserID,
+			APIKeyID:           req.APIKeyID,
+			BusinessUnitID:     req.BusinessUnitID,
+			OrganizationID:     req.OrganizationID,
+			Resource:           check.Resource,
+			Operation:          check.Operation,
+			ResourceID:         check.ResourceID,
+			ResourceAttributes: check.ResourceAttributes,
+			ContextAttributes:  req.ContextAttributes,
 		})
 		if err != nil {
 			return nil, err
@@ -217,6 +223,59 @@ func (e *engine) CheckBatch(
 		CacheHit:      len(results) > 0 && results[0].CacheHit,
 		CheckDuration: time.Since(start).Milliseconds(),
 	}, nil
+}
+
+func enforceResourceAttributes(
+	req *services.PermissionCheckRequest,
+	dataScope permission.DataScope,
+) *services.PermissionCheckResult {
+	attrs := req.ResourceAttributes
+
+	if attrs.OrganizationID.IsNotNil() && attrs.OrganizationID != req.OrganizationID {
+		return deniedByABAC(dataScope, "abac_organization_mismatch")
+	}
+
+	if attrs.BusinessUnitID.IsNotNil() && attrs.BusinessUnitID != req.BusinessUnitID {
+		return deniedByABAC(dataScope, "abac_business_unit_mismatch")
+	}
+
+	if attrs.ActiveRoleID.IsNotNil() &&
+		!slices.Contains(req.ContextAttributes.ActiveRoleIDs, attrs.ActiveRoleID) {
+		return deniedByABAC(dataScope, "abac_active_role_required")
+	}
+
+	if strings.EqualFold(req.ContextAttributes.RiskDecision, "deny") {
+		return deniedByABAC(dataScope, "abac_risk_denied")
+	}
+
+	switch dataScope {
+	case permission.DataScopeOwn:
+		if attrs.OwnerID.IsNotNil() && attrs.OwnerID != req.UserID {
+			return deniedByABAC(dataScope, "abac_owner_scope")
+		}
+	case permission.DataScopeOrganization:
+		if attrs.OrganizationID.IsNotNil() && attrs.OrganizationID != req.OrganizationID {
+			return deniedByABAC(dataScope, "abac_organization_scope")
+		}
+	case permission.DataScopeBusinessUnit:
+		if attrs.BusinessUnitID.IsNotNil() && attrs.BusinessUnitID != req.BusinessUnitID {
+			return deniedByABAC(dataScope, "abac_business_unit_scope")
+		}
+	case permission.DataScopeAll:
+	}
+
+	return nil
+}
+
+func deniedByABAC(
+	dataScope permission.DataScope,
+	reason string,
+) *services.PermissionCheckResult {
+	return &services.PermissionCheckResult{
+		Allowed:   false,
+		Reason:    reason,
+		DataScope: dataScope,
+	}
 }
 
 func (e *engine) GetLightManifest(
@@ -260,33 +319,11 @@ func (e *engine) GetLightManifest(
 			len(authorizedRoleIDs) > 0
 	}
 
-	if load.perms.IsPlatformAdmin {
-		return e.newLightManifest(
-			userID,
-			orgID,
-			true,
-			true,
-			true,
-			permission.SensitivityConfidential,
-			e.allResourceBitmasks(),
-			orgSummaries,
-			activeRoleIDs,
-			authorizedRoleIDs,
-			activeRoles,
-			authorizedRoles,
-			requiresRoleActivation,
-			expiresAt,
-		), nil
-	}
-
 	perms := load.perms
 	permissions := e.lightResourceBitmasks(perms)
 	return e.newLightManifest(
 		userID,
 		orgID,
-		false,
-		perms.IsOrgAdmin,
-		perms.IsBusinessUnitAdmin,
 		permission.FieldSensitivity(perms.MaxSensitivity),
 		permissions,
 		orgSummaries,
@@ -369,25 +406,7 @@ func activeRoleSummaries(
 	return activeRoles
 }
 
-func (e *engine) allResourceBitmasks() map[string]uint32 {
-	allPermissions := make(map[string]uint32)
-
-	for _, def := range e.registry.All() {
-		var bitmask uint32
-		for _, opDef := range def.Operations {
-			bitmask |= permission.OperationToBit[opDef.Operation]
-		}
-		allPermissions[def.Resource] = bitmask
-	}
-
-	return allPermissions
-}
-
-func (e *engine) lightResourceBitmasks(perms *repositories.CachedPermissions) map[string]uint32 {
-	if perms.IsOrgAdmin || perms.IsBusinessUnitAdmin {
-		return e.allResourceBitmasks()
-	}
-
+func (*engine) lightResourceBitmasks(perms *repositories.CachedPermissions) map[string]uint32 {
 	permissions := make(map[string]uint32)
 	for resource, rp := range perms.Resources {
 		var bitmask uint32
@@ -402,9 +421,6 @@ func (e *engine) lightResourceBitmasks(perms *repositories.CachedPermissions) ma
 
 func (e *engine) newLightManifest(
 	userID, orgID pulid.ID,
-	isPlatformAdmin bool,
-	isOrgAdmin bool,
-	isBusinessUnitAdmin bool,
 	maxSensitivity permission.FieldSensitivity,
 	permissions map[string]uint32,
 	orgSummaries []services.OrgSummary,
@@ -419,9 +435,6 @@ func (e *engine) newLightManifest(
 		Version:                manifestVersion,
 		UserID:                 userID,
 		OrganizationID:         orgID,
-		IsPlatformAdmin:        isPlatformAdmin,
-		IsOrgAdmin:             isOrgAdmin,
-		IsBusinessUnitAdmin:    isBusinessUnitAdmin,
 		ActiveRoleIDs:          activeRoleIDs,
 		AuthorizedRoleIDs:      authorizedRoleIDs,
 		ActiveRoles:            activeRoles,
@@ -462,42 +475,8 @@ func (e *engine) GetResourcePermissions(
 		return nil, err
 	}
 
-	if load.perms.IsPlatformAdmin {
-		ops := make([]permission.Operation, len(def.Operations))
-		for i, opDef := range def.Operations {
-			ops[i] = opDef.Operation
-		}
-
-		accessibleFields := e.getAccessibleFields(def, permission.SensitivityConfidential)
-
-		return &services.ResourcePermissionDetail{
-			Resource:         resource,
-			Operations:       ops,
-			DataScope:        permission.DataScopeAll,
-			MaxSensitivity:   permission.SensitivityConfidential,
-			AccessibleFields: accessibleFields,
-		}, nil
-	}
-
 	perms := load.perms
 	maxSensitivity := permission.FieldSensitivity(perms.MaxSensitivity)
-
-	if perms.IsOrgAdmin || perms.IsBusinessUnitAdmin {
-		ops := make([]permission.Operation, len(def.Operations))
-		for i, opDef := range def.Operations {
-			ops[i] = opDef.Operation
-		}
-
-		accessibleFields := e.getAccessibleFields(def, maxSensitivity)
-
-		return &services.ResourcePermissionDetail{
-			Resource:         resource,
-			Operations:       ops,
-			DataScope:        permission.DataScopeOrganization,
-			MaxSensitivity:   maxSensitivity,
-			AccessibleFields: accessibleFields,
-		}, nil
-	}
 
 	effectiveResource := e.registry.GetEffectiveResource(resource)
 	resourcePerms, ok := perms.Resources[effectiveResource]
@@ -665,12 +644,9 @@ func (e *engine) computeAPIKeyPermissions(
 	}
 
 	return &repositories.CachedPermissions{
-		IsPlatformAdmin:     false,
-		IsOrgAdmin:          false,
-		IsBusinessUnitAdmin: false,
-		MaxSensitivity:      string(permission.SensitivityRestricted),
-		Resources:           resources,
-		ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		MaxSensitivity: string(permission.SensitivityRestricted),
+		Resources:      resources,
+		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, nil
 }
 
@@ -682,9 +658,8 @@ func (e *engine) getOrComputePermissions(
 	_, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
 	if hasRoleActivation {
 		computeStart := time.Now()
-		perms, platformAdminDuration, err := e.computePermissions(ctx, userID, orgID)
+		perms, err := e.computePermissions(ctx, userID, orgID)
 		result.computeDuration = time.Since(computeStart)
-		result.platformAdminDuration = platformAdminDuration
 		result.perms = perms
 		return result, err
 	}
@@ -703,9 +678,8 @@ func (e *engine) getOrComputePermissions(
 	}
 
 	computeStart := time.Now()
-	perms, platformAdminDuration, err := e.computePermissions(ctx, userID, orgID)
+	perms, err := e.computePermissions(ctx, userID, orgID)
 	result.computeDuration = time.Since(computeStart)
-	result.platformAdminDuration = platformAdminDuration
 	if err != nil {
 		return result, err
 	}
@@ -721,87 +695,50 @@ func (e *engine) getOrComputePermissions(
 func (e *engine) computePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
-) (*repositories.CachedPermissions, time.Duration, error) {
-	platformAdminStart := time.Now()
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, userID)
-	platformAdminDuration := time.Since(platformAdminStart)
-	if err != nil {
-		return nil, platformAdminDuration, err
-	}
-
-	if isPlatformAdmin {
-		return &repositories.CachedPermissions{
-			IsPlatformAdmin:     true,
-			IsOrgAdmin:          true,
-			IsBusinessUnitAdmin: true,
-			MaxSensitivity:      string(permission.SensitivityConfidential),
-			Resources:           make(map[string]*repositories.CachedResourcePermission),
-			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-		}, platformAdminDuration, nil
-	}
-
+) (*repositories.CachedPermissions, error) {
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 	if err != nil {
-		return nil, platformAdminDuration, err
+		return nil, err
 	}
 
 	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
 	if hasRoleActivation && roleActivation.RequiresActivation &&
 		len(roleActivation.ActiveRoleIDs) == 0 {
 		return &repositories.CachedPermissions{
-			IsPlatformAdmin:     false,
-			IsOrgAdmin:          false,
-			IsBusinessUnitAdmin: false,
-			MaxSensitivity:      string(permission.SensitivityPublic),
-			Resources:           make(map[string]*repositories.CachedResourcePermission),
-			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-		}, platformAdminDuration, nil
+			MaxSensitivity: string(permission.SensitivityPublic),
+			Resources:      make(map[string]*repositories.CachedResourcePermission),
+			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		}, nil
 	}
 
 	roleIDs := activePermissionRoleIDs(assignments, roleActivation, hasRoleActivation)
 
 	if len(roleIDs) == 0 {
 		return &repositories.CachedPermissions{
-			IsPlatformAdmin:     false,
-			IsOrgAdmin:          false,
-			IsBusinessUnitAdmin: false,
-			MaxSensitivity:      string(permission.SensitivityPublic),
-			Resources:           make(map[string]*repositories.CachedResourcePermission),
-			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-		}, platformAdminDuration, nil
+			MaxSensitivity: string(permission.SensitivityPublic),
+			Resources:      make(map[string]*repositories.CachedResourcePermission),
+			ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		}, nil
 	}
 
 	roles, err := e.roleRepo.GetRolesWithInheritance(ctx, roleIDs)
 	if err != nil {
-		return nil, platformAdminDuration, err
+		return nil, err
 	}
 
-	isOrgAdmin := false
-	isBusinessUnitAdmin := false
 	maxSensitivity := permission.SensitivityPublic
 	resources := make(map[string]*repositories.CachedResourcePermission)
 
 	for _, role := range roles {
-		e.applyRoleMeta(role, &isOrgAdmin, &isBusinessUnitAdmin, &maxSensitivity)
+		applyRoleSensitivity(role, &maxSensitivity)
 		e.mergeRolePermissionsIntoCache(resources, role.Permissions)
 	}
 
-	hasBUAdminAccess, err := e.roleRepo.HasBusinessUnitAdminAccess(ctx, userID, orgID)
-	if err != nil {
-		return nil, platformAdminDuration, err
-	}
-	if hasBUAdminAccess {
-		isBusinessUnitAdmin = true
-	}
-
 	return &repositories.CachedPermissions{
-		IsPlatformAdmin:     false,
-		IsOrgAdmin:          isOrgAdmin,
-		IsBusinessUnitAdmin: isBusinessUnitAdmin,
-		MaxSensitivity:      string(maxSensitivity),
-		Resources:           resources,
-		ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
-	}, platformAdminDuration, nil
+		MaxSensitivity: string(maxSensitivity),
+		Resources:      resources,
+		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+	}, nil
 }
 
 func activePermissionRoleIDs(
@@ -839,19 +776,10 @@ func activePermissionRoleIDs(
 	return activeRoleIDs
 }
 
-func (e *engine) applyRoleMeta(
+func applyRoleSensitivity(
 	role *permission.Role,
-	isOrgAdmin *bool,
-	isBusinessUnitAdmin *bool,
 	maxSensitivity *permission.FieldSensitivity,
 ) {
-	if role.IsOrgAdmin {
-		*isOrgAdmin = true
-	}
-	if role.IsBusinessUnitAdmin {
-		*isBusinessUnitAdmin = true
-	}
-
 	if role.MaxSensitivity.Level() > maxSensitivity.Level() {
 		*maxSensitivity = role.MaxSensitivity
 	}
@@ -938,12 +866,10 @@ func (e *engine) buildEffectivePermissions(
 	roleSummaries := make([]services.RoleSummary, len(roles))
 	for i, role := range roles {
 		roleSummaries[i] = services.RoleSummary{
-			ID:                  role.ID,
-			Name:                role.Name,
-			Description:         role.Description,
-			IsSystem:            role.IsSystem,
-			IsOrgAdmin:          role.IsOrgAdmin,
-			IsBusinessUnitAdmin: role.IsBusinessUnitAdmin,
+			ID:          role.ID,
+			Name:        role.Name,
+			Description: role.Description,
+			IsSystem:    role.IsSystem,
 		}
 
 		if role.MaxSensitivity.Level() > maxSensitivity.Level() {
@@ -992,18 +918,12 @@ func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) str
 	sort.Strings(keys)
 
 	data := struct {
-		IsPlatformAdmin        bool
-		IsOrgAdmin             bool
-		IsBusinessUnitAdmin    bool
 		ActiveRoleIDs          []pulid.ID
 		AuthorizedRoleIDs      []pulid.ID
 		RequiresRoleActivation bool
 		MaxSensitivity         string
 		Permissions            map[string]uint32
 	}{
-		IsPlatformAdmin:        manifest.IsPlatformAdmin,
-		IsOrgAdmin:             manifest.IsOrgAdmin,
-		IsBusinessUnitAdmin:    manifest.IsBusinessUnitAdmin,
 		ActiveRoleIDs:          manifest.ActiveRoleIDs,
 		AuthorizedRoleIDs:      manifest.AuthorizedRoleIDs,
 		RequiresRoleActivation: manifest.RequiresRoleActivation,

@@ -974,16 +974,39 @@ func (s *service) validateTransferActor(
 		return nil
 	}
 
+	if original == nil {
+		return errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalidOperation,
+			"Shipment is required to validate ownership transfer permissions",
+		)
+	}
+
 	if s.permissions == nil {
 		return errortypes.NewBusinessError("Permission engine is not configured")
 	}
 
-	manifest, err := s.permissions.GetLightManifest(ctx, auditActor.UserID, orgID)
+	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+		PrincipalType:  auditActor.PrincipalType,
+		PrincipalID:    auditActor.PrincipalID,
+		UserID:         auditActor.UserID,
+		APIKeyID:       auditActor.APIKeyID,
+		BusinessUnitID: original.BusinessUnitID,
+		OrganizationID: orgID,
+		Resource:       permission.ResourceShipment.String(),
+		Operation:      permission.OpUpdate,
+		ResourceID:     &original.ID,
+		ResourceAttributes: services.ResourceAttributes{
+			OrganizationID: original.OrganizationID,
+			BusinessUnitID: original.BusinessUnitID,
+			OwnerID:        original.OwnerID,
+		},
+	})
 	if err != nil {
 		return err
 	}
 
-	if manifest.IsOrgAdmin || manifest.IsBusinessUnitAdmin {
+	if result.Allowed {
 		return nil
 	}
 

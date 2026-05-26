@@ -152,11 +152,6 @@ func (b *UserBuilder) WithPassword(password string) *UserBuilder {
 	return b
 }
 
-func (b *UserBuilder) AsPlatformAdmin() *UserBuilder {
-	b.user.IsPlatformAdmin = true
-	return b
-}
-
 func (b *UserBuilder) Build(t *testing.T, ctx context.Context, tx bun.Tx) *tenant.User {
 	t.Helper()
 

@@ -1,4 +1,3 @@
-//nolint:funlen // existing legacy workflow/API shape is intentionally kept stable
 package userservice
 
 import (
@@ -140,7 +139,6 @@ func (s *Service) GetOrganizations(
 	ctx context.Context,
 	userID pulid.ID,
 	currentOrgID pulid.ID,
-	currentBusinessUnitID pulid.ID,
 ) ([]*repositories.UserOrganizationResponse, error) {
 	log := s.l.With(
 		zap.String("operation", "GetUserOrganizations"),
@@ -151,48 +149,6 @@ func (s *Service) GetOrganizations(
 	if err != nil {
 		log.Error("failed to get user organizations", zap.Error(err))
 		return nil, err
-	}
-
-	isBusinessUnitAdmin := false
-	if s.roleRepo != nil {
-		isBusinessUnitAdmin, err = s.roleRepo.HasBusinessUnitAdminAccess(ctx, userID, currentOrgID)
-		if err != nil {
-			log.Error("failed to check business unit admin access", zap.Error(err))
-			return nil, err
-		}
-	}
-
-	if isBusinessUnitAdmin {
-		orgsInBU, orgErr := s.repo.GetOrganizationsByBusinessUnit(ctx, currentBusinessUnitID)
-		if orgErr != nil {
-			log.Error("failed to get business unit organizations", zap.Error(orgErr))
-			return nil, orgErr
-		}
-
-		membershipByOrgID := make(map[pulid.ID]*tenant.OrganizationMembership, len(results))
-		for _, membership := range results {
-			membershipByOrgID[membership.OrganizationID] = membership
-		}
-
-		orgs := make([]*repositories.UserOrganizationResponse, len(orgsInBU))
-		for i, org := range orgsInBU {
-			isDefault := false
-			if membership, ok := membershipByOrgID[org.ID]; ok {
-				isDefault = membership.IsDefault
-			}
-
-			orgs[i] = &repositories.UserOrganizationResponse{
-				ID:        org.ID,
-				Name:      org.Name,
-				City:      org.City,
-				State:     organizationStateName(org),
-				LogoURL:   org.LogoURL,
-				IsDefault: isDefault,
-				IsCurrent: org.ID == currentOrgID,
-			}
-		}
-
-		return orgs, nil
 	}
 
 	orgs := make([]*repositories.UserOrganizationResponse, len(results))
@@ -215,7 +171,6 @@ func (s *Service) GetOrganizations(
 	return orgs, nil
 }
 
-//nolint:nestif // existing validation flow mirrors business rule nesting
 func (s *Service) SwitchOrganization(
 	ctx context.Context,
 	req repositories.SwitchOrganizationRequest,
@@ -254,33 +209,10 @@ func (s *Service) SwitchOrganization(
 	if targetOrg != nil {
 		targetBusinessUnitID = targetOrg.BusinessUnitID
 	} else {
-		isBUAdmin := false
-		var buErr error
-		if s.roleRepo != nil {
-			isBUAdmin, buErr = s.roleRepo.HasBusinessUnitAdminAccess(
-				ctx,
-				sess.UserID,
-				req.OrganizationID,
-			)
-		}
-		if buErr != nil {
-			log.Error("failed to check business unit admin access", zap.Error(buErr))
-			return nil, buErr
-		}
-
-		if !isBUAdmin {
-			log.Warn("user attempted to switch to unauthorized organization")
-			return nil, errortypes.NewAuthorizationError(
-				"You do not have access to this organization",
-			)
-		}
-
-		org, orgErr := s.repo.GetOrganizationByID(ctx, req.OrganizationID)
-		if orgErr != nil {
-			log.Error("failed to lookup target organization", zap.Error(orgErr))
-			return nil, orgErr
-		}
-		targetBusinessUnitID = org.BusinessUnitID
+		log.Warn("user attempted to switch to unauthorized organization")
+		return nil, errortypes.NewAuthorizationError(
+			"You do not have access to this organization",
+		)
 	}
 
 	if err = s.repo.UpdateCurrentOrganization(

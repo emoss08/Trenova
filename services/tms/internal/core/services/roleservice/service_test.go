@@ -31,7 +31,6 @@ func newStubValidator() *Validator {
 type testServiceDeps struct {
 	roleRepo   *mocks.MockRoleRepository
 	rbacRepo   *rbactest.Repository
-	userRepo   *mocks.MockUserRepository
 	permCache  *mocks.MockPermissionCacheRepository
 	permEngine *mocks.MockPermissionEngine
 	svc        *Service
@@ -42,16 +41,17 @@ func setupTestService(t *testing.T) *testServiceDeps {
 
 	roleRepo := mocks.NewMockRoleRepository(t)
 	rbacRepo := &rbactest.Repository{}
-	userRepo := mocks.NewMockUserRepository(t)
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
 	logger := zap.NewNop()
+	permEngine.On("GetEffectivePermissions", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(testFullEffectivePermissions(), nil)
 
 	svc := &Service{
 		l:          logger.Named("test.role"),
 		roleRepo:   roleRepo,
 		rbacRepo:   rbacRepo,
-		userRepo:   userRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
 		validator:  newStubValidator(),
@@ -61,70 +61,31 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	return &testServiceDeps{
 		roleRepo:   roleRepo,
 		rbacRepo:   rbacRepo,
-		userRepo:   userRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
 		svc:        svc,
 	}
 }
 
-func TestCreateRole_Success_PlatformAdmin(t *testing.T) {
-	t.Parallel()
+func testFullEffectivePermissions() *services.EffectivePermissions {
+	registry := permission.NewRegistry()
+	resources := make(map[string]services.EffectiveResourcePermission, len(registry.All()))
+	for _, def := range registry.All() {
+		operations := make([]permission.Operation, len(def.Operations))
+		for i, op := range def.Operations {
+			operations[i] = op.Operation
+		}
 
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	role := &permission.Role{
-		Name:           "Test Role",
-		MaxSensitivity: permission.SensitivityInternal,
-		IsOrgAdmin:     false,
-		Permissions:    []*permission.ResourcePermission{},
+		resources[def.Resource] = services.EffectiveResourcePermission{
+			Operations: operations,
+			DataScope:  permission.DataScopeAll,
+		}
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
-	deps.roleRepo.On("Create", ctx, role).Return(nil)
-
-	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.NoError(t, err)
-	assert.Equal(t, orgID, role.OrganizationID)
-	assert.Equal(t, actorID, role.CreatedBy)
-
-	deps.userRepo.AssertExpectations(t)
-	deps.roleRepo.AssertExpectations(t)
-}
-
-func TestCreateRole_OrgAdminWithoutPlatformAdmin_Fails(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	role := &permission.Role{
-		Name:       "Admin Role",
-		IsOrgAdmin: true,
+	return &services.EffectivePermissions{
+		MaxSensitivity: permission.SensitivityConfidential,
+		Resources:      resources,
 	}
-
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
-
-	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.Error(t, err)
-	assert.Equal(t, ErrCannotCreateOrgAdmin, err)
-
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
@@ -141,7 +102,8 @@ func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
 		Permissions:    []*permission.ResourcePermission{},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
+	deps.permEngine.ExpectedCalls = nil
+
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(&services.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
@@ -158,7 +120,6 @@ func TestCreateRole_PrivilegeEscalation_Fails(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -219,7 +180,6 @@ func TestUpdateRole_Success(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("Update", ctx, role).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
@@ -232,7 +192,6 @@ func TestUpdateRole_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permCache.AssertExpectations(t)
 }
 
@@ -288,10 +247,8 @@ func TestAssignRole_Success(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
 		ID:          roleID,
-		IsOrgAdmin:  false,
 		Permissions: []*permission.ResourcePermission{},
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
 		Return([]*permission.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
@@ -308,7 +265,6 @@ func TestAssignRole_Success(t *testing.T) {
 	assert.Equal(t, actorID, assignment.AssignedBy)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -332,10 +288,8 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(&permission.Role{
 		ID:          roleID,
-		IsOrgAdmin:  false,
 		Permissions: []*permission.ResourcePermission{},
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{
@@ -353,52 +307,6 @@ func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
 	require.ErrorIs(t, err, ErrRoleAlreadyAssigned)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
-}
-
-func TestAssignRole_OrgAdmin_NotPlatformAdmin_NotOrgAdmin_Fails(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	targetUserID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	assignment := &permission.UserRoleAssignment{
-		UserID: targetUserID,
-		RoleID: roleID,
-	}
-
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
-		ID:         roleID,
-		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
-		ID:          roleID,
-		IsOrgAdmin:  true,
-		Permissions: []*permission.ResourcePermission{},
-	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
-	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
-			Roles: []services.RoleSummary{
-				{ID: pulid.MustNew("rol_"), Name: "Regular", IsOrgAdmin: false},
-			},
-		}, nil)
-
-	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Assignment:     assignment,
-	})
-
-	require.Error(t, err)
-	assert.Equal(t, ErrCannotEscalatePrivileges, err)
-
-	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
-	deps.permEngine.AssertExpectations(t)
 }
 
 func TestUnassignRole_Success(t *testing.T) {
@@ -457,7 +365,6 @@ func TestInitializeOrganizationRoles(t *testing.T) {
 		return role.OrganizationID == orgID &&
 			role.Name == "Organization Administrator" &&
 			role.IsSystem &&
-			role.IsOrgAdmin &&
 			role.CreatedBy == creatorID
 	})).Return(nil)
 	deps.roleRepo.On("CreateAssignment", ctx, mock.MatchedBy(func(a *permission.UserRoleAssignment) bool {
@@ -497,7 +404,6 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
@@ -506,7 +412,6 @@ func TestCreateResourcePermission_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permCache.AssertExpectations(t)
 }
 
@@ -582,8 +487,6 @@ func TestCircularInheritance_DirectSelfReference(t *testing.T) {
 		ParentRoleIDs: []pulid.ID{roleID},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
-
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
 		ActorID:        actorID,
 		OrganizationID: orgID,
@@ -593,7 +496,6 @@ func TestCircularInheritance_DirectSelfReference(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, ErrCircularInheritance, err)
 
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
@@ -616,7 +518,8 @@ func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
 		},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
+	deps.permEngine.ExpectedCalls = nil
+
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(&services.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
@@ -638,7 +541,6 @@ func TestValidateNoEscalation_ResourceNotAllowed(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -662,7 +564,8 @@ func TestValidateNoEscalation_OperationNotAllowed(t *testing.T) {
 		},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
+	deps.permEngine.ExpectedCalls = nil
+
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(&services.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
@@ -684,7 +587,6 @@ func TestValidateNoEscalation_OperationNotAllowed(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -708,7 +610,8 @@ func TestValidateNoEscalation_DataScopeNotAllowed(t *testing.T) {
 		},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
+	deps.permEngine.ExpectedCalls = nil
+
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(&services.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
@@ -730,7 +633,6 @@ func TestValidateNoEscalation_DataScopeNotAllowed(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -813,7 +715,6 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).Return(nil)
 
@@ -822,7 +723,6 @@ func TestUpdateResourcePermission_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permCache.AssertExpectations(t)
 }
 
@@ -883,7 +783,7 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
+	deps.permEngine.ExpectedCalls = nil
 	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
 		Return(&services.EffectivePermissions{
 			MaxSensitivity: permission.SensitivityInternal,
@@ -902,7 +802,6 @@ func TestUpdateResourcePermission_PrivilegeEscalation_Fails(t *testing.T) {
 	require.True(t, errors.As(err, &multiErr))
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permEngine.AssertExpectations(t)
 }
 
@@ -924,7 +823,6 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 		Permissions:   []*permission.ResourcePermission{},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req repositories.GetRoleByIDRequest) bool {
 		return req.ID == roleB
 	})).Return(&permission.Role{
@@ -947,7 +845,6 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, ErrCircularInheritance, err)
 
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestCircularInheritance_NoParents(t *testing.T) {
@@ -965,7 +862,6 @@ func TestCircularInheritance_NoParents(t *testing.T) {
 		Permissions:    []*permission.ResourcePermission{},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("Create", ctx, role).Return(nil)
 
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
@@ -976,7 +872,6 @@ func TestCircularInheritance_NoParents(t *testing.T) {
 
 	require.NoError(t, err)
 
-	deps.userRepo.AssertExpectations(t)
 	deps.roleRepo.AssertExpectations(t)
 }
 
@@ -996,7 +891,6 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 		Permissions:    []*permission.ResourcePermission{},
 	}
 
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req repositories.GetRoleByIDRequest) bool {
 		return req.ID == parentRoleID
 	})).Return(&permission.Role{
@@ -1013,58 +907,7 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 
 	require.NoError(t, err)
 
-	deps.userRepo.AssertExpectations(t)
 	deps.roleRepo.AssertExpectations(t)
-}
-
-func TestAssignRole_OrgAdminByOrgAdmin_Success(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	targetUserID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	assignment := &permission.UserRoleAssignment{
-		UserID: targetUserID,
-		RoleID: roleID,
-	}
-
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
-		ID:         roleID,
-		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
-		ID:          roleID,
-		IsOrgAdmin:  true,
-		Permissions: []*permission.ResourcePermission{},
-	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
-	deps.permEngine.On("GetEffectivePermissions", ctx, actorID, orgID).
-		Return(&services.EffectivePermissions{
-			MaxSensitivity: permission.SensitivityConfidential,
-			Roles: []services.RoleSummary{
-				{ID: pulid.MustNew("rol_"), Name: "Org Admin", IsOrgAdmin: true},
-			},
-			Resources: make(map[string]services.EffectiveResourcePermission),
-		}, nil)
-	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
-		Return([]*permission.UserRoleAssignment{}, nil)
-	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
-	deps.permEngine.On("InvalidateUser", ctx, targetUserID, orgID).Return(nil)
-
-	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Assignment:     assignment,
-	})
-
-	require.NoError(t, err)
-
-	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
-	deps.permEngine.AssertExpectations(t)
 }
 
 func TestUnassignRole_Error(t *testing.T) {
@@ -1147,31 +990,6 @@ func TestInitializeOrganizationRoles_AssignmentError(t *testing.T) {
 	require.Error(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-}
-
-func TestCreateRole_IsPlatformAdminError(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-
-	role := &permission.Role{
-		Name: "Test Role",
-	}
-
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, errors.New("db error"))
-
-	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.Error(t, err)
-
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestUpdateRole_GetByIDError(t *testing.T) {
@@ -1312,7 +1130,6 @@ func TestNew(t *testing.T) {
 	t.Parallel()
 
 	roleRepo := mocks.NewMockRoleRepository(t)
-	userRepo := mocks.NewMockUserRepository(t)
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
 	validator := newStubValidator()
@@ -1321,7 +1138,6 @@ func TestNew(t *testing.T) {
 	svc := New(Params{
 		Logger:           zap.NewNop(),
 		RoleRepo:         roleRepo,
-		UserRepo:         userRepo,
 		PermissionCache:  permCache,
 		PermissionEngine: permEngine,
 		Validator:        validator,
@@ -1409,7 +1225,6 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(errors.New("db error"))
 
 	err := deps.svc.CreateResourcePermission(ctx, actorID, orgID, rp)
@@ -1418,7 +1233,6 @@ func TestCreateResourcePermission_PermissionRepoError(t *testing.T) {
 	assert.Equal(t, "db error", err.Error())
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
@@ -1444,7 +1258,6 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("CreateResourcePermission", ctx, rp).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
 		Return(errors.New("cache error"))
@@ -1454,7 +1267,6 @@ func TestCreateResourcePermission_CacheInvalidationError(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permCache.AssertExpectations(t)
 }
 
@@ -1483,7 +1295,6 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(errors.New("db error"))
 
 	err := deps.svc.UpdateResourcePermission(ctx, actorID, orgID, rp)
@@ -1492,7 +1303,6 @@ func TestUpdateResourcePermission_PermissionRepoError(t *testing.T) {
 	assert.Equal(t, "db error", err.Error())
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
@@ -1520,7 +1330,6 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 		ID:       roleID,
 		IsSystem: false,
 	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
 	deps.roleRepo.On("UpdateResourcePermission", ctx, rp).Return(nil)
 	deps.permCache.On("InvalidateByRole", ctx, roleID, deps.roleRepo).
 		Return(errors.New("cache error"))
@@ -1530,7 +1339,6 @@ func TestUpdateResourcePermission_CacheInvalidationError(t *testing.T) {
 	require.NoError(t, err)
 
 	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 	deps.permCache.AssertExpectations(t)
 }
 
@@ -1558,78 +1366,6 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 	assert.Equal(t, "not found", err.Error())
 
 	deps.roleRepo.AssertExpectations(t)
-}
-
-func TestUpdateRole_IsPlatformAdminError(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	role := &permission.Role{
-		ID:   roleID,
-		Name: "Updated Role",
-	}
-
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
-		ID:         roleID,
-		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
-		ID:       roleID,
-		IsSystem: false,
-	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, errors.New("db error"))
-
-	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.Error(t, err)
-
-	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
-}
-
-func TestUpdateRole_OrgAdminWithoutPlatformAdmin_Fails(t *testing.T) {
-	t.Parallel()
-
-	deps := setupTestService(t)
-	ctx := t.Context()
-	actorID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	roleID := pulid.MustNew("rol_")
-
-	role := &permission.Role{
-		ID:         roleID,
-		Name:       "Admin Role",
-		IsOrgAdmin: true,
-	}
-
-	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
-		ID:         roleID,
-		TenantInfo: pagination.TenantInfo{OrgID: orgID},
-	}).Return(&permission.Role{
-		ID:       roleID,
-		IsSystem: false,
-	}, nil)
-	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(false, nil)
-
-	err := deps.svc.UpdateRole(ctx, UpdateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.Error(t, err)
-	assert.Equal(t, ErrCannotCreateOrgAdmin, err)
-
-	deps.roleRepo.AssertExpectations(t)
-	deps.userRepo.AssertExpectations(t)
 }
 
 func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {

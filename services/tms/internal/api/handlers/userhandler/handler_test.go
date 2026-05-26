@@ -56,7 +56,6 @@ func newDefaultUserRepo(t *testing.T) *mocks.MockUserRepository {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
@@ -166,7 +165,6 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 	roleSvc := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         opts.roleRepo,
-		UserRepo:         opts.userRepo,
 		PermissionCache:  newDefaultPermCacheRepo(t),
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
@@ -218,7 +216,6 @@ func TestUserHandler_List_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
@@ -261,7 +258,6 @@ func TestUserHandler_List_WithPagination(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("UpdatePassword", mock.Anything, mock.Anything).Maybe().Return(nil)
@@ -301,7 +297,6 @@ func TestUserHandler_List_Error(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -346,7 +341,6 @@ func makeUserRepoWithGetByID(t *testing.T, user *tenant.User, err error) *mocks.
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -436,7 +430,6 @@ func TestUserHandler_Update_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -530,7 +523,6 @@ func TestUserHandler_Update_ServiceError(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -773,7 +765,6 @@ func TestUserHandler_Patch_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -896,7 +887,6 @@ func TestUserHandler_Patch_UpdateError(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("GetByIDs", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -945,7 +935,6 @@ func TestUserHandler_BulkUpdateStatus_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
@@ -1003,7 +992,6 @@ func TestUserHandler_BulkUpdateStatus_ServiceError(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -1050,7 +1038,6 @@ func TestUserHandler_SelectOptions_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -1086,7 +1073,6 @@ func TestUserHandler_SelectOptions_Error(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -1278,7 +1264,6 @@ func TestUserHandler_GetOrganizations_Success(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -1316,7 +1301,6 @@ func TestUserHandler_GetOrganizations_Error(t *testing.T) {
 	repo.On("UpdateCurrentOrganization", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil)
-	repo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	repo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("Update", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	repo.On("BulkUpdateStatus", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
@@ -1384,7 +1368,6 @@ func TestUserHandler_SwitchOrganization_Success(t *testing.T) {
 		Return(&pagination.ListResult[*tenant.User]{Items: []*tenant.User{}, Total: 0}, nil)
 	userRepo.On("FindByEmail", mock.Anything, mock.Anything).Maybe().Return(nil, errNotFound)
 	userRepo.On("UpdateLastLoginAt", mock.Anything, mock.Anything).Maybe().Return(nil)
-	userRepo.On("IsPlatformAdmin", mock.Anything, mock.Anything).Maybe().Return(true, nil)
 	userRepo.On("GetUserOrganizationSummaries", mock.Anything, mock.Anything).
 		Maybe().
 		Return(nil, nil)

@@ -51,12 +51,6 @@ ALTER TABLE user_organization_memberships
     DROP COLUMN IF EXISTS role_ids,
     DROP COLUMN IF EXISTS direct_policies;
 
---bun:split
--- Add is_platform_admin to users table
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS is_platform_admin boolean NOT NULL DEFAULT FALSE;
-
---bun:split
 -- Create roles table
 CREATE TABLE roles(
     "id" varchar(100) NOT NULL,
@@ -67,7 +61,6 @@ CREATE TABLE roles(
     "parent_role_ids" text[] DEFAULT ARRAY[] ::text[],
     "max_sensitivity" varchar(20) NOT NULL DEFAULT 'internal',
     "is_system" boolean NOT NULL DEFAULT FALSE,
-    "is_org_admin" boolean NOT NULL DEFAULT FALSE,
     "created_by" varchar(100),
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
@@ -116,4 +109,3 @@ CREATE TABLE IF NOT EXISTS user_role_assignments(
 CREATE INDEX IF NOT EXISTS idx_user_role_assignments_user_org ON user_role_assignments("user_id", "organization_id");
 
 CREATE INDEX IF NOT EXISTS idx_user_role_assignments_role_id ON user_role_assignments("role_id");
-

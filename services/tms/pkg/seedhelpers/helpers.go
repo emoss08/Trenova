@@ -121,7 +121,6 @@ func (sc *SeedContext) CreateUser(
 		EmailAddress:          opts.Email,
 		Status:                status,
 		Timezone:              opts.Timezone,
-		IsPlatformAdmin:       opts.IsPlatformAdmin,
 		MustChangePassword:    opts.MustChangePassword,
 		CreatedAt:             now,
 		UpdatedAt:             now,

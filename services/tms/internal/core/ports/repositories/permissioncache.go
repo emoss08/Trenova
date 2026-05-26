@@ -13,13 +13,10 @@ type CachedResourcePermission struct {
 }
 
 type CachedPermissions struct {
-	IsPlatformAdmin     bool                                 `json:"isPlatformAdmin"`
-	IsOrgAdmin          bool                                 `json:"isOrgAdmin"`
-	IsBusinessUnitAdmin bool                                 `json:"isBusinessUnitAdmin"`
-	MaxSensitivity      string                               `json:"maxSensitivity"`
-	Resources           map[string]*CachedResourcePermission `json:"resources"`
-	Checksum            string                               `json:"checksum"`
-	ExpiresAt           int64                                `json:"expiresAt"`
+	MaxSensitivity string                               `json:"maxSensitivity"`
+	Resources      map[string]*CachedResourcePermission `json:"resources"`
+	Checksum       string                               `json:"checksum"`
+	ExpiresAt      int64                                `json:"expiresAt"`
 }
 
 type PermissionCacheRepository interface {

@@ -46,6 +46,7 @@ type DataScope string
 const (
 	DataScopeOwn          DataScope = "own"
 	DataScopeOrganization DataScope = "organization"
+	DataScopeBusinessUnit DataScope = "business_unit"
 	DataScopeAll          DataScope = "all"
 )
 
@@ -55,8 +56,10 @@ func (s DataScope) Level() int {
 		return 0
 	case DataScopeOrganization:
 		return 1
-	case DataScopeAll:
+	case DataScopeBusinessUnit:
 		return 2
+	case DataScopeAll:
+		return 3
 	default:
 		return 0
 	}
@@ -72,7 +75,7 @@ func (s DataScope) String() string {
 
 func (s DataScope) IsValid() bool {
 	switch s {
-	case DataScopeOwn, DataScopeOrganization, DataScopeAll:
+	case DataScopeOwn, DataScopeOrganization, DataScopeBusinessUnit, DataScopeAll:
 		return true
 	default:
 		return false

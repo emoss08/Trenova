@@ -64,7 +64,6 @@ type UserOptions struct {
 	Status             domaintypes.Status
 	Timezone           string
 	IsAdmin            bool
-	IsPlatformAdmin    bool
 	MustChangePassword bool
 }
 

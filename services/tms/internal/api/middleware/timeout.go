@@ -141,7 +141,10 @@ func applyTimeoutFallbackCORS(header http.Header, cfg *config.Config, r *http.Re
 		header.Set("Access-Control-Allow-Credentials", "true")
 	}
 	if len(cfg.Server.CORS.ExposeHeaders) > 0 {
-		header.Set("Access-Control-Expose-Headers", strings.Join(cfg.Server.CORS.ExposeHeaders, ", "))
+		header.Set(
+			"Access-Control-Expose-Headers",
+			strings.Join(cfg.Server.CORS.ExposeHeaders, ", "),
+		)
 	}
 }
 

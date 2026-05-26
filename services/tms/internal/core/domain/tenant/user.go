@@ -73,7 +73,6 @@ type User struct {
 	Timezone              string                 `json:"timezone"              bun:"timezone,type:VARCHAR(50),notnull"`
 	IsLocked              bool                   `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull,default:false"`
 	MustChangePassword    bool                   `json:"mustChangePassword"    bun:"must_change_password,type:BOOLEAN,notnull,default:false"`
-	IsPlatformAdmin       bool                   `json:"isPlatformAdmin"       bun:"is_platform_admin,type:BOOLEAN,notnull,default:false"`
 	Version               int64                  `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt             int64                  `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64                  `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

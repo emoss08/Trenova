@@ -425,7 +425,6 @@ func (h *Handler) getOrganizations(c *gin.Context) {
 		c.Request.Context(),
 		authCtx.UserID,
 		authCtx.OrganizationID,
-		authCtx.BusinessUnitID,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
