@@ -35,8 +35,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
         // eslint-disable-next-line react-hooks/rules-of-hooks
         const handleChange = useCallback(
           (date: Date | undefined) => {
-            const formattedDate = toUnixTimeStamp(date);
-            field.onChange(formattedDate);
+            field.onChange(date ? toUnixTimeStamp(date) : null);
           },
           [field],
         );

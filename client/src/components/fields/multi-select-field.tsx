@@ -9,11 +9,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { useDebounce } from "@/hooks/use-debounce";
 import { API_BASE_URL } from "@/lib/constants";
@@ -54,6 +50,7 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   onChange: (values: (string | TOption)[]) => void;
   onOptionsChange?: (options: TOption[]) => void;
   disabled?: boolean;
+  readOnly?: boolean;
   className?: string;
   triggerClassName?: string;
   noResultsMessage?: string;
@@ -64,13 +61,11 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
 }
 
 export interface MultiSelectAutocompleteProps<TOption>
-  extends BaseMultiSelectAutocompleteFieldProps<TOption>,
+  extends
+    BaseMultiSelectAutocompleteFieldProps<TOption>,
     Omit<ComponentPropsWithoutRef<"button">, "onChange"> {}
 
-export interface MultiSelectAutocompleteFieldProps<
-  TOption,
-  TForm extends FieldValues,
-> {
+export interface MultiSelectAutocompleteFieldProps<TOption, TForm extends FieldValues> {
   name: FieldPath<TForm>;
   control: Control<TForm>;
   rules?: RegisterOptions<TForm, Path<TForm>>;
@@ -88,6 +83,8 @@ export interface MultiSelectAutocompleteFieldProps<
   placeholder?: string;
   noResultsMessage?: string;
   triggerClassName?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
   maxCount?: number;
   animation?: number;
   extraSearchParams?: Record<string, string>;
@@ -136,10 +133,7 @@ async function fetchOptionsByIds(
 
   const promises = ids.map(async (id) => {
     try {
-      const fetchURL = new URL(
-        `${API_BASE_URL}${link}${id}`,
-        window.location.origin,
-      );
+      const fetchURL = new URL(`${API_BASE_URL}${link}${id}`, window.location.origin);
 
       if (extraSearchParams) {
         Object.entries(extraSearchParams).forEach(([key, value]) => {
@@ -180,6 +174,7 @@ export function MultiSelectAutocomplete<T>({
   values = [],
   onChange,
   disabled = false,
+  readOnly = false,
   className,
   triggerClassName,
   noResultsMessage,
@@ -206,19 +201,14 @@ export function MultiSelectAutocomplete<T>({
     | { type: "fetchError"; error: string }
     | { type: "fetchEnd" };
 
-  const asyncStateReducer = (
-    state: AsyncState,
-    action: AsyncAction,
-  ): AsyncState => {
+  const asyncStateReducer = (state: AsyncState, action: AsyncAction): AsyncState => {
     switch (action.type) {
       case "fetchStart":
         return { ...state, loading: true, error: null };
       case "fetchSuccess":
         return {
           ...state,
-          options: action.append
-            ? [...state.options, ...action.results]
-            : action.results,
+          options: action.append ? [...state.options, ...action.results] : action.results,
           hasMore: action.hasMore,
         };
       case "fetchError":
@@ -231,6 +221,7 @@ export function MultiSelectAutocomplete<T>({
   };
 
   const listboxId = useId();
+  const isLocked = disabled || readOnly;
   const [open, setOpen] = useState(false);
   const [asyncState, dispatchAsyncState] = useReducer(asyncStateReducer, {
     options: [],
@@ -261,9 +252,7 @@ export function MultiSelectAutocomplete<T>({
       }
 
       const currentValuesKey = JSON.stringify(
-        values.map((v) =>
-          typeof v === "string" ? v : getOptionValue(v as T).toString(),
-        ),
+        values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
       );
 
       if (prevValuesRef.current === currentValuesKey) {
@@ -276,9 +265,7 @@ export function MultiSelectAutocomplete<T>({
       const resolveInitialOptions = nestedValues
         ? (async () => {
             const objects = values.filter((v): v is T => typeof v === "object");
-            const strings = values.filter(
-              (v): v is string => typeof v === "string",
-            );
+            const strings = values.filter((v): v is string => typeof v === "string");
             const additionalOptionsPromise =
               strings.length > 0
                 ? fetchOptionsByIds(link, strings, extraSearchParams)
@@ -289,9 +276,7 @@ export function MultiSelectAutocomplete<T>({
           })()
         : fetchOptionsByIds(
             link,
-            values.map((v) =>
-              typeof v === "string" ? v : getOptionValue(v as T).toString(),
-            ),
+            values.map((v) => (typeof v === "string" ? v : getOptionValue(v as T).toString())),
             extraSearchParams,
           );
 
@@ -309,10 +294,7 @@ export function MultiSelectAutocomplete<T>({
         .catch((err) => {
           dispatchAsyncState({
             type: "fetchError",
-            error:
-              err instanceof Error
-                ? err.message
-                : "Failed to fetch initial values",
+            error: err instanceof Error ? err.message : "Failed to fetch initial values",
           });
         })
         .finally(() => {
@@ -340,8 +322,7 @@ export function MultiSelectAutocomplete<T>({
           console.error(link, err);
           dispatchAsyncState({
             type: "fetchError",
-            error:
-              err instanceof Error ? err.message : "Failed to fetch options",
+            error: err instanceof Error ? err.message : "Failed to fetch options",
           });
         })
         .finally(() => {
@@ -388,9 +369,9 @@ export function MultiSelectAutocomplete<T>({
 
   const handleSelect = useCallback(
     (currentValue: string) => {
-      const optionToToggle = options.find(
-        (opt) => getOptionValue(opt).toString() === currentValue,
-      );
+      if (isLocked) return;
+
+      const optionToToggle = options.find((opt) => getOptionValue(opt).toString() === currentValue);
 
       if (!optionToToggle) return;
 
@@ -399,13 +380,9 @@ export function MultiSelectAutocomplete<T>({
       );
 
       const newSelectedOptions = isAlreadySelected
-        ? selectedOptions.filter(
-            (opt) => getOptionValue(opt).toString() !== currentValue,
-          )
+        ? selectedOptions.filter((opt) => getOptionValue(opt).toString() !== currentValue)
         : [
-            ...selectedOptions.filter(
-              (opt) => getOptionValue(opt).toString() !== currentValue,
-            ),
+            ...selectedOptions.filter((opt) => getOptionValue(opt).toString() !== currentValue),
             optionToToggle,
           ];
 
@@ -413,28 +390,20 @@ export function MultiSelectAutocomplete<T>({
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
-            | string
-            | T
-          )[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
       onChange(newValues);
 
       if (onOptionsChange) {
         onOptionsChange(newSelectedOptions);
       }
     },
-    [
-      options,
-      selectedOptions,
-      onChange,
-      onOptionsChange,
-      getOptionValue,
-      nestedValues,
-    ],
+    [options, selectedOptions, onChange, onOptionsChange, getOptionValue, nestedValues, isLocked],
   );
 
   const removeOption = useCallback(
     (valueToRemove: string) => {
+      if (isLocked) return;
+
       const newSelectedOptions = selectedOptions.filter(
         (opt) => getOptionValue(opt).toString() !== valueToRemove,
       );
@@ -443,40 +412,33 @@ export function MultiSelectAutocomplete<T>({
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
-            | string
-            | T
-          )[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
       onChange(newValues);
 
       if (onOptionsChange) {
         onOptionsChange(newSelectedOptions);
       }
     },
-    [selectedOptions, onChange, onOptionsChange, getOptionValue, nestedValues],
+    [selectedOptions, onChange, onOptionsChange, getOptionValue, nestedValues, isLocked],
   );
 
   const handleClearAll = useCallback(() => {
+    if (isLocked) return;
+
     setSelectedOptions([]);
     onChange([]);
     if (onOptionsChange) {
       onOptionsChange([]);
     }
-  }, [onChange, onOptionsChange]);
+  }, [onChange, onOptionsChange, isLocked]);
 
   const handleScrollEnd = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
       const target = e.target as HTMLDivElement;
       const scrollBuffer = 50;
-      const distanceFromBottom =
-        target.scrollHeight - (target.scrollTop + target.clientHeight);
+      const distanceFromBottom = target.scrollHeight - (target.scrollTop + target.clientHeight);
 
-      if (
-        !loading &&
-        hasMore &&
-        distanceFromBottom <= scrollBuffer &&
-        distanceFromBottom >= 0
-      ) {
+      if (!loading && hasMore && distanceFromBottom <= scrollBuffer && distanceFromBottom >= 0) {
         setPage((prev) => prev + 1);
       }
     },
@@ -487,11 +449,9 @@ export function MultiSelectAutocomplete<T>({
     (e: React.WheelEvent<HTMLDivElement>) => {
       if (
         commandListRef.current &&
-        commandListRef.current.scrollHeight >
-          commandListRef.current.clientHeight
+        commandListRef.current.scrollHeight > commandListRef.current.clientHeight
       ) {
-        const { scrollTop, scrollHeight, clientHeight } =
-          commandListRef.current;
+        const { scrollTop, scrollHeight, clientHeight } = commandListRef.current;
         const isScrollingDown = e.deltaY > 0;
         const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
         const isAtTop = scrollTop <= 0;
@@ -518,6 +478,8 @@ export function MultiSelectAutocomplete<T>({
   );
 
   const toggleSelectAll = useCallback(() => {
+    if (isLocked) return;
+
     if (selectedOptions.length === options.length) {
       handleClearAll();
     } else {
@@ -526,10 +488,7 @@ export function MultiSelectAutocomplete<T>({
 
       const newValues = nestedValues
         ? (newSelectedOptions as (string | T)[])
-        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
-            | string
-            | T
-          )[]);
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (string | T)[]);
       onChange(newValues);
 
       if (onOptionsChange) {
@@ -544,30 +503,38 @@ export function MultiSelectAutocomplete<T>({
     handleClearAll,
     getOptionValue,
     nestedValues,
+    isLocked,
   ]);
 
   return (
     <div className="flex flex-col gap-1">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(isLocked ? false : nextOpen);
+        }}
+      >
         <PopoverTrigger
           render={
             <Button
               variant="outline"
               role="combobox"
+              aria-label={label}
               aria-expanded={open}
               aria-controls={listboxId}
+              aria-readonly={readOnly || undefined}
               className={cn(
                 "h-auto min-h-7 w-full cursor-auto gap-2 rounded-md border-muted-foreground/20 bg-muted px-2 py-1 font-normal",
                 "data-pressed:border-brand data-pressed:ring-4 data-pressed:ring-brand/20 data-pressed:outline-hidden",
                 "cursor-pointer justify-between hover:bg-muted-foreground/20 [&_svg]:size-3 [&_svg]:shrink-0",
                 "transition-all duration-200 ease-in-out",
                 "cursor-default whitespace-nowrap",
-                disabled && "cursor-not-allowed opacity-50",
+                isLocked && "cursor-not-allowed opacity-50",
                 isInvalid &&
                   "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 hover:border-red-500 hover:bg-red-500/20 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
                 triggerClassName,
               )}
-              disabled={disabled}
+              disabled={isLocked}
             >
               {selectedOptions.length > 0 ? (
                 <div className="flex w-full flex-wrap items-center justify-between gap-2 py-1">
@@ -575,22 +542,20 @@ export function MultiSelectAutocomplete<T>({
                     {selectedOptions.slice(0, maxCount).map((option) => (
                       <span
                         key={getOptionValue(option).toString()}
-                        className={cn(
-                          multiSelectVariants({ variant: "default" }),
-                        )}
+                        className={cn(multiSelectVariants({ variant: "default" }))}
                       >
-                        {renderBadge
-                          ? renderBadge(option)
-                          : getDisplayValue(option)}
-                        <span
-                          className="size-4 cursor-pointer"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            removeOption(getOptionValue(option).toString());
-                          }}
-                        >
-                          <XIcon />
-                        </span>
+                        {renderBadge ? renderBadge(option) : getDisplayValue(option)}
+                        {!isLocked && (
+                          <span
+                            className="size-4 cursor-pointer"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removeOption(getOptionValue(option).toString());
+                            }}
+                          >
+                            <XIcon />
+                          </span>
+                        )}
                       </span>
                     ))}
                     {selectedOptions.length > maxCount && (
@@ -606,7 +571,7 @@ export function MultiSelectAutocomplete<T>({
                   </div>
 
                   <div className="flex items-center">
-                    {selectedOptions.length > 0 && !loading && (
+                    {selectedOptions.length > 0 && !loading && !isLocked && (
                       <div className="flex-rowitems-center flex justify-center gap-0.5">
                         <span
                           title="Clear all"
@@ -627,7 +592,7 @@ export function MultiSelectAutocomplete<T>({
                           className="mr-0.5 size-3 cursor-pointer items-center justify-center text-muted-foreground transition-all duration-200 ease-in-out"
                           onClick={(event) => {
                             event.stopPropagation();
-                            setOpen(!open);
+                            if (!isLocked) setOpen(!open);
                           }}
                         >
                           <ChevronDownIcon
@@ -643,19 +608,14 @@ export function MultiSelectAutocomplete<T>({
                 </div>
               ) : (
                 <>
-                  <p
-                    className={cn(
-                      "text-muted-foreground",
-                      isInvalid && "text-red-500",
-                    )}
-                  >
+                  <p className={cn("text-muted-foreground", isInvalid && "text-red-500")}>
                     {placeholder}
                   </p>
                   <span
                     className="mr-0.5 size-3 cursor-pointer items-center justify-center text-muted-foreground transition-all duration-200 ease-in-out"
                     onClick={(event) => {
                       event.stopPropagation();
-                      setOpen(!open);
+                      if (!isLocked) setOpen(!open);
                     }}
                   >
                     <ChevronDownIcon
@@ -691,11 +651,9 @@ export function MultiSelectAutocomplete<T>({
               ref={commandListRef}
               onScroll={handleScrollEnd}
               onWheel={handleWheel}
-              className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-[200px] overflow-y-auto"
+              className="max-h-[200px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent overflow-y-auto"
             >
-              {error && (
-                <div className="p-4 text-center text-destructive">{error}</div>
-              )}
+              {error && <div className="p-4 text-center text-destructive">{error}</div>}
               {!loading && !error && options.length === 0 && (
                 <CommandEmpty>
                   {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
@@ -711,8 +669,7 @@ export function MultiSelectAutocomplete<T>({
                     <div
                       className={cn(
                         "flex size-4 items-center justify-center rounded-sm border border-primary",
-                        selectedOptions.length === options.length &&
-                          options.length > 0
+                        selectedOptions.length === options.length && options.length > 0
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
                       )}
@@ -725,8 +682,7 @@ export function MultiSelectAutocomplete<T>({
                 {options.map((option) => {
                   const optionValue = getOptionValue(option).toString();
                   const isSelected = selectedOptions.some(
-                    (selected) =>
-                      getOptionValue(selected).toString() === optionValue,
+                    (selected) => getOptionValue(selected).toString() === optionValue,
                   );
 
                   return (
@@ -738,10 +694,7 @@ export function MultiSelectAutocomplete<T>({
                     >
                       {renderOption(option)}
                       <CheckIcon
-                        className={cn(
-                          "ml-auto size-2",
-                          isSelected ? "opacity-100" : "opacity-0",
-                        )}
+                        className={cn("ml-auto size-2", isSelected ? "opacity-100" : "opacity-0")}
                       />
                     </CommandItem>
                   );
@@ -765,10 +718,7 @@ export function MultiSelectAutocomplete<T>({
   );
 }
 
-export function MultiSelectAutocompleteField<
-  TOption,
-  TForm extends FieldValues,
->({
+export function MultiSelectAutocompleteField<TOption, TForm extends FieldValues>({
   label,
   name,
   control,
@@ -783,6 +733,8 @@ export function MultiSelectAutocompleteField<
   getDisplayValue,
   onOptionsChange,
   extraSearchParams,
+  disabled,
+  readOnly,
   ...props
 }: MultiSelectAutocompleteFieldProps<TOption, TForm>) {
   return (
@@ -790,32 +742,37 @@ export function MultiSelectAutocompleteField<
       name={name}
       control={control}
       rules={rules}
-      render={({ field: { onChange, value, disabled }, fieldState }) => (
-        <FieldWrapper
-          label={label}
-          description={description}
-          required={!!rules?.required}
-          error={fieldState.error?.message}
-          className={className}
-        >
-          <MultiSelectAutocomplete<TOption>
-            link={link}
-            preload={preload}
-            renderOption={renderOption}
-            renderBadge={renderBadge}
-            getDisplayValue={getDisplayValue}
-            getOptionValue={getOptionValue}
+      render={({ field: { onChange, value, disabled: fieldDisabled }, fieldState }) => {
+        const resolvedDisabled = disabled || fieldDisabled;
+
+        return (
+          <FieldWrapper
             label={label}
-            values={Array.isArray(value) ? value : []}
-            onChange={onChange}
-            isInvalid={fieldState.invalid}
-            onOptionsChange={onOptionsChange}
-            disabled={disabled}
-            extraSearchParams={extraSearchParams}
-            {...props}
-          />
-        </FieldWrapper>
-      )}
+            description={description}
+            required={!!rules?.required}
+            error={fieldState.error?.message}
+            className={className}
+          >
+            <MultiSelectAutocomplete<TOption>
+              link={link}
+              preload={preload}
+              renderOption={renderOption}
+              renderBadge={renderBadge}
+              getDisplayValue={getDisplayValue}
+              getOptionValue={getOptionValue}
+              label={label}
+              values={Array.isArray(value) ? value : []}
+              onChange={onChange}
+              isInvalid={fieldState.invalid}
+              onOptionsChange={onOptionsChange}
+              disabled={resolvedDisabled}
+              readOnly={readOnly}
+              extraSearchParams={extraSearchParams}
+              {...props}
+            />
+          </FieldWrapper>
+        );
+      }}
     />
   );
 }

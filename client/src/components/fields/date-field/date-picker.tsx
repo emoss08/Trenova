@@ -4,13 +4,7 @@ import { generateDateOnly, generateDateOnlyString } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { parseDate } from "@/lib/chrono";
 import { CalendarIcon, XIcon } from "lucide-react";
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { DatePickerProps } from "./date-field";
 import { DatePickerPopover } from "./date-picker-popover";
@@ -22,10 +16,7 @@ export type Suggestion = {
 
 const defaultSuggestions = ["t", "t+1", "t+2", "t+3", "t+5", "t+7"];
 
-function generateSuggestions(
-  inputValue: string,
-  suggestion: Suggestion | null,
-): Suggestion[] {
+function generateSuggestions(inputValue: string, suggestion: Suggestion | null): Suggestion[] {
   if (!inputValue.length) {
     return defaultSuggestions
       .map((text) => ({
@@ -51,14 +42,8 @@ function generateSuggestions(
   return [suggestion].filter((s) => s !== null) as Suggestion[];
 }
 
-export const AutoCompleteDatePicker = forwardRef<
-  HTMLInputElement,
-  DatePickerProps
->(
-  (
-    { date, setDate, isInvalid, placeholder, clearable, readOnly, ...props },
-    ref,
-  ) => {
+export const AutoCompleteDatePicker = forwardRef<HTMLInputElement, DatePickerProps>(
+  ({ date, setDate, isInvalid, placeholder, clearable, readOnly, ...props }, ref) => {
     const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
     const [inputValue, setInputValue] = useState("");
     const [isOpen, setIsOpen] = useState(false);
@@ -115,6 +100,7 @@ export const AutoCompleteDatePicker = forwardRef<
         setIsOpen(true);
       } else {
         setIsOpen(false);
+        setDate(undefined);
       }
 
       setSelectedIndex(0);
@@ -258,11 +244,7 @@ export const AutoCompleteDatePicker = forwardRef<
               tabIndex={-1}
               aria-label="Suggestions"
             >
-              <ul
-                role="listbox"
-                aria-label="Suggestions"
-                className="max-h-56 p-1"
-              >
+              <ul role="listbox" aria-label="Suggestions" className="max-h-56 p-1">
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={suggestion.inputString}
@@ -270,8 +252,7 @@ export const AutoCompleteDatePicker = forwardRef<
                     aria-selected={selectedIndex === index}
                     className={cn(
                       "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
-                      index === selectedIndex &&
-                        "bg-muted text-accent-foreground",
+                      index === selectedIndex && "bg-muted text-accent-foreground",
                     )}
                     onClick={() => {
                       const dateStr = generateDateOnlyString(suggestion.date);
@@ -282,9 +263,7 @@ export const AutoCompleteDatePicker = forwardRef<
                     }}
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
-                    <span className="xs:w-auto w-[110px] truncate">
-                      {suggestion.inputString}
-                    </span>
+                    <span className="xs:w-auto w-[110px] truncate">{suggestion.inputString}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
                       {generateDateOnlyString(suggestion.date)}
                     </span>

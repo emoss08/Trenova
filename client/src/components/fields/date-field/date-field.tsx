@@ -1,10 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toDate, toUnixTimeStamp } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { FormControlProps } from "@/types/fields";
@@ -20,10 +16,11 @@ export type BaseDateFieldProps = {
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
   placeholder?: string;
   clearable?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
 };
 
-export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps &
-  FormControlProps<T>;
+export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps & FormControlProps<T>;
 
 const styles = {
   base: "w-full h-7 text-sm justify-start text-left font-normal border border-input bg-muted rounded-md",
@@ -32,8 +29,7 @@ const styles = {
   open: "text-sm data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
   focusVisible:
     "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
-  hover:
-    "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
+  hover: "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
   disabled: "text-muted-foreground hover:text-muted-foreground",
 };
 
@@ -46,6 +42,8 @@ export function DateField<T extends FieldValues>({
   className,
   placeholder,
   clearable,
+  disabled = false,
+  readOnly = false,
 }: DateFieldProps<T>) {
   return (
     <Controller<T>
@@ -54,6 +52,7 @@ export function DateField<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => {
         const dateValue = toDate(field.value);
+        const isLocked = disabled || field.disabled || readOnly;
 
         return (
           <FieldWrapper
@@ -68,11 +67,14 @@ export function DateField<T extends FieldValues>({
                 render={
                   <Button
                     variant="outline"
+                    disabled={isLocked}
+                    aria-readonly={readOnly || undefined}
                     className={cn(
                       styles.base,
                       styles.focusVisible,
                       styles.hover,
                       !dateValue && styles.disabled,
+                      isLocked && "cursor-not-allowed opacity-50",
                       fieldState.invalid && styles.invalid,
                     )}
                   >
@@ -82,11 +84,12 @@ export function DateField<T extends FieldValues>({
                     ) : (
                       <span>{placeholder || "Pick a date"}</span>
                     )}
-                    {clearable && dateValue && (
+                    {clearable && dateValue && !isLocked && (
                       <XIcon
                         className="ml-auto h-4 w-4 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (isLocked) return;
                           field.onChange(null);
                         }}
                       />
@@ -100,6 +103,7 @@ export function DateField<T extends FieldValues>({
                   mode="single"
                   selected={dateValue}
                   onSelect={(date) => {
+                    if (isLocked) return;
                     field.onChange(toUnixTimeStamp(date));
                   }}
                 />
@@ -111,8 +115,7 @@ export function DateField<T extends FieldValues>({
     />
   );
 }
-export interface DatePickerProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface DatePickerProps extends React.InputHTMLAttributes<HTMLInputElement> {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
   isInvalid?: boolean;
@@ -166,17 +169,12 @@ export function AutoCompleteDateField<T extends FieldValues>({
               aria-invalid={isInvalid}
               date={field.value ? toDate(field.value) : undefined}
               placeholder={placeholder}
-              setDate={(date) =>
-                field.onChange(date ? toUnixTimeStamp(date) : null)
-              }
+              setDate={(date) => field.onChange(date ? toUnixTimeStamp(date) : null)}
               onBlur={field.onBlur}
               className={className}
               isInvalid={fieldState.invalid}
               autoComplete="off"
-              aria-describedby={cn(
-                description && descriptionId,
-                fieldState.error && errorId,
-              )}
+              aria-describedby={cn(description && descriptionId, fieldState.error && errorId)}
             />
           </FieldWrapper>
         );

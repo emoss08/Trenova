@@ -43,6 +43,8 @@ type AddressFieldProps<TForm extends FieldValues> = {
   label?: string;
   placeholder?: string;
   description?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
   rules?: RegisterOptions<TForm, Path<TForm>>;
 };
 
@@ -61,9 +63,12 @@ export function AddressField<TForm extends FieldValues>({
   label = "Address Line 1",
   placeholder = "Address Line 1",
   description = "The primary address line.",
+  disabled = false,
+  readOnly = false,
   rules,
 }: AddressFieldProps<TForm>) {
   const { setValue } = useFormContext<TForm>();
+  const isLocked = disabled || readOnly;
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
@@ -80,7 +85,7 @@ export function AddressField<TForm extends FieldValues>({
     configQuery.data?.enabled === true &&
     (configQuery.data?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false);
 
-  const enabled = isSearchAvailable && debouncedInput.length > 3;
+  const enabled = isSearchAvailable && !isLocked && debouncedInput.length > 3;
 
   const {
     data: autocompleteResult,
@@ -117,21 +122,23 @@ export function AddressField<TForm extends FieldValues>({
 
   const handleSelect = useCallback(
     (locationId: LocationDetails["placeId"]) => {
-      if (!locationId) return;
+      if (isLocked || !locationId) return;
 
       const location = locations.find((loc) => loc.placeId === locationId);
 
       if (!location) return;
 
       if (populateFields) {
-        if (nameField) setFieldValue(nameField, (location.name || "") as PathValue<TForm, typeof nameField>);
+        if (nameField)
+          setFieldValue(nameField, (location.name || "") as PathValue<TForm, typeof nameField>);
         if (addressLine1Field) {
           setFieldValue(
             addressLine1Field,
             (location.addressLine1 || "") as PathValue<TForm, typeof addressLine1Field>,
           );
         }
-        if (cityField) setFieldValue(cityField, (location.city || "") as PathValue<TForm, typeof cityField>);
+        if (cityField)
+          setFieldValue(cityField, (location.city || "") as PathValue<TForm, typeof cityField>);
         if (postalCodeField) {
           setFieldValue(
             postalCodeField,
@@ -181,18 +188,24 @@ export function AddressField<TForm extends FieldValues>({
       latitudeField,
       setFieldValue,
       onLocationSelect,
+      isLocked,
     ],
   );
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
+      if (isLocked) {
+        setOpen(false);
+        return;
+      }
+
       if (nextOpen && !isSearchAvailable) return;
       setOpen(nextOpen);
       if (nextOpen) {
         sessionTokenRef.current = crypto.randomUUID();
       }
     },
-    [isSearchAvailable],
+    [isSearchAvailable, isLocked],
   );
 
   const apiKeyError = error ? (error as ApiRequestError)?.data?.title || "Unknown error" : null;
@@ -207,6 +220,8 @@ export function AddressField<TForm extends FieldValues>({
           label={label}
           placeholder={placeholder}
           description={description}
+          disabled={disabled}
+          readOnly={readOnly}
         />
 
         {isSearchAvailable ? (
@@ -217,6 +232,8 @@ export function AddressField<TForm extends FieldValues>({
                   className="absolute top-1/2 right-2 mt-0.5 -translate-y-1/2"
                   size="icon-xs"
                   variant="ghost"
+                  disabled={isLocked}
+                  aria-readonly={readOnly || undefined}
                 >
                   <span
                     id="address-search-button"

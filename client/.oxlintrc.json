@@ -18,6 +18,7 @@
     "ignorePatterns": [
         "dist/**",
         "node_modules/**",
+        "storybook-static/**",
         "stats.html",
         "tmp/**"
     ],

@@ -130,7 +130,7 @@ class PopoutWindowManager {
   private readonly events: PopoutWindowEvents;
   private isInitialized: boolean;
   private readonly origin: string;
-  private cleanupInterval?: number;
+  private cleanupInterval?: ReturnType<typeof setInterval>;
   private readonly storedPositions: Map<string, StoredWindowPosition>;
   private focusQueue: string[];
 
