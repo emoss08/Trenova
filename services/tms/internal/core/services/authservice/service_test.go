@@ -94,7 +94,6 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 				ID:          roleID,
 				Name:        "Dispatcher",
 				Description: "Coordinates dispatch activity",
-				IsOrgAdmin:  true,
 			},
 		},
 	}
@@ -115,7 +114,6 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	require.Len(t, result.AuthorizedRoles, 1)
 	assert.Equal(t, roleID, result.AuthorizedRoleIDs[0])
 	assert.Equal(t, "Dispatcher", result.AuthorizedRoles[0].Name)
-	assert.True(t, result.AuthorizedRoles[0].IsOrgAdmin)
 	assert.True(t, result.RequiresRoleActivation)
 	deps.userRepo.AssertExpectations(t)
 	deps.sessionRepo.AssertExpectations(t)
@@ -236,10 +234,9 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	deps.svc.rbacRepo = &rbactest.Repository{
 		AuthorizedRoles: []*permission.Role{
 			{
-				ID:                  roleID,
-				Name:                "Billing Manager",
-				Description:         "Manages billing operations",
-				IsBusinessUnitAdmin: true,
+				ID:          roleID,
+				Name:        "Billing Manager",
+				Description: "Manages billing operations",
 			},
 		},
 	}
@@ -267,7 +264,6 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	require.Len(t, result.ActiveRoles, 1)
 	require.Len(t, result.AuthorizedRoles, 1)
 	assert.Equal(t, "Billing Manager", result.ActiveRoles[0].Name)
-	assert.True(t, result.ActiveRoles[0].IsBusinessUnitAdmin)
 	assert.False(t, result.RequiresRoleActivation)
 	deps.sessionRepo.AssertExpectations(t)
 }

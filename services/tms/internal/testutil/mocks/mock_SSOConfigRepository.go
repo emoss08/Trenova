@@ -39,6 +39,82 @@ func (_m *MockSSOConfigRepository) EXPECT() *MockSSOConfigRepository_Expecter {
 	return &MockSSOConfigRepository_Expecter{mock: &_m.Mock}
 }
 
+func (_mock *MockSSOConfigRepository) ListEnabledByOrganizationID(ctx context.Context, organizationID pulid.ID) ([]*tenant.SSOConfig, error) {
+	ret := _mock.Called(ctx, organizationID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEnabledByOrganizationID")
+	}
+
+	var r0 []*tenant.SSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) ([]*tenant.SSOConfig, error)); ok {
+		return returnFunc(ctx, organizationID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) []*tenant.SSOConfig); ok {
+		r0 = returnFunc(ctx, organizationID)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).([]*tenant.SSOConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, organizationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type MockSSOConfigRepository_ListEnabledByOrganizationID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockSSOConfigRepository_Expecter) ListEnabledByOrganizationID(ctx interface{}, organizationID interface{}) *MockSSOConfigRepository_ListEnabledByOrganizationID_Call {
+	return &MockSSOConfigRepository_ListEnabledByOrganizationID_Call{Call: _e.mock.On("ListEnabledByOrganizationID", ctx, organizationID)}
+}
+
+func (_c *MockSSOConfigRepository_ListEnabledByOrganizationID_Call) Return(sSOConfigs []*tenant.SSOConfig, err error) *MockSSOConfigRepository_ListEnabledByOrganizationID_Call {
+	_c.Call.Return(sSOConfigs, err)
+	return _c
+}
+
+func (_mock *MockSSOConfigRepository) GetEnabledByID(ctx context.Context, providerID pulid.ID) (*tenant.SSOConfig, error) {
+	ret := _mock.Called(ctx, providerID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetEnabledByID")
+	}
+
+	var r0 *tenant.SSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*tenant.SSOConfig, error)); ok {
+		return returnFunc(ctx, providerID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *tenant.SSOConfig); ok {
+		r0 = returnFunc(ctx, providerID)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*tenant.SSOConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, providerID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+type MockSSOConfigRepository_GetEnabledByID_Call struct {
+	*mock.Call
+}
+
+func (_e *MockSSOConfigRepository_Expecter) GetEnabledByID(ctx interface{}, providerID interface{}) *MockSSOConfigRepository_GetEnabledByID_Call {
+	return &MockSSOConfigRepository_GetEnabledByID_Call{Call: _e.mock.On("GetEnabledByID", ctx, providerID)}
+}
+
+func (_c *MockSSOConfigRepository_GetEnabledByID_Call) Return(sSOConfig *tenant.SSOConfig, err error) *MockSSOConfigRepository_GetEnabledByID_Call {
+	_c.Call.Return(sSOConfig, err)
+	return _c
+}
+
 // GetByOrganizationID provides a mock function for the type MockSSOConfigRepository
 func (_mock *MockSSOConfigRepository) GetByOrganizationID(ctx context.Context, organizationID pulid.ID, provider tenant.SSOProvider) (*tenant.SSOConfig, error) {
 	ret := _mock.Called(ctx, organizationID, provider)

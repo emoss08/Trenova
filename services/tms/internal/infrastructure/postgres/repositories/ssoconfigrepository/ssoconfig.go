@@ -32,6 +32,38 @@ func New(p Params) repositories.SSOConfigRepository {
 	}
 }
 
+func (r *repository) ListEnabledByOrganizationID(
+	ctx context.Context,
+	organizationID pulid.ID,
+) ([]*tenant.SSOConfig, error) {
+	configs := make([]*tenant.SSOConfig, 0)
+	err := r.db.DB().
+		NewSelect().
+		Model(&configs).
+		Where("ssoc.organization_id = ?", organizationID).
+		Where("ssoc.enabled = TRUE").
+		Order("ssoc.name ASC").
+		Scan(ctx)
+	return configs, err
+}
+
+func (r *repository) GetEnabledByID(
+	ctx context.Context,
+	providerID pulid.ID,
+) (*tenant.SSOConfig, error) {
+	entity := new(tenant.SSOConfig)
+	if err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		Where("ssoc.id = ?", providerID).
+		Where("ssoc.enabled = TRUE").
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "SSOConfig")
+	}
+
+	return entity, nil
+}
+
 func (r *repository) GetByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,

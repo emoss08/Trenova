@@ -9,6 +9,11 @@ import (
 )
 
 type SSOConfigRepository interface {
+	ListEnabledByOrganizationID(
+		ctx context.Context,
+		organizationID pulid.ID,
+	) ([]*tenant.SSOConfig, error)
+	GetEnabledByID(ctx context.Context, providerID pulid.ID) (*tenant.SSOConfig, error)
 	GetByOrganizationID(
 		ctx context.Context,
 		organizationID pulid.ID,

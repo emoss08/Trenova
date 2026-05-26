@@ -24,6 +24,13 @@ type LoginResponse struct {
 	ExpiresAt              int64         `json:"expiresAt"`
 	SessionID              string        `json:"sessionId"`
 	CSRFToken              string        `json:"csrfToken,omitempty"`
+	AuthProvider           string        `json:"authProvider,omitempty"`
+	ExternalIdentityID     string        `json:"externalIdentityId,omitempty"`
+	AuthenticatorAAL       int           `json:"authenticatorAal"`
+	FederationFAL          int           `json:"federationFal"`
+	MFAAuthenticatedAt     int64         `json:"mfaAuthenticatedAt,omitempty"`
+	LastReauthenticatedAt  int64         `json:"lastReauthenticatedAt,omitempty"`
+	RiskDecision           string        `json:"riskDecision,omitempty"`
 	ActiveRoleIDs          []pulid.ID    `json:"activeRoleIds"`
 	AuthorizedRoleIDs      []pulid.ID    `json:"authorizedRoleIds"`
 	ActiveRoles            []RoleSummary `json:"activeRoles"`
@@ -40,8 +47,17 @@ type TenantLoginMetadataResponse struct {
 	EnforceSSO       bool     `json:"enforceSso"`
 }
 
+type AuthProviderSummary struct {
+	ID       pulid.ID           `json:"id"`
+	Name     string             `json:"name"`
+	Provider tenant.SSOProvider `json:"provider"`
+	Protocol tenant.SSOProtocol `json:"protocol"`
+	Enabled  bool               `json:"enabled"`
+}
+
 type StartSSOLoginRequest struct {
 	Provider         tenant.SSOProvider
+	ProviderID       pulid.ID
 	OrganizationSlug string
 	ReturnTo         string
 }
@@ -149,6 +165,7 @@ type AuthService interface {
 		ctx context.Context,
 		organizationSlug string,
 	) (*TenantLoginMetadataResponse, error)
+	ListAuthProviders(ctx context.Context, organizationSlug string) ([]AuthProviderSummary, error)
 	StartSSOLogin(ctx context.Context, req StartSSOLoginRequest) (string, error)
 	HandleSSOCallback(
 		ctx context.Context,

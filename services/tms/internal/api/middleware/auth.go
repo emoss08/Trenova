@@ -90,6 +90,15 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		OrganizationID:         sess.OrganizationID,
 		ActiveRoleIDs:          sess.ActiveRoleIDs,
 		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0,
+		AuthProvider:           sess.AuthProvider,
+		ExternalIdentityID:     sess.ExternalIdentityID,
+		ExternalSubject:        sess.ExternalSubject,
+		AuthenticatorAAL:       sess.AuthenticatorAAL,
+		FederationFAL:          sess.FederationFAL,
+		MFAAuthenticatedAt:     sess.MFAAuthenticatedAt,
+		LastReauthenticatedAt:  sess.LastReauthenticatedAt,
+		RiskDecision:           sess.RiskDecision,
+		RiskDecisionID:         sess.RiskDecisionID,
 	})
 
 	return nil
