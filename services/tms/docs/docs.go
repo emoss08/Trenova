@@ -26142,11 +26142,13 @@ const docTemplate = `{
             "enum": [
                 "own",
                 "organization",
+                "business_unit",
                 "all"
             ],
             "x-enum-varnames": [
                 "DataScopeOwn",
                 "DataScopeOrganization",
+                "DataScopeBusinessUnit",
                 "DataScopeAll"
             ]
         },
@@ -26241,6 +26243,9 @@ const docTemplate = `{
                 "edi",
                 "api_key",
                 "data_entry_control",
+                "platform_catalog",
+                "database_session",
+                "document_operation",
                 "equipment_type",
                 "equipment_manufacturer",
                 "trailer",
@@ -26313,6 +26318,9 @@ const docTemplate = `{
                 "ResourceEDI",
                 "ResourceAPIKey",
                 "ResourceDataEntryControl",
+                "ResourcePlatformCatalog",
+                "ResourceDatabaseSession",
+                "ResourceDocumentOperation",
                 "ResourceEquipmentType",
                 "ResourceEquipmentManufacturer",
                 "ResourceTrailer",
@@ -26466,12 +26474,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
-                },
-                "isBusinessUnitAdmin": {
-                    "type": "boolean"
-                },
-                "isOrgAdmin": {
-                    "type": "boolean"
                 },
                 "isSystem": {
                     "type": "boolean"
@@ -28700,9 +28702,6 @@ const docTemplate = `{
                 "isLocked": {
                     "type": "boolean"
                 },
-                "isPlatformAdmin": {
-                    "type": "boolean"
-                },
                 "lastLoginAt": {
                     "type": "integer"
                 },
@@ -30062,6 +30061,30 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_ports_services.LightPermissionManifest": {
             "type": "object",
             "properties": {
+                "activeRoleIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "activeRoles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary"
+                    }
+                },
+                "authorizedRoleIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "authorizedRoles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary"
+                    }
+                },
                 "availableOrgs": {
                     "type": "array",
                     "items": {
@@ -30073,15 +30096,6 @@ const docTemplate = `{
                 },
                 "expiresAt": {
                     "type": "integer"
-                },
-                "isBusinessUnitAdmin": {
-                    "type": "boolean"
-                },
-                "isOrgAdmin": {
-                    "type": "boolean"
-                },
-                "isPlatformAdmin": {
-                    "type": "boolean"
                 },
                 "maxSensitivity": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.FieldSensitivity"
@@ -30095,6 +30109,9 @@ const docTemplate = `{
                         "type": "integer",
                         "format": "int32"
                     }
+                },
+                "requiresRoleActivation": {
+                    "type": "boolean"
                 },
                 "routeAccess": {
                     "type": "object",
@@ -30169,11 +30186,59 @@ const docTemplate = `{
         "github_com_emoss08_trenova_internal_core_ports_services.LoginResponse": {
             "type": "object",
             "properties": {
+                "activeRoleIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "activeRoles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary"
+                    }
+                },
+                "authProvider": {
+                    "type": "string"
+                },
+                "authenticatorAal": {
+                    "type": "integer"
+                },
+                "authorizedRoleIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "authorizedRoles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary"
+                    }
+                },
                 "csrfToken": {
                     "type": "string"
                 },
                 "expiresAt": {
                     "type": "integer"
+                },
+                "externalIdentityId": {
+                    "type": "string"
+                },
+                "federationFal": {
+                    "type": "integer"
+                },
+                "lastReauthenticatedAt": {
+                    "type": "integer"
+                },
+                "mfaAuthenticatedAt": {
+                    "type": "integer"
+                },
+                "requiresRoleActivation": {
+                    "type": "boolean"
+                },
+                "riskDecision": {
+                    "type": "string"
                 },
                 "sessionId": {
                     "type": "string"
@@ -30275,12 +30340,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "string"
-                },
-                "isBusinessUnitAdmin": {
-                    "type": "boolean"
-                },
-                "isOrgAdmin": {
-                    "type": "boolean"
                 },
                 "isSystem": {
                     "type": "boolean"
