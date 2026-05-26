@@ -26,3 +26,5 @@ deploy/caddy-root-ca.crt
 TODO
 enterprise/
 .playwright-mcp
+shipment_page_design
+research-docs/
