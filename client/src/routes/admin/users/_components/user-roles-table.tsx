@@ -1,12 +1,10 @@
 import { DataTableLazyComponent } from "@/components/error-boundary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { lazy } from "react";
+import { Activity, lazy } from "react";
 
 const UserTable = lazy(() => import("./user-table"));
-const RoleTable = lazy(
-  () => import("@/routes/admin/roles/_components/role-table"),
-);
+const RoleTable = lazy(() => import("@/routes/admin/roles/_components/role-table"));
 
 const tabValues = ["users", "roles"] as const;
 
@@ -19,23 +17,25 @@ export default function UserRolesTable() {
   return (
     <Tabs
       value={activeTab}
-      onValueChange={(value) =>
-        setActiveTab(value as (typeof tabValues)[number])
-      }
+      onValueChange={(value) => setActiveTab(value as (typeof tabValues)[number])}
     >
       <TabsList variant="underline">
         <TabsTrigger value="users">Users</TabsTrigger>
         <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
       </TabsList>
       <TabsContent value="users">
-        <DataTableLazyComponent>
-          <UserTable />
-        </DataTableLazyComponent>
+        <Activity mode={activeTab === "users" ? "visible" : "hidden"}>
+          <DataTableLazyComponent>
+            <UserTable />
+          </DataTableLazyComponent>
+        </Activity>
       </TabsContent>
       <TabsContent value="roles">
-        <DataTableLazyComponent>
-          <RoleTable />
-        </DataTableLazyComponent>
+        <Activity mode={activeTab === "roles" ? "visible" : "hidden"}>
+          <DataTableLazyComponent>
+            <RoleTable />
+          </DataTableLazyComponent>
+        </Activity>
       </TabsContent>
     </Tabs>
   );

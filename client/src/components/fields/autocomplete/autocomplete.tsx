@@ -123,7 +123,7 @@ export interface BaseAutocompleteFieldProps<
   /** Preload all data ahead of time */
   preload?: boolean;
   /** Function to filter options */
-  filterFn?: (option: TOption, query: string) => boolean;
+  filterOption?: (option: TOption) => boolean;
   /** Function to render each option */
   renderOption: (option: TOption) => React.ReactNode;
   /** Function to get the value from an option */
@@ -194,6 +194,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   extraSearchParams,
   popoutLink,
   initialLimit,
+  filterOption,
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
   const [open, setOpen] = useState(false);
   const listboxId = useId();
@@ -334,6 +335,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             initialLimit={initialLimit}
             popoutLink={popoutLink}
             listboxId={listboxId}
+            filterOption={filterOption}
             onClear={() => {
               setUserSelectedOptionState(null);
               if (onOptionChange) {
@@ -364,6 +366,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
   extraSearchParams,
   placeholder,
   initialLimit,
+  filterOption,
   selectedValueLink,
   ...props
 }: AutocompleteFieldProps<TOption, TForm>) {
@@ -393,6 +396,7 @@ export function AutocompleteField<TOption, TForm extends FieldValues>({
               label={label}
               initialLimit={initialLimit}
               selectedValueLink={selectedValueLink}
+              filterOption={filterOption}
               placeholder={placeholder}
               value={value}
               onChange={onChange}

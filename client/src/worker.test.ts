@@ -45,6 +45,8 @@ describe("Cloudflare SPA worker", () => {
     expect(response.headers.get("Content-Security-Policy")).not.toContain("sha256-");
     expect(response.headers.get("Content-Security-Policy")).toContain("ws://127.0.0.1:*");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:*");
+    expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:9000");
+    expect(response.headers.get("Content-Security-Policy")).toContain("http://127.0.0.1:9000");
   });
 
   it("returns 404 for sensitive paths before static asset lookup", async () => {
@@ -291,6 +293,8 @@ function expectSecurityHeaders(headers: Headers): void {
   );
   expect(headers.get("Content-Security-Policy")).toContain("https://cloudflareinsights.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://storage.trenova.app");
+  expect(headers.get("Content-Security-Policy")).not.toContain("http://localhost:9000");
+  expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:9000");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://tile.openweathermap.org");
   expect(headers.get("Content-Security-Policy")).toContain("https://*.ably.net");

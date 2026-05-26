@@ -54,6 +54,9 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   extraSearchParams?: Record<string, string | string[]>;
   selectedValueLink?: API_ENDPOINTS;
   onOptionChange?: (option: TOption | null) => void;
+  filterOption?: (option: TOption) => boolean;
+  noResultsMessage?: string;
+  initialLimit?: number;
 };
 
 type ControlledAutocompleteFieldProps<TOption> = {
@@ -159,6 +162,22 @@ export function RoleAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.name || ""}
       renderOption={(option) => option.name || ""}
       getOptionLabel={(option) => option.name || ""}
+      {...props}
+    />
+  );
+}
+
+export function RoleSelectAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<Role, T>) {
+  return (
+    <AutocompleteField<Role, T>
+      link="/roles/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name || ""}
+      renderOption={(option) => (
+        <EDIOptionStack primary={option.name || ""} secondary={option.description} />
+      )}
       {...props}
     />
   );

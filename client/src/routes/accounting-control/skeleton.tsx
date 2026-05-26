@@ -1,21 +1,15 @@
 import { InputFieldSkeleton } from "@/components/fields/input-field";
 import { SwitchFieldSkeleton } from "@/components/fields/switch-field";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PageSkeleton() {
   return (
-    <div className="flex flex-col gap-y-4">
+    <div className="flex flex-col gap-y-4 p-4">
       <Card>
         <CardHeader>
           <CardTitle>
-            <Skeleton className="h-6 w-[150px]" />
+            <Skeleton className="h-6 w-37.5" />
           </CardTitle>
           <CardDescription>
             <Skeleton className="h-10 w-full" />
@@ -31,7 +25,7 @@ export function PageSkeleton() {
       <Card>
         <CardHeader>
           <CardTitle>
-            <Skeleton className="h-6 w-[150px]" />
+            <Skeleton className="h-6 w-37.5" />
           </CardTitle>
           <CardDescription>
             <Skeleton className="h-10 w-full" />
@@ -46,7 +40,7 @@ export function PageSkeleton() {
       <Card>
         <CardHeader>
           <CardTitle>
-            <Skeleton className="h-6 w-[150px]" />
+            <Skeleton className="h-6 w-37.5" />
           </CardTitle>
           <CardDescription>
             <Skeleton className="h-10 w-full" />

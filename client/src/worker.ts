@@ -30,6 +30,10 @@ const imageSources = [
   "https://tile.openweathermap.org",
   "https://storage.trenova.app",
 ] as const;
+const localDevelopmentImageSources = [
+  "http://localhost:9000",
+  "http://127.0.0.1:9000",
+] as const;
 const connectSources = [
   "'self'",
   "https://api.trenova.app",
@@ -244,6 +248,9 @@ function contentSecurityPolicy(request: Request | null): string {
   const effectiveConnectSources = isLocalDevelopment
     ? [...connectSources, ...localDevelopmentConnectSources]
     : [...connectSources];
+  const effectiveImageSources = isLocalDevelopment
+    ? [...imageSources, ...localDevelopmentImageSources]
+    : [...imageSources];
 
   return [
     "default-src 'self'",
@@ -254,7 +261,7 @@ function contentSecurityPolicy(request: Request | null): string {
     `script-src ${effectiveScriptSources.join(" ")}`,
     `style-src ${styleSources.join(" ")}`,
     `font-src ${fontSources.join(" ")}`,
-    `img-src ${imageSources.join(" ")}`,
+    `img-src ${effectiveImageSources.join(" ")}`,
     `connect-src ${effectiveConnectSources.join(" ")}`,
     "worker-src 'self' blob:",
     "manifest-src 'self'",
