@@ -78,7 +78,6 @@ export const userSchema = z.object({
   timeFormat: TimeFormat.default("12-hour"),
   isLocked: z.boolean().default(false),
   mustChangePassword: z.boolean().default(true),
-  isPlatformAdmin: z.boolean().optional().default(false),
   lastLoginAt: timestampSchema.optional(),
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),

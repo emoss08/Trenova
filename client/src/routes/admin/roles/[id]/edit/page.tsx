@@ -1,6 +1,5 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
@@ -38,8 +37,6 @@ export function RoleEditPage() {
       name: "",
       description: "",
       maxSensitivity: "internal",
-      isOrgAdmin: false,
-      isBusinessUnitAdmin: false,
       permissions: [],
     },
   });
@@ -67,8 +64,6 @@ export function RoleEditPage() {
         name: role.name,
         description: role.description ?? "",
         maxSensitivity: role.maxSensitivity,
-        isOrgAdmin: role.isOrgAdmin ?? false,
-        isBusinessUnitAdmin: role.isBusinessUnitAdmin ?? false,
         permissions: mappedPermissions,
       });
       isInitializedRef.current = true;
@@ -179,17 +174,6 @@ export function RoleEditPage() {
                     label="Description"
                     placeholder="Describe what this role is for..."
                     disabled={role.isSystem}
-                  />
-                </FormControl>
-                <FormControl cols="full">
-                  <SwitchField
-                    control={control}
-                    name="isBusinessUnitAdmin"
-                    label="Business Unit Administrator"
-                    description="Grants admin-level access across all organizations in this business unit."
-                    disabled={role.isSystem}
-                    outlined
-                    position="left"
                   />
                 </FormControl>
               </FormGroup>

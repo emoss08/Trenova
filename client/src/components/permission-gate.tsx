@@ -86,34 +86,3 @@ export function AllPermissionsGate({
 
   return <>{fallback}</>;
 }
-
-interface AdminGateProps {
-  children: ReactNode;
-  fallback?: ReactNode;
-  requirePlatformAdmin?: boolean;
-}
-
-export function AdminGate({
-  children,
-  fallback = null,
-  requirePlatformAdmin = false,
-}: AdminGateProps) {
-  const manifest = usePermissionStore((state) => state.manifest);
-
-  if (!manifest) {
-    return null;
-  }
-
-  if (requirePlatformAdmin) {
-    if (manifest.isPlatformAdmin) {
-      return <>{children}</>;
-    }
-    return <>{fallback}</>;
-  }
-
-  if (manifest.isPlatformAdmin || manifest.isOrgAdmin) {
-    return <>{children}</>;
-  }
-
-  return <>{fallback}</>;
-}

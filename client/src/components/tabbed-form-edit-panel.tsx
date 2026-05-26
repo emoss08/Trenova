@@ -12,7 +12,6 @@ import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
-import { usePermissionStore } from "@/stores/permission-store";
 import type { DataTablePanelProps } from "@/types/data-table";
 import type { API_ENDPOINTS } from "@/types/server";
 import { Dialog } from "@base-ui/react/dialog";
@@ -98,9 +97,6 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("details"));
-  const manifest = usePermissionStore((s) => s.manifest);
-  const isAdmin = manifest?.isOrgAdmin || manifest?.isPlatformAdmin; // check if the user is organization admin or platform admin
-
   const {
     setError,
     formState: { isSubmitting },
@@ -241,7 +237,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                 <Dialog.Title className="text-2xl leading-none font-semibold">
                   {typeof panelTitle === "string" ? panelTitle : title}
                 </Dialog.Title>
-                {isAdmin && <FormCopyButton rowId={rowId} />}
+                <FormCopyButton rowId={rowId} />
               </div>
               <div className="flex items-center gap-1">
                 {headerActions}

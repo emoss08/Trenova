@@ -110,7 +110,6 @@ describe("AuthForm", () => {
         timeFormat: "12-hour",
         isLocked: false,
         mustChangePassword: false,
-        isPlatformAdmin: false,
       },
       sessionId: "ses_1",
       expiresAt: 1782403304,

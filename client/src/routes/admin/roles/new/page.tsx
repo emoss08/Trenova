@@ -34,8 +34,6 @@ export function RoleCreatePage() {
       name: "",
       description: "",
       maxSensitivity: "internal",
-      isOrgAdmin: false,
-      isBusinessUnitAdmin: false,
       permissions: [],
     },
   });

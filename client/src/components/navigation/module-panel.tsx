@@ -12,7 +12,6 @@ import {
 import { adminLinks } from "@/config/navigation.config";
 import type { NavModule, NavItem, NavGroup } from "@/config/navigation.types";
 import { isNavGroup } from "@/config/navigation.types";
-import { usePermissionStore } from "@/stores/permission-store";
 import type { SidebarLink } from "@/components/sidebar-nav";
 
 type ModulePanelProps = {
@@ -92,16 +91,9 @@ function NavGroupSection({
 }
 
 function AdminSection({ currentPath }: { currentPath: string }) {
-  const manifest = usePermissionStore((s) => s.manifest);
-  const isPlatformAdmin = manifest?.isPlatformAdmin ?? false;
-
   const grouped = useMemo(() => {
-    const filtered = adminLinks.filter(
-      (link) => !link.platformAdminOnly || isPlatformAdmin,
-    );
-
     const groups = new Map<string, SidebarLink[]>();
-    for (const link of filtered) {
+    for (const link of adminLinks) {
       const groupName = link.group ?? "Other";
       const existing = groups.get(groupName);
       if (existing) {
@@ -111,7 +103,7 @@ function AdminSection({ currentPath }: { currentPath: string }) {
       }
     }
     return groups;
-  }, [isPlatformAdmin]);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">

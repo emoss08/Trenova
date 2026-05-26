@@ -1,6 +1,5 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { coreResponsibilityChoices, fieldSensitivityChoices } from "@/lib/choices";
@@ -50,17 +49,6 @@ export function RoleForm({ isSystemRole }: { isSystemRole?: boolean }) {
           label="Description"
           placeholder="Describe the purpose of this role"
           disabled={isSystemRole}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <SwitchField
-          control={control}
-          name="isBusinessUnitAdmin"
-          label="Business Unit Administrator"
-          description="Grants admin-level access across all organizations in this business unit."
-          disabled={isSystemRole}
-          outlined
-          position="left"
         />
       </FormControl>
     </FormGroup>

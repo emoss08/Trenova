@@ -5,8 +5,6 @@ export type SidebarLink = {
   title: string;
   group?: string;
   disabled?: boolean;
-  adminOnly?: boolean;
-  platformAdminOnly?: boolean;
   includeBetaTag?: boolean;
   resource?: string;
   requiredOperation?: OperationType;

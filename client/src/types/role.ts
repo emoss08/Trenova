@@ -48,8 +48,6 @@ export const roleSchema = z.object({
   parentRoleIds: z.array(z.string()).nullish(),
   maxSensitivity: fieldSensitivitySchema,
   isSystem: z.boolean().optional(),
-  isOrgAdmin: z.boolean().optional(),
-  isBusinessUnitAdmin: z.boolean().optional(),
   createdBy: optionalStringSchema,
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
@@ -65,8 +63,6 @@ export const roleSummarySchema = z.object({
     .nullish()
     .transform((value) => value ?? ""),
   isSystem: z.boolean().optional().default(false),
-  isOrgAdmin: z.boolean().optional().default(false),
-  isBusinessUnitAdmin: z.boolean().optional().default(false),
 });
 export type RoleSummary = z.infer<typeof roleSummarySchema>;
 

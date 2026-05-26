@@ -27,7 +27,6 @@ export interface NavItem {
   includeBetaTag?: boolean;
   external?: boolean;
   resource?: string;
-  adminOnly?: boolean;
 }
 
 export interface NavGroup {
@@ -37,7 +36,6 @@ export interface NavGroup {
   items: NavItem[];
   defaultOpen?: boolean;
   resource?: string;
-  adminOnly?: boolean;
 }
 
 export interface NavModule {
@@ -53,7 +51,6 @@ export interface NavModule {
   navigation: (NavItem | NavGroup)[];
   hideSecondarySidebar?: boolean;
   resource?: string;
-  adminOnly?: boolean;
 }
 
 export interface NavigationConfig {

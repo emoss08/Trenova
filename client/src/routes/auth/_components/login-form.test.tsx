@@ -80,7 +80,6 @@ function testUser(currentOrganizationId = "org_1") {
     timeFormat: "12-hour",
     isLocked: false,
     mustChangePassword: false,
-    isPlatformAdmin: false,
   };
 }
 

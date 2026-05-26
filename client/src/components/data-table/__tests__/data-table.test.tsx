@@ -21,8 +21,6 @@ vi.mock("@/hooks/use-permission", () => ({
     canExport: true,
     canImport: true,
     isLoading: false,
-    isPlatformAdmin: false,
-    isOrgAdmin: false,
   }),
 }));
 

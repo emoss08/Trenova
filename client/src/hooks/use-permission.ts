@@ -38,8 +38,6 @@ export function usePermission(
   return {
     allowed: hasPermission(resource, operation),
     isLoading: !manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 
@@ -54,8 +52,6 @@ export function usePermissions(resource: string) {
     canExport: hasPermission(resource, Operation.Export),
     canImport: hasPermission(resource, Operation.Import),
     isLoading: !manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 
@@ -114,8 +110,6 @@ export function usePermissionCheck() {
     checkAll,
     checkRoute,
     isReady: !!manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 

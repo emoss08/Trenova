@@ -24,8 +24,6 @@ export function AppLayout() {
           name: roleId,
           description: "",
           isSystem: false,
-          isOrgAdmin: false,
-          isBusinessUnitAdmin: false,
         }));
 
     const toggleRole = (roleId: string) => {
