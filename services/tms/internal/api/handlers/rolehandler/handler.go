@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	_ "github.com/emoss08/trenova/internal/core/domain/tenant" // import for documentation generation
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -19,14 +20,16 @@ import (
 type Params struct {
 	fx.In
 
-	Service          *roleservice.Service
-	PermissionEngine services.PermissionEngine
-	ErrorHandler     *helpers.ErrorHandler
+	Service              *roleservice.Service
+	PermissionEngine     services.PermissionEngine
+	PermissionMiddleware *middleware.PermissionMiddleware
+	ErrorHandler         *helpers.ErrorHandler
 }
 
 type Handler struct {
 	service    *roleservice.Service
 	permEngine services.PermissionEngine
+	perm       *middleware.PermissionMiddleware
 	eh         *helpers.ErrorHandler
 }
 
@@ -34,28 +37,49 @@ func New(p Params) *Handler {
 	return &Handler{
 		service:    p.Service,
 		permEngine: p.PermissionEngine,
+		perm:       p.PermissionMiddleware,
 		eh:         p.ErrorHandler,
 	}
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/roles")
-	api.GET("/", h.list)
-	api.GET("/:roleID", h.get)
-	api.POST("/", h.create)
-	api.PUT("/:roleID", h.update)
-	api.GET("/:roleID/impact", h.getImpact)
+	require := h.requireRolePermission
 
-	api.POST("/:roleID/permissions", h.addPermission)
-	api.PUT("/:roleID/permissions/:permID", h.updatePermission)
-	api.DELETE("/:roleID/permissions/:permID", h.deletePermission)
+	api.GET("/", require(permission.OpRead), h.list)
+	api.POST("/", require(permission.OpCreate), h.create)
 
-	api.POST("/:roleID/assignments", h.assignRole)
-	api.DELETE("/assignments/:assignmentID", h.unassignRole)
+	api.GET("/hierarchy", require(permission.OpRead), h.listHierarchy)
+	api.POST("/hierarchy", require(permission.OpUpdate), h.upsertHierarchy)
+	api.DELETE("/hierarchy/:edgeID", require(permission.OpUpdate), h.deleteHierarchy)
+	api.GET("/constraints", require(permission.OpRead), h.listConstraints)
+	api.POST("/constraints", require(permission.OpUpdate), h.saveConstraint)
+	api.PUT("/constraints/:constraintID", require(permission.OpUpdate), h.saveConstraint)
+	api.DELETE("/constraints/:constraintID", require(permission.OpDelete), h.deleteConstraint)
+	api.GET("/preflight", require(permission.OpRead), h.preflight)
 
 	selectOptions := api.Group("/select-options")
-	selectOptions.GET("/", h.selectOptions)
-	selectOptions.GET("/:roleID", h.getOption)
+	selectOptions.GET("/", require(permission.OpRead), h.selectOptions)
+	selectOptions.GET("/:roleID", require(permission.OpRead), h.getOption)
+
+	api.DELETE("/assignments/:assignmentID", require(permission.OpUnassign), h.unassignRole)
+
+	api.GET("/:roleID", require(permission.OpRead), h.get)
+	api.PUT("/:roleID", require(permission.OpUpdate), h.update)
+	api.GET("/:roleID/impact", require(permission.OpRead), h.getImpact)
+
+	api.POST("/:roleID/permissions", require(permission.OpUpdate), h.addPermission)
+	api.PUT("/:roleID/permissions/:permID", require(permission.OpUpdate), h.updatePermission)
+	api.DELETE("/:roleID/permissions/:permID", require(permission.OpUpdate), h.deletePermission)
+
+	api.POST("/:roleID/assignments", require(permission.OpAssign), h.assignRole)
+}
+
+func (h *Handler) requireRolePermission(operation permission.Operation) gin.HandlerFunc {
+	if h.perm == nil {
+		return func(c *gin.Context) { c.Next() }
+	}
+	return h.perm.RequirePermission(permission.ResourceRole.String(), operation)
 }
 
 // @Summary List roles
@@ -272,6 +296,158 @@ func (h *Handler) getImpact(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, users)
+}
+
+func (h *Handler) listHierarchy(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	edges, err := h.service.ListRoleHierarchyEdges(c.Request.Context(), authCtx.OrganizationID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, edges)
+}
+
+func (h *Handler) upsertHierarchy(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	var req UpsertHierarchyEdgeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err := h.service.UpsertRoleHierarchyEdge(
+		c.Request.Context(),
+		&roleservice.UpsertHierarchyEdgeRequest{
+			ActorID:        authCtx.UserID,
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			SeniorRoleID:   req.SeniorRoleID,
+			JuniorRoleID:   req.JuniorRoleID,
+		},
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) deleteHierarchy(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	edgeID, err := pulid.MustParse(c.Param("edgeID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.DeleteRoleHierarchyEdge(
+		c.Request.Context(),
+		authCtx.OrganizationID,
+		edgeID,
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) listConstraints(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	constraintType := permission.RoleConstraintType(c.Query("type"))
+	constraints, err := h.service.ListRoleConstraints(
+		c.Request.Context(),
+		repositories.ListRoleConstraintsRequest{
+			OrganizationID: authCtx.OrganizationID,
+			Type:           constraintType,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, constraints)
+}
+
+func (h *Handler) saveConstraint(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	var req SaveConstraintRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if constraintID := c.Param("constraintID"); constraintID != "" {
+		id, err := pulid.MustParse(constraintID)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		req.ID = id
+	}
+
+	enabled := true
+	if req.Enabled != nil {
+		enabled = *req.Enabled
+	}
+
+	constraint := &permission.RoleConstraint{
+		ID:          req.ID,
+		Name:        req.Name,
+		Description: req.Description,
+		Type:        req.Type,
+		MaxRoles:    req.MaxRoles,
+		Enabled:     enabled,
+	}
+
+	if err := h.service.SaveRoleConstraint(
+		c.Request.Context(),
+		&roleservice.SaveConstraintRequest{
+			ActorID:        authCtx.UserID,
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			Constraint:     constraint,
+			RoleIDs:        req.RoleIDs,
+		},
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, constraint)
+}
+
+func (h *Handler) deleteConstraint(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	constraintID, err := pulid.MustParse(c.Param("constraintID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.service.DeleteRoleConstraint(
+		c.Request.Context(),
+		authCtx.OrganizationID,
+		constraintID,
+	); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) preflight(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	report, err := h.service.RunRBACPreflight(c.Request.Context(), authCtx.OrganizationID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, report)
 }
 
 // @Summary Add a role permission

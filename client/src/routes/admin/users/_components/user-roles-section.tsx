@@ -2,16 +2,11 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { listRoles } from "@/lib/role-api";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/types/role";
 import { useQuery } from "@tanstack/react-query";
-import { LockIcon, SearchIcon, ShieldCheckIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 type UserRolesSectionProps = {
@@ -19,10 +14,7 @@ type UserRolesSectionProps = {
   onRoleIdsChange: (roleIds: string[]) => void;
 };
 
-export function UserRolesSection({
-  selectedRoleIds,
-  onRoleIdsChange,
-}: UserRolesSectionProps) {
+export function UserRolesSection({ selectedRoleIds, onRoleIdsChange }: UserRolesSectionProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { data: rolesResponse, isLoading } = useQuery({
@@ -37,8 +29,7 @@ export function UserRolesSection({
     const query = searchQuery.toLowerCase();
     return roles.filter(
       (role) =>
-        role.name.toLowerCase().includes(query) ||
-        role.description?.toLowerCase().includes(query),
+        role.name.toLowerCase().includes(query) || role.description?.toLowerCase().includes(query),
     );
   }, [roles, searchQuery]);
 
@@ -87,12 +78,7 @@ export function UserRolesSection({
                   className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
                 >
                   <span className="sr-only">Remove</span>
-                  <svg
-                    className="size-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="size-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -143,41 +129,13 @@ function RoleRow({ role, isSelected, onToggle }: RoleRowProps) {
         isSelected && "bg-primary/5",
       )}
     >
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={onToggle}
-        className="mt-0.5"
-      />
+      <Checkbox checked={isSelected} onCheckedChange={onToggle} className="mt-0.5" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{role.name}</span>
-          {role.isSystem && (
-            <Tooltip>
-              <TooltipTrigger>
-                <Badge variant="outline" className="gap-1 text-[10px]">
-                  <LockIcon className="size-2.5" />
-                  System
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>System-managed role</TooltipContent>
-            </Tooltip>
-          )}
-          {role.isOrgAdmin && (
-            <Tooltip>
-              <TooltipTrigger>
-                <Badge className="gap-1 bg-amber-600 text-[10px] hover:bg-amber-700">
-                  <ShieldCheckIcon className="size-2.5" />
-                  Admin
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>Organization administrator</TooltipContent>
-            </Tooltip>
-          )}
         </div>
         {role.description && (
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-            {role.description}
-          </p>
+          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{role.description}</p>
         )}
       </div>
     </label>

@@ -30,6 +30,7 @@ type Params struct {
 
 	Logger           *zap.Logger
 	RoleRepo         repositories.RoleRepository
+	RBACRepo         repositories.RBACRepository
 	UserRepo         repositories.UserRepository
 	PermissionCache  repositories.PermissionCacheRepository
 	PermissionEngine services.PermissionEngine
@@ -40,6 +41,7 @@ type Params struct {
 type Service struct {
 	l          *zap.Logger
 	roleRepo   repositories.RoleRepository
+	rbacRepo   repositories.RBACRepository
 	userRepo   repositories.UserRepository
 	permCache  repositories.PermissionCacheRepository
 	permEngine services.PermissionEngine
@@ -52,6 +54,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:          p.Logger.Named("service.role"),
 		roleRepo:   p.RoleRepo,
+		rbacRepo:   p.RBACRepo,
 		userRepo:   p.UserRepo,
 		permCache:  p.PermissionCache,
 		permEngine: p.PermissionEngine,
@@ -83,6 +86,22 @@ type UnassignRoleRequest struct {
 	ActorID        pulid.ID
 	OrganizationID pulid.ID
 	AssignmentID   pulid.ID
+}
+
+type UpsertHierarchyEdgeRequest struct {
+	ActorID        pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	SeniorRoleID   pulid.ID
+	JuniorRoleID   pulid.ID
+}
+
+type SaveConstraintRequest struct {
+	ActorID        pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Constraint     *permission.RoleConstraint
+	RoleIDs        []pulid.ID
 }
 
 func (s *Service) CreateRole(ctx context.Context, req CreateRoleRequest) error {
@@ -245,6 +264,38 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		zap.String("roleID", req.Assignment.RoleID.String()),
 	)
 
+	if err := s.validateAssignmentPrivileges(ctx, &req, log); err != nil {
+		return err
+	}
+
+	req.Assignment.OrganizationID = req.OrganizationID
+	req.Assignment.AssignedBy = req.ActorID
+
+	if err := s.validateStaticSeparationOfDutyForAssignment(ctx, &req); err != nil {
+		return err
+	}
+
+	if err := s.roleRepo.CreateAssignment(ctx, req.Assignment); err != nil {
+		log.Error("failed to create assignment", zap.Error(err))
+		return err
+	}
+
+	if err := s.permEngine.InvalidateUser(
+		ctx,
+		req.Assignment.UserID,
+		req.OrganizationID,
+	); err != nil {
+		log.Warn("failed to invalidate user permission cache", zap.Error(err))
+	}
+
+	return nil
+}
+
+func (s *Service) validateAssignmentPrivileges(
+	ctx context.Context,
+	req *AssignRoleRequest,
+	log *zap.Logger,
+) error {
 	role, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
 		ID: req.Assignment.RoleID,
 		TenantInfo: pagination.TenantInfo{
@@ -261,80 +312,232 @@ func (s *Service) AssignRole(ctx context.Context, req AssignRoleRequest) error {
 		log.Error("failed to check platform admin status", zap.Error(err))
 		return err
 	}
-
-	if role.IsOrgAdmin && !isPlatformAdmin {
-		actorPerms, aErr := s.permEngine.GetEffectivePermissions(
-			ctx,
-			req.ActorID,
-			req.OrganizationID,
-		)
-		if aErr != nil {
-			return aErr
-		}
-		isActorOrgAdmin := false
-		for _, r := range actorPerms.Roles {
-			if r.IsOrgAdmin {
-				isActorOrgAdmin = true
-				break
-			}
-		}
-		if !isActorOrgAdmin {
-			return ErrCannotEscalatePrivileges
-		}
+	if isPlatformAdmin {
+		return nil
 	}
 
-	if role.IsBusinessUnitAdmin && !isPlatformAdmin {
-		actorPerms, aErr := s.permEngine.GetEffectivePermissions(
+	if role.IsOrgAdmin || role.IsBusinessUnitAdmin {
+		actorPerms, permsErr := s.permEngine.GetEffectivePermissions(
 			ctx,
 			req.ActorID,
 			req.OrganizationID,
 		)
-		if aErr != nil {
-			return aErr
+		if permsErr != nil {
+			return permsErr
 		}
-		isActorBUAdmin := false
-		for _, r := range actorPerms.Roles {
-			if r.IsBusinessUnitAdmin {
-				isActorBUAdmin = true
-				break
-			}
+		if role.IsOrgAdmin && !actorHasOrgAdminRole(actorPerms.Roles) {
+			return ErrCannotEscalatePrivileges
 		}
-		if !isActorBUAdmin {
+		if role.IsBusinessUnitAdmin && !actorHasBusinessUnitAdminRole(actorPerms.Roles) {
 			return ErrCannotCreateBusinessUnitAdmin
 		}
 	}
 
-	if !isPlatformAdmin {
-		tempRole := &permission.Role{
-			Permissions: role.Permissions,
-		}
-		if err = s.validateNoEscalation(
-			ctx,
-			req.ActorID,
-			req.OrganizationID,
-			tempRole,
-		); err != nil {
-			return err
+	return s.validateNoEscalation(ctx, req.ActorID, req.OrganizationID, &permission.Role{
+		Permissions: role.Permissions,
+	})
+}
+
+func actorHasOrgAdminRole(roles []services.RoleSummary) bool {
+	for _, role := range roles {
+		if role.IsOrgAdmin {
+			return true
 		}
 	}
+	return false
+}
 
-	req.Assignment.OrganizationID = req.OrganizationID
-	req.Assignment.AssignedBy = req.ActorID
-
-	if err = s.roleRepo.CreateAssignment(ctx, req.Assignment); err != nil {
-		log.Error("failed to create assignment", zap.Error(err))
-		return err
+func actorHasBusinessUnitAdminRole(roles []services.RoleSummary) bool {
+	for _, role := range roles {
+		if role.IsBusinessUnitAdmin {
+			return true
+		}
 	}
+	return false
+}
 
-	if err = s.permEngine.InvalidateUser(
+func (s *Service) validateStaticSeparationOfDutyForAssignment(
+	ctx context.Context,
+	req *AssignRoleRequest,
+) error {
+	existingAssignments, err := s.roleRepo.GetUserRoleAssignments(
 		ctx,
 		req.Assignment.UserID,
 		req.OrganizationID,
-	); err != nil {
-		log.Warn("failed to invalidate user permission cache", zap.Error(err))
+	)
+	if err != nil {
+		return err
 	}
 
+	roleIDs := make([]pulid.ID, 0, len(existingAssignments)+1)
+	for _, assignment := range existingAssignments {
+		if !assignment.IsExpired() {
+			roleIDs = append(roleIDs, assignment.RoleID)
+		}
+	}
+	roleIDs = append(roleIDs, req.Assignment.RoleID)
+
+	violations, err := s.rbacRepo.ValidateStaticSeparationOfDuty(
+		ctx,
+		req.Assignment.UserID,
+		req.OrganizationID,
+		roleIDs,
+	)
+	if err != nil {
+		return err
+	}
+	if len(violations) > 0 {
+		return separationOfDutyError("role assignment violates static separation of duty")
+	}
 	return nil
+}
+
+func (s *Service) ListRoleHierarchyEdges(
+	ctx context.Context,
+	orgID pulid.ID,
+) ([]*permission.RoleHierarchyEdge, error) {
+	return s.rbacRepo.ListRoleHierarchyEdges(ctx, orgID)
+}
+
+func (s *Service) UpsertRoleHierarchyEdge(
+	ctx context.Context,
+	req *UpsertHierarchyEdgeRequest,
+) error {
+	if err := s.rbacRepo.UpsertRoleHierarchyEdge(ctx, &repositories.UpsertRoleHierarchyEdgeRequest{
+		ActorID:        req.ActorID,
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		SeniorRoleID:   req.SeniorRoleID,
+		JuniorRoleID:   req.JuniorRoleID,
+	}); err != nil {
+		if errors.Is(err, repositories.ErrCircularRoleHierarchy) {
+			return ErrCircularInheritance
+		}
+		return err
+	}
+
+	if err := s.permCache.InvalidateByRole(ctx, req.SeniorRoleID, s.roleRepo); err != nil {
+		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
+	}
+	return nil
+}
+
+func (s *Service) DeleteRoleHierarchyEdge(
+	ctx context.Context,
+	orgID pulid.ID,
+	edgeID pulid.ID,
+) error {
+	return s.rbacRepo.DeleteRoleHierarchyEdge(ctx, repositories.DeleteRoleHierarchyEdgeRequest{
+		OrganizationID: orgID,
+		EdgeID:         edgeID,
+	})
+}
+
+func (s *Service) ListRoleConstraints(
+	ctx context.Context,
+	req repositories.ListRoleConstraintsRequest,
+) ([]*permission.RoleConstraint, error) {
+	return s.rbacRepo.ListRoleConstraints(ctx, req)
+}
+
+func (s *Service) SaveRoleConstraint(ctx context.Context, req *SaveConstraintRequest) error {
+	if req.Constraint.MaxRoles < 1 {
+		return errortypes.NewValidationError(
+			"maxRoles",
+			errortypes.ErrInvalid,
+			"Max roles must be at least 1",
+		)
+	}
+	if len(req.RoleIDs) <= req.Constraint.MaxRoles {
+		return errortypes.NewValidationError(
+			"roleIds",
+			errortypes.ErrInvalid,
+			"Constraint role set must contain more roles than the max roles limit",
+		)
+	}
+	if err := s.validateConstraintRoleIDs(ctx, req.OrganizationID, req.RoleIDs); err != nil {
+		return err
+	}
+
+	req.Constraint.OrganizationID = req.OrganizationID
+	req.Constraint.BusinessUnitID = req.BusinessUnitID
+	req.Constraint.CreatedBy = req.ActorID
+
+	if err := s.rbacRepo.SaveRoleConstraint(ctx, &repositories.SaveRoleConstraintRequest{
+		Constraint: req.Constraint,
+		RoleIDs:    req.RoleIDs,
+	}); err != nil {
+		return err
+	}
+
+	if err := s.permCache.InvalidateOrganization(ctx, req.OrganizationID); err != nil {
+		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
+	}
+	return nil
+}
+
+func (s *Service) validateConstraintRoleIDs(
+	ctx context.Context,
+	orgID pulid.ID,
+	roleIDs []pulid.ID,
+) error {
+	seen := make(map[pulid.ID]struct{}, len(roleIDs))
+	for _, roleID := range roleIDs {
+		if roleID.IsNil() {
+			return errortypes.NewValidationError(
+				"roleIds",
+				errortypes.ErrInvalid,
+				"Constraint role IDs must not be empty",
+			)
+		}
+		if _, ok := seen[roleID]; ok {
+			return errortypes.NewValidationError(
+				"roleIds",
+				errortypes.ErrInvalid,
+				"Constraint role IDs must be unique",
+			)
+		}
+		seen[roleID] = struct{}{}
+	}
+
+	for _, roleID := range roleIDs {
+		if _, err := s.roleRepo.GetByID(ctx, repositories.GetRoleByIDRequest{
+			ID: roleID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: orgID,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) DeleteRoleConstraint(
+	ctx context.Context,
+	orgID pulid.ID,
+	constraintID pulid.ID,
+) error {
+	if err := s.rbacRepo.DeleteRoleConstraint(ctx, orgID, constraintID); err != nil {
+		return err
+	}
+	if err := s.permCache.InvalidateOrganization(ctx, orgID); err != nil {
+		s.l.Warn("failed to invalidate permission cache", zap.Error(err))
+	}
+	return nil
+}
+
+func (s *Service) RunRBACPreflight(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*repositories.RBACPreflightReport, error) {
+	return s.rbacRepo.RunPreflight(ctx, orgID)
+}
+
+func separationOfDutyError(message string) error {
+	me := errortypes.NewMultiError()
+	me.Add("roleIds", errortypes.ErrForbidden, message)
+	return me
 }
 
 func (s *Service) UnassignRole(ctx context.Context, req UnassignRoleRequest) error {

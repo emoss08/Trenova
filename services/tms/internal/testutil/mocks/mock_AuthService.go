@@ -583,3 +583,53 @@ func (_c *MockAuthService_ValidateSession_Call) RunAndReturn(run func(ctx contex
 	_c.Call.Return(run)
 	return _c
 }
+
+func (_mock *MockAuthService) ListAuthorizedSessionRoles(
+	ctx context.Context,
+	sessionID pulid.ID,
+) (*services.AuthorizedSessionRolesResponse, error) {
+	ret := _mock.Called(ctx, sessionID)
+	if len(ret) == 0 {
+		panic("no return value specified for ListAuthorizedSessionRoles")
+	}
+
+	var r0 *services.AuthorizedSessionRolesResponse
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *services.AuthorizedSessionRolesResponse); ok {
+		r0 = returnFunc(ctx, sessionID)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*services.AuthorizedSessionRolesResponse)
+	}
+
+	var r1 error
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, sessionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+func (_mock *MockAuthService) ActivateSessionRoles(
+	ctx context.Context,
+	req services.ActivateSessionRolesRequest,
+) (*services.ActivateSessionRolesResponse, error) {
+	ret := _mock.Called(ctx, req)
+	if len(ret) == 0 {
+		panic("no return value specified for ActivateSessionRoles")
+	}
+
+	var r0 *services.ActivateSessionRolesResponse
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ActivateSessionRolesRequest) *services.ActivateSessionRolesResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*services.ActivateSessionRolesResponse)
+	}
+
+	var r1 error
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ActivateSessionRolesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}

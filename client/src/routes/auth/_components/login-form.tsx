@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { authService } from "@/services/auth";
+import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
-import type { TenantLoginMetadata } from "@/types/organization";
+import { usePermissionStore } from "@/stores/permission-store";
+import type { TenantLoginMetadata, UserOrganization } from "@/types/organization";
 import { loginRequestSchema, type LoginRequest } from "@/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -17,14 +19,18 @@ import { useNavigate, useSearchParams } from "react-router";
 export function LoginForm({
   organizationSlug,
   tenantMetadata,
+  onOrganizationSelectionRequired,
 }: {
   organizationSlug?: string;
   tenantMetadata?: TenantLoginMetadata;
+  onOrganizationSelectionRequired?: (organizations: UserOrganization[]) => void;
 }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
+  const fetchManifest = usePermissionStore((state) => state.fetchManifest);
+  const clearPermissions = usePermissionStore((state) => state.clearPermissions);
 
   const providers = tenantMetadata?.enabledProviders ?? [];
   const hasMicrosoft = providers.includes("AzureAD");
@@ -45,8 +51,18 @@ export function LoginForm({
     mutationFn: authService.login,
     setFormError: setError,
     resourceName: "Login",
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setUser(data.user);
+      if (!organizationSlug) {
+        const availableOrganizations = await apiService.userService.getUserOrganizations();
+        if (availableOrganizations.length > 1) {
+          clearPermissions();
+          onOrganizationSelectionRequired?.(availableOrganizations);
+          return;
+        }
+      }
+
+      await fetchManifest();
       void navigate("/", { replace: true });
     },
   });
@@ -77,9 +93,7 @@ export function LoginForm({
           <Button
             className="w-full"
             variant="outline"
-            render={
-              <a href={authService.getSSOStartUrl("AzureAD", organizationSlug, returnTo)} />
-            }
+            render={<a href={authService.getSSOStartUrl("AzureAD", organizationSlug, returnTo)} />}
           >
             <MicrosoftLogo className="size-4" />
             Continue with Microsoft
@@ -89,9 +103,7 @@ export function LoginForm({
           <Button
             className="w-full"
             variant="outline"
-            render={
-              <a href={authService.getSSOStartUrl("Okta", organizationSlug, returnTo)} />
-            }
+            render={<a href={authService.getSSOStartUrl("Okta", organizationSlug, returnTo)} />}
           >
             <OktaLogo className="h-4 w-auto" />
             Continue with Okta

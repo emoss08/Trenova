@@ -2,10 +2,11 @@ import { z } from "zod";
 import {
   optionalStringSchema,
   statusSchema,
+  stringArraySchema,
   timestampSchema,
   versionSchema,
 } from "./helpers";
-import { roleSchema } from "./role";
+import { roleSchema, roleSummaryArraySchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
 export { apiErrorResponseSchema, type ApiErrorResponse } from "./errors";
 
@@ -47,13 +48,9 @@ export const userOrganizationMembershipSchema = z.object({
     .nullish(),
 });
 
-export type UserOrganizationMembership = z.infer<
-  typeof userOrganizationMembershipSchema
->;
+export type UserOrganizationMembership = z.infer<typeof userOrganizationMembershipSchema>;
 
-export const userOrganizationMembershipsResponseSchema = z.array(
-  userOrganizationMembershipSchema,
-);
+export const userOrganizationMembershipsResponseSchema = z.array(userOrganizationMembershipSchema);
 
 export const replaceOrganizationMembershipsRequestSchema = z.object({
   organizationIds: z.array(z.string()),
@@ -81,6 +78,7 @@ export const userSchema = z.object({
   timeFormat: TimeFormat.default("12-hour"),
   isLocked: z.boolean().default(false),
   mustChangePassword: z.boolean().default(true),
+  isPlatformAdmin: z.boolean().optional().default(false),
   lastLoginAt: timestampSchema.optional(),
 
   assignments: z.array(userRoleAssignmentSchema).nullish(),
@@ -97,9 +95,7 @@ export const loginRequestSchema = z.object({
   emailAddress: z.email({
     error: "Please enter a valid email address",
   }),
-  password: z
-    .string({ error: "Password is required" })
-    .min(1, "Password is required"),
+  password: z.string({ error: "Password is required" }).min(1, "Password is required"),
   organizationSlug: z.string().optional(),
 });
 
@@ -110,6 +106,11 @@ export const loginResponseSchema = z.object({
   sessionId: z.string(),
   expiresAt: z.number(),
   csrfToken: z.string(),
+  activeRoleIds: stringArraySchema,
+  authorizedRoleIds: stringArraySchema,
+  activeRoles: roleSummaryArraySchema,
+  authorizedRoles: roleSummaryArraySchema,
+  requiresRoleActivation: z.boolean().optional().default(false),
 });
 
 export type LoginResponse = z.infer<typeof loginResponseSchema>;
@@ -140,12 +141,8 @@ export const bulkUpdateUserStatusRequestSchema = z.object({
   status: statusSchema,
 });
 
-export type BulkUpdateUserStatusRequest = z.infer<
-  typeof bulkUpdateUserStatusRequestSchema
->;
+export type BulkUpdateUserStatusRequest = z.infer<typeof bulkUpdateUserStatusRequestSchema>;
 
 export const bulkUpdateUserStatusResponseSchema = z.array(userSchema);
 
-export type BulkUpdateUserStatusResponse = z.infer<
-  typeof bulkUpdateUserStatusResponseSchema
->;
+export type BulkUpdateUserStatusResponse = z.infer<typeof bulkUpdateUserStatusResponseSchema>;

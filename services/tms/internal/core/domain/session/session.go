@@ -17,6 +17,7 @@ type Session struct {
 	UserID         pulid.ID     `json:"userId"`
 	BusinessUnitID pulid.ID     `json:"businessUnitId"`
 	OrganizationID pulid.ID     `json:"organizationId"`
+	ActiveRoleIDs  []pulid.ID   `json:"activeRoleIds"`
 	LastAccessedAt int64        `json:"lastAccessedAt"`
 	ExpiresAt      int64        `json:"expiresAt"`
 	CreatedAt      int64        `json:"createdAt"`
@@ -36,6 +37,7 @@ func NewSession(req *NewSessionRequest) *Session {
 		BusinessUnitID: req.TenantInfo.BuID,
 		UserID:         req.TenantInfo.UserID,
 		OrganizationID: req.TenantInfo.OrgID,
+		ActiveRoleIDs:  []pulid.ID{},
 		LastAccessedAt: now,
 		ExpiresAt:      req.ExpiresAt,
 		CreatedAt:      now,

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
@@ -32,6 +33,12 @@ func RegisterEntities() []any {
 		&tenant.BillingControl{},
 		&invoice.Invoice{},
 		&invoice.InoviceLine{},
+		&permission.Role{},
+		&permission.ResourcePermission{},
+		&permission.UserRoleAssignment{},
+		&permission.RoleHierarchyEdge{},
+		&permission.RoleConstraint{},
+		&permission.RoleConstraintRole{},
 		&tenant.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
@@ -70,5 +77,12 @@ func RegisterEntities() []any {
 		&shipmentimportchat.Turn{},
 		&customer.CustomerBillingProfileDocumentType{},
 		&bankreceipt.BankReceipt{},
+	}
+}
+
+func RegisterManyToManyEntities() []any {
+	return []any{
+		&customer.CustomerBillingProfileDocumentType{},
+		&permission.RoleConstraintRole{},
 	}
 }

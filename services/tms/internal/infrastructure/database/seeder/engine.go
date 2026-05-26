@@ -28,6 +28,7 @@ type Engine struct {
 
 func NewEngine(db *bun.DB, registry *Registry, cfg *config.Config) *Engine {
 	if db != nil {
+		db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 		db.RegisterModel(domainregistry.RegisterEntities()...)
 	}
 

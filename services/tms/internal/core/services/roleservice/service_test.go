@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -29,6 +30,7 @@ func newStubValidator() *Validator {
 
 type testServiceDeps struct {
 	roleRepo   *mocks.MockRoleRepository
+	rbacRepo   *rbactest.Repository
 	userRepo   *mocks.MockUserRepository
 	permCache  *mocks.MockPermissionCacheRepository
 	permEngine *mocks.MockPermissionEngine
@@ -39,6 +41,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	t.Helper()
 
 	roleRepo := mocks.NewMockRoleRepository(t)
+	rbacRepo := &rbactest.Repository{}
 	userRepo := mocks.NewMockUserRepository(t)
 	permCache := mocks.NewMockPermissionCacheRepository(t)
 	permEngine := mocks.NewMockPermissionEngine(t)
@@ -47,6 +50,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 	svc := &Service{
 		l:          logger.Named("test.role"),
 		roleRepo:   roleRepo,
+		rbacRepo:   rbacRepo,
 		userRepo:   userRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
@@ -56,6 +60,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 
 	return &testServiceDeps{
 		roleRepo:   roleRepo,
+		rbacRepo:   rbacRepo,
 		userRepo:   userRepo,
 		permCache:  permCache,
 		permEngine: permEngine,
@@ -287,6 +292,8 @@ func TestAssignRole_Success(t *testing.T) {
 		Permissions: []*permission.ResourcePermission{},
 	}, nil)
 	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
 	deps.permEngine.On("InvalidateUser", ctx, targetUserID, orgID).Return(nil)
 
@@ -998,6 +1005,8 @@ func TestAssignRole_OrgAdminByOrgAdmin_Success(t *testing.T) {
 			},
 			Resources: make(map[string]services.EffectiveResourcePermission),
 		}, nil)
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
 	deps.roleRepo.On("CreateAssignment", ctx, assignment).Return(nil)
 	deps.permEngine.On("InvalidateUser", ctx, targetUserID, orgID).Return(nil)
 
@@ -1577,4 +1586,100 @@ func TestUpdateRole_OrgAdminWithoutPlatformAdmin_Fails(t *testing.T) {
 
 	deps.roleRepo.AssertExpectations(t)
 	deps.userRepo.AssertExpectations(t)
+}
+
+func TestSaveRoleConstraint_ValidatesRolesAndInvalidatesCache(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	roleID := pulid.MustNew("rol_")
+	otherRoleID := pulid.MustNew("rol_")
+
+	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: roleID}, nil)
+	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+		ID:         otherRoleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: otherRoleID}, nil)
+	deps.permCache.On("InvalidateOrganization", ctx, orgID).Return(nil)
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, otherRoleID},
+	})
+
+	require.NoError(t, err)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertExpectations(t)
+}
+
+func TestSaveRoleConstraint_DuplicateRoleIDsFail(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		OrganizationID: orgID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, roleID},
+	})
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "Constraint role IDs must be unique")
+}
+
+func TestSaveRoleConstraint_InvalidTenantRoleFails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	otherRoleID := pulid.MustNew("rol_")
+	expectedErr := errors.New("role not found")
+
+	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{ID: roleID}, nil)
+	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+		ID:         otherRoleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(nil, expectedErr)
+
+	err := deps.svc.SaveRoleConstraint(ctx, &SaveConstraintRequest{
+		OrganizationID: orgID,
+		Constraint: &permission.RoleConstraint{
+			Name:     "Dispatch separation",
+			Type:     permission.RoleConstraintTypeSSD,
+			MaxRoles: 1,
+		},
+		RoleIDs: []pulid.ID{roleID, otherRoleID},
+	})
+
+	require.ErrorIs(t, err, expectedErr)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.permCache.AssertNotCalled(t, "InvalidateOrganization")
 }

@@ -20,10 +20,15 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	User      *tenant.User `json:"user"`
-	ExpiresAt int64        `json:"expiresAt"`
-	SessionID string       `json:"sessionId"`
-	CSRFToken string       `json:"csrfToken,omitempty"`
+	User                   *tenant.User  `json:"user"`
+	ExpiresAt              int64         `json:"expiresAt"`
+	SessionID              string        `json:"sessionId"`
+	CSRFToken              string        `json:"csrfToken,omitempty"`
+	ActiveRoleIDs          []pulid.ID    `json:"activeRoleIds"`
+	AuthorizedRoleIDs      []pulid.ID    `json:"authorizedRoleIds"`
+	ActiveRoles            []RoleSummary `json:"activeRoles"`
+	AuthorizedRoles        []RoleSummary `json:"authorizedRoles"`
+	RequiresRoleActivation bool          `json:"requiresRoleActivation"`
 }
 
 type TenantLoginMetadataResponse struct {
@@ -66,6 +71,25 @@ type AuthenticatedPrincipal struct {
 	BusinessUnitID pulid.ID
 	OrganizationID pulid.ID
 	APIKey         *apikey.Key
+}
+
+type ActivateSessionRolesRequest struct {
+	SessionID pulid.ID   `json:"-"`
+	RoleIDs   []pulid.ID `json:"roleIds"`
+}
+
+type ActivateSessionRolesResponse struct {
+	ActiveRoleIDs          []pulid.ID    `json:"activeRoleIds"`
+	AuthorizedRoleIDs      []pulid.ID    `json:"authorizedRoleIds"`
+	ActiveRoles            []RoleSummary `json:"activeRoles"`
+	AuthorizedRoles        []RoleSummary `json:"authorizedRoles"`
+	RequiresRoleActivation bool          `json:"requiresRoleActivation"`
+}
+
+type AuthorizedSessionRolesResponse struct {
+	RoleIDs           []pulid.ID    `json:"roleIds"`
+	AuthorizedRoleIDs []pulid.ID    `json:"authorizedRoleIds"`
+	AuthorizedRoles   []RoleSummary `json:"authorizedRoles"`
 }
 
 type RequestActor struct {
@@ -132,6 +156,14 @@ type AuthService interface {
 	) (*SSOCallbackResponse, error)
 	GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error)
 	ValidateSession(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
+	ListAuthorizedSessionRoles(
+		ctx context.Context,
+		sessionID pulid.ID,
+	) (*AuthorizedSessionRolesResponse, error)
+	ActivateSessionRoles(
+		ctx context.Context,
+		req ActivateSessionRolesRequest,
+	) (*ActivateSessionRolesResponse, error)
 	AuthenticateAPIKey(
 		ctx context.Context,
 		token string,

@@ -82,6 +82,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/notificationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/organizationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/sequenceconfigrepository"
@@ -143,6 +144,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documentcontrolrepository.New,
 	documentparsingrulerepository.New,
 	documentpacketrulerepository.New,
+	rbacrepository.New,
 	rolerepository.New,
 	roleassignmentrepository.New,
 	usstaterepository.New,

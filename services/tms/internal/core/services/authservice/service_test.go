@@ -4,10 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -28,9 +30,10 @@ func setupTest(t *testing.T) *testDeps {
 	ur := mocks.NewMockUserRepository(t)
 	sr := mocks.NewMockSessionRepository(t)
 	svc := &Service{
-		ur: ur,
-		sr: sr,
-		l:  zap.NewNop(),
+		ur:       ur,
+		sr:       sr,
+		rbacRepo: &rbactest.Repository{},
+		l:        zap.NewNop(),
 	}
 	return &testDeps{userRepo: ur, sessionRepo: sr, svc: svc}
 }
@@ -75,6 +78,45 @@ func TestLogin_Success(t *testing.T) {
 	assert.Equal(t, usr, result.User)
 	assert.NotEmpty(t, result.SessionID)
 	assert.Greater(t, result.ExpiresAt, timeutils.NowUnix())
+	deps.userRepo.AssertExpectations(t)
+	deps.sessionRepo.AssertExpectations(t)
+}
+
+func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	ctx := t.Context()
+	usr := newTestUser(t)
+	roleID := pulid.MustNew("rol_")
+	deps.svc.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*permission.Role{
+			{
+				ID:          roleID,
+				Name:        "Dispatcher",
+				Description: "Coordinates dispatch activity",
+				IsOrgAdmin:  true,
+			},
+		},
+	}
+
+	req := services.LoginRequest{
+		EmailAddress: "test@example.com",
+		Password:     "password123",
+	}
+
+	deps.userRepo.On("FindByEmail", mock.Anything, req.EmailAddress).Return(usr, nil)
+	deps.sessionRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
+	deps.userRepo.On("UpdateLastLoginAt", mock.Anything, usr.ID).Return(nil)
+
+	result, err := deps.svc.Login(ctx, req)
+
+	require.NoError(t, err)
+	require.Len(t, result.AuthorizedRoleIDs, 1)
+	require.Len(t, result.AuthorizedRoles, 1)
+	assert.Equal(t, roleID, result.AuthorizedRoleIDs[0])
+	assert.Equal(t, "Dispatcher", result.AuthorizedRoles[0].Name)
+	assert.True(t, result.AuthorizedRoles[0].IsOrgAdmin)
+	assert.True(t, result.RequiresRoleActivation)
 	deps.userRepo.AssertExpectations(t)
 	deps.sessionRepo.AssertExpectations(t)
 }
@@ -181,6 +223,88 @@ func TestValidateSession_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, sess, result)
 	deps.sessionRepo.AssertExpectations(t)
+}
+
+func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	ctx := t.Context()
+	sessionID := pulid.MustNew("ses_")
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	deps.svc.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*permission.Role{
+			{
+				ID:                  roleID,
+				Name:                "Billing Manager",
+				Description:         "Manages billing operations",
+				IsBusinessUnitAdmin: true,
+			},
+		},
+	}
+	sess := &session.Session{
+		ID:             sessionID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		ActiveRoleIDs:  []pulid.ID{},
+		ExpiresAt:      timeutils.NowUnix() + 3600,
+	}
+
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
+	deps.sessionRepo.On("Update", mock.Anything, mock.MatchedBy(func(updated *session.Session) bool {
+		return len(updated.ActiveRoleIDs) == 1 && updated.ActiveRoleIDs[0] == roleID
+	})).Return(nil)
+
+	result, err := deps.svc.ActivateSessionRoles(ctx, services.ActivateSessionRolesRequest{
+		SessionID: sessionID,
+		RoleIDs:   []pulid.ID{roleID},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{roleID}, result.ActiveRoleIDs)
+	assert.Equal(t, []pulid.ID{roleID}, result.AuthorizedRoleIDs)
+	require.Len(t, result.ActiveRoles, 1)
+	require.Len(t, result.AuthorizedRoles, 1)
+	assert.Equal(t, "Billing Manager", result.ActiveRoles[0].Name)
+	assert.True(t, result.ActiveRoles[0].IsBusinessUnitAdmin)
+	assert.False(t, result.RequiresRoleActivation)
+	deps.sessionRepo.AssertExpectations(t)
+}
+
+func TestActivateSessionRoles_RejectsUnauthorizedRoleIDs(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	ctx := t.Context()
+	sessionID := pulid.MustNew("ses_")
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	authorizedRoleID := pulid.MustNew("rol_")
+	unauthorizedRoleID := pulid.MustNew("rol_")
+	deps.svc.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*permission.Role{
+			{ID: authorizedRoleID, Name: "Dispatcher"},
+		},
+	}
+	sess := &session.Session{
+		ID:             sessionID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		ActiveRoleIDs:  []pulid.ID{},
+		ExpiresAt:      timeutils.NowUnix() + 3600,
+	}
+
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
+
+	result, err := deps.svc.ActivateSessionRoles(ctx, services.ActivateSessionRolesRequest{
+		SessionID: sessionID,
+		RoleIDs:   []pulid.ID{unauthorizedRoleID},
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	deps.sessionRepo.AssertExpectations(t)
+	deps.sessionRepo.AssertNotCalled(t, "Update")
 }
 
 func TestValidateSession_NotFound(t *testing.T) {

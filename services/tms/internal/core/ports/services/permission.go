@@ -50,18 +50,23 @@ type BatchPermissionCheckResult struct {
 }
 
 type LightPermissionManifest struct {
-	Version             string                      `json:"version"`
-	UserID              pulid.ID                    `json:"userId"`
-	OrganizationID      pulid.ID                    `json:"organizationId"`
-	IsPlatformAdmin     bool                        `json:"isPlatformAdmin"`
-	IsOrgAdmin          bool                        `json:"isOrgAdmin"`
-	IsBusinessUnitAdmin bool                        `json:"isBusinessUnitAdmin"`
-	MaxSensitivity      permission.FieldSensitivity `json:"maxSensitivity"`
-	Permissions         map[string]uint32           `json:"permissions"`
-	RouteAccess         map[string]bool             `json:"routeAccess"`
-	AvailableOrgs       []OrgSummary                `json:"availableOrgs"`
-	Checksum            string                      `json:"checksum"`
-	ExpiresAt           int64                       `json:"expiresAt"`
+	Version                string                      `json:"version"`
+	UserID                 pulid.ID                    `json:"userId"`
+	OrganizationID         pulid.ID                    `json:"organizationId"`
+	IsPlatformAdmin        bool                        `json:"isPlatformAdmin"`
+	IsOrgAdmin             bool                        `json:"isOrgAdmin"`
+	IsBusinessUnitAdmin    bool                        `json:"isBusinessUnitAdmin"`
+	ActiveRoleIDs          []pulid.ID                  `json:"activeRoleIds"`
+	AuthorizedRoleIDs      []pulid.ID                  `json:"authorizedRoleIds"`
+	ActiveRoles            []RoleSummary               `json:"activeRoles"`
+	AuthorizedRoles        []RoleSummary               `json:"authorizedRoles"`
+	RequiresRoleActivation bool                        `json:"requiresRoleActivation"`
+	MaxSensitivity         permission.FieldSensitivity `json:"maxSensitivity"`
+	Permissions            map[string]uint32           `json:"permissions"`
+	RouteAccess            map[string]bool             `json:"routeAccess"`
+	AvailableOrgs          []OrgSummary                `json:"availableOrgs"`
+	Checksum               string                      `json:"checksum"`
+	ExpiresAt              int64                       `json:"expiresAt"`
 }
 
 type OrgSummary struct {
@@ -92,6 +97,17 @@ type RoleSummary struct {
 	IsSystem            bool     `json:"isSystem"`
 	IsOrgAdmin          bool     `json:"isOrgAdmin"`
 	IsBusinessUnitAdmin bool     `json:"isBusinessUnitAdmin"`
+}
+
+func NewRoleSummary(role *permission.Role) RoleSummary {
+	return RoleSummary{
+		ID:                  role.ID,
+		Name:                role.Name,
+		Description:         role.Description,
+		IsSystem:            role.IsSystem,
+		IsOrgAdmin:          role.IsOrgAdmin,
+		IsBusinessUnitAdmin: role.IsBusinessUnitAdmin,
+	}
 }
 
 type EffectiveResourcePermission struct {

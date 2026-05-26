@@ -13,6 +13,10 @@ export const timestampSchema = z.number().int().positive().optional();
 export const nullableStringSchema = z
   .union([z.string().transform((val) => (val === "" ? null : val)), z.null()])
   .nullish();
+export const stringArraySchema = z
+  .array(z.string())
+  .nullish()
+  .transform((value) => value ?? []);
 
 export const tenantInfoSchema = z.object({
   id: optionalStringSchema,

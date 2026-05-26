@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { stringArraySchema } from "./helpers";
+import { roleSummaryArraySchema } from "./role";
 
 export const Operation = {
   Read: 1 << 0,
@@ -25,12 +27,7 @@ export const Operation = {
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];
 
-export const FieldSensitivity = z.enum([
-  "public",
-  "internal",
-  "restricted",
-  "confidential",
-]);
+export const FieldSensitivity = z.enum(["public", "internal", "restricted", "confidential"]);
 
 export type FieldSensitivityType = z.infer<typeof FieldSensitivity>;
 
@@ -48,6 +45,11 @@ export const permissionManifestSchema = z.object({
   isPlatformAdmin: z.boolean(),
   isOrgAdmin: z.boolean(),
   isBusinessUnitAdmin: z.boolean().optional().default(false),
+  activeRoleIds: stringArraySchema,
+  authorizedRoleIds: stringArraySchema,
+  activeRoles: roleSummaryArraySchema,
+  authorizedRoles: roleSummaryArraySchema,
+  requiresRoleActivation: z.boolean().optional().default(false),
   maxSensitivity: FieldSensitivity,
   permissions: z.record(z.string(), z.number()),
   routeAccess: z.record(z.string(), z.boolean()),

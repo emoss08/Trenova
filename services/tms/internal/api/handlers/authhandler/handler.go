@@ -51,12 +51,51 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("login", h.login)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
+	api.GET("session/roles", h.listAuthorizedSessionRoles)
+	api.POST("session/roles/activate", h.activateSessionRoles)
 	api.GET("csrf", h.csrfToken)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
 	api.GET("microsoft/start/:slug", h.startSSOLogin(tenant.SSOProviderAzureAD))
 	api.GET("microsoft/callback", h.ssoCallback(tenant.SSOProviderAzureAD))
 	api.GET("sso/start/:provider/:slug", h.startSSOLoginGeneric)
 	api.GET("sso/callback/:provider", h.ssoCallbackGeneric)
+}
+
+func (h *Handler) listAuthorizedSessionRoles(c *gin.Context) {
+	sessionID, ok := h.sessionIDFromCookie(c)
+	if !ok {
+		return
+	}
+
+	resp, err := h.service.ListAuthorizedSessionRoles(c.Request.Context(), sessionID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) activateSessionRoles(c *gin.Context) {
+	sessionID, ok := h.sessionIDFromCookie(c)
+	if !ok {
+		return
+	}
+
+	var req services.ActivateSessionRolesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.SessionID = sessionID
+
+	resp, err := h.service.ActivateSessionRoles(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // @Summary Login
@@ -157,19 +196,13 @@ func (h *Handler) validateSession(c *gin.Context) {
 }
 
 func (h *Handler) csrfToken(c *gin.Context) {
-	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
-	if err != nil || sessionIDstr == "" {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
+	sessionID, ok := h.sessionIDFromCookie(c)
+	if !ok {
 		return
 	}
+	sessionIDstr := sessionID.String()
 
-	sessionID, err := pulid.MustParse(sessionIDstr)
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
-		return
-	}
-
-	if _, err = h.service.ValidateSession(c.Request.Context(), sessionID); err != nil {
+	if _, err := h.service.ValidateSession(c.Request.Context(), sessionID); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
@@ -178,6 +211,22 @@ func (h *Handler) csrfToken(c *gin.Context) {
 		"csrfToken":  csrf.Token(sessionIDstr, h.cfg.Security.Session.Secret),
 		"headerName": h.cfg.Security.CSRF.HeaderName,
 	})
+}
+
+func (h *Handler) sessionIDFromCookie(c *gin.Context) (pulid.ID, bool) {
+	sessionIDstr, err := c.Cookie(h.cfg.Security.Session.Name)
+	if err != nil || sessionIDstr == "" {
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Session not found"))
+		return "", false
+	}
+
+	sessionID, err := pulid.MustParse(sessionIDstr)
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewAuthenticationError("Invalid session ID"))
+		return "", false
+	}
+
+	return sessionID, true
 }
 
 func (h *Handler) getTenantLoginMetadata(c *gin.Context) {

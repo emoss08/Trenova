@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -38,6 +39,7 @@ type Params struct {
 	fx.In
 
 	RoleRepository      repositories.RoleRepository
+	RBACRepository      repositories.RBACRepository
 	APIKeyRepository    repositories.APIKeyRepository
 	PermissionCacheRepo repositories.PermissionCacheRepository
 	UserRepository      repositories.UserRepository
@@ -48,6 +50,7 @@ type Params struct {
 
 type engine struct {
 	roleRepo      repositories.RoleRepository
+	rbacRepo      repositories.RBACRepository
 	apiKeyRepo    repositories.APIKeyRepository
 	cacheRepo     repositories.PermissionCacheRepository
 	userRepo      repositories.UserRepository
@@ -60,6 +63,7 @@ type engine struct {
 func NewEngine(p Params) services.PermissionEngine {
 	return &engine{
 		roleRepo:      p.RoleRepository,
+		rbacRepo:      p.RBACRepository,
 		apiKeyRepo:    p.APIKeyRepository,
 		cacheRepo:     p.PermissionCacheRepo,
 		userRepo:      p.UserRepository,
@@ -237,6 +241,24 @@ func (e *engine) GetLightManifest(
 		return nil, err
 	}
 	expiresAt := timeutils.NowUnix() + int64(cacheTTL.Seconds())
+	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
+	activeRoleIDs := roleActivation.ActiveRoleIDs
+	activeRoles := []services.RoleSummary{}
+	requiresRoleActivation := false
+	authorizedRoleIDs := []pulid.ID{}
+	authorizedRoles := []services.RoleSummary{}
+	if hasRoleActivation {
+		authorizedRoles, err = e.getAuthorizedRoleSummaries(ctx, userID, orgID)
+		if err != nil {
+			log.Error("failed to get authorized roles", zap.Error(err))
+			return nil, err
+		}
+		authorizedRoleIDs = roleSummaryIDs(authorizedRoles)
+		activeRoles = activeRoleSummaries(activeRoleIDs, authorizedRoles)
+		requiresRoleActivation = roleActivation.RequiresActivation &&
+			len(activeRoleIDs) == 0 &&
+			len(authorizedRoleIDs) > 0
+	}
 
 	if load.perms.IsPlatformAdmin {
 		return e.newLightManifest(
@@ -248,6 +270,11 @@ func (e *engine) GetLightManifest(
 			permission.SensitivityConfidential,
 			e.allResourceBitmasks(),
 			orgSummaries,
+			activeRoleIDs,
+			authorizedRoleIDs,
+			activeRoles,
+			authorizedRoles,
+			requiresRoleActivation,
 			expiresAt,
 		), nil
 	}
@@ -263,6 +290,11 @@ func (e *engine) GetLightManifest(
 		permission.FieldSensitivity(perms.MaxSensitivity),
 		permissions,
 		orgSummaries,
+		activeRoleIDs,
+		authorizedRoleIDs,
+		activeRoles,
+		authorizedRoles,
+		requiresRoleActivation,
 		expiresAt,
 	), nil
 }
@@ -285,6 +317,56 @@ func (e *engine) getUserOrgSummaries(
 	}
 
 	return orgSummaries, nil
+}
+
+func (e *engine) getAuthorizedRoleSummaries(
+	ctx context.Context,
+	userID pulid.ID,
+	orgID pulid.ID,
+) ([]services.RoleSummary, error) {
+	roles, err := e.rbacRepo.GetAuthorizedRoles(ctx, userID, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	summaries := make([]services.RoleSummary, 0, len(roles))
+	for _, role := range roles {
+		if role != nil {
+			summaries = append(summaries, services.NewRoleSummary(role))
+		}
+	}
+	return summaries, nil
+}
+
+func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
+	roleIDs := make([]pulid.ID, len(roles))
+	for i, role := range roles {
+		roleIDs[i] = role.ID
+	}
+	return roleIDs
+}
+
+func activeRoleSummaries(
+	activeRoleIDs []pulid.ID,
+	authorizedRoles []services.RoleSummary,
+) []services.RoleSummary {
+	if len(activeRoleIDs) == 0 || len(authorizedRoles) == 0 {
+		return []services.RoleSummary{}
+	}
+
+	byID := make(map[pulid.ID]services.RoleSummary, len(authorizedRoles))
+	for _, role := range authorizedRoles {
+		byID[role.ID] = role
+	}
+
+	activeRoles := make([]services.RoleSummary, 0, len(activeRoleIDs))
+	for _, roleID := range activeRoleIDs {
+		role, ok := byID[roleID]
+		if ok {
+			activeRoles = append(activeRoles, role)
+		}
+	}
+	return activeRoles
 }
 
 func (e *engine) allResourceBitmasks() map[string]uint32 {
@@ -326,20 +408,30 @@ func (e *engine) newLightManifest(
 	maxSensitivity permission.FieldSensitivity,
 	permissions map[string]uint32,
 	orgSummaries []services.OrgSummary,
+	activeRoleIDs []pulid.ID,
+	authorizedRoleIDs []pulid.ID,
+	activeRoles []services.RoleSummary,
+	authorizedRoles []services.RoleSummary,
+	requiresRoleActivation bool,
 	expiresAt int64,
 ) *services.LightPermissionManifest {
 	manifest := &services.LightPermissionManifest{
-		Version:             manifestVersion,
-		UserID:              userID,
-		OrganizationID:      orgID,
-		IsPlatformAdmin:     isPlatformAdmin,
-		IsOrgAdmin:          isOrgAdmin,
-		IsBusinessUnitAdmin: isBusinessUnitAdmin,
-		MaxSensitivity:      maxSensitivity,
-		Permissions:         permissions,
-		RouteAccess:         e.computeRouteAccess(permissions),
-		AvailableOrgs:       orgSummaries,
-		ExpiresAt:           expiresAt,
+		Version:                manifestVersion,
+		UserID:                 userID,
+		OrganizationID:         orgID,
+		IsPlatformAdmin:        isPlatformAdmin,
+		IsOrgAdmin:             isOrgAdmin,
+		IsBusinessUnitAdmin:    isBusinessUnitAdmin,
+		ActiveRoleIDs:          activeRoleIDs,
+		AuthorizedRoleIDs:      authorizedRoleIDs,
+		ActiveRoles:            activeRoles,
+		AuthorizedRoles:        authorizedRoles,
+		RequiresRoleActivation: requiresRoleActivation,
+		MaxSensitivity:         maxSensitivity,
+		Permissions:            permissions,
+		RouteAccess:            e.computeRouteAccess(permissions),
+		AvailableOrgs:          orgSummaries,
+		ExpiresAt:              expiresAt,
 	}
 	manifest.Checksum = e.computeChecksum(manifest)
 	return manifest
@@ -587,6 +679,15 @@ func (e *engine) getOrComputePermissions(
 	userID, orgID pulid.ID,
 ) (permissionLoadResult, error) {
 	result := permissionLoadResult{}
+	_, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
+	if hasRoleActivation {
+		computeStart := time.Now()
+		perms, platformAdminDuration, err := e.computePermissions(ctx, userID, orgID)
+		result.computeDuration = time.Since(computeStart)
+		result.platformAdminDuration = platformAdminDuration
+		result.perms = perms
+		return result, err
+	}
 
 	cacheStart := time.Now()
 	cached, err := e.cacheRepo.Get(ctx, userID, orgID)
@@ -644,12 +745,20 @@ func (e *engine) computePermissions(
 		return nil, platformAdminDuration, err
 	}
 
-	roleIDs := make([]pulid.ID, 0, len(assignments))
-	for _, a := range assignments {
-		if !a.IsExpired() {
-			roleIDs = append(roleIDs, a.RoleID)
-		}
+	roleActivation, hasRoleActivation := authctx.GetSessionRoleActivation(ctx)
+	if hasRoleActivation && roleActivation.RequiresActivation &&
+		len(roleActivation.ActiveRoleIDs) == 0 {
+		return &repositories.CachedPermissions{
+			IsPlatformAdmin:     false,
+			IsOrgAdmin:          false,
+			IsBusinessUnitAdmin: false,
+			MaxSensitivity:      string(permission.SensitivityPublic),
+			Resources:           make(map[string]*repositories.CachedResourcePermission),
+			ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
+		}, platformAdminDuration, nil
 	}
+
+	roleIDs := activePermissionRoleIDs(assignments, roleActivation, hasRoleActivation)
 
 	if len(roleIDs) == 0 {
 		return &repositories.CachedPermissions{
@@ -693,6 +802,41 @@ func (e *engine) computePermissions(
 		Resources:           resources,
 		ExpiresAt:           timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, platformAdminDuration, nil
+}
+
+func activePermissionRoleIDs(
+	assignments []*permission.UserRoleAssignment,
+	roleActivation authctx.SessionRoleActivation,
+	hasRoleActivation bool,
+) []pulid.ID {
+	authorized := make(map[pulid.ID]struct{}, len(assignments))
+	roleIDs := make([]pulid.ID, 0, len(assignments))
+	seenRoleIDs := make(map[pulid.ID]struct{}, len(assignments))
+	for _, assignment := range assignments {
+		if assignment.IsExpired() {
+			continue
+		}
+		authorized[assignment.RoleID] = struct{}{}
+		if hasRoleActivation {
+			continue
+		}
+		if _, seen := seenRoleIDs[assignment.RoleID]; seen {
+			continue
+		}
+		seenRoleIDs[assignment.RoleID] = struct{}{}
+		roleIDs = append(roleIDs, assignment.RoleID)
+	}
+	if !hasRoleActivation {
+		return roleIDs
+	}
+
+	activeRoleIDs := make([]pulid.ID, 0, len(roleActivation.ActiveRoleIDs))
+	for _, id := range roleActivation.ActiveRoleIDs {
+		if _, ok := authorized[id]; ok {
+			activeRoleIDs = append(activeRoleIDs, id)
+		}
+	}
+	return activeRoleIDs
 }
 
 func (e *engine) applyRoleMeta(
@@ -848,17 +992,23 @@ func (e *engine) computeChecksum(manifest *services.LightPermissionManifest) str
 	sort.Strings(keys)
 
 	data := struct {
-		IsPlatformAdmin     bool
-		IsOrgAdmin          bool
-		IsBusinessUnitAdmin bool
-		MaxSensitivity      string
-		Permissions         map[string]uint32
+		IsPlatformAdmin        bool
+		IsOrgAdmin             bool
+		IsBusinessUnitAdmin    bool
+		ActiveRoleIDs          []pulid.ID
+		AuthorizedRoleIDs      []pulid.ID
+		RequiresRoleActivation bool
+		MaxSensitivity         string
+		Permissions            map[string]uint32
 	}{
-		IsPlatformAdmin:     manifest.IsPlatformAdmin,
-		IsOrgAdmin:          manifest.IsOrgAdmin,
-		IsBusinessUnitAdmin: manifest.IsBusinessUnitAdmin,
-		MaxSensitivity:      string(manifest.MaxSensitivity),
-		Permissions:         manifest.Permissions,
+		IsPlatformAdmin:        manifest.IsPlatformAdmin,
+		IsOrgAdmin:             manifest.IsOrgAdmin,
+		IsBusinessUnitAdmin:    manifest.IsBusinessUnitAdmin,
+		ActiveRoleIDs:          manifest.ActiveRoleIDs,
+		AuthorizedRoleIDs:      manifest.AuthorizedRoleIDs,
+		RequiresRoleActivation: manifest.RequiresRoleActivation,
+		MaxSensitivity:         string(manifest.MaxSensitivity),
+		Permissions:            manifest.Permissions,
 	}
 
 	bytes, _ := sonic.Marshal(data)

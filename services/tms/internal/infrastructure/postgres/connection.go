@@ -98,6 +98,7 @@ func (c *Connection) connect(ctx context.Context) error {
 
 	c.setupHooks()
 
+	c.db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	c.db.RegisterModel(domainregistry.RegisterEntities()...)
 
 	if err := c.HealthCheck(ctx); err != nil {
@@ -154,6 +155,7 @@ func (c *Connection) shutdown(ctx context.Context) error {
 }
 
 func NewTestConnection(db *bun.DB) *Connection {
+	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 	return &Connection{db: db}
 }
