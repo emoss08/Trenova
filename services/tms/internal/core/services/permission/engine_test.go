@@ -173,6 +173,147 @@ func TestCheck_CacheHit(t *testing.T) {
 	cacheRepo.AssertExpectations(t)
 }
 
+func TestCheck_EnforcesResourceAttributes(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		dataScope         permission.DataScope
+		attrs             services.ResourceAttributes
+		contextAttributes services.RequestContextAttributes
+		wantReason        string
+	}{
+		{
+			name:       "owner scope denies mismatched owner",
+			dataScope:  permission.DataScopeOwn,
+			attrs:      services.ResourceAttributes{OwnerID: pulid.MustNew("usr_")},
+			wantReason: "abac_owner_scope",
+		},
+		{
+			name:       "organization mismatch denies globally",
+			dataScope:  permission.DataScopeOrganization,
+			attrs:      services.ResourceAttributes{OrganizationID: pulid.MustNew("org_")},
+			wantReason: "abac_organization_mismatch",
+		},
+		{
+			name:       "business unit mismatch denies globally",
+			dataScope:  permission.DataScopeBusinessUnit,
+			attrs:      services.ResourceAttributes{BusinessUnitID: pulid.MustNew("bu_")},
+			wantReason: "abac_business_unit_mismatch",
+		},
+		{
+			name:       "active role requirement denies when inactive",
+			dataScope:  permission.DataScopeOrganization,
+			attrs:      services.ResourceAttributes{ActiveRoleID: pulid.MustNew("rol_")},
+			wantReason: "abac_active_role_required",
+		},
+		{
+			name:      "risk deny blocks request",
+			dataScope: permission.DataScopeOrganization,
+			attrs:     services.ResourceAttributes{},
+			contextAttributes: services.RequestContextAttributes{
+				RiskDecision: "deny",
+			},
+			wantReason: "abac_risk_denied",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			eng, _, cacheRepo, _ := setupTestEngine(t)
+			ctx := t.Context()
+			userID := pulid.MustNew("usr_")
+			orgID := pulid.MustNew("org_")
+			buID := pulid.MustNew("bu_")
+
+			cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
+				MaxSensitivity: string(permission.SensitivityInternal),
+				Resources: map[string]*repositories.CachedResourcePermission{
+					"shipment": {
+						Operations: []string{"read"},
+						DataScope:  string(tt.dataScope),
+					},
+				},
+				ExpiresAt: timeutils.NowUnix() + 3600,
+			}, nil)
+
+			result, err := eng.Check(ctx, &services.PermissionCheckRequest{
+				UserID:             userID,
+				BusinessUnitID:     buID,
+				OrganizationID:     orgID,
+				Resource:           "shipment",
+				Operation:          permission.OpRead,
+				ResourceAttributes: tt.attrs,
+				ContextAttributes:  tt.contextAttributes,
+			})
+
+			require.NoError(t, err)
+			assert.False(t, result.Allowed)
+			assert.Equal(t, tt.wantReason, result.Reason)
+			assert.Equal(t, tt.dataScope, result.DataScope)
+			cacheRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestCheckBatch_PropagatesResourceAttributes(t *testing.T) {
+	t.Parallel()
+
+	eng, _, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	activeRoleID := pulid.MustNew("rol_")
+	inactiveRoleID := pulid.MustNew("rol_")
+
+	cachedPermissions := &repositories.CachedPermissions{
+		MaxSensitivity: string(permission.SensitivityInternal),
+		Resources: map[string]*repositories.CachedResourcePermission{
+			"shipment": {
+				Operations: []string{"read"},
+				DataScope:  string(permission.DataScopeOrganization),
+			},
+		},
+		ExpiresAt: timeutils.NowUnix() + 3600,
+	}
+	cacheRepo.On("Get", ctx, userID, orgID).Return(cachedPermissions, nil).Twice()
+
+	result, err := eng.CheckBatch(ctx, &services.BatchPermissionCheckRequest{
+		UserID:         userID,
+		BusinessUnitID: buID,
+		OrganizationID: orgID,
+		ContextAttributes: services.RequestContextAttributes{
+			ActiveRoleIDs: []pulid.ID{activeRoleID},
+		},
+		Checks: []services.ResourceOperationCheck{
+			{
+				Resource:  "shipment",
+				Operation: permission.OpRead,
+				ResourceAttributes: services.ResourceAttributes{
+					ActiveRoleID: activeRoleID,
+				},
+			},
+			{
+				Resource:  "shipment",
+				Operation: permission.OpRead,
+				ResourceAttributes: services.ResourceAttributes{
+					ActiveRoleID: inactiveRoleID,
+				},
+			},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.Results, 2)
+	assert.True(t, result.Results[0].Allowed)
+	assert.False(t, result.Results[1].Allowed)
+	assert.Equal(t, "abac_active_role_required", result.Results[1].Reason)
+	cacheRepo.AssertExpectations(t)
+}
+
 func TestCheck_NoRoles(t *testing.T) {
 	t.Parallel()
 

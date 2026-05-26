@@ -30,6 +30,7 @@ type SSOConfigRepository interface {
 type SSOLoginState struct {
 	State            string             `json:"state"`
 	Provider         tenant.SSOProvider `json:"provider"`
+	ProviderID       pulid.ID           `json:"providerId"`
 	OrganizationID   pulid.ID           `json:"organizationId"`
 	OrganizationSlug string             `json:"organizationSlug"`
 	CodeVerifier     string             `json:"codeVerifier"`

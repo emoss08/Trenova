@@ -77,11 +77,29 @@ func (p *IdentityProvider) BeforeAppendModel(_ context.Context, q bun.Query) err
 		if p.ID.IsNil() {
 			p.ID = pulid.MustNew("idp_")
 		}
+		p.setCollectionDefaults()
 		p.CreatedAt = now
 	case *bun.UpdateQuery:
+		p.setCollectionDefaults()
 		p.UpdatedAt = now
 	}
 	return nil
+}
+
+func (p *IdentityProvider) setCollectionDefaults() {
+	if p.AllowedDomains == nil {
+		p.AllowedDomains = []string{}
+	}
+	if p.AttributeMap == nil {
+		p.AttributeMap = map[string]string{}
+	}
+	if p.OIDCScopes == nil {
+		p.OIDCScopes = defaultIdentityProviderOIDCScopes()
+	}
+}
+
+func defaultIdentityProviderOIDCScopes() []string {
+	return []string{"openid", "email", "profile"}
 }
 
 type ExternalIdentity struct {
@@ -102,7 +120,16 @@ type ExternalIdentity struct {
 }
 
 func (e *ExternalIdentity) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &e.ID, "ext_", &e.CreatedAt, &e.UpdatedAt)
+	if e.RawClaims == nil {
+		e.RawClaims = map[string]string{}
+	}
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &e.ID,
+		IDPrefix:  "ext_",
+		CreatedAt: &e.CreatedAt,
+		UpdatedAt: &e.UpdatedAt,
+	})
 	return nil
 }
 
@@ -124,7 +151,13 @@ type MFAAuthenticator struct {
 }
 
 func (a *MFAAuthenticator) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &a.ID, "mfa_", &a.CreatedAt, &a.UpdatedAt)
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &a.ID,
+		IDPrefix:  "mfa_",
+		CreatedAt: &a.CreatedAt,
+		UpdatedAt: &a.UpdatedAt,
+	})
 	return nil
 }
 
@@ -151,7 +184,15 @@ type AuthEvent struct {
 }
 
 func (e *AuthEvent) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &e.ID, "aue_", &e.CreatedAt, nil)
+	if e.RiskSignals == nil {
+		e.RiskSignals = []string{}
+	}
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &e.ID,
+		IDPrefix:  "aue_",
+		CreatedAt: &e.CreatedAt,
+	})
 	if e.OccurredAt == 0 {
 		e.OccurredAt = e.CreatedAt
 	}
@@ -172,7 +213,15 @@ type RiskDecision struct {
 }
 
 func (d *RiskDecision) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &d.ID, "rsk_", &d.CreatedAt, nil)
+	if d.Signals == nil {
+		d.Signals = []string{}
+	}
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &d.ID,
+		IDPrefix:  "rsk_",
+		CreatedAt: &d.CreatedAt,
+	})
 	return nil
 }
 
@@ -189,7 +238,13 @@ type SCIMDirectory struct {
 }
 
 func (d *SCIMDirectory) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &d.ID, "scd_", &d.CreatedAt, &d.UpdatedAt)
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &d.ID,
+		IDPrefix:  "scd_",
+		CreatedAt: &d.CreatedAt,
+		UpdatedAt: &d.UpdatedAt,
+	})
 	return nil
 }
 
@@ -210,7 +265,13 @@ type SCIMToken struct {
 }
 
 func (t *SCIMToken) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &t.ID, "sct_", &t.CreatedAt, &t.UpdatedAt)
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &t.ID,
+		IDPrefix:  "sct_",
+		CreatedAt: &t.CreatedAt,
+		UpdatedAt: &t.UpdatedAt,
+	})
 	return nil
 }
 
@@ -229,7 +290,13 @@ type SCIMGroupRoleMapping struct {
 }
 
 func (m *SCIMGroupRoleMapping) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &m.ID, "sgr_", &m.CreatedAt, &m.UpdatedAt)
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &m.ID,
+		IDPrefix:  "sgr_",
+		CreatedAt: &m.CreatedAt,
+		UpdatedAt: &m.UpdatedAt,
+	})
 	return nil
 }
 
@@ -249,7 +316,12 @@ type ProvisioningAuditRecord struct {
 }
 
 func (r *ProvisioningAuditRecord) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &r.ID, "par_", &r.CreatedAt, nil)
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &r.ID,
+		IDPrefix:  "par_",
+		CreatedAt: &r.CreatedAt,
+	})
 	return nil
 }
 
@@ -288,29 +360,38 @@ func (p *AccessPolicy) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (p *AccessPolicy) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(q, &p.ID, "pol_", &p.CreatedAt, &p.UpdatedAt)
+	if p.Conditions == nil {
+		p.Conditions = map[string]string{}
+	}
+	setIAMTimestamps(iamTimestampParams{
+		Query:     q,
+		ID:        &p.ID,
+		IDPrefix:  "pol_",
+		CreatedAt: &p.CreatedAt,
+		UpdatedAt: &p.UpdatedAt,
+	})
 	return nil
 }
 
-func setIAMTimestamps(
-	q bun.Query,
-	id *pulid.ID,
-	prefix string,
-	createdAt *int64,
-	updatedAt *int64,
-) {
+type iamTimestampParams struct {
+	Query     bun.Query
+	ID        *pulid.ID
+	IDPrefix  string
+	CreatedAt *int64
+	UpdatedAt *int64
+}
+
+func setIAMTimestamps(p iamTimestampParams) {
 	now := timeutils.NowUnix()
-	switch q.(type) {
+	switch p.Query.(type) {
 	case *bun.InsertQuery:
-		if id != nil && id.IsNil() {
-			*id = pulid.MustNew(prefix)
+		if p.ID.IsNil() {
+			*p.ID = pulid.MustNew(p.IDPrefix)
 		}
-		if createdAt != nil {
-			*createdAt = now
-		}
+		*p.CreatedAt = now
 	case *bun.UpdateQuery:
-		if updatedAt != nil {
-			*updatedAt = now
+		if p.UpdatedAt != nil {
+			*p.UpdatedAt = now
 		}
 	}
 }

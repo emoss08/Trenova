@@ -81,6 +81,11 @@ var errSSORequired = errortypes.NewAuthenticationError(
 
 const ssoLoginStateTTL = 10 * time.Minute
 
+type tenantSSOConfiguration struct {
+	organization *tenant.Organization
+	configs      []*tenant.SSOConfig
+}
+
 type loginSessionContext struct {
 	AuthProvider          string
 	ExternalIdentityID    string
@@ -149,15 +154,12 @@ func (s *Service) GetTenantLoginMetadata(
 	ctx context.Context,
 	organizationSlug string,
 ) (*services.TenantLoginMetadataResponse, error) {
-	if s.or == nil || s.ssoRepo == nil {
-		return nil, errortypes.NewBusinessError("Tenant login is not configured")
-	}
-
-	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
 	}
 
+	org := loginConfig.organization
 	resp := &services.TenantLoginMetadataResponse{
 		OrganizationID:   org.ID.String(),
 		OrganizationName: org.Name,
@@ -166,12 +168,8 @@ func (s *Service) GetTenantLoginMetadata(
 	}
 
 	var anyEnforced bool
-	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, org.ID)
-	if err != nil {
-		return nil, err
-	}
-	enabledProviders := make([]string, 0, len(configs))
-	for _, cfg := range configs {
+	enabledProviders := make([]string, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
 		enabledProviders = append(enabledProviders, string(cfg.Provider))
 		if cfg.EnforceSSO {
 			anyEnforced = true
@@ -188,22 +186,13 @@ func (s *Service) ListAuthProviders(
 	ctx context.Context,
 	organizationSlug string,
 ) ([]services.AuthProviderSummary, error) {
-	if s.or == nil || s.ssoRepo == nil {
-		return nil, errortypes.NewBusinessError("Tenant login is not configured")
-	}
-
-	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
 	}
 
-	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, org.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	providers := make([]services.AuthProviderSummary, 0, len(configs))
-	for _, cfg := range configs {
+	providers := make([]services.AuthProviderSummary, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
 		providers = append(providers, services.AuthProviderSummary{
 			ID:       cfg.ID,
 			Name:     cfg.Name,
@@ -262,6 +251,7 @@ func (s *Service) StartSSOLogin(
 	if err = s.stateRepo.Save(ctx, &repositories.SSOLoginState{
 		State:            state,
 		Provider:         req.Provider,
+		ProviderID:       ssoConfig.ID,
 		OrganizationID:   org.ID,
 		OrganizationSlug: org.LoginSlug,
 		CodeVerifier:     verifier,
@@ -319,11 +309,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	displayName := providerDisplayName(loginState.Provider)
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(
-		ctx,
-		loginState.OrganizationID,
-		loginState.Provider,
-	)
+	ssoConfig, err := s.resolveSSOConfigForCallback(ctx, loginState)
 	if err != nil {
 		return nil, err
 	}
@@ -451,6 +437,54 @@ func (s *Service) GetSSOLoginState(
 		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
 	return s.stateRepo.Get(ctx, state)
+}
+
+func (s *Service) enabledTenantSSOConfiguration(
+	ctx context.Context,
+	organizationSlug string,
+) (*tenantSSOConfiguration, error) {
+	if s.or == nil || s.ssoRepo == nil {
+		return nil, errortypes.NewBusinessError("Tenant login is not configured")
+	}
+
+	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tenantSSOConfiguration{
+		organization: org,
+		configs:      configs,
+	}, nil
+}
+
+func (s *Service) resolveSSOConfigForCallback(
+	ctx context.Context,
+	loginState *repositories.SSOLoginState,
+) (*tenant.SSOConfig, error) {
+	if loginState.ProviderID.IsNotNil() {
+		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.OrganizationID != loginState.OrganizationID {
+			return nil, errortypes.NewAuthenticationError(
+				"SSO provider does not belong to this organization",
+			)
+		}
+		return cfg, nil
+	}
+
+	return s.ssoRepo.GetEnabledByOrganizationID(
+		ctx,
+		loginState.OrganizationID,
+		loginState.Provider,
+	)
 }
 
 func (s *Service) ValidateSession(

@@ -229,6 +229,29 @@ func enforceResourceAttributes(
 	req *services.PermissionCheckRequest,
 	dataScope permission.DataScope,
 ) *services.PermissionCheckResult {
+	if result := enforceGlobalResourceAttributes(req, dataScope); result != nil {
+		return result
+	}
+
+	attrs := req.ResourceAttributes
+
+	switch dataScope {
+	case permission.DataScopeOwn:
+		if attrs.OwnerID.IsNotNil() && attrs.OwnerID != req.UserID {
+			return deniedByABAC(dataScope, "abac_owner_scope")
+		}
+	case permission.DataScopeOrganization,
+		permission.DataScopeBusinessUnit,
+		permission.DataScopeAll:
+	}
+
+	return nil
+}
+
+func enforceGlobalResourceAttributes(
+	req *services.PermissionCheckRequest,
+	dataScope permission.DataScope,
+) *services.PermissionCheckResult {
 	attrs := req.ResourceAttributes
 
 	if attrs.OrganizationID.IsNotNil() && attrs.OrganizationID != req.OrganizationID {
@@ -246,22 +269,6 @@ func enforceResourceAttributes(
 
 	if strings.EqualFold(req.ContextAttributes.RiskDecision, "deny") {
 		return deniedByABAC(dataScope, "abac_risk_denied")
-	}
-
-	switch dataScope {
-	case permission.DataScopeOwn:
-		if attrs.OwnerID.IsNotNil() && attrs.OwnerID != req.UserID {
-			return deniedByABAC(dataScope, "abac_owner_scope")
-		}
-	case permission.DataScopeOrganization:
-		if attrs.OrganizationID.IsNotNil() && attrs.OrganizationID != req.OrganizationID {
-			return deniedByABAC(dataScope, "abac_organization_scope")
-		}
-	case permission.DataScopeBusinessUnit:
-		if attrs.BusinessUnitID.IsNotNil() && attrs.BusinessUnitID != req.BusinessUnitID {
-			return deniedByABAC(dataScope, "abac_business_unit_scope")
-		}
-	case permission.DataScopeAll:
 	}
 
 	return nil
