@@ -14,3 +14,18 @@ type AssignRoleRequest struct {
 	UserID    pulid.ID `json:"userId"              form:"userId" binding:"required"`
 	ExpiresAt *int64   `json:"expiresAt,omitempty"`
 }
+
+type UpsertHierarchyEdgeRequest struct {
+	SeniorRoleID pulid.ID `json:"seniorRoleId" binding:"required"`
+	JuniorRoleID pulid.ID `json:"juniorRoleId" binding:"required"`
+}
+
+type SaveConstraintRequest struct {
+	ID          pulid.ID                      `json:"id,omitempty"`
+	Name        string                        `json:"name"                  binding:"required"`
+	Description string                        `json:"description,omitempty"`
+	Type        permission.RoleConstraintType `json:"type"                  binding:"required"`
+	MaxRoles    int                           `json:"maxRoles"              binding:"required"`
+	Enabled     *bool                         `json:"enabled,omitempty"`
+	RoleIDs     []pulid.ID                    `json:"roleIds"               binding:"required"`
+}

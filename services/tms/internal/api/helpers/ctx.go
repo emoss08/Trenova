@@ -31,6 +31,24 @@ func queryValue[T any](
 	return sliceutils.FirstOrDefault(defaults, zero)
 }
 
+func ContextValue[T any](c *gin.Context, key string) (T, bool) {
+	val, exists := c.Get(key)
+	if !exists {
+		var zero T
+		return zero, false
+	}
+	typed, ok := val.(T)
+	return typed, ok
+}
+
+func ContextValueOr[T any](c *gin.Context, key string, fallback T) T {
+	value, ok := ContextValue[T](c, key)
+	if !ok {
+		return fallback
+	}
+	return value
+}
+
 func QueryString(c *gin.Context, key string, defaultValue ...string) string {
 	return queryValue(c, key, func(s string) (string, bool) { return s, true }, "", defaultValue)
 }

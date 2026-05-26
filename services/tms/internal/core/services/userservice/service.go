@@ -295,6 +295,7 @@ func (s *Service) SwitchOrganization(
 
 	sess.OrganizationID = req.OrganizationID
 	sess.BusinessUnitID = targetBusinessUnitID
+	sess.ActiveRoleIDs = nil
 
 	if err = s.sr.Update(ctx, sess); err != nil {
 		log.Error("failed to update session", zap.Error(err))

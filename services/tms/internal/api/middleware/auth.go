@@ -83,12 +83,14 @@ func (m *AuthMiddleware) authenticateWithSession(c *gin.Context) error {
 		return err
 	}
 
-	authctx.SetAuthContext(
-		c,
-		sess.UserID,
-		sess.BusinessUnitID,
-		sess.OrganizationID,
-	)
+	authctx.SetSessionAuthContext(c, authctx.SessionAuthContextParams{
+		SessionID:              sess.ID,
+		UserID:                 sess.UserID,
+		BusinessUnitID:         sess.BusinessUnitID,
+		OrganizationID:         sess.OrganizationID,
+		ActiveRoleIDs:          sess.ActiveRoleIDs,
+		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0,
+	})
 
 	return nil
 }

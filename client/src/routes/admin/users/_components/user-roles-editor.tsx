@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,13 +22,7 @@ import { assignRole, listRoles, unassignRole } from "@/lib/role-api";
 import type { Role, UserRoleAssignment } from "@/types/role";
 import { TimeFormat } from "@/types/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarIcon,
-  LockIcon,
-  PlusIcon,
-  ShieldCheckIcon,
-  TrashIcon,
-} from "lucide-react";
+import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -44,8 +37,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["user-role-assignments", userId],
-    queryFn: () =>
-      api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments`),
+    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments`),
     select: (response) => response,
   });
 
@@ -83,12 +75,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Assigned Roles</h3>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setAddDialogOpen(true)}
-        >
+        <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
           <PlusIcon className="mr-1 size-3.5" />
           Assign Role
         </Button>
@@ -146,30 +133,9 @@ function RoleAssignmentRow({ assignment, onUnassign }: RoleAssignmentRowProps) {
     <div className="rounded-md border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-medium">
-              {role?.name ?? "Unknown Role"}
-            </p>
-            {role?.isSystem && (
-              <Badge variant="secondary" className="gap-1 text-xs">
-                <LockIcon className="size-3" />
-                System
-              </Badge>
-            )}
-            {role?.isOrgAdmin && (
-              <Badge
-                variant="default"
-                className="gap-1 bg-amber-600 text-xs hover:bg-amber-700"
-              >
-                <ShieldCheckIcon className="size-3" />
-                Admin
-              </Badge>
-            )}
-          </div>
+          <p className="text-sm font-medium">{role?.name ?? "Unknown Role"}</p>
           {role?.description && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {role.description}
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">{role.description}</p>
           )}
           <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
             <span>{assignedText}</span>
@@ -231,9 +197,7 @@ function AssignRoleDialog({
     }
 
     setIsSubmitting(true);
-    const expiresAtTimestamp = expiresAt
-      ? new Date(expiresAt).getTime() / 1000
-      : null;
+    const expiresAtTimestamp = expiresAt ? new Date(expiresAt).getTime() / 1000 : null;
 
     await assignRole(selectedRoleId, {
       userId,
@@ -274,16 +238,13 @@ function AssignRoleDialog({
               </SelectTrigger>
               <SelectContent>
                 {availableRoles.map((role: Role) => (
-                  <SelectItem key={role.id} value={role.id!}>
-                    <div className="flex items-center gap-2">
-                      <span>{role.name}</span>
-                      {role.isOrgAdmin && (
-                        <Badge
-                          variant="default"
-                          className="bg-amber-600 text-xs hover:bg-amber-700"
-                        >
-                          Admin
-                        </Badge>
+                  <SelectItem key={role.id} value={role.id!} className="cursor-pointer">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate">{role.name}</span>
+                      {role.description && (
+                        <span className="truncate text-xs text-muted-foreground">
+                          {role.description}
+                        </span>
                       )}
                     </div>
                   </SelectItem>
@@ -299,24 +260,14 @@ function AssignRoleDialog({
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              Leave empty for permanent assignment
-            </p>
+            <p className="text-xs text-muted-foreground">Leave empty for permanent assignment</p>
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={isSubmitting || !selectedRoleId}
-          >
+          <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !selectedRoleId}>
             Assign Role
           </Button>
         </DialogFooter>

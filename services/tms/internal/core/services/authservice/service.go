@@ -34,6 +34,7 @@ type Params struct {
 	UserRepository    repositories.UserRepository
 	OrganizationRepo  repositories.OrganizationRepository
 	SessionRepository repositories.SessionRepository
+	RBACRepository    repositories.RBACRepository
 	SSOConfigRepo     repositories.SSOConfigRepository
 	SSOStateRepo      repositories.SSOLoginStateRepository
 	APIKeyRepository  repositories.APIKeyRepository
@@ -47,6 +48,7 @@ type Service struct {
 	ur        repositories.UserRepository
 	or        repositories.OrganizationRepository
 	sr        repositories.SessionRepository
+	rbacRepo  repositories.RBACRepository
 	ssoRepo   repositories.SSOConfigRepository
 	stateRepo repositories.SSOLoginStateRepository
 	akr       repositories.APIKeyRepository
@@ -61,6 +63,7 @@ func New(p Params) services.AuthService {
 		ur:        p.UserRepository,
 		or:        p.OrganizationRepo,
 		sr:        p.SessionRepository,
+		rbacRepo:  p.RBACRepository,
 		ssoRepo:   p.SSOConfigRepo,
 		stateRepo: p.SSOStateRepo,
 		akr:       p.APIKeyRepository,
@@ -393,6 +396,98 @@ func (s *Service) ValidateSession(
 	return sess, nil
 }
 
+func (s *Service) ListAuthorizedSessionRoles(
+	ctx context.Context,
+	sessionID pulid.ID,
+) (*services.AuthorizedSessionRolesResponse, error) {
+	sess, err := s.ValidateSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+	return &services.AuthorizedSessionRolesResponse{
+		RoleIDs:           authorizedRoleIDs,
+		AuthorizedRoleIDs: authorizedRoleIDs,
+		AuthorizedRoles:   authorizedRoles,
+	}, nil
+}
+
+func (s *Service) ActivateSessionRoles(
+	ctx context.Context,
+	req services.ActivateSessionRolesRequest,
+) (*services.ActivateSessionRolesResponse, error) {
+	sess, err := s.ValidateSession(ctx, req.SessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, sess.UserID, sess.OrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+	authorized := make(map[pulid.ID]struct{}, len(authorizedRoleIDs))
+	for _, id := range authorizedRoleIDs {
+		authorized[id] = struct{}{}
+	}
+
+	activeRoleIDs := make([]pulid.ID, 0, len(req.RoleIDs))
+	seen := make(map[pulid.ID]struct{}, len(req.RoleIDs))
+	for _, roleID := range req.RoleIDs {
+		if roleID.IsNil() {
+			continue
+		}
+		if _, ok := seen[roleID]; ok {
+			continue
+		}
+		if _, ok := authorized[roleID]; !ok {
+			return nil, errortypes.NewAuthorizationError("Cannot activate unauthorized role")
+		}
+		seen[roleID] = struct{}{}
+		activeRoleIDs = append(activeRoleIDs, roleID)
+	}
+	if len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0 {
+		return nil, errortypes.NewValidationError(
+			"roleIds",
+			errortypes.ErrRequired,
+			"At least one active role is required",
+		)
+	}
+
+	violations, vErr := s.rbacRepo.ValidateDynamicSeparationOfDuty(
+		ctx,
+		sess.OrganizationID,
+		activeRoleIDs,
+	)
+	if vErr != nil {
+		return nil, vErr
+	}
+	if len(violations) > 0 {
+		return nil, errortypes.NewAuthorizationError(
+			"Selected active roles violate dynamic separation of duty",
+		)
+	}
+
+	sess.ActiveRoleIDs = activeRoleIDs
+	if err = s.sr.Update(ctx, sess); err != nil {
+		return nil, err
+	}
+
+	return &services.ActivateSessionRolesResponse{
+		ActiveRoleIDs:          activeRoleIDs,
+		AuthorizedRoleIDs:      authorizedRoleIDs,
+		ActiveRoles:            activeRoleSummaries(activeRoleIDs, authorizedRoles),
+		AuthorizedRoles:        authorizedRoles,
+		RequiresRoleActivation: len(activeRoleIDs) == 0 && len(authorizedRoleIDs) > 0,
+	}, nil
+}
+
 func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
 	return s.sr.Delete(ctx, sessionID)
 }
@@ -480,11 +575,71 @@ func (s *Service) createLoginResponse(
 		s.l.Error("failed to update last login at", zap.Error(err))
 	}
 
+	authorizedRoles, err := s.authorizedRoleSummaries(ctx, user.ID, user.CurrentOrganizationID)
+	if err != nil {
+		return nil, err
+	}
+	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
+
 	return &services.LoginResponse{
-		User:      user,
-		ExpiresAt: sess.ExpiresAt,
-		SessionID: sess.ID.String(),
+		User:                   user,
+		ExpiresAt:              sess.ExpiresAt,
+		SessionID:              sess.ID.String(),
+		ActiveRoleIDs:          sess.ActiveRoleIDs,
+		AuthorizedRoleIDs:      authorizedRoleIDs,
+		ActiveRoles:            activeRoleSummaries(sess.ActiveRoleIDs, authorizedRoles),
+		AuthorizedRoles:        authorizedRoles,
+		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0 && len(authorizedRoleIDs) > 0,
 	}, nil
+}
+
+func (s *Service) authorizedRoleSummaries(
+	ctx context.Context,
+	userID pulid.ID,
+	orgID pulid.ID,
+) ([]services.RoleSummary, error) {
+	roles, err := s.rbacRepo.GetAuthorizedRoles(ctx, userID, orgID)
+	if err != nil {
+		return nil, err
+	}
+	summaries := make([]services.RoleSummary, 0, len(roles))
+	for _, role := range roles {
+		if role != nil {
+			summaries = append(summaries, services.NewRoleSummary(role))
+		}
+	}
+	return summaries, nil
+}
+
+func roleSummaryIDs(roles []services.RoleSummary) []pulid.ID {
+	roleIDs := make([]pulid.ID, len(roles))
+	for i, role := range roles {
+		roleIDs[i] = role.ID
+	}
+	return roleIDs
+}
+
+func activeRoleSummaries(
+	activeRoleIDs []pulid.ID,
+	authorizedRoles []services.RoleSummary,
+) []services.RoleSummary {
+	if len(activeRoleIDs) == 0 || len(authorizedRoles) == 0 {
+		return []services.RoleSummary{}
+	}
+
+	byID := make(map[pulid.ID]services.RoleSummary, len(authorizedRoles))
+	for _, role := range authorizedRoles {
+		byID[role.ID] = role
+	}
+
+	activeRoles := make([]services.RoleSummary, 0, len(activeRoleIDs))
+	for _, roleID := range activeRoleIDs {
+		role, ok := byID[roleID]
+		if ok {
+			activeRoles = append(activeRoles, role)
+		}
+	}
+	return activeRoles
 }
 
 func (s *Service) resolveRequestedOrganization(

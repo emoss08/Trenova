@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/testutil"
@@ -59,10 +60,14 @@ func setupRoleHandler(t *testing.T, repo *mocks.MockRoleRepository) *rolehandler
 		Maybe().
 		Return(nil)
 	permCacheRepo.On("InvalidateOrganization", mock.Anything, mock.Anything).Maybe().Return(nil)
+	repo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return([]*permission.UserRoleAssignment{}, nil)
 
 	service := roleservice.New(roleservice.Params{
 		Logger:           logger,
 		RoleRepo:         repo,
+		RBACRepo:         &rbactest.Repository{},
 		UserRepo:         userRepo,
 		PermissionCache:  permCacheRepo,
 		PermissionEngine: permEngine,

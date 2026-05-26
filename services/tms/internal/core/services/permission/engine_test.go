@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/rbactest"
+	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
@@ -32,6 +34,7 @@ func setupTestEngine(
 
 	e := &engine{
 		roleRepo:      roleRepo,
+		rbacRepo:      &rbactest.Repository{},
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
 		registry:      permission.NewRegistry(),
@@ -81,8 +84,8 @@ func TestCheck_OrgAdminBypass(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
 
-	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil)
+	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
 	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
@@ -294,7 +297,8 @@ func TestCheckBatch(t *testing.T) {
 	cacheRepo.On("Get", ctx, userID, orgID).Return(nil, nil).Once()
 	userRepo.On("IsPlatformAdmin", ctx, userID).Return(true, nil).Once()
 	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
-		Return(nil).Once()
+		Return(nil).
+		Once()
 	cacheRepo.On("Get", ctx, userID, orgID).Return(&repositories.CachedPermissions{
 		IsPlatformAdmin:     true,
 		IsOrgAdmin:          true,
@@ -391,7 +395,6 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	}, nil)
 	cacheRepo.On("Set", ctx, userID, orgID, mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).
 		Return(nil)
-
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
 	require.NoError(t, err)
@@ -404,6 +407,81 @@ func TestGetLightManifest_RegularUser(t *testing.T) {
 	userRepo.AssertExpectations(t)
 	roleRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
+}
+
+func TestGetLightManifest_IncludesAuthorizedRolesWhenActivationRequired(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{}, true)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+	eng.rbacRepo = &rbactest.Repository{
+		AuthorizedRoles: []*permission.Role{
+			{
+				ID:          roleID,
+				Name:        "Dispatcher",
+				Description: "Coordinates loads",
+				IsOrgAdmin:  true,
+			},
+		},
+	}
+
+	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
+	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
+		{ID: orgID, Name: "Test Org"},
+	}, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+
+	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.True(t, manifest.RequiresRoleActivation)
+	assert.Equal(t, []pulid.ID{roleID}, manifest.AuthorizedRoleIDs)
+	assert.Empty(t, manifest.ActiveRoleIDs)
+	require.Len(t, manifest.AuthorizedRoles, 1)
+	assert.Equal(t, "Dispatcher", manifest.AuthorizedRoles[0].Name)
+	assert.True(t, manifest.AuthorizedRoles[0].IsOrgAdmin)
+	assert.Empty(t, manifest.ActiveRoles)
+
+	userRepo.AssertExpectations(t)
+	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertNotCalled(t, "Get")
+	cacheRepo.AssertNotCalled(t, "Set")
+}
+
+func TestGetLightManifest_DoesNotRequireRoleActivationWithoutAuthorizedRoles(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, userRepo := setupTestEngine(t)
+	ctx := authctx.WithSessionRoleActivation(t.Context(), []pulid.ID{}, true)
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+
+	userRepo.On("IsPlatformAdmin", ctx, userID).Return(false, nil)
+	userRepo.On("GetUserOrganizationSummaries", ctx, userID).Return([]repositories.OrgSummary{
+		{ID: orgID, Name: "Test Org"},
+	}, nil)
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{}, nil)
+
+	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
+
+	require.NoError(t, err)
+	assert.False(t, manifest.RequiresRoleActivation)
+	assert.Empty(t, manifest.AuthorizedRoleIDs)
+	assert.Empty(t, manifest.ActiveRoleIDs)
+	assert.Empty(t, manifest.AuthorizedRoles)
+	assert.Empty(t, manifest.ActiveRoles)
+
+	userRepo.AssertExpectations(t)
+	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertNotCalled(t, "Get")
+	cacheRepo.AssertNotCalled(t, "Set")
 }
 
 func TestInvalidateUser(t *testing.T) {

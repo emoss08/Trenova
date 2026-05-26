@@ -617,7 +617,7 @@ func TestUserHandler_GetRoleAssignments_Success(t *testing.T) {
 	roleRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(&permission.Role{}, nil)
 	roleRepo.On("GetRolesWithInheritance", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	roleRepo.On("GetUsersWithRole", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	roleRepo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return([]*permission.UserRoleAssignment{
 			{
 				ID:     pulid.MustNew("ura_"),
@@ -661,7 +661,7 @@ func TestUserHandler_GetRoleAssignments_Error(t *testing.T) {
 	roleRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(&permission.Role{}, nil)
 	roleRepo.On("GetRolesWithInheritance", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 	roleRepo.On("GetUsersWithRole", mock.Anything, mock.Anything).Maybe().Return(nil, nil)
-	roleRepo.On("GetUserRoleAssignments", mock.Anything, mock.Anything, mock.Anything).
+	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, mock.Anything).
 		Return(nil, errors.New("role repo error"))
 	roleRepo.On("CreateAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)
 	roleRepo.On("DeleteAssignment", mock.Anything, mock.Anything).Maybe().Return(nil)

@@ -308,13 +308,18 @@ func (h *Handler) selectOptions(c *gin.Context) {
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /users/{userID}/role-assignments/ [get]
-// todo: this needs to move into the me handler because we're automatically passing in the user ID
 func (h *Handler) getRoleAssignments(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
+	userID, err := pulid.MustParse(c.Param("userID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	assignments, err := h.roleService.GetUserRoleAssignments(
 		c.Request.Context(),
-		authCtx.UserID,
+		userID,
 		authCtx.OrganizationID,
 	)
 	if err != nil {

@@ -88,6 +88,7 @@ func createDB(cfg *config.Config) (*bun.DB, error) {
 		))
 	}
 
+	db.RegisterModel(domainregistry.RegisterManyToManyEntities()...)
 	db.RegisterModel(domainregistry.RegisterEntities()...)
 
 	return db, nil

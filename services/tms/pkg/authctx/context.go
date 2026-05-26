@@ -2,8 +2,10 @@
 package authctx
 
 import (
+	"context"
 	"reflect"
 
+	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
 )
@@ -11,12 +13,15 @@ import (
 type Key string
 
 const (
-	UserIDKey = Key("userId")
-	BuIDKey   = Key("businessUnitId")
-	OrgIDKey  = Key("organizationId")
-	TypeKey   = Key("principalType")
-	ActorKey  = Key("principalId")
-	APIKeyID  = Key("apiKeyId")
+	UserIDKey                 = Key("userId")
+	BuIDKey                   = Key("businessUnitId")
+	OrgIDKey                  = Key("organizationId")
+	TypeKey                   = Key("principalType")
+	ActorKey                  = Key("principalId")
+	APIKeyID                  = Key("apiKeyId")
+	SessionID                 = Key("sessionId")
+	ActiveRoleIDsKey          = Key("activeRoleIds")
+	RequiresRoleActivationKey = Key("requiresRoleActivation")
 )
 
 const (
@@ -75,6 +80,27 @@ func SetAuthContext(c *gin.Context, userID, buID, orgID pulid.ID) {
 	SetOrganizationID(c, orgID)
 }
 
+type SessionAuthContextParams struct {
+	SessionID              pulid.ID
+	UserID                 pulid.ID
+	BusinessUnitID         pulid.ID
+	OrganizationID         pulid.ID
+	ActiveRoleIDs          []pulid.ID
+	RequiresRoleActivation bool
+}
+
+func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
+	SetAuthContext(c, p.UserID, p.BusinessUnitID, p.OrganizationID)
+	c.Set(string(SessionID), p.SessionID)
+	c.Set(string(ActiveRoleIDsKey), p.ActiveRoleIDs)
+	c.Set(string(RequiresRoleActivationKey), p.RequiresRoleActivation)
+	c.Request = c.Request.WithContext(WithSessionRoleActivation(
+		c.Request.Context(),
+		p.ActiveRoleIDs,
+		p.RequiresRoleActivation,
+	))
+}
+
 func SetAPIKeyContext(
 	c *gin.Context,
 	principalID, buID, orgID pulid.ID,
@@ -87,12 +113,15 @@ func SetAPIKeyContext(
 }
 
 type AuthContext struct {
-	PrincipalType  string
-	PrincipalID    pulid.ID
-	UserID         pulid.ID
-	BusinessUnitID pulid.ID
-	OrganizationID pulid.ID
-	APIKeyID       pulid.ID
+	PrincipalType          string
+	PrincipalID            pulid.ID
+	UserID                 pulid.ID
+	BusinessUnitID         pulid.ID
+	OrganizationID         pulid.ID
+	APIKeyID               pulid.ID
+	SessionID              pulid.ID
+	ActiveRoleIDs          []pulid.ID
+	RequiresRoleActivation bool
 }
 
 func (ac *AuthContext) IsAPIKey() bool {
@@ -103,38 +132,7 @@ func (ac *AuthContext) IsAPIKey() bool {
 }
 
 func GetAuthContext(c *gin.Context) *AuthContext {
-	ac := &AuthContext{}
-
-	if val, exists := c.Get(string(TypeKey)); exists {
-		if principalType, ok := val.(string); ok {
-			ac.PrincipalType = principalType
-		}
-	}
-
-	if val, exists := c.Get(string(ActorKey)); exists {
-		if principalID, ok := val.(pulid.ID); ok {
-			ac.PrincipalID = principalID
-		}
-	}
-
-	if userID, exists := GetUserID(c); exists {
-		ac.UserID = userID
-	}
-
-	if buID, exists := GetBusinessUnitID(c); exists {
-		ac.BusinessUnitID = buID
-	}
-
-	if orgID, exists := GetOrganizationID(c); exists {
-		ac.OrganizationID = orgID
-	}
-
-	if val, exists := c.Get(string(APIKeyID)); exists {
-		if apiKeyID, ok := val.(pulid.ID); ok {
-			ac.APIKeyID = apiKeyID
-		}
-	}
-
+	ac := authContextFromGin(c)
 	switch ac.PrincipalType {
 	case "":
 		switch {
@@ -159,6 +157,81 @@ func GetAuthContext(c *gin.Context) *AuthContext {
 	}
 
 	return ac
+}
+
+func authContextFromGin(c *gin.Context) *AuthContext {
+	return &AuthContext{
+		PrincipalType: helpers.ContextValueOr[string](
+			c,
+			string(TypeKey),
+			"",
+		),
+		PrincipalID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(ActorKey),
+			pulid.Nil,
+		),
+		UserID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(UserIDKey),
+			pulid.Nil,
+		),
+		BusinessUnitID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(BuIDKey),
+			pulid.Nil,
+		),
+		OrganizationID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(OrgIDKey),
+			pulid.Nil,
+		),
+		APIKeyID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(APIKeyID),
+			pulid.Nil,
+		),
+		SessionID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(SessionID),
+			pulid.Nil,
+		),
+		ActiveRoleIDs: helpers.ContextValueOr[[]pulid.ID](
+			c,
+			string(ActiveRoleIDsKey),
+			nil,
+		),
+		RequiresRoleActivation: helpers.ContextValueOr[bool](
+			c,
+			string(RequiresRoleActivationKey),
+			false,
+		),
+	}
+}
+
+type sessionRoleActivationContextKey struct{}
+
+type SessionRoleActivation struct {
+	ActiveRoleIDs      []pulid.ID
+	RequiresActivation bool
+}
+
+func WithSessionRoleActivation(
+	ctx context.Context,
+	activeRoleIDs []pulid.ID,
+	requiresActivation bool,
+) context.Context {
+	ids := make([]pulid.ID, len(activeRoleIDs))
+	copy(ids, activeRoleIDs)
+	return context.WithValue(ctx, sessionRoleActivationContextKey{}, SessionRoleActivation{
+		ActiveRoleIDs:      ids,
+		RequiresActivation: requiresActivation,
+	})
+}
+
+func GetSessionRoleActivation(ctx context.Context) (SessionRoleActivation, bool) {
+	value, ok := ctx.Value(sessionRoleActivationContextKey{}).(SessionRoleActivation)
+	return value, ok
 }
 
 func AddContextToRequest(authCtx *AuthContext, req any) {

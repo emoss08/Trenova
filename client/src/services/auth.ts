@@ -1,10 +1,7 @@
 import { api, clearCsrfToken, setCsrfToken } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
-import {
-  loginResponseSchema,
-  type LoginRequest,
-  type LoginResponse,
-} from "@/types/user";
+import type { RoleSummary } from "@/types/role";
+import { loginResponseSchema, type LoginRequest, type LoginResponse } from "@/types/user";
 import { API_BASE_URL } from "@/lib/constants";
 
 export const authService = {
@@ -21,6 +18,24 @@ export const authService = {
     } finally {
       clearCsrfToken();
     }
+  },
+
+  listAuthorizedSessionRoles: async () => {
+    return api.get<{
+      roleIds: string[];
+      authorizedRoleIds: string[];
+      authorizedRoles: RoleSummary[];
+    }>("/auth/session/roles");
+  },
+
+  activateSessionRoles: async (roleIds: string[]) => {
+    return api.post<{
+      activeRoleIds: string[];
+      authorizedRoleIds: string[];
+      activeRoles: RoleSummary[];
+      authorizedRoles: RoleSummary[];
+      requiresRoleActivation: boolean;
+    }>("/auth/session/roles/activate", { roleIds });
   },
 
   getSSOStartUrl: (provider: string, slug: string, returnTo: string) => {
