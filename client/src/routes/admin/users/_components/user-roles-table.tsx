@@ -23,14 +23,14 @@ export default function UserRolesTable() {
         <TabsTrigger value="users">Users</TabsTrigger>
         <TabsTrigger value="roles">Roles & Permissions</TabsTrigger>
       </TabsList>
-      <TabsContent value="users">
+      <TabsContent value="users" keepMounted>
         <Activity mode={activeTab === "users" ? "visible" : "hidden"}>
           <DataTableLazyComponent>
             <UserTable />
           </DataTableLazyComponent>
         </Activity>
       </TabsContent>
-      <TabsContent value="roles">
+      <TabsContent value="roles" keepMounted>
         <Activity mode={activeTab === "roles" ? "visible" : "hidden"}>
           <DataTableLazyComponent>
             <RoleTable />
