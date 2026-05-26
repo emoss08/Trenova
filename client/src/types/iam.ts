@@ -37,6 +37,24 @@ export type IdentityProvider = z.infer<typeof identityProviderSchema>;
 
 export const identityProvidersSchema = z.array(identityProviderSchema);
 
+export const identityProviderFormSchema = identityProviderSchema.extend({
+  name: z.string().trim().min(1, "Provider name is required"),
+  slug: z.string().trim().min(1, "Provider slug is required"),
+  allowedDomains: z.array(z.string().trim().min(1)).default([]),
+  attributeMap: z.record(z.string(), z.string()).default({ email: "email" }),
+  oidcIssuerUrl: z.string().trim().min(1, "Issuer URL is required"),
+  oidcClientId: z.string().trim().min(1, "Client ID is required"),
+  oidcClientSecret: z.string().default(""),
+  oidcRedirectUrl: z.string().trim().min(1, "Redirect URI is required"),
+  oidcScopes: z.array(z.string().trim().min(1)).min(1, "At least one OIDC scope is required"),
+});
+
+export const identityProviderCreateFormSchema = identityProviderFormSchema.extend({
+  oidcClientSecret: z.string().trim().min(1, "Client secret is required"),
+});
+
+export type IdentityProviderFormValues = z.infer<typeof identityProviderFormSchema>;
+
 export const scimDirectorySchema = z.object({
   id: z.string().optional().default(""),
   organizationId: z.string().optional().default(""),
