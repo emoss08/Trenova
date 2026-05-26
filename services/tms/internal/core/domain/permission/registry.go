@@ -371,6 +371,78 @@ func (r *Registry) registerAdministrationResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceIdentityProvider.String(),
+		DisplayName:        "Identity Provider",
+		Description:        "OIDC identity provider configuration",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceSCIMDirectory.String(),
+		DisplayName:        "SCIM Directory",
+		Description:        "SCIM directory, token, and group mapping administration",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceProvisioningAudit.String(),
+		DisplayName:        "Provisioning Audit",
+		Description:        "SCIM provisioning activity",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAccessPolicy.String(),
+		DisplayName:        "Access Policy",
+		Description:        "Organization access policy decisions",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAuthEvent.String(),
+		DisplayName:        "Authentication Event",
+		Description:        "Authentication and sign-in activity",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRiskDecision.String(),
+		DisplayName:        "Risk Decision",
+		Description:        "Authentication risk decisions",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceExternalIdentity.String(),
+		DisplayName:        "External Identity",
+		Description:        "Federated identity links",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceMFAAuthenticator.String(),
+		DisplayName:        "MFA Authenticator",
+		Description:        "MFA authenticator inventory",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
 }
 
 func (r *Registry) registerEquipmentResources() {

@@ -19,6 +19,14 @@ const (
 	ResourcePlatformCatalog       Resource = "platform_catalog"
 	ResourceDatabaseSession       Resource = "database_session"
 	ResourceDocumentOperation     Resource = "document_operation"
+	ResourceIdentityProvider      Resource = "identity_provider"
+	ResourceSCIMDirectory         Resource = "scim_directory"
+	ResourceProvisioningAudit     Resource = "provisioning_audit"
+	ResourceAccessPolicy          Resource = "access_policy"
+	ResourceAuthEvent             Resource = "auth_event"
+	ResourceRiskDecision          Resource = "risk_decision"
+	ResourceExternalIdentity      Resource = "external_identity"
+	ResourceMFAAuthenticator      Resource = "mfa_authenticator"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"

@@ -139,7 +139,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
         redirectUrl,
       }),
     setFormError: setError,
-    resourceName: "Microsoft SSO",
+    resourceName: "Microsoft Entra ID SSO",
     onSuccess: async (data) => {
       reset({
         ...data,
@@ -150,7 +150,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
       await queryClient.invalidateQueries({
         queryKey: queries.organization.microsoftSSO(organizationId).queryKey,
       });
-      toast.success("Microsoft SSO settings updated");
+      toast.success("Microsoft Entra ID SSO settings updated");
     },
   });
 
@@ -188,181 +188,180 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           <Separator />
           <div className="px-5 py-5">
             <FormProvider {...form}>
-            <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
-              <div className="space-y-6">
-                {/* Setup Guide */}
-                <Alert variant="info">
-                  <InfoIcon />
-                  <AlertDescription>
-                    <p>
-                      To configure SSO, register an app in{" "}
-                      <a
-                        href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-medium underline underline-offset-2"
-                      >
-                        Microsoft Entra ID
-                      </a>
-                      , copy the redirect URL below into the app&apos;s authentication settings,
-                      then paste the credentials here.
-                    </p>
-                  </AlertDescription>
-                </Alert>
+              <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
+                <div className="space-y-6">
+                  {/* Setup Guide */}
+                  <Alert variant="info">
+                    <InfoIcon />
+                    <AlertDescription>
+                      <p>
+                        To configure SSO, register an app in{" "}
+                        <a
+                          href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium underline underline-offset-2"
+                        >
+                          Microsoft Entra ID
+                        </a>
+                        , copy the redirect URL below into the app&apos;s authentication settings,
+                        then paste the credentials here.
+                      </p>
+                    </AlertDescription>
+                  </Alert>
 
-                <Separator />
+                  <Separator />
 
-                {/* Authentication Policy */}
-                <div className="space-y-3">
-                  <SectionHeader
-                    title="Authentication Policy"
-                    description="Control how users authenticate to this tenant."
-                  />
-                  <FormGroup cols={1}>
-                    <FormControl cols="full">
-                      <SwitchField
-                        control={control}
-                        name="enabled"
-                        label="Enable Microsoft sign-in"
-                        description='Allow users to sign in with a "Continue with Microsoft" button.'
-                        outlined
-                      />
-                    </FormControl>
-                    {enabled && (
+                  {/* Authentication Policy */}
+                  <div className="space-y-3">
+                    <SectionHeader
+                      title="Authentication Policy"
+                      description="Control how users authenticate to this tenant."
+                    />
+                    <FormGroup cols={1}>
                       <FormControl cols="full">
                         <SwitchField
                           control={control}
-                          name="enforceSso"
-                          label="Require Microsoft SSO"
-                          description="Disable password login and require all users to sign in with Microsoft."
+                          name="enabled"
+                          label="Enable Entra ID sign-in"
+                          description='Allow users to sign in with a "Continue with Microsoft Entra ID" button.'
                           outlined
-                          warning={{
-                            show: Boolean(enforceSso),
-                            message: "All users will be required to sign in with Microsoft.",
-                          }}
                         />
                       </FormControl>
-                    )}
-                  </FormGroup>
-                  {enabled && enforceSso && (
-                    <Alert variant="warning">
-                      <AlertTriangleIcon />
-                      <AlertTitle>Password login will be disabled</AlertTitle>
-                      <AlertDescription>
-                        Users without a Microsoft account linked to an allowed domain will be locked
-                        out. Ensure all users have Microsoft accounts before enabling this.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-
-                {enabled && (
-                  <>
-                    <Separator />
-
-                    {/* Service Provider */}
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Service Provider"
-                        description="Copy this value into your Microsoft app registration."
-                      />
-                      <Alert variant="info">
-                        <LinkIcon />
+                      {enabled && (
+                        <FormControl cols="full">
+                          <SwitchField
+                            control={control}
+                            name="enforceSso"
+                            label="Require Entra ID SSO"
+                            description="Disable password login and require all users to sign in with Entra ID."
+                            outlined
+                            warning={{
+                              show: Boolean(enforceSso),
+                              message: "All users will be required to sign in with Entra ID.",
+                            }}
+                          />
+                        </FormControl>
+                      )}
+                    </FormGroup>
+                    {enabled && enforceSso && (
+                      <Alert variant="warning">
+                        <AlertTriangleIcon />
+                        <AlertTitle>Password login will be disabled</AlertTitle>
                         <AlertDescription>
-                          Add this redirect URL to your Microsoft app under Authentication &gt;
-                          Redirect URIs.
+                          Users without an Entra ID account linked to an allowed domain will be
+                          locked out. Ensure all users have Entra ID accounts before enabling this.
                         </AlertDescription>
                       </Alert>
-                      <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
-                    </div>
+                    )}
+                  </div>
 
-                    <Separator />
+                  {enabled && (
+                    <>
+                      <Separator />
 
-                    {/* Identity Provider */}
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Identity Provider"
-                        description="Paste these values from your Microsoft Entra ID app registration."
-                      />
-                      <FormGroup cols={1}>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="tenantId"
-                            label="Directory (Tenant) ID"
-                            placeholder="00000000-0000-0000-0000-000000000000"
-                            rules={{ required: enabled }}
-                          />
-                        </FormControl>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="clientId"
-                            label="Application (Client) ID"
-                            placeholder="00000000-0000-0000-0000-000000000000"
-                            rules={{ required: enabled }}
-                          />
-                        </FormControl>
-                        <FormControl cols="full">
-                          <SensitiveField
-                            control={control}
-                            name="clientSecret"
-                            label="Client Secret Value"
-                            placeholder="Paste a new client secret"
-                            description={
-                              configQuery.data?.secretConfigured
-                                ? "A secret is already stored. Leave blank to keep it."
-                                : "Required the first time you configure SSO."
-                            }
-                          />
-                        </FormControl>
-                      </FormGroup>
-                    </div>
+                      {/* Service Provider */}
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Service Provider"
+                          description="Copy this value into your Entra ID app registration."
+                        />
+                        <Alert variant="info">
+                          <LinkIcon />
+                          <AlertDescription>
+                            Add this redirect URL to your Entra ID app under Authentication &gt;
+                            Redirect URIs.
+                          </AlertDescription>
+                        </Alert>
+                        <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
+                      </div>
 
-                    <Separator />
+                      <Separator />
 
-                    {/* Domain Restrictions */}
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Domain Restrictions"
-                        description="Limit which email domains can sign in with Microsoft."
-                      />
-                      <FormGroup cols={1}>
-                        <FormControl cols="full">
-                          <InputField
-                            control={control}
-                            name="allowedDomainsText"
-                            label="Allowed Email Domains"
-                            placeholder="company.com, contractor.com"
-                            description="Comma-separated list. Leave blank to allow all Microsoft account domains."
-                          />
-                        </FormControl>
-                      </FormGroup>
-                    </div>
+                      {/* Identity Provider */}
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Identity Provider"
+                          description="Paste these values from your Microsoft Entra ID app registration."
+                        />
+                        <FormGroup cols={1}>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="tenantId"
+                              label="Directory (Tenant) ID"
+                              placeholder="00000000-0000-0000-0000-000000000000"
+                              rules={{ required: enabled }}
+                            />
+                          </FormControl>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="clientId"
+                              label="Application (Client) ID"
+                              placeholder="00000000-0000-0000-0000-000000000000"
+                              rules={{ required: enabled }}
+                            />
+                          </FormControl>
+                          <FormControl cols="full">
+                            <SensitiveField
+                              control={control}
+                              name="clientSecret"
+                              label="Client Secret Value"
+                              placeholder="Paste a new client secret"
+                              description={
+                                configQuery.data?.secretConfigured
+                                  ? "A secret is already stored. Leave blank to keep it."
+                                  : "Required the first time you configure SSO."
+                              }
+                            />
+                          </FormControl>
+                        </FormGroup>
+                      </div>
 
-                    <Separator />
+                      <Separator />
 
-                    {/* Tenant Login URL */}
-                    <div className="space-y-3">
-                      <SectionHeader
-                        title="Tenant Login URL"
-                        description="Share this URL with your users for Microsoft SSO sign-in."
-                      />
-                      <CopyableInput value={tenantLoginUrl} label="Login URL" />
-                      <p className="text-xs text-muted-foreground">
-                        Replace{" "}
-                        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
-                          {"{loginSlug}"}
-                        </code>{" "}
-                        with your organization&apos;s login slug from General settings.
-                      </p>
-                    </div>
-                  </>
-                )}
+                      {/* Domain Restrictions */}
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Domain Restrictions"
+                          description="Limit which email domains can sign in with Entra ID."
+                        />
+                        <FormGroup cols={1}>
+                          <FormControl cols="full">
+                            <InputField
+                              control={control}
+                              name="allowedDomainsText"
+                              label="Allowed Email Domains"
+                              placeholder="company.com, contractor.com"
+                              description="Comma-separated list. Leave blank to allow all Entra ID account domains."
+                            />
+                          </FormControl>
+                        </FormGroup>
+                      </div>
 
-              </div>
-              <FormSaveDock />
-            </Form>
+                      <Separator />
+
+                      {/* Tenant Login URL */}
+                      <div className="space-y-3">
+                        <SectionHeader
+                          title="Tenant Login URL"
+                          description="Share this URL with your users for Entra ID SSO sign-in."
+                        />
+                        <CopyableInput value={tenantLoginUrl} label="Login URL" />
+                        <p className="text-xs text-muted-foreground">
+                          Replace{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+                            {"{loginSlug}"}
+                          </code>{" "}
+                          with your organization&apos;s login slug from General settings.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <FormSaveDock />
+              </Form>
             </FormProvider>
           </div>
         </CollapsibleContent>

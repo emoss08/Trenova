@@ -9,6 +9,7 @@ import { LoginForm } from "./login-form";
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   login: vi.fn(),
+  listProviders: vi.fn(),
   getSSOStartUrl: vi.fn(() => "/sso"),
   getUserOrganizations: vi.fn(),
   switchOrganization: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock("react-router", async (importActual) => {
 vi.mock("@/services/auth", () => ({
   authService: {
     login: mocks.login,
+    listProviders: mocks.listProviders,
     getSSOStartUrl: mocks.getSSOStartUrl,
   },
 }));
@@ -125,6 +127,7 @@ describe("LoginForm", () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockClear());
     mocks.login.mockResolvedValue(loginResponse());
+    mocks.listProviders.mockResolvedValue([]);
     mocks.fetchManifest.mockResolvedValue(undefined);
     mocks.getUserOrganizations.mockResolvedValue([
       {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"slices"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
+	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -50,6 +52,7 @@ type Params struct {
 
 	RoleRepository      repositories.RoleRepository
 	RBACRepository      repositories.RBACRepository
+	IAMRepository       repositories.IAMRepository
 	APIKeyRepository    repositories.APIKeyRepository
 	PermissionCacheRepo repositories.PermissionCacheRepository
 	UserRepository      repositories.UserRepository
@@ -61,6 +64,7 @@ type Params struct {
 type engine struct {
 	roleRepo      repositories.RoleRepository
 	rbacRepo      repositories.RBACRepository
+	iamRepo       repositories.IAMRepository
 	apiKeyRepo    repositories.APIKeyRepository
 	cacheRepo     repositories.PermissionCacheRepository
 	userRepo      repositories.UserRepository
@@ -74,6 +78,7 @@ func NewEngine(p Params) services.PermissionEngine {
 	return &engine{
 		roleRepo:      p.RoleRepository,
 		rbacRepo:      p.RBACRepository,
+		iamRepo:       p.IAMRepository,
 		apiKeyRepo:    p.APIKeyRepository,
 		cacheRepo:     p.PermissionCacheRepo,
 		userRepo:      p.UserRepository,
@@ -106,15 +111,16 @@ func (e *engine) Check(
 		return nil, err
 	}
 
-	return e.checkUserPermission(log, start, load, req), nil
+	return e.checkUserPermission(ctx, log, start, load, req)
 }
 
 func (e *engine) checkUserPermission(
+	ctx context.Context,
 	log *zap.Logger,
 	start time.Time,
 	load permissionLoadResult,
 	req *services.PermissionCheckRequest,
-) *services.PermissionCheckResult {
+) (*services.PermissionCheckResult, error) {
 	perms := load.perms
 	effectiveResource := e.registry.GetEffectiveResource(req.Resource)
 
@@ -126,11 +132,11 @@ func (e *engine) checkUserPermission(
 			load:   load,
 			req:    req,
 			reason: "no_permission",
-		})
+		}), nil
 	}
 
 	if slices.Contains(resourcePerms.Operations, string(req.Operation)) {
-		return e.permissionResult(&permissionResultRequest{
+		result := e.permissionResult(&permissionResultRequest{
 			log:       log,
 			start:     start,
 			load:      load,
@@ -139,6 +145,10 @@ func (e *engine) checkUserPermission(
 			reason:    "allowed",
 			dataScope: permission.DataScope(resourcePerms.DataScope),
 		})
+		if !result.Allowed {
+			return result, nil
+		}
+		return e.applyAccessPolicies(ctx, req, result)
 	}
 
 	return e.permissionResult(&permissionResultRequest{
@@ -147,7 +157,130 @@ func (e *engine) checkUserPermission(
 		load:   load,
 		req:    req,
 		reason: "no_permission",
+	}), nil
+}
+
+func (e *engine) applyAccessPolicies(
+	ctx context.Context,
+	req *services.PermissionCheckRequest,
+	result *services.PermissionCheckResult,
+) (*services.PermissionCheckResult, error) {
+	if e.iamRepo == nil {
+		return result, nil
+	}
+
+	policies, err := e.iamRepo.ListEnabledAccessPolicies(ctx, repositories.IAMPolicyLookupRequest{
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		Resource:       e.registry.GetEffectiveResource(req.Resource),
+		Operation:      req.Operation,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	decision := evaluateAccessPolicies(policies, req)
+	if decision == "" || decision == iam.PolicyEffectAllow {
+		return result, nil
+	}
+
+	result.Allowed = false
+	result.Reason = "iam_policy_denied"
+	return result, nil
+}
+
+func evaluateAccessPolicies(
+	policies []*iam.AccessPolicy,
+	req *services.PermissionCheckRequest,
+) iam.PolicyEffect {
+	var currentPriority int
+	var hasPriority bool
+	var matchedAllow bool
+
+	for _, policy := range policies {
+		if !accessPolicyMatches(policy, req) {
+			continue
+		}
+		if hasPriority && policy.Priority != currentPriority {
+			if matchedAllow {
+				return iam.PolicyEffectAllow
+			}
+			continue
+		}
+		if !hasPriority {
+			hasPriority = true
+			currentPriority = policy.Priority
+		}
+		if policy.Effect == iam.PolicyEffectDeny {
+			return iam.PolicyEffectDeny
+		}
+		if policy.Effect == iam.PolicyEffectAllow {
+			matchedAllow = true
+		}
+	}
+
+	if matchedAllow {
+		return iam.PolicyEffectAllow
+	}
+	return ""
+}
+
+func accessPolicyMatches(policy *iam.AccessPolicy, req *services.PermissionCheckRequest) bool {
+	if policy == nil || len(policy.Conditions) == 0 {
+		return true
+	}
+
+	for key, expected := range policy.Conditions {
+		if !accessPolicyConditionMatches(key, expected, req) {
+			return false
+		}
+	}
+	return true
+}
+
+func accessPolicyConditionMatches(
+	key string,
+	expected string,
+	req *services.PermissionCheckRequest,
+) bool {
+	normalizedKey := strings.TrimSpace(key)
+	normalizedExpected := strings.TrimSpace(expected)
+
+	switch normalizedKey {
+	case "principalType":
+		return string(req.PrincipalType) == normalizedExpected
+	case "userId":
+		return req.UserID.String() == normalizedExpected
+	case "businessUnitId":
+		return req.BusinessUnitID.String() == normalizedExpected
+	case "organizationId":
+		return req.OrganizationID.String() == normalizedExpected
+	case "resourceId":
+		return req.ResourceID != nil && req.ResourceID.String() == normalizedExpected
+	case "ownerId":
+		return req.ResourceAttributes.OwnerID.String() == normalizedExpected
+	case "activeRoleId":
+		return slices.Contains(req.ContextAttributes.ActiveRoleIDs, pulid.ID(normalizedExpected))
+	case "riskDecision":
+		return strings.EqualFold(req.ContextAttributes.RiskDecision, normalizedExpected)
+	case "mfaRequired":
+		return !strings.EqualFold(normalizedExpected, "true") ||
+			req.ContextAttributes.MFAAuthenticatedAt > 0
+	case "authenticatorAalMin":
+		return intConditionAtLeast(req.ContextAttributes.AuthenticatorAAL, normalizedExpected)
+	case "federationFalMin":
+		return intConditionAtLeast(req.ContextAttributes.FederationFAL, normalizedExpected)
+	default:
+		return false
+	}
+}
+
+func intConditionAtLeast(actual int, expected string) bool {
+	var expectedValue int
+	if _, err := fmt.Sscanf(expected, "%d", &expectedValue); err != nil {
+		return false
+	}
+	return actual >= expectedValue
 }
 
 func (e *engine) permissionResult(p *permissionResultRequest) *services.PermissionCheckResult {

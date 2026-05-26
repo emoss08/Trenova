@@ -25,8 +25,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { BillingUsageTab } from "./billing-usage-tab";
-import { MicrosoftSSOCard } from "./microsoft-sso-card";
-import { OktaSSOCard } from "./okta-sso-card";
+import { SecurityAccessWorkspace } from "./security-access-workspace";
 
 const tabValues = ["general", "security", "billing-usage"] as const;
 const emptyOrganizationDefaults: OrganizationSettings = {
@@ -173,9 +172,8 @@ export default function OrganizationSettingsForm() {
           </Form>
         </FormProvider>
       </TabsContent>
-      <TabsContent value="security" className="space-y-4">
-        <MicrosoftSSOCard organizationId={organizationId} />
-        <OktaSSOCard organizationId={organizationId} />
+      <TabsContent value="security">
+        <SecurityAccessWorkspace organizationId={organizationId} />
       </TabsContent>
       <TabsContent value="billing-usage" className="pb-10">
         <BillingUsageTab />

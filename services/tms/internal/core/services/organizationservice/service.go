@@ -357,7 +357,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 		return nil, errortypes.NewValidationError(
 			"config",
 			errortypes.ErrRequired,
-			"Microsoft SSO configuration is required",
+			"Microsoft Entra ID SSO configuration is required",
 		)
 	}
 
@@ -397,7 +397,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	if clientSecret != "" {
 		clientSecret, err = s.enc.EncryptString(clientSecret)
 		if err != nil {
-			return nil, errortypes.NewBusinessError("Failed to encrypt Microsoft client secret").
+			return nil, errortypes.NewBusinessError("Failed to encrypt Entra ID client secret").
 				WithInternal(err)
 		}
 	}
