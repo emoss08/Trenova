@@ -40,6 +40,10 @@ func (r *repository) filterQuery(
 	req *repositories.ListRolesRequest,
 ) *bun.SelectQuery {
 	q = querybuilder.ApplyFilters(q, "r", req.Filter, (*permission.Role)(nil))
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("r.organization_id = ?", req.Filter.TenantInfo.OrgID).
+			Where("r.business_unit_id = ?", req.Filter.TenantInfo.BuID)
+	})
 
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
@@ -212,6 +216,7 @@ func (r *repository) GetUserRoleAssignments(
 	err := r.db.DB().
 		NewSelect().
 		Model(&assignments).
+		Relation("Role").
 		Where("ura.user_id = ?", userID).
 		Where("ura.organization_id = ?", orgID).
 		Scan(ctx)

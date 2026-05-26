@@ -25,13 +25,14 @@ import type { HazardousMaterial } from "@/types/hazardous-material";
 import type { Location } from "@/types/location";
 import type { LocationCategory } from "@/types/location-category";
 import type { OrganizationSelectOption } from "@/types/organization";
+import type { Role } from "@/types/role";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
 import type { Tractor } from "@/types/tractor";
 import type { Trailer } from "@/types/trailer";
 import type { UsState } from "@/types/us-state";
-import type { User, UserRoleAssignment } from "@/types/user";
+import type { User } from "@/types/user";
 import type { Worker } from "@/types/worker";
 import type { ReactNode } from "react";
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
@@ -150,17 +151,14 @@ function EDIOptionStack({ primary, secondary }: { primary: ReactNode; secondary?
 
 export function RoleAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseMultiSelectAutocompleteFieldProps<UserRoleAssignment, T>) {
+}: BaseMultiSelectAutocompleteFieldProps<Role, T>) {
   return (
-    <MultiSelectAutocompleteField<UserRoleAssignment, T>
-      link="/role-assignments/select-options/"
+    <MultiSelectAutocompleteField<Role, T>
+      link="/roles/select-options/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.role?.name || ""}
-      renderOption={(option) => option.role?.name || ""}
-      getOptionLabel={(option) => option.role?.name || ""}
-      extraSearchParams={{
-        expandRoles: "true",
-      }}
+      getDisplayValue={(option) => option.name || ""}
+      renderOption={(option) => option.name || ""}
+      getOptionLabel={(option) => option.name || ""}
       {...props}
     />
   );

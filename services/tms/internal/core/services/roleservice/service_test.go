@@ -312,6 +312,50 @@ func TestAssignRole_Success(t *testing.T) {
 	deps.permEngine.AssertExpectations(t)
 }
 
+func TestAssignRole_DuplicateActiveAssignment_Fails(t *testing.T) {
+	t.Parallel()
+
+	deps := setupTestService(t)
+	ctx := t.Context()
+	actorID := pulid.MustNew("usr_")
+	targetUserID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	assignment := &permission.UserRoleAssignment{
+		UserID: targetUserID,
+		RoleID: roleID,
+	}
+
+	deps.roleRepo.On("GetByID", ctx, repositories.GetRoleByIDRequest{
+		ID:         roleID,
+		TenantInfo: pagination.TenantInfo{OrgID: orgID},
+	}).Return(&permission.Role{
+		ID:          roleID,
+		IsOrgAdmin:  false,
+		Permissions: []*permission.ResourcePermission{},
+	}, nil)
+	deps.userRepo.On("IsPlatformAdmin", ctx, actorID).Return(true, nil)
+	deps.roleRepo.On("GetUserRoleAssignments", ctx, targetUserID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{
+				UserID: targetUserID,
+				RoleID: roleID,
+			},
+		}, nil)
+
+	err := deps.svc.AssignRole(ctx, AssignRoleRequest{
+		ActorID:        actorID,
+		OrganizationID: orgID,
+		Assignment:     assignment,
+	})
+
+	require.ErrorIs(t, err, ErrRoleAlreadyAssigned)
+
+	deps.roleRepo.AssertExpectations(t)
+	deps.userRepo.AssertExpectations(t)
+}
+
 func TestAssignRole_OrgAdmin_NotPlatformAdmin_NotOrgAdmin_Fails(t *testing.T) {
 	t.Parallel()
 

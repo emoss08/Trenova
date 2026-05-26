@@ -23,21 +23,22 @@ import type { Role, UserRoleAssignment } from "@/types/role";
 import { TimeFormat } from "@/types/user";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type UserRolesEditorProps = {
   userId: string;
+  isDisabled?: boolean;
 };
 
-export function UserRolesEditor({ userId }: UserRolesEditorProps) {
+export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorProps) {
   const queryClient = useQueryClient();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["user-role-assignments", userId],
-    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments`),
+    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments/`),
     select: (response) => response,
   });
 
@@ -75,7 +76,13 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Assigned Roles</h3>
-        <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setAddDialogOpen(true)}
+          disabled={isDisabled}
+        >
           <PlusIcon className="mr-1 size-3.5" />
           Assign Role
         </Button>
@@ -91,6 +98,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
             <RoleAssignmentRow
               key={assignment.id}
               assignment={assignment}
+              isDisabled={isDisabled}
               onUnassign={() => handleUnassign(assignment.id!)}
             />
           ))}
@@ -104,6 +112,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
         existingRoleIds={roleAssignments.map((a) => a.roleId)}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
+        isDisabled={isDisabled}
       />
     </div>
   );
@@ -111,10 +120,11 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
 
 type RoleAssignmentRowProps = {
   assignment: UserRoleAssignment;
+  isDisabled: boolean;
   onUnassign: () => void;
 };
 
-function RoleAssignmentRow({ assignment, onUnassign }: RoleAssignmentRowProps) {
+function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmentRowProps) {
   const role = assignment.role;
 
   const expiresText = assignment.expiresAt
@@ -151,6 +161,7 @@ function RoleAssignmentRow({ assignment, onUnassign }: RoleAssignmentRowProps) {
           variant="ghost"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={onUnassign}
+          disabled={isDisabled}
         >
           <TrashIcon className="size-4" />
         </Button>
@@ -166,6 +177,7 @@ type AssignRoleDialogProps = {
   existingRoleIds: string[];
   isSubmitting: boolean;
   setIsSubmitting: (submitting: boolean) => void;
+  isDisabled: boolean;
 };
 
 function AssignRoleDialog({
@@ -175,6 +187,7 @@ function AssignRoleDialog({
   existingRoleIds,
   isSubmitting,
   setIsSubmitting,
+  isDisabled,
 }: AssignRoleDialogProps) {
   const queryClient = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState<string>("");
@@ -182,16 +195,40 @@ function AssignRoleDialog({
 
   const { data: rolesResponse } = useQuery({
     queryKey: ["roles-for-assignment"],
-    queryFn: () => listRoles({ includeSystem: true }),
+    queryFn: () => listRoles({ includeSystem: true, limit: 100 }),
     enabled: open,
   });
 
-  const availableRoles = (rolesResponse?.results ?? []).filter(
-    (role: Role) => !existingRoleIds.includes(role.id!),
+  const availableRoles = useMemo(() => {
+    const rolesByID = new Map<string, Role>();
+    for (const role of rolesResponse?.results ?? []) {
+      if (role.id && !existingRoleIds.includes(role.id)) {
+        rolesByID.set(role.id, role);
+      }
+    }
+
+    return Array.from(rolesByID.values());
+  }, [existingRoleIds, rolesResponse?.results]);
+
+  useEffect(() => {
+    if (selectedRoleId && !availableRoles.some((role) => role.id === selectedRoleId)) {
+      setSelectedRoleId("");
+    }
+  }, [availableRoles, selectedRoleId]);
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      onOpenChange(nextOpen);
+      if (!nextOpen) {
+        setSelectedRoleId("");
+        setExpiresAt("");
+      }
+    },
+    [onOpenChange],
   );
 
   const handleSubmit = async () => {
-    if (!selectedRoleId) {
+    if (!selectedRoleId || isDisabled) {
       toast.error("Please select a role");
       return;
     }
@@ -208,7 +245,7 @@ function AssignRoleDialog({
           queryKey: ["user-role-assignments", userId],
         });
         toast.success("Role assigned");
-        onOpenChange(false);
+        handleOpenChange(false);
         setSelectedRoleId("");
         setExpiresAt("");
       })
@@ -221,7 +258,7 @@ function AssignRoleDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Assign Role</DialogTitle>
@@ -232,9 +269,10 @@ function AssignRoleDialog({
             <Select
               value={selectedRoleId}
               onValueChange={(value) => setSelectedRoleId(value ?? "")}
+              disabled={isDisabled || availableRoles.length === 0}
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
                 {availableRoles.map((role: Role) => (
@@ -251,6 +289,11 @@ function AssignRoleDialog({
                 ))}
               </SelectContent>
             </Select>
+            {availableRoles.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                Every available role is already assigned.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -259,15 +302,20 @@ function AssignRoleDialog({
               type="datetime-local"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
+              disabled={isDisabled}
             />
             <p className="text-xs text-muted-foreground">Leave empty for permanent assignment</p>
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !selectedRoleId}>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isDisabled || isSubmitting || !selectedRoleId}
+          >
             Assign Role
           </Button>
         </DialogFooter>

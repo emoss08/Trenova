@@ -23,6 +23,7 @@ var (
 	ErrCannotModifySystemRole = errors.New("system roles cannot be modified")
 	ErrCannotDeleteSystemRole = errors.New("system roles cannot be deleted")
 	ErrCircularInheritance    = errors.New("role inheritance would create a cycle")
+	ErrRoleAlreadyAssigned    = errors.New("role is already assigned to this user")
 )
 
 type Params struct {
@@ -371,9 +372,13 @@ func (s *Service) validateStaticSeparationOfDutyForAssignment(
 
 	roleIDs := make([]pulid.ID, 0, len(existingAssignments)+1)
 	for _, assignment := range existingAssignments {
-		if !assignment.IsExpired() {
-			roleIDs = append(roleIDs, assignment.RoleID)
+		if assignment.IsExpired() {
+			continue
 		}
+		if assignment.RoleID == req.Assignment.RoleID {
+			return ErrRoleAlreadyAssigned
+		}
+		roleIDs = append(roleIDs, assignment.RoleID)
 	}
 	roleIDs = append(roleIDs, req.Assignment.RoleID)
 

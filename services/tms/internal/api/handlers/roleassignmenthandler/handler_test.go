@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/roleassignmenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -57,7 +58,9 @@ func TestRoleAssignmentHandler_List_Success(t *testing.T) {
 
 	assignmentID := pulid.MustNew("ura_")
 	repo := mocks.NewMockRoleAssignmentRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRoleAssignmentsRequest) bool {
+		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID
+	})).
 		Return(&pagination.ListResult[*permission.UserRoleAssignment]{
 			Items: []*permission.UserRoleAssignment{
 				{
@@ -92,7 +95,9 @@ func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockRoleAssignmentRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListRoleAssignmentsRequest) bool {
+		return req.Filter.TenantInfo.OrgID == testutil.TestOrgID
+	})).
 		Return(&pagination.ListResult[*permission.UserRoleAssignment]{
 			Items: []*permission.UserRoleAssignment{},
 			Total: 30,

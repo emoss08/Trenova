@@ -14,6 +14,7 @@ import { Loader2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
+import { UserRolesEditor } from "./user-roles-editor";
 
 export function UserForm({
   isEdit,
@@ -100,15 +101,19 @@ export function UserForm({
           description="User will be prompted to set a new password after signing in"
         />
       </FormControl>
-      <FormControl>
-        <RoleAutocompleteField
-          control={control}
-          name="assignments"
-          label="Roles"
-          description="System access permissions and privileges"
-          placeholder="Select roles"
-        />
-      </FormControl>
+      {isEdit && editUserId ? (
+        <UserRolesEditor userId={editUserId} isDisabled={Boolean(isDisabled)} />
+      ) : (
+        <FormControl>
+          <RoleAutocompleteField
+            control={control}
+            name="assignments"
+            label="Roles"
+            description="System access permissions and privileges"
+            placeholder="Select roles"
+          />
+        </FormControl>
+      )}
       {isEdit && editUserId && (
         <OrganizationMembershipSection userId={editUserId} isDisabled={Boolean(isDisabled)} />
       )}
