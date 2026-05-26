@@ -1,12 +1,7 @@
 import type { FieldFilter } from "@/types/data-table";
 import { shipmentStatusSchema, type ShipmentStatus } from "@/types/shipment";
 
-export type SavedViewId =
-  | "all"
-  | "transit"
-  | "at-risk"
-  | "unassigned"
-  | "delivering-today";
+export type SavedViewId = "all" | "transit" | "at-risk" | "unassigned" | "delivering-today";
 
 export type ChipFilterId = "at-risk" | "reefer" | "today";
 
@@ -34,11 +29,9 @@ export const CHIP_FILTERS: readonly { id: ChipFilterId; label: string }[] = [
 const STATUS_FIELD = "status";
 const STATUS_FIELD_IN: FieldFilter["operator"] = "in";
 const SHIPMENT_TYPE_CODE_FIELD = "shipmentType.code";
-const DEST_SCHEDULED_FIELD = "destinationPickup.scheduledWindowStart";
+const DELIVERY_APPOINTMENT_FIELD = "deliveryAppointment.scheduledWindowStart";
 
 const startOfTodaySeconds = () => Math.floor(new Date().setHours(0, 0, 0, 0) / 1000);
-const startOfTomorrowSeconds = () =>
-  Math.floor(new Date().setHours(24, 0, 0, 0) / 1000);
 
 const statusInFilter = (statuses: ShipmentStatus[]): FieldFilter => ({
   field: STATUS_FIELD,
@@ -47,9 +40,9 @@ const statusInFilter = (statuses: ShipmentStatus[]): FieldFilter => ({
 });
 
 const todayDeliveryFilter = (): FieldFilter => ({
-  field: DEST_SCHEDULED_FIELD,
+  field: DELIVERY_APPOINTMENT_FIELD,
   operator: "daterange",
-  value: [startOfTodaySeconds(), startOfTomorrowSeconds()],
+  value: { from: startOfTodaySeconds(), to: startOfTodaySeconds() },
 });
 
 const reeferFilter = (): FieldFilter => ({
@@ -96,10 +89,7 @@ export function getFiltersForChips(chips: ChipFilterId[]): FieldFilter[] {
   return filters;
 }
 
-export function getMandatoryFieldFilters(
-  view: SavedViewId,
-  chips: ChipFilterId[],
-): FieldFilter[] {
+export function getMandatoryFieldFilters(view: SavedViewId, chips: ChipFilterId[]): FieldFilter[] {
   const merged = [...getFiltersForView(view), ...getFiltersForChips(chips)];
   // Dedupe field+operator+value triples to keep the URL/payload tidy when a
   // chip overlaps with the saved view (e.g., both add status=Delayed).

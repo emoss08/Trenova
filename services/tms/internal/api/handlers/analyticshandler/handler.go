@@ -18,6 +18,7 @@ const (
 	maxAnalyticsWindowDays     = 90
 	includeLaneHeatmap         = "laneHeatmap"
 	includeTomorrowsPickups    = "tomorrowsPickups"
+	includeSavedViewCounts     = "savedViewCounts"
 )
 
 type Params struct {
@@ -126,8 +127,8 @@ func validateAnalyticsRequest(req *services.AnaltyicsRequest) error {
 		),
 		validation.Field(
 			&req.Include,
-			validation.In("", includeLaneHeatmap, includeTomorrowsPickups).
-				Error("Include must be laneHeatmap or tomorrowsPickups when provided"),
+			validation.In("", includeLaneHeatmap, includeTomorrowsPickups, includeSavedViewCounts).
+				Error("Include must be laneHeatmap, tomorrowsPickups, or savedViewCounts when provided"),
 		),
 		validation.Field(
 			&req.Offset,

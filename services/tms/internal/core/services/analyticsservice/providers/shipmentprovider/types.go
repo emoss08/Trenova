@@ -125,3 +125,11 @@ type LaneHeatmapCard struct {
 	Cells      []*LaneHeatmapCell `json:"cells"`
 	Total      int                `json:"total"`
 }
+
+type SavedViewCounts struct {
+	All             int `json:"all"              bun:"all"`
+	Transit         int `json:"transit"          bun:"transit"`
+	AtRisk          int `json:"at-risk"          bun:"at_risk"`
+	Unassigned      int `json:"unassigned"       bun:"unassigned"`
+	DeliveringToday int `json:"delivering-today" bun:"delivering_today"`
+}

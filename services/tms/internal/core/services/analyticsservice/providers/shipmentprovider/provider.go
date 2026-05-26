@@ -24,6 +24,7 @@ var _ services.AnalyticsPageProvider = (*Provider)(nil)
 
 const laneHeatmapInclude = "laneHeatmap"
 const tomorrowsPickupsInclude = "tomorrowsPickups"
+const savedViewCountsInclude = "savedViewCounts"
 const defaultLaneHeatmapWindowDays = 7
 const customerMixWindowDays = 30
 const defaultTomorrowsPickupsLimit = 20
@@ -76,6 +77,7 @@ type hourlyMetricRow struct {
 
 type analyticsWindow struct {
 	TodayStart     int64
+	TomorrowStart  int64
 	Now            int64
 	YesterdayStart int64
 	YesterdayEnd   int64
@@ -125,6 +127,19 @@ func (p *Provider) GetAnalyticsData(
 
 		return services.AnalyticsData{
 			"tomorrowsPickups": tomorrowsPickups,
+		}, nil
+	}
+
+	if opts.Include == savedViewCountsInclude {
+		counts, err := p.getSavedViewCounts(ctx, opts.OrgID, opts.BuID, tz)
+		if err != nil {
+			log.Error("failed to get saved view counts", zap.Error(err))
+			return nil, err
+		}
+
+		return services.AnalyticsData{
+			"savedViewCounts": counts,
+			"page":            string(services.ShipmentAnalyticsPage),
 		}, nil
 	}
 
@@ -988,6 +1003,101 @@ func (p *Provider) getTomorrowsPickups( //nolint:funlen // legacy workflow
 	return buildTomorrowsPickupsCard(tomorrowStart, rows), nil
 }
 
+func (p *Provider) getSavedViewCounts(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	tz string,
+) (*SavedViewCounts, error) {
+	window, err := shipmentAnalyticsWindow(tz)
+	if err != nil {
+		return nil, fmt.Errorf("load timezone %q: %w", tz, err)
+	}
+
+	counts := new(SavedViewCounts)
+	err = p.db.DB().NewRaw(
+		`SELECT
+			COUNT(*) FILTER (
+				WHERE sp.organization_id = ? AND sp.business_unit_id = ?
+			)::int AS "all",
+			COUNT(*) FILTER (
+				WHERE sp.organization_id = ? AND sp.business_unit_id = ? AND sp.status = ?
+			)::int AS transit,
+			COUNT(*) FILTER (
+				WHERE sp.organization_id = ? AND sp.business_unit_id = ? AND sp.status = ?
+			)::int AS at_risk,
+			COUNT(*) FILTER (
+				WHERE sp.organization_id = ? AND sp.business_unit_id = ? AND sp.status IN (?)
+			)::int AS unassigned,
+			COUNT(*) FILTER (
+				WHERE sp.organization_id = ?
+					AND sp.business_unit_id = ?
+					AND EXISTS (
+						SELECT 1
+						FROM shipment_moves sm
+						INNER JOIN stops stp
+							ON stp.shipment_move_id = sm.id
+							AND stp.organization_id = sm.organization_id
+							AND stp.business_unit_id = sm.business_unit_id
+						WHERE sm.shipment_id = sp.id
+							AND sm.organization_id = sp.organization_id
+							AND sm.business_unit_id = sp.business_unit_id
+							AND sm.organization_id = ?
+							AND sm.business_unit_id = ?
+							AND stp.organization_id = ?
+							AND stp.business_unit_id = ?
+							AND sm.sequence = (
+								SELECT MAX(sm2.sequence)
+								FROM shipment_moves sm2
+								WHERE sm2.shipment_id = sp.id
+									AND sm2.organization_id = sp.organization_id
+									AND sm2.business_unit_id = sp.business_unit_id
+							)
+							AND stp.type IN (?)
+							AND stp.schedule_type = ?
+							AND stp.scheduled_window_start >= ?
+							AND stp.scheduled_window_start < ?
+					)
+			)::int AS delivering_today
+		FROM shipments sp
+		WHERE sp.organization_id = ?
+			AND sp.business_unit_id = ?`,
+		orgID,
+		buID,
+		orgID,
+		buID,
+		shipment.StatusInTransit,
+		orgID,
+		buID,
+		shipment.StatusDelayed,
+		orgID,
+		buID,
+		bun.List([]shipment.Status{
+			shipment.StatusNew,
+			shipment.StatusPartiallyAssigned,
+		}),
+		orgID,
+		buID,
+		orgID,
+		buID,
+		orgID,
+		buID,
+		bun.List([]shipment.StopType{
+			shipment.StopTypeDelivery,
+			shipment.StopTypeSplitDelivery,
+		}),
+		shipment.StopScheduleTypeAppointment,
+		window.TodayStart,
+		window.TomorrowStart,
+		orgID,
+		buID,
+	).Scan(ctx, counts)
+	if err != nil {
+		return nil, err
+	}
+
+	return counts, nil
+}
+
 func (p *Provider) getLaneHeatmap(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -1223,6 +1333,7 @@ func shipmentAnalyticsWindow(tz string) (analyticsWindow, error) {
 
 	return analyticsWindow{
 		TodayStart:     todayStart.Unix(),
+		TomorrowStart:  todayStart.AddDate(0, 0, 1).Unix(),
 		Now:            now.Unix(),
 		YesterdayStart: yesterdayStart.Unix(),
 		YesterdayEnd:   yesterdayStart.Add(elapsed).Unix(),

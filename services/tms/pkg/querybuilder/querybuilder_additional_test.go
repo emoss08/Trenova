@@ -599,6 +599,62 @@ func TestQueryBuilder_ResolveShipmentDestinationLocationUsesLastMoveAndStop(t *t
 	assert.NotContains(t, sql, `stop_dest.type`)
 }
 
+func TestQueryBuilder_ResolveShipmentAppointmentRelationships(t *testing.T) {
+	t.Parallel()
+
+	ClearCaches()
+
+	db := newAdditionalTestDB()
+	entity := &shipment.Shipment{}
+	config := entity.GetPostgresSearchConfig()
+
+	query := db.NewSelect().Model((*shipment.Shipment)(nil)).ModelTableExpr("shipments AS sp")
+	qb := &QueryBuilder{
+		query:        query,
+		tableAlias:   "sp",
+		searchConfig: &config,
+		entity:       entity,
+		appliedJoins: make(map[string]bool),
+	}
+
+	pickupSQLField, pickupJoinDefs := qb.resolveNestedField("pickupAppointment.scheduledWindowStart")
+	assert.Equal(t, "pickup_appt.scheduled_window_start", pickupSQLField)
+	require.Len(t, pickupJoinDefs, 2)
+	assert.Equal(t, "sm_pickup_appt", pickupJoinDefs[0].Alias)
+	assert.Contains(t, pickupJoinDefs[0].Condition, "SELECT MIN(sm2.sequence)")
+	assert.Equal(t, "pickup_appt", pickupJoinDefs[1].Alias)
+	assert.Contains(t, pickupJoinDefs[1].Condition, "pickup_appt.type IN ('Pickup', 'SplitPickup')")
+	assert.Contains(t, pickupJoinDefs[1].Condition, "pickup_appt.schedule_type = 'Appointment'")
+	assert.Contains(t, pickupJoinDefs[1].Condition, "SELECT MIN(stp2.sequence)")
+
+	deliverySQLField, deliveryJoinDefs := qb.resolveNestedField("deliveryAppointment.scheduledWindowStart")
+	assert.Equal(t, "delivery_appt.scheduled_window_start", deliverySQLField)
+	require.Len(t, deliveryJoinDefs, 2)
+	assert.Equal(t, "sm_delivery_appt", deliveryJoinDefs[0].Alias)
+	assert.Contains(t, deliveryJoinDefs[0].Condition, "SELECT MAX(sm2.sequence)")
+	assert.Equal(t, "delivery_appt", deliveryJoinDefs[1].Alias)
+	assert.Contains(t, deliveryJoinDefs[1].Condition, "delivery_appt.type IN ('Delivery', 'SplitDelivery')")
+	assert.Contains(t, deliveryJoinDefs[1].Condition, "delivery_appt.schedule_type = 'Appointment'")
+	assert.Contains(t, deliveryJoinDefs[1].Condition, "SELECT MAX(stp2.sequence)")
+
+	fieldConfig := GetFieldConfiguration(entity)
+	assert.True(t, fieldConfig.FilterableFields["pickup_appointment.scheduledWindowStart"])
+	assert.True(t, fieldConfig.SortableFields["pickup_appointment.scheduledWindowStart"])
+	assert.True(t, fieldConfig.FilterableFields["delivery_appointment.scheduledWindowStart"])
+	assert.True(t, fieldConfig.SortableFields["delivery_appointment.scheduledWindowStart"])
+
+	sortQuery := db.NewSelect().Model((*shipment.Shipment)(nil)).ModelTableExpr("shipments AS sp")
+	sortQB := NewWithPostgresSearch(sortQuery, "sp", fieldConfig, entity).WithTraversalSupport(true)
+	sortQB.ApplySort([]domaintypes.SortField{
+		{Field: "deliveryAppointment.scheduledWindowStart", Direction: dbtype.SortDirectionDesc},
+	})
+
+	sql := sortQB.GetQuery().String()
+	assert.Contains(t, sql, `LEFT JOIN shipment_moves AS sm_delivery_appt`)
+	assert.Contains(t, sql, `LEFT JOIN stops AS delivery_appt`)
+	assert.Contains(t, sql, `ORDER BY "delivery_appt"."scheduled_window_start" DESC`)
+}
+
 func TestQueryBuilder_ResolveBelongsToRelationship(t *testing.T) {
 	t.Parallel()
 

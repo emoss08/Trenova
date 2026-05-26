@@ -135,6 +135,44 @@ func TestGetAnalyticsData_ReturnsSupportedShipmentKPIsOnly(t *testing.T) {
 	require.NoError(t, mockDB.ExpectationsWereMet())
 }
 
+func TestGetAnalyticsData_ReturnsSavedViewCountsInclude(t *testing.T) {
+	t.Parallel()
+
+	provider, mockDB, _ := newTestProvider(t)
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+
+	mockDB.ExpectQuery(`(?s)SELECT\s+COUNT\(\*\) FILTER \(\s+WHERE sp\.organization_id = .*sp\.business_unit_id = .*\)::int AS "all".*COUNT\(\*\) FILTER \(\s+WHERE sp\.organization_id = .*sp\.business_unit_id = .*sp\.status = .*\)::int AS transit.*COUNT\(\*\) FILTER \(\s+WHERE sp\.organization_id = .*sp\.business_unit_id = .*sp\.status = .*\)::int AS at_risk.*COUNT\(\*\) FILTER \(\s+WHERE sp\.organization_id = .*sp\.business_unit_id = .*sp\.status IN .*\)::int AS unassigned.*EXISTS \(\s+SELECT 1\s+FROM shipment_moves sm\s+INNER JOIN stops stp.*AND sm\.sequence = \(\s+SELECT MAX\(sm2\.sequence\).*AND stp\.type IN .*AND stp\.schedule_type = .*AND stp\.scheduled_window_start >= .*AND stp\.scheduled_window_start < .*\)::int AS delivering_today\s+FROM shipments sp\s+WHERE sp\.organization_id = .*AND sp\.business_unit_id = .*`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"all",
+			"transit",
+			"at_risk",
+			"unassigned",
+			"delivering_today",
+		}).AddRow(11, 4, 2, 3, 5))
+
+	data, err := provider.GetAnalyticsData(t.Context(), &services.AnalyticsRequestOptions{
+		OrgID:    orgID,
+		BuID:     buID,
+		Timezone: "America/New_York",
+		Include:  savedViewCountsInclude,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, data, 2)
+	assert.Equal(t, string(services.ShipmentAnalyticsPage), data["page"])
+	counts, ok := data["savedViewCounts"].(*SavedViewCounts)
+	require.True(t, ok)
+	assert.Equal(t, &SavedViewCounts{
+		All:             11,
+		Transit:         4,
+		AtRisk:          2,
+		Unassigned:      3,
+		DeliveringToday: 5,
+	}, counts)
+	require.NoError(t, mockDB.ExpectationsWereMet())
+}
+
 func newTestProvider(t *testing.T) (*Provider, sqlmock.Sqlmock, *mocks.MockDispatchControlRepository) {
 	t.Helper()
 

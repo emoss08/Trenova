@@ -1,8 +1,10 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
+import { formatToUserTimezone } from "@/lib/date";
 import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
+import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { Customer } from "@/types/customer";
 import type { RowAction } from "@/types/data-table";
-import type { Shipment } from "@/types/shipment";
+import type { Shipment, Stop } from "@/types/shipment";
 import { type ColumnDef } from "@tanstack/react-table";
 import { ActionsCell } from "./command-center/cells/actions-cell";
 import { DriverCell } from "./command-center/cells/driver-cell";
@@ -10,6 +12,29 @@ import { EtaCell } from "./command-center/cells/eta-cell";
 import { LaneCell } from "./command-center/cells/lane-cell";
 import { RevenueCell } from "./command-center/cells/revenue-cell";
 import { StatusCell } from "./command-center/cells/status-cell";
+
+function formatAppointment(stop: Stop | null) {
+  const appointment = getAppointmentStop(stop);
+  if (!appointment?.scheduledWindowStart) return "—";
+
+  const start = formatToUserTimezone(appointment.scheduledWindowStart, {
+    showTimeZone: false,
+    showSeconds: false,
+  });
+
+  if (!appointment.scheduledWindowEnd) return start;
+
+  const end = formatToUserTimezone(appointment.scheduledWindowEnd, {
+    showTimeZone: false,
+    showSeconds: false,
+  });
+
+  return `${start} - ${end}`;
+}
+
+function getAppointmentStop(stop: Stop | null) {
+  return stop?.scheduleType === "Appointment" ? stop : null;
+}
 
 export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipment>[] {
   return [
@@ -145,6 +170,49 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       minSize: 140,
       maxSize: 200,
       meta: { label: "ETA", sortable: false, filterable: false },
+    },
+    {
+      id: "pickupAppointment",
+      header: "Pickup Appt",
+      accessorFn: (row) => getAppointmentStop(getOriginStop(row))?.scheduledWindowStart ?? null,
+      cell: ({ row }) => (
+        <span className="font-table text-[11.5px] tabular-nums">
+          {formatAppointment(getOriginStop(row.original))}
+        </span>
+      ),
+      size: 170,
+      minSize: 150,
+      maxSize: 220,
+      meta: {
+        apiField: "pickupAppointment.scheduledWindowStart",
+        label: "Pickup Appointment",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+    },
+    {
+      id: "deliveryAppointment",
+      header: "Delivery Appt",
+      accessorFn: (row) =>
+        getAppointmentStop(getDestinationStop(row))?.scheduledWindowStart ?? null,
+      cell: ({ row }) => (
+        <span className="font-table text-[11.5px] tabular-nums">
+          {formatAppointment(getDestinationStop(row.original))}
+        </span>
+      ),
+      size: 170,
+      minSize: 150,
+      maxSize: 220,
+      meta: {
+        apiField: "deliveryAppointment.scheduledWindowStart",
+        label: "Delivery Appointment",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
     },
     {
       id: "revenue",
