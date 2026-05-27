@@ -117,6 +117,29 @@ func TestValidateUpdate_RejectsDuplicateStopSequencesWithinMove(t *testing.T) {
 	assertErrorField(t, multiErr, "moves[0].stops[1].sequence")
 }
 
+func TestValidateUpdate_RejectsDuplicateMoveSequences(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator(t)
+	entity := validShipmentForValidation()
+	entity.ID = pulid.MustNew("shp_")
+	entity.Version = 1
+	entity.Moves = []*shipment.ShipmentMove{
+		validMove(),
+		validMove(),
+	}
+	entity.Moves[0].ID = pulid.MustNew("sm_")
+	entity.Moves[1].ID = pulid.MustNew("sm_")
+	entity.Moves[0].Sequence = 0
+	entity.Moves[1].Sequence = 0
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assert.True(t, multiErr.HasErrors())
+	assertErrorField(t, multiErr, "moves[1].sequence")
+}
+
 func TestValidateUpdate_AllowsUniqueNestedIDs(t *testing.T) {
 	t.Parallel()
 
@@ -130,6 +153,8 @@ func TestValidateUpdate_AllowsUniqueNestedIDs(t *testing.T) {
 	}
 	entity.Moves[0].ID = pulid.MustNew("sm_")
 	entity.Moves[1].ID = pulid.MustNew("sm_")
+	entity.Moves[0].Sequence = 0
+	entity.Moves[1].Sequence = 1
 	entity.Moves[0].Stops[0].ID = pulid.MustNew("stp_")
 	entity.Moves[0].Stops[1].ID = pulid.MustNew("stp_")
 	entity.Moves[1].Stops[0].ID = pulid.MustNew("stp_")

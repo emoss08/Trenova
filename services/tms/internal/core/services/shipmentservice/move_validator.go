@@ -11,12 +11,13 @@ import (
 )
 
 type moveRuleContext struct {
-	moveIndex   int
-	move        *shipment.ShipmentMove
-	shipmentID  pulid.ID
-	isCreate    bool
-	seenMoveIDs map[pulid.ID]int
-	multiErr    *errortypes.MultiError
+	moveIndex     int
+	move          *shipment.ShipmentMove
+	shipmentID    pulid.ID
+	isCreate      bool
+	seenMoveIDs   map[pulid.ID]int
+	seenSequences map[int64]int
+	multiErr      *errortypes.MultiError
 }
 
 func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipment] {
@@ -32,6 +33,7 @@ func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipm
 			multiErr *errortypes.MultiError,
 		) error {
 			seenMoveIDs := make(map[pulid.ID]int, len(entity.Moves))
+			seenSequences := make(map[int64]int, len(entity.Moves))
 
 			for moveIndex, move := range entity.Moves {
 				if move == nil {
@@ -39,15 +41,17 @@ func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipm
 				}
 
 				ruleCtx := moveRuleContext{
-					moveIndex:   moveIndex,
-					move:        move,
-					shipmentID:  entity.ID,
-					isCreate:    valCtx.IsCreate(),
-					seenMoveIDs: seenMoveIDs,
-					multiErr:    multiErr,
+					moveIndex:     moveIndex,
+					move:          move,
+					shipmentID:    entity.ID,
+					isCreate:      valCtx.IsCreate(),
+					seenMoveIDs:   seenMoveIDs,
+					seenSequences: seenSequences,
+					multiErr:      multiErr,
 				}
 
 				validateMoveIdentifiers(ruleCtx)
+				validateMoveSequence(ruleCtx)
 				validateMoveStopCount(ruleCtx)
 				validateMoveStopOrder(ruleCtx)
 				validateMoveStopChronology(ruleCtx)
@@ -89,6 +93,19 @@ func validateMoveIdentifiers(ctx moveRuleContext) {
 			"Move shipment ID must match the shipment being updated",
 		)
 	}
+}
+
+func validateMoveSequence(ctx moveRuleContext) {
+	if firstIndex, ok := ctx.seenSequences[ctx.move.Sequence]; ok {
+		ctx.multiErr.Add(
+			moveFieldPath(ctx.moveIndex, "sequence"),
+			errortypes.ErrDuplicate,
+			fmt.Sprintf("Move sequence duplicates moves[%d].sequence", firstIndex),
+		)
+		return
+	}
+
+	ctx.seenSequences[ctx.move.Sequence] = ctx.moveIndex
 }
 
 func validateMoveStopCount(ctx moveRuleContext) {

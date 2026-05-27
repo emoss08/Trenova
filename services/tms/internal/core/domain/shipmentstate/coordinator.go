@@ -55,6 +55,10 @@ func (c *Coordinator) RefreshShipmentStateWithDelayThreshold(
 	delayThresholdMinutes int16,
 ) {
 	c.calculateShipmentTimestamps(entity)
+	if preservesShipmentStatusOnRefresh(entity.Status) {
+		return
+	}
+
 	entity.Status = deriveShipmentStatus(entity, c.now(), delayThresholdMinutes)
 }
 
@@ -118,10 +122,11 @@ func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 				originalStop = moveStops[stop.ID]
 			}
 
+			stopPath := fmt.Sprintf("moves[%d].stops[%d]", moveIndex, stopIndex)
 			stop.Status = c.resolveStopStatus(
 				originalStop,
 				stop,
-				fmt.Sprintf("moves[%d].stops[%d].status", moveIndex, stopIndex),
+				stopPath,
 				multiErr,
 			)
 		}
@@ -147,15 +152,16 @@ func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 func (c *Coordinator) resolveStopStatus(
 	original *shipment.Stop,
 	stop *shipment.Stop,
-	field string,
+	path string,
 	multiErr *errortypes.MultiError,
 ) shipment.StopStatus {
 	requested := stop.Status
 	current := defaultStopStatus(original)
+	statusField := path + ".status"
 
 	if original != nil && original.IsCanceled() && requested != shipment.StopStatusCanceled {
 		multiErr.Add(
-			field,
+			statusField,
 			errortypes.ErrInvalidOperation,
 			"Canceled stop cannot transition to another status",
 		)
@@ -165,7 +171,7 @@ func (c *Coordinator) resolveStopStatus(
 	if requested == shipment.StopStatusCanceled {
 		if !isAllowedStopStatusTransition(current, shipment.StopStatusCanceled) {
 			multiErr.Add(
-				field,
+				statusField,
 				errortypes.ErrInvalidOperation,
 				fmt.Sprintf(
 					"Stop status transition from %s to %s is not allowed",
@@ -183,10 +189,18 @@ func (c *Coordinator) resolveStopStatus(
 		return original.Status
 	}
 
-	switch {
-	case stop.ActualDeparture != nil:
+	if original != nil && original.IsCompleted() {
+		if !c.validateCompletedStopActuals(stop, path, multiErr) {
+			return original.Status
+		}
+
 		return shipment.StopStatusCompleted
-	case stop.ActualArrival != nil:
+	}
+
+	switch {
+	case stop.ActualArrival != nil && stop.ActualDeparture != nil:
+		return shipment.StopStatusCompleted
+	case stop.ActualArrival != nil || stop.ActualDeparture != nil:
 		return shipment.StopStatusInTransit
 	default:
 		return shipment.StopStatusNew
@@ -233,6 +247,18 @@ func (c *Coordinator) resolveMoveStatus(
 	}
 
 	derived := deriveMoveStatus(move)
+	if original != nil && original.IsCompleted() {
+		if derived != shipment.MoveStatusCompleted {
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalidOperation,
+				"Completed move cannot be reopened by a shipment update",
+			)
+		}
+
+		return shipment.MoveStatusCompleted
+	}
+
 	if derived == shipment.MoveStatusAssigned &&
 		!isAllowedMoveStatusTransition(current, shipment.MoveStatusAssigned) {
 		multiErr.Add(
@@ -359,21 +385,144 @@ func (c *Coordinator) calculateShipmentTimestamps(entity *shipment.Shipment) {
 		return
 	}
 
-	firstMove := entity.Moves[0]
-	if firstMove != nil && len(firstMove.Stops) > 0 {
-		firstStop := firstMove.Stops[0]
-		if firstStop != nil && firstStop.IsOriginStop() && firstStop.ActualDeparture != nil {
-			entity.ActualShipDate = firstStop.ActualDeparture
+	firstMove := firstActiveMoveBySequence(entity.Moves)
+	firstStop := firstActiveStopBySequence(firstMove)
+	if firstStop != nil && firstStop.IsOriginStop() && firstStop.ActualDeparture != nil {
+		entity.ActualShipDate = firstStop.ActualDeparture
+	}
+
+	lastMove := lastActiveMoveBySequence(entity.Moves)
+	lastStop := lastActiveStopBySequence(lastMove)
+	if lastStop != nil && lastStop.IsDestinationStop() && lastStop.ActualArrival != nil {
+		entity.ActualDeliveryDate = lastStop.ActualArrival
+	}
+}
+
+func (c *Coordinator) validateCompletedStopActuals(
+	stop *shipment.Stop,
+	path string,
+	multiErr *errortypes.MultiError,
+) bool {
+	valid := true
+	if stop.ActualArrival == nil {
+		multiErr.Add(
+			path+".actualArrival",
+			errortypes.ErrRequired,
+			"Completed stop must keep an actual arrival",
+		)
+		valid = false
+	}
+
+	if stop.ActualDeparture == nil {
+		multiErr.Add(
+			path+".actualDeparture",
+			errortypes.ErrRequired,
+			"Completed stop must keep an actual departure",
+		)
+		valid = false
+	}
+
+	if !valid {
+		return false
+	}
+
+	now := c.now()
+	if *stop.ActualArrival > now {
+		multiErr.Add(
+			path+".actualArrival",
+			errortypes.ErrInvalid,
+			"Actual arrival cannot be in the future",
+		)
+		valid = false
+	}
+
+	if *stop.ActualDeparture > now {
+		multiErr.Add(
+			path+".actualDeparture",
+			errortypes.ErrInvalid,
+			"Actual departure cannot be in the future",
+		)
+		valid = false
+	}
+
+	if *stop.ActualDeparture < *stop.ActualArrival {
+		multiErr.Add(
+			path+".actualDeparture",
+			errortypes.ErrInvalid,
+			"Actual departure must be greater than or equal to actual arrival",
+		)
+		valid = false
+	}
+
+	return valid
+}
+
+func firstActiveMoveBySequence(moves []*shipment.ShipmentMove) *shipment.ShipmentMove {
+	var candidate *shipment.ShipmentMove
+	for _, move := range moves {
+		if move == nil || move.IsCanceled() {
+			continue
+		}
+
+		if candidate == nil || move.Sequence < candidate.Sequence {
+			candidate = move
 		}
 	}
 
-	lastMove := entity.Moves[len(entity.Moves)-1]
-	if lastMove != nil && len(lastMove.Stops) > 0 {
-		lastStop := lastMove.Stops[len(lastMove.Stops)-1]
-		if lastStop != nil && lastStop.IsDestinationStop() && lastStop.ActualArrival != nil {
-			entity.ActualDeliveryDate = lastStop.ActualArrival
+	return candidate
+}
+
+func lastActiveMoveBySequence(moves []*shipment.ShipmentMove) *shipment.ShipmentMove {
+	var candidate *shipment.ShipmentMove
+	for _, move := range moves {
+		if move == nil || move.IsCanceled() {
+			continue
+		}
+
+		if candidate == nil || move.Sequence > candidate.Sequence {
+			candidate = move
 		}
 	}
+
+	return candidate
+}
+
+func firstActiveStopBySequence(move *shipment.ShipmentMove) *shipment.Stop {
+	if move == nil {
+		return nil
+	}
+
+	var candidate *shipment.Stop
+	for _, stop := range move.Stops {
+		if stop == nil || stop.IsCanceled() {
+			continue
+		}
+
+		if candidate == nil || stop.Sequence < candidate.Sequence {
+			candidate = stop
+		}
+	}
+
+	return candidate
+}
+
+func lastActiveStopBySequence(move *shipment.ShipmentMove) *shipment.Stop {
+	if move == nil {
+		return nil
+	}
+
+	var candidate *shipment.Stop
+	for _, stop := range move.Stops {
+		if stop == nil || stop.IsCanceled() {
+			continue
+		}
+
+		if candidate == nil || stop.Sequence > candidate.Sequence {
+			candidate = stop
+		}
+	}
+
+	return candidate
 }
 
 func deriveMoveStatus(move *shipment.ShipmentMove) shipment.MoveStatus {
@@ -507,6 +656,19 @@ func allowsBillingContinuation(status shipment.Status) bool {
 	//nolint:exhaustive // only actionable enum states require explicit handling here
 	switch status {
 	case shipment.StatusReadyToInvoice, shipment.StatusInvoiced:
+		return true
+	default:
+		return false
+	}
+}
+
+func preservesShipmentStatusOnRefresh(status shipment.Status) bool {
+	//nolint:exhaustive // only billing and terminal statuses are preserved during refresh
+	switch status {
+	case shipment.StatusCanceled,
+		shipment.StatusReadyToInvoice,
+		shipment.StatusCompleted,
+		shipment.StatusInvoiced:
 		return true
 	default:
 		return false

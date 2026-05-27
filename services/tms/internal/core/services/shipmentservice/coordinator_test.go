@@ -105,6 +105,182 @@ func TestStateCoordinator_PrepareForCreate_DerivesDelayedShipment(t *testing.T) 
 	assert.Equal(t, shipment.StatusDelayed, entity.Status)
 }
 
+func TestStateCoordinator_PrepareForUpdate_AllowsCompletedStopTimestampCorrection(t *testing.T) {
+	t.Parallel()
+
+	original := completedShipmentForCoordinator()
+	entity := cloneShipment(original)
+	correctedArrival := int64(130)
+	correctedDeparture := int64(140)
+	entity.Moves[0].Stops[0].ActualArrival = &correctedArrival
+	entity.Moves[0].Stops[0].ActualDeparture = &correctedDeparture
+
+	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
+
+	multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
+
+	require.Nil(t, multiErr)
+	assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+	assert.Equal(t, correctedDeparture, *entity.ActualShipDate)
+}
+
+func TestStateCoordinator_PrepareForUpdate_RejectsCompletedStopTimestampRemoval(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		mutate        func(*shipment.Stop)
+		expectedField string
+	}{
+		{
+			name: "clears actual arrival",
+			mutate: func(stop *shipment.Stop) {
+				stop.ActualArrival = nil
+			},
+			expectedField: "moves[0].stops[0].actualArrival",
+		},
+		{
+			name: "clears actual departure",
+			mutate: func(stop *shipment.Stop) {
+				stop.ActualDeparture = nil
+			},
+			expectedField: "moves[0].stops[0].actualDeparture",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			original := completedShipmentForCoordinator()
+			entity := cloneShipment(original)
+			tt.mutate(entity.Moves[0].Stops[0])
+
+			coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
+
+			multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
+
+			require.NotNil(t, multiErr)
+			assertErrorField(t, multiErr, tt.expectedField)
+			assert.Equal(t, shipment.StopStatusCompleted, entity.Moves[0].Stops[0].Status)
+			assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
+		})
+	}
+}
+
+func TestStateCoordinator_PrepareForUpdate_RejectsCompletedMoveReopenByOmittedStops(t *testing.T) {
+	t.Parallel()
+
+	original := completedShipmentForCoordinator()
+	entity := cloneShipment(original)
+	entity.Moves[0].Stops = []*shipment.Stop{}
+
+	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
+
+	multiErr := coordinator.PrepareForUpdateWithDelayThreshold(original, entity, 30)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "moves[0].status")
+	assert.Equal(t, shipment.MoveStatusCompleted, entity.Moves[0].Status)
+	assert.Equal(t, shipment.StatusCompleted, entity.Status)
+}
+
+func TestStateCoordinator_RefreshShipmentState_PreservesBillingAndTerminalStatuses(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		status         shipment.Status
+		expectedStatus shipment.Status
+	}{
+		{
+			name:           "ready to invoice",
+			status:         shipment.StatusReadyToInvoice,
+			expectedStatus: shipment.StatusReadyToInvoice,
+		},
+		{
+			name:           "invoiced",
+			status:         shipment.StatusInvoiced,
+			expectedStatus: shipment.StatusInvoiced,
+		},
+		{
+			name:           "canceled",
+			status:         shipment.StatusCanceled,
+			expectedStatus: shipment.StatusCanceled,
+		},
+		{
+			name:           "completed",
+			status:         shipment.StatusCompleted,
+			expectedStatus: shipment.StatusCompleted,
+		},
+		{
+			name:           "active in transit",
+			status:         shipment.StatusInTransit,
+			expectedStatus: shipment.StatusDelayed,
+		},
+		{
+			name:           "partially completed active",
+			status:         shipment.StatusPartiallyCompleted,
+			expectedStatus: shipment.StatusDelayed,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			entity := shipmentWithOverdueStopForRefresh(tt.status)
+			coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 200 })
+
+			coordinator.RefreshShipmentStateWithDelayThreshold(entity, 1)
+
+			assert.Equal(t, tt.expectedStatus, entity.Status)
+		})
+	}
+}
+
+func TestStateCoordinator_RefreshShipmentState_UsesSequenceOrderForTimestamps(t *testing.T) {
+	t.Parallel()
+
+	actualShipDate := int64(120)
+	actualDeliveryDate := int64(400)
+	entity := validShipmentForValidation()
+	entity.Moves = []*shipment.ShipmentMove{
+		{
+			Status:   shipment.MoveStatusCompleted,
+			Sequence: 10,
+			Stops: []*shipment.Stop{
+				completedStopForCoordinator(shipment.StopTypePickup, 0, 300, 310),
+				completedStopForCoordinator(
+					shipment.StopTypeDelivery,
+					1,
+					actualDeliveryDate,
+					410,
+				),
+			},
+		},
+		{
+			Status:   shipment.MoveStatusCompleted,
+			Sequence: 0,
+			Stops: []*shipment.Stop{
+				completedStopForCoordinator(shipment.StopTypeDelivery, 1, 200, 210),
+				completedStopForCoordinator(shipment.StopTypePickup, 0, 100, actualShipDate),
+			},
+		},
+	}
+
+	coordinator := shipmentstate.NewCoordinatorWithClock(func() int64 { return 1000 })
+
+	coordinator.RefreshShipmentStateWithDelayThreshold(entity, 30)
+
+	require.NotNil(t, entity.ActualShipDate)
+	require.NotNil(t, entity.ActualDeliveryDate)
+	assert.Equal(t, actualShipDate, *entity.ActualShipDate)
+	assert.Equal(t, actualDeliveryDate, *entity.ActualDeliveryDate)
+}
+
 func TestServiceUpdate_RejectsReadyToInvoiceBeforeCompletion(t *testing.T) {
 	t.Parallel()
 
@@ -916,6 +1092,73 @@ func cloneShipment(source *shipment.Shipment) *shipment.Shipment {
 	}
 
 	return &clone
+}
+
+func completedShipmentForCoordinator() *shipment.Shipment {
+	entity := validShipmentForValidation()
+	entity.ID = pulid.MustNew("shp_")
+	entity.Version = 1
+	entity.Status = shipment.StatusCompleted
+
+	move := entity.Moves[0]
+	move.ID = pulid.MustNew("sm_")
+	move.ShipmentID = entity.ID
+	move.Status = shipment.MoveStatusCompleted
+	move.Version = 1
+
+	for stopIndex, stop := range move.Stops {
+		stop.ID = pulid.MustNew("stp_")
+		stop.ShipmentMoveID = move.ID
+		stop.Status = shipment.StopStatusCompleted
+		stop.Version = 1
+		arrival := int64(100 + stopIndex*100)
+		departure := arrival + 10
+		stop.ActualArrival = &arrival
+		stop.ActualDeparture = &departure
+	}
+
+	entity.ActualShipDate = move.Stops[0].ActualDeparture
+	entity.ActualDeliveryDate = move.Stops[1].ActualArrival
+	return entity
+}
+
+func shipmentWithOverdueStopForRefresh(status shipment.Status) *shipment.Shipment {
+	entity := validShipmentForValidation()
+	entity.Status = status
+	entity.Moves[0].Status = shipment.MoveStatusInTransit
+	entity.Moves[0].Stops[0].Status = shipment.StopStatusInTransit
+	entity.Moves[0].Stops[0].ScheduledWindowEnd = ptrInt64(100)
+
+	if status != shipment.StatusPartiallyCompleted {
+		return entity
+	}
+
+	completedMove := validMove()
+	completedMove.Status = shipment.MoveStatusCompleted
+	completedMove.Sequence = 0
+	for _, stop := range completedMove.Stops {
+		stop.Status = shipment.StopStatusCompleted
+		stop.ActualArrival = ptrInt64(10)
+		stop.ActualDeparture = ptrInt64(20)
+	}
+
+	activeMove := entity.Moves[0]
+	activeMove.Sequence = 1
+	entity.Moves = []*shipment.ShipmentMove{completedMove, activeMove}
+	return entity
+}
+
+func completedStopForCoordinator(
+	stopType shipment.StopType,
+	sequence int64,
+	actualArrival int64,
+	actualDeparture int64,
+) *shipment.Stop {
+	stop := makeStopForValidation(stopType, sequence, 1, 2)
+	stop.Status = shipment.StopStatusCompleted
+	stop.ActualArrival = &actualArrival
+	stop.ActualDeparture = &actualDeparture
+	return stop
 }
 
 //go:fix inline
