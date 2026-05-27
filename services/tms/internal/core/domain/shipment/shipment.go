@@ -253,6 +253,62 @@ func (s *Shipment) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 				},
 			},
 			{
+				Field:        "pickupAppointment",
+				Type:         dbtype.RelationshipTypeCustom,
+				TargetEntity: (*Stop)(nil),
+				TargetTable:  "stops",
+				Alias:        "pickup_appt",
+				Queryable:    true,
+				CustomJoinPath: []domaintypes.JoinStep{
+					{
+						Table: "shipment_moves",
+						Alias: "sm_pickup_appt",
+						Condition: "sp.id = sm_pickup_appt.shipment_id AND sm_pickup_appt.sequence = " +
+							"(SELECT MIN(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
+						JoinType: dbtype.JoinTypeLeft,
+					},
+					{
+						Table: "stops",
+						Alias: "pickup_appt",
+						Condition: "sm_pickup_appt.id = pickup_appt.shipment_move_id " +
+							"AND pickup_appt.type IN ('Pickup', 'SplitPickup') " +
+							"AND pickup_appt.schedule_type = 'Appointment' AND pickup_appt.sequence = " +
+							"(SELECT MIN(stp2.sequence) FROM stops AS stp2 " +
+							"WHERE stp2.shipment_move_id = sm_pickup_appt.id " +
+							"AND stp2.type IN ('Pickup', 'SplitPickup'))",
+						JoinType: dbtype.JoinTypeLeft,
+					},
+				},
+			},
+			{
+				Field:        "deliveryAppointment",
+				Type:         dbtype.RelationshipTypeCustom,
+				TargetEntity: (*Stop)(nil),
+				TargetTable:  "stops",
+				Alias:        "delivery_appt",
+				Queryable:    true,
+				CustomJoinPath: []domaintypes.JoinStep{
+					{
+						Table: "shipment_moves",
+						Alias: "sm_delivery_appt",
+						Condition: "sp.id = sm_delivery_appt.shipment_id AND sm_delivery_appt.sequence = " +
+							"(SELECT MAX(sm2.sequence) FROM shipment_moves AS sm2 WHERE sm2.shipment_id = sp.id)",
+						JoinType: dbtype.JoinTypeLeft,
+					},
+					{
+						Table: "stops",
+						Alias: "delivery_appt",
+						Condition: "sm_delivery_appt.id = delivery_appt.shipment_move_id " +
+							"AND delivery_appt.type IN ('Delivery', 'SplitDelivery') " +
+							"AND delivery_appt.schedule_type = 'Appointment' AND delivery_appt.sequence = " +
+							"(SELECT MAX(stp2.sequence) FROM stops AS stp2 " +
+							"WHERE stp2.shipment_move_id = sm_delivery_appt.id " +
+							"AND stp2.type IN ('Delivery', 'SplitDelivery'))",
+						JoinType: dbtype.JoinTypeLeft,
+					},
+				},
+			},
+			{
 				Field:        "owner",
 				Type:         dbtype.RelationshipTypeBelongsTo,
 				TargetEntity: (*tenant.User)(nil),

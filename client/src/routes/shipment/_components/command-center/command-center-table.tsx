@@ -118,7 +118,10 @@ export function CommandCenterTable({
 
   const [filterItems, setFilterItems] = useState<FilterItem[]>([]);
   const [sort, setSort] = useState<SortField[]>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    pickupAppointment: false,
+    deliveryAppointment: false,
+  });
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
