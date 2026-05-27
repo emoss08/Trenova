@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
-import { searchParamsParser } from "@/hooks/use-organization-setting-state";
+import { searchParamsParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
 import { formatIdentityProviderName } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -8,19 +8,40 @@ import {
   ActivityIcon,
   KeyRoundIcon,
   ShieldCheckIcon,
+  type LucideIcon,
   UsersRoundIcon,
 } from "lucide-react";
-import { useQueryStates } from "nuqs";
-import { Activity, useMemo } from "react";
+import { useQueryState } from "nuqs";
+import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
 import { ActivityTab } from "./security-access/activity-tab";
+import { OuterSection } from "./security-access/layout";
 import { SecurityOverview } from "./security-access/overview";
 import { PoliciesTab } from "./security-access/policies-tab";
 import { SignInTab } from "./security-access/sign-in-tab";
 import { identityProviderQueryKey } from "./security-access/utils";
 
+const securityTabs: Array<{
+  value: SecurityTabValue;
+  label: string;
+  Icon: LucideIcon;
+}> = [
+  { value: "sign-in", label: "Sign-in", Icon: KeyRoundIcon },
+  { value: "provisioning", label: "Provisioning", Icon: UsersRoundIcon },
+  { value: "policies", label: "Policies", Icon: ShieldCheckIcon },
+  { value: "activity", label: "Activity", Icon: ActivityIcon },
+];
+
 export function SecurityAccessWorkspace({ organizationId }: { organizationId: string }) {
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  return (
+    <OuterSection>
+      <SecurityOverviewSection organizationId={organizationId} />
+      <SecurityAccessTabs organizationId={organizationId} />
+    </OuterSection>
+  );
+}
+
+function SecurityOverviewSection({ organizationId }: { organizationId: string }) {
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
@@ -70,62 +91,61 @@ export function SecurityAccessWorkspace({ organizationId }: { organizationId: st
   const activePolicyCount = policies.filter((policy) => policy.enabled).length;
 
   return (
-    <section className="space-y-4 pb-10">
-      <SecurityOverview
-        isLoading={overviewLoading}
-        providerCount={providers.filter((provider) => provider.enabled).length}
-        enforcedProviderName={
-          enforcedProvider ? formatIdentityProviderName(enforcedProvider.name) : ""
-        }
-        directoryStatus={activeDirectory ? activeDirectory.tenantSlug : ""}
-        activePolicyCount={activePolicyCount}
-        recentActivity={recentActivity}
-      />
+    <SecurityOverview
+      isLoading={overviewLoading}
+      providerCount={providers.filter((provider) => provider.enabled).length}
+      enforcedProviderName={
+        enforcedProvider ? formatIdentityProviderName(enforcedProvider.name) : ""
+      }
+      directoryStatus={activeDirectory ? activeDirectory.tenantSlug : ""}
+      activePolicyCount={activePolicyCount}
+      recentActivity={recentActivity}
+    />
+  );
+}
 
-      <Tabs
-        value={searchParams.securityTab}
-        onValueChange={(value) => setSearchParams({ securityTab: value })}
-        className="gap-4"
-      >
-        <TabsList variant="underline">
-          <TabsTab value="sign-in">
-            <KeyRoundIcon size={16} />
-            Sign-in
+function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
+  const [securityTab, setSecurityTab] = useQueryState(
+    "securityTab",
+    searchParamsParser.securityTab,
+  );
+  const handleTabChange = useCallback(
+    (value: string) => {
+      void setSecurityTab(value as SecurityTabValue);
+    },
+    [setSecurityTab],
+  );
+
+  return (
+    <Tabs value={securityTab} onValueChange={handleTabChange}>
+      <TabsList variant="underline">
+        {securityTabs.map(({ value, label, Icon }) => (
+          <TabsTab key={value} value={value}>
+            <Icon size={16} />
+            {label}
           </TabsTab>
-          <TabsTab value="provisioning">
-            <UsersRoundIcon size={16} />
-            Provisioning
-          </TabsTab>
-          <TabsTab value="policies">
-            <ShieldCheckIcon size={16} />
-            Policies
-          </TabsTab>
-          <TabsTab value="activity">
-            <ActivityIcon size={16} />
-            Activity
-          </TabsTab>
-        </TabsList>
-        <TabsContent value="sign-in" keepMounted>
-          <Activity mode={searchParams.securityTab === "sign-in" ? "visible" : "hidden"}>
-            <SignInTab organizationId={organizationId} />
-          </Activity>
-        </TabsContent>
-        <TabsContent value="provisioning" keepMounted>
-          <Activity mode={searchParams.securityTab === "provisioning" ? "visible" : "hidden"}>
-            <ProvisioningTab organizationId={organizationId} />
-          </Activity>
-        </TabsContent>
-        <TabsContent value="policies" keepMounted>
-          <Activity mode={searchParams.securityTab === "policies" ? "visible" : "hidden"}>
-            <PoliciesTab organizationId={organizationId} />
-          </Activity>
-        </TabsContent>
-        <TabsContent value="activity" keepMounted>
-          <Activity mode={searchParams.securityTab === "activity" ? "visible" : "hidden"}>
-            <ActivityTab organizationId={organizationId} />
-          </Activity>
-        </TabsContent>
-      </Tabs>
-    </section>
+        ))}
+      </TabsList>
+      <TabsContent value="sign-in" keepMounted>
+        <Activity mode={securityTab === "sign-in" ? "visible" : "hidden"}>
+          <SignInTab organizationId={organizationId} />
+        </Activity>
+      </TabsContent>
+      <TabsContent value="provisioning" keepMounted>
+        <Activity mode={securityTab === "provisioning" ? "visible" : "hidden"}>
+          <ProvisioningTab organizationId={organizationId} />
+        </Activity>
+      </TabsContent>
+      <TabsContent value="policies" keepMounted>
+        <Activity mode={securityTab === "policies" ? "visible" : "hidden"}>
+          <PoliciesTab organizationId={organizationId} />
+        </Activity>
+      </TabsContent>
+      <TabsContent value="activity" keepMounted>
+        <Activity mode={securityTab === "activity" ? "visible" : "hidden"}>
+          <ActivityTab organizationId={organizationId} />
+        </Activity>
+      </TabsContent>
+    </Tabs>
   );
 }

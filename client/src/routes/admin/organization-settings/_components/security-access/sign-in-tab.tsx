@@ -16,7 +16,7 @@ import { identityProviderCreateFormSchema, identityProviderFormSchema } from "@/
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -78,7 +78,7 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
     );
   }, [providers, search]);
 
-  const deleteMutation = useMutation({
+  const { mutate: deleteProvider, isPending: isDeletingProvider } = useMutation({
     mutationFn: async (providerId: string) =>
       apiService.organizationService.deleteIdentityProvider(organizationId, providerId),
     onSuccess: async () => {
@@ -89,17 +89,22 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
     },
   });
 
-  const openCreatePanel = () => {
+  const openCreatePanel = useCallback(() => {
     setPanelMode("create");
     setEditingProvider(null);
     setPanelOpen(true);
-  };
+  }, []);
 
-  const openEditPanel = (provider: IdentityProvider) => {
+  const openEditPanel = useCallback((provider: IdentityProvider) => {
     setPanelMode("edit");
     setEditingProvider(provider);
     setPanelOpen(true);
-  };
+  }, []);
+
+  const handleDeleteProvider = useCallback(
+    (providerId: string) => deleteProvider(providerId),
+    [deleteProvider],
+  );
 
   return (
     <div className="space-y-3">
@@ -110,7 +115,7 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
         onSearchChange={setSearch}
         searchPlaceholder="Search providers, domains, or issuer"
         action={
-          <Button onClick={openCreatePanel}>
+          <Button size="sm" onClick={openCreatePanel}>
             <PlusIcon />
             Add provider
           </Button>
@@ -126,9 +131,9 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
             <ProviderRow
               key={provider.id}
               provider={provider}
-              onEdit={() => openEditPanel(provider)}
-              onDelete={() => deleteMutation.mutate(provider.id)}
-              isDeleting={deleteMutation.isPending}
+              onEditProvider={openEditPanel}
+              onDeleteProvider={handleDeleteProvider}
+              isDeleting={isDeletingProvider}
             />
           ))}
         </div>
@@ -186,15 +191,15 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
   );
 }
 
-function ProviderRow({
+const ProviderRow = memo(function ProviderRow({
   provider,
-  onEdit,
-  onDelete,
+  onEditProvider,
+  onDeleteProvider,
   isDeleting,
 }: {
   provider: IdentityProvider;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEditProvider: (provider: IdentityProvider) => void;
+  onDeleteProvider: (providerId: string) => void;
   isDeleting: boolean;
 }) {
   return (
@@ -228,17 +233,22 @@ function ProviderRow({
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onEdit}>
+        <Button size="sm" variant="outline" onClick={() => onEditProvider(provider)}>
           Edit
         </Button>
-        <Button variant="destructive" onClick={onDelete} disabled={isDeleting}>
+        <Button
+          size="sm"
+          variant="destructive"
+          onClick={() => onDeleteProvider(provider.id)}
+          disabled={isDeleting}
+        >
           <Trash2Icon />
           Delete
         </Button>
       </div>
     </div>
   );
-}
+});
 
 function IdentityProviderForm({ mode }: { mode: IdentityProviderPanelMode }) {
   const { control, getValues, setValue } = useFormContext<IdentityProviderFormValues>();

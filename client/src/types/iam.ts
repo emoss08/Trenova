@@ -144,6 +144,47 @@ export type AccessPolicy = z.infer<typeof accessPolicySchema>;
 
 export const accessPoliciesSchema = z.array(accessPolicySchema);
 
+export const accessPolicyConditionRowSchema = z.object({
+  id: z.string(),
+  key: z.string().default(""),
+  value: z.string().default(""),
+});
+
+export type AccessPolicyConditionRow = z.infer<typeof accessPolicyConditionRowSchema>;
+
+export const accessPolicyFormSchema = accessPolicySchema
+  .extend({
+    name: z.string().trim().min(1, "Policy name is required"),
+    resource: z.string().trim().min(1, "Resource is required"),
+    operation: z.string().trim().min(1, "Operation is required"),
+    priority: z.number().int().min(0, "Priority cannot be negative"),
+    conditionRows: z.array(accessPolicyConditionRowSchema).default([]),
+  })
+  .superRefine((value, ctx) => {
+    value.conditionRows.forEach((row, index) => {
+      const hasKey = row.key.trim() !== "";
+      const hasValue = row.value.trim() !== "";
+
+      if (hasKey && !hasValue) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Condition value is required when a key is provided",
+          path: ["conditionRows", index, "value"],
+        });
+      }
+
+      if (hasValue && !hasKey) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Condition key is required when a value is provided",
+          path: ["conditionRows", index, "key"],
+        });
+      }
+    });
+  });
+
+export type AccessPolicyFormValues = z.infer<typeof accessPolicyFormSchema>;
+
 export const authEventSchema = z.object({
   id: z.string(),
   userId: z.string().optional().default(""),

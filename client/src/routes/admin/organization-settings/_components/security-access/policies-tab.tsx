@@ -1,22 +1,23 @@
+import {
+  PermissionOperationAutocompleteField,
+  PermissionResourceAutocompleteField,
+} from "@/components/autocomplete-fields";
+import { InputField } from "@/components/fields/input-field";
+import { NumberField } from "@/components/fields/number-field";
+import { SelectField } from "@/components/fields/select-field";
+import { SwitchField } from "@/components/fields/switch-field";
+import { FormCreatePanel } from "@/components/form-create-panel";
+import { FormEditPanel } from "@/components/form-edit-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { queries } from "@/lib/queries";
 import {
   getAvailableOperations,
@@ -25,18 +26,62 @@ import {
   type ResourceDefinition,
 } from "@/lib/role-api";
 import { apiService } from "@/services/api";
-import type { AccessPolicy } from "@/types/iam";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, SaveIcon, SearchIcon, ShieldCheckIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { ConsoleToolbar, EmptyState, ErrorState, Field, RowSkeleton, ToggleRow } from "./shared";
+import type { SelectOption } from "@/types/fields";
 import {
-  conditionRowsToRecord,
-  emptyPolicy,
-  recordToConditionRows,
-  type ConditionRow,
-} from "./utils";
+  accessPolicyFormSchema,
+  type AccessPolicy,
+  type AccessPolicyConditionRow,
+  type AccessPolicyFormValues,
+} from "@/types/iam";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { PlusIcon, ShieldCheckIcon, Trash2Icon, XIcon } from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { type Resolver, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
+import { toast } from "sonner";
+import { ConsoleToolbar, EmptyState, ErrorState, RowSkeleton } from "./shared";
+import { conditionRowsToRecord, emptyPolicy, recordToConditionRows } from "./utils";
+
+type AccessPolicyPanelMode = "create" | "edit";
+type AccessPolicyRecord = AccessPolicyFormValues & Record<string, unknown>;
+
+const accessPolicyQueryKey = (organizationId: string) => `access-policy-list:${organizationId}`;
+
+const effectFilterOptions = [
+  { value: "all", label: "All effects" },
+  { value: "allow", label: "Allow" },
+  { value: "deny", label: "Deny" },
+] as const;
+
+const policyEffectOptions: SelectOption[] = [
+  {
+    value: "deny",
+    label: "Deny",
+    description: "Block matching access requests before lower-priority allow policies apply.",
+  },
+  {
+    value: "allow",
+    label: "Allow",
+    description: "Permit matching access requests when no higher-priority deny policy applies.",
+  },
+];
+
+function toAccessPolicyFormValues(policy: AccessPolicy): AccessPolicyFormValues {
+  return {
+    ...policy,
+    conditionRows: recordToConditionRows(policy.conditions),
+  };
+}
+
+function toAccessPolicy(values: AccessPolicyFormValues): AccessPolicy {
+  const { conditionRows, ...policyValues } = values;
+
+  return {
+    ...emptyPolicy,
+    ...policyValues,
+    conditions: conditionRowsToRecord(conditionRows),
+  };
+}
 
 export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const queryClient = useQueryClient();
@@ -49,9 +94,19 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
     queryKey: ["permissions", "operations"],
     queryFn: getAvailableOperations,
   });
-  const [policy, setPolicy] = useState<AccessPolicy>(emptyPolicy);
-  const [conditions, setConditions] = useState<ConditionRow[]>([]);
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const createForm = useForm<AccessPolicyFormValues>({
+    resolver: zodResolver(accessPolicyFormSchema) as Resolver<AccessPolicyFormValues>,
+    defaultValues: toAccessPolicyFormValues(emptyPolicy),
+    mode: "onChange",
+  });
+  const editForm = useForm<AccessPolicyFormValues>({
+    resolver: zodResolver(accessPolicyFormSchema) as Resolver<AccessPolicyFormValues>,
+    defaultValues: toAccessPolicyFormValues(emptyPolicy),
+    mode: "onChange",
+  });
+  const [panelMode, setPanelMode] = useState<AccessPolicyPanelMode>("create");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState<AccessPolicy | null>(null);
   const [search, setSearch] = useState("");
   const [effectFilter, setEffectFilter] = useState("all");
 
@@ -59,10 +114,11 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
     () => (resourcesQuery.data ?? []).flatMap((category) => category.resources),
     [resourcesQuery.data],
   );
-  const selectedResource = resources.find((resource) => resource.resource === policy.resource);
-  const availableOperations = selectedResource?.operations.length
-    ? selectedResource.operations
-    : (operationsQuery.data ?? []);
+  const operations = useMemo(() => operationsQuery.data ?? [], [operationsQuery.data]);
+  const resourceDisplayNames = useMemo(
+    () => new Map(resources.map((resource) => [resource.resource, resource.displayName])),
+    [resources],
+  );
   const policies = useMemo(
     () => [...(policiesQuery.data ?? [])].sort((left, right) => left.priority - right.priority),
     [policiesQuery.data],
@@ -81,48 +137,39 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
     });
   }, [effectFilter, policies, search]);
 
-  const saveMutation = useMutation({
-    mutationFn: async (value: AccessPolicy) =>
-      value.id
-        ? apiService.organizationService.updateAccessPolicy(organizationId, value)
-        : apiService.organizationService.createAccessPolicy(organizationId, value),
-    onSuccess: async () => {
-      toast.success("Access policy saved");
-      setPolicy(emptyPolicy);
-      setConditions([]);
-      setSheetOpen(false);
-      await queryClient.invalidateQueries({
+  const invalidateAccessPolicies = useCallback(
+    async () =>
+      queryClient.invalidateQueries({
         queryKey: queries.organization.accessPolicies(organizationId).queryKey,
-      });
-    },
-  });
+      }),
+    [organizationId, queryClient],
+  );
 
-  const deleteMutation = useMutation({
+  const { mutate: removeAccessPolicy } = useMutation({
     mutationFn: async (policyId: string) =>
       apiService.organizationService.deleteAccessPolicy(organizationId, policyId),
     onSuccess: async () => {
       toast.success("Access policy removed");
-      await queryClient.invalidateQueries({
-        queryKey: queries.organization.accessPolicies(organizationId).queryKey,
-      });
+      await invalidateAccessPolicies();
     },
   });
 
-  const editPolicy = (item: AccessPolicy) => {
-    setPolicy(item);
-    setConditions(recordToConditionRows(item.conditions));
-    setSheetOpen(true);
-  };
+  const createPolicy = useCallback(() => {
+    setPanelMode("create");
+    setEditingPolicy(null);
+    setPanelOpen(true);
+  }, []);
 
-  const createPolicy = () => {
-    setPolicy(emptyPolicy);
-    setConditions([]);
-    setSheetOpen(true);
-  };
+  const editPolicy = useCallback((policy: AccessPolicy) => {
+    setPanelMode("edit");
+    setEditingPolicy(policy);
+    setPanelOpen(true);
+  }, []);
 
-  const savePolicy = () => {
-    saveMutation.mutate({ ...policy, conditions: conditionRowsToRecord(conditions) });
-  };
+  const deletePolicy = useCallback(
+    (policyId: string) => removeAccessPolicy(policyId),
+    [removeAccessPolicy],
+  );
 
   return (
     <div className="space-y-3">
@@ -134,17 +181,23 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
         searchPlaceholder="Search policies or resources"
         action={
           <div className="flex flex-wrap gap-2">
-            <Select value={effectFilter} onValueChange={(value) => setEffectFilter(value ?? "all")}>
-              <SelectTrigger className="h-8 w-32 bg-background text-xs">
+            <Select
+              value={effectFilter}
+              items={effectFilterOptions}
+              onValueChange={(value) => setEffectFilter(value ?? "all")}
+            >
+              <SelectTrigger className="h-7 w-32 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All effects</SelectItem>
-                <SelectItem value="allow">Allow</SelectItem>
-                <SelectItem value="deny">Deny</SelectItem>
+                {effectFilterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Button onClick={createPolicy}>
+            <Button size="sm" onClick={createPolicy}>
               <PlusIcon />
               Add policy
             </Button>
@@ -158,13 +211,13 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
         <ErrorState label="Access policies could not be loaded." />
       ) : filteredPolicies.length > 0 ? (
         <div className="overflow-hidden rounded-lg border bg-background">
-          {filteredPolicies.map((item) => (
+          {filteredPolicies.map((policy) => (
             <PolicyRow
-              key={item.id}
-              policy={item}
-              resource={resources.find((resource) => resource.resource === item.resource)}
-              onEdit={() => editPolicy(item)}
-              onDelete={() => deleteMutation.mutate(item.id)}
+              key={policy.id}
+              policy={policy}
+              resourceName={resourceDisplayNames.get(policy.resource)}
+              onEditPolicy={editPolicy}
+              onDeletePolicy={deletePolicy}
             />
           ))}
         </div>
@@ -180,54 +233,76 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
         />
       )}
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-[calc(100vw-1rem)] overflow-hidden sm:max-w-xl">
-          <SheetHeader className="border-b">
-            <SheetTitle>{policy.id ? "Edit access policy" : "Add access policy"}</SheetTitle>
-            <SheetDescription>
-              Select a resource and operation, then define effect, priority, and optional
-              conditions.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4">
-            <PolicyForm
-              policy={policy}
+      {panelMode === "edit" ? (
+        <FormEditPanel<AccessPolicyFormValues, AccessPolicyRecord>
+          open={panelOpen}
+          onOpenChange={setPanelOpen}
+          row={
+            editingPolicy ? (toAccessPolicyFormValues(editingPolicy) as AccessPolicyRecord) : null
+          }
+          form={editForm}
+          queryKey={accessPolicyQueryKey(organizationId)}
+          title="Access Policy"
+          fieldKey="name"
+          size="lg"
+          formComponent={
+            <AccessPolicyForm
               resources={resources}
-              operations={availableOperations}
-              conditions={conditions}
+              operations={operations}
               resourcesLoading={resourcesQuery.isLoading}
               operationsLoading={operationsQuery.isLoading}
-              onPolicyChange={setPolicy}
-              onConditionsChange={setConditions}
             />
-          </div>
-          <SheetFooter className="border-t">
-            <Button
-              onClick={savePolicy}
-              isLoading={saveMutation.isPending}
-              loadingText="Saving..."
-              disabled={!policy.name.trim() || !policy.resource || !policy.operation}
-            >
-              <SaveIcon />
-              Save policy
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          }
+          mutationFn={async (values) => {
+            const saved = await apiService.organizationService.updateAccessPolicy(
+              organizationId,
+              toAccessPolicy(values),
+            );
+            await invalidateAccessPolicies();
+            return toAccessPolicyFormValues(saved);
+          }}
+        />
+      ) : (
+        <FormCreatePanel<AccessPolicyFormValues, AccessPolicyRecord>
+          open={panelOpen}
+          onOpenChange={setPanelOpen}
+          form={createForm}
+          queryKey={accessPolicyQueryKey(organizationId)}
+          title="Access Policy"
+          description="Create a priority-ordered authorization decision for a protected resource."
+          size="lg"
+          formComponent={
+            <AccessPolicyForm
+              resources={resources}
+              operations={operations}
+              resourcesLoading={resourcesQuery.isLoading}
+              operationsLoading={operationsQuery.isLoading}
+            />
+          }
+          mutationFn={async (values) => {
+            const saved = await apiService.organizationService.createAccessPolicy(
+              organizationId,
+              toAccessPolicy(values),
+            );
+            await invalidateAccessPolicies();
+            return toAccessPolicyFormValues(saved);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function PolicyRow({
+const PolicyRow = memo(function PolicyRow({
   policy,
-  resource,
-  onEdit,
-  onDelete,
+  resourceName,
+  onEditPolicy,
+  onDeletePolicy,
 }: {
   policy: AccessPolicy;
-  resource?: ResourceDefinition;
-  onEdit: () => void;
-  onDelete: () => void;
+  resourceName?: string;
+  onEditPolicy: (policy: AccessPolicy) => void;
+  onDeletePolicy: (policyId: string) => void;
 }) {
   const conditionCount = Object.keys(policy.conditions).length;
 
@@ -243,9 +318,7 @@ function PolicyRow({
           {!policy.enabled && <Badge variant="outline">Disabled</Badge>}
         </div>
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded bg-muted px-1.5 py-0.5">
-            {resource?.displayName || policy.resource}
-          </span>
+          <span className="rounded bg-muted px-1.5 py-0.5">{resourceName || policy.resource}</span>
           <span className="rounded bg-muted px-1.5 py-0.5">{policy.operation}</span>
           <span>
             {conditionCount} condition{conditionCount === 1 ? "" : "s"}
@@ -253,255 +326,194 @@ function PolicyRow({
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onEdit}>
+        <Button size="sm" variant="outline" onClick={() => onEditPolicy(policy)}>
           Edit
         </Button>
-        <Button variant="destructive" onClick={onDelete}>
+        <Button size="sm" variant="destructive" onClick={() => onDeletePolicy(policy.id)}>
           <Trash2Icon />
           Delete
         </Button>
       </div>
     </div>
   );
-}
+});
 
-function PolicyForm({
-  policy,
+function AccessPolicyForm({
   resources,
   operations,
-  conditions,
   resourcesLoading,
   operationsLoading,
-  onPolicyChange,
-  onConditionsChange,
 }: {
-  policy: AccessPolicy;
   resources: ResourceDefinition[];
   operations: OperationDefinition[];
-  conditions: ConditionRow[];
   resourcesLoading: boolean;
   operationsLoading: boolean;
-  onPolicyChange: (policy: AccessPolicy) => void;
-  onConditionsChange: (conditions: ConditionRow[]) => void;
 }) {
-  const [resourceSearch, setResourceSearch] = useState("");
-  const [operationSearch, setOperationSearch] = useState("");
-  const filteredResources = useMemo(() => {
-    const query = resourceSearch.trim().toLowerCase();
-    if (!query) return resources;
-    return resources.filter((resource) =>
-      [resource.displayName, resource.resource, resource.category, resource.description]
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [resourceSearch, resources]);
-  const filteredOperations = useMemo(() => {
-    const query = operationSearch.trim().toLowerCase();
-    if (!query) return operations;
-    return operations.filter((operation) =>
-      [operation.displayName, operation.operation, operation.description]
-        .join(" ")
-        .toLowerCase()
-        .includes(query),
-    );
-  }, [operationSearch, operations]);
+  const { control, setValue } = useFormContext<AccessPolicyFormValues>();
+  const selectedResourceName = useWatch({ control, name: "resource" });
+  const selectedResource = resources.find((resource) => resource.resource === selectedResourceName);
+  const availableOperations = selectedResource?.operations.length
+    ? selectedResource.operations
+    : operations;
 
   return (
-    <div className="space-y-4 py-4">
-      <Field label="Name">
-        <Input
-          value={policy.name}
-          placeholder="Require managed devices for billing exports"
-          onChange={(event) => onPolicyChange({ ...policy, name: event.target.value })}
-        />
-      </Field>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <SearchablePolicySelect
-          label="Resource"
-          value={policy.resource}
-          search={resourceSearch}
-          searchPlaceholder="Search resources"
-          selectPlaceholder="Select resource"
-          disabled={resourcesLoading}
-          options={filteredResources.map((resource) => ({
-            value: resource.resource,
-            label: resource.displayName,
-          }))}
-          onSearchChange={setResourceSearch}
-          onValueChange={(value) => onPolicyChange({ ...policy, resource: value, operation: "" })}
-        />
-        <SearchablePolicySelect
-          label="Operation"
-          value={policy.operation}
-          search={operationSearch}
-          searchPlaceholder="Search operations"
-          selectPlaceholder="Select operation"
-          disabled={operationsLoading || operations.length === 0}
-          options={filteredOperations.map((operation) => ({
-            value: operation.operation,
-            label: operation.displayName || operation.operation,
-          }))}
-          onSearchChange={setOperationSearch}
-          onValueChange={(value) => onPolicyChange({ ...policy, operation: value })}
-        />
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Effect">
-          <Select
-            value={policy.effect}
-            onValueChange={(value) =>
-              onPolicyChange({ ...policy, effect: (value ?? "deny") as AccessPolicy["effect"] })
-            }
-          >
-            <SelectTrigger className="w-full bg-background">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="deny">Deny</SelectItem>
-              <SelectItem value="allow">Allow</SelectItem>
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Priority">
-          <Input
-            type="number"
-            value={policy.priority}
-            onChange={(event) =>
-              onPolicyChange({ ...policy, priority: Number(event.target.value || 0) })
-            }
-          />
-        </Field>
-      </div>
-      <ToggleRow
-        label="Enabled"
-        description="Evaluate this policy during access decisions."
-        checked={policy.enabled}
-        onCheckedChange={(enabled) => onPolicyChange({ ...policy, enabled })}
-      />
-      <ConditionsEditor conditions={conditions} onChange={onConditionsChange} />
-    </div>
+    <>
+      <FormSection title="Policy Decision">
+        <FormGroup cols={2}>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              rules={{ required: true }}
+              name="name"
+              label="Policy Name"
+              placeholder="Require managed devices for billing exports"
+              description="Administrative name that explains when this policy should match."
+              maxLength={120}
+            />
+          </FormControl>
+          <FormControl>
+            <PermissionResourceAutocompleteField<AccessPolicyFormValues>
+              control={control}
+              rules={{ required: true }}
+              name="resource"
+              resources={resources}
+              disabled={resourcesLoading}
+              onValueChange={() =>
+                setValue("operation", "", { shouldDirty: true, shouldValidate: true })
+              }
+            />
+          </FormControl>
+          <FormControl>
+            <PermissionOperationAutocompleteField<AccessPolicyFormValues>
+              control={control}
+              rules={{ required: true }}
+              name="operation"
+              operations={availableOperations}
+              disabled={operationsLoading || availableOperations.length === 0}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              rules={{ required: true }}
+              name="effect"
+              label="Effect"
+              placeholder="Select effect"
+              description="Authorization decision returned when this policy matches."
+              options={policyEffectOptions}
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              control={control}
+              rules={{ required: true, min: 0 }}
+              name="priority"
+              label="Priority"
+              placeholder="100"
+              description="Lower numbers evaluate first. Use gaps to leave room for future rules."
+              min={0}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <SwitchField
+              control={control}
+              name="enabled"
+              label="Enabled"
+              description="Evaluate this policy during access decisions."
+              outlined
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+      <PolicyConditionsSection />
+    </>
   );
 }
 
-function ConditionsEditor({
-  conditions,
-  onChange,
-}: {
-  conditions: ConditionRow[];
-  onChange: (conditions: ConditionRow[]) => void;
-}) {
+function PolicyConditionsSection() {
+  const { control } = useFormContext<AccessPolicyFormValues>();
+  const { append, fields, remove } = useFieldArray({
+    control,
+    name: "conditionRows",
+    keyName: "fieldId",
+  });
+
   const addCondition = () => {
-    onChange([...conditions, { id: `${Date.now()}-${conditions.length}`, key: "", value: "" }]);
+    append({
+      id: `${Date.now()}-${fields.length}`,
+      key: "",
+      value: "",
+    });
   };
 
   return (
-    <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium">Conditions</div>
-          <div className="text-xs text-muted-foreground">
-            Optional key/value checks persisted with the policy.
+    <FormSection
+      title="Conditions"
+      description="Optional claim or context key/value checks persisted with the policy."
+      className="border-t py-2"
+    >
+      <div className="space-y-3">
+        <div className="flex justify-end">
+          <Button type="button" size="sm" variant="outline" onClick={addCondition}>
+            <PlusIcon />
+            Add condition
+          </Button>
+        </div>
+        {fields.length > 0 ? (
+          <div className="space-y-2">
+            {fields.map((field, index) => (
+              <ConditionRowFields
+                key={field.fieldId}
+                index={index}
+                condition={field}
+                onRemove={() => remove(index)}
+              />
+            ))}
           </div>
-        </div>
-        <Button size="sm" variant="outline" onClick={addCondition}>
-          <PlusIcon />
-          Add
-        </Button>
+        ) : (
+          <div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+            No conditions. The policy applies whenever the resource and operation match.
+          </div>
+        )}
       </div>
-      {conditions.length > 0 ? (
-        <div className="space-y-2">
-          {conditions.map((condition, index) => (
-            <div key={condition.id} className="grid gap-2 sm:grid-cols-[1fr_1fr_32px]">
-              <Input
-                value={condition.key}
-                placeholder="claim"
-                onChange={(event) => {
-                  const next = [...conditions];
-                  next[index] = { ...condition, key: event.target.value };
-                  onChange(next);
-                }}
-              />
-              <Input
-                value={condition.value}
-                placeholder="expected value"
-                onChange={(event) => {
-                  const next = [...conditions];
-                  next[index] = { ...condition, value: event.target.value };
-                  onChange(next);
-                }}
-              />
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => onChange(conditions.filter((item) => item.id !== condition.id))}
-              >
-                <XIcon />
-              </Button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-md border border-dashed bg-background p-3 text-xs text-muted-foreground">
-          No conditions. The policy applies whenever the resource and operation match.
-        </div>
-      )}
-    </div>
+    </FormSection>
   );
 }
 
-function SearchablePolicySelect({
-  label,
-  value,
-  search,
-  searchPlaceholder,
-  selectPlaceholder,
-  disabled,
-  options,
-  onSearchChange,
-  onValueChange,
+function ConditionRowFields({
+  index,
+  condition,
+  onRemove,
 }: {
-  label: string;
-  value: string;
-  search: string;
-  searchPlaceholder: string;
-  selectPlaceholder: string;
-  disabled: boolean;
-  options: Array<{ value: string; label: string }>;
-  onSearchChange: (value: string) => void;
-  onValueChange: (value: string) => void;
+  index: number;
+  condition: AccessPolicyConditionRow;
+  onRemove: () => void;
 }) {
+  const { control } = useFormContext<AccessPolicyFormValues>();
+
   return (
-    <div className="grid gap-1 text-sm">
-      <span className="font-medium">{label}</span>
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={search}
-          placeholder={searchPlaceholder}
-          className="pl-8"
-          disabled={disabled}
-          onChange={(event) => onSearchChange(event.target.value)}
-        />
+    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_32px] items-center">
+      <InputField
+        control={control}
+        name={`conditionRows.${index}.key`}
+        label="Condition Key"
+        placeholder="Claim"
+        description="Claim, signal, or context key to evaluate."
+        defaultValue={condition.key}
+      />
+      <InputField
+        control={control}
+        name={`conditionRows.${index}.value`}
+        label="Condition Value"
+        placeholder="Expected value"
+        description="Expected value for the configured condition key."
+        defaultValue={condition.value}
+      />
+      <div className="flex items-end pb-0.5">
+        <Button type="button" size="icon-sm" variant="ghost" onClick={onRemove}>
+          <XIcon />
+        </Button>
       </div>
-      <Select
-        value={value}
-        onValueChange={(nextValue) => onValueChange(nextValue ?? "")}
-        disabled={disabled || options.length === 0}
-      >
-        <SelectTrigger className="w-full bg-background">
-          <SelectValue placeholder={selectPlaceholder} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        </SelectContent>
-      </Select>
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import type { BadgeVariant } from "@/components/ui/badge";
 import type {
   AccessPolicy,
+  AccessPolicyConditionRow,
   IdentityProvider,
   IdentityProviderFormValues,
 } from "@/types/iam";
 import type { API_ENDPOINTS } from "@/types/server";
 
-export type ConditionRow = { id: string; key: string; value: string };
+export type ConditionRow = AccessPolicyConditionRow;
 
 export const emptyProvider: IdentityProvider = {
   id: "",
@@ -81,9 +82,7 @@ export function recordToConditionRows(value: Record<string, string>) {
 
 export function conditionRowsToRecord(rows: ConditionRow[]) {
   return Object.fromEntries(
-    rows
-      .map((row) => [row.key.trim(), row.value.trim()] as const)
-      .filter(([key]) => key),
+    rows.map((row) => [row.key.trim(), row.value.trim()] as const).filter(([key]) => key),
   );
 }
 

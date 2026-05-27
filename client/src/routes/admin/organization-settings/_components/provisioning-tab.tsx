@@ -24,12 +24,7 @@ import { formatUnixDateTimeOrDash } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import { cn, toTitleCase } from "@/lib/utils";
 import { apiService } from "@/services/api";
-import type {
-  ProvisioningAuditRecord,
-  SCIMDirectory,
-  SCIMGroupRoleMapping,
-  SCIMToken,
-} from "@/types/iam";
+import type { ProvisioningAuditRecord, SCIMDirectory, SCIMGroupRoleMapping } from "@/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIcon,
@@ -41,7 +36,7 @@ import {
   Trash2Icon,
   UsersRoundIcon,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -58,6 +53,11 @@ type MappingFormValues = {
   externalGroupId: string;
   displayName: string;
   roleId: string;
+};
+
+type DirectoryFormValues = {
+  tenantSlug: string;
+  enabled: boolean;
 };
 
 const emptyDirectory: SCIMDirectory = {
@@ -86,125 +86,44 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
   const queryClient = useQueryClient();
   const directoriesQuery = useQuery(queries.organization.scimDirectories(organizationId));
   const auditQuery = useQuery(queries.organization.provisioningAudit(organizationId));
-  const [directory, setDirectory] = useState<SCIMDirectory>(emptyDirectory);
+  const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory>(emptyDirectory);
   const [directorySheetOpen, setDirectorySheetOpen] = useState(false);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState("");
-  const [tokenName, setTokenName] = useState("");
-  const [createdToken, setCreatedToken] = useState("");
-  const [mapping, setMapping] = useState<SCIMGroupRoleMapping>(emptyMapping);
-  const [mappingSheetOpen, setMappingSheetOpen] = useState(false);
 
   const directories = useMemo(() => directoriesQuery.data ?? [], [directoriesQuery.data]);
   const directoryId = selectedDirectoryId || directories[0]?.id || "";
   const selectedDirectory = directories.find((item) => item.id === directoryId);
-  const tokensQuery = useQuery({
-    queryKey: ["scim-tokens", organizationId, directoryId],
-    queryFn: async () => apiService.organizationService.listSCIMTokens(organizationId, directoryId),
-    enabled: Boolean(directoryId),
-  });
-  const mappingsQuery = useQuery({
-    queryKey: ["scim-mappings", organizationId, directoryId],
-    queryFn: async () =>
-      apiService.organizationService.listSCIMGroupRoleMappings(organizationId, directoryId),
-    enabled: Boolean(directoryId),
-  });
 
-  useEffect(() => {
-    if (!selectedDirectoryId && directories[0]?.id) {
-      setSelectedDirectoryId(directories[0].id);
-    }
-  }, [directories, selectedDirectoryId]);
+  const invalidateProvisioning = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.scimDirectories(organizationId).queryKey,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["scim-tokens", organizationId, directoryId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["scim-mappings", organizationId, directoryId],
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queries.organization.provisioningAudit(organizationId).queryKey,
+      }),
+    ]);
+  }, [directoryId, organizationId, queryClient]);
 
-  const invalidateProvisioning = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: queries.organization.scimDirectories(organizationId).queryKey,
-    });
-    await queryClient.invalidateQueries({ queryKey: ["scim-tokens", organizationId, directoryId] });
-    await queryClient.invalidateQueries({
-      queryKey: ["scim-mappings", organizationId, directoryId],
-    });
-    await queryClient.invalidateQueries({
-      queryKey: queries.organization.provisioningAudit(organizationId).queryKey,
-    });
-  };
-
-  const saveDirectoryMutation = useMutation({
-    mutationFn: async (value: SCIMDirectory) =>
-      value.id
-        ? apiService.organizationService.updateSCIMDirectory(organizationId, value)
-        : apiService.organizationService.createSCIMDirectory(organizationId, value),
-    onSuccess: async (saved) => {
-      toast.success("SCIM directory saved");
-      setDirectory(emptyDirectory);
+  const handleDirectorySaved = useCallback(
+    async (saved: SCIMDirectory) => {
       setDirectorySheetOpen(false);
       setSelectedDirectoryId(saved.id);
       await invalidateProvisioning();
     },
-  });
+    [invalidateProvisioning],
+  );
 
-  const createTokenMutation = useMutation({
-    mutationFn: async () =>
-      apiService.organizationService.createSCIMToken(organizationId, directoryId, tokenName),
-    onSuccess: async (response) => {
-      setCreatedToken(response.token);
-      setTokenName("");
-      toast.success("SCIM token created");
-      await invalidateProvisioning();
-    },
-  });
-
-  const revokeTokenMutation = useMutation({
-    mutationFn: async (tokenId: string) =>
-      apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
-    onSuccess: async () => {
-      toast.success("SCIM token revoked");
-      await invalidateProvisioning();
-    },
-  });
-
-  const saveMappingMutation = useMutation({
-    mutationFn: async (value: SCIMGroupRoleMapping) =>
-      value.id
-        ? apiService.organizationService.updateSCIMGroupRoleMapping(
-          organizationId,
-          directoryId,
-          value,
-        )
-        : apiService.organizationService.createSCIMGroupRoleMapping(
-          organizationId,
-          directoryId,
-          value,
-        ),
-    onSuccess: async () => {
-      toast.success("Group mapping saved");
-      setMapping(emptyMapping);
-      setMappingSheetOpen(false);
-      await invalidateProvisioning();
-    },
-  });
-
-  const deleteMappingMutation = useMutation({
-    mutationFn: async (mappingId: string) =>
-      apiService.organizationService.deleteSCIMGroupRoleMapping(
-        organizationId,
-        directoryId,
-        mappingId,
-      ),
-    onSuccess: async () => {
-      toast.success("Group mapping removed");
-      await invalidateProvisioning();
-    },
-  });
-
-  const openDirectorySheet = (value: SCIMDirectory) => {
-    setDirectory(value);
+  const openDirectorySheet = useCallback((value: SCIMDirectory) => {
+    setEditingDirectory(value);
     setDirectorySheetOpen(true);
-  };
-
-  const openMappingSheet = (value: SCIMGroupRoleMapping) => {
-    setMapping(value);
-    setMappingSheetOpen(true);
-  };
+  }, []);
 
   return (
     <div className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">
@@ -282,6 +201,7 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
             </div>
             <Button
               variant="outline"
+              size="sm"
               disabled={!selectedDirectory}
               onClick={() => selectedDirectory && openDirectorySheet(selectedDirectory)}
             >
@@ -291,97 +211,157 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
         </div>
 
         <SCIMTokenPanel
-          tokens={tokensQuery.data ?? []}
-          isLoading={tokensQuery.isLoading}
-          tokenName={tokenName}
-          createdToken={createdToken}
-          setTokenName={setTokenName}
-          onCreate={() => createTokenMutation.mutate()}
-          onRevoke={(tokenId) => revokeTokenMutation.mutate(tokenId)}
-          disabled={!directoryId || createTokenMutation.isPending}
+          organizationId={organizationId}
+          directoryId={directoryId}
+          onProvisioningChange={invalidateProvisioning}
         />
-        <MappingsPanel
-          mappings={mappingsQuery.data ?? []}
-          isLoading={mappingsQuery.isLoading}
-          onAdd={() => openMappingSheet(emptyMapping)}
-          onEdit={openMappingSheet}
-          onDelete={(mappingId) => deleteMappingMutation.mutate(mappingId)}
-          disabled={!directoryId}
+        <MappingsPanelController
+          organizationId={organizationId}
+          directoryId={directoryId}
+          onProvisioningChange={invalidateProvisioning}
         />
         <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />
       </div>
 
-      <Sheet open={directorySheetOpen} onOpenChange={setDirectorySheetOpen}>
-        <SheetContent className="w-[calc(100vw-1rem)] sm:max-w-md">
-          <SheetHeader className="border-b">
-            <SheetTitle>{directory.id ? "Edit SCIM directory" : "Add SCIM directory"}</SheetTitle>
-            <SheetDescription>
-              Configure the tenant slug and provisioning availability.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="space-y-3 px-4">
-            <Field label="Tenant slug">
-              <Input
-                value={directory.tenantSlug}
-                onChange={(event) => setDirectory({ ...directory, tenantSlug: event.target.value })}
-              />
-            </Field>
-            <ToggleRow
-              label="Enabled"
-              description="Allow SCIM API calls for this directory."
-              checked={directory.enabled}
-              onCheckedChange={(enabled) => setDirectory({ ...directory, enabled })}
-            />
-          </div>
-          <SheetFooter className="border-t">
-            <Button
-              onClick={() => saveDirectoryMutation.mutate(directory)}
-              isLoading={saveDirectoryMutation.isPending}
-              loadingText="Saving..."
-            >
-              <SaveIcon />
-              Save directory
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={mappingSheetOpen} onOpenChange={setMappingSheetOpen}>
-        <SheetContent className="w-[calc(100vw-1rem)] sm:max-w-md">
-          <SheetHeader className="border-b">
-            <SheetTitle>{mapping.id ? "Edit group mapping" : "Add group mapping"}</SheetTitle>
-            <SheetDescription>Map an external SCIM group to a Trenova role.</SheetDescription>
-          </SheetHeader>
-          <MappingEditor
-            mapping={mapping}
-            disabled={!directoryId || saveMappingMutation.isPending}
-            onSave={(value) => saveMappingMutation.mutate(value)}
-          />
-        </SheetContent>
-      </Sheet>
+      <DirectoryEditorSheet
+        organizationId={organizationId}
+        directory={editingDirectory}
+        open={directorySheetOpen}
+        onOpenChange={setDirectorySheetOpen}
+        onSaved={handleDirectorySaved}
+      />
     </div>
   );
 }
 
-function SCIMTokenPanel({
-  tokens,
-  isLoading,
-  tokenName,
-  createdToken,
-  setTokenName,
-  onCreate,
-  onRevoke,
-  disabled,
+function DirectoryEditorSheet({
+  organizationId,
+  directory,
+  open,
+  onOpenChange,
+  onSaved,
 }: {
-  tokens: SCIMToken[];
-  isLoading: boolean;
-  tokenName: string;
-  createdToken: string;
-  setTokenName: (value: string) => void;
-  onCreate: () => void;
-  onRevoke: (tokenId: string) => void;
-  disabled: boolean;
+  organizationId: string;
+  directory: SCIMDirectory;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSaved: (directory: SCIMDirectory) => Promise<void>;
 }) {
+  const saveDirectoryMutation = useMutation({
+    mutationFn: async (value: SCIMDirectory) =>
+      value.id
+        ? apiService.organizationService.updateSCIMDirectory(organizationId, value)
+        : apiService.organizationService.createSCIMDirectory(organizationId, value),
+    onSuccess: async (saved) => {
+      toast.success("SCIM directory saved");
+      await onSaved(saved);
+    },
+  });
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-[calc(100vw-1rem)] sm:max-w-md">
+        <SheetHeader className="border-b">
+          <SheetTitle>{directory.id ? "Edit SCIM directory" : "Add SCIM directory"}</SheetTitle>
+          <SheetDescription>
+            Configure the tenant slug and provisioning availability.
+          </SheetDescription>
+        </SheetHeader>
+        <DirectoryEditorForm
+          key={`${directory.id || "new"}-${open ? "open" : "closed"}`}
+          directory={directory}
+          isSaving={saveDirectoryMutation.isPending}
+          onSave={(value) => saveDirectoryMutation.mutate(value)}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function DirectoryEditorForm({
+  directory,
+  isSaving,
+  onSave,
+}: {
+  directory: SCIMDirectory;
+  isSaving: boolean;
+  onSave: (directory: SCIMDirectory) => void;
+}) {
+  const { handleSubmit, register, setValue, watch } = useForm<DirectoryFormValues>({
+    defaultValues: {
+      tenantSlug: directory.tenantSlug,
+      enabled: directory.enabled,
+    },
+  });
+
+  return (
+    <form
+      className="flex min-h-0 flex-1 flex-col"
+      onSubmit={(event) => {
+        event.stopPropagation();
+        void handleSubmit((values) => onSave({ ...directory, ...values }))(event);
+      }}
+    >
+      <div className="space-y-3 px-4">
+        <Field label="Tenant slug">
+          <Input {...register("tenantSlug", { required: true })} />
+        </Field>
+        <ToggleRow
+          label="Enabled"
+          description="Allow SCIM API calls for this directory."
+          checked={watch("enabled")}
+          onCheckedChange={(enabled) =>
+            setValue("enabled", enabled, { shouldDirty: true, shouldValidate: true })
+          }
+        />
+      </div>
+      <SheetFooter className="border-t">
+        <Button type="submit" size="sm" isLoading={isSaving} loadingText="Saving...">
+          <SaveIcon />
+          Save directory
+        </Button>
+      </SheetFooter>
+    </form>
+  );
+}
+
+const SCIMTokenPanel = memo(function SCIMTokenPanel({
+  organizationId,
+  directoryId,
+  onProvisioningChange,
+}: {
+  organizationId: string;
+  directoryId: string;
+  onProvisioningChange: () => Promise<void>;
+}) {
+  const [tokenName, setTokenName] = useState("");
+  const [createdToken, setCreatedToken] = useState("");
+  const tokensQuery = useQuery({
+    queryKey: ["scim-tokens", organizationId, directoryId],
+    queryFn: async () => apiService.organizationService.listSCIMTokens(organizationId, directoryId),
+    enabled: Boolean(directoryId),
+  });
+  const { mutate: createToken, isPending: isCreatingToken } = useMutation({
+    mutationFn: async () =>
+      apiService.organizationService.createSCIMToken(organizationId, directoryId, tokenName),
+    onSuccess: async (response) => {
+      setCreatedToken(response.token);
+      setTokenName("");
+      toast.success("SCIM token created");
+      await onProvisioningChange();
+    },
+  });
+  const { mutate: revokeToken } = useMutation({
+    mutationFn: async (tokenId: string) =>
+      apiService.organizationService.revokeSCIMToken(organizationId, tokenId),
+    onSuccess: async () => {
+      toast.success("SCIM token revoked");
+      await onProvisioningChange();
+    },
+  });
+  const tokens = tokensQuery.data ?? [];
+  const createDisabled = !directoryId || isCreatingToken;
+
   return (
     <div className="rounded-lg border bg-background">
       <PanelHeader
@@ -396,13 +376,17 @@ function SCIMTokenPanel({
             placeholder="Token name"
             onChange={(event) => setTokenName(event.target.value)}
           />
-          <Button onClick={onCreate} disabled={disabled || tokenName.trim() === ""}>
+          <Button
+            size="sm"
+            onClick={() => createToken()}
+            disabled={createDisabled || tokenName.trim() === ""}
+          >
             <PlusIcon />
             Create token
           </Button>
         </div>
         {createdToken && <CopyableSecretBlock value={createdToken} />}
-        {isLoading ? (
+        {tokensQuery.isLoading ? (
           <RowSkeleton rows={2} />
         ) : tokens.length > 0 ? (
           <div className="overflow-x-auto">
@@ -436,7 +420,7 @@ function SCIMTokenPanel({
                         size="sm"
                         variant="destructive"
                         disabled={token.status !== "active"}
-                        onClick={() => onRevoke(token.id)}
+                        onClick={() => revokeToken(token.id)}
                       >
                         Revoke
                       </Button>
@@ -457,7 +441,7 @@ function SCIMTokenPanel({
       </div>
     </div>
   );
-}
+});
 
 function CopyableSecretBlock({ value }: { value: string }) {
   const { copy, isCopied } = useCopyToClipboard();
@@ -485,7 +469,93 @@ function CopyableSecretBlock({ value }: { value: string }) {
   );
 }
 
-function MappingsPanel({
+const MappingsPanelController = memo(function MappingsPanelController({
+  organizationId,
+  directoryId,
+  onProvisioningChange,
+}: {
+  organizationId: string;
+  directoryId: string;
+  onProvisioningChange: () => Promise<void>;
+}) {
+  const [mapping, setMapping] = useState<SCIMGroupRoleMapping>(emptyMapping);
+  const [mappingSheetOpen, setMappingSheetOpen] = useState(false);
+  const mappingsQuery = useQuery({
+    queryKey: ["scim-mappings", organizationId, directoryId],
+    queryFn: async () =>
+      apiService.organizationService.listSCIMGroupRoleMappings(organizationId, directoryId),
+    enabled: Boolean(directoryId),
+  });
+  const { mutate: saveMapping, isPending: isSavingMapping } = useMutation({
+    mutationFn: async (value: SCIMGroupRoleMapping) =>
+      value.id
+        ? apiService.organizationService.updateSCIMGroupRoleMapping(
+            organizationId,
+            directoryId,
+            value,
+          )
+        : apiService.organizationService.createSCIMGroupRoleMapping(
+            organizationId,
+            directoryId,
+            value,
+          ),
+    onSuccess: async () => {
+      toast.success("Group mapping saved");
+      setMapping(emptyMapping);
+      setMappingSheetOpen(false);
+      await onProvisioningChange();
+    },
+  });
+  const { mutate: removeMapping } = useMutation({
+    mutationFn: async (mappingId: string) =>
+      apiService.organizationService.deleteSCIMGroupRoleMapping(
+        organizationId,
+        directoryId,
+        mappingId,
+      ),
+    onSuccess: async () => {
+      toast.success("Group mapping removed");
+      await onProvisioningChange();
+    },
+  });
+  const openMappingSheet = useCallback((value: SCIMGroupRoleMapping) => {
+    setMapping(value);
+    setMappingSheetOpen(true);
+  }, []);
+  const addMapping = useCallback(() => openMappingSheet(emptyMapping), [openMappingSheet]);
+  const deleteMapping = useCallback(
+    (mappingId: string) => removeMapping(mappingId),
+    [removeMapping],
+  );
+
+  return (
+    <>
+      <MappingsPanel
+        mappings={mappingsQuery.data ?? []}
+        isLoading={mappingsQuery.isLoading}
+        onAdd={addMapping}
+        onEdit={openMappingSheet}
+        onDelete={deleteMapping}
+        disabled={!directoryId}
+      />
+      <Sheet open={mappingSheetOpen} onOpenChange={setMappingSheetOpen}>
+        <SheetContent className="w-[calc(100vw-1rem)] sm:max-w-md">
+          <SheetHeader className="border-b">
+            <SheetTitle>{mapping.id ? "Edit group mapping" : "Add group mapping"}</SheetTitle>
+            <SheetDescription>Map an external SCIM group to a Trenova role.</SheetDescription>
+          </SheetHeader>
+          <MappingEditor
+            mapping={mapping}
+            disabled={!directoryId || isSavingMapping}
+            onSave={saveMapping}
+          />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+});
+
+const MappingsPanel = memo(function MappingsPanel({
   mappings,
   isLoading,
   onAdd,
@@ -563,7 +633,7 @@ function MappingsPanel({
       </div>
     </div>
   );
-}
+});
 
 function MappingEditor({
   mapping,
@@ -616,7 +686,7 @@ function MappingEditor({
         />
       </div>
       <SheetFooter className="border-t">
-        <Button type="submit" disabled={disabled}>
+        <Button type="submit" size="sm" disabled={disabled}>
           <SaveIcon />
           Save mapping
         </Button>
@@ -625,7 +695,7 @@ function MappingEditor({
   );
 }
 
-function AuditTimeline({
+const AuditTimeline = memo(function AuditTimeline({
   records,
   isLoading,
 }: {
@@ -670,4 +740,4 @@ function AuditTimeline({
       </div>
     </div>
   );
-}
+});

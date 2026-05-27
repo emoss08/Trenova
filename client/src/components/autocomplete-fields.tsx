@@ -1,3 +1,4 @@
+import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import { formatLocation } from "@/lib/utils";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
@@ -36,10 +37,12 @@ import type { User } from "@/types/user";
 import type { Worker } from "@/types/worker";
 import type { ReactNode } from "react";
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
+import type { SelectOption } from "@/types/fields";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
 import { FieldWrapper } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
+import { SelectField } from "./fields/select-field";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
@@ -92,6 +95,41 @@ type BaseMultiSelectAutocompleteFieldProps<
   placeholder?: string;
   extraSearchParams?: Record<string, string>;
 };
+
+type BaseStaticPermissionAutocompleteFieldProps<TForm extends FieldValues> = {
+  name: Path<TForm>;
+  control: Control<TForm>;
+  rules?: RegisterOptions<TForm, Path<TForm>>;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  disabled?: boolean;
+  onValueChange?: (value: string) => void;
+};
+
+type PermissionResourceAutocompleteFieldProps<TForm extends FieldValues> =
+  BaseStaticPermissionAutocompleteFieldProps<TForm> & {
+    resources: ResourceDefinition[];
+  };
+
+type PermissionOperationAutocompleteFieldProps<TForm extends FieldValues> =
+  BaseStaticPermissionAutocompleteFieldProps<TForm> & {
+    operations: OperationDefinition[];
+  };
+
+function toPermissionSelectOptions(
+  definitions: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>,
+): SelectOption[] {
+  return definitions.map((definition) => ({
+    value: definition.value,
+    label: definition.label,
+    description: definition.description,
+  }));
+}
 
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
@@ -178,6 +216,58 @@ export function RoleSelectAutocompleteField<T extends FieldValues>({
       renderOption={(option) => (
         <EDIOptionStack primary={option.name || ""} secondary={option.description} />
       )}
+      {...props}
+    />
+  );
+}
+
+export function PermissionResourceAutocompleteField<T extends FieldValues>({
+  resources,
+  label = "Resource",
+  placeholder = "Select resource",
+  description = "Protected application resource evaluated by this access policy.",
+  ...props
+}: PermissionResourceAutocompleteFieldProps<T>) {
+  const options = toPermissionSelectOptions(
+    resources.map((resource) => ({
+      value: resource.resource,
+      label: resource.displayName,
+      description: resource.description || resource.category,
+    })),
+  );
+
+  return (
+    <SelectField<T>
+      label={label}
+      placeholder={placeholder}
+      description={description}
+      options={options}
+      {...props}
+    />
+  );
+}
+
+export function PermissionOperationAutocompleteField<T extends FieldValues>({
+  operations,
+  label = "Operation",
+  placeholder = "Select operation",
+  description = "Action on the selected resource that this policy allows or denies.",
+  ...props
+}: PermissionOperationAutocompleteFieldProps<T>) {
+  const options = toPermissionSelectOptions(
+    operations.map((operation) => ({
+      value: operation.operation,
+      label: operation.displayName || operation.operation,
+      description: operation.description,
+    })),
+  );
+
+  return (
+    <SelectField<T>
+      label={label}
+      placeholder={placeholder}
+      description={description}
+      options={options}
       {...props}
     />
   );

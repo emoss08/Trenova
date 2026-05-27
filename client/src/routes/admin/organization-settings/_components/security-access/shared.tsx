@@ -65,7 +65,7 @@ export function ConsoleToolbar({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-muted/20 p-3">
+    <div className="rounded-lg border bg-sidebar p-3">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h3 className="text-base font-semibold tracking-tight">{title}</h3>
@@ -73,12 +73,11 @@ export function ConsoleToolbar({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative min-w-0 sm:w-80">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               placeholder={searchPlaceholder}
-              className="pl-8"
               onChange={(event) => onSearchChange(event.target.value)}
+              leftElement={<SearchIcon className="size-3 text-muted-foreground" />}
             />
           </div>
           {action}
