@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/iam"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -55,7 +56,10 @@ type IAMService interface {
 	) (*iam.IdentityProvider, error)
 	DeleteIdentityProvider(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
 
-	ListSCIMDirectories(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*iam.SCIMDirectory, error)
+	ListSCIMDirectories(
+		ctx context.Context,
+		req *repositories.ListSCIMDirectoryRequest,
+	) (*pagination.ListResult[*iam.SCIMDirectory], error)
 	CreateSCIMDirectory(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -95,7 +99,11 @@ type IAMService interface {
 		id pulid.ID,
 		entity *iam.SCIMGroupRoleMapping,
 	) (*iam.SCIMGroupRoleMapping, error)
-	DeleteSCIMGroupRoleMapping(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
+	DeleteSCIMGroupRoleMapping(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		id pulid.ID,
+	) error
 
 	ListProvisioningAuditRecords(
 		ctx context.Context,
@@ -104,7 +112,10 @@ type IAMService interface {
 		limit int,
 	) ([]*iam.ProvisioningAuditRecord, error)
 
-	ListAccessPolicies(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*iam.AccessPolicy, error)
+	ListAccessPolicies(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*iam.AccessPolicy, error)
 	CreateAccessPolicy(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
@@ -124,5 +135,9 @@ type IAMService interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*iam.ExternalIdentity, error)
-	ListMFAAuthenticators(ctx context.Context, orgID pulid.ID, limit int) ([]*iam.MFAAuthenticator, error)
+	ListMFAAuthenticators(
+		ctx context.Context,
+		orgID pulid.ID,
+		limit int,
+	) ([]*iam.MFAAuthenticator, error)
 }

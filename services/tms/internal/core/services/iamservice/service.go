@@ -226,9 +226,9 @@ func normalizedScopes(values []string) []string {
 
 func (s *service) ListSCIMDirectories(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) ([]*iam.SCIMDirectory, error) {
-	return s.repo.ListSCIMDirectories(ctx, repositories.ListIAMRequest{TenantInfo: tenantInfo})
+	req *repositories.ListSCIMDirectoryRequest,
+) (*pagination.ListResult[*iam.SCIMDirectory], error) {
+	return s.repo.ListSCIMDirectories(ctx, req)
 }
 
 func (s *service) CreateSCIMDirectory(

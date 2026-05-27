@@ -28,7 +28,11 @@ export const organization = createQueryKeys("organization", {
   }),
   scimDirectories: (organizationId: string) => ({
     queryKey: ["scim-directories", organizationId],
-    queryFn: async () => apiService.organizationService.listSCIMDirectories(organizationId),
+    queryFn: async () =>
+      apiService.organizationService.listSCIMDirectories(organizationId, {
+        limit: 100,
+        offset: 0,
+      }),
   }),
   provisioningAudit: (organizationId: string) => ({
     queryKey: ["provisioning-audit", organizationId],

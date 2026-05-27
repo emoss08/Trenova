@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { createLimitOffsetResponse } from "./server";
 
 const stringArraySchema = z
   .array(z.string())
@@ -67,7 +68,17 @@ export const scimDirectorySchema = z.object({
 
 export type SCIMDirectory = z.infer<typeof scimDirectorySchema>;
 
+export const scimDirectoryListSchema = createLimitOffsetResponse(scimDirectorySchema);
+
+export type SCIMDirectoryListResponse = z.infer<typeof scimDirectoryListSchema>;
+
 export const scimDirectoriesSchema = z.array(scimDirectorySchema);
+
+export const scimDirectoryFormSchema = scimDirectorySchema.extend({
+  tenantSlug: z.string().trim().min(1, "Tenant slug is required"),
+});
+
+export type SCIMDirectoryFormValues = z.infer<typeof scimDirectoryFormSchema>;
 
 export const scimTokenSchema = z.object({
   id: z.string().optional().default(""),
@@ -107,6 +118,14 @@ export const scimGroupRoleMappingSchema = z.object({
 export type SCIMGroupRoleMapping = z.infer<typeof scimGroupRoleMappingSchema>;
 
 export const scimGroupRoleMappingsSchema = z.array(scimGroupRoleMappingSchema);
+
+export const scimGroupRoleMappingFormSchema = scimGroupRoleMappingSchema.extend({
+  externalGroupId: z.string().trim().min(1, "External group ID is required"),
+  displayName: z.string().default(""),
+  roleId: z.string().trim().min(1, "Role is required"),
+});
+
+export type SCIMGroupRoleMappingFormValues = z.infer<typeof scimGroupRoleMappingFormSchema>;
 
 export const provisioningAuditRecordSchema = z.object({
   id: z.string(),

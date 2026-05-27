@@ -21,6 +21,15 @@ type IAMPolicyLookupRequest struct {
 	Operation      permission.Operation
 }
 
+type ListSCIMDirectoryRequest struct {
+	Filter *pagination.QueryOptions `json:"filter"`
+}
+
+type GetSCIMDirectoryRequest struct {
+	ID         pulid.ID              `json:"id"         form:"id"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
+}
+
 type IAMRepository interface {
 	ListIdentityProviders(ctx context.Context, req ListIAMRequest) ([]*iam.IdentityProvider, error)
 	GetIdentityProvider(
@@ -28,15 +37,23 @@ type IAMRepository interface {
 		tenantInfo pagination.TenantInfo,
 		id pulid.ID,
 	) (*iam.IdentityProvider, error)
-	CreateIdentityProvider(ctx context.Context, entity *iam.IdentityProvider) (*iam.IdentityProvider, error)
-	UpdateIdentityProvider(ctx context.Context, entity *iam.IdentityProvider) (*iam.IdentityProvider, error)
+	CreateIdentityProvider(
+		ctx context.Context,
+		entity *iam.IdentityProvider,
+	) (*iam.IdentityProvider, error)
+	UpdateIdentityProvider(
+		ctx context.Context,
+		entity *iam.IdentityProvider,
+	) (*iam.IdentityProvider, error)
 	DeleteIdentityProvider(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
 
-	ListSCIMDirectories(ctx context.Context, req ListIAMRequest) ([]*iam.SCIMDirectory, error)
+	ListSCIMDirectories(
+		ctx context.Context,
+		req *ListSCIMDirectoryRequest,
+	) (*pagination.ListResult[*iam.SCIMDirectory], error)
 	GetSCIMDirectory(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		id pulid.ID,
+		req GetSCIMDirectoryRequest,
 	) (*iam.SCIMDirectory, error)
 	CreateSCIMDirectory(ctx context.Context, entity *iam.SCIMDirectory) (*iam.SCIMDirectory, error)
 	UpdateSCIMDirectory(ctx context.Context, entity *iam.SCIMDirectory) (*iam.SCIMDirectory, error)
@@ -84,5 +101,9 @@ type IAMRepository interface {
 	ListAuthEvents(ctx context.Context, orgID pulid.ID, limit int) ([]*iam.AuthEvent, error)
 	ListRiskDecisions(ctx context.Context, orgID pulid.ID, limit int) ([]*iam.RiskDecision, error)
 	ListExternalIdentities(ctx context.Context, req ListIAMRequest) ([]*iam.ExternalIdentity, error)
-	ListMFAAuthenticators(ctx context.Context, orgID pulid.ID, limit int) ([]*iam.MFAAuthenticator, error)
+	ListMFAAuthenticators(
+		ctx context.Context,
+		orgID pulid.ID,
+		limit int,
+	) ([]*iam.MFAAuthenticator, error)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -207,16 +208,22 @@ func (h *Handler) deleteIdentityProvider(c *gin.Context) {
 }
 
 func (h *Handler) listSCIMDirectories(c *gin.Context) {
-	tenantInfo, ok := h.tenantInfo(c)
-	if !ok {
-		return
-	}
-	resp, err := h.service.ListSCIMDirectories(c.Request.Context(), tenantInfo)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, resp)
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewQueryOptions(c, authCtx)
+
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*iam.SCIMDirectory], error) {
+			return h.service.ListSCIMDirectories(
+				c.Request.Context(),
+				&repositories.ListSCIMDirectoryRequest{
+					Filter: req,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) createSCIMDirectory(c *gin.Context) {

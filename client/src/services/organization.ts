@@ -10,7 +10,7 @@ import {
   mfaAuthenticatorsSchema,
   provisioningAuditRecordsSchema,
   riskDecisionsSchema,
-  scimDirectoriesSchema,
+  scimDirectoryListSchema,
   scimDirectorySchema,
   scimGroupRoleMappingSchema,
   scimGroupRoleMappingsSchema,
@@ -19,6 +19,7 @@ import {
   type AccessPolicy,
   type IdentityProvider,
   type SCIMDirectory,
+  type SCIMDirectoryListResponse,
   type SCIMGroupRoleMapping,
 } from "@/types/iam";
 import {
@@ -149,9 +150,18 @@ export class OrganizationService {
     await api.delete(`${this.base_url}/${organizationId}/iam/identity-providers/${providerId}`);
   }
 
-  public async listSCIMDirectories(organizationId: string) {
-    const response = await api.get(`${this.base_url}/${organizationId}/iam/scim/directories`);
-    return safeParse(scimDirectoriesSchema, response, "SCIMDirectories");
+  public async listSCIMDirectories(
+    organizationId: string,
+    params?: { limit?: number; offset?: number },
+  ) {
+    const searchParams = new URLSearchParams();
+    if (params?.limit != null) searchParams.set("limit", String(params.limit));
+    if (params?.offset != null) searchParams.set("offset", String(params.offset));
+    const qs = searchParams.toString();
+    const response = await api.get<SCIMDirectoryListResponse>(
+      `${this.base_url}/${organizationId}/iam/scim/directories${qs ? `?${qs}` : ""}`,
+    );
+    return safeParse(scimDirectoryListSchema, response, "SCIMDirectories");
   }
 
   public async createSCIMDirectory(organizationId: string, data: SCIMDirectory) {

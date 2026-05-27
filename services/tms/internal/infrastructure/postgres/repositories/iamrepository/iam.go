@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -141,30 +142,39 @@ func (r *repository) DeleteIdentityProvider(
 
 func (r *repository) ListSCIMDirectories(
 	ctx context.Context,
-	req repositories.ListIAMRequest,
-) ([]*iam.SCIMDirectory, error) {
-	entities := make([]*iam.SCIMDirectory, 0)
-	err := r.db.DB().NewSelect().
+	req *repositories.ListSCIMDirectoryRequest,
+) (*pagination.ListResult[*iam.SCIMDirectory], error) {
+	entities := make([]*iam.SCIMDirectory, 0, req.Filter.Pagination.SafeLimit())
+	cols := buncolgen.SCIMDirectoryColumns
+
+	total, err := r.db.DB().NewSelect().
 		Model(&entities).
-		Where("sd.organization_id = ?", req.TenantInfo.OrgID).
-		Where("sd.business_unit_id = ?", req.TenantInfo.BuID).
-		Order("sd.created_at DESC").
-		Limit(safeLimit(req.Limit)).
-		Scan(ctx)
-	return entities, err
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.SCIMDirectoryApplyTenant(req.Filter.TenantInfo)(sq)
+		}).
+		Order(cols.CreatedAt.OrderDesc()).
+		Limit(req.Filter.Pagination.SafeLimit()).
+		Offset(req.Filter.Pagination.SafeOffset()).
+		ScanAndCount(ctx)
+
+	return &pagination.ListResult[*iam.SCIMDirectory]{
+		Items: entities,
+		Total: total,
+	}, err
 }
 
 func (r *repository) GetSCIMDirectory(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	id pulid.ID,
+	req repositories.GetSCIMDirectoryRequest,
 ) (*iam.SCIMDirectory, error) {
 	entity := new(iam.SCIMDirectory)
+	cols := buncolgen.SCIMDirectoryColumns
+
 	if err := r.db.DB().NewSelect().
 		Model(entity).
-		Where("sd.id = ?", id).
-		Where("sd.organization_id = ?", tenantInfo.OrgID).
-		Where("sd.business_unit_id = ?", tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.SCIMDirectoryScopeTenant(sq, req.TenantInfo).Where(cols.ID.Eq(), req.ID)
+		}).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "SCIM directory")
 	}

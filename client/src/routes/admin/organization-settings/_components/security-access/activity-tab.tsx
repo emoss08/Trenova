@@ -48,6 +48,19 @@ const activityViewButtonLabels: Record<ActivityViewValue, string> = {
   mfa: "MFA authenticators",
 };
 
+function getActivityViewIcon(view: ActivityViewValue) {
+  switch (view) {
+    case "auth":
+      return KeyRoundIcon;
+    case "risk":
+      return ShieldAlertIcon;
+    case "identities":
+      return ExternalLinkIcon;
+    case "mfa":
+      return LockKeyholeIcon;
+  }
+}
+
 export function ActivityTab({ organizationId }: { organizationId: string }) {
   const [activityView, setActivityView] = useQueryState(
     "activityView",
@@ -170,21 +183,14 @@ const ActivityViewButton = memo(function ActivityViewButton({
   count: number;
   onViewChange: (value: ActivityViewValue) => void;
 }) {
-  const Icon =
-    view === "auth"
-      ? KeyRoundIcon
-      : view === "risk"
-        ? ShieldAlertIcon
-        : view === "identities"
-          ? ExternalLinkIcon
-          : LockKeyholeIcon;
+  const Icon = getActivityViewIcon(view);
 
   return (
     <button
       type="button"
       className={cn(
-        "flex items-center justify-between gap-2 rounded-lg border bg-background p-3 text-left transition-colors hover:bg-muted/40",
-        active && "border-primary/40 bg-primary/5",
+        "flex items-center justify-between gap-2 rounded-lg border bg-background p-3 text-left transition-colors hover:border-brand hover:bg-brand/20",
+        active && "border-brand bg-brand/20 hover:bg-brand/30",
       )}
       onClick={() => onViewChange(view)}
     >

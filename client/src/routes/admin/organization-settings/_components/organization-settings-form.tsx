@@ -143,7 +143,14 @@ export default function OrganizationSettingsForm() {
   return (
     <Tabs
       value={searchParams.tab}
-      onValueChange={(value) => setSearchParams({ tab: value })}
+      onValueChange={(value) =>
+        setSearchParams({
+          tab: value,
+          securityTab: value === "security" ? searchParams.securityTab : null,
+          activityView: value === "security" ? searchParams.activityView : null,
+          directoryId: value === "security" ? searchParams.directoryId : null,
+        })
+      }
       className="gap-1 px-4"
     >
       <TabsList variant="underline">

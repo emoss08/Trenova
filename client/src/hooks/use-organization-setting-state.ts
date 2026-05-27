@@ -1,4 +1,4 @@
-import { parseAsStringLiteral } from "nuqs";
+import { parseAsString, parseAsStringLiteral } from "nuqs";
 
 export const organizationSettingsTabValues = ["general", "security", "billing-usage"] as const;
 export const securityTabValues = ["sign-in", "provisioning", "policies", "activity"] as const;
@@ -15,4 +15,5 @@ export const searchParamsParser = {
   activityView: parseAsStringLiteral(activityViewValues)
     .withDefault("auth")
     .withOptions({ history: "push" }),
+  directoryId: parseAsString.withOptions({ history: "replace" }),
 };

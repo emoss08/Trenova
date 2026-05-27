@@ -11,7 +11,7 @@ import {
   type LucideIcon,
   UsersRoundIcon,
 } from "lucide-react";
-import { useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
 import { ActivityTab } from "./security-access/activity-tab";
@@ -52,7 +52,10 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
   const riskQuery = useQuery(queries.organization.riskDecisions(organizationId));
 
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
-  const directories = useMemo(() => directoriesQuery.data ?? [], [directoriesQuery.data]);
+  const directories = useMemo(
+    () => directoriesQuery.data?.results ?? [],
+    [directoriesQuery.data?.results],
+  );
   const policies = useMemo(() => policiesQuery.data ?? [], [policiesQuery.data]);
   const authEvents = useMemo(() => authEventsQuery.data ?? [], [authEventsQuery.data]);
   const riskDecisions = useMemo(() => riskQuery.data ?? [], [riskQuery.data]);
@@ -105,15 +108,19 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
 }
 
 function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
-  const [securityTab, setSecurityTab] = useQueryState(
-    "securityTab",
-    searchParamsParser.securityTab,
-  );
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const { securityTab } = searchParams;
   const handleTabChange = useCallback(
     (value: string) => {
-      void setSecurityTab(value as SecurityTabValue);
+      const nextSecurityTab = value as SecurityTabValue;
+
+      void setSearchParams({
+        securityTab: nextSecurityTab,
+        directoryId: nextSecurityTab === "provisioning" ? searchParams.directoryId : null,
+        activityView: nextSecurityTab === "activity" ? searchParams.activityView : null,
+      });
     },
-    [setSecurityTab],
+    [searchParams.activityView, searchParams.directoryId, setSearchParams],
   );
 
   return (
