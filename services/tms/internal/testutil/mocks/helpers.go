@@ -105,7 +105,24 @@ func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 ) (*services.EffectivePermissions, error) {
-	return nil, nil
+	registry := permission.NewRegistry()
+	resources := make(map[string]services.EffectiveResourcePermission, len(registry.All()))
+	for _, def := range registry.All() {
+		operations := make([]permission.Operation, len(def.Operations))
+		for i, op := range def.Operations {
+			operations[i] = op.Operation
+		}
+
+		resources[def.Resource] = services.EffectiveResourcePermission{
+			Operations: operations,
+			DataScope:  permission.DataScopeAll,
+		}
+	}
+
+	return &services.EffectivePermissions{
+		MaxSensitivity: permission.SensitivityConfidential,
+		Resources:      resources,
+	}, nil
 }
 
 func (a *AllowAllPermissionEngine) SimulatePermissions(

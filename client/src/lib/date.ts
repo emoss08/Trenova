@@ -451,6 +451,11 @@ export function formatUnixDateTime(value: number | null | undefined): string {
   return new Date(value * 1000).toLocaleString();
 }
 
+export function formatUnixDateTimeOrDash(value: number | null | undefined): string {
+  if (!value) return "-";
+  return formatUnixDateTime(value);
+}
+
 export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
   return [
     {

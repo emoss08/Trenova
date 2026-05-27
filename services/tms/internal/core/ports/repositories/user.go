@@ -104,7 +104,6 @@ type UserRepository interface {
 		req ReplaceOrganizationMembershipsRequest,
 	) ([]*tenant.OrganizationMembership, error)
 	UpdateCurrentOrganization(ctx context.Context, userID, orgID, buID pulid.ID) error
-	IsPlatformAdmin(ctx context.Context, userID pulid.ID) (bool, error)
 	GetUserOrganizationSummaries(ctx context.Context, userID pulid.ID) ([]OrgSummary, error)
 	Update(ctx context.Context, entity *tenant.User) (*tenant.User, error)
 	UpdatePassword(ctx context.Context, req UpdateUserPasswordRequest) error

@@ -21,38 +21,6 @@ export function createPermissionLoader(
   };
 }
 
-export function createAdminOnlyLoader(): LoaderFunction {
-  return async () => {
-    const { manifest } = usePermissionStore.getState();
-
-    if (!manifest) {
-      return redirect("/login");
-    }
-
-    if (!manifest.isPlatformAdmin && !manifest.isOrgAdmin) {
-      throw new Response("Forbidden", { status: 403 });
-    }
-
-    return null;
-  };
-}
-
-export function createPlatformAdminLoader(): LoaderFunction {
-  return async () => {
-    const { manifest } = usePermissionStore.getState();
-
-    if (!manifest) {
-      return redirect("/login");
-    }
-
-    if (!manifest.isPlatformAdmin) {
-      throw new Response("Forbidden", { status: 403 });
-    }
-
-    return null;
-  };
-}
-
 export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
   return async (args) => {
     for (const loader of loaders) {

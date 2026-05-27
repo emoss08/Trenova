@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
@@ -106,6 +107,7 @@ import (
 
 var ServiceModule = fx.Module("api-services", fx.Provide(
 	organizationservice.New,
+	iamservice.New,
 	userservice.New,
 	authservice.New,
 	tableconfigurationservice.New,

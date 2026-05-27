@@ -45,7 +45,6 @@ func TestPermissionCacheRepository_SetAndGet_Integration(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	perms := &repositories.CachedPermissions{
-		IsOrgAdmin:     true,
 		MaxSensitivity: string(permission.SensitivityRestricted),
 		Resources: map[string]*repositories.CachedResourcePermission{
 			"shipment": {
@@ -69,7 +68,6 @@ func TestPermissionCacheRepository_SetAndGet_Integration(t *testing.T) {
 	retrieved, err := repo.Get(ctx, userID, orgID)
 	require.NoError(t, err)
 	require.NotNil(t, retrieved)
-	assert.Equal(t, perms.IsOrgAdmin, retrieved.IsOrgAdmin)
 	assert.Equal(t, perms.MaxSensitivity, retrieved.MaxSensitivity)
 	assert.Len(t, retrieved.Resources, 2)
 	assert.Contains(t, retrieved.Resources, "shipment")
@@ -98,8 +96,7 @@ func TestPermissionCacheRepository_Delete_Integration(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 
 	perms := &repositories.CachedPermissions{
-		IsOrgAdmin: false,
-		Resources:  map[string]*repositories.CachedResourcePermission{},
+		Resources: map[string]*repositories.CachedResourcePermission{},
 	}
 
 	err := repo.Set(ctx, userID, orgID, perms, 5*time.Minute)

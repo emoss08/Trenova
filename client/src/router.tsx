@@ -1,10 +1,5 @@
 import { RouteErrorBoundary } from "@/components/error-boundary";
-import {
-  combineLoaders,
-  createAdminOnlyLoader,
-  createPermissionLoader,
-  createPlatformAdminLoader,
-} from "@/lib/route-permission";
+import { combineLoaders, createPermissionLoader } from "@/lib/route-permission";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { useAuthStore } from "@/stores/auth-store";
@@ -504,7 +499,7 @@ const routes: RouteObject[] = [
             path: "admin",
             Component: AdminLayout,
             HydrateFallback: LoadingSkeleton,
-            loader: combineLoaders(protectedLoader, createAdminOnlyLoader()),
+            loader: protectedLoader,
             children: [
               {
                 path: "billing-controls",
@@ -542,7 +537,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "table-change-alerts",
-                loader: createPlatformAdminLoader(),
+                loader: createPermissionLoader(Resource.TableChangeAlert, Operation.Read),
                 async lazy() {
                   const { TableChangeAlertPage } = await import("@/routes/table-change-alert/page");
                   return { Component: TableChangeAlertPage };
@@ -669,7 +664,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "database-sessions",
-                loader: createPlatformAdminLoader(),
+                loader: createPermissionLoader(Resource.DatabaseSession, Operation.Read),
                 async lazy() {
                   const { DatabaseSessionsPage } =
                     await import("@/routes/admin/database-sessions/page");
@@ -694,7 +689,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "document-operations",
-                loader: createPlatformAdminLoader(),
+                loader: createPermissionLoader(Resource.DocumentOperation, Operation.Read),
                 async lazy() {
                   const { DocumentOperationsPage } =
                     await import("@/routes/admin/document-operations/page");

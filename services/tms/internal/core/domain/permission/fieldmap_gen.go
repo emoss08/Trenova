@@ -18,6 +18,27 @@ func (e *Role) GetStaticFieldMap() map[string]string {
 	return buncolgen.RoleFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleConstraint].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RoleConstraintFieldMap] instead of parsing struct tags via reflection.
+func (e *RoleConstraint) GetStaticFieldMap() map[string]string {
+	return buncolgen.RoleConstraintFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleConstraintRole].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RoleConstraintRoleFieldMap] instead of parsing struct tags via reflection.
+func (e *RoleConstraintRole) GetStaticFieldMap() map[string]string {
+	return buncolgen.RoleConstraintRoleFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleHierarchyEdge].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RoleHierarchyEdgeFieldMap] instead of parsing struct tags via reflection.
+func (e *RoleHierarchyEdge) GetStaticFieldMap() map[string]string {
+	return buncolgen.RoleHierarchyEdgeFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [UserRoleAssignment].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.UserRoleAssignmentFieldMap] instead of parsing struct tags via reflection.

@@ -2457,11 +2457,13 @@ definitions:
         enum:
             - own
             - organization
+            - business_unit
             - all
         type: string
         x-enum-varnames:
             - DataScopeOwn
             - DataScopeOrganization
+            - DataScopeBusinessUnit
             - DataScopeAll
     github_com_emoss08_trenova_internal_core_domain_permission.FieldSensitivity:
         enum:
@@ -2542,6 +2544,9 @@ definitions:
             - edi
             - api_key
             - data_entry_control
+            - platform_catalog
+            - database_session
+            - document_operation
             - equipment_type
             - equipment_manufacturer
             - trailer
@@ -2614,6 +2619,9 @@ definitions:
             - ResourceEDI
             - ResourceAPIKey
             - ResourceDataEntryControl
+            - ResourcePlatformCatalog
+            - ResourceDatabaseSession
+            - ResourceDocumentOperation
             - ResourceEquipmentType
             - ResourceEquipmentManufacturer
             - ResourceTrailer
@@ -2734,10 +2742,6 @@ definitions:
                 type: string
             id:
                 type: string
-            isBusinessUnitAdmin:
-                type: boolean
-            isOrgAdmin:
-                type: boolean
             isSystem:
                 type: boolean
             maxSensitivity:
@@ -4301,8 +4305,6 @@ definitions:
                 type: string
             isLocked:
                 type: boolean
-            isPlatformAdmin:
-                type: boolean
             lastLoginAt:
                 type: integer
             memberships:
@@ -5211,6 +5213,22 @@ definitions:
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.LightPermissionManifest:
         properties:
+            activeRoleIds:
+                items:
+                    type: string
+                type: array
+            activeRoles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary'
+                type: array
+            authorizedRoleIds:
+                items:
+                    type: string
+                type: array
+            authorizedRoles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary'
+                type: array
             availableOrgs:
                 items:
                     $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.OrgSummary'
@@ -5219,12 +5237,6 @@ definitions:
                 type: string
             expiresAt:
                 type: integer
-            isBusinessUnitAdmin:
-                type: boolean
-            isOrgAdmin:
-                type: boolean
-            isPlatformAdmin:
-                type: boolean
             maxSensitivity:
                 $ref: '#/definitions/github_com_emoss08_trenova_internal_core_domain_permission.FieldSensitivity'
             organizationId:
@@ -5234,6 +5246,8 @@ definitions:
                     format: int32
                     type: integer
                 type: object
+            requiresRoleActivation:
+                type: boolean
             routeAccess:
                 additionalProperties:
                     type: boolean
@@ -5282,10 +5296,42 @@ definitions:
         type: object
     github_com_emoss08_trenova_internal_core_ports_services.LoginResponse:
         properties:
+            activeRoleIds:
+                items:
+                    type: string
+                type: array
+            activeRoles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary'
+                type: array
+            authProvider:
+                type: string
+            authenticatorAal:
+                type: integer
+            authorizedRoleIds:
+                items:
+                    type: string
+                type: array
+            authorizedRoles:
+                items:
+                    $ref: '#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RoleSummary'
+                type: array
             csrfToken:
                 type: string
             expiresAt:
                 type: integer
+            externalIdentityId:
+                type: string
+            federationFal:
+                type: integer
+            lastReauthenticatedAt:
+                type: integer
+            mfaAuthenticatedAt:
+                type: integer
+            requiresRoleActivation:
+                type: boolean
+            riskDecision:
+                type: string
             sessionId:
                 type: string
             user:
@@ -5352,10 +5398,6 @@ definitions:
                 type: string
             id:
                 type: string
-            isBusinessUnitAdmin:
-                type: boolean
-            isOrgAdmin:
-                type: boolean
             isSystem:
                 type: boolean
             name:

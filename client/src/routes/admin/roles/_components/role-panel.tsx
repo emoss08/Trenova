@@ -47,8 +47,6 @@ function RoleCreatePanel({ open, onOpenChange }: RoleCreatePanelProps) {
       name: "",
       description: "",
       maxSensitivity: "internal",
-      isOrgAdmin: false,
-      isBusinessUnitAdmin: false,
       permissions: [],
     },
   });
@@ -183,8 +181,6 @@ function RoleEditPanel({ open, onOpenChange, row }: RoleEditPanelProps) {
       name: "",
       description: "",
       maxSensitivity: "internal",
-      isOrgAdmin: false,
-      isBusinessUnitAdmin: false,
     },
   });
 

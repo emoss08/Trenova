@@ -334,6 +334,115 @@ func (r *Registry) registerAdministrationResources() {
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourcePlatformCatalog.String(),
+		DisplayName:        "Platform Catalog",
+		Description:        "Platform catalog and entitlement metadata administration",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDatabaseSession.String(),
+		DisplayName: "Database Session",
+		Description: "Database session diagnostics and termination",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View database sessions"},
+			{
+				Operation:   OpDelete,
+				DisplayName: "Terminate",
+				Description: "Terminate database sessions",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceDocumentOperation.String(),
+		DisplayName: "Document Operation",
+		Description: "Document diagnostics, extraction, preview, and search operations",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View document diagnostics"},
+			{Operation: OpUpdate, DisplayName: "Run", Description: "Run document operations"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceIdentityProvider.String(),
+		DisplayName:        "Identity Provider",
+		Description:        "OIDC identity provider configuration",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceSCIMDirectory.String(),
+		DisplayName:        "SCIM Directory",
+		Description:        "SCIM directory, token, and group mapping administration",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceProvisioningAudit.String(),
+		DisplayName:        "Provisioning Audit",
+		Description:        "SCIM provisioning activity",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAccessPolicy.String(),
+		DisplayName:        "Access Policy",
+		Description:        "Organization access policy decisions",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAuthEvent.String(),
+		DisplayName:        "Authentication Event",
+		Description:        "Authentication and sign-in activity",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceRiskDecision.String(),
+		DisplayName:        "Risk Decision",
+		Description:        "Authentication risk decisions",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceExternalIdentity.String(),
+		DisplayName:        "External Identity",
+		Description:        "Federated identity links",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceMFAAuthenticator.String(),
+		DisplayName:        "MFA Authenticator",
+		Description:        "MFA authenticator inventory",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
 }
 
 func (r *Registry) registerEquipmentResources() {

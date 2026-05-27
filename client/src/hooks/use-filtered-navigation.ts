@@ -18,16 +18,7 @@ export function useFilteredNavigation() {
       return navigationConfig.modules;
     }
 
-    const isPlatformAdmin = manifest.isPlatformAdmin;
-    const isOrgAdmin = manifest.isOrgAdmin;
-
     const canAccessItem = (item: NavItem | NavGroup | NavModule): boolean => {
-      if (isPlatformAdmin) return true;
-
-      if (item.adminOnly && !isOrgAdmin) {
-        return false;
-      }
-
       if (item.resource) {
         return hasPermission(item.resource, Operation.Read);
       }
@@ -76,16 +67,7 @@ export function useFilteredModuleNavigation(module: NavModule | null) {
       return module?.navigation ?? [];
     }
 
-    const isPlatformAdmin = manifest.isPlatformAdmin;
-    const isOrgAdmin = manifest.isOrgAdmin;
-
     const canAccessItem = (item: NavItem | NavGroup): boolean => {
-      if (isPlatformAdmin) return true;
-
-      if (item.adminOnly && !isOrgAdmin) {
-        return false;
-      }
-
       if (item.resource) {
         return hasPermission(item.resource, Operation.Read);
       }

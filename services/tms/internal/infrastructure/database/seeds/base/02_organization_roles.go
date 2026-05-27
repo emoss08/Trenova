@@ -64,7 +64,6 @@ func (s *OrganizationRolesSeed) Run(ctx context.Context, tx bun.Tx) error {
 			Description:    "Full access to all resources within the organization",
 			MaxSensitivity: permission.SensitivityConfidential,
 			IsSystem:       true,
-			IsOrgAdmin:     true,
 			CreatedBy:      adminUser.ID,
 			CreatedAt:      now,
 			UpdatedAt:      now,

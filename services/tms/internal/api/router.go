@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterialhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/holdreasonhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/iamhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/invoiceadjustmenthandler"
@@ -112,6 +113,7 @@ type RouterParams struct {
 	ErrorHandler                    *helpers.ErrorHandler
 	DocsHandler                     *docshandler.Handler
 	OrganizationHandler             *organizationhandler.Handler
+	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
 	BankReceiptHandler              *bankreceipthandler.Handler
@@ -203,6 +205,7 @@ type Router struct {
 	errorHandler                    *helpers.ErrorHandler
 	docsHandler                     *docshandler.Handler
 	organizationHandler             *organizationhandler.Handler
+	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
 	bankReceiptHandler              *bankreceipthandler.Handler
@@ -296,6 +299,7 @@ func NewRouter(p RouterParams) *Router {
 		errorHandler:                    p.ErrorHandler,
 		docsHandler:                     p.DocsHandler,
 		organizationHandler:             p.OrganizationHandler,
+		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
 		bankReceiptHandler:              p.BankReceiptHandler,
@@ -443,6 +447,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected.Use(r.controlPlaneAccessMiddleware.RequireAccess())
 
 	r.organizationHandler.RegisterRoutes(protected)
+	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)
 	r.bankReceiptHandler.RegisterRoutes(protected)

@@ -21,7 +21,7 @@ type FormCreatePanelProps<T extends FieldValues, TData> = Pick<
   DataTablePanelProps<TData>,
   "open" | "onOpenChange"
 > & {
-  url: API_ENDPOINTS;
+  url?: API_ENDPOINTS;
   title: string;
   queryKey: string;
   formComponent: React.ReactNode;
@@ -30,6 +30,7 @@ type FormCreatePanelProps<T extends FieldValues, TData> = Pick<
   size?: PanelSize;
   notice?: React.ReactNode;
   useDock?: boolean;
+  mutationFn?: (values: T) => Promise<T>;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
@@ -50,6 +51,7 @@ export function FormCreatePanel<T extends FieldValues, TData>({
   queryKey,
   notice,
   useDock = false,
+  mutationFn,
 }: FormCreatePanelProps<T, TData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
@@ -80,6 +82,14 @@ export function FormCreatePanel<T extends FieldValues, TData>({
 
   const { mutateAsync } = useApiMutation<T, CreateSubmitPayload, unknown, T>({
     mutationFn: async ({ values }) => {
+      if (mutationFn) {
+        return mutationFn(values);
+      }
+
+      if (!url) {
+        throw new Error(`No URL configured for ${title}`);
+      }
+
       return api.post<T>(url, values);
     },
     onSuccess: (_data, variables) => {

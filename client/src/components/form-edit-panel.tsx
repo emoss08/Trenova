@@ -24,7 +24,7 @@ type FormEditPanelProps<T extends FieldValues, TData extends Record<string, unkn
   DataTablePanelProps<TData>,
   "open" | "onOpenChange" | "row"
 > & {
-  url: API_ENDPOINTS;
+  url?: API_ENDPOINTS;
   title: string;
   queryKey: string;
   formComponent: React.ReactNode;
@@ -34,6 +34,7 @@ type FormEditPanelProps<T extends FieldValues, TData extends Record<string, unkn
   titleComponent?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
   useDock?: boolean;
+  mutationFn?: (values: T, row: TData) => Promise<T>;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -55,6 +56,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   titleComponent,
   headerActions,
   useDock = false,
+  mutationFn,
 }: FormEditPanelProps<T, TData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -87,6 +89,17 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
 
   const { mutateAsync } = useApiMutation<T, EditSubmitPayload, unknown, T>({
     mutationFn: async ({ values }) => {
+      if (mutationFn) {
+        if (!row) {
+          throw new Error(`No ${title} record selected`);
+        }
+        return mutationFn(values, row);
+      }
+
+      if (!url) {
+        throw new Error(`No URL configured for ${title}`);
+      }
+
       return api.put<T>(`${url}${row?.id as string}/`, values);
     },
     onMutate: async (newValues) => {

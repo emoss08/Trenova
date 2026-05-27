@@ -1,2 +1,0 @@
-ALTER TABLE roles
-    ADD COLUMN IF NOT EXISTS is_business_unit_admin BOOLEAN NOT NULL DEFAULT FALSE;

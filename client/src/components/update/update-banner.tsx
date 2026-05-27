@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { usePermissionStore } from "@/stores/permission-store";
 import { useUpdateStore } from "@/stores/update-store";
+import { Operation, Resource } from "@/types/permission";
 import { ExternalLinkIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -9,10 +10,9 @@ export function LatestChange() {
   const status = useUpdateStore((state) => state.status);
   const dismissedVersion = useUpdateStore((state) => state.dismissedVersion);
   const dismissUpdate = useUpdateStore((state) => state.dismissUpdate);
+  const hasPermission = usePermissionStore((state) => state.hasPermission);
 
-  const isAdmin = manifest?.isPlatformAdmin || manifest?.isOrgAdmin;
-
-  if (!isAdmin) {
+  if (!manifest || !hasPermission(Resource.PlatformCatalog, Operation.Read)) {
     return null;
   }
 

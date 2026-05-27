@@ -294,8 +294,6 @@ func createTestSchema(t *testing.T, db *bun.DB, ctx testutil.TestContext) {
 			parent_role_ids TEXT[],
 			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
 			is_system BOOLEAN DEFAULT FALSE,
-			is_org_admin BOOLEAN DEFAULT FALSE,
-			is_business_unit_admin BOOLEAN DEFAULT FALSE,
 			created_by VARCHAR(100),
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL
@@ -367,7 +365,6 @@ func TestRoleRepository_Create_Integration(t *testing.T) {
 		Description:    "A test role",
 		MaxSensitivity: permission.SensitivityInternal,
 		IsSystem:       false,
-		IsOrgAdmin:     false,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 		Permissions: []*permission.ResourcePermission{

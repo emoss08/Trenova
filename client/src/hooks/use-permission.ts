@@ -1,45 +1,14 @@
-import { getPermissionManifest } from "@/lib/permission-api";
 import { usePermissionStore } from "@/stores/permission-store";
-import {
-  Operation,
-  type OperationType,
-} from "@/types/permission";
-import { useQuery } from "@tanstack/react-query";
+import { Operation, type OperationType } from "@/types/permission";
 import { useCallback, useEffect } from "react";
 
-const QUERY_KEY = "permissions";
-
-export function usePermissionManifest() {
-  const { manifest, lastFetched } = usePermissionStore();
-
-  return useQuery({
-    queryKey: [QUERY_KEY, "manifest"],
-    queryFn: async () => {
-      const newManifest = await getPermissionManifest();
-      void usePermissionStore.getState().fetchManifest();
-      return newManifest;
-    },
-    initialData: manifest ?? undefined,
-    staleTime: 1000 * 60 * 5,
-    enabled:
-      !manifest ||
-      !lastFetched ||
-      new Date().getTime() - lastFetched > 1000 * 60 * 5,
-  });
-}
-
-export function usePermission(
-  resource: string,
-  operation: OperationType,
-) {
+export function usePermission(resource: string, operation: OperationType) {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
   const manifest = usePermissionStore((state) => state.manifest);
 
   return {
     allowed: hasPermission(resource, operation),
     isLoading: !manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 
@@ -54,8 +23,6 @@ export function usePermissions(resource: string) {
     canExport: hasPermission(resource, Operation.Export),
     canImport: hasPermission(resource, Operation.Import),
     isLoading: !manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 
@@ -71,12 +38,8 @@ export function useRouteAccess(route: string) {
 
 export function usePermissionCheck() {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
-  const hasAnyPermission = usePermissionStore(
-    (state) => state.hasAnyPermission,
-  );
-  const hasAllPermissions = usePermissionStore(
-    (state) => state.hasAllPermissions,
-  );
+  const hasAnyPermission = usePermissionStore((state) => state.hasAnyPermission);
+  const hasAllPermissions = usePermissionStore((state) => state.hasAllPermissions);
   const canAccessRoute = usePermissionStore((state) => state.canAccessRoute);
   const manifest = usePermissionStore((state) => state.manifest);
 
@@ -114,8 +77,6 @@ export function usePermissionCheck() {
     checkAll,
     checkRoute,
     isReady: !!manifest,
-    isPlatformAdmin: manifest?.isPlatformAdmin ?? false,
-    isOrgAdmin: manifest?.isOrgAdmin ?? false,
   };
 }
 

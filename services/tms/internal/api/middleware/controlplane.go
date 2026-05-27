@@ -57,24 +57,13 @@ func (m *ControlPlaneAccessMiddleware) RequireAccess() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		routePattern := c.FullPath()
 
-		policy := m.registry.PolicyForRoute(c.Request.Method, routePattern)
-		switch policy.AccessClass {
-		case platformcatalog.RouteAccessClassAccountShell:
-			c.Next()
-			return
-		case platformcatalog.RouteAccessClassUnclassified:
-			m.logUnclassifiedRoute(c, routePattern)
-			c.Next()
-			return
-		case platformcatalog.RouteAccessClassProduct:
-		default:
-			m.logUnclassifiedRoute(c, routePattern)
+		routePattern := c.FullPath()
+		policy, requiresAccess := m.productRoutePolicy(c, routePattern)
+		if !requiresAccess {
 			c.Next()
 			return
 		}
-
 		if m.authorizer == nil {
 			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(
 				"Control-plane authorization is not configured",
@@ -98,53 +87,12 @@ func (m *ControlPlaneAccessMiddleware) RequireAccess() gin.HandlerFunc {
 			return
 		}
 
-		limitResult, err := m.usage.CheckLimit(
-			c.Request.Context(),
-			&services.UsageLimitCheckRequest{
-				OrganizationID: authCtx.OrganizationID,
-				BusinessUnitID: authCtx.BusinessUnitID,
-				PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-				PrincipalID:    authCtx.PrincipalID,
-				UserID:         authCtx.UserID,
-				APIKeyID:       authCtx.APIKeyID,
-				MeterKey:       platformcatalog.MeterAPIRequests,
-				Quantity:       1,
-				CheckedAt:      checkedAt,
-				IdempotencyKey: idempotencyKey,
-			},
-		)
-		if err != nil {
-			m.errorHandler.HandleError(c, err)
-			return
-		}
-		if !limitResult.Allowed {
-			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(limitResult.Reason))
+		if !m.checkRequestLimit(c, authCtx, checkedAt, idempotencyKey) {
 			return
 		}
 
-		result, err := m.authorizer.AuthorizeAccess(
-			c.Request.Context(),
-			&services.AccessAuthorizeRequest{
-				OrganizationID: authCtx.OrganizationID,
-				BusinessUnitID: authCtx.BusinessUnitID,
-				PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
-				PrincipalID:    authCtx.PrincipalID,
-				UserID:         authCtx.UserID,
-				APIKeyID:       authCtx.APIKeyID,
-				HTTPMethod:     c.Request.Method,
-				HTTPPath:       c.Request.URL.Path,
-				RoutePattern:   routePattern,
-				FeatureKey:     feature.Key,
-				CheckedAt:      checkedAt,
-			},
-		)
-		if err != nil {
-			m.errorHandler.HandleError(c, err)
-			return
-		}
-		if !result.Allowed {
-			m.logDeniedAccess(c, routePattern, result.FeatureKey, result.Reason)
-			m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(result.Reason))
+		result, ok := m.authorizeProductAccess(c, authCtx, routePattern, feature.Key, checkedAt)
+		if !ok {
 			return
 		}
 
@@ -161,7 +109,39 @@ func (m *ControlPlaneAccessMiddleware) RequireAccess() gin.HandlerFunc {
 		if c.Writer.Status() >= http.StatusBadRequest {
 			return
 		}
-		if _, err = m.usage.RecordUsage(c.Request.Context(), &services.UsageRecordRequest{
+		m.recordRequestUsage(c, authCtx, idempotencyKey)
+	}
+}
+
+func (m *ControlPlaneAccessMiddleware) productRoutePolicy(
+	c *gin.Context,
+	routePattern string,
+) (platformcatalog.RoutePolicy, bool) {
+	policy := m.registry.PolicyForRoute(c.Request.Method, routePattern)
+	switch policy.AccessClass {
+	case platformcatalog.RouteAccessClassAccountShell:
+		return policy, false
+	case platformcatalog.RouteAccessClassUnclassified:
+		m.logUnclassifiedRoute(c, routePattern)
+		return policy, false
+	case platformcatalog.RouteAccessClassProduct:
+	default:
+		m.logUnclassifiedRoute(c, routePattern)
+		return policy, false
+	}
+
+	return policy, true
+}
+
+func (m *ControlPlaneAccessMiddleware) checkRequestLimit(
+	c *gin.Context,
+	authCtx *authctx.AuthContext,
+	checkedAt int64,
+	idempotencyKey string,
+) bool {
+	limitResult, err := m.usage.CheckLimit(
+		c.Request.Context(),
+		&services.UsageLimitCheckRequest{
 			OrganizationID: authCtx.OrganizationID,
 			BusinessUnitID: authCtx.BusinessUnitID,
 			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
@@ -170,15 +150,80 @@ func (m *ControlPlaneAccessMiddleware) RequireAccess() gin.HandlerFunc {
 			APIKeyID:       authCtx.APIKeyID,
 			MeterKey:       platformcatalog.MeterAPIRequests,
 			Quantity:       1,
-			RecordedAt:     m.now().Unix(),
+			CheckedAt:      checkedAt,
 			IdempotencyKey: idempotencyKey,
-		}); err != nil {
-			m.logger.Warn(
-				"failed to record control-plane API request usage",
-				zap.String("route", routePattern),
-				zap.Error(err),
-			)
-		}
+		},
+	)
+	if err != nil {
+		m.errorHandler.HandleError(c, err)
+		return false
+	}
+	if !limitResult.Allowed {
+		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(limitResult.Reason))
+		return false
+	}
+
+	return true
+}
+
+func (m *ControlPlaneAccessMiddleware) authorizeProductAccess(
+	c *gin.Context,
+	authCtx *authctx.AuthContext,
+	routePattern string,
+	featureKey platformcatalog.FeatureKey,
+	checkedAt int64,
+) (*services.AccessAuthorizeResult, bool) {
+	result, err := m.authorizer.AuthorizeAccess(
+		c.Request.Context(),
+		&services.AccessAuthorizeRequest{
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+			PrincipalID:    authCtx.PrincipalID,
+			UserID:         authCtx.UserID,
+			APIKeyID:       authCtx.APIKeyID,
+			HTTPMethod:     c.Request.Method,
+			HTTPPath:       c.Request.URL.Path,
+			RoutePattern:   routePattern,
+			FeatureKey:     featureKey,
+			CheckedAt:      checkedAt,
+		},
+	)
+	if err != nil {
+		m.errorHandler.HandleError(c, err)
+		return nil, false
+	}
+	if !result.Allowed {
+		m.logDeniedAccess(c, routePattern, result.FeatureKey, result.Reason)
+		m.errorHandler.HandleError(c, errortypes.NewAuthorizationError(result.Reason))
+		return nil, false
+	}
+
+	return result, true
+}
+
+func (m *ControlPlaneAccessMiddleware) recordRequestUsage(
+	c *gin.Context,
+	authCtx *authctx.AuthContext,
+	idempotencyKey string,
+) {
+	if _, err := m.usage.RecordUsage(c.Request.Context(), &services.UsageRecordRequest{
+		OrganizationID: authCtx.OrganizationID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+		PrincipalID:    authCtx.PrincipalID,
+		UserID:         authCtx.UserID,
+		APIKeyID:       authCtx.APIKeyID,
+		MeterKey:       platformcatalog.MeterAPIRequests,
+		Quantity:       1,
+		RecordedAt:     m.now().Unix(),
+		IdempotencyKey: idempotencyKey,
+	}); err != nil {
+		m.logger.Warn(
+			"failed to record control-plane API request usage",
+			zap.String("route", c.FullPath()),
+			zap.Error(err),
+		)
 	}
 }
 

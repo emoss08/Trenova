@@ -2,12 +2,16 @@ package authservice
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -94,7 +98,6 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 				ID:          roleID,
 				Name:        "Dispatcher",
 				Description: "Coordinates dispatch activity",
-				IsOrgAdmin:  true,
 			},
 		},
 	}
@@ -115,7 +118,6 @@ func TestLogin_IncludesAuthorizedRoleSummaries(t *testing.T) {
 	require.Len(t, result.AuthorizedRoles, 1)
 	assert.Equal(t, roleID, result.AuthorizedRoleIDs[0])
 	assert.Equal(t, "Dispatcher", result.AuthorizedRoles[0].Name)
-	assert.True(t, result.AuthorizedRoles[0].IsOrgAdmin)
 	assert.True(t, result.RequiresRoleActivation)
 	deps.userRepo.AssertExpectations(t)
 	deps.sessionRepo.AssertExpectations(t)
@@ -236,10 +238,9 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	deps.svc.rbacRepo = &rbactest.Repository{
 		AuthorizedRoles: []*permission.Role{
 			{
-				ID:                  roleID,
-				Name:                "Billing Manager",
-				Description:         "Manages billing operations",
-				IsBusinessUnitAdmin: true,
+				ID:          roleID,
+				Name:        "Billing Manager",
+				Description: "Manages billing operations",
 			},
 		},
 	}
@@ -267,7 +268,6 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	require.Len(t, result.ActiveRoles, 1)
 	require.Len(t, result.AuthorizedRoles, 1)
 	assert.Equal(t, "Billing Manager", result.ActiveRoles[0].Name)
-	assert.True(t, result.ActiveRoles[0].IsBusinessUnitAdmin)
 	assert.False(t, result.RequiresRoleActivation)
 	deps.sessionRepo.AssertExpectations(t)
 }
@@ -398,6 +398,109 @@ func TestLogin_UpdateLastLoginAtError_StillSucceeds(t *testing.T) {
 	deps.sessionRepo.AssertExpectations(t)
 }
 
+func TestStartSSOLogin_StoresProviderIDInState(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	providerID := pulid.MustNew("sso_")
+	providerServer := newOIDCDiscoveryServer(t)
+
+	orgRepo := mocks.NewMockOrganizationRepository(t)
+	ssoRepo := mocks.NewMockSSOConfigRepository(t)
+	stateRepo := mocks.NewMockSSOLoginStateRepository(t)
+	svc := &Service{
+		or:        orgRepo,
+		ssoRepo:   ssoRepo,
+		stateRepo: stateRepo,
+		cfg: &config.Config{
+			Server: config.ServerConfig{
+				CORS: config.CORSConfig{
+					AllowedOrigins: []string{"https://app.test"},
+				},
+			},
+		},
+		l: zap.NewNop(),
+	}
+	ssoConfig := &tenant.SSOConfig{
+		ID:               providerID,
+		OrganizationID:   orgID,
+		BusinessUnitID:   buID,
+		Name:             "Corporate SSO",
+		Provider:         tenant.SSOProviderOkta,
+		Protocol:         tenant.SSOProtocolOIDC,
+		Enabled:          true,
+		OIDCIssuerURL:    providerServer.URL,
+		OIDCClientID:     "client-id",
+		OIDCClientSecret: "client-secret",
+		OIDCRedirectURL:  "https://api.test/auth/callback",
+		OIDCScopes:       []string{"openid", "email", "profile"},
+	}
+
+	orgRepo.On("GetByLoginSlug", ctx, "acme").Return(&tenant.Organization{
+		ID:             orgID,
+		BusinessUnitID: buID,
+		Name:           "Acme Logistics",
+		LoginSlug:      "acme",
+	}, nil)
+	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(ssoConfig, nil)
+	stateRepo.On(
+		"Save",
+		ctx,
+		mock.MatchedBy(func(state *repositories.SSOLoginState) bool {
+			return state.ProviderID == providerID &&
+				state.Provider == tenant.SSOProviderOkta &&
+				state.OrganizationID == orgID &&
+				state.OrganizationSlug == "acme" &&
+				state.CodeVerifier != "" &&
+				state.Nonce != "" &&
+				state.ReturnTo == "https://app.test/home"
+		}),
+		ssoLoginStateTTL,
+	).Return(nil)
+
+	redirectURL, err := svc.StartSSOLogin(ctx, services.StartSSOLoginRequest{
+		ProviderID:       providerID,
+		OrganizationSlug: "acme",
+		ReturnTo:         "https://app.test/home",
+	})
+
+	require.NoError(t, err)
+	assert.Contains(t, redirectURL, providerServer.URL+"/authorize")
+	orgRepo.AssertExpectations(t)
+	ssoRepo.AssertExpectations(t)
+	stateRepo.AssertExpectations(t)
+}
+
+func TestResolveSSOConfigForCallback_UsesProviderID(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	orgID := pulid.MustNew("org_")
+	providerID := pulid.MustNew("sso_")
+	ssoRepo := mocks.NewMockSSOConfigRepository(t)
+	svc := &Service{ssoRepo: ssoRepo}
+	expectedConfig := &tenant.SSOConfig{
+		ID:             providerID,
+		OrganizationID: orgID,
+		Provider:       tenant.SSOProviderOkta,
+	}
+
+	ssoRepo.On("GetEnabledByID", ctx, providerID).Return(expectedConfig, nil)
+
+	cfg, err := svc.resolveSSOConfigForCallback(ctx, &repositories.SSOLoginState{
+		Provider:       tenant.SSOProviderAzureAD,
+		ProviderID:     providerID,
+		OrganizationID: orgID,
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, expectedConfig, cfg)
+	ssoRepo.AssertExpectations(t)
+	ssoRepo.AssertNotCalled(t, "GetEnabledByOrganizationID")
+}
+
 func TestValidateSession_ExpiredDeleteError_StillReturnsExpiredErr(t *testing.T) {
 	t.Parallel()
 	deps := setupTest(t)
@@ -455,4 +558,34 @@ func TestNew(t *testing.T) {
 	})
 
 	require.NotNil(t, svc)
+}
+
+func newOIDCDiscoveryServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/.well-known/openid-configuration" {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_, err := w.Write([]byte(`{
+			"issuer": "` + server.URL + `",
+			"authorization_endpoint": "` + server.URL + `/authorize",
+			"token_endpoint": "` + server.URL + `/token",
+			"jwks_uri": "` + server.URL + `/keys",
+			"response_types_supported": ["code"],
+			"subject_types_supported": ["public"],
+			"id_token_signing_alg_values_supported": ["RS256"]
+		}`))
+		require.NoError(t, err)
+	}))
+	t.Cleanup(func() {
+		server.CloseClientConnections()
+		server.Close()
+	})
+
+	return server
 }

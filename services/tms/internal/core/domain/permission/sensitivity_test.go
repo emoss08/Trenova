@@ -150,7 +150,8 @@ func TestDataScope_Level(t *testing.T) {
 	}{
 		{DataScopeOwn, 0},
 		{DataScopeOrganization, 1},
-		{DataScopeAll, 2},
+		{DataScopeBusinessUnit, 2},
+		{DataScopeAll, 3},
 		{DataScope("unknown"), 0},
 	}
 
@@ -173,14 +174,22 @@ func TestDataScope_IsMorePermissive(t *testing.T) {
 	}{
 		{"own vs own", DataScopeOwn, DataScopeOwn, false},
 		{"own vs organization", DataScopeOwn, DataScopeOrganization, false},
+		{"own vs business unit", DataScopeOwn, DataScopeBusinessUnit, false},
 		{"own vs all", DataScopeOwn, DataScopeAll, false},
 
 		{"organization vs own", DataScopeOrganization, DataScopeOwn, true},
 		{"organization vs organization", DataScopeOrganization, DataScopeOrganization, false},
+		{"organization vs business unit", DataScopeOrganization, DataScopeBusinessUnit, false},
 		{"organization vs all", DataScopeOrganization, DataScopeAll, false},
+
+		{"business unit vs own", DataScopeBusinessUnit, DataScopeOwn, true},
+		{"business unit vs organization", DataScopeBusinessUnit, DataScopeOrganization, true},
+		{"business unit vs business unit", DataScopeBusinessUnit, DataScopeBusinessUnit, false},
+		{"business unit vs all", DataScopeBusinessUnit, DataScopeAll, false},
 
 		{"all vs own", DataScopeAll, DataScopeOwn, true},
 		{"all vs organization", DataScopeAll, DataScopeOrganization, true},
+		{"all vs business unit", DataScopeAll, DataScopeBusinessUnit, true},
 		{"all vs all", DataScopeAll, DataScopeAll, false},
 	}
 
@@ -201,6 +210,7 @@ func TestDataScope_String(t *testing.T) {
 	}{
 		{DataScopeOwn, "own"},
 		{DataScopeOrganization, "organization"},
+		{DataScopeBusinessUnit, "business_unit"},
 		{DataScopeAll, "all"},
 	}
 
@@ -221,6 +231,7 @@ func TestDataScope_IsValid(t *testing.T) {
 	}{
 		{DataScopeOwn, true},
 		{DataScopeOrganization, true},
+		{DataScopeBusinessUnit, true},
 		{DataScopeAll, true},
 		{DataScope("unknown"), false},
 		{DataScope(""), false},

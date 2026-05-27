@@ -77,14 +77,6 @@ export function RouteCommandPalette() {
           return false;
         }
 
-        if (manifest.isPlatformAdmin) {
-          return true;
-        }
-
-        if (link.adminOnly && !manifest.isOrgAdmin) {
-          return false;
-        }
-
         if (link.resource) {
           return hasPermission(link.resource, link.requiredOperation ?? Operation.Read);
         }

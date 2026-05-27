@@ -43,10 +43,6 @@ func setupTest(t *testing.T) *testDeps {
 	t.Helper()
 	repo := mocks.NewMockUserRepository(t)
 	roleRepo := mocks.NewMockRoleRepository(t)
-	roleRepo.
-		On("HasBusinessUnitAdminAccess", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().
-		Return(false, nil)
 	sessionRepo := mocks.NewMockSessionRepository(t)
 	storageClient := mocks.NewMockClient(t)
 	storageClient.On("Upload", mock.Anything, mock.Anything).Maybe().Return((*storage.FileInfo)(nil), nil)
@@ -299,7 +295,6 @@ func TestGetOrganizations_Success(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	currentOrgID := pulid.MustNew("org_")
-	currentBuID := pulid.MustNew("bu_")
 	otherOrgID := pulid.MustNew("org_")
 
 	memberships := []*tenant.OrganizationMembership{
@@ -318,10 +313,8 @@ func TestGetOrganizations_Success(t *testing.T) {
 	}
 
 	deps.repo.On("GetOrganizations", mock.Anything, userID).Return(memberships, nil)
-	deps.roleRepo.On("HasBusinessUnitAdminAccess", mock.Anything, userID, currentOrgID).
-		Return(false, nil)
 
-	result, err := deps.svc.GetOrganizations(ctx, userID, currentOrgID, currentBuID)
+	result, err := deps.svc.GetOrganizations(ctx, userID, currentOrgID)
 
 	require.NoError(t, err)
 	assert.Len(t, result, 2)
@@ -334,7 +327,6 @@ func TestGetOrganizations_Success(t *testing.T) {
 	assert.False(t, result[1].IsDefault)
 	assert.False(t, result[1].IsCurrent)
 	deps.repo.AssertExpectations(t)
-	deps.roleRepo.AssertExpectations(t)
 }
 
 func TestGetOrganizations_Error(t *testing.T) {
@@ -344,11 +336,10 @@ func TestGetOrganizations_Error(t *testing.T) {
 
 	userID := pulid.MustNew("usr_")
 	currentOrgID := pulid.MustNew("org_")
-	currentBuID := pulid.MustNew("bu_")
 
 	deps.repo.On("GetOrganizations", mock.Anything, userID).Return(nil, errors.New("repo error"))
 
-	result, err := deps.svc.GetOrganizations(ctx, userID, currentOrgID, currentBuID)
+	result, err := deps.svc.GetOrganizations(ctx, userID, currentOrgID)
 
 	require.Error(t, err)
 	assert.Nil(t, result)
@@ -602,8 +593,7 @@ func TestUpdateMySettings_Success(t *testing.T) {
 			updated.Timezone == "America/Chicago" &&
 			updated.TimeFormat == domaintypes.TimeFormat24Hour &&
 			updated.ProfilePicURL == user.ProfilePicURL &&
-			updated.ThumbnailURL == user.ThumbnailURL &&
-			updated.IsPlatformAdmin == user.IsPlatformAdmin
+			updated.ThumbnailURL == user.ThumbnailURL
 	})).Return(func(_ context.Context, updated *tenant.User) *tenant.User {
 		return updated
 	}, func(context.Context, *tenant.User) error {

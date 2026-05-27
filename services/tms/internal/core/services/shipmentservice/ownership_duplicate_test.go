@@ -3,6 +3,7 @@ package shipmentservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -128,10 +129,14 @@ func TestServiceTransferOwnership_SucceedsForAdmin(t *testing.T) {
 		OwnerID:        currentOwnerID,
 	}, nil).Once()
 	permissions.EXPECT().
-		GetLightManifest(mock.Anything, actorID, orgID).
-		Return(&services.LightPermissionManifest{
-			IsOrgAdmin: true,
-		}, nil).
+		Check(mock.Anything, mock.MatchedBy(func(req *services.PermissionCheckRequest) bool {
+			return req.UserID == actorID &&
+				req.OrganizationID == orgID &&
+				req.BusinessUnitID == buID &&
+				req.Resource == permission.ResourceShipment.String() &&
+				req.Operation == permission.OpUpdate
+		})).
+		Return(&services.PermissionCheckResult{Allowed: true}, nil).
 		Once()
 	userRepo.EXPECT().
 		GetByID(mock.Anything, mock.Anything).

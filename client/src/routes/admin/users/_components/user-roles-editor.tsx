@@ -1,3 +1,5 @@
+import { RoleSelectAutocompleteField } from "@/components/autocomplete-fields";
+import { AutoCompleteDateTimeField } from "@/components/fields/date-field/datetime-field";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,38 +8,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
-import { assignRole, listRoles, unassignRole } from "@/lib/role-api";
-import type { Role, UserRoleAssignment } from "@/types/role";
+import { assignRole, unassignRole } from "@/lib/role-api";
+import type { UserRoleAssignment } from "@/types/role";
 import { TimeFormat } from "@/types/user";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
+
+const assignRoleFormSchema = z.object({
+  roleId: z.string().min(1, "Role is required"),
+  expiresAt: z.number().nullable().optional(),
+});
+
+type AssignRoleFormValues = z.infer<typeof assignRoleFormSchema>;
+
+const assignRoleDefaultValues: AssignRoleFormValues = {
+  roleId: "",
+  expiresAt: null,
+};
 
 type UserRolesEditorProps = {
   userId: string;
+  isDisabled?: boolean;
 };
 
-export function UserRolesEditor({ userId }: UserRolesEditorProps) {
+export function UserRolesEditor({ userId, isDisabled = false }: UserRolesEditorProps) {
   const queryClient = useQueryClient();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["user-role-assignments", userId],
-    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments`),
+    queryFn: () => api.get<UserRoleAssignment[]>(`/users/${userId}/role-assignments/`),
     select: (response) => response,
   });
 
@@ -75,7 +85,13 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Assigned Roles</h3>
-        <Button type="button" size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setAddDialogOpen(true)}
+          disabled={isDisabled}
+        >
           <PlusIcon className="mr-1 size-3.5" />
           Assign Role
         </Button>
@@ -91,6 +107,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
             <RoleAssignmentRow
               key={assignment.id}
               assignment={assignment}
+              isDisabled={isDisabled}
               onUnassign={() => handleUnassign(assignment.id!)}
             />
           ))}
@@ -102,8 +119,7 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
         onOpenChange={setAddDialogOpen}
         userId={userId}
         existingRoleIds={roleAssignments.map((a) => a.roleId)}
-        isSubmitting={isSubmitting}
-        setIsSubmitting={setIsSubmitting}
+        isDisabled={isDisabled}
       />
     </div>
   );
@@ -111,10 +127,11 @@ export function UserRolesEditor({ userId }: UserRolesEditorProps) {
 
 type RoleAssignmentRowProps = {
   assignment: UserRoleAssignment;
+  isDisabled: boolean;
   onUnassign: () => void;
 };
 
-function RoleAssignmentRow({ assignment, onUnassign }: RoleAssignmentRowProps) {
+function RoleAssignmentRow({ assignment, isDisabled, onUnassign }: RoleAssignmentRowProps) {
   const role = assignment.role;
 
   const expiresText = assignment.expiresAt
@@ -151,6 +168,7 @@ function RoleAssignmentRow({ assignment, onUnassign }: RoleAssignmentRowProps) {
           variant="ghost"
           className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={onUnassign}
+          disabled={isDisabled}
         >
           <TrashIcon className="size-4" />
         </Button>
@@ -164,8 +182,7 @@ type AssignRoleDialogProps = {
   onOpenChange: (open: boolean) => void;
   userId: string;
   existingRoleIds: string[];
-  isSubmitting: boolean;
-  setIsSubmitting: (submitting: boolean) => void;
+  isDisabled: boolean;
 };
 
 function AssignRoleDialog({
@@ -173,104 +190,124 @@ function AssignRoleDialog({
   onOpenChange,
   userId,
   existingRoleIds,
-  isSubmitting,
-  setIsSubmitting,
+  isDisabled,
 }: AssignRoleDialogProps) {
   const queryClient = useQueryClient();
-  const [selectedRoleId, setSelectedRoleId] = useState<string>("");
-  const [expiresAt, setExpiresAt] = useState<string>("");
-
-  const { data: rolesResponse } = useQuery({
-    queryKey: ["roles-for-assignment"],
-    queryFn: () => listRoles({ includeSystem: true }),
-    enabled: open,
+  const form = useForm<AssignRoleFormValues>({
+    resolver: zodResolver(assignRoleFormSchema),
+    defaultValues: assignRoleDefaultValues,
   });
 
-  const availableRoles = (rolesResponse?.results ?? []).filter(
-    (role: Role) => !existingRoleIds.includes(role.id!),
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { isSubmitting },
+  } = form;
+
+  const assignedRoleIDSet = useMemo(() => new Set(existingRoleIds), [existingRoleIds]);
+  const filterAvailableRole = useCallback(
+    (role: { id?: string | null }) => !!role.id && !assignedRoleIDSet.has(role.id),
+    [assignedRoleIDSet],
   );
 
-  const handleSubmit = async () => {
-    if (!selectedRoleId) {
-      toast.error("Please select a role");
-      return;
-    }
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+    reset(assignRoleDefaultValues);
+  }, [onOpenChange, reset]);
 
-    setIsSubmitting(true);
-    const expiresAtTimestamp = expiresAt ? new Date(expiresAt).getTime() / 1000 : null;
-
-    await assignRole(selectedRoleId, {
-      userId,
-      expiresAt: expiresAtTimestamp,
-    })
-      .then(async () => {
-        await queryClient.invalidateQueries({
-          queryKey: ["user-role-assignments", userId],
-        });
-        toast.success("Role assigned");
-        onOpenChange(false);
-        setSelectedRoleId("");
-        setExpiresAt("");
-      })
-      .catch(() => {
-        toast.error("Failed to assign role");
-      })
-      .finally(() => {
-        setIsSubmitting(false);
+  const { mutateAsync, isPending } = useApiMutation<
+    UserRoleAssignment,
+    AssignRoleFormValues,
+    unknown,
+    AssignRoleFormValues
+  >({
+    mutationFn: (values) =>
+      assignRole(values.roleId, {
+        userId,
+        expiresAt: values.expiresAt ?? null,
+      }),
+    resourceName: "Role Assignment",
+    setFormError: setError,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["user-role-assignments", userId],
       });
-  };
+      toast.success("Role assigned");
+    },
+  });
+
+  const onSubmit = useCallback(
+    async (values: AssignRoleFormValues) => {
+      if (isDisabled) return;
+      await mutateAsync(values);
+      handleClose();
+    },
+    [handleClose, isDisabled, mutateAsync],
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          onOpenChange(true);
+          return;
+        }
+        handleClose();
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Assign Role</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Role</Label>
-            <Select
-              value={selectedRoleId}
-              onValueChange={(value) => setSelectedRoleId(value ?? "")}
+        <Form
+          onSubmit={(event) => {
+            event.stopPropagation();
+            void handleSubmit(onSubmit)(event);
+          }}
+        >
+          <FormGroup cols={1} className="pb-4">
+            <FormControl>
+              <RoleSelectAutocompleteField<AssignRoleFormValues>
+                control={control}
+                name="roleId"
+                label="Role"
+                placeholder="Select role"
+                clearable
+                disabled={isDisabled}
+                filterOption={filterAvailableRole}
+                noResultsMessage="No available roles found."
+                rules={{ required: true }}
+              />
+            </FormControl>
+            <FormControl>
+              <AutoCompleteDateTimeField<AssignRoleFormValues>
+                control={control}
+                name="expiresAt"
+                label="Expires At"
+                description="Leave empty for permanent assignment"
+                placeholder="No expiration"
+                clearable
+                disabled={isDisabled}
+              />
+            </FormControl>
+          </FormGroup>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={isSubmitting || isPending}
+              loadingText="Assigning..."
+              disabled={isDisabled}
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRoles.map((role: Role) => (
-                  <SelectItem key={role.id} value={role.id!} className="cursor-pointer">
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate">{role.name}</span>
-                      {role.description && (
-                        <span className="truncate text-xs text-muted-foreground">
-                          {role.description}
-                        </span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Expires At (Optional)</Label>
-            <Input
-              type="datetime-local"
-              value={expiresAt}
-              onChange={(e) => setExpiresAt(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">Leave empty for permanent assignment</p>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button type="button" onClick={handleSubmit} disabled={isSubmitting || !selectedRoleId}>
-            Assign Role
-          </Button>
-        </DialogFooter>
+              Assign Role
+            </Button>
+          </DialogFooter>
+        </Form>
       </DialogContent>
     </Dialog>
   );

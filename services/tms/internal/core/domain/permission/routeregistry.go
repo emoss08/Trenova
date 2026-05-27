@@ -418,6 +418,36 @@ func (rr *RouteRegistry) registerAdministrationRoutes() {
 		DisplayName: "Sequence Configuration",
 		Category:    "Administration",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/platform-catalog",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourcePlatformCatalog, Operation: OpRead},
+		},
+		DisplayName: "Platform Catalog",
+		Category:    "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/database-sessions",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDatabaseSession, Operation: OpRead},
+		},
+		DisplayName: "Database Sessions",
+		Category:    "Administration",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/document-operations",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDocumentOperation, Operation: OpRead},
+		},
+		DisplayName: "Document Operations",
+		Category:    "Administration",
+	})
 }
 
 func (rr *RouteRegistry) registerEquipmentRoutes() {

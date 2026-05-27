@@ -9,6 +9,11 @@ import (
 )
 
 type SSOConfigRepository interface {
+	ListEnabledByOrganizationID(
+		ctx context.Context,
+		organizationID pulid.ID,
+	) ([]*tenant.SSOConfig, error)
+	GetEnabledByID(ctx context.Context, providerID pulid.ID) (*tenant.SSOConfig, error)
 	GetByOrganizationID(
 		ctx context.Context,
 		organizationID pulid.ID,
@@ -25,6 +30,7 @@ type SSOConfigRepository interface {
 type SSOLoginState struct {
 	State            string             `json:"state"`
 	Provider         tenant.SSOProvider `json:"provider"`
+	ProviderID       pulid.ID           `json:"providerId"`
 	OrganizationID   pulid.ID           `json:"organizationId"`
 	OrganizationSlug string             `json:"organizationSlug"`
 	CodeVerifier     string             `json:"codeVerifier"`

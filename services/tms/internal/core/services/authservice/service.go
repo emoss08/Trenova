@@ -81,6 +81,23 @@ var errSSORequired = errortypes.NewAuthenticationError(
 
 const ssoLoginStateTTL = 10 * time.Minute
 
+type tenantSSOConfiguration struct {
+	organization *tenant.Organization
+	configs      []*tenant.SSOConfig
+}
+
+type loginSessionContext struct {
+	AuthProvider          string
+	ExternalIdentityID    string
+	ExternalSubject       string
+	AuthenticatorAAL      int
+	FederationFAL         int
+	MFAAuthenticatedAt    int64
+	LastReauthenticatedAt int64
+	RiskDecision          string
+	RiskDecisionID        pulid.ID
+}
+
 func (s *Service) Login(
 	ctx context.Context,
 	req services.LoginRequest,
@@ -124,23 +141,25 @@ func (s *Service) Login(
 		usr.BusinessUnitID = targetOrg.BusinessUnitID
 	}
 
-	return s.createLoginResponse(ctx, usr)
+	return s.createLoginResponse(ctx, usr, loginSessionContext{
+		AuthProvider:          "password",
+		AuthenticatorAAL:      1,
+		FederationFAL:         1,
+		LastReauthenticatedAt: timeutils.NowUnix(),
+		RiskDecision:          "allow",
+	})
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *Service) GetTenantLoginMetadata(
 	ctx context.Context,
 	organizationSlug string,
 ) (*services.TenantLoginMetadataResponse, error) {
-	if s.or == nil || s.ssoRepo == nil {
-		return nil, errortypes.NewBusinessError("Tenant login is not configured")
-	}
-
-	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
 	if err != nil {
 		return nil, err
 	}
 
+	org := loginConfig.organization
 	resp := &services.TenantLoginMetadataResponse{
 		OrganizationID:   org.ID.String(),
 		OrganizationName: org.Name,
@@ -148,18 +167,10 @@ func (s *Service) GetTenantLoginMetadata(
 		PasswordEnabled:  true,
 	}
 
-	providers := []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta}
-	var enabledProviders []string
 	var anyEnforced bool
-	for _, p := range providers {
-		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID, p)
-		if err != nil {
-			if errortypes.IsNotFoundError(err) {
-				continue
-			}
-			return nil, err
-		}
-		enabledProviders = append(enabledProviders, string(p))
+	enabledProviders := make([]string, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
+		enabledProviders = append(enabledProviders, string(cfg.Provider))
 		if cfg.EnforceSSO {
 			anyEnforced = true
 		}
@@ -169,6 +180,29 @@ func (s *Service) GetTenantLoginMetadata(
 	resp.PasswordEnabled = !anyEnforced
 
 	return resp, nil
+}
+
+func (s *Service) ListAuthProviders(
+	ctx context.Context,
+	organizationSlug string,
+) ([]services.AuthProviderSummary, error) {
+	loginConfig, err := s.enabledTenantSSOConfiguration(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	providers := make([]services.AuthProviderSummary, 0, len(loginConfig.configs))
+	for _, cfg := range loginConfig.configs {
+		providers = append(providers, services.AuthProviderSummary{
+			ID:       cfg.ID,
+			Name:     cfg.Name,
+			Provider: cfg.Provider,
+			Protocol: cfg.Protocol,
+			Enabled:  cfg.Enabled,
+		})
+	}
+
+	return providers, nil
 }
 
 func (s *Service) StartSSOLogin(
@@ -186,10 +220,11 @@ func (s *Service) StartSSOLogin(
 		return "", err
 	}
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID, req.Provider)
+	ssoConfig, err := s.resolveSSOConfig(ctx, org.ID, req)
 	if err != nil {
 		return "", err
 	}
+	req.Provider = ssoConfig.Provider
 
 	if err = validateReturnToURL(req.ReturnTo, s.cfg.Server.CORS.AllowedOrigins); err != nil {
 		return "", err
@@ -216,6 +251,7 @@ func (s *Service) StartSSOLogin(
 	if err = s.stateRepo.Save(ctx, &repositories.SSOLoginState{
 		State:            state,
 		Provider:         req.Provider,
+		ProviderID:       ssoConfig.ID,
 		OrganizationID:   org.ID,
 		OrganizationSlug: org.LoginSlug,
 		CodeVerifier:     verifier,
@@ -230,6 +266,27 @@ func (s *Service) StartSSOLogin(
 		oidc.Nonce(nonce),
 		oauth2.S256ChallengeOption(verifier),
 	), nil
+}
+
+func (s *Service) resolveSSOConfig(
+	ctx context.Context,
+	orgID pulid.ID,
+	req services.StartSSOLoginRequest,
+) (*tenant.SSOConfig, error) {
+	if req.ProviderID.IsNotNil() {
+		cfg, err := s.ssoRepo.GetEnabledByID(ctx, req.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.OrganizationID != orgID {
+			return nil, errortypes.NewAuthenticationError(
+				"SSO provider does not belong to this organization",
+			)
+		}
+		return cfg, nil
+	}
+
+	return s.ssoRepo.GetEnabledByOrganizationID(ctx, orgID, req.Provider)
 }
 
 func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
@@ -252,11 +309,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	displayName := providerDisplayName(loginState.Provider)
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(
-		ctx,
-		loginState.OrganizationID,
-		loginState.Provider,
-	)
+	ssoConfig, err := s.resolveSSOConfigForCallback(ctx, loginState)
 	if err != nil {
 		return nil, err
 	}
@@ -356,7 +409,16 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 		usr.BusinessUnitID = ssoConfig.BusinessUnitID
 	}
 
-	loginResp, err := s.createLoginResponse(ctx, usr)
+	aal, mfaAt := assuranceFromOIDCClaims(claims)
+	loginResp, err := s.createLoginResponse(ctx, usr, loginSessionContext{
+		AuthProvider:          string(loginState.Provider),
+		ExternalSubject:       claims.Subject,
+		AuthenticatorAAL:      aal,
+		FederationFAL:         2,
+		MFAAuthenticatedAt:    mfaAt,
+		LastReauthenticatedAt: timeutils.NowUnix(),
+		RiskDecision:          "allow",
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -375,6 +437,54 @@ func (s *Service) GetSSOLoginState(
 		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
 	return s.stateRepo.Get(ctx, state)
+}
+
+func (s *Service) enabledTenantSSOConfiguration(
+	ctx context.Context,
+	organizationSlug string,
+) (*tenantSSOConfiguration, error) {
+	if s.or == nil || s.ssoRepo == nil {
+		return nil, errortypes.NewBusinessError("Tenant login is not configured")
+	}
+
+	org, err := s.or.GetByLoginSlug(ctx, organizationSlug)
+	if err != nil {
+		return nil, err
+	}
+
+	configs, err := s.ssoRepo.ListEnabledByOrganizationID(ctx, org.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tenantSSOConfiguration{
+		organization: org,
+		configs:      configs,
+	}, nil
+}
+
+func (s *Service) resolveSSOConfigForCallback(
+	ctx context.Context,
+	loginState *repositories.SSOLoginState,
+) (*tenant.SSOConfig, error) {
+	if loginState.ProviderID.IsNotNil() {
+		cfg, err := s.ssoRepo.GetEnabledByID(ctx, loginState.ProviderID)
+		if err != nil {
+			return nil, err
+		}
+		if cfg.OrganizationID != loginState.OrganizationID {
+			return nil, errortypes.NewAuthenticationError(
+				"SSO provider does not belong to this organization",
+			)
+		}
+		return cfg, nil
+	}
+
+	return s.ssoRepo.GetEnabledByOrganizationID(
+		ctx,
+		loginState.OrganizationID,
+		loginState.Provider,
+	)
 }
 
 func (s *Service) ValidateSession(
@@ -543,7 +653,11 @@ func (s *Service) AuthenticateAPIKey(
 	}, nil
 }
 
-func (s *Service) createSession(ctx context.Context, user *tenant.User) (*session.Session, error) {
+func (s *Service) createSession(
+	ctx context.Context,
+	user *tenant.User,
+	authn loginSessionContext,
+) (*session.Session, error) {
 	expiresAt := timeutils.NowUnix() + int64(session.DefaultTTL.Seconds())
 
 	sess := session.NewSession(&session.NewSessionRequest{
@@ -552,7 +666,16 @@ func (s *Service) createSession(ctx context.Context, user *tenant.User) (*sessio
 			BuID:   user.BusinessUnitID,
 			UserID: user.ID,
 		},
-		ExpiresAt: expiresAt,
+		ExpiresAt:             expiresAt,
+		AuthProvider:          authn.AuthProvider,
+		ExternalIdentityID:    authn.ExternalIdentityID,
+		ExternalSubject:       authn.ExternalSubject,
+		AuthenticatorAAL:      authn.AuthenticatorAAL,
+		FederationFAL:         authn.FederationFAL,
+		MFAAuthenticatedAt:    authn.MFAAuthenticatedAt,
+		LastReauthenticatedAt: authn.LastReauthenticatedAt,
+		RiskDecision:          authn.RiskDecision,
+		RiskDecisionID:        authn.RiskDecisionID,
 	})
 
 	if err := s.sr.Create(ctx, sess); err != nil {
@@ -565,8 +688,9 @@ func (s *Service) createSession(ctx context.Context, user *tenant.User) (*sessio
 func (s *Service) createLoginResponse(
 	ctx context.Context,
 	user *tenant.User,
+	authn loginSessionContext,
 ) (*services.LoginResponse, error) {
-	sess, err := s.createSession(ctx, user)
+	sess, err := s.createSession(ctx, user, authn)
 	if err != nil {
 		return nil, err
 	}
@@ -582,14 +706,22 @@ func (s *Service) createLoginResponse(
 	authorizedRoleIDs := roleSummaryIDs(authorizedRoles)
 
 	return &services.LoginResponse{
-		User:                   user,
-		ExpiresAt:              sess.ExpiresAt,
-		SessionID:              sess.ID.String(),
-		ActiveRoleIDs:          sess.ActiveRoleIDs,
-		AuthorizedRoleIDs:      authorizedRoleIDs,
-		ActiveRoles:            activeRoleSummaries(sess.ActiveRoleIDs, authorizedRoles),
-		AuthorizedRoles:        authorizedRoles,
-		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0 && len(authorizedRoleIDs) > 0,
+		User:                  user,
+		ExpiresAt:             sess.ExpiresAt,
+		SessionID:             sess.ID.String(),
+		AuthProvider:          sess.AuthProvider,
+		ExternalIdentityID:    sess.ExternalIdentityID,
+		AuthenticatorAAL:      sess.AuthenticatorAAL,
+		FederationFAL:         sess.FederationFAL,
+		MFAAuthenticatedAt:    sess.MFAAuthenticatedAt,
+		LastReauthenticatedAt: sess.LastReauthenticatedAt,
+		RiskDecision:          sess.RiskDecision,
+		ActiveRoleIDs:         sess.ActiveRoleIDs,
+		AuthorizedRoleIDs:     authorizedRoleIDs,
+		ActiveRoles:           activeRoleSummaries(sess.ActiveRoleIDs, authorizedRoles),
+		AuthorizedRoles:       authorizedRoles,
+		RequiresRoleActivation: len(sess.ActiveRoleIDs) == 0 &&
+			len(authorizedRoleIDs) > 0,
 	}, nil
 }
 
@@ -716,11 +848,14 @@ func (s *Service) enforcePasswordLoginPolicy(
 }
 
 type oidcClaims struct {
-	Email             string `json:"email"`
-	PreferredUsername string `json:"preferred_username"`
-	UPN               string `json:"upn"`
-	Nonce             string `json:"nonce"`
-	TenantID          string `json:"tid"`
+	Email             string   `json:"email"`
+	PreferredUsername string   `json:"preferred_username"`
+	UPN               string   `json:"upn"`
+	Nonce             string   `json:"nonce"`
+	TenantID          string   `json:"tid"`
+	Subject           string   `json:"sub"`
+	ACR               string   `json:"acr"`
+	AMR               []string `json:"amr"`
 }
 
 func (c oidcClaims) EmailAddress() string {
@@ -732,6 +867,23 @@ func (c oidcClaims) EmailAddress() string {
 	default:
 		return strings.ToLower(strings.TrimSpace(c.UPN))
 	}
+}
+
+func assuranceFromOIDCClaims(claims oidcClaims) (int, int64) {
+	for _, method := range claims.AMR {
+		switch strings.ToLower(strings.TrimSpace(method)) {
+		case "mfa", "otp", "totp", "webauthn", "hwk", "swk", "fido", "face", "fingerprint":
+			return 2, timeutils.NowUnix()
+		}
+	}
+
+	acr := strings.ToLower(strings.TrimSpace(claims.ACR))
+	if strings.Contains(acr, "aal2") || strings.Contains(acr, "level2") ||
+		strings.Contains(acr, "urn:mace:incommon:iap:silver") {
+		return 2, timeutils.NowUnix()
+	}
+
+	return 1, 0
 }
 
 func validateReturnToURL(returnTo string, allowedOrigins []string) error {

@@ -45,7 +45,6 @@ type testRoleRepo struct {
 func newTestRoleRepo(db *bun.DB) *testRoleRepo {
 	mockRoleRepo := &mocks.MockRoleRepository{}
 	mockRoleRepo.On(
-		"HasBusinessUnitAdminAccess",
 		mock.Anything,
 		mock.Anything,
 		mock.Anything,
@@ -274,19 +273,6 @@ func (u *testUserRepo) UpdateCurrentOrganization(_ context.Context, _, _, _ puli
 	return nil
 }
 
-func (u *testUserRepo) IsPlatformAdmin(ctx context.Context, userID pulid.ID) (bool, error) {
-	var isPlatformAdmin bool
-	err := u.db.NewSelect().
-		TableExpr("users AS u").
-		ColumnExpr("u.is_platform_admin").
-		Where("u.id = ?", userID).
-		Scan(ctx, &isPlatformAdmin)
-	if err != nil {
-		return false, err
-	}
-	return isPlatformAdmin, nil
-}
-
 func (u *testUserRepo) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,
@@ -404,7 +390,6 @@ func createIntegrationSchema(t *testing.T, db *bun.DB) {
 			id VARCHAR(100) PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
 			organization_id VARCHAR(100) REFERENCES organizations(id),
-			is_platform_admin BOOLEAN DEFAULT FALSE
 		)`,
 		`CREATE TABLE IF NOT EXISTS roles (
 			id VARCHAR(100) PRIMARY KEY,
@@ -416,8 +401,6 @@ func createIntegrationSchema(t *testing.T, db *bun.DB) {
 			parent_role_ids TEXT[],
 			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
 			is_system BOOLEAN DEFAULT FALSE,
-			is_org_admin BOOLEAN DEFAULT FALSE,
-			is_business_unit_admin BOOLEAN DEFAULT FALSE,
 			created_by VARCHAR(100),
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL
@@ -477,7 +460,6 @@ func seedIntegrationData(t *testing.T, db *bun.DB) *integrationTestData {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		userID.String(),
 		"Test User",
 		orgID.String(),
@@ -547,42 +529,6 @@ func setupIntegrationEngine(t *testing.T) (*engine, *bun.DB, *redis.Client) {
 	}
 
 	return eng, db, redisClient
-}
-
-func TestIntegration_PlatformAdminBypass(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
-	ctx := t.Context()
-
-	orgID := pulid.MustNew("org_")
-	userID := pulid.MustNew("usr_")
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(),
-		"Test Org",
-	)
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
-		userID.String(),
-		"Admin",
-		orgID.String(),
-		true,
-	)
-
-	result, err := eng.Check(ctx, &services.PermissionCheckRequest{
-		UserID:         userID,
-		OrganizationID: orgID,
-		Resource:       "shipment",
-		Operation:      permission.OpRead,
-	})
-
-	require.NoError(t, err)
-	assert.True(t, result.Allowed)
-	assert.Equal(t, "platform_admin", result.Reason)
-	assert.Equal(t, permission.DataScopeAll, result.DataScope)
 }
 
 func TestIntegration_RegularUserPermissionCheck(t *testing.T) {
@@ -664,7 +610,6 @@ func TestIntegration_BatchPermissionCheck(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		userID.String(),
 		"Admin",
 		orgID.String(),
@@ -732,7 +677,6 @@ func TestIntegration_LightManifest(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		userID.String(),
 		"Admin",
 		orgID.String(),
@@ -744,8 +688,6 @@ func TestIntegration_LightManifest(t *testing.T) {
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 
 	require.NoError(t, err)
-	assert.True(t, manifest.IsPlatformAdmin)
-	assert.True(t, manifest.IsOrgAdmin)
 	assert.NotEmpty(t, manifest.Checksum)
 	assert.NotEmpty(t, manifest.RouteAccess)
 }

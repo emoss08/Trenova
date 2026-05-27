@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/services/documentoperationsservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,11 +38,26 @@ func New(p Params) *Handler {
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/admin/document-operations")
-	api.Use(h.pm.RequirePlatformAdmin())
-	api.GET("/:documentID/", h.getDiagnostics)
-	api.POST("/:documentID/reextract/", h.reextract)
-	api.POST("/:documentID/regenerate-preview/", h.regeneratePreview)
-	api.POST("/:documentID/resync-search/", h.resyncSearch)
+	api.GET(
+		"/:documentID/",
+		h.pm.RequirePermission(permission.ResourceDocumentOperation.String(), permission.OpRead),
+		h.getDiagnostics,
+	)
+	api.POST(
+		"/:documentID/reextract/",
+		h.pm.RequirePermission(permission.ResourceDocumentOperation.String(), permission.OpUpdate),
+		h.reextract,
+	)
+	api.POST(
+		"/:documentID/regenerate-preview/",
+		h.pm.RequirePermission(permission.ResourceDocumentOperation.String(), permission.OpUpdate),
+		h.regeneratePreview,
+	)
+	api.POST(
+		"/:documentID/resync-search/",
+		h.pm.RequirePermission(permission.ResourceDocumentOperation.String(), permission.OpUpdate),
+		h.resyncSearch,
+	)
 }
 
 func (h *Handler) getDiagnostics(c *gin.Context) {

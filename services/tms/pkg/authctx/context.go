@@ -22,6 +22,15 @@ const (
 	SessionID                 = Key("sessionId")
 	ActiveRoleIDsKey          = Key("activeRoleIds")
 	RequiresRoleActivationKey = Key("requiresRoleActivation")
+	AuthProviderKey           = Key("authProvider")
+	ExternalIdentityIDKey     = Key("externalIdentityId")
+	ExternalSubjectKey        = Key("externalSubject")
+	AuthenticatorAALKey       = Key("authenticatorAal")
+	FederationFALKey          = Key("federationFal")
+	MFAAuthenticatedAtKey     = Key("mfaAuthenticatedAt")
+	LastReauthenticatedAtKey  = Key("lastReauthenticatedAt")
+	RiskDecisionKey           = Key("riskDecision")
+	RiskDecisionIDKey         = Key("riskDecisionId")
 )
 
 const (
@@ -87,6 +96,15 @@ type SessionAuthContextParams struct {
 	OrganizationID         pulid.ID
 	ActiveRoleIDs          []pulid.ID
 	RequiresRoleActivation bool
+	AuthProvider           string
+	ExternalIdentityID     string
+	ExternalSubject        string
+	AuthenticatorAAL       int
+	FederationFAL          int
+	MFAAuthenticatedAt     int64
+	LastReauthenticatedAt  int64
+	RiskDecision           string
+	RiskDecisionID         pulid.ID
 }
 
 func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
@@ -94,6 +112,15 @@ func SetSessionAuthContext(c *gin.Context, p SessionAuthContextParams) {
 	c.Set(string(SessionID), p.SessionID)
 	c.Set(string(ActiveRoleIDsKey), p.ActiveRoleIDs)
 	c.Set(string(RequiresRoleActivationKey), p.RequiresRoleActivation)
+	c.Set(string(AuthProviderKey), p.AuthProvider)
+	c.Set(string(ExternalIdentityIDKey), p.ExternalIdentityID)
+	c.Set(string(ExternalSubjectKey), p.ExternalSubject)
+	c.Set(string(AuthenticatorAALKey), p.AuthenticatorAAL)
+	c.Set(string(FederationFALKey), p.FederationFAL)
+	c.Set(string(MFAAuthenticatedAtKey), p.MFAAuthenticatedAt)
+	c.Set(string(LastReauthenticatedAtKey), p.LastReauthenticatedAt)
+	c.Set(string(RiskDecisionKey), p.RiskDecision)
+	c.Set(string(RiskDecisionIDKey), p.RiskDecisionID)
 	c.Request = c.Request.WithContext(WithSessionRoleActivation(
 		c.Request.Context(),
 		p.ActiveRoleIDs,
@@ -122,6 +149,15 @@ type AuthContext struct {
 	SessionID              pulid.ID
 	ActiveRoleIDs          []pulid.ID
 	RequiresRoleActivation bool
+	AuthProvider           string
+	ExternalIdentityID     string
+	ExternalSubject        string
+	AuthenticatorAAL       int
+	FederationFAL          int
+	MFAAuthenticatedAt     int64
+	LastReauthenticatedAt  int64
+	RiskDecision           string
+	RiskDecisionID         pulid.ID
 }
 
 func (ac *AuthContext) IsAPIKey() bool {
@@ -205,6 +241,51 @@ func authContextFromGin(c *gin.Context) *AuthContext {
 			c,
 			string(RequiresRoleActivationKey),
 			false,
+		),
+		AuthProvider: helpers.ContextValueOr[string](
+			c,
+			string(AuthProviderKey),
+			"",
+		),
+		ExternalIdentityID: helpers.ContextValueOr[string](
+			c,
+			string(ExternalIdentityIDKey),
+			"",
+		),
+		ExternalSubject: helpers.ContextValueOr[string](
+			c,
+			string(ExternalSubjectKey),
+			"",
+		),
+		AuthenticatorAAL: helpers.ContextValueOr[int](
+			c,
+			string(AuthenticatorAALKey),
+			0,
+		),
+		FederationFAL: helpers.ContextValueOr[int](
+			c,
+			string(FederationFALKey),
+			0,
+		),
+		MFAAuthenticatedAt: helpers.ContextValueOr[int64](
+			c,
+			string(MFAAuthenticatedAtKey),
+			0,
+		),
+		LastReauthenticatedAt: helpers.ContextValueOr[int64](
+			c,
+			string(LastReauthenticatedAtKey),
+			0,
+		),
+		RiskDecision: helpers.ContextValueOr[string](
+			c,
+			string(RiskDecisionKey),
+			"",
+		),
+		RiskDecisionID: helpers.ContextValueOr[pulid.ID](
+			c,
+			string(RiskDecisionIDKey),
+			pulid.Nil,
 		),
 	}
 }

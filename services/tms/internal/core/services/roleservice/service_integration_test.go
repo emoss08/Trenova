@@ -238,16 +238,6 @@ func (u *integrationUserRepo) UpdateCurrentOrganization(_ context.Context, _, _,
 	return nil
 }
 
-func (u *integrationUserRepo) IsPlatformAdmin(ctx context.Context, userID pulid.ID) (bool, error) {
-	var isPlatformAdmin bool
-	err := u.db.NewSelect().
-		TableExpr("users AS u").
-		ColumnExpr("u.is_platform_admin").
-		Where("u.id = ?", userID).
-		Scan(ctx, &isPlatformAdmin)
-	return isPlatformAdmin, err
-}
-
 func (u *integrationUserRepo) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,
@@ -368,7 +358,6 @@ func createRoleServiceSchema(t *testing.T, db *bun.DB) {
 			id VARCHAR(100) PRIMARY KEY,
 			name VARCHAR(255) NOT NULL,
 			organization_id VARCHAR(100) REFERENCES organizations(id),
-			is_platform_admin BOOLEAN DEFAULT FALSE
 		)`,
 		`CREATE TABLE IF NOT EXISTS roles (
 			id VARCHAR(100) PRIMARY KEY,
@@ -380,8 +369,6 @@ func createRoleServiceSchema(t *testing.T, db *bun.DB) {
 			parent_role_ids TEXT[],
 			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
 			is_system BOOLEAN DEFAULT FALSE,
-			is_org_admin BOOLEAN DEFAULT FALSE,
-			is_business_unit_admin BOOLEAN DEFAULT FALSE,
 			created_by VARCHAR(100),
 			created_at BIGINT NOT NULL,
 			updated_at BIGINT NOT NULL
@@ -417,7 +404,6 @@ func createRoleServiceSchema(t *testing.T, db *bun.DB) {
 type integrationPermEngine struct {
 	roleRepo  repositories.RoleRepository
 	cacheRepo repositories.PermissionCacheRepository
-	userRepo  repositories.UserRepository
 	registry  *permission.Registry
 }
 
@@ -425,18 +411,6 @@ func (e *integrationPermEngine) Check(
 	ctx context.Context,
 	req *services.PermissionCheckRequest,
 ) (*services.PermissionCheckResult, error) {
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, req.UserID)
-	if err != nil {
-		return nil, err
-	}
-	if isPlatformAdmin {
-		return &services.PermissionCheckResult{
-			Allowed:   true,
-			Reason:    "platform_admin",
-			DataScope: permission.DataScopeAll,
-		}, nil
-	}
-
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, req.UserID, req.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -457,13 +431,6 @@ func (e *integrationPermEngine) Check(
 	}
 
 	for _, role := range roles {
-		if role.IsOrgAdmin {
-			return &services.PermissionCheckResult{
-				Allowed:   true,
-				Reason:    "org_admin",
-				DataScope: permission.DataScopeOrganization,
-			}, nil
-		}
 		for _, perm := range role.Permissions {
 			if string(perm.Resource) == string(req.Resource) {
 				for _, op := range perm.Operations {
@@ -512,19 +479,6 @@ func (e *integrationPermEngine) GetEffectivePermissions(
 	ctx context.Context,
 	userID, orgID pulid.ID,
 ) (*services.EffectivePermissions, error) {
-	isPlatformAdmin, err := e.userRepo.IsPlatformAdmin(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	if isPlatformAdmin {
-		return &services.EffectivePermissions{
-			UserID:         userID,
-			OrganizationID: orgID,
-			MaxSensitivity: permission.SensitivityConfidential,
-			Resources:      make(map[string]services.EffectiveResourcePermission),
-		}, nil
-	}
-
 	assignments, err := e.roleRepo.GetUserRoleAssignments(ctx, userID, orgID)
 	if err != nil {
 		return nil, err
@@ -590,23 +544,17 @@ func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {
 		db:                 db,
 		MockRoleRepository: &mocks.MockRoleRepository{},
 	}
-	userRepo := &integrationUserRepo{
-		db:                 db,
-		MockUserRepository: &mocks.MockUserRepository{},
-	}
 	cacheRepo := &integrationPermCacheRepo{client: redisClient}
 
 	permEngine := &integrationPermEngine{
 		roleRepo:  roleRepo,
 		cacheRepo: cacheRepo,
-		userRepo:  userRepo,
 		registry:  permission.NewRegistry(),
 	}
 
 	svc := &Service{
 		l:          zap.NewNop().Named("test.role-service"),
 		roleRepo:   roleRepo,
-		userRepo:   userRepo,
 		permCache:  cacheRepo,
 		permEngine: permEngine,
 		validator: &Validator{
@@ -619,48 +567,6 @@ func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {
 	}
 
 	return svc, db
-}
-
-func TestIntegration_CreateRole_PlatformAdmin(t *testing.T) {
-	svc, db := setupIntegrationService(t)
-	ctx := t.Context()
-
-	orgID := pulid.MustNew("org_")
-	actorID := pulid.MustNew("usr_")
-
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(),
-		"Test Org",
-	)
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
-		actorID.String(),
-		"Admin",
-		orgID.String(),
-		true,
-	)
-
-	role := &permission.Role{
-		Name:           "New Role",
-		MaxSensitivity: permission.SensitivityInternal,
-		Permissions:    []*permission.ResourcePermission{},
-	}
-
-	err := svc.CreateRole(ctx, CreateRoleRequest{
-		ActorID:        actorID,
-		OrganizationID: orgID,
-		Role:           role,
-	})
-
-	require.NoError(t, err)
-	assert.Equal(t, orgID, role.OrganizationID)
-	assert.Equal(t, actorID, role.CreatedBy)
-	assert.NotEmpty(t, role.ID)
 }
 
 func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
@@ -680,7 +586,6 @@ func TestIntegration_CreateRole_CircularInheritance(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
@@ -722,7 +627,6 @@ func TestIntegration_UpdateRole_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
@@ -776,7 +680,6 @@ func TestIntegration_UpdateRole_SystemRole_Fails(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
@@ -831,7 +734,6 @@ func TestIntegration_AssignRole_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),
@@ -840,7 +742,6 @@ func TestIntegration_AssignRole_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		targetUserID.String(),
 		"User",
 		orgID.String(),
@@ -893,7 +794,6 @@ func TestIntegration_InitializeOrganizationRoles(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		creatorID.String(),
 		"Creator",
 		orgID.String(),
@@ -931,7 +831,6 @@ func TestIntegration_CreateResourcePermission_Success(t *testing.T) {
 	sharedtestutil.MustExec(
 		t,
 		db,
-		`INSERT INTO users (id, name, organization_id, is_platform_admin) VALUES (?, ?, ?, ?)`,
 		actorID.String(),
 		"Admin",
 		orgID.String(),

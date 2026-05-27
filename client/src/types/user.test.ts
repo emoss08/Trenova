@@ -18,7 +18,6 @@ describe("loginResponseSchema", () => {
         timezone: "America/Los_Angeles",
         isLocked: false,
         mustChangePassword: false,
-        isPlatformAdmin: true,
         version: 0,
         createdAt: 1779811265,
         updatedAt: 1779811264,
@@ -36,8 +35,6 @@ describe("loginResponseSchema", () => {
           name: "Dispatcher",
           description: null,
           isSystem: false,
-          isOrgAdmin: true,
-          isBusinessUnitAdmin: false,
         },
       ],
       requiresRoleActivation: true,
@@ -48,6 +45,5 @@ describe("loginResponseSchema", () => {
     expect(parsed.activeRoles).toEqual([]);
     expect(parsed.authorizedRoles[0]?.name).toBe("Dispatcher");
     expect(parsed.authorizedRoles[0]?.description).toBe("");
-    expect(parsed.user.isPlatformAdmin).toBe(true);
   });
 });

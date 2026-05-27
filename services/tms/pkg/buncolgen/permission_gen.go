@@ -157,35 +157,31 @@ var RoleTable = TableInfo{
 //	q.Where(RoleColumns.ID.Eq(), id)           // WHERE r.id = ?
 //	q.Order(RoleColumns.CreatedAt.OrderDesc())  // ORDER BY r.created_at DESC
 var RoleColumns = struct {
-	ID                  Column // "id" → qualified: "r.id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "r.business_unit_id"
-	OrganizationID      Column // "organization_id" → qualified: "r.organization_id"
-	Name                Column // "name" → qualified: "r.name"
-	Description         Column // "description" → qualified: "r.description"
-	CoreResponsibility  Column // "core_responsibility" → qualified: "r.core_responsibility"
-	ParentRoleIDs       Column // "parent_role_ids" → qualified: "r.parent_role_ids"
-	MaxSensitivity      Column // "max_sensitivity" → qualified: "r.max_sensitivity"
-	IsSystem            Column // "is_system" → qualified: "r.is_system"
-	IsOrgAdmin          Column // "is_org_admin" → qualified: "r.is_org_admin"
-	IsBusinessUnitAdmin Column // "is_business_unit_admin" → qualified: "r.is_business_unit_admin"
-	CreatedBy           Column // "created_by" → qualified: "r.created_by"
-	CreatedAt           Column // "created_at" → qualified: "r.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "r.updated_at"
+	ID                 Column // "id" → qualified: "r.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "r.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "r.organization_id"
+	Name               Column // "name" → qualified: "r.name"
+	Description        Column // "description" → qualified: "r.description"
+	CoreResponsibility Column // "core_responsibility" → qualified: "r.core_responsibility"
+	ParentRoleIDs      Column // "parent_role_ids" → qualified: "r.parent_role_ids"
+	MaxSensitivity     Column // "max_sensitivity" → qualified: "r.max_sensitivity"
+	IsSystem           Column // "is_system" → qualified: "r.is_system"
+	CreatedBy          Column // "created_by" → qualified: "r.created_by"
+	CreatedAt          Column // "created_at" → qualified: "r.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "r.updated_at"
 }{
-	ID:                  NewColumn("id", "r"),
-	BusinessUnitID:      NewColumn("business_unit_id", "r"),
-	OrganizationID:      NewColumn("organization_id", "r"),
-	Name:                NewColumn("name", "r"),
-	Description:         NewColumn("description", "r"),
-	CoreResponsibility:  NewColumn("core_responsibility", "r"),
-	ParentRoleIDs:       NewColumn("parent_role_ids", "r"),
-	MaxSensitivity:      NewColumn("max_sensitivity", "r"),
-	IsSystem:            NewColumn("is_system", "r"),
-	IsOrgAdmin:          NewColumn("is_org_admin", "r"),
-	IsBusinessUnitAdmin: NewColumn("is_business_unit_admin", "r"),
-	CreatedBy:           NewColumn("created_by", "r"),
-	CreatedAt:           NewColumn("created_at", "r"),
-	UpdatedAt:           NewColumn("updated_at", "r"),
+	ID:                 NewColumn("id", "r"),
+	BusinessUnitID:     NewColumn("business_unit_id", "r"),
+	OrganizationID:     NewColumn("organization_id", "r"),
+	Name:               NewColumn("name", "r"),
+	Description:        NewColumn("description", "r"),
+	CoreResponsibility: NewColumn("core_responsibility", "r"),
+	ParentRoleIDs:      NewColumn("parent_role_ids", "r"),
+	MaxSensitivity:     NewColumn("max_sensitivity", "r"),
+	IsSystem:           NewColumn("is_system", "r"),
+	CreatedBy:          NewColumn("created_by", "r"),
+	CreatedAt:          NewColumn("created_at", "r"),
+	UpdatedAt:          NewColumn("updated_at", "r"),
 }
 
 // RoleFieldMap maps JSON API field names to database column names.
@@ -193,20 +189,18 @@ var RoleColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Role.GetStaticFieldMap().
 var RoleFieldMap = map[string]string{
-	"id":                  "id",
-	"businessUnitId":      "business_unit_id",
-	"organizationId":      "organization_id",
-	"name":                "name",
-	"description":         "description",
-	"coreResponsibility":  "core_responsibility",
-	"parentRoleIds":       "parent_role_ids",
-	"maxSensitivity":      "max_sensitivity",
-	"isSystem":            "is_system",
-	"isOrgAdmin":          "is_org_admin",
-	"isBusinessUnitAdmin": "is_business_unit_admin",
-	"createdBy":           "created_by",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"name":               "name",
+	"description":        "description",
+	"coreResponsibility": "core_responsibility",
+	"parentRoleIds":      "parent_role_ids",
+	"maxSensitivity":     "max_sensitivity",
+	"isSystem":           "is_system",
+	"createdBy":          "created_by",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
 }
 
 // RoleInsertableColumns lists column names suitable for INSERT statements on the "roles" table.
@@ -221,8 +215,6 @@ var RoleInsertableColumns = []string{
 	"parent_role_ids",
 	"max_sensitivity",
 	"is_system",
-	"is_org_admin",
-	"is_business_unit_admin",
 	"created_by",
 	"created_at",
 	"updated_at",
@@ -289,20 +281,18 @@ func RoleApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.Selec
 //	RoleFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var RoleFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	Name                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	CoreResponsibility  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coreResponsibility" → DB: "core_responsibility"
-	ParentRoleIDs       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentRoleIds" → DB: "parent_role_ids"
-	MaxSensitivity      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxSensitivity" → DB: "max_sensitivity"
-	IsSystem            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
-	IsOrgAdmin          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isOrgAdmin" → DB: "is_org_admin"
-	IsBusinessUnitAdmin func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isBusinessUnitAdmin" → DB: "is_business_unit_admin"
-	CreatedBy           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Name               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	CoreResponsibility func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "coreResponsibility" → DB: "core_responsibility"
+	ParentRoleIDs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentRoleIds" → DB: "parent_role_ids"
+	MaxSensitivity     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxSensitivity" → DB: "max_sensitivity"
+	IsSystem           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isSystem" → DB: "is_system"
+	CreatedBy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -331,11 +321,513 @@ var RoleFilter = struct {
 	IsSystem: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("isSystem", op, value)
 	},
-	IsOrgAdmin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("isOrgAdmin", op, value)
+	CreatedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdBy", op, value)
 	},
-	IsBusinessUnitAdmin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("isBusinessUnitAdmin", op, value)
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RoleConstraint — table "role_constraints", alias "rc"
+// ---------------------------------------------------------------------------
+
+// RoleConstraintTable holds the table name, alias, and primary key columns
+// for the "role_constraints" table. The alias "rc" is used in all generated
+// SQL fragments (e.g. "rc.id = ?").
+var RoleConstraintTable = TableInfo{
+	Name:       "role_constraints",
+	Alias:      "rc",
+	PrimaryKey: []string{"id"},
+}
+
+// RoleConstraintColumns provides type-safe column references for the "role_constraints" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RoleConstraintColumns.ID.String())
+//	// SELECT rc.id FROM role_constraints AS rc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RoleConstraintColumns.ID.Eq(), id)           // WHERE rc.id = ?
+//	q.Order(RoleConstraintColumns.CreatedAt.OrderDesc())  // ORDER BY rc.created_at DESC
+var RoleConstraintColumns = struct {
+	ID             Column // "id" → qualified: "rc.id"
+	OrganizationID Column // "organization_id" → qualified: "rc.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "rc.business_unit_id"
+	Name           Column // "name" → qualified: "rc.name"
+	Description    Column // "description" → qualified: "rc.description"
+	Type           Column // "type" → qualified: "rc.type"
+	MaxRoles       Column // "max_roles" → qualified: "rc.max_roles"
+	Enabled        Column // "enabled" → qualified: "rc.enabled"
+	CreatedBy      Column // "created_by" → qualified: "rc.created_by"
+	CreatedAt      Column // "created_at" → qualified: "rc.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "rc.updated_at"
+}{
+	ID:             NewColumn("id", "rc"),
+	OrganizationID: NewColumn("organization_id", "rc"),
+	BusinessUnitID: NewColumn("business_unit_id", "rc"),
+	Name:           NewColumn("name", "rc"),
+	Description:    NewColumn("description", "rc"),
+	Type:           NewColumn("type", "rc"),
+	MaxRoles:       NewColumn("max_roles", "rc"),
+	Enabled:        NewColumn("enabled", "rc"),
+	CreatedBy:      NewColumn("created_by", "rc"),
+	CreatedAt:      NewColumn("created_at", "rc"),
+	UpdatedAt:      NewColumn("updated_at", "rc"),
+}
+
+// RoleConstraintFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RoleConstraint.GetStaticFieldMap().
+var RoleConstraintFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"name":           "name",
+	"description":    "description",
+	"type":           "type",
+	"maxRoles":       "max_roles",
+	"enabled":        "enabled",
+	"createdBy":      "created_by",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// RoleConstraintInsertableColumns lists column names suitable for INSERT statements on the "role_constraints" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RoleConstraintInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"name",
+	"description",
+	"type",
+	"max_roles",
+	"enabled",
+	"created_by",
+	"created_at",
+	"updated_at",
+}
+
+// RoleConstraintScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rc.organization_id = ? AND rc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.RoleConstraintScopeTenant(sq, ti).
+//		Where(buncolgen.RoleConstraintColumns.ID.Eq(), id)
+func RoleConstraintScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, RoleConstraintColumns.OrganizationID, RoleConstraintColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.RoleConstraintScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.RoleConstraintColumns.ID.In(), bun.List(ids))
+//	})
+func RoleConstraintScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, RoleConstraintColumns.OrganizationID, RoleConstraintColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.RoleConstraintScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.RoleConstraintColumns.ID.Eq(), id)
+//	})
+func RoleConstraintScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, RoleConstraintColumns.OrganizationID, RoleConstraintColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.RoleConstraintApplyTenant(tenantInfo))
+func RoleConstraintApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(RoleConstraintColumns.OrganizationID, RoleConstraintColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "role_constraints" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RoleConstraintFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RoleConstraintFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	Name           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Type           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "type" → DB: "type"
+	MaxRoles       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxRoles" → DB: "max_roles"
+	Enabled        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	CreatedBy      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	Name: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("name", op, value)
+	},
+	Description: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("description", op, value)
+	},
+	Type: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("type", op, value)
+	},
+	MaxRoles: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxRoles", op, value)
+	},
+	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enabled", op, value)
+	},
+	CreatedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdBy", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RoleConstraintRole — table "role_constraint_roles", alias "rcr"
+// ---------------------------------------------------------------------------
+
+// RoleConstraintRoleTable holds the table name, alias, and primary key columns
+// for the "role_constraint_roles" table. The alias "rcr" is used in all generated
+// SQL fragments (e.g. "rcr.id = ?").
+var RoleConstraintRoleTable = TableInfo{
+	Name:       "role_constraint_roles",
+	Alias:      "rcr",
+	PrimaryKey: []string{"id"},
+}
+
+// RoleConstraintRoleColumns provides type-safe column references for the "role_constraint_roles" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RoleConstraintRoleColumns.ID.String())
+//	// SELECT rcr.id FROM role_constraint_roles AS rcr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RoleConstraintRoleColumns.ID.Eq(), id)           // WHERE rcr.id = ?
+//	q.Order(RoleConstraintRoleColumns.CreatedAt.OrderDesc())  // ORDER BY rcr.created_at DESC
+var RoleConstraintRoleColumns = struct {
+	ID               Column // "id" → qualified: "rcr.id"
+	RoleConstraintID Column // "role_constraint_id" → qualified: "rcr.role_constraint_id"
+	RoleID           Column // "role_id" → qualified: "rcr.role_id"
+	OrganizationID   Column // "organization_id" → qualified: "rcr.organization_id"
+	BusinessUnitID   Column // "business_unit_id" → qualified: "rcr.business_unit_id"
+	CreatedAt        Column // "created_at" → qualified: "rcr.created_at"
+}{
+	ID:               NewColumn("id", "rcr"),
+	RoleConstraintID: NewColumn("role_constraint_id", "rcr"),
+	RoleID:           NewColumn("role_id", "rcr"),
+	OrganizationID:   NewColumn("organization_id", "rcr"),
+	BusinessUnitID:   NewColumn("business_unit_id", "rcr"),
+	CreatedAt:        NewColumn("created_at", "rcr"),
+}
+
+// RoleConstraintRoleFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RoleConstraintRole.GetStaticFieldMap().
+var RoleConstraintRoleFieldMap = map[string]string{
+	"id":               "id",
+	"roleConstraintId": "role_constraint_id",
+	"roleId":           "role_id",
+	"organizationId":   "organization_id",
+	"businessUnitId":   "business_unit_id",
+	"createdAt":        "created_at",
+}
+
+// RoleConstraintRoleInsertableColumns lists column names suitable for INSERT statements on the "role_constraint_roles" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RoleConstraintRoleInsertableColumns = []string{
+	"id",
+	"role_constraint_id",
+	"role_id",
+	"organization_id",
+	"business_unit_id",
+	"created_at",
+}
+
+// RoleConstraintRoleRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(RoleConstraintRoleRelations.RoleConstraint)
+//	// Bun eager-loads the RoleConstraint association via a separate query
+var RoleConstraintRoleRelations = struct {
+	RoleConstraint string
+	Role           string
+}{
+	RoleConstraint: "RoleConstraint",
+	Role:           "Role",
+}
+
+// RoleConstraintRoleScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rcr.organization_id = ? AND rcr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.RoleConstraintRoleScopeTenant(sq, ti).
+//		Where(buncolgen.RoleConstraintRoleColumns.ID.Eq(), id)
+func RoleConstraintRoleScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, RoleConstraintRoleColumns.OrganizationID, RoleConstraintRoleColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintRoleScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.RoleConstraintRoleScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.RoleConstraintRoleColumns.ID.In(), bun.List(ids))
+//	})
+func RoleConstraintRoleScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, RoleConstraintRoleColumns.OrganizationID, RoleConstraintRoleColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintRoleScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.RoleConstraintRoleScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.RoleConstraintRoleColumns.ID.Eq(), id)
+//	})
+func RoleConstraintRoleScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, RoleConstraintRoleColumns.OrganizationID, RoleConstraintRoleColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintRoleApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.RoleConstraintRoleApplyTenant(tenantInfo))
+func RoleConstraintRoleApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(RoleConstraintRoleColumns.OrganizationID, RoleConstraintRoleColumns.BusinessUnitID, ti)
+}
+
+// RoleConstraintRoleFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "role_constraint_roles" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RoleConstraintRoleFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RoleConstraintRoleFilter = struct {
+	ID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	RoleConstraintID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleConstraintId" → DB: "role_constraint_id"
+	RoleID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleId" → DB: "role_id"
+	OrganizationID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	CreatedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	RoleConstraintID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roleConstraintId", op, value)
+	},
+	RoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roleId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// RoleHierarchyEdge — table "role_hierarchy_edges", alias "rhe"
+// ---------------------------------------------------------------------------
+
+// RoleHierarchyEdgeTable holds the table name, alias, and primary key columns
+// for the "role_hierarchy_edges" table. The alias "rhe" is used in all generated
+// SQL fragments (e.g. "rhe.id = ?").
+var RoleHierarchyEdgeTable = TableInfo{
+	Name:       "role_hierarchy_edges",
+	Alias:      "rhe",
+	PrimaryKey: []string{"id"},
+}
+
+// RoleHierarchyEdgeColumns provides type-safe column references for the "role_hierarchy_edges" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RoleHierarchyEdgeColumns.ID.String())
+//	// SELECT rhe.id FROM role_hierarchy_edges AS rhe
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RoleHierarchyEdgeColumns.ID.Eq(), id)           // WHERE rhe.id = ?
+//	q.Order(RoleHierarchyEdgeColumns.CreatedAt.OrderDesc())  // ORDER BY rhe.created_at DESC
+var RoleHierarchyEdgeColumns = struct {
+	ID             Column // "id" → qualified: "rhe.id"
+	SeniorRoleID   Column // "senior_role_id" → qualified: "rhe.senior_role_id"
+	JuniorRoleID   Column // "junior_role_id" → qualified: "rhe.junior_role_id"
+	OrganizationID Column // "organization_id" → qualified: "rhe.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "rhe.business_unit_id"
+	CreatedBy      Column // "created_by" → qualified: "rhe.created_by"
+	CreatedAt      Column // "created_at" → qualified: "rhe.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "rhe.updated_at"
+}{
+	ID:             NewColumn("id", "rhe"),
+	SeniorRoleID:   NewColumn("senior_role_id", "rhe"),
+	JuniorRoleID:   NewColumn("junior_role_id", "rhe"),
+	OrganizationID: NewColumn("organization_id", "rhe"),
+	BusinessUnitID: NewColumn("business_unit_id", "rhe"),
+	CreatedBy:      NewColumn("created_by", "rhe"),
+	CreatedAt:      NewColumn("created_at", "rhe"),
+	UpdatedAt:      NewColumn("updated_at", "rhe"),
+}
+
+// RoleHierarchyEdgeFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RoleHierarchyEdge.GetStaticFieldMap().
+var RoleHierarchyEdgeFieldMap = map[string]string{
+	"id":             "id",
+	"seniorRoleId":   "senior_role_id",
+	"juniorRoleId":   "junior_role_id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"createdBy":      "created_by",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// RoleHierarchyEdgeInsertableColumns lists column names suitable for INSERT statements on the "role_hierarchy_edges" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RoleHierarchyEdgeInsertableColumns = []string{
+	"id",
+	"senior_role_id",
+	"junior_role_id",
+	"organization_id",
+	"business_unit_id",
+	"created_by",
+	"created_at",
+	"updated_at",
+}
+
+// RoleHierarchyEdgeRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(RoleHierarchyEdgeRelations.SeniorRole)
+//	// Bun eager-loads the SeniorRole association via a separate query
+var RoleHierarchyEdgeRelations = struct {
+	SeniorRole string
+	JuniorRole string
+}{
+	SeniorRole: "SeniorRole",
+	JuniorRole: "JuniorRole",
+}
+
+// RoleHierarchyEdgeScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rhe.organization_id = ? AND rhe.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.RoleHierarchyEdgeScopeTenant(sq, ti).
+//		Where(buncolgen.RoleHierarchyEdgeColumns.ID.Eq(), id)
+func RoleHierarchyEdgeScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, RoleHierarchyEdgeColumns.OrganizationID, RoleHierarchyEdgeColumns.BusinessUnitID, ti)
+}
+
+// RoleHierarchyEdgeScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.RoleHierarchyEdgeScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.RoleHierarchyEdgeColumns.ID.In(), bun.List(ids))
+//	})
+func RoleHierarchyEdgeScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, RoleHierarchyEdgeColumns.OrganizationID, RoleHierarchyEdgeColumns.BusinessUnitID, ti)
+}
+
+// RoleHierarchyEdgeScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.RoleHierarchyEdgeScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.RoleHierarchyEdgeColumns.ID.Eq(), id)
+//	})
+func RoleHierarchyEdgeScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, RoleHierarchyEdgeColumns.OrganizationID, RoleHierarchyEdgeColumns.BusinessUnitID, ti)
+}
+
+// RoleHierarchyEdgeApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.RoleHierarchyEdgeApplyTenant(tenantInfo))
+func RoleHierarchyEdgeApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(RoleHierarchyEdgeColumns.OrganizationID, RoleHierarchyEdgeColumns.BusinessUnitID, ti)
+}
+
+// RoleHierarchyEdgeFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "role_hierarchy_edges" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RoleHierarchyEdgeFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RoleHierarchyEdgeFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	SeniorRoleID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "seniorRoleId" → DB: "senior_role_id"
+	JuniorRoleID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "juniorRoleId" → DB: "junior_role_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	CreatedBy      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdBy" → DB: "created_by"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	SeniorRoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("seniorRoleId", op, value)
+	},
+	JuniorRoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("juniorRoleId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
 	},
 	CreatedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdBy", op, value)

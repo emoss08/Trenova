@@ -91,10 +91,6 @@ export const usePermissionStore = create<PermissionState>()(
           return false;
         }
 
-        if (manifest.isPlatformAdmin || manifest.isOrgAdmin) {
-          return true;
-        }
-
         const resourcePerms = manifest.permissions[resource];
         if (resourcePerms === undefined) {
           return false;
@@ -124,10 +120,6 @@ export const usePermissionStore = create<PermissionState>()(
 
         if (!manifest) {
           return false;
-        }
-
-        if (manifest.isPlatformAdmin || manifest.isOrgAdmin) {
-          return true;
         }
 
         return manifest.routeAccess[route] ?? false;

@@ -8,6 +8,7 @@ import { AuthForm } from "./auth-form";
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
   login: vi.fn(),
+  listProviders: vi.fn(),
   getSSOStartUrl: vi.fn(() => "/sso"),
   getUserOrganizations: vi.fn(),
   switchOrganization: vi.fn(),
@@ -28,6 +29,7 @@ vi.mock("react-router", async (importActual) => {
 vi.mock("@/services/auth", () => ({
   authService: {
     login: mocks.login,
+    listProviders: mocks.listProviders,
     getSSOStartUrl: mocks.getSSOStartUrl,
   },
 }));
@@ -92,6 +94,7 @@ describe("AuthForm", () => {
 
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockClear());
+    mocks.listProviders.mockResolvedValue([]);
     mocks.login.mockResolvedValue({
       user: {
         id: "usr_1",
@@ -110,7 +113,6 @@ describe("AuthForm", () => {
         timeFormat: "12-hour",
         isLocked: false,
         mustChangePassword: false,
-        isPlatformAdmin: false,
       },
       sessionId: "ses_1",
       expiresAt: 1782403304,

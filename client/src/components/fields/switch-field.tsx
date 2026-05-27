@@ -136,8 +136,8 @@ export function SwitchFieldSkeleton() {
     <div className="group relative flex w-full items-start gap-2 rounded-md border border-transparent p-2.5">
       <Skeleton className="size-5" />
       <div className="grid grow gap-1">
-        <Skeleton className="h-4 w-[150px]" />
-        <Skeleton className="h-4 w-[200px]" />
+        <Skeleton className="h-4 w-37.5" />
+        <Skeleton className="h-4 w-50" />
       </div>
     </div>
   );

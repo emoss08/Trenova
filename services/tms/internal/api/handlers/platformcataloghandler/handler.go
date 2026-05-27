@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -47,7 +48,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	me.GET("/billing", h.getMeBilling)
 
 	admin := rg.Group("/platform-catalog")
-	admin.Use(h.pm.RequirePlatformAdmin())
+	admin.Use(h.pm.RequirePermission(
+		permission.ResourcePlatformCatalog.String(),
+		permission.OpRead,
+	))
 	admin.GET("/products", h.listProducts)
 	admin.GET("/features", h.listFeatures)
 	admin.GET("/meters", h.listMeters)

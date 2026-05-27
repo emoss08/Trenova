@@ -55,9 +55,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("session/roles/activate", h.activateSessionRoles)
 	api.GET("csrf", h.csrfToken)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
+	api.GET("providers/:orgSlug", h.listAuthProviders)
 	api.GET("microsoft/start/:slug", h.startSSOLogin(tenant.SSOProviderAzureAD))
 	api.GET("microsoft/callback", h.ssoCallback(tenant.SSOProviderAzureAD))
-	api.GET("sso/start/:provider/:slug", h.startSSOLoginGeneric)
+	api.GET("sso/start/:providerId/:orgSlug", h.startSSOLoginGeneric)
 	api.GET("sso/callback/:provider", h.ssoCallbackGeneric)
 }
 
@@ -239,6 +240,16 @@ func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+func (h *Handler) listAuthProviders(c *gin.Context) {
+	resp, err := h.service.ListAuthProviders(c.Request.Context(), c.Param("orgSlug"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
 func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		redirectURL, err := h.service.StartSSOLogin(
@@ -259,13 +270,51 @@ func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
 }
 
 func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
-	provider, err := parseSSOProvider(c.Param("provider"))
+	rawProviderID := strings.TrimSpace(c.Param("providerId"))
+	orgSlug := c.Param("orgSlug")
+	if orgSlug == "" {
+		orgSlug = c.Param("slug")
+	}
+
+	providerID, parseIDErr := pulid.Parse(rawProviderID)
+	if parseIDErr == nil {
+		redirectURL, err := h.service.StartSSOLogin(
+			c.Request.Context(),
+			services.StartSSOLoginRequest{
+				ProviderID:       providerID,
+				OrganizationSlug: orgSlug,
+				ReturnTo:         c.Query("returnTo"),
+			},
+		)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	provider, err := parseSSOProvider(rawProviderID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	h.startSSOLogin(provider)(c)
+	redirectURL, err := h.service.StartSSOLogin(
+		c.Request.Context(),
+		services.StartSSOLoginRequest{
+			Provider:         provider,
+			OrganizationSlug: orgSlug,
+			ReturnTo:         c.Query("returnTo"),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {

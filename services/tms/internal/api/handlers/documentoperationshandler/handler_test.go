@@ -49,9 +49,9 @@ func setupHandler(t *testing.T) *testDeps {
 
 	permEngine := mocks.NewMockPermissionEngine(t)
 	permEngine.EXPECT().
-		GetLightManifest(mock.Anything, mock.Anything, mock.Anything).
-		Return(&serviceports.LightPermissionManifest{IsPlatformAdmin: true}, nil).
-		Maybe()
+		Check(mock.Anything, mock.Anything).
+		Maybe().
+		Return(&serviceports.PermissionCheckResult{Allowed: true}, nil)
 
 	pm := middleware.NewPermissionMiddleware(middleware.PermissionMiddlewareParams{
 		PermissionEngine: permEngine,

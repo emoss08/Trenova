@@ -1,5 +1,6 @@
 import { api, clearCsrfToken, setCsrfToken } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
+import { authProviderSummariesSchema } from "@/types/iam";
 import type { RoleSummary } from "@/types/role";
 import { loginResponseSchema, type LoginRequest, type LoginResponse } from "@/types/user";
 import { API_BASE_URL } from "@/lib/constants";
@@ -36,6 +37,11 @@ export const authService = {
       authorizedRoles: RoleSummary[];
       requiresRoleActivation: boolean;
     }>("/auth/session/roles/activate", { roleIds });
+  },
+
+  listProviders: async (organizationSlug: string) => {
+    const response = await api.get(`/auth/providers/${organizationSlug}`);
+    return safeParse(authProviderSummariesSchema, response, "AuthProviderSummaries");
   },
 
   getSSOStartUrl: (provider: string, slug: string, returnTo: string) => {

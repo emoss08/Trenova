@@ -8,15 +8,17 @@ import (
 )
 
 type PermissionCheckRequest struct {
-	PrincipalType  PrincipalType
-	PrincipalID    pulid.ID
-	UserID         pulid.ID
-	APIKeyID       pulid.ID
-	BusinessUnitID pulid.ID
-	OrganizationID pulid.ID
-	Resource       string
-	Operation      permission.Operation
-	ResourceID     *pulid.ID
+	PrincipalType      PrincipalType
+	PrincipalID        pulid.ID
+	UserID             pulid.ID
+	APIKeyID           pulid.ID
+	BusinessUnitID     pulid.ID
+	OrganizationID     pulid.ID
+	Resource           string
+	Operation          permission.Operation
+	ResourceID         *pulid.ID
+	ResourceAttributes ResourceAttributes
+	ContextAttributes  RequestContextAttributes
 }
 
 type PermissionCheckResult struct {
@@ -28,19 +30,38 @@ type PermissionCheckResult struct {
 }
 
 type BatchPermissionCheckRequest struct {
-	PrincipalType  PrincipalType
-	PrincipalID    pulid.ID
-	UserID         pulid.ID
-	APIKeyID       pulid.ID
-	BusinessUnitID pulid.ID
-	OrganizationID pulid.ID
-	Checks         []ResourceOperationCheck
+	PrincipalType     PrincipalType
+	PrincipalID       pulid.ID
+	UserID            pulid.ID
+	APIKeyID          pulid.ID
+	BusinessUnitID    pulid.ID
+	OrganizationID    pulid.ID
+	Checks            []ResourceOperationCheck
+	ContextAttributes RequestContextAttributes
 }
 
 type ResourceOperationCheck struct {
-	Resource   string
-	Operation  permission.Operation
-	ResourceID *pulid.ID
+	Resource           string
+	Operation          permission.Operation
+	ResourceID         *pulid.ID
+	ResourceAttributes ResourceAttributes
+}
+
+type ResourceAttributes struct {
+	OrganizationID pulid.ID `json:"organizationId,omitempty"`
+	BusinessUnitID pulid.ID `json:"businessUnitId,omitempty"`
+	OwnerID        pulid.ID `json:"ownerId,omitempty"`
+	TerminalID     pulid.ID `json:"terminalId,omitempty"`
+	ActiveRoleID   pulid.ID `json:"activeRoleId,omitempty"`
+}
+
+type RequestContextAttributes struct {
+	ActiveRoleIDs         []pulid.ID `json:"activeRoleIds,omitempty"`
+	AuthenticatorAAL      int        `json:"authenticatorAal,omitempty"`
+	FederationFAL         int        `json:"federationFal,omitempty"`
+	MFAAuthenticatedAt    int64      `json:"mfaAuthenticatedAt,omitempty"`
+	LastReauthenticatedAt int64      `json:"lastReauthenticatedAt,omitempty"`
+	RiskDecision          string     `json:"riskDecision,omitempty"`
 }
 
 type BatchPermissionCheckResult struct {
@@ -53,9 +74,6 @@ type LightPermissionManifest struct {
 	Version                string                      `json:"version"`
 	UserID                 pulid.ID                    `json:"userId"`
 	OrganizationID         pulid.ID                    `json:"organizationId"`
-	IsPlatformAdmin        bool                        `json:"isPlatformAdmin"`
-	IsOrgAdmin             bool                        `json:"isOrgAdmin"`
-	IsBusinessUnitAdmin    bool                        `json:"isBusinessUnitAdmin"`
 	ActiveRoleIDs          []pulid.ID                  `json:"activeRoleIds"`
 	AuthorizedRoleIDs      []pulid.ID                  `json:"authorizedRoleIds"`
 	ActiveRoles            []RoleSummary               `json:"activeRoles"`
@@ -91,22 +109,18 @@ type EffectivePermissions struct {
 }
 
 type RoleSummary struct {
-	ID                  pulid.ID `json:"id"`
-	Name                string   `json:"name"`
-	Description         string   `json:"description"`
-	IsSystem            bool     `json:"isSystem"`
-	IsOrgAdmin          bool     `json:"isOrgAdmin"`
-	IsBusinessUnitAdmin bool     `json:"isBusinessUnitAdmin"`
+	ID          pulid.ID `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	IsSystem    bool     `json:"isSystem"`
 }
 
 func NewRoleSummary(role *permission.Role) RoleSummary {
 	return RoleSummary{
-		ID:                  role.ID,
-		Name:                role.Name,
-		Description:         role.Description,
-		IsSystem:            role.IsSystem,
-		IsOrgAdmin:          role.IsOrgAdmin,
-		IsBusinessUnitAdmin: role.IsBusinessUnitAdmin,
+		ID:          role.ID,
+		Name:        role.Name,
+		Description: role.Description,
+		IsSystem:    role.IsSystem,
 	}
 }
 

@@ -88,6 +88,7 @@ export function AutocompleteCommandContent<TOption>({
   onClear,
   initialLimit = 20,
   listboxId,
+  filterOption,
 }: {
   open: boolean;
   link: string;
@@ -108,6 +109,7 @@ export function AutocompleteCommandContent<TOption>({
   popoutLink?: string;
   onClear?: () => void;
   listboxId: string;
+  filterOption?: (option: TOption) => boolean;
 }) {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -178,17 +180,31 @@ export function AutocompleteCommandContent<TOption>({
       aggregatedOptions.push(...data.results);
     }
 
+    const filteredOptions = filterOption
+      ? aggregatedOptions.filter(filterOption)
+      : aggregatedOptions;
+
     if (value && selectedOption && open) {
-      const optionExists = aggregatedOptions.some(
+      const optionExists = filteredOptions.some(
         (opt) => getOptionValue(opt).toString() === value,
       );
       if (!optionExists) {
-        return [selectedOption, ...aggregatedOptions];
+        return [selectedOption, ...filteredOptions];
       }
     }
 
-    return aggregatedOptions;
-  }, [data, page, queryClient, value, selectedOption, open, getOptionValue, getSearchQueryKey]);
+    return filteredOptions;
+  }, [
+    data,
+    page,
+    queryClient,
+    value,
+    selectedOption,
+    open,
+    getOptionValue,
+    getSearchQueryKey,
+    filterOption,
+  ]);
 
   useEffect(() => {
     if (!open) {

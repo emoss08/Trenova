@@ -67,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/iamrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/integrationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/invoiceadjustmentrepository"
@@ -119,6 +120,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	tenantsyncrepository.New,
 	tenantprovisioningrepository.New,
 	organizationrepository.New,
+	iamrepository.New,
 	ssoconfigrepository.New,
 	userrepository.New,
 	formulatemplaterepository.New,

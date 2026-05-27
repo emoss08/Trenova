@@ -1,6 +1,6 @@
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
-import { MicrosoftLogo } from "@/components/logos/microsoft";
+import { EntraLogo } from "@/components/logos/entra";
 import { OktaLogo } from "@/components/logos/okta";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { usePermissionStore } from "@/stores/permission-store";
 import type { TenantLoginMetadata, UserOrganization } from "@/types/organization";
 import { loginRequestSchema, type LoginRequest } from "@/types/user";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -32,10 +33,13 @@ export function LoginForm({
   const fetchManifest = usePermissionStore((state) => state.fetchManifest);
   const clearPermissions = usePermissionStore((state) => state.clearPermissions);
 
-  const providers = tenantMetadata?.enabledProviders ?? [];
-  const hasMicrosoft = providers.includes("AzureAD");
-  const hasOkta = providers.includes("Okta");
-  const hasAnySso = hasMicrosoft || hasOkta;
+  const providerQuery = useQuery({
+    queryKey: ["auth-providers", organizationSlug],
+    queryFn: async () => authService.listProviders(organizationSlug ?? ""),
+    enabled: Boolean(organizationSlug),
+  });
+  const providers = providerQuery.data ?? [];
+  const hasAnySso = providers.length > 0;
   const returnTo = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
 
   const { control, handleSubmit, setError } = useForm<LoginRequest>({
@@ -89,26 +93,19 @@ export function LoginForm({
             <AlertDescription>{ssoError}</AlertDescription>
           </Alert>
         )}
-        {hasMicrosoft && organizationSlug && (
+        {providers.map((provider) => (
           <Button
+            key={provider.id}
             className="w-full"
             variant="outline"
-            render={<a href={authService.getSSOStartUrl("AzureAD", organizationSlug, returnTo)} />}
+            render={
+              <a href={authService.getSSOStartUrl(provider.id, organizationSlug ?? "", returnTo)} />
+            }
           >
-            <MicrosoftLogo className="size-4" />
-            Continue with Microsoft
+            <ProviderLogo provider={provider.provider} />
+            Continue with {provider.name}
           </Button>
-        )}
-        {hasOkta && organizationSlug && (
-          <Button
-            className="w-full"
-            variant="outline"
-            render={<a href={authService.getSSOStartUrl("Okta", organizationSlug, returnTo)} />}
-          >
-            <OktaLogo className="h-4 w-auto" />
-            Continue with Okta
-          </Button>
-        )}
+        ))}
         {hasAnySso && tenantMetadata?.passwordEnabled && (
           <div className="text-center text-xs tracking-[0.2em] text-muted-foreground uppercase">
             Or use password
@@ -146,5 +143,19 @@ export function LoginForm({
         )}
       </FormGroup>
     </Form>
+  );
+}
+
+function ProviderLogo({ provider }: { provider: string }) {
+  if (provider === "AzureAD") {
+    return <EntraLogo className="size-4" />;
+  }
+  if (provider === "Okta") {
+    return <OktaLogo className="h-4 w-auto" />;
+  }
+  return (
+    <span className="flex size-4 items-center justify-center rounded-sm bg-primary/10 text-2xs font-semibold text-primary">
+      SSO
+    </span>
   );
 }

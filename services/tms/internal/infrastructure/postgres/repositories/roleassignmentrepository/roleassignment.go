@@ -40,6 +40,8 @@ func (r *repository) filterQuery(
 		q = q.Relation("Role")
 	}
 
+	q = q.Where("ura.organization_id = ?", req.Filter.TenantInfo.OrgID)
+
 	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
 }
 

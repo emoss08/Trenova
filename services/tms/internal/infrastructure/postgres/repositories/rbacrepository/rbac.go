@@ -401,16 +401,14 @@ func (r *repository) loadConstraintRoles(
 	}
 
 	var rows []struct {
-		ConstraintID        pulid.ID                    `bun:"role_constraint_id"`
-		RoleID              pulid.ID                    `bun:"role_id"`
-		BusinessUnitID      pulid.ID                    `bun:"business_unit_id"`
-		OrganizationID      pulid.ID                    `bun:"organization_id"`
-		Name                string                      `bun:"name"`
-		Description         string                      `bun:"description"`
-		MaxSensitivity      permission.FieldSensitivity `bun:"max_sensitivity"`
-		IsSystem            bool                        `bun:"is_system"`
-		IsOrgAdmin          bool                        `bun:"is_org_admin"`
-		IsBusinessUnitAdmin bool                        `bun:"is_business_unit_admin"`
+		ConstraintID   pulid.ID                    `bun:"role_constraint_id"`
+		RoleID         pulid.ID                    `bun:"role_id"`
+		BusinessUnitID pulid.ID                    `bun:"business_unit_id"`
+		OrganizationID pulid.ID                    `bun:"organization_id"`
+		Name           string                      `bun:"name"`
+		Description    string                      `bun:"description"`
+		MaxSensitivity permission.FieldSensitivity `bun:"max_sensitivity"`
+		IsSystem       bool                        `bun:"is_system"`
 	}
 	if err := r.db.DB().NewSelect().
 		TableExpr("role_constraint_roles AS rcr").
@@ -422,8 +420,6 @@ func (r *repository) loadConstraintRoles(
 		ColumnExpr("r.description").
 		ColumnExpr("r.max_sensitivity").
 		ColumnExpr("r.is_system").
-		ColumnExpr("r.is_org_admin").
-		ColumnExpr("r.is_business_unit_admin").
 		Join("JOIN roles AS r ON r.id = rcr.role_id").
 		Where("rcr.role_constraint_id IN (?)", bun.List(ids)).
 		Scan(ctx, &rows); err != nil {
@@ -433,15 +429,13 @@ func (r *repository) loadConstraintRoles(
 	for _, row := range rows {
 		if constraint := byID[row.ConstraintID]; constraint != nil {
 			constraint.Roles = append(constraint.Roles, &permission.Role{
-				ID:                  row.RoleID,
-				BusinessUnitID:      row.BusinessUnitID,
-				OrganizationID:      row.OrganizationID,
-				Name:                row.Name,
-				Description:         row.Description,
-				MaxSensitivity:      row.MaxSensitivity,
-				IsSystem:            row.IsSystem,
-				IsOrgAdmin:          row.IsOrgAdmin,
-				IsBusinessUnitAdmin: row.IsBusinessUnitAdmin,
+				ID:             row.RoleID,
+				BusinessUnitID: row.BusinessUnitID,
+				OrganizationID: row.OrganizationID,
+				Name:           row.Name,
+				Description:    row.Description,
+				MaxSensitivity: row.MaxSensitivity,
+				IsSystem:       row.IsSystem,
 			})
 		}
 	}

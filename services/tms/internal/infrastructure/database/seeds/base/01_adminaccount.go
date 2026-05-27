@@ -145,7 +145,6 @@ func (s *AdminAccountSeed) Run(ctx context.Context, tx bun.Tx) error {
 				Password:           "admin123!",
 				Status:             domaintypes.StatusActive,
 				Timezone:           "America/Los_Angeles",
-				IsPlatformAdmin:    true,
 				MustChangePassword: false,
 			}, s.Name())
 			if err != nil {

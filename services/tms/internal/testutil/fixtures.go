@@ -54,11 +54,6 @@ func (b *RoleBuilder) WithIsSystem(isSystem bool) *RoleBuilder {
 	return b
 }
 
-func (b *RoleBuilder) WithIsOrgAdmin(isOrgAdmin bool) *RoleBuilder {
-	b.role.IsOrgAdmin = isOrgAdmin
-	return b
-}
-
 func (b *RoleBuilder) WithParentRoleIDs(ids ...pulid.ID) *RoleBuilder {
 	b.role.ParentRoleIDs = ids
 	return b
@@ -226,12 +221,10 @@ func (b *EffectivePermissionsBuilder) WithResource(
 func (b *EffectivePermissionsBuilder) WithRole(
 	id pulid.ID,
 	name string,
-	isOrgAdmin bool,
 ) *EffectivePermissionsBuilder {
 	b.ep.Roles = append(b.ep.Roles, services.RoleSummary{
-		ID:         id,
-		Name:       name,
-		IsOrgAdmin: isOrgAdmin,
+		ID:   id,
+		Name: name,
 	})
 	return b
 }
@@ -247,16 +240,10 @@ type CachedPermissionsBuilder struct {
 func NewCachedPermissionsBuilder() *CachedPermissionsBuilder {
 	return &CachedPermissionsBuilder{
 		cp: &repositories.CachedPermissions{
-			IsOrgAdmin:     false,
 			MaxSensitivity: string(permission.SensitivityInternal),
 			Resources:      make(map[string]*repositories.CachedResourcePermission),
 		},
 	}
-}
-
-func (b *CachedPermissionsBuilder) WithIsOrgAdmin(isOrgAdmin bool) *CachedPermissionsBuilder {
-	b.cp.IsOrgAdmin = isOrgAdmin
-	return b
 }
 
 func (b *CachedPermissionsBuilder) WithMaxSensitivity(
