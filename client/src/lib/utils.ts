@@ -83,6 +83,26 @@ export function toTitleCase(str: string): string {
     .join(" ");
 }
 
+export function parseCommaSeparatedList(value: string): string[] {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function parseWhitespaceSeparatedList(value: string): string[] {
+  return value
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function formatIdentityProviderName(name: string): string {
+  return name
+    .replace(/azure\s*ad/gi, "Entra ID")
+    .replace(/microsoft entra id/gi, "Microsoft Entra ID");
+}
+
 export function pluralize(word: string, count: number) {
   return count === 1 ? word : `${word}s`;
 }
