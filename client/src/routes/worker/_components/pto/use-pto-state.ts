@@ -41,3 +41,15 @@ export const ptoSearchParamsParser = {
       fleetCodeId: undefined,
     }),
 };
+
+export const ptoViewTypeSearchParamsParser = {
+  viewType: ptoSearchParamsParser.viewType,
+};
+
+export const ptoOverviewFiltersSearchParamsParser = {
+  ptoOverviewFilters: ptoSearchParamsParser.ptoOverviewFilters,
+};
+
+export const requestPTOFiltersSearchParamsParser = {
+  requestPTOFilters: ptoSearchParamsParser.requestPTOFilters,
+};

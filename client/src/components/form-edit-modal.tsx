@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useOptionalDataTable } from "@/contexts/data-table-context";
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { entitySearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
@@ -62,7 +62,7 @@ export function FormEditModal<T extends FieldValues>({
 }: FormEditModalProps<T>) {
   const dataTable = useOptionalDataTable<T, unknown>();
   const [isPending, startTransition] = useTransition();
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser, {
+  const [searchParams, setSearchParams] = useQueryStates(entitySearchParamsParser, {
     history: "replace",
     throttleMs: 50,
   });

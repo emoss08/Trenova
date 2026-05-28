@@ -1,37 +1,59 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, type Dispatch, type SetStateAction } from "react";
 
-function getItemFromLocalStorage(key: string) {
-  const item = window?.localStorage.getItem(key);
-  if (item) return JSON.parse(item);
+function getItemFromLocalStorage<T>(key: string, initialValue: T): T {
+  if (typeof window === "undefined") {
+    return initialValue;
+  }
 
-  return null;
+  try {
+    const item = window.localStorage.getItem(key);
+    if (item === null) {
+      return initialValue;
+    }
+
+    return JSON.parse(item) as T;
+  } catch {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+      // Ignore storage cleanup failures and keep rendering with the fallback.
+    }
+
+    return initialValue;
+  }
+}
+
+function setItemInLocalStorage<T>(key: string, value: T) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Storage may be unavailable or full; keep the in-memory state update.
+  }
 }
 
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
-): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window !== "undefined") {
-      const stored = getItemFromLocalStorage(key);
-      if (stored !== null) return stored;
-    }
-    return initialValue;
-  });
+): [T, Dispatch<SetStateAction<T>>] {
+  const [storedValue, setStoredValue] = useState<T>(() =>
+    getItemFromLocalStorage(key, initialValue),
+  );
 
-  const setValue: React.Dispatch<React.SetStateAction<T>> = useCallback(
+  const setValue: Dispatch<SetStateAction<T>> = useCallback(
     (value) => {
       if (value instanceof Function) {
         setStoredValue((prev: T) => {
           const newValue = value(prev);
-          // Save to localStorage
-          window.localStorage.setItem(key, JSON.stringify(newValue));
+          setItemInLocalStorage(key, newValue);
           return newValue;
         });
       } else {
         setStoredValue(value);
-        // Save to localStorage
-        window.localStorage.setItem(key, JSON.stringify(value));
+        setItemInLocalStorage(key, value);
       }
     },
     [key],

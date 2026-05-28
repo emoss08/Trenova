@@ -1,7 +1,7 @@
 import { DataTableLazyComponent, LazyComponent } from "@/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { Button } from "@/components/ui/button";
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { analytics } from "@/lib/queries/analytics";
 import { queries } from "@/lib/queries";
 import { usePermissionStore } from "@/stores/permission-store";
@@ -21,7 +21,7 @@ const BottomModules = lazy(() => import("./_components/command-center/bottom-mod
 
 export function ShipmentsPage() {
   const queryClient = useQueryClient();
-  const [, setSearchParams] = useQueryStates(searchParamsParser);
+  const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const [summary, setSummary] = useState<CommandCenterTableSummary | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: organizations } = useQuery(queries.userOrganization.all());

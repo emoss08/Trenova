@@ -3,10 +3,10 @@ import { useQueryStates } from "nuqs";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
 import { usePTOFilters } from "../use-pto-filters";
-import { ptoSearchParamsParser } from "../use-pto-state";
+import { ptoOverviewFiltersSearchParamsParser } from "../use-pto-state";
 
 export function ApprovedPTOHeader() {
-  const [, setSearchParams] = useQueryStates(ptoSearchParamsParser);
+  const [, setSearchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
   const handleFilterSubmit = (data: PTOFilter) => {

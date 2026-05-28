@@ -10,7 +10,7 @@ import {
   parseAsStringLiteral,
 } from "nuqs";
 
-const parseAsSortFields = createParser<SortField[]>({
+export const parseAsSortFields = createParser<SortField[]>({
   parse: (value) => {
     if (!value) return [];
     try {
@@ -25,7 +25,7 @@ const parseAsSortFields = createParser<SortField[]>({
   },
 }).withDefault([]);
 
-const parseAsFilterGroups = createParser<FilterGroup[]>({
+export const parseAsFilterGroups = createParser<FilterGroup[]>({
   parse: (value) => {
     if (!value) return [];
     try {
@@ -40,7 +40,7 @@ const parseAsFilterGroups = createParser<FilterGroup[]>({
   },
 }).withDefault([]);
 
-const parseAsFieldFilters = createParser<FieldFilter[]>({
+export const parseAsFieldFilters = createParser<FieldFilter[]>({
   parse: (value) => {
     if (!value) return [];
     try {
@@ -55,15 +55,31 @@ const parseAsFieldFilters = createParser<FieldFilter[]>({
   },
 }).withDefault([]);
 
-export const searchParamsParser = {
+export const entitySearchParamsParser = {
   entityId: parseAsString,
   modalType: parseAsStringLiteral(["edit", "create"]),
+};
+
+export const panelSearchParamsParser = {
   panelType: parseAsStringLiteral(["edit", "create"]),
   panelEntityId: parseAsString,
+};
+
+export const tablePaginationSearchParamsParser = {
   pageIndex: parseAsInteger.withDefault(1),
   pageSize: parseAsInteger.withDefault(10),
+};
+
+export const tableFilterSearchParamsParser = {
   query: parseAsString.withDefault(""),
   fieldFilters: parseAsFieldFilters,
   filterGroups: parseAsFilterGroups,
   sort: parseAsSortFields,
+};
+
+export const searchParamsParser = {
+  ...entitySearchParamsParser,
+  ...panelSearchParamsParser,
+  ...tablePaginationSearchParamsParser,
+  ...tableFilterSearchParamsParser,
 };

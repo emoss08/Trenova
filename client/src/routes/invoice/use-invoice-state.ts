@@ -6,3 +6,13 @@ export const invoiceSearchParamsParser = {
   query: parseAsString.withDefault(""),
   billType: parseAsString,
 };
+
+export const invoiceSelectionSearchParamsParser = {
+  item: invoiceSearchParamsParser.item,
+};
+
+export const invoiceSidebarSearchParamsParser = {
+  status: invoiceSearchParamsParser.status,
+  query: invoiceSearchParamsParser.query,
+  billType: invoiceSearchParamsParser.billType,
+};
