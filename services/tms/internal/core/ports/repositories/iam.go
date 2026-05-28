@@ -30,6 +30,11 @@ type GetSCIMDirectoryRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo" form:"tenantInfo"`
 }
 
+type ListSCIMGroupRoleMappingsRequest struct {
+	Filter      *pagination.QueryOptions `json:"filter"`
+	DirectoryID pulid.ID                 `json:"directoryId" form:"directoryId"`
+}
+
 type IAMRepository interface {
 	ListIdentityProviders(ctx context.Context, req ListIAMRequest) ([]*iam.IdentityProvider, error)
 	GetIdentityProvider(
@@ -65,9 +70,8 @@ type IAMRepository interface {
 
 	ListSCIMGroupRoleMappings(
 		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		directoryID pulid.ID,
-	) ([]*iam.SCIMGroupRoleMapping, error)
+		req *ListSCIMGroupRoleMappingsRequest,
+	) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error)
 	CreateSCIMGroupRoleMapping(
 		ctx context.Context,
 		entity *iam.SCIMGroupRoleMapping,
@@ -79,7 +83,7 @@ type IAMRepository interface {
 	DeleteSCIMGroupRoleMapping(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-		id pulid.ID,
+		sgrmID pulid.ID,
 	) error
 
 	ListProvisioningAuditRecords(

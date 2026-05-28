@@ -1497,7 +1497,7 @@ var SCIMDirectoryFilter = struct {
 var SCIMGroupRoleMappingTable = TableInfo{
 	Name:       "scim_group_role_mappings",
 	Alias:      "sgrm",
-	PrimaryKey: []string{"id"},
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
 }
 
 // SCIMGroupRoleMappingColumns provides type-safe column references for the "scim_group_role_mappings" table.
@@ -1520,6 +1520,9 @@ var SCIMGroupRoleMappingColumns = struct {
 	ExternalGroupID Column // "external_group_id" → qualified: "sgrm.external_group_id"
 	DisplayName     Column // "display_name" → qualified: "sgrm.display_name"
 	RoleID          Column // "role_id" → qualified: "sgrm.role_id"
+	SearchVector    Column // "search_vector" → qualified: "sgrm.search_vector"
+	Rank            Column // "rank" → qualified: "sgrm.rank"
+	Version         Column // "version" → qualified: "sgrm.version"
 	CreatedAt       Column // "created_at" → qualified: "sgrm.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "sgrm.updated_at"
 }{
@@ -1530,6 +1533,9 @@ var SCIMGroupRoleMappingColumns = struct {
 	ExternalGroupID: NewColumn("external_group_id", "sgrm"),
 	DisplayName:     NewColumn("display_name", "sgrm"),
 	RoleID:          NewColumn("role_id", "sgrm"),
+	SearchVector:    NewColumn("search_vector", "sgrm"),
+	Rank:            NewColumn("rank", "sgrm"),
+	Version:         NewColumn("version", "sgrm"),
 	CreatedAt:       NewColumn("created_at", "sgrm"),
 	UpdatedAt:       NewColumn("updated_at", "sgrm"),
 }
@@ -1546,6 +1552,7 @@ var SCIMGroupRoleMappingFieldMap = map[string]string{
 	"externalGroupId": "external_group_id",
 	"displayName":     "display_name",
 	"roleId":          "role_id",
+	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
 }
@@ -1560,8 +1567,20 @@ var SCIMGroupRoleMappingInsertableColumns = []string{
 	"external_group_id",
 	"display_name",
 	"role_id",
+	"version",
 	"created_at",
 	"updated_at",
+}
+
+// SCIMGroupRoleMappingRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SCIMGroupRoleMappingRelations.Role)
+//	// Bun eager-loads the Role association via a separate query
+var SCIMGroupRoleMappingRelations = struct {
+	Role string
+}{
+	Role: "Role",
 }
 
 // SCIMGroupRoleMappingScopeTenant restricts a query to a single tenant by adding:
@@ -1621,6 +1640,7 @@ var SCIMGroupRoleMappingFilter = struct {
 	ExternalGroupID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalGroupId" → DB: "external_group_id"
 	DisplayName     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "displayName" → DB: "display_name"
 	RoleID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleId" → DB: "role_id"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
@@ -1644,6 +1664,9 @@ var SCIMGroupRoleMappingFilter = struct {
 	},
 	RoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("roleId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

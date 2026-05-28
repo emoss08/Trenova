@@ -8,6 +8,7 @@ import {
   type AccessPolicyFormValues,
 } from "@/types/iam";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { conditionRowsToRecord, emptyPolicy, recordToConditionRows } from "../utils";
 import { accessPolicyPanelQueryKey } from "./constants";
@@ -59,11 +60,17 @@ export function AccessPolicyPanel({
   onOpenChange,
   onSaved,
 }: AccessPolicyPanelProps) {
-  const form = useForm<AccessPolicyFormValues>({
+  const createForm = useForm<AccessPolicyFormValues>({
     resolver: zodResolver(accessPolicyFormSchema) as Resolver<AccessPolicyFormValues>,
     defaultValues: toAccessPolicyFormValues(emptyPolicy),
     mode: "onChange",
   });
+  const editForm = useForm<AccessPolicyFormValues>({
+    resolver: zodResolver(accessPolicyFormSchema) as Resolver<AccessPolicyFormValues>,
+    defaultValues: toAccessPolicyFormValues(emptyPolicy),
+    mode: "onChange",
+  });
+  const { reset: resetCreateForm } = createForm;
   const queryKey = accessPolicyPanelQueryKey(organizationId);
   const formComponent = (
     <AccessPolicyForm
@@ -74,13 +81,19 @@ export function AccessPolicyPanel({
     />
   );
 
+  useEffect(() => {
+    if (open && mode === "create") {
+      resetCreateForm(toAccessPolicyFormValues(emptyPolicy));
+    }
+  }, [mode, open, resetCreateForm]);
+
   if (mode === "edit") {
     return (
       <FormEditPanel<AccessPolicyFormValues, AccessPolicyRecord>
         open={open}
         onOpenChange={onOpenChange}
         row={policy ? (toAccessPolicyFormValues(policy) as AccessPolicyRecord) : null}
-        form={form}
+        form={editForm}
         queryKey={queryKey}
         title="Access Policy"
         fieldKey="name"
@@ -101,7 +114,7 @@ export function AccessPolicyPanel({
     <FormCreatePanel<AccessPolicyFormValues, AccessPolicyRecord>
       open={open}
       onOpenChange={onOpenChange}
-      form={form}
+      form={createForm}
       queryKey={queryKey}
       title="Access Policy"
       description="Create a priority-ordered authorization decision for a protected resource."

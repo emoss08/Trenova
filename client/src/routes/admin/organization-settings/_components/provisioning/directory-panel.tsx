@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type Resolver, useForm } from "react-hook-form";
 import { emptyDirectory, scimDirectoryPanelQueryKey } from "./constants";
 import { SCIMDirectoryForm } from "./directory-form";
+import type { TableSheetProps } from "@/types/data-table";
 
 export type SCIMDirectoryPanelMode = "create" | "edit";
 
@@ -18,11 +19,9 @@ type SCIMDirectoryRecord = SCIMDirectoryFormValues & Record<string, unknown>;
 type SCIMDirectoryPanelProps = {
   organizationId: string;
   mode: SCIMDirectoryPanelMode;
-  open: boolean;
   directory: SCIMDirectory | null;
-  onOpenChange: (open: boolean) => void;
   onSaved: (directory: SCIMDirectory) => Promise<void>;
-};
+} & TableSheetProps;
 
 function toSCIMDirectoryFormValues(directory: SCIMDirectory): SCIMDirectoryFormValues {
   return {

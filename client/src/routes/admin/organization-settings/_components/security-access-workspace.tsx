@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
-import { searchParamsParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
+import { securityTabParser, type SecurityTabValue } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
 import { formatIdentityProviderName } from "@/lib/utils";
 import { apiService } from "@/services/api";
@@ -11,7 +11,7 @@ import {
   type LucideIcon,
   UsersRoundIcon,
 } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { useQueryState } from "nuqs";
 import { Activity, useCallback, useMemo } from "react";
 import { ProvisioningTab } from "./provisioning-tab";
 import { ActivityTab } from "./security-access/activity-tab";
@@ -108,19 +108,12 @@ function SecurityOverviewSection({ organizationId }: { organizationId: string })
 }
 
 function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
-  const { securityTab } = searchParams;
+  const [securityTab, setSecurityTab] = useQueryState("securityTab", securityTabParser);
   const handleTabChange = useCallback(
     (value: string) => {
-      const nextSecurityTab = value as SecurityTabValue;
-
-      void setSearchParams({
-        securityTab: nextSecurityTab,
-        directoryId: nextSecurityTab === "provisioning" ? searchParams.directoryId : null,
-        activityView: nextSecurityTab === "activity" ? searchParams.activityView : null,
-      });
+      void setSecurityTab(value as SecurityTabValue);
     },
-    [searchParams.activityView, searchParams.directoryId, setSearchParams],
+    [setSecurityTab],
   );
 
   return (
@@ -140,7 +133,10 @@ function SecurityAccessTabs({ organizationId }: { organizationId: string }) {
       </TabsContent>
       <TabsContent value="provisioning" keepMounted>
         <Activity mode={securityTab === "provisioning" ? "visible" : "hidden"}>
-          <ProvisioningTab organizationId={organizationId} />
+          <ProvisioningTab
+            organizationId={organizationId}
+            isActive={securityTab === "provisioning"}
+          />
         </Activity>
       </TabsContent>
       <TabsContent value="policies" keepMounted>

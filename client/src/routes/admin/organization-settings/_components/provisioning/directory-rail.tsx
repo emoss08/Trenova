@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextShimmer } from "@/components/ui/text-shimmer";
-import { searchParamsParser } from "@/hooks/use-organization-setting-state";
+import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@/types/iam";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { PlusIcon, UsersRoundIcon } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useRef } from "react";
 import { EmptyState, ErrorState } from "../security-access/shared";
 
@@ -24,7 +24,10 @@ type DirectoryRailProps = {
 };
 
 export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: DirectoryRailProps) {
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [selectedDirectoryId, setSelectedDirectoryId] = useQueryState(
+    "directoryId",
+    directoryIdParser,
+  );
   const directoriesQuery = useInfiniteQuery({
     queryKey: [
       ...queries.organization.scimDirectories(organizationId).queryKey,
@@ -52,7 +55,6 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
   );
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = directoriesQuery;
   const observerTarget = useRef<HTMLDivElement>(null);
-  const selectedDirectoryId = searchParams.directoryId || directories[0]?.id || "";
 
   useEffect(() => {
     onDirectoriesChange(directories);
@@ -107,7 +109,7 @@ export function DirectoryRail({ organizationId, onAdd, onDirectoriesChange }: Di
                 key={directory.id}
                 directory={directory}
                 selected={directory.id === selectedDirectoryId}
-                onSelect={(directoryId) => void setSearchParams({ directoryId })}
+                onSelect={(directoryId) => void setSelectedDirectoryId(directoryId)}
               />
             ))}
             {directoriesQuery.isFetchingNextPage && (

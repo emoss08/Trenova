@@ -29,20 +29,23 @@ type Params struct {
 
 	Repo       repositories.IAMRepository
 	Encryption *encryptionservice.Service
+	Validator  *Validator
 	Logger     *zap.Logger
 }
 
 type service struct {
-	repo repositories.IAMRepository
-	enc  *encryptionservice.Service
-	l    *zap.Logger
+	repo      repositories.IAMRepository
+	enc       *encryptionservice.Service
+	validator *Validator
+	l         *zap.Logger
 }
 
 func New(p Params) services.IAMService {
 	return &service{
-		repo: p.Repo,
-		enc:  p.Encryption,
-		l:    p.Logger.Named("service.iam"),
+		repo:      p.Repo,
+		enc:       p.Encryption,
+		validator: p.Validator,
+		l:         p.Logger.Named("service.iam"),
 	}
 }
 
@@ -352,10 +355,9 @@ func generateSCIMToken() (*generatedSCIMToken, error) {
 
 func (s *service) ListSCIMGroupRoleMappings(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	directoryID pulid.ID,
-) ([]*iam.SCIMGroupRoleMapping, error) {
-	return s.repo.ListSCIMGroupRoleMappings(ctx, tenantInfo, directoryID)
+	req *repositories.ListSCIMGroupRoleMappingsRequest,
+) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
+	return s.repo.ListSCIMGroupRoleMappings(ctx, req)
 }
 
 func (s *service) CreateSCIMGroupRoleMapping(
@@ -413,8 +415,9 @@ func (s *service) CreateAccessPolicy(
 ) (*iam.AccessPolicy, error) {
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
-	if err := validateAccessPolicy(entity); err != nil {
-		return nil, err
+	prepareAccessPolicy(entity)
+	if multiErr := s.validator.ValidateCreate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 	return s.repo.CreateAccessPolicy(ctx, entity)
 }
@@ -428,22 +431,18 @@ func (s *service) UpdateAccessPolicy(
 	entity.ID = id
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
-	if err := validateAccessPolicy(entity); err != nil {
-		return nil, err
+	prepareAccessPolicy(entity)
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
 	}
 	return s.repo.UpdateAccessPolicy(ctx, entity)
 }
 
-func validateAccessPolicy(entity *iam.AccessPolicy) error {
+func prepareAccessPolicy(entity *iam.AccessPolicy) {
 	entity.Name = strings.TrimSpace(entity.Name)
 	entity.Resource = strings.TrimSpace(entity.Resource)
 	entity.Operation = strings.TrimSpace(entity.Operation)
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	entity.Conditions = normalizeAccessPolicyConditions(entity.Conditions)
 }
 
 func (s *service) DeleteAccessPolicy(

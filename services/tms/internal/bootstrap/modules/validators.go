@@ -30,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterialservice"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
+	"github.com/emoss08/trenova/internal/core/services/iamservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
@@ -106,6 +107,7 @@ var ValidationFrameworkModule = fx.Module("validation-framework",
 var ValidatorModule = fx.Module("validators",
 	fx.Provide(
 		organizationservice.NewValidator,
+		iamservice.NewValidator,
 		equipmentmanufacturerservice.NewValidator,
 		equipmenttypeservice.NewValidator,
 		fleetcodeservice.NewValidator,

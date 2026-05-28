@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { roleSchema } from "./role";
 import { createLimitOffsetResponse } from "./server";
 
 const stringArraySchema = z
@@ -113,9 +114,12 @@ export const scimGroupRoleMappingSchema = z.object({
   roleId: z.string().default(""),
   createdAt: z.number().default(0),
   updatedAt: z.number().default(0),
+  role: roleSchema.optional(),
 });
 
 export type SCIMGroupRoleMapping = z.infer<typeof scimGroupRoleMappingSchema>;
+export const scimGroupRoleMappingListSchema = createLimitOffsetResponse(scimGroupRoleMappingSchema);
+export type SCIMGroupRoleMappingListResponse = z.infer<typeof scimGroupRoleMappingListSchema>;
 
 export const scimGroupRoleMappingsSchema = z.array(scimGroupRoleMappingSchema);
 

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -273,73 +274,6 @@ func (r *repository) RevokeSCIMToken(
 	return entity, nil
 }
 
-func (r *repository) ListSCIMGroupRoleMappings(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	directoryID pulid.ID,
-) ([]*iam.SCIMGroupRoleMapping, error) {
-	entities := make([]*iam.SCIMGroupRoleMapping, 0)
-	err := r.db.DB().NewSelect().
-		Model(&entities).
-		Where("sgrm.organization_id = ?", tenantInfo.OrgID).
-		Where("sgrm.business_unit_id = ?", tenantInfo.BuID).
-		Where("sgrm.directory_id = ?", directoryID).
-		Order("sgrm.display_name ASC").
-		Scan(ctx)
-	return entities, err
-}
-
-func (r *repository) CreateSCIMGroupRoleMapping(
-	ctx context.Context,
-	entity *iam.SCIMGroupRoleMapping,
-) (*iam.SCIMGroupRoleMapping, error) {
-	if _, err := r.db.DB().NewInsert().Model(entity).Exec(ctx); err != nil {
-		return nil, err
-	}
-	return entity, nil
-}
-
-func (r *repository) UpdateSCIMGroupRoleMapping(
-	ctx context.Context,
-	entity *iam.SCIMGroupRoleMapping,
-) (*iam.SCIMGroupRoleMapping, error) {
-	res, err := r.db.DB().NewUpdate().
-		Model(entity).
-		Column("external_group_id", "display_name", "role_id").
-		Where("id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Exec(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = dberror.CheckRowsAffected(
-		res,
-		"SCIM group role mapping",
-		entity.ID.String(),
-	); err != nil {
-		return nil, err
-	}
-	return entity, nil
-}
-
-func (r *repository) DeleteSCIMGroupRoleMapping(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	id pulid.ID,
-) error {
-	res, err := r.db.DB().NewDelete().
-		Model((*iam.SCIMGroupRoleMapping)(nil)).
-		Where("id = ?", id).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	return dberror.CheckRowsAffected(res, "SCIM group role mapping", id.String())
-}
-
 func (r *repository) ListProvisioningAuditRecords(
 	ctx context.Context,
 	orgID pulid.ID,
@@ -396,7 +330,7 @@ func (r *repository) CreateAccessPolicy(
 	entity *iam.AccessPolicy,
 ) (*iam.AccessPolicy, error) {
 	if _, err := r.db.DB().NewInsert().Model(entity).Exec(ctx); err != nil {
-		return nil, err
+		return nil, mapAccessPolicyUniqueConstraintError(err)
 	}
 	return entity, nil
 }
@@ -413,12 +347,35 @@ func (r *repository) UpdateAccessPolicy(
 		Where("business_unit_id = ?", entity.BusinessUnitID).
 		Exec(ctx)
 	if err != nil {
-		return nil, err
+		return nil, mapAccessPolicyUniqueConstraintError(err)
 	}
 	if err = dberror.CheckRowsAffected(res, "Access policy", entity.ID.String()); err != nil {
 		return nil, err
 	}
 	return entity, nil
+}
+
+func mapAccessPolicyUniqueConstraintError(err error) error {
+	if !dberror.IsUniqueConstraintViolation(err) {
+		return err
+	}
+
+	switch dberror.ExtractConstraintName(err) {
+	case "idx_access_policies_name_tenant":
+		return errortypes.NewValidationError(
+			"name",
+			errortypes.ErrDuplicate,
+			"Access policy with this name already exists",
+		)
+	case "idx_access_policies_enabled_scope_tenant":
+		return errortypes.NewValidationError(
+			"resource",
+			errortypes.ErrDuplicate,
+			"An enabled access policy with the same resource, operation, and conditions already exists",
+		)
+	default:
+		return err
+	}
 }
 
 func (r *repository) DeleteAccessPolicy(

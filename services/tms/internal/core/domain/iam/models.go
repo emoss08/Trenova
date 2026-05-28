@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -11,16 +12,17 @@ import (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*IdentityProvider)(nil)
-	_ bun.BeforeAppendModelHook = (*ExternalIdentity)(nil)
-	_ bun.BeforeAppendModelHook = (*MFAAuthenticator)(nil)
-	_ bun.BeforeAppendModelHook = (*AuthEvent)(nil)
-	_ bun.BeforeAppendModelHook = (*RiskDecision)(nil)
-	_ bun.BeforeAppendModelHook = (*SCIMDirectory)(nil)
-	_ bun.BeforeAppendModelHook = (*SCIMToken)(nil)
-	_ bun.BeforeAppendModelHook = (*SCIMGroupRoleMapping)(nil)
-	_ bun.BeforeAppendModelHook = (*ProvisioningAuditRecord)(nil)
-	_ bun.BeforeAppendModelHook = (*AccessPolicy)(nil)
+	_ bun.BeforeAppendModelHook          = (*IdentityProvider)(nil)
+	_ bun.BeforeAppendModelHook          = (*ExternalIdentity)(nil)
+	_ bun.BeforeAppendModelHook          = (*MFAAuthenticator)(nil)
+	_ bun.BeforeAppendModelHook          = (*AuthEvent)(nil)
+	_ bun.BeforeAppendModelHook          = (*RiskDecision)(nil)
+	_ bun.BeforeAppendModelHook          = (*SCIMDirectory)(nil)
+	_ bun.BeforeAppendModelHook          = (*SCIMToken)(nil)
+	_ bun.BeforeAppendModelHook          = (*SCIMGroupRoleMapping)(nil)
+	_ bun.BeforeAppendModelHook          = (*ProvisioningAuditRecord)(nil)
+	_ bun.BeforeAppendModelHook          = (*AccessPolicy)(nil)
+	_ validationframework.TenantedEntity = (*AccessPolicy)(nil)
 )
 
 type IdentityProvider struct {
@@ -275,31 +277,6 @@ func (t *SCIMToken) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
-type SCIMGroupRoleMapping struct {
-	bun.BaseModel `bun:"table:scim_group_role_mappings,alias:sgrm" json:"-"`
-
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	DirectoryID     pulid.ID `json:"directoryId"     bun:"directory_id,type:VARCHAR(100),notnull"`
-	ExternalGroupID string   `json:"externalGroupId" bun:"external_group_id,type:VARCHAR(255),notnull"`
-	DisplayName     string   `json:"displayName"     bun:"display_name,type:VARCHAR(255),notnull"`
-	RoleID          pulid.ID `json:"roleId"          bun:"role_id,type:VARCHAR(100),notnull"`
-	CreatedAt       int64    `json:"createdAt"       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64    `json:"updatedAt"       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (m *SCIMGroupRoleMapping) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	setIAMTimestamps(iamTimestampParams{
-		Query:     q,
-		ID:        &m.ID,
-		IDPrefix:  "sgr_",
-		CreatedAt: &m.CreatedAt,
-		UpdatedAt: &m.UpdatedAt,
-	})
-	return nil
-}
-
 type ProvisioningAuditRecord struct {
 	bun.BaseModel `bun:"table:provisioning_audit_records,alias:par" json:"-"`
 
@@ -371,6 +348,22 @@ func (p *AccessPolicy) BeforeAppendModel(_ context.Context, q bun.Query) error {
 		UpdatedAt: &p.UpdatedAt,
 	})
 	return nil
+}
+
+func (p *AccessPolicy) GetID() pulid.ID {
+	return p.ID
+}
+
+func (p *AccessPolicy) GetOrganizationID() pulid.ID {
+	return p.OrganizationID
+}
+
+func (p *AccessPolicy) GetBusinessUnitID() pulid.ID {
+	return p.BusinessUnitID
+}
+
+func (p *AccessPolicy) GetTableName() string {
+	return "access_policies"
 }
 
 type iamTimestampParams struct {
