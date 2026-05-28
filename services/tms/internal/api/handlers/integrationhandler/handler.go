@@ -70,7 +70,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	)
 	api.GET(
 		"/:type/runtime-config/",
-		h.pm.RequirePermission(permission.ResourceIntegration.String(), permission.OpRead),
 		h.getRuntimeConfig,
 	)
 
@@ -209,7 +208,7 @@ func (h *Handler) getRuntimeConfig(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, result.Config)
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) testConnection(c *gin.Context) {

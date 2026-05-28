@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -20,6 +21,17 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	defaultOANDABaseURL = "https://exchange-rates-api.oanda.com"
+	defaultDateLayout   = "2006-01-02"
+	settlementQuoteTTL  = 15 * time.Minute
+	oandaSpotRatesPath  = "/v2/rates/spot.json"
+)
+
+var defaultRefreshTargetCurrencies = []string{
+	"USD", "EUR", "GBP", "CAD", "MXN", "AUD", "JPY", "CHF", "BRL", "CNY",
+}
 
 type Params struct {
 	fx.In
@@ -73,17 +85,18 @@ func (s *Service) Convert(
 	amount decimal.Decimal,
 	date time.Time,
 ) (*services.RateConversionResult, error) {
-	fromCurrency = strings.ToUpper(strings.TrimSpace(fromCurrency))
-	toCurrency = strings.ToUpper(strings.TrimSpace(toCurrency))
+	fromCurrency = normalizeCurrency(fromCurrency)
+	toCurrency = normalizeCurrency(toCurrency)
 
 	if fromCurrency == toCurrency {
 		return &services.RateConversionResult{
-			FromCurrency: fromCurrency,
-			ToCurrency:   toCurrency,
-			Amount:       amount,
-			Rate:         decimal.NewFromInt(1),
-			Converted:    amount,
-			Date:         date.Format("2006-01-02"),
+			FromCurrency:       fromCurrency,
+			ToCurrency:         toCurrency,
+			Amount:             amount,
+			Rate:               decimal.NewFromInt(1),
+			Converted:          amount,
+			Date:               date.Format(defaultDateLayout),
+			SettlementEligible: false,
 		}, nil
 	}
 
@@ -92,15 +105,20 @@ func (s *Service) Convert(
 		return nil, err
 	}
 
-	converted := amount.Mul(rate)
-
+	fetchedAt := rate.FetchedAt
+	sourceTimestamp := rate.SourceTimestamp
 	return &services.RateConversionResult{
-		FromCurrency: fromCurrency,
-		ToCurrency:   toCurrency,
-		Amount:       amount,
-		Rate:         rate,
-		Converted:    converted,
-		Date:         date.Format("2006-01-02"),
+		FromCurrency:       fromCurrency,
+		ToCurrency:         toCurrency,
+		Amount:             amount,
+		Rate:               rate.SelectedRate,
+		Converted:          amount.Mul(rate.SelectedRate),
+		Date:               rate.Date,
+		Provider:           string(rate.Provider),
+		RateType:           string(rate.RateType),
+		SourceTimestamp:    &sourceTimestamp,
+		FetchedAt:          &fetchedAt,
+		SettlementEligible: false,
 	}, nil
 }
 
@@ -109,8 +127,8 @@ func (s *Service) GetLatestRates(
 	tenantInfo pagination.TenantInfo,
 	baseCurrency string,
 ) (*services.LatestRatesResult, error) {
-	baseCurrency = strings.ToUpper(strings.TrimSpace(baseCurrency))
-	return s.fetchAndCacheRates(ctx, tenantInfo, baseCurrency)
+	baseCurrency = normalizeCurrency(baseCurrency)
+	return s.fetchAndCacheRates(ctx, tenantInfo, baseCurrency, nil, time.Time{})
 }
 
 func (s *Service) RefreshRates(
@@ -118,9 +136,84 @@ func (s *Service) RefreshRates(
 	tenantInfo pagination.TenantInfo,
 	baseCurrency string,
 ) error {
-	baseCurrency = strings.ToUpper(strings.TrimSpace(baseCurrency))
-	_, err := s.fetchAndCacheRates(ctx, tenantInfo, baseCurrency)
+	baseCurrency = normalizeCurrency(baseCurrency)
+	targets := refreshTargetsForBase(baseCurrency)
+	_, err := s.fetchAndCacheRates(ctx, tenantInfo, baseCurrency, targets, time.Time{})
 	return err
+}
+
+func (s *Service) CreateSettlementQuote(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	req *services.CreateSettlementQuoteRequest,
+) (*exchangerate.SettlementQuote, error) {
+	if req == nil {
+		return nil, errortypes.NewBusinessError("settlement quote request is required")
+	}
+
+	fromCurrency := normalizeCurrency(req.FromCurrency)
+	toCurrency := normalizeCurrency(req.ToCurrency)
+	if fromCurrency == "" || toCurrency == "" {
+		return nil, errortypes.NewBusinessError("fromCurrency and toCurrency are required")
+	}
+	if !req.Amount.IsPositive() {
+		return nil, errortypes.NewBusinessError("amount must be greater than zero")
+	}
+
+	cfg, err := s.oandaConfig(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	rateType := normalizeRateType(req.RateType, cfg.DefaultRateType)
+	quoteDate, err := parseOptionalDate(req.Date)
+	if err != nil {
+		return nil, err
+	}
+
+	var selectedRate decimal.Decimal
+	var sourceTimestamp time.Time
+	var fetchedAt time.Time
+	if fromCurrency == toCurrency {
+		selectedRate = decimal.NewFromInt(1)
+		fetchedAt = time.Now().UTC()
+		sourceTimestamp = fetchedAt
+	} else {
+		snapshot, fetchErr := s.fetchOANDAPair(ctx, cfg, fromCurrency, toCurrency, rateType, quoteDate)
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+			TenantInfo: tenantInfo,
+			Rates:      []*exchangerate.ExchangeRate{snapshot},
+		}); upsertErr != nil {
+			return nil, errortypes.NewBusinessError("failed to persist exchange rate snapshot").
+				WithInternal(upsertErr)
+		}
+		selectedRate = snapshot.SelectedRate
+		sourceTimestamp = snapshot.SourceTimestamp
+		fetchedAt = snapshot.FetchedAt
+	}
+
+	quote := &exchangerate.SettlementQuote{
+		BusinessUnitID:  tenantInfo.BuID,
+		OrganizationID:  tenantInfo.OrgID,
+		Provider:        exchangerate.ProviderOANDA,
+		FromCurrency:    fromCurrency,
+		ToCurrency:      toCurrency,
+		Amount:          req.Amount,
+		Rate:            selectedRate,
+		ConvertedAmount: req.Amount.Mul(selectedRate),
+		RateType:        rateType,
+		SourceTimestamp: sourceTimestamp,
+		FetchedAt:       fetchedAt,
+		ExpiresAt:       fetchedAt.Add(settlementQuoteTTL),
+	}
+
+	return s.repo.CreateSettlementQuote(ctx, &repositories.CreateSettlementQuoteRequest{
+		TenantInfo: tenantInfo,
+		Quote:      quote,
+	})
 }
 
 func (s *Service) getRate(
@@ -128,182 +221,361 @@ func (s *Service) getRate(
 	tenantInfo pagination.TenantInfo,
 	fromCurrency, toCurrency string,
 	date time.Time,
-) (decimal.Decimal, error) {
+) (*exchangerate.ExchangeRate, error) {
+	cfg, err := s.oandaConfig(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	rateType := normalizeRateType("", cfg.DefaultRateType)
 	cached, err := s.repo.GetRate(ctx, &repositories.GetExchangeRateRequest{
 		TenantInfo:   tenantInfo,
+		Provider:     exchangerate.ProviderOANDA,
 		FromCurrency: fromCurrency,
 		ToCurrency:   toCurrency,
+		RateType:     rateType,
 		Date:         date,
 	})
-	if err == nil && cached != nil {
-		return cached.Rate, nil
+	if err == nil {
+		return cached, nil
+	}
+	if !errortypes.IsNotFoundError(err) {
+		return nil, errortypes.NewBusinessError("failed to retrieve cached exchange rate").
+			WithInternal(err)
 	}
 
-	cfg, apiErr := s.integrationService.GetRuntimeConfig(
-		ctx,
-		tenantInfo,
-		integration.TypeExchangeRateAPI,
-	)
-	if apiErr != nil {
-		return decimal.Zero, apiErr
+	rate, err := s.fetchOANDAPair(ctx, cfg, fromCurrency, toCurrency, rateType, date)
+	if err != nil {
+		return nil, err
 	}
 
-	rate, apiErr := s.fetchPairRate(ctx, cfg.Config["apiKey"], fromCurrency, toCurrency)
-	if apiErr != nil {
-		return decimal.Zero, apiErr
-	}
-
-	upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+	if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
 		TenantInfo: tenantInfo,
-		Rates: []*exchangerate.ExchangeRate{
-			{
-				BusinessUnitID: tenantInfo.BuID,
-				OrganizationID: tenantInfo.OrgID,
-				FromCurrency:   fromCurrency,
-				ToCurrency:     toCurrency,
-				Rate:           rate,
-				Date:           date.Format("2006-01-02"),
-			},
-		},
-	})
-	if upsertErr != nil {
-		s.l.Error("failed to cache exchange rate", zap.Error(upsertErr))
+		Rates:      []*exchangerate.ExchangeRate{rate},
+	}); upsertErr != nil {
+		return nil, errortypes.NewBusinessError("failed to persist exchange rate snapshot").
+			WithInternal(upsertErr)
 	}
 
 	return rate, nil
 }
 
-type exchangeRateAPIResponse struct {
-	Result            string             `json:"result"`
-	BaseCode          string             `json:"base_code"`
-	ConversionRates   map[string]float64 `json:"conversion_rates"`
-	ConversionRate    float64            `json:"conversion_rate"`
-	TargetCode        string             `json:"target_code"`
-	TimeLastUpdateUTC string             `json:"time_last_update_utc"`
-	ErrorType         string             `json:"error-type,omitempty"`
+type oandaRuntimeConfig struct {
+	APIKey          string
+	BaseURL         string
+	DefaultRateType exchangerate.RateType
+}
+
+func (s *Service) oandaConfig(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*oandaRuntimeConfig, error) {
+	cfg, err := s.integrationService.GetRuntimeConfig(
+		ctx,
+		tenantInfo,
+		integration.TypeOANDAExchangeRates,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg.Config["baseUrl"]), "/")
+	if baseURL == "" {
+		baseURL = defaultOANDABaseURL
+	}
+
+	return &oandaRuntimeConfig{
+		APIKey:          strings.TrimSpace(cfg.Config["apiKey"]),
+		BaseURL:         baseURL,
+		DefaultRateType: normalizeRateType(cfg.Config["defaultRateType"], exchangerate.RateTypeMid),
+	}, nil
+}
+
+type oandaSpotResponse struct {
+	Meta   oandaMeta        `json:"meta"`
+	Quotes []oandaSpotQuote `json:"quotes"`
+}
+
+type oandaMeta struct {
+	RequestTime string `json:"request_time"`
+}
+
+type oandaSpotQuote struct {
+	BaseCurrency  string `json:"base_currency"`
+	QuoteCurrency string `json:"quote_currency"`
+	DateTime      string `json:"date_time"`
+	Bid           string `json:"bid"`
+	Ask           string `json:"ask"`
+	Midpoint      string `json:"midpoint"`
+	SourceDate    string `json:"source_date"`
+}
+
+type oandaErrorResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 func (s *Service) fetchAndCacheRates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	baseCurrency string,
+	targetCurrencies []string,
+	date time.Time,
 ) (*services.LatestRatesResult, error) {
-	cfg, err := s.integrationService.GetRuntimeConfig(
-		ctx,
-		tenantInfo,
-		integration.TypeExchangeRateAPI,
-	)
+	cfg, err := s.oandaConfig(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	apiKey := cfg.Config["apiKey"]
-	url := fmt.Sprintf("https://v6.exchangerate-api.com/v6/%s/latest/%s", apiKey, baseCurrency)
-
-	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if reqErr != nil {
-		return nil, errortypes.NewBusinessError("failed to create exchange rate request").
-			WithInternal(reqErr)
+	rateType := normalizeRateType("", cfg.DefaultRateType)
+	snapshots, err := s.fetchOANDARates(ctx, cfg, baseCurrency, targetCurrencies, rateType, date)
+	if err != nil {
+		return nil, err
 	}
 
-	resp, respErr := s.httpClient.Do(req)
-	if respErr != nil {
-		return nil, errortypes.NewBusinessError("failed to fetch exchange rates").
-			WithInternal(respErr)
-	}
-	defer resp.Body.Close()
-
-	body, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		return nil, errortypes.NewBusinessError("failed to read exchange rate response").
-			WithInternal(readErr)
+	if len(snapshots) > 0 {
+		if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
+			TenantInfo: tenantInfo,
+			Rates:      snapshots,
+		}); upsertErr != nil {
+			return nil, errortypes.NewBusinessError("failed to persist exchange rate snapshots").
+				WithInternal(upsertErr)
+		}
 	}
 
-	var apiResp exchangeRateAPIResponse
-	if jsonErr := sonic.Unmarshal(body, &apiResp); jsonErr != nil {
-		return nil, errortypes.NewBusinessError("failed to parse exchange rate response").
-			WithInternal(jsonErr)
-	}
-
-	if apiResp.Result != "success" {
-		return nil, errortypes.NewBusinessError(
-			fmt.Sprintf("exchange rate API error: %s", apiResp.ErrorType),
-		)
-	}
-
-	today := time.Now().Format("2006-01-02")
-	rates := make([]*exchangerate.ExchangeRate, 0, len(apiResp.ConversionRates))
-	for currency, rate := range apiResp.ConversionRates {
-		rates = append(rates, &exchangerate.ExchangeRate{
-			BusinessUnitID: tenantInfo.BuID,
-			OrganizationID: tenantInfo.OrgID,
-			FromCurrency:   baseCurrency,
-			ToCurrency:     currency,
-			Rate:           decimal.NewFromFloat(rate),
-			Date:           today,
-		})
-	}
-
-	if upsertErr := s.repo.UpsertRates(ctx, &repositories.UpsertExchangeRatesRequest{
-		TenantInfo: tenantInfo,
-		Rates:      rates,
-	}); upsertErr != nil {
-		s.l.Error("failed to cache exchange rates", zap.Error(upsertErr))
-	}
-
-	floatRates := make(map[string]float64, len(apiResp.ConversionRates))
-	for k, v := range apiResp.ConversionRates {
-		floatRates[k] = v
+	rates := make(map[string]decimal.Decimal, len(snapshots))
+	resultDate := time.Now().UTC().Format(defaultDateLayout)
+	for idx := range snapshots {
+		rate := snapshots[idx]
+		rates[rate.ToCurrency] = rate.SelectedRate
+		resultDate = rate.Date
 	}
 
 	return &services.LatestRatesResult{
 		BaseCurrency: baseCurrency,
-		Date:         today,
-		Rates:        floatRates,
+		Date:         resultDate,
+		Provider:     string(exchangerate.ProviderOANDA),
+		RateType:     string(rateType),
+		Rates:        rates,
 	}, nil
 }
 
-func (s *Service) fetchPairRate(
+func (s *Service) fetchOANDAPair(
 	ctx context.Context,
-	apiKey, fromCurrency, toCurrency string,
-) (decimal.Decimal, error) {
-	url := fmt.Sprintf(
-		"https://v6.exchangerate-api.com/v6/%s/pair/%s/%s",
-		apiKey,
-		fromCurrency,
-		toCurrency,
-	)
+	cfg *oandaRuntimeConfig,
+	fromCurrency, toCurrency string,
+	rateType exchangerate.RateType,
+	date time.Time,
+) (*exchangerate.ExchangeRate, error) {
+	rates, err := s.fetchOANDARates(ctx, cfg, fromCurrency, []string{toCurrency}, rateType, date)
+	if err != nil {
+		return nil, err
+	}
+	if len(rates) == 0 {
+		return nil, errortypes.NewBusinessError("OANDA returned no exchange rate for currency pair")
+	}
+	return rates[0], nil
+}
 
-	req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if reqErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to create pair rate request").
-			WithInternal(reqErr)
+func (s *Service) fetchOANDARates(
+	ctx context.Context,
+	cfg *oandaRuntimeConfig,
+	baseCurrency string,
+	targetCurrencies []string,
+	rateType exchangerate.RateType,
+	date time.Time,
+) ([]*exchangerate.ExchangeRate, error) {
+	endpoint, err := url.Parse(cfg.BaseURL + oandaSpotRatesPath)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("invalid OANDA base URL").WithInternal(err)
 	}
 
-	resp, respErr := s.httpClient.Do(req)
-	if respErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to fetch pair rate").
-			WithInternal(respErr)
+	query := endpoint.Query()
+	query.Add("base", baseCurrency)
+	for _, targetCurrency := range targetCurrencies {
+		targetCurrency = normalizeCurrency(targetCurrency)
+		if targetCurrency != "" && targetCurrency != baseCurrency {
+			query.Add("quote", targetCurrency)
+		}
+	}
+	query.Set("source_date", "true")
+	if !date.IsZero() {
+		query.Set("date_time", date.UTC().Format(defaultDateLayout))
+	}
+	endpoint.RawQuery = query.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), http.NoBody)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to create OANDA exchange rate request").
+			WithInternal(err)
+	}
+	req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to fetch OANDA exchange rates").
+			WithInternal(err)
 	}
 	defer resp.Body.Close()
 
-	body, readErr := io.ReadAll(resp.Body)
-	if readErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to read pair rate response").
-			WithInternal(readErr)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to read OANDA exchange rate response").
+			WithInternal(err)
 	}
 
-	var apiResp exchangeRateAPIResponse
-	if jsonErr := sonic.Unmarshal(body, &apiResp); jsonErr != nil {
-		return decimal.Zero, errortypes.NewBusinessError("failed to parse pair rate response").
-			WithInternal(jsonErr)
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, mapOANDAError(resp.StatusCode, body)
 	}
 
-	if apiResp.Result != "success" {
-		return decimal.Zero, errortypes.NewBusinessError(
-			fmt.Sprintf("exchange rate API error: %s", apiResp.ErrorType),
-		)
+	var apiResp oandaSpotResponse
+	if err = sonic.Unmarshal(body, &apiResp); err != nil {
+		return nil, errortypes.NewBusinessError("failed to parse OANDA exchange rate response").
+			WithInternal(err)
 	}
 
-	return decimal.NewFromFloat(apiResp.ConversionRate), nil
+	fetchedAt := parseOANDATimestamp(apiResp.Meta.RequestTime, time.Now().UTC())
+	rates := make([]*exchangerate.ExchangeRate, 0, len(apiResp.Quotes))
+	for idx := range apiResp.Quotes {
+		rate, parseErr := buildExchangeRate(apiResp.Quotes[idx], rateType, fetchedAt)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		rates = append(rates, rate)
+	}
+
+	return rates, nil
+}
+
+func buildExchangeRate(
+	quote oandaSpotQuote,
+	rateType exchangerate.RateType,
+	fetchedAt time.Time,
+) (*exchangerate.ExchangeRate, error) {
+	bid, err := decimal.NewFromString(quote.Bid)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to parse OANDA bid rate").WithInternal(err)
+	}
+	ask, err := decimal.NewFromString(quote.Ask)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to parse OANDA ask rate").WithInternal(err)
+	}
+	mid, err := decimal.NewFromString(quote.Midpoint)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("failed to parse OANDA midpoint rate").
+			WithInternal(err)
+	}
+
+	selectedRate := mid
+	switch rateType {
+	case exchangerate.RateTypeBid:
+		selectedRate = bid
+	case exchangerate.RateTypeAsk:
+		selectedRate = ask
+	}
+
+	sourceTimestamp := parseOANDATimestamp(quote.DateTime, time.Time{})
+	if sourceTimestamp.IsZero() {
+		sourceTimestamp = parseOANDATimestamp(quote.SourceDate, fetchedAt)
+	}
+
+	return &exchangerate.ExchangeRate{
+		Provider:           exchangerate.ProviderOANDA,
+		FromCurrency:       normalizeCurrency(quote.BaseCurrency),
+		ToCurrency:         normalizeCurrency(quote.QuoteCurrency),
+		RateType:           rateType,
+		Bid:                bid,
+		Ask:                ask,
+		Mid:                mid,
+		SelectedRate:       selectedRate,
+		Date:               sourceTimestamp.Format(defaultDateLayout),
+		SourceTimestamp:    sourceTimestamp,
+		FetchedAt:          fetchedAt,
+		SettlementEligible: true,
+	}, nil
+}
+
+func mapOANDAError(statusCode int, body []byte) error {
+	var apiErr oandaErrorResponse
+	if err := sonic.Unmarshal(body, &apiErr); err != nil {
+		return errortypes.NewBusinessError(
+			fmt.Sprintf("OANDA exchange rate request failed with status %d", statusCode),
+		).WithInternal(err)
+	}
+
+	message := strings.TrimSpace(apiErr.Message)
+	if message == "" {
+		message = fmt.Sprintf("OANDA exchange rate request failed with status %d", statusCode)
+	}
+
+	return errortypes.NewBusinessError(message)
+}
+
+func parseOptionalDate(value string) (time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return time.Time{}, nil
+	}
+
+	parsed, err := time.Parse(defaultDateLayout, value)
+	if err != nil {
+		return time.Time{}, errortypes.NewBusinessError("invalid date format, use YYYY-MM-DD").
+			WithInternal(err)
+	}
+	return parsed, nil
+}
+
+func parseOANDATimestamp(value string, fallback time.Time) time.Time {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fallback
+	}
+
+	layouts := [...]string{
+		time.RFC3339Nano,
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		defaultDateLayout,
+	}
+	for _, layout := range layouts {
+		if parsed, err := time.Parse(layout, value); err == nil {
+			return parsed.UTC()
+		}
+	}
+	return fallback
+}
+
+func normalizeCurrency(value string) string {
+	return strings.ToUpper(strings.TrimSpace(value))
+}
+
+func normalizeRateType(
+	value any,
+	defaultRateType exchangerate.RateType,
+) exchangerate.RateType {
+	rateType := strings.ToLower(strings.TrimSpace(fmt.Sprint(value)))
+	switch rateType {
+	case string(exchangerate.RateTypeBid):
+		return exchangerate.RateTypeBid
+	case string(exchangerate.RateTypeAsk):
+		return exchangerate.RateTypeAsk
+	case string(exchangerate.RateTypeMid), "midpoint", "":
+		if defaultRateType != "" {
+			return defaultRateType
+		}
+		return exchangerate.RateTypeMid
+	default:
+		return exchangerate.RateTypeMid
+	}
+}
+
+func refreshTargetsForBase(baseCurrency string) []string {
+	targets := make([]string, 0, len(defaultRefreshTargetCurrencies)-1)
+	for _, currency := range defaultRefreshTargetCurrencies {
+		if currency != baseCurrency {
+			targets = append(targets, currency)
+		}
+	}
+	return targets
 }

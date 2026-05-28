@@ -9,3 +9,14 @@ export const searchParamsParser = {
   category: parseAsString.withDefault("all"),
   status: parseAsStringLiteral(statusOptions).withDefault("all"),
 };
+
+export const integrationHeaderSearchParamsParser = {
+  query: searchParamsParser.query,
+};
+
+export const integrationCatalogSearchParamsParser = {
+  sortBy: searchParamsParser.sortBy,
+  category: searchParamsParser.category,
+  status: searchParamsParser.status,
+  query: searchParamsParser.query,
+};

@@ -29,7 +29,7 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
     ...queries.integration.runtimeConfig("GoogleMaps"),
   });
 
-  if (!googleMapsData.data?.apiKey) {
+  if (!googleMapsData.data?.config.apiKey) {
     return null;
   }
 
@@ -57,7 +57,7 @@ export function GeocodedBadge({ longitude, latitude, placeId }: GeocodeBadgeSche
                 </div>
               }
             >
-              <LazyMap apiKey={googleMapsData.data?.apiKey ?? ""} position={position} />
+              <LazyMap apiKey={googleMapsData.data.config.apiKey} position={position} />
             </Suspense>
           </div>
         )}

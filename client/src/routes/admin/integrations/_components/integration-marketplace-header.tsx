@@ -1,10 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
-import { searchParamsParser } from "../integration-marketplace-state";
+import { integrationHeaderSearchParamsParser } from "../integration-marketplace-state";
 
 export function IntegrationMarketplaceHeader() {
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [searchParams, setSearchParams] = useQueryStates(integrationHeaderSearchParamsParser);
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -132,7 +133,7 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Equal(t, integration.TypeGoogleMaps, resp.Items[1].Type)
 	require.Equal(t, integration.TypeOpenWeatherMap, resp.Items[2].Type)
 	require.Equal(t, integration.TypeOpenAI, resp.Items[3].Type)
-	require.Equal(t, integration.TypeExchangeRateAPI, resp.Items[4].Type)
+	require.Equal(t, integration.TypeOANDAExchangeRates, resp.Items[4].Type)
 }
 
 func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
@@ -161,7 +162,65 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 	)
 
 	require.NoError(t, err)
+	require.True(t, resp.Enabled)
+	require.True(t, resp.Configured)
+	require.True(t, resp.Ready)
+	require.Empty(t, resp.MissingRequiredFields)
 	require.Equal(t, map[string]string{"apiKey": "browser-map-key"}, resp.Config)
+}
+
+func TestGetClientRuntimeConfigReturnsReadinessForUnconfiguredIntegration(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger: zap.NewNop(),
+		Repo: &stubIntegrationRepo{
+			getByTypeErr: errortypes.NewNotFoundError("integration not found"),
+		},
+	})
+
+	resp, err := svc.GetClientRuntimeConfig(
+		t.Context(),
+		pagination.TenantInfo{},
+		integration.TypeOANDAExchangeRates,
+	)
+
+	require.NoError(t, err)
+	require.False(t, resp.Enabled)
+	require.False(t, resp.Configured)
+	require.False(t, resp.Ready)
+	require.Equal(t, []string{"apiKey"}, resp.MissingRequiredFields)
+	require.Empty(t, resp.Config)
+}
+
+func TestGetClientRuntimeConfigReturnsDisabledReadinessWithoutConfig(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger: zap.NewNop(),
+		Repo: &stubIntegrationRepo{
+			getByTypeResult: &integration.Integration{
+				Type:    integration.TypeOANDAExchangeRates,
+				Enabled: false,
+				Configuration: map[string]any{
+					"apiKey": "encrypted-api-key",
+				},
+			},
+		},
+	})
+
+	resp, err := svc.GetClientRuntimeConfig(
+		t.Context(),
+		pagination.TenantInfo{},
+		integration.TypeOANDAExchangeRates,
+	)
+
+	require.NoError(t, err)
+	require.False(t, resp.Enabled)
+	require.True(t, resp.Configured)
+	require.False(t, resp.Ready)
+	require.Empty(t, resp.MissingRequiredFields)
+	require.Empty(t, resp.Config)
 }
 
 func TestGetClientRuntimeConfigRejectsServerSideIntegrations(t *testing.T) {

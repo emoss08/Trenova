@@ -76,14 +76,13 @@ export function AddressField<TForm extends FieldValues>({
   const sessionToken = sessionTokenRef.current;
   const debouncedInput = useDebounce(searchValue, 400);
 
-  const configQuery = useQuery({
-    ...queries.integration.config("GoogleMaps"),
+  const runtimeConfigQuery = useQuery({
+    ...queries.integration.runtimeConfig("GoogleMaps"),
     staleTime: 5 * 60 * 1000,
   });
 
   const isSearchAvailable =
-    configQuery.data?.enabled === true &&
-    (configQuery.data?.fields?.some((f) => f.key === "apiKey" && f.hasValue) ?? false);
+    runtimeConfigQuery.data?.ready === true && Boolean(runtimeConfigQuery.data.config.apiKey);
 
   const enabled = isSearchAvailable && !isLocked && debouncedInput.length > 3;
 
