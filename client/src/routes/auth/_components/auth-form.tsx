@@ -1,5 +1,6 @@
 import { Metadata } from "@/components/metadata";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import type { TenantLoginMetadata, UserOrganization } from "@/types/organization";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { AnimatePresence, m } from "motion/react";
@@ -136,10 +137,14 @@ export function AuthForm({
           </CardContent>
         </Card>
         <div className="text-center text-xs text-balance text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-          By clicking continue, you agree to our <a href="#">Terms of Service</a> and{" "}
-          <span className="cursor-pointer underline underline-offset-4 hover:text-primary">
-            License Agreement
-          </span>
+          By clicking continue, you agree to our{" "}
+          <a href={TERMS_URL} target="_blank" rel="noreferrer">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href={PRIVACY_URL} target="_blank" rel="noreferrer">
+            Privacy Policy
+          </a>
           .
         </div>
       </div>

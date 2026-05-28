@@ -11,11 +11,11 @@ import {
 
 export class WorkerService {
   public async approvePTO(id: WorkerPTO["id"]) {
-    await api.post<WorkerPTO>(`/workers/pto/${id}/approve/`);
+    await api.post<WorkerPTO>(`/worker-pto/${id}/approve/`);
   }
 
   public async rejectPTO(id: WorkerPTO["id"], reason: string) {
-    await api.post<WorkerPTO>(`/workers/pto/${id}/reject/`, { reason });
+    await api.post<WorkerPTO>(`/worker-pto/${id}/reject/`, { reason });
   }
 
   public async patch(id: Worker["id"], data: Partial<Worker>) {

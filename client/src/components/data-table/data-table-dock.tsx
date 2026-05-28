@@ -48,6 +48,7 @@ export function DataTableDock<TData>({
               handleClearSelection();
             }
           })
+          .catch(() => undefined)
           .finally(() => {
             setLoadingActions((prev) => {
               const next = new Set(prev);
@@ -73,16 +74,20 @@ export function DataTableDock<TData>({
 
       if (result instanceof Promise) {
         setLoadingActions((prev) => new Set(prev).add(action.id));
-        await result.finally(() => {
-          setLoadingActions((prev) => {
-            const next = new Set(prev);
-            next.delete(action.id);
-            return next;
+        await result
+          .then(() => {
+            if (action.clearSelectionOnSuccess) {
+              handleClearSelection();
+            }
+          })
+          .catch(() => undefined)
+          .finally(() => {
+            setLoadingActions((prev) => {
+              const next = new Set(prev);
+              next.delete(action.id);
+              return next;
+            });
           });
-          if (action.clearSelectionOnSuccess) {
-            handleClearSelection();
-          }
-        });
       } else if (action.clearSelectionOnSuccess) {
         handleClearSelection();
       }
