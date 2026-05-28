@@ -231,18 +231,18 @@ export function RouteCommandPalette() {
   const remoteResultGroups =
     remoteQueryReady && !remoteSearchQuery.isFetching && !remoteSearchQuery.isError
       ? remoteGroups.map((group) => (
-          <CommandGroup key={group.entityType} heading={group.label}>
-            {group.hits.map((hit) => (
-              <SearchResultItem
-                key={`${group.entityType}:${hit.id}`}
-                hit={hit}
-                searchValue={searchValue}
-                onSelect={() => handleNavigate(hit.href)}
-                onPreview={hit.entityType === "shipment" ? handleShipmentPreview : undefined}
-              />
-            ))}
-          </CommandGroup>
-        ))
+        <CommandGroup key={group.entityType} heading={group.label}>
+          {group.hits.map((hit) => (
+            <SearchResultItem
+              key={`${group.entityType}:${hit.id}`}
+              hit={hit}
+              searchValue={searchValue}
+              onSelect={() => handleNavigate(hit.href)}
+              onPreview={hit.entityType === "shipment" ? handleShipmentPreview : undefined}
+            />
+          ))}
+        </CommandGroup>
+      ))
       : null;
 
   const remoteStatusIndicator = (() => {
@@ -453,7 +453,12 @@ export function RouteCommandPalette() {
           )}
         </div>
 
-        <div className={cn("flex items-center gap-6 border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground", (mentionOpen || (recordEntityFilter && remoteGroups.length === 0)) && "hidden")}>
+        <div
+          className={cn(
+            "flex items-center gap-6 border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground",
+            (mentionOpen || (recordEntityFilter && remoteGroups.length === 0)) && "hidden",
+          )}
+        >
           <div className="flex items-center gap-2">
             <KbdGroup>
               <Kbd>

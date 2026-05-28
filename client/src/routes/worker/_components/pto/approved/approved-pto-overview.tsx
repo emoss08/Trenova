@@ -1,7 +1,7 @@
 import { useQueryStates } from "nuqs";
 import React, { lazy } from "react";
 import { usePTOFilters } from "../use-pto-filters";
-import { ptoSearchParamsParser } from "../use-pto-state";
+import { ptoOverviewFiltersSearchParamsParser } from "../use-pto-state";
 import { ApprovedPTOHeader } from "./approved-pto-header";
 import { ApprovedChartBoundary } from "./chart/approved-chart-state";
 import { ApprovedPTOKPICards } from "./chart/approved-pto-kpi-cards";
@@ -11,7 +11,7 @@ const ApprovedPTOChart = lazy(() => import("./chart/approved-pto-chart"));
 
 export function ApprovedPTOOverview() {
   const { defaultValues } = usePTOFilters();
-  const [searchParams] = useQueryStates(ptoSearchParamsParser);
+  const [searchParams] = useQueryStates(ptoOverviewFiltersSearchParamsParser);
   const filters = searchParams.ptoOverviewFilters ?? defaultValues;
   const analytics = useApprovedPTOAnalytics({
     startDate: filters.startDate,

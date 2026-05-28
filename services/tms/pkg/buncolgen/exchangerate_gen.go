@@ -49,23 +49,37 @@ var ExchangeRateTable = TableInfo{
 //	q.Where(ExchangeRateColumns.ID.Eq(), id)           // WHERE er.id = ?
 //	q.Order(ExchangeRateColumns.CreatedAt.OrderDesc())  // ORDER BY er.created_at DESC
 var ExchangeRateColumns = struct {
-	ID             Column // "id" → qualified: "er.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "er.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "er.organization_id"
-	FromCurrency   Column // "from_currency" → qualified: "er.from_currency"
-	ToCurrency     Column // "to_currency" → qualified: "er.to_currency"
-	Rate           Column // "rate" → qualified: "er.rate"
-	Date           Column // "date" → qualified: "er.date"
-	FetchedAt      Column // "fetched_at" → qualified: "er.fetched_at"
+	ID                 Column // "id" → qualified: "er.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "er.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "er.organization_id"
+	Provider           Column // "provider" → qualified: "er.provider"
+	FromCurrency       Column // "from_currency" → qualified: "er.from_currency"
+	ToCurrency         Column // "to_currency" → qualified: "er.to_currency"
+	RateType           Column // "rate_type" → qualified: "er.rate_type"
+	Bid                Column // "bid" → qualified: "er.bid"
+	Ask                Column // "ask" → qualified: "er.ask"
+	Mid                Column // "mid" → qualified: "er.mid"
+	SelectedRate       Column // "selected_rate" → qualified: "er.selected_rate"
+	Date               Column // "date" → qualified: "er.date"
+	SourceTimestamp    Column // "source_timestamp" → qualified: "er.source_timestamp"
+	FetchedAt          Column // "fetched_at" → qualified: "er.fetched_at"
+	SettlementEligible Column // "settlement_eligible" → qualified: "er.settlement_eligible"
 }{
-	ID:             NewColumn("id", "er"),
-	BusinessUnitID: NewColumn("business_unit_id", "er"),
-	OrganizationID: NewColumn("organization_id", "er"),
-	FromCurrency:   NewColumn("from_currency", "er"),
-	ToCurrency:     NewColumn("to_currency", "er"),
-	Rate:           NewColumn("rate", "er"),
-	Date:           NewColumn("date", "er"),
-	FetchedAt:      NewColumn("fetched_at", "er"),
+	ID:                 NewColumn("id", "er"),
+	BusinessUnitID:     NewColumn("business_unit_id", "er"),
+	OrganizationID:     NewColumn("organization_id", "er"),
+	Provider:           NewColumn("provider", "er"),
+	FromCurrency:       NewColumn("from_currency", "er"),
+	ToCurrency:         NewColumn("to_currency", "er"),
+	RateType:           NewColumn("rate_type", "er"),
+	Bid:                NewColumn("bid", "er"),
+	Ask:                NewColumn("ask", "er"),
+	Mid:                NewColumn("mid", "er"),
+	SelectedRate:       NewColumn("selected_rate", "er"),
+	Date:               NewColumn("date", "er"),
+	SourceTimestamp:    NewColumn("source_timestamp", "er"),
+	FetchedAt:          NewColumn("fetched_at", "er"),
+	SettlementEligible: NewColumn("settlement_eligible", "er"),
 }
 
 // ExchangeRateFieldMap maps JSON API field names to database column names.
@@ -73,14 +87,21 @@ var ExchangeRateColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by ExchangeRate.GetStaticFieldMap().
 var ExchangeRateFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"fromCurrency":   "from_currency",
-	"toCurrency":     "to_currency",
-	"rate":           "rate",
-	"date":           "date",
-	"fetchedAt":      "fetched_at",
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"provider":           "provider",
+	"fromCurrency":       "from_currency",
+	"toCurrency":         "to_currency",
+	"rateType":           "rate_type",
+	"bid":                "bid",
+	"ask":                "ask",
+	"mid":                "mid",
+	"selectedRate":       "selected_rate",
+	"date":               "date",
+	"sourceTimestamp":    "source_timestamp",
+	"fetchedAt":          "fetched_at",
+	"settlementEligible": "settlement_eligible",
 }
 
 // ExchangeRateInsertableColumns lists column names suitable for INSERT statements on the "exchange_rates" table.
@@ -89,11 +110,18 @@ var ExchangeRateInsertableColumns = []string{
 	"id",
 	"business_unit_id",
 	"organization_id",
+	"provider",
 	"from_currency",
 	"to_currency",
-	"rate",
+	"rate_type",
+	"bid",
+	"ask",
+	"mid",
+	"selected_rate",
 	"date",
+	"source_timestamp",
 	"fetched_at",
+	"settlement_eligible",
 }
 
 // ExchangeRateRelations provides type-safe names for Bun eager-loading.
@@ -159,14 +187,21 @@ func ExchangeRateApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *b
 //	ExchangeRateFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ExchangeRateFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	FromCurrency   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromCurrency" → DB: "from_currency"
-	ToCurrency     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toCurrency" → DB: "to_currency"
-	Rate           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rate" → DB: "rate"
-	Date           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "date" → DB: "date"
-	FetchedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fetchedAt" → DB: "fetched_at"
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Provider           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	FromCurrency       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromCurrency" → DB: "from_currency"
+	ToCurrency         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toCurrency" → DB: "to_currency"
+	RateType           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rateType" → DB: "rate_type"
+	Bid                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bid" → DB: "bid"
+	Ask                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ask" → DB: "ask"
+	Mid                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mid" → DB: "mid"
+	SelectedRate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "selectedRate" → DB: "selected_rate"
+	Date               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "date" → DB: "date"
+	SourceTimestamp    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceTimestamp" → DB: "source_timestamp"
+	FetchedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fetchedAt" → DB: "fetched_at"
+	SettlementEligible func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementEligible" → DB: "settlement_eligible"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -177,19 +212,40 @@ var ExchangeRateFilter = struct {
 	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("organizationId", op, value)
 	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
 	FromCurrency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fromCurrency", op, value)
 	},
 	ToCurrency: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("toCurrency", op, value)
 	},
-	Rate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("rate", op, value)
+	RateType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rateType", op, value)
+	},
+	Bid: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("bid", op, value)
+	},
+	Ask: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ask", op, value)
+	},
+	Mid: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("mid", op, value)
+	},
+	SelectedRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("selectedRate", op, value)
 	},
 	Date: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("date", op, value)
 	},
+	SourceTimestamp: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceTimestamp", op, value)
+	},
 	FetchedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fetchedAt", op, value)
+	},
+	SettlementEligible: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("settlementEligible", op, value)
 	},
 }

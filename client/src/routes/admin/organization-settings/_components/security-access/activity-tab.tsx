@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { searchParamsParser, type ActivityViewValue } from "@/hooks/use-organization-setting-state";
+import { activityViewParser, type ActivityViewValue } from "@/hooks/use-organization-setting-state";
 import { formatUnixDateTimeOrDash } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import { cn, formatIdentityProviderName, toTitleCase } from "@/lib/utils";
@@ -62,10 +62,7 @@ function getActivityViewIcon(view: ActivityViewValue) {
 }
 
 export function ActivityTab({ organizationId }: { organizationId: string }) {
-  const [activityView, setActivityView] = useQueryState(
-    "activityView",
-    searchParamsParser.activityView,
-  );
+  const [activityView, setActivityView] = useQueryState("activityView", activityViewParser);
   const [search, setSearch] = useState("");
   const normalizedSearch = useMemo(() => search.trim().toLowerCase(), [search]);
   const handleActivityViewChange = useCallback(

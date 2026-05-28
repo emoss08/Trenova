@@ -3,12 +3,13 @@ import { z } from "zod";
 export const configFieldSpecSchema = z.object({
   key: z.string(),
   label: z.string(),
-  type: z.enum(["string", "url", "password"]),
+  type: z.enum(["string", "url", "password", "select"]),
   required: z.boolean(),
   sensitive: z.boolean(),
   placeholder: z.string().optional(),
   helpText: z.string().optional(),
   default: z.string().optional(),
+  options: z.array(z.string()).optional(),
 });
 
 export const configFieldValueSchema = z.object({
@@ -23,6 +24,14 @@ export const integrationConfigResponseSchema = z.object({
   fields: z.array(configFieldValueSchema),
   spec: z.array(configFieldSpecSchema),
   updatedAt: z.number().int(),
+});
+
+export const integrationRuntimeConfigResponseSchema = z.object({
+  enabled: z.boolean(),
+  configured: z.boolean(),
+  ready: z.boolean(),
+  missingRequiredFields: z.array(z.string()),
+  config: z.record(z.string(), z.string()),
 });
 
 export const updateIntegrationConfigRequestSchema = z.object({
@@ -75,6 +84,9 @@ export const integrationCatalogResponseSchema = z.object({
 export type ConfigFieldSpec = z.infer<typeof configFieldSpecSchema>;
 export type ConfigFieldValue = z.infer<typeof configFieldValueSchema>;
 export type IntegrationConfigResponse = z.infer<typeof integrationConfigResponseSchema>;
+export type IntegrationRuntimeConfigResponse = z.infer<
+  typeof integrationRuntimeConfigResponseSchema
+>;
 export type UpdateIntegrationConfigRequest = z.infer<typeof updateIntegrationConfigRequestSchema>;
 export type IntegrationCatalogItem = z.infer<typeof integrationCatalogItemSchema>;
 export type IntegrationCatalogResponse = z.infer<typeof integrationCatalogResponseSchema>;

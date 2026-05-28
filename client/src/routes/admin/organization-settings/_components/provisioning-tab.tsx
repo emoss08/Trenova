@@ -1,9 +1,10 @@
-import { searchParamsParser } from "@/hooks/use-organization-setting-state";
+import { directoryIdParser } from "@/hooks/use-organization-setting-state";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { SCIMDirectory } from "@/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
+import { UsersRoundIcon } from "lucide-react";
+import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AuditTimeline } from "./provisioning/audit-timeline";
@@ -13,35 +14,30 @@ import { SCIMDirectoryPanel, type SCIMDirectoryPanelMode } from "./provisioning/
 import { DirectoryRail } from "./provisioning/directory-rail";
 import { MappingsPanelController } from "./provisioning/mappings-panel";
 import { SCIMTokenPanel } from "./provisioning/scim-token-panel";
+import { EmptyState } from "./security-access/shared";
 
-export function ProvisioningTab({ organizationId }: { organizationId: string }) {
+export function ProvisioningTab({
+  organizationId,
+  isActive,
+}: {
+  organizationId: string;
+  isActive: boolean;
+}) {
   const queryClient = useQueryClient();
   const auditQuery = useQuery(queries.organization.provisioningAudit(organizationId));
   const [directoryPanelMode, setDirectoryPanelMode] = useState<SCIMDirectoryPanelMode>("create");
   const [directoryPanelOpen, setDirectoryPanelOpen] = useState(false);
   const [editingDirectory, setEditingDirectory] = useState<SCIMDirectory | null>(null);
   const [directories, setDirectories] = useState<SCIMDirectory[]>([]);
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [directoryId, setDirectoryId] = useQueryState("directoryId", directoryIdParser);
 
-  const directoryId = searchParams.directoryId || directories[0]?.id || "";
   const selectedDirectory = directories.find((directory) => directory.id === directoryId);
 
   useEffect(() => {
-    if (
-      searchParams.tab === "security" &&
-      searchParams.securityTab === "provisioning" &&
-      !searchParams.directoryId &&
-      directories[0]?.id
-    ) {
-      void setSearchParams({ directoryId: directories[0].id });
+    if (isActive && !directoryId && directories[0]?.id) {
+      void setDirectoryId(directories[0].id);
     }
-  }, [
-    directories,
-    searchParams.directoryId,
-    searchParams.securityTab,
-    searchParams.tab,
-    setSearchParams,
-  ]);
+  }, [directories, directoryId, isActive, setDirectoryId]);
 
   const invalidateProvisioning = useCallback(async () => {
     await Promise.all([
@@ -62,10 +58,10 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
 
   const handleDirectorySaved = useCallback(
     async (saved: SCIMDirectory) => {
-      void setSearchParams({ directoryId: saved.id });
+      void setDirectoryId(saved.id);
       await invalidateProvisioning();
     },
-    [invalidateProvisioning, setSearchParams],
+    [invalidateProvisioning, setDirectoryId],
   );
 
   const handleDirectoryDeleted = useCallback(
@@ -73,10 +69,10 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
       const remainingDirectory = directories.find(
         (directory) => directory.id !== deletedDirectoryId,
       );
-      void setSearchParams({ directoryId: remainingDirectory?.id ?? null });
+      void setDirectoryId(remainingDirectory?.id ?? null);
       await invalidateProvisioning();
     },
-    [directories, invalidateProvisioning, setSearchParams],
+    [directories, invalidateProvisioning, setDirectoryId],
   );
 
   const { mutate: deleteDirectory, isPending: isDeletingDirectory } = useMutation({
@@ -101,35 +97,44 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
   }, []);
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div className="h-full">
+    <TabOuter>
+      <RailOuter>
         <DirectoryRail
           organizationId={organizationId}
           onAdd={addDirectory}
           onDirectoriesChange={setDirectories}
         />
-      </div>
+      </RailOuter>
 
-      <div className="min-w-0 space-y-3">
+      <ContentOuter>
         <DirectoryDetailHeader
           directory={selectedDirectory}
           isDeleting={isDeletingDirectory}
           onEdit={editDirectory}
           onDelete={deleteDirectory}
         />
-        <SCIMTokenPanel
-          organizationId={organizationId}
-          directoryId={directoryId}
-          onProvisioningChange={invalidateProvisioning}
-        />
-        <MappingsPanelController
-          organizationId={organizationId}
-          directoryId={directoryId}
-          onProvisioningChange={invalidateProvisioning}
-        />
+        {selectedDirectory ? (
+          <>
+            <SCIMTokenPanel
+              organizationId={organizationId}
+              directoryId={selectedDirectory.id}
+              onProvisioningChange={invalidateProvisioning}
+            />
+            <MappingsPanelController
+              organizationId={organizationId}
+              directoryId={selectedDirectory.id}
+              onProvisioningChange={invalidateProvisioning}
+            />
+          </>
+        ) : (
+          <EmptyState
+            icon={<UsersRoundIcon />}
+            label="Select a directory"
+            description="Choose or create a SCIM directory before managing tokens and group mappings."
+          />
+        )}
         <AuditTimeline records={auditQuery.data ?? []} isLoading={auditQuery.isLoading} />
-      </div>
-
+      </ContentOuter>
       <SCIMDirectoryPanel
         organizationId={organizationId}
         mode={directoryPanelMode}
@@ -138,6 +143,18 @@ export function ProvisioningTab({ organizationId }: { organizationId: string }) 
         onOpenChange={setDirectoryPanelOpen}
         onSaved={handleDirectorySaved}
       />
-    </div>
+    </TabOuter>
   );
+}
+
+function ContentOuter({ children }: { children: React.ReactNode }) {
+  return <div className="min-w-0 space-y-3">{children}</div>;
+}
+
+function TabOuter({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-3 xl:grid-cols-[320px_minmax(0,1fr)]">{children}</div>;
+}
+
+function RailOuter({ children }: { children: React.ReactNode }) {
+  return <div className="h-full">{children}</div>;
 }

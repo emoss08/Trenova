@@ -1,10 +1,42 @@
-CREATE TYPE iam_identity_provider_protocol_enum AS ENUM('OIDC', 'SAML');
-CREATE TYPE iam_mfa_authenticator_type_enum AS ENUM('webauthn', 'totp');
-CREATE TYPE iam_auth_event_outcome_enum AS ENUM('success', 'challenge', 'denied', 'failed');
-CREATE TYPE iam_risk_outcome_enum AS ENUM('allow', 'challenge', 'deny');
-CREATE TYPE iam_scim_token_status_enum AS ENUM('active', 'revoked');
-CREATE TYPE iam_provisioning_action_enum AS ENUM('create', 'update', 'deactivate', 'delete');
-CREATE TYPE iam_policy_effect_enum AS ENUM('allow', 'deny');
+CREATE TYPE iam_identity_provider_protocol_enum AS ENUM(
+    'OIDC',
+    'SAML'
+);
+
+CREATE TYPE iam_mfa_authenticator_type_enum AS ENUM(
+    'webauthn',
+    'totp'
+);
+
+CREATE TYPE iam_auth_event_outcome_enum AS ENUM(
+    'success',
+    'challenge',
+    'denied',
+    'failed'
+);
+
+CREATE TYPE iam_risk_outcome_enum AS ENUM(
+    'allow',
+    'challenge',
+    'deny'
+);
+
+CREATE TYPE iam_scim_token_status_enum AS ENUM(
+    'active',
+    'revoked'
+);
+
+CREATE TYPE iam_provisioning_action_enum AS ENUM(
+    'create',
+    'update',
+    'deactivate',
+    'delete'
+);
+
+CREATE TYPE iam_policy_effect_enum AS ENUM(
+    'allow',
+    'deny'
+);
 
 --bun:split
 CREATE TABLE identity_providers(
@@ -33,38 +65,12 @@ CREATE TABLE identity_providers(
     created_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
     updated_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
     UNIQUE (organization_id, slug),
-    CONSTRAINT identity_provider_oidc_required CHECK (
-        protocol != 'OIDC'
-        OR (oidc_issuer_url IS NOT NULL AND oidc_client_id IS NOT NULL AND oidc_redirect_url IS NOT NULL)
-    ),
-    CONSTRAINT identity_provider_saml_required CHECK (
-        protocol != 'SAML'
-        OR (saml_entity_id IS NOT NULL AND saml_sso_url IS NOT NULL AND saml_x509_certificate IS NOT NULL)
-    )
+    CONSTRAINT identity_provider_oidc_required CHECK (protocol != 'OIDC' OR (oidc_issuer_url IS NOT NULL AND oidc_client_id IS NOT NULL AND oidc_redirect_url IS NOT NULL)),
+    CONSTRAINT identity_provider_saml_required CHECK (protocol != 'SAML' OR (saml_entity_id IS NOT NULL AND saml_sso_url IS NOT NULL AND saml_x509_certificate IS NOT NULL))
 );
 
 --bun:split
-INSERT INTO identity_providers(
-    id,
-    organization_id,
-    business_unit_id,
-    name,
-    slug,
-    protocol,
-    enabled,
-    enforce_sso,
-    auto_provision,
-    allowed_domains,
-    attribute_map,
-    oidc_issuer_url,
-    oidc_client_id,
-    oidc_client_secret,
-    oidc_redirect_url,
-    oidc_scopes,
-    version,
-    created_at,
-    updated_at
-)
+INSERT INTO identity_providers(id, organization_id, business_unit_id, name, slug, protocol, enabled, enforce_sso, auto_provision, allowed_domains, attribute_map, oidc_issuer_url, oidc_client_id, oidc_client_secret, oidc_redirect_url, oidc_scopes, version, created_at, updated_at)
 SELECT
     id,
     organization_id,
@@ -85,8 +91,11 @@ SELECT
     version,
     created_at,
     updated_at
-FROM sso_configs
-ON CONFLICT (organization_id, slug) DO NOTHING;
+FROM
+    sso_configs
+ON CONFLICT (organization_id,
+    slug)
+    DO NOTHING;
 
 --bun:split
 CREATE TABLE external_identities(
@@ -120,10 +129,7 @@ CREATE TABLE mfa_authenticators(
     last_used_at bigint,
     created_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
     updated_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
-    CONSTRAINT mfa_authenticator_material CHECK (
-        credential_id IS NOT NULL
-        OR secret_cipher IS NOT NULL
-    )
+    CONSTRAINT mfa_authenticator_material CHECK (credential_id IS NOT NULL OR secret_cipher IS NOT NULL)
 );
 
 --bun:split
@@ -189,18 +195,38 @@ CREATE TABLE scim_tokens(
 );
 
 --bun:split
-CREATE TABLE scim_group_role_mappings(
-    id varchar(100) PRIMARY KEY,
-    organization_id varchar(100) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    business_unit_id varchar(100) NOT NULL REFERENCES business_units(id) ON DELETE CASCADE,
-    directory_id varchar(100) NOT NULL REFERENCES scim_directories(id) ON DELETE CASCADE,
-    external_group_id varchar(255) NOT NULL,
-    display_name varchar(255) NOT NULL,
-    role_id varchar(100) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    created_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
-    updated_at bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
-    UNIQUE (directory_id, external_group_id, role_id)
+CREATE TABLE "scim_group_role_mappings"(
+    "id" varchar(100),
+    "organization_id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "directory_id" varchar(100) NOT NULL,
+    "external_group_id" varchar(255) NOT NULL,
+    "display_name" varchar(255) NOT NULL,
+    "role_id" varchar(100) NOT NULL,
+    -- Metadata
+    "version" bigint NOT NULL DEFAULT 0,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(epoch FROM current_timestamp)::bigint,
+    -- Constraints
+    CONSTRAINT "pk_scim_group_role_mappings" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
+    CONSTRAINT "fk_sgrm_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_sgrm_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_sgrm_directory" FOREIGN KEY ("directory_id") REFERENCES "scim_directories"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_sgrm_role" FOREIGN KEY ("role_id", "business_unit_id", "organization_id") REFERENCES "roles"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
+
+--bun:split
+CREATE UNIQUE INDEX "idx_sgrm_display_name" ON "scim_group_role_mappings"(lower("display_name"), "organization_id");
+
+--bun:split
+ALTER TABLE "scim_group_role_mappings"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("display_name", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("external_group_id", '')), 'B')
+    ) STORED;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_sgrm_search ON "scim_group_role_mappings" USING GIN(search_vector);
 
 --bun:split
 CREATE TABLE provisioning_audit_records(
@@ -234,12 +260,22 @@ CREATE TABLE access_policies(
 
 --bun:split
 CREATE INDEX idx_identity_providers_org_enabled ON identity_providers(organization_id, enabled);
+
 CREATE INDEX idx_external_identities_user_org ON external_identities(user_id, organization_id);
+
 CREATE INDEX idx_mfa_authenticators_user_org_enabled ON mfa_authenticators(user_id, organization_id, enabled);
+
 CREATE INDEX idx_auth_events_org_user_time ON auth_events(organization_id, user_id, occurred_at DESC);
+
 CREATE INDEX idx_auth_events_ip_time ON auth_events(ip_address, occurred_at DESC);
+
 CREATE INDEX idx_risk_decisions_org_user_time ON risk_decisions(organization_id, user_id, created_at DESC);
+
 CREATE INDEX idx_scim_tokens_directory_status ON scim_tokens(directory_id, status);
+
 CREATE INDEX idx_scim_group_role_mappings_directory_group ON scim_group_role_mappings(directory_id, external_group_id);
+
 CREATE INDEX idx_provisioning_audit_directory_time ON provisioning_audit_records(directory_id, created_at DESC);
+
 CREATE INDEX idx_access_policies_org_resource ON access_policies(organization_id, resource, operation, enabled, priority DESC);
+

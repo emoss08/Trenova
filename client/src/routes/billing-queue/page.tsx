@@ -13,7 +13,10 @@ import { useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
 import { BillingQueueKPIStrip } from "./_components/billing-queue-kpi-strip";
 import { BillingQueueSidebar } from "./_components/billing-queue-sidebar";
-import { queueSearchParamsParser } from "./use-billing-queue-state";
+import {
+  queueSelectionSearchParamsParser,
+  queueToolbarSearchParamsParser,
+} from "./use-billing-queue-state";
 
 const BillingQueueDetailPane = lazy(() => import("./_components/billing-queue-detail-pane"));
 const BillingQueueDocumentPreview = lazy(
@@ -21,26 +24,28 @@ const BillingQueueDocumentPreview = lazy(
 );
 
 export function BillingQueuePage() {
-  const [searchParams, setSearchParams] = useQueryStates(queueSearchParamsParser);
-  const { item: selectedItemId, status: statusFilter, includePosted } = searchParams;
+  const [selectionParams, setSelectionParams] = useQueryStates(queueSelectionSearchParamsParser);
+  const [toolbarParams, setToolbarParams] = useQueryStates(queueToolbarSearchParamsParser);
+  const { item: selectedItemId } = selectionParams;
+  const { status: statusFilter, includePosted } = toolbarParams;
 
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [selectedDocumentName, setSelectedDocumentName] = useState<string | null>(null);
 
   const handleSelectItem = useCallback(
     (id: string) => {
-      void setSearchParams({ item: id });
+      void setSelectionParams({ item: id });
       setSelectedDocumentId(null);
       setSelectedDocumentName(null);
     },
-    [setSearchParams],
+    [setSelectionParams],
   );
 
   const setStatusFilter = useCallback(
     (status: string | null) => {
-      void setSearchParams({ status });
+      void setToolbarParams({ status });
     },
-    [setSearchParams],
+    [setToolbarParams],
   );
 
   const handleDocumentSelect = useCallback((docId: string, fileName: string) => {
@@ -76,7 +81,7 @@ export function BillingQueuePage() {
   useHotkey(
     "Escape",
     () => {
-      void setSearchParams({ item: null });
+      void setSelectionParams({ item: null });
       setSelectedDocumentId(null);
       setSelectedDocumentName(null);
     },

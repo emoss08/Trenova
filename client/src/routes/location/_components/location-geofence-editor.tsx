@@ -235,13 +235,13 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
         <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
           Loading map editor...
         </div>
-      ) : !googleMapsQuery.data?.apiKey ? (
+      ) : !googleMapsQuery.data?.config.apiKey ? (
         <div className="flex h-full items-center justify-center px-6 text-center text-sm text-muted-foreground">
           Google Maps is not configured for this environment, so the geofence editor cannot be
           displayed.
         </div>
       ) : (
-        <APIProvider apiKey={googleMapsQuery.data.apiKey}>
+        <APIProvider apiKey={googleMapsQuery.data.config.apiKey}>
           <Map
             mapId={mapId}
             defaultCenter={center}

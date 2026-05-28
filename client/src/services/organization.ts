@@ -12,8 +12,8 @@ import {
   riskDecisionsSchema,
   scimDirectoryListSchema,
   scimDirectorySchema,
+  scimGroupRoleMappingListSchema,
   scimGroupRoleMappingSchema,
-  scimGroupRoleMappingsSchema,
   scimTokenCreateResponseSchema,
   scimTokensSchema,
   type AccessPolicy,
@@ -21,6 +21,7 @@ import {
   type SCIMDirectory,
   type SCIMDirectoryListResponse,
   type SCIMGroupRoleMapping,
+  type SCIMGroupRoleMappingListResponse,
 } from "@/types/iam";
 import {
   microsoftSSOConfigSchema,
@@ -206,11 +207,19 @@ export class OrganizationService {
     return safeParse(scimTokenCreateResponseSchema.omit({ token: true }), response, "SCIMToken");
   }
 
-  public async listSCIMGroupRoleMappings(organizationId: string, directoryId: string) {
-    const response = await api.get(
-      `${this.base_url}/${organizationId}/iam/scim/directories/${directoryId}/group-role-mappings`,
+  public async listSCIMGroupRoleMappings(
+    organizationId: string,
+    directoryId: string,
+    params?: { limit?: number; offset?: number },
+  ) {
+    const searchParams = new URLSearchParams();
+    if (params?.limit != null) searchParams.set("limit", String(params.limit));
+    if (params?.offset != null) searchParams.set("offset", String(params.offset));
+    const qs = searchParams.toString();
+    const response = await api.get<SCIMGroupRoleMappingListResponse>(
+      `${this.base_url}/${organizationId}/iam/scim/directories/${directoryId}/group-role-mappings${qs ? `?${qs}` : ""}`,
     );
-    return safeParse(scimGroupRoleMappingsSchema, response, "SCIMGroupRoleMappings");
+    return safeParse(scimGroupRoleMappingListSchema, response, "SCIMGroupRoleMappings");
   }
 
   public async createSCIMGroupRoleMapping(

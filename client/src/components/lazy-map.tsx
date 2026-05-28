@@ -25,10 +25,10 @@ export function LazyMapWithKey({ position }: Pick<LazyMapProps, "position">) {
     ...queries.integration.runtimeConfig("GoogleMaps"),
   });
 
-  if (!googleMapsData?.apiKey) {
+  if (!googleMapsData?.config.apiKey) {
     console.error("Google Maps API key not found");
     return null;
   }
 
-  return <LazyMap apiKey={googleMapsData?.apiKey ?? ""} position={position} />;
+  return <LazyMap apiKey={googleMapsData.config.apiKey} position={position} />;
 }

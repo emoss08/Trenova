@@ -32,7 +32,11 @@ const OWM_LAYER_MAP: Record<string, OWMLayerId> = {
   pressure: "pressure_new",
 };
 
-export default function ShipmentMapPanel({ backgroundEnabled = true }: { backgroundEnabled?: boolean }) {
+export default function ShipmentMapPanel({
+  backgroundEnabled = true,
+}: {
+  backgroundEnabled?: boolean;
+}) {
   const mapId = useMapId();
   const { data } = useSuspenseQuery({
     ...queries.integration.runtimeConfig("GoogleMaps"),
@@ -75,7 +79,7 @@ export default function ShipmentMapPanel({ backgroundEnabled = true }: { backgro
     enabled: backgroundEnabled,
   });
 
-  const owmApiKey = owmQuery.data?.apiKey ?? "";
+  const owmApiKey = owmQuery.data?.config.apiKey ?? "";
 
   const selectedGeofence = useMemo(
     () => allGeofences.find((g) => g.id === selectedGeofenceId) ?? null,
@@ -116,8 +120,22 @@ export default function ShipmentMapPanel({ backgroundEnabled = true }: { backgro
     (shipment) => shipment.status === "InTransit" || shipment.status === "PartiallyCompleted",
   ).length;
 
+  if (!data.config.apiKey) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-lg border bg-card px-6 text-center text-sm text-muted-foreground",
+          isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-[420px]",
+        )}
+      >
+        Google Maps is not configured for this environment, so the live shipment map cannot be
+        displayed.
+      </div>
+    );
+  }
+
   return (
-    <APIProvider apiKey={data.apiKey}>
+    <APIProvider apiKey={data.config.apiKey}>
       <div
         className={cn(
           "relative flex w-full flex-col overflow-hidden rounded-lg border bg-card",

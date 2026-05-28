@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -42,12 +43,14 @@ func (r *repository) GetRate(
 		Model(entity).
 		Where("er.organization_id = ?", req.TenantInfo.OrgID).
 		Where("er.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("er.provider = ?", req.Provider).
 		Where("er.from_currency = ?", req.FromCurrency).
 		Where("er.to_currency = ?", req.ToCurrency).
+		Where("er.rate_type = ?", req.RateType).
 		Where("er.date = ?", req.Date.Format("2006-01-02")).
 		Scan(ctx)
 	if err != nil {
-		return nil, err
+		return nil, dberror.HandleNotFoundError(err, "ExchangeRate")
 	}
 	return entity, nil
 }
@@ -61,9 +64,14 @@ func (r *repository) UpsertRates(
 			rate := req.Rates[idx]
 			_, err := tx.NewInsert().
 				Model(rate).
-				On("CONFLICT (organization_id, business_unit_id, from_currency, to_currency, date) DO UPDATE").
-				Set("rate = EXCLUDED.rate").
+				On("CONFLICT (organization_id, business_unit_id, provider, from_currency, to_currency, rate_type, date) DO UPDATE").
+				Set("bid = EXCLUDED.bid").
+				Set("ask = EXCLUDED.ask").
+				Set("mid = EXCLUDED.mid").
+				Set("selected_rate = EXCLUDED.selected_rate").
+				Set("source_timestamp = EXCLUDED.source_timestamp").
 				Set("fetched_at = EXCLUDED.fetched_at").
+				Set("settlement_eligible = EXCLUDED.settlement_eligible").
 				Exec(txCtx)
 			if err != nil {
 				return err
@@ -71,6 +79,24 @@ func (r *repository) UpsertRates(
 		}
 		return nil
 	})
+}
+
+func (r *repository) CreateSettlementQuote(
+	ctx context.Context,
+	req *repositories.CreateSettlementQuoteRequest,
+) (*exchangerate.SettlementQuote, error) {
+	req.Quote.OrganizationID = req.TenantInfo.OrgID
+	req.Quote.BusinessUnitID = req.TenantInfo.BuID
+
+	if _, err := r.db.DB().
+		NewInsert().
+		Model(req.Quote).
+		Returning("*").
+		Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return req.Quote, nil
 }
 
 func (r *repository) GetLatestDate(

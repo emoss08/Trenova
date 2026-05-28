@@ -83,7 +83,7 @@ func (s *Service) ListCatalog(
 
 		if installedRecord != nil {
 			item.Enabled = installedRecord.Enabled
-			item.Configured = isConfigured(installedRecord.Configuration, spec)
+			item.Configured = integration.HasRequiredConfiguration(installedRecord.Configuration, spec)
 		}
 
 		item.Status = buildCatalogStatus(item.Enabled, item.Configured)
@@ -92,19 +92,6 @@ func (s *Service) ListCatalog(
 
 	sortCatalogItems(items)
 	return &services.CatalogResponse{Items: items}, nil
-}
-
-func isConfigured(configuration map[string]any, spec integration.IntegrationSpec) bool {
-	for _, field := range spec.Fields {
-		if !field.Required {
-			continue
-		}
-		val := readConfigString(configuration, field.Key)
-		if val == "" {
-			return false
-		}
-	}
-	return true
 }
 
 func buildCatalogStatus(enabled, configured bool) services.CatalogStatus {
@@ -180,7 +167,7 @@ func buildFieldValues(
 ) []services.ConfigFieldValue {
 	fields := make([]services.ConfigFieldValue, 0, len(spec.Fields))
 	for _, f := range spec.Fields {
-		val := readConfigString(configuration, f.Key)
+		val := integration.ReadConfigString(configuration, f.Key)
 		fv := services.ConfigFieldValue{
 			Key:      f.Key,
 			HasValue: val != "",
@@ -334,8 +321,11 @@ func (s *Service) TestConnection(
 }
 
 type RuntimeConfig struct {
-	Enabled bool
-	Config  map[string]string
+	Enabled               bool              `json:"enabled"`
+	Configured            bool              `json:"configured"`
+	Ready                 bool              `json:"ready"`
+	MissingRequiredFields []string          `json:"missingRequiredFields"`
+	Config                map[string]string `json:"config"`
 }
 
 var clientRuntimeConfigFields = map[integration.Type]map[string]struct{}{
@@ -345,6 +335,7 @@ var clientRuntimeConfigFields = map[integration.Type]map[string]struct{}{
 	integration.TypeOpenWeatherMap: {
 		"apiKey": {},
 	},
+	integration.TypeOANDAExchangeRates: {},
 }
 
 func (s *Service) GetRuntimeConfig(
@@ -367,21 +358,53 @@ func (s *Service) GetClientRuntimeConfig(
 		)
 	}
 
-	runtimeCfg, err := s.getRuntimeConfig(ctx, tenantInfo, typ, true)
-	if err != nil {
-		return nil, err
+	spec, ok := integration.ConfigSpecs[typ]
+	if !ok {
+		return nil, errortypes.NewBusinessError("unsupported integration type")
 	}
 
+	record, err := s.repo.GetByType(ctx, tenantInfo, typ)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return &RuntimeConfig{
+				Enabled:               false,
+				Configured:            false,
+				Ready:                 false,
+				MissingRequiredFields: requiredFieldKeys(spec, nil),
+				Config:                map[string]string{},
+			}, nil
+		}
+
+		return nil, errortypes.NewBusinessError(
+			"failed to retrieve " + string(typ) + " configuration",
+		).WithInternal(err)
+	}
+
+	missingRequiredFields := requiredFieldKeys(spec, record.Configuration)
+	configured := len(missingRequiredFields) == 0
+	ready := record.Enabled && configured
 	clientCfg := make(map[string]string, len(allowedFields))
-	for key := range allowedFields {
-		if value := strings.TrimSpace(runtimeCfg.Config[key]); value != "" {
-			clientCfg[key] = value
+	if ready {
+		fieldsByKey := configFieldsByKey(spec)
+		for key := range allowedFields {
+			value, err := s.readRuntimeConfigField(record.Configuration, fieldsByKey[key])
+			if err != nil {
+				return nil, errortypes.NewBusinessError(
+					"failed to decrypt " + string(typ) + " configuration",
+				).WithInternal(err)
+			}
+			if value != "" {
+				clientCfg[key] = value
+			}
 		}
 	}
 
 	return &RuntimeConfig{
-		Enabled: runtimeCfg.Enabled,
-		Config:  clientCfg,
+		Enabled:               record.Enabled,
+		Configured:            configured,
+		Ready:                 ready,
+		MissingRequiredFields: missingRequiredFields,
+		Config:                clientCfg,
 	}, nil
 }
 
@@ -413,20 +436,16 @@ func (s *Service) getRuntimeConfig(
 
 	cfg := make(map[string]string, len(spec.Fields))
 	for _, field := range spec.Fields {
-		val := strings.TrimSpace(readConfigString(record.Configuration, field.Key))
-		if field.Sensitive && val != "" {
-			decrypted, decErr := s.encryption.DecryptString(val)
-			if decErr != nil {
-				return nil, errortypes.NewBusinessError(
-					"failed to decrypt " + string(typ) + " configuration",
-				).WithInternal(decErr)
-			}
-			cfg[field.Key] = decrypted
-		} else {
-			cfg[field.Key] = val
+		val, readErr := s.readRuntimeConfigField(record.Configuration, &field)
+		if readErr != nil {
+			return nil, errortypes.NewBusinessError(
+				"failed to decrypt " + string(typ) + " configuration",
+			).WithInternal(readErr)
 		}
+		cfg[field.Key] = val
 	}
 
+	missingRequiredFields := requiredFieldKeysFromRuntimeConfig(spec, cfg)
 	for _, field := range spec.Fields {
 		if field.Required && cfg[field.Key] == "" {
 			return nil, errortypes.NewBusinessError(
@@ -436,9 +455,80 @@ func (s *Service) getRuntimeConfig(
 	}
 
 	return &RuntimeConfig{
-		Enabled: record.Enabled,
-		Config:  cfg,
+		Enabled:               record.Enabled,
+		Configured:            len(missingRequiredFields) == 0,
+		Ready:                 record.Enabled && len(missingRequiredFields) == 0,
+		MissingRequiredFields: missingRequiredFields,
+		Config:                cfg,
 	}, nil
+}
+
+func (s *Service) readRuntimeConfigField(
+	configuration map[string]any,
+	field *integration.ConfigFieldSpec,
+) (string, error) {
+	if field == nil {
+		return "", nil
+	}
+
+	val := strings.TrimSpace(integration.ReadConfigString(configuration, field.Key))
+	if val == "" {
+		return "", nil
+	}
+
+	if field.Sensitive {
+		decrypted, err := s.encryption.DecryptString(val)
+		if err != nil {
+			return "", err
+		}
+		return decrypted, nil
+	}
+
+	return val, nil
+}
+
+func configFieldsByKey(spec integration.IntegrationSpec) map[string]*integration.ConfigFieldSpec {
+	fields := make(map[string]*integration.ConfigFieldSpec, len(spec.Fields))
+	for idx := range spec.Fields {
+		field := &spec.Fields[idx]
+		fields[field.Key] = field
+	}
+
+	return fields
+}
+
+func requiredFieldKeys(
+	spec integration.IntegrationSpec,
+	configuration map[string]any,
+) []string {
+	missing := make([]string, 0, len(spec.Fields))
+	for _, field := range spec.Fields {
+		if !field.Required {
+			continue
+		}
+		if integration.ReadConfigString(configuration, field.Key) == "" {
+			missing = append(missing, field.Key)
+		}
+	}
+
+	return missing
+}
+
+func requiredFieldKeysFromRuntimeConfig(
+	spec integration.IntegrationSpec,
+	configuration map[string]string,
+) []string {
+	missing := make([]string, 0, len(spec.Fields))
+	for _, field := range spec.Fields {
+		if !field.Required {
+			continue
+		}
+		if strings.TrimSpace(configuration[field.Key]) == "" {
+			missing = append(missing, field.Key)
+		}
+	}
+
+	return missing
 }
 
 func (s *Service) buildFinalConfig(
@@ -473,7 +563,7 @@ func (s *Service) resolveSensitiveField(
 ) (string, error) {
 	if incoming == "" {
 		if existing != nil {
-			return readConfigString(existing.Configuration, field.Key), nil
+			return integration.ReadConfigString(existing.Configuration, field.Key), nil
 		}
 		return "", nil
 	}
@@ -510,7 +600,7 @@ func validateRequiredFields(
 		if !field.Required {
 			continue
 		}
-		val := readConfigString(config, field.Key)
+		val := integration.ReadConfigString(config, field.Key)
 		if val == "" {
 			return errortypes.NewBusinessError(
 				field.Label + " is required when integration is enabled",
@@ -527,22 +617,4 @@ func findCatalogDefinition(typ integration.Type) services.CatalogItem {
 		}
 	}
 	return services.CatalogItem{Name: string(typ)}
-}
-
-func readConfigString(configuration map[string]any, key string) string {
-	if len(configuration) == 0 {
-		return ""
-	}
-
-	value, ok := configuration[key]
-	if !ok || value == nil {
-		return ""
-	}
-
-	stringValue, ok := value.(string)
-	if !ok {
-		return ""
-	}
-
-	return strings.TrimSpace(stringValue)
 }

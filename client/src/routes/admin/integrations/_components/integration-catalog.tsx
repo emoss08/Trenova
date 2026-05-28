@@ -19,12 +19,12 @@ import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useMemo, useState } from "react";
-import { searchParamsParser } from "../integration-marketplace-state";
+import { integrationCatalogSearchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
+import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
-import { ExchangeRateAPIIntegrationModal } from "./exchangerateapi/exchange-rate-api-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -54,12 +54,12 @@ const statusOptions = [
 
 export function IntegrationCatalogCard() {
   const { theme } = useTheme();
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
   const [isSamsaraModalOpen, setIsSamsaraModalOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
   const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
-  const [isExchangeRateAPIModalOpen, setIsExchangeRateAPIModalOpen] = useState(false);
+  const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -135,8 +135,8 @@ export function IntegrationCatalogCard() {
       case "OpenWeatherMap":
         setIsOpenWeatherMapModalOpen(true);
         break;
-      case "ExchangeRateAPI":
-        setIsExchangeRateAPIModalOpen(true);
+      case "OANDAExchangeRates":
+        setIsOANDAModalOpen(true);
         break;
       default:
         break;
@@ -144,7 +144,11 @@ export function IntegrationCatalogCard() {
   };
 
   const hasModal = (type: string) =>
-    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI" || type === "OpenWeatherMap" || type === "ExchangeRateAPI";
+    type === "Samsara" ||
+    type === "GoogleMaps" ||
+    type === "OpenAI" ||
+    type === "OpenWeatherMap" ||
+    type === "OANDAExchangeRates";
 
   return (
     <>
@@ -318,9 +322,9 @@ export function IntegrationCatalogCard() {
         open={isOpenWeatherMapModalOpen}
         onOpenChange={setIsOpenWeatherMapModalOpen}
       />
-      <ExchangeRateAPIIntegrationModal
-        open={isExchangeRateAPIModalOpen}
-        onOpenChange={setIsExchangeRateAPIModalOpen}
+      <OANDAExchangeRatesIntegrationModal
+        open={isOANDAModalOpen}
+        onOpenChange={setIsOANDAModalOpen}
       />
     </>
   );

@@ -1,6 +1,6 @@
 import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { UploadPanel } from "@/components/documents/upload-panel";
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { api } from "@/lib/api";
 import { queries } from "@/lib/queries";
@@ -55,7 +55,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
 
   // Reuse the same nuqs parser the existing DataTable uses so deep-links to
   // ?panelType=edit&panelEntityId=<id> still open the shipment editor.
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [searchParams, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const { panelType, panelEntityId } = searchParams;
   const panelMode: PanelMode = panelType ?? "create";
   const uploadShipmentId = uploadShipment?.id ?? "";

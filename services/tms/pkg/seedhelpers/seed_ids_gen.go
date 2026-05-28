@@ -10,23 +10,24 @@ func (s SeedID) String() string {
 }
 
 const (
-	SeedAdminAccount SeedID = "AdminAccount" // from 01_adminaccount.go
-	SeedDocumentParsingRuleExample SeedID = "DocumentParsingRuleExample" // from 08_documentparsingruleexample.go
-	SeedDocumentType SeedID = "DocumentType" // from 06_document_type.go
-	SeedDotHazmatReferences SeedID = "DotHazmatReferences" // from 03_dot_hazmat_references.go
-	SeedFormulaTemplate SeedID = "FormulaTemplate" // from 01_formulatemplate.go
-	SeedGLAccount SeedID = "GLAccount" // from 04_gl_account.go
-	SeedLocation SeedID = "Location" // from 05_location.go
-	SeedLocationCategory SeedID = "LocationCategory" // from 04_location_category.go
-	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
-	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
-	SeedShipment SeedID = "Shipment" // from 07_shipment.go
-	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
-	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
-	SeedTestData SeedID = "TestData" // from 06_test_data.go
-	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
-	SeedUSStates SeedID = "USStates" // from 00_us_states.go
-	SeedWorker SeedID = "Worker" // from 03_worker.go
+	SeedAdminAccount                    SeedID = "AdminAccount"                    // from 01_adminaccount.go
+	SeedDocumentParsingRuleExample      SeedID = "DocumentParsingRuleExample"      // from 08_documentparsingruleexample.go
+	SeedDocumentType                    SeedID = "DocumentType"                    // from 06_document_type.go
+	SeedDotHazmatReferences             SeedID = "DotHazmatReferences"             // from 03_dot_hazmat_references.go
+	SeedFormulaTemplate                 SeedID = "FormulaTemplate"                 // from 01_formulatemplate.go
+	SeedGLAccount                       SeedID = "GLAccount"                       // from 04_gl_account.go
+	SeedLocation                        SeedID = "Location"                        // from 05_location.go
+	SeedLocationCategory                SeedID = "LocationCategory"                // from 04_location_category.go
+	SeedNormalAccount                   SeedID = "NormalAccount"                   // from 02_normalaccount.go
+	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
+	SeedOrganizationRoles               SeedID = "OrganizationRoles"               // from 02_organization_roles.go
+	SeedShipment                        SeedID = "Shipment"                        // from 07_shipment.go
+	SeedSystemAccount                   SeedID = "SystemAccount"                   // from 05_system_account.go
+	SeedTCAAllowlistedTables            SeedID = "TCAAllowlistedTables"            // from 07_tca_allowlisted_tables.go
+	SeedTestData                        SeedID = "TestData"                        // from 06_test_data.go
+	SeedTestOrganizations               SeedID = "TestOrganizations"               // from 00_test_organizations.go
+	SeedUSStates                        SeedID = "USStates"                        // from 00_us_states.go
+	SeedWorker                          SeedID = "Worker"                          // from 03_worker.go
 )
 
 var AllSeedIDs = []SeedID{
@@ -39,6 +40,7 @@ var AllSeedIDs = []SeedID{
 	SeedLocation,
 	SeedLocationCategory,
 	SeedNormalAccount,
+	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedShipment,
 	SeedSystemAccount,
@@ -54,6 +56,7 @@ var BaseSeedIDs = []SeedID{
 	SeedDocumentType,
 	SeedDotHazmatReferences,
 	SeedGLAccount,
+	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
 	SeedSystemAccount,
 	SeedTCAAllowlistedTables,
@@ -72,8 +75,7 @@ var DevelopmentSeedIDs = []SeedID{
 	SeedWorker,
 }
 
-var TestSeedIDs = []SeedID{
-}
+var TestSeedIDs = []SeedID{}
 
 func ValidateSeedID(id SeedID) bool {
 	for _, valid := range AllSeedIDs {

@@ -3,6 +3,7 @@ import { safeParse } from "@/lib/parse";
 import {
   integrationCatalogResponseSchema,
   integrationConfigResponseSchema,
+  integrationRuntimeConfigResponseSchema,
   updateIntegrationConfigRequestSchema,
   type UpdateIntegrationConfigRequest,
 } from "@/types/integration";
@@ -39,7 +40,8 @@ export class IntegrationService {
   }
 
   public async getRuntimeConfig(type: string) {
-    return api.get<Record<string, string>>(`/integrations/${type}/runtime-config/`);
+    const response = await api.get(`/integrations/${type}/runtime-config/`);
+    return safeParse(integrationRuntimeConfigResponseSchema, response, `${type} Runtime Config`);
   }
 
   public async getSamsaraWorkerSyncReadiness() {

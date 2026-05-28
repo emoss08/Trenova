@@ -10,7 +10,7 @@ import {
 import { useQueryStates } from "nuqs";
 import { lazy, useCallback, useState } from "react";
 import { InvoiceSidebar } from "./_components/invoice-sidebar";
-import { invoiceSearchParamsParser } from "./use-invoice-state";
+import { invoiceSelectionSearchParamsParser } from "./use-invoice-state";
 
 const InvoiceDetailPane = lazy(
   () => import("./_components/invoice-detail-pane"),
@@ -20,9 +20,7 @@ const BillingQueueDocumentPreview = lazy(
 );
 
 export function InvoicesPage() {
-  const [searchParams, setSearchParams] = useQueryStates(
-    invoiceSearchParamsParser,
-  );
+  const [searchParams, setSearchParams] = useQueryStates(invoiceSelectionSearchParamsParser);
   const selectedInvoiceId = searchParams.item;
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     null,

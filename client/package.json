@@ -17,7 +17,8 @@
     "test:storybook:watch": "vitest --project=storybook",
     "b:dev": "bunx --bun vite",
     "b:build": "bunx --bun vite build",
-    "deploy": "pnpm run build && wrangler deploy"
+    "deploy": "pnpm run build && wrangler deploy",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -127,6 +128,8 @@
     "playwright": "^1.60.0",
     "prettier": "3.4.1",
     "prettier-eslint": "^16.4.2",
+    "react-doctor": "^0.2.9",
+    "react-scan": "^0.5.7",
     "rollup-plugin-visualizer": "^7.0.1",
     "sass-embedded": "^1.100.0",
     "shadcn": "^4.8.0",

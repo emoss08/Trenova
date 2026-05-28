@@ -1,7 +1,7 @@
 import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { TextShimmer } from "@/components/ui/text-shimmer";
-import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -123,7 +123,7 @@ function PickupsList({
   initialData: TomorrowsPickupsCard;
   enabled: boolean;
 }) {
-  const [, setSearchParams] = useQueryStates(searchParamsParser);
+  const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
   const observerTarget = useRef<HTMLLIElement>(null);
 
   const query = useInfiniteQuery({

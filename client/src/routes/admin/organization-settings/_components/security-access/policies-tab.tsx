@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,10 +8,11 @@ import {
 } from "@/components/ui/select";
 import { queries } from "@/lib/queries";
 import { getAvailableOperations, getAvailableResources } from "@/lib/role-api";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { AccessPolicy } from "@/types/iam";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlusIcon, ShieldCheckIcon, Trash2Icon } from "lucide-react";
+import { PencilIcon, PlusIcon, ShieldCheckIcon, ShieldXIcon, Trash2Icon } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { effectFilterOptions } from "./policies/constants";
@@ -35,6 +35,8 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const [editingPolicy, setEditingPolicy] = useState<AccessPolicy | null>(null);
   const [search, setSearch] = useState("");
   const [effectFilter, setEffectFilter] = useState("all");
+  const selectedOption =
+    effectFilterOptions.find((option) => option.value === effectFilter) || null;
 
   const resources = useMemo(
     () => (resourcesQuery.data ?? []).flatMap((category) => category.resources),
@@ -113,11 +115,27 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
               onValueChange={(value) => setEffectFilter(value ?? "all")}
             >
               <SelectTrigger className="h-7 w-32 text-xs">
+                {selectedOption?.color ? (
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: selectedOption?.color }}
+                  />
+                ) : null}
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="p-1">
                 {effectFilterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    className="flex w-full flex-row items-center"
+                  >
+                    {option?.color ? (
+                      <span
+                        className="mt-1 size-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: option?.color }}
+                      />
+                    ) : null}
                     {option.label}
                   </SelectItem>
                 ))}
@@ -187,33 +205,86 @@ const PolicyRow = memo(function PolicyRow({
   onDeletePolicy: (policyId: string) => void;
 }) {
   const conditionCount = Object.keys(policy.conditions).length;
+  const isAllow = policy.effect === "allow";
+  const EffectIcon = isAllow ? ShieldCheckIcon : ShieldXIcon;
+  const effectLabel = isAllow ? "Allow" : "Deny";
+  const resourceLabel = resourceName || policy.resource;
 
   return (
-    <div className="grid gap-3 border-b p-3 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_160px] lg:items-center">
-      <div className="min-w-0 space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={policy.effect === "allow" ? "active" : "inactive"}>
-            {policy.effect === "allow" ? "Allow" : "Deny"}
-          </Badge>
-          <span className="font-medium">{policy.name}</span>
-          <Badge variant={policy.enabled ? "info" : "outline"}>Priority {policy.priority}</Badge>
-          {!policy.enabled && <Badge variant="outline">Disabled</Badge>}
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span className="rounded bg-muted px-1.5 py-0.5">{resourceName || policy.resource}</span>
-          <span className="rounded bg-muted px-1.5 py-0.5">{policy.operation}</span>
-          <span>
-            {conditionCount} condition{conditionCount === 1 ? "" : "s"}
-          </span>
+    <div
+      className={cn(
+        "group grid gap-3 border-b bg-background px-3 py-2.5 transition-colors last:border-b-0 hover:bg-muted/30 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center",
+        !policy.enabled && "bg-muted/20 text-muted-foreground",
+      )}
+    >
+      <div className="flex min-w-0 gap-3">
+        <span
+          className={cn(
+            "mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md border bg-muted/35 text-foreground/70",
+            !policy.enabled && "text-muted-foreground",
+          )}
+        >
+          <EffectIcon
+            className={cn(
+              "size-3.5",
+              isAllow ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400",
+              !policy.enabled && "text-muted-foreground",
+            )}
+          />
+        </span>
+        <div className="min-w-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="truncate text-sm font-medium text-foreground">{policy.name}</span>
+            {!policy.enabled && (
+              <span className="text-xs font-medium text-muted-foreground">Disabled</span>
+            )}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span
+              className={cn(
+                "font-medium",
+                isAllow
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-red-700 dark:text-red-400",
+                !policy.enabled && "text-muted-foreground",
+              )}
+            >
+              {effectLabel}
+            </span>
+            <span aria-hidden="true">/</span>
+            <span>Priority {policy.priority}</span>
+            <span aria-hidden="true">/</span>
+            <span className="text-xs text-muted-foreground">
+              {conditionCount === 0
+                ? "No conditions"
+                : `${conditionCount} condition${conditionCount === 1 ? "" : "s"}`}
+            </span>
+          </div>
+          <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-xs">
+            <span className="text-muted-foreground">Scope</span>
+            <span className="max-w-full truncate font-mono text-[11px] text-foreground/80">
+              {resourceLabel}
+            </span>
+            <span className="text-muted-foreground" aria-hidden="true">
+              /
+            </span>
+            <span className="font-mono text-[11px] text-foreground/80">{policy.operation}</span>
+          </div>
         </div>
       </div>
-      <div className="flex justify-end gap-2">
-        <Button size="sm" variant="outline" onClick={() => onEditPolicy(policy)}>
+      <div className="flex items-center justify-end gap-1">
+        <Button size="sm" variant="ghost" onClick={() => onEditPolicy(policy)}>
+          <PencilIcon />
           Edit
         </Button>
-        <Button size="sm" variant="destructive" onClick={() => onDeletePolicy(policy.id)}>
+        <Button
+          size="icon-sm"
+          variant="ghost"
+          className="text-destructive hover:text-destructive"
+          aria-label={`Delete ${policy.name}`}
+          onClick={() => onDeletePolicy(policy.id)}
+        >
           <Trash2Icon />
-          Delete
         </Button>
       </div>
     </div>

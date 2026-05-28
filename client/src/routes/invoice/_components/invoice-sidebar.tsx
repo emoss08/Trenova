@@ -17,7 +17,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { FileTextIcon, ReceiptTextIcon, SearchIcon } from "lucide-react";
 import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useMemo, useRef } from "react";
-import { invoiceSearchParamsParser } from "../use-invoice-state";
+import { invoiceSidebarSearchParamsParser } from "../use-invoice-state";
 import { InvoiceItemCard } from "./invoice-item-card";
 
 const PAGE_SIZE = 20;
@@ -29,7 +29,7 @@ export function InvoiceSidebar({
   selectedInvoiceId: string | null;
   onSelectInvoice: (id: string) => void;
 }) {
-  const [searchParams, setSearchParams] = useQueryStates(invoiceSearchParamsParser);
+  const [searchParams, setSearchParams] = useQueryStates(invoiceSidebarSearchParamsParser);
   const { status, query, billType } = searchParams;
   const deferredSearch = useDeferredValue(query);
   const observerTarget = useRef<HTMLDivElement>(null);

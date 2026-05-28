@@ -13,12 +13,12 @@ import type { FormulaTemplate } from "@/types/formula-template";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import {
+  ArchiveIcon,
   CircleCheckIcon,
   CopyIcon,
   DownloadIcon,
   GitForkIcon,
   NetworkIcon,
-  TrashIcon,
 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -76,6 +76,54 @@ export default function FormulaTemplatesDataTable() {
 
   const columns = useMemo(() => getColumns(), []);
 
+  const handleArchiveTemplates = useCallback(
+    async (templates: FormulaTemplate[]) => {
+      const ids = templates.flatMap((template) => (template.id ? [template.id] : []));
+      if (ids.length === 0) {
+        toast.error("No formula templates selected");
+        throw new Error("No formula templates selected");
+      }
+
+      const confirmed = window.confirm(
+        `Archive ${templates.length} formula template${
+          templates.length === 1 ? "" : "s"
+        }? Archived templates will be marked inactive.`,
+      );
+
+      if (!confirmed) {
+        throw new Error("Archive canceled");
+      }
+
+      await apiService.formulaTemplateService
+        .bulkUpdateStatus({
+          templateIds: ids,
+          status: "Inactive",
+        })
+        .then(() => {
+          toast.success(
+            templates.length === 1
+              ? "Formula template archived"
+              : "Formula templates archived",
+          );
+        })
+        .catch((error: unknown) => {
+          toast.error(
+            templates.length === 1
+              ? "Failed to archive formula template"
+              : "Failed to archive formula templates",
+          );
+          throw error;
+        })
+        .finally(async () => {
+          await queryClient.invalidateQueries({
+            queryKey: ["formula-template-list"],
+            refetchType: "all",
+          });
+        });
+    },
+    [queryClient],
+  );
+
   const contextMenuActions = useMemo<RowAction<FormulaTemplate>[]>(
     () => [
       {
@@ -107,22 +155,16 @@ export default function FormulaTemplatesDataTable() {
         onClick: (row) => handleExportClick(row.original),
       },
       {
-        id: "delete",
-        label: "Delete",
-        icon: TrashIcon,
+        id: "archive",
+        label: "Archive",
+        icon: ArchiveIcon,
         variant: "destructive",
-        onClick: (row) => {
-          console.log("Delete", row.original);
-        },
+        onClick: (row) =>
+          void handleArchiveTemplates([row.original]).catch(() => undefined),
       },
     ],
-    [handleDuplicate, handleExportClick],
+    [handleArchiveTemplates, handleDuplicate, handleExportClick],
   );
-
-  const handleBulkDelete = useCallback((rows: FormulaTemplate[]) => {
-    const ids = rows.map((r) => r.id);
-    console.log("Delete templates:", ids);
-  }, []);
 
   const handleBulkExport = useCallback((rows: FormulaTemplate[]) => {
     const exportData = buildBulkExport(rows);
@@ -211,15 +253,16 @@ export default function FormulaTemplatesDataTable() {
         onClick: handleBulkExport,
       },
       {
-        id: "delete",
-        label: "Delete",
-        icon: TrashIcon,
+        id: "archive",
+        label: "Archive",
+        icon: ArchiveIcon,
         variant: "destructive",
-        onClick: handleBulkDelete,
+        onClick: handleArchiveTemplates,
+        clearSelectionOnSuccess: true,
       },
     ],
     [
-      handleBulkDelete,
+      handleArchiveTemplates,
       handleBulkExport,
       handleBulkDuplicate,
       handleBulkStatusUpdate,

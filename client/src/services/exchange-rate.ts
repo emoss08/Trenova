@@ -3,16 +3,46 @@ import { api } from "@/lib/api";
 export interface RateConversionResult {
   fromCurrency: string;
   toCurrency: string;
-  amount: number;
-  rate: number;
-  converted: number;
+  amount: string;
+  rate: string;
+  converted: string;
   date: string;
+  provider?: string;
+  rateType?: "bid" | "ask" | "mid";
+  sourceTimestamp?: string;
+  fetchedAt?: string;
+  settlementEligible: boolean;
+  settlementQuoteId?: string;
 }
 
 export interface LatestRatesResult {
   baseCurrency: string;
   date: string;
-  rates: Record<string, number>;
+  provider: string;
+  rateType: "bid" | "ask" | "mid";
+  rates: Record<string, string>;
+}
+
+export interface SettlementQuoteRequest {
+  fromCurrency: string;
+  toCurrency: string;
+  amount: string;
+  rateType?: "bid" | "ask" | "mid";
+  date?: string;
+}
+
+export interface SettlementQuote {
+  id: string;
+  provider: string;
+  fromCurrency: string;
+  toCurrency: string;
+  amount: string;
+  rate: string;
+  convertedAmount: string;
+  rateType: "bid" | "ask" | "mid";
+  sourceTimestamp: string;
+  fetchedAt: string;
+  expiresAt: string;
 }
 
 export class ExchangeRateService {
@@ -30,5 +60,9 @@ export class ExchangeRateService {
   async refresh(base: string) {
     const searchParams = new URLSearchParams({ base });
     return api.post<{ status: string }>(`/exchange-rates/refresh/?${searchParams}`);
+  }
+
+  async createSettlementQuote(payload: SettlementQuoteRequest) {
+    return api.post<SettlementQuote>("/exchange-rates/settlement-quotes/", payload);
   }
 }

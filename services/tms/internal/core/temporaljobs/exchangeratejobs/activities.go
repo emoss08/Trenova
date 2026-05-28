@@ -33,22 +33,25 @@ type RefreshExchangeRatesResult struct {
 type ActivitiesParams struct {
 	fx.In
 
-	ExchangeRateService *exchangerateservice.Service
-	IntegrationRepo     repositories.IntegrationRepository
-	Logger              *zap.Logger
+	ExchangeRateService   *exchangerateservice.Service
+	AccountingControlRepo repositories.AccountingControlRepository
+	IntegrationRepo       repositories.IntegrationRepository
+	Logger                *zap.Logger
 }
 
 type Activities struct {
-	exchangeRateSvc *exchangerateservice.Service
-	integrationRepo repositories.IntegrationRepository
-	logger          *zap.Logger
+	exchangeRateSvc       *exchangerateservice.Service
+	accountingControlRepo repositories.AccountingControlRepository
+	integrationRepo       repositories.IntegrationRepository
+	logger                *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		exchangeRateSvc: p.ExchangeRateService,
-		integrationRepo: p.IntegrationRepo,
-		logger:          p.Logger.Named("temporal.exchange-rate"),
+		exchangeRateSvc:       p.ExchangeRateService,
+		accountingControlRepo: p.AccountingControlRepo,
+		integrationRepo:       p.IntegrationRepo,
+		logger:                p.Logger.Named("temporal.exchange-rate"),
 	}
 }
 
@@ -56,14 +59,14 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 	a.logger.Info("Starting exchange rate refresh activity")
 	recordActivityHeartbeat(ctx, "refreshing-exchange-rates")
 
-	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeExchangeRateAPI)
+	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeOANDAExchangeRates)
 	if err != nil {
-		a.logger.Error("Failed to list enabled ExchangeRateAPI integrations", zap.Error(err))
+		a.logger.Error("Failed to list enabled OANDA exchange-rate integrations", zap.Error(err))
 		return err
 	}
 
 	if len(integrations) == 0 {
-		a.logger.Info("No enabled ExchangeRateAPI integrations found, skipping refresh")
+		a.logger.Info("No enabled OANDA exchange-rate integrations found, skipping refresh")
 		return nil
 	}
 
@@ -76,9 +79,18 @@ func (a *Activities) RefreshExchangeRatesActivity(ctx context.Context) error {
 			BuID:  integ.BusinessUnitID,
 		}
 
-		if refreshErr := a.exchangeRateSvc.RefreshRates(ctx, tenantInfo, "USD"); refreshErr != nil {
+		baseCurrency, currencyErr := a.functionalCurrency(ctx, tenantInfo)
+		if currencyErr != nil {
+			a.logger.Error("Failed to resolve functional currency for tenant",
+				zap.String("orgID", integ.OrganizationID.String()),
+				zap.Error(currencyErr))
+			continue
+		}
+
+		if refreshErr := a.exchangeRateSvc.RefreshRates(ctx, tenantInfo, baseCurrency); refreshErr != nil {
 			a.logger.Error("Failed to refresh rates for tenant",
 				zap.String("orgID", integ.OrganizationID.String()),
+				zap.String("baseCurrency", baseCurrency),
 				zap.Error(refreshErr))
 			continue
 		}
@@ -97,7 +109,7 @@ func (a *Activities) ListExchangeRateTenantsActivity(
 	payload *ListExchangeRateTenantsPayload,
 ) (*ListExchangeRateTenantsResult, error) {
 	limit := temporaljobs.NormalizeLimit(payload.Limit, temporaljobs.DefaultTenantScanLimit)
-	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeExchangeRateAPI)
+	integrations, err := a.integrationRepo.ListEnabledByType(ctx, integration.TypeOANDAExchangeRates)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +137,11 @@ func (a *Activities) RefreshExchangeRatesForTenantActivity(
 ) error {
 	baseCurrency := payload.BaseCurrency
 	if baseCurrency == "" {
-		baseCurrency = "USD"
+		var err error
+		baseCurrency, err = a.functionalCurrency(ctx, payload.TenantInfo())
+		if err != nil {
+			return err
+		}
 	}
 
 	tenantInfo := payload.TenantInfo()
@@ -142,6 +158,17 @@ func (a *Activities) RefreshExchangeRatesForTenantActivity(
 		zap.String("orgID", tenantInfo.OrgID.String()),
 		zap.String("buID", tenantInfo.BuID.String()))
 	return nil
+}
+
+func (a *Activities) functionalCurrency(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (string, error) {
+	accountingControl, err := a.accountingControlRepo.GetByOrgID(ctx, tenantInfo.OrgID)
+	if err != nil {
+		return "", err
+	}
+	return accountingControl.FunctionalCurrencyCode, nil
 }
 
 func recordActivityHeartbeat(ctx context.Context, details ...any) {

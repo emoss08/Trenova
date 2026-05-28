@@ -35,17 +35,12 @@ export function ShipmentRouteMap({
       .filter(Boolean) as Point[];
   }, [moves]);
 
-  const coordinates = useMemo(
-    () => stops.map((s) => ({ lat: s.lat, lng: s.lng })),
-    [stops],
-  );
+  const coordinates = useMemo(() => stops.map((s) => ({ lat: s.lat, lng: s.lng })), [stops]);
 
   const center = useMemo(() => {
     if (coordinates.length === 0) return undefined;
-    const avgLat =
-      coordinates.reduce((s, p) => s + p.lat, 0) / coordinates.length;
-    const avgLng =
-      coordinates.reduce((s, p) => s + p.lng, 0) / coordinates.length;
+    const avgLat = coordinates.reduce((s, p) => s + p.lat, 0) / coordinates.length;
+    const avgLng = coordinates.reduce((s, p) => s + p.lng, 0) / coordinates.length;
     return { lat: avgLat, lng: avgLng };
   }, [coordinates]);
 
@@ -55,13 +50,13 @@ export function ShipmentRouteMap({
 
   const mapId = useMapId();
 
-  if (!apiKeyData?.apiKey || !center || coordinates.length === 0) {
+  if (!apiKeyData?.config.apiKey || !center || coordinates.length === 0) {
     return null;
   }
 
   return (
     <Container className={containerClassName}>
-      <APIProvider apiKey={apiKeyData.apiKey}>
+      <APIProvider apiKey={apiKeyData.config.apiKey}>
         <Map
           mapId={mapId}
           defaultCenter={US_CENTER}
@@ -79,9 +74,7 @@ export function ShipmentRouteMap({
                 title={pt.stop.location?.name}
                 onMouseEnter={() => setHoveredIdx(idx)}
                 onMouseLeave={() =>
-                  setHoveredIdx((cur) =>
-                    cur === idx && pinnedIdx == null ? null : cur,
-                  )
+                  setHoveredIdx((cur) => (cur === idx && pinnedIdx == null ? null : cur))
                 }
                 onClick={() => setPinnedIdx(idx)}
               >
@@ -120,12 +113,7 @@ function StopMarker({
   };
   return (
     <div className="relative">
-      <div
-        className={cn(
-          "size-2.5 rounded-full ring-2 ring-white",
-          color(point.stop.type),
-        )}
-      />
+      <div className={cn("size-2.5 rounded-full ring-2 ring-white", color(point.stop.type))} />
       {activeIdx === idx && (
         <div className="absolute -top-1.5 left-1/2 z-1 -translate-x-1/2 -translate-y-full rounded border border-border bg-popover px-2 py-1 text-2xs whitespace-nowrap text-popover-foreground shadow-md">
           <div className="max-w-[220px] truncate font-medium">
@@ -142,18 +130,8 @@ function StopMarker({
   );
 }
 
-function Container({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Container({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={cn("h-32 w-full overflow-hidden rounded-md border", className)}
-    >
-      {children}
-    </div>
+    <div className={cn("h-32 w-full overflow-hidden rounded-md border", className)}>{children}</div>
   );
 }

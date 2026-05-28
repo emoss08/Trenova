@@ -24,3 +24,21 @@ export const queueSearchParamsParser = {
   includePosted: parseAsBoolean.withDefault(false),
   preset: parseAsString,
 };
+
+export const queueSelectionSearchParamsParser = {
+  item: queueSearchParamsParser.item,
+};
+
+export const queueToolbarSearchParamsParser = {
+  status: queueSearchParamsParser.status,
+  includePosted: queueSearchParamsParser.includePosted,
+};
+
+export const queueSidebarSearchParamsParser = {
+  status: queueSearchParamsParser.status,
+  query: queueSearchParamsParser.query,
+  billType: queueSearchParamsParser.billType,
+  billers: queueSearchParamsParser.billers,
+  includePosted: queueSearchParamsParser.includePosted,
+  preset: queueSearchParamsParser.preset,
+};

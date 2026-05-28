@@ -10,8 +10,10 @@ import (
 
 type GetExchangeRateRequest struct {
 	TenantInfo   pagination.TenantInfo
+	Provider     exchangerate.Provider
 	FromCurrency string
 	ToCurrency   string
+	RateType     exchangerate.RateType
 	Date         time.Time
 }
 
@@ -20,8 +22,17 @@ type UpsertExchangeRatesRequest struct {
 	Rates      []*exchangerate.ExchangeRate
 }
 
+type CreateSettlementQuoteRequest struct {
+	TenantInfo pagination.TenantInfo
+	Quote      *exchangerate.SettlementQuote
+}
+
 type ExchangeRateRepository interface {
 	GetRate(ctx context.Context, req *GetExchangeRateRequest) (*exchangerate.ExchangeRate, error)
 	UpsertRates(ctx context.Context, req *UpsertExchangeRatesRequest) error
+	CreateSettlementQuote(
+		ctx context.Context,
+		req *CreateSettlementQuoteRequest,
+	) (*exchangerate.SettlementQuote, error)
 	GetLatestDate(ctx context.Context, tenantInfo pagination.TenantInfo) (*time.Time, error)
 }

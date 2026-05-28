@@ -339,20 +339,27 @@ func (h *Handler) revokeSCIMToken(c *gin.Context) {
 }
 
 func (h *Handler) listSCIMGroupRoleMappings(c *gin.Context) {
-	tenantInfo, ok := h.tenantInfo(c)
-	if !ok {
-		return
-	}
 	directoryID, ok := h.pathID(c, "directoryId")
 	if !ok {
 		return
 	}
-	resp, err := h.service.ListSCIMGroupRoleMappings(c.Request.Context(), tenantInfo, directoryID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, resp)
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewQueryOptions(c, authCtx)
+
+	pagination.List(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
+			return h.service.ListSCIMGroupRoleMappings(
+				c.Request.Context(),
+				&repositories.ListSCIMGroupRoleMappingsRequest{
+					Filter:      req,
+					DirectoryID: directoryID,
+				},
+			)
+		},
+	)
 }
 
 func (h *Handler) createSCIMGroupRoleMapping(c *gin.Context) {

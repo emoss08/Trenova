@@ -6,6 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import {
+  identityProviderPanelSearchParamsParser,
+  identityProviderSearchParser,
+} from "@/hooks/use-organization-setting-state";
+import {
   formatIdentityProviderName,
   parseCommaSeparatedList,
   parseWhitespaceSeparatedList,
@@ -16,7 +20,8 @@ import { identityProviderCreateFormSchema, identityProviderFormSchema } from "@/
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { useQueryState, useQueryStates } from "nuqs";
+import { memo, useCallback, useEffect, useMemo } from "react";
 import { type Resolver, useForm, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import {
@@ -38,29 +43,79 @@ import {
 
 type IdentityProviderPanelMode = "create" | "edit";
 type IdentityProviderRecord = IdentityProvider & Record<string, unknown>;
+type IdentityProviderPanelParams = {
+  editingProvider: string | null;
+  panelMode: IdentityProviderPanelMode;
+  panelOpen: boolean;
+};
+type SetIdentityProviderPanelParams = (values: {
+  editingProvider?: string | null;
+  panelMode?: IdentityProviderPanelMode | null;
+  panelOpen?: boolean | null;
+}) => Promise<URLSearchParams>;
 
 export function SignInTab({ organizationId }: { organizationId: string }) {
-  const queryClient = useQueryClient();
+  const [panelParams, setPanelParams] = useQueryStates(identityProviderPanelSearchParamsParser);
   const providersQuery = useQuery({
     queryKey: [identityProviderQueryKey(organizationId)],
     queryFn: async () => apiService.organizationService.listIdentityProviders(organizationId),
   });
-  const createForm = useForm<IdentityProviderFormValues>({
-    resolver: zodResolver(identityProviderCreateFormSchema) as Resolver<IdentityProviderFormValues>,
-    defaultValues: emptyProvider,
-    mode: "onChange",
-  });
-  const editForm = useForm<IdentityProviderFormValues>({
-    resolver: zodResolver(identityProviderFormSchema) as Resolver<IdentityProviderFormValues>,
-    defaultValues: emptyProvider,
-    mode: "onChange",
-  });
-  const [panelMode, setPanelMode] = useState<IdentityProviderPanelMode>("create");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<IdentityProvider | null>(null);
-  const [search, setSearch] = useState("");
-
   const providers = useMemo(() => providersQuery.data ?? [], [providersQuery.data]);
+
+  const openCreatePanel = useCallback(() => {
+    void setPanelParams({
+      panelMode: "create",
+      editingProvider: null,
+      panelOpen: true,
+    });
+  }, [setPanelParams]);
+
+  const openEditPanel = useCallback((provider: IdentityProvider) => {
+    void setPanelParams({
+      panelMode: "edit",
+      editingProvider: provider.id,
+      panelOpen: true,
+    });
+  }, [setPanelParams]);
+
+  return (
+    <div className="space-y-3">
+      <IdentityProviderListSection
+        organizationId={organizationId}
+        providers={providers}
+        isLoading={providersQuery.isLoading}
+        isError={providersQuery.isError}
+        onCreateProvider={openCreatePanel}
+        onEditProvider={openEditPanel}
+      />
+      <IdentityProviderPanelController
+        organizationId={organizationId}
+        providers={providers}
+        providersLoaded={providersQuery.isSuccess}
+        panelParams={panelParams}
+        setPanelParams={setPanelParams}
+      />
+    </div>
+  );
+}
+
+const IdentityProviderListSection = memo(function IdentityProviderListSection({
+  organizationId,
+  providers,
+  isLoading,
+  isError,
+  onCreateProvider,
+  onEditProvider,
+}: {
+  organizationId: string;
+  providers: IdentityProvider[];
+  isLoading: boolean;
+  isError: boolean;
+  onCreateProvider: () => void;
+  onEditProvider: (provider: IdentityProvider) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useQueryState("search", identityProviderSearchParser);
   const filteredProviders = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return providers;
@@ -89,17 +144,12 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
     },
   });
 
-  const openCreatePanel = useCallback(() => {
-    setPanelMode("create");
-    setEditingProvider(null);
-    setPanelOpen(true);
-  }, []);
-
-  const openEditPanel = useCallback((provider: IdentityProvider) => {
-    setPanelMode("edit");
-    setEditingProvider(provider);
-    setPanelOpen(true);
-  }, []);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      void setSearch(value || null);
+    },
+    [setSearch],
+  );
 
   const handleDeleteProvider = useCallback(
     (providerId: string) => deleteProvider(providerId),
@@ -112,18 +162,18 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
         title="Identity providers"
         description="OIDC sign-in providers available to this organization."
         search={search}
-        onSearchChange={setSearch}
+        onSearchChange={handleSearchChange}
         searchPlaceholder="Search providers, domains, or issuer"
         action={
-          <Button size="sm" onClick={openCreatePanel}>
+          <Button size="sm" onClick={onCreateProvider}>
             <PlusIcon />
             Add provider
           </Button>
         }
       />
-      {providersQuery.isLoading ? (
+      {isLoading ? (
         <RowSkeleton rows={3} />
-      ) : providersQuery.isError ? (
+      ) : isError ? (
         <ErrorState label="Identity providers could not be loaded." />
       ) : filteredProviders.length > 0 ? (
         <div className="overflow-hidden rounded-lg border bg-background">
@@ -131,7 +181,7 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
             <ProviderRow
               key={provider.id}
               provider={provider}
-              onEditProvider={openEditPanel}
+              onEditProvider={onEditProvider}
               onDeleteProvider={handleDeleteProvider}
               isDeleting={isDeletingProvider}
             />
@@ -148,46 +198,111 @@ export function SignInTab({ organizationId }: { organizationId: string }) {
           }
         />
       )}
-
-      {panelMode === "edit" ? (
-        <FormEditPanel<IdentityProviderFormValues, IdentityProviderRecord>
-          open={panelOpen}
-          onOpenChange={setPanelOpen}
-          row={(editingProvider as IdentityProviderRecord | null) ?? null}
-          form={editForm}
-          url={identityProviderEndpoint(organizationId)}
-          queryKey={identityProviderQueryKey(organizationId)}
-          title="Identity Provider"
-          fieldKey="name"
-          size="lg"
-          formComponent={<IdentityProviderForm mode="edit" />}
-          mutationFn={async (values) =>
-            apiService.organizationService.updateIdentityProvider(
-              organizationId,
-              toIdentityProvider(values),
-            )
-          }
-        />
-      ) : (
-        <FormCreatePanel<IdentityProviderFormValues, IdentityProviderRecord>
-          open={panelOpen}
-          onOpenChange={setPanelOpen}
-          form={createForm}
-          url={identityProviderEndpoint(organizationId)}
-          queryKey={identityProviderQueryKey(organizationId)}
-          title="Identity Provider"
-          description="Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings."
-          size="lg"
-          formComponent={<IdentityProviderForm mode="create" />}
-          mutationFn={async (values) =>
-            apiService.organizationService.createIdentityProvider(
-              organizationId,
-              toIdentityProvider(values),
-            )
-          }
-        />
-      )}
     </div>
+  );
+});
+
+function IdentityProviderPanelController({
+  organizationId,
+  providers,
+  providersLoaded,
+  panelParams,
+  setPanelParams,
+}: {
+  organizationId: string;
+  providers: IdentityProvider[];
+  providersLoaded: boolean;
+  panelParams: IdentityProviderPanelParams;
+  setPanelParams: SetIdentityProviderPanelParams;
+}) {
+  const { panelMode, panelOpen, editingProvider } = panelParams;
+  const createForm = useForm<IdentityProviderFormValues>({
+    resolver: zodResolver(identityProviderCreateFormSchema) as Resolver<IdentityProviderFormValues>,
+    defaultValues: emptyProvider,
+    mode: "onChange",
+  });
+  const editForm = useForm<IdentityProviderFormValues>({
+    resolver: zodResolver(identityProviderFormSchema) as Resolver<IdentityProviderFormValues>,
+    defaultValues: emptyProvider,
+    mode: "onChange",
+  });
+  const selectedProvider = useMemo(
+    () => providers.find((provider) => provider.id === editingProvider) ?? null,
+    [editingProvider, providers],
+  );
+
+  const handlePanelOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        void setPanelParams({ panelOpen: true });
+        return;
+      }
+
+      void setPanelParams({
+        panelOpen: null,
+        panelMode: null,
+        editingProvider: null,
+      });
+    },
+    [setPanelParams],
+  );
+
+  useEffect(() => {
+    if (
+      providersLoaded &&
+      panelOpen &&
+      panelMode === "edit" &&
+      editingProvider &&
+      !selectedProvider
+    ) {
+      handlePanelOpenChange(false);
+    }
+  }, [
+    editingProvider,
+    handlePanelOpenChange,
+    panelMode,
+    panelOpen,
+    providersLoaded,
+    selectedProvider,
+  ]);
+
+  return panelMode === "edit" ? (
+    <FormEditPanel<IdentityProviderFormValues, IdentityProviderRecord>
+      open={panelOpen}
+      onOpenChange={handlePanelOpenChange}
+      row={(selectedProvider as IdentityProviderRecord | null) ?? null}
+      form={editForm}
+      url={identityProviderEndpoint(organizationId)}
+      queryKey={identityProviderQueryKey(organizationId)}
+      title="Identity Provider"
+      fieldKey="name"
+      size="lg"
+      formComponent={<IdentityProviderForm mode="edit" />}
+      mutationFn={async (values) =>
+        apiService.organizationService.updateIdentityProvider(
+          organizationId,
+          toIdentityProvider(values),
+        )
+      }
+    />
+  ) : (
+    <FormCreatePanel<IdentityProviderFormValues, IdentityProviderRecord>
+      open={panelOpen}
+      onOpenChange={handlePanelOpenChange}
+      form={createForm}
+      url={identityProviderEndpoint(organizationId)}
+      queryKey={identityProviderQueryKey(organizationId)}
+      title="Identity Provider"
+      description="Configure OIDC sign-in details, allowed domains, scopes, and enforcement settings."
+      size="lg"
+      formComponent={<IdentityProviderForm mode="create" />}
+      mutationFn={async (values) =>
+        apiService.organizationService.createIdentityProvider(
+          organizationId,
+          toIdentityProvider(values),
+        )
+      }
+    />
   );
 }
 

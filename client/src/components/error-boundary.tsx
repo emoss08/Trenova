@@ -27,10 +27,14 @@ export function DataTableLazyComponent({
   children,
   onError,
   fallback,
+  columnCount = 10,
+  rowCount = 10,
 }: {
   children: React.ReactNode;
   onError?: (error: Error, info: React.ErrorInfo) => void;
   fallback?: ReactNode;
+  columnCount?: number;
+  rowCount?: number;
 }) {
   // Adapter for onError signature
   const handleBoundaryError = onError
@@ -43,7 +47,9 @@ export function DataTableLazyComponent({
 
   return (
     <ErrorBoundary FallbackComponent={ErrorBoundaryFallbackAdapter} onError={handleBoundaryError}>
-      <Suspense fallback={fallback ?? <DataTableSkeleton columnCount={10} rowCount={10} />}>
+      <Suspense
+        fallback={fallback ?? <DataTableSkeleton columnCount={columnCount} rowCount={rowCount} />}
+      >
         {children}
       </Suspense>
     </ErrorBoundary>

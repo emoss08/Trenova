@@ -7,9 +7,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	accountingcontrol "github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -21,7 +24,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB              *postgres.Connection
+	IntegrationRepo repositories.IntegrationRepository
 }
 
 type Validator struct {
@@ -29,7 +33,7 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	builder := newValidatorBuilder()
+	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
 
 	if p.DB != nil {
 		builder.
@@ -50,13 +54,19 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 func newValidatorBuilder() *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl] {
+	return newValidatorBuilderWithIntegrationRepo(nil)
+}
+
+func newValidatorBuilderWithIntegrationRepo(
+	integrationRepo repositories.IntegrationRepository,
+) *validationframework.TenantedValidatorBuilder[*accountingcontrol.AccountingControl] {
 	return validationframework.
 		NewTenantedValidatorBuilder[*accountingcontrol.AccountingControl]().
 		WithModelName("AccountingControl").
 		WithCustomRule(createAccountingBasisRule()).
 		WithCustomRule(createJournalPostingRule()).
 		WithCustomRule(createManualJournalEntryRule()).
-		WithCustomRule(createCurrencyRule()).
+		WithCustomRule(createCurrencyRule(integrationRepo)).
 		WithCustomRule(createReconciliationRule()).
 		WithCustomRule(createPeriodCloseRule())
 }
@@ -331,13 +341,15 @@ func createManualJournalEntryRule() validationframework.TenantedRule[*accounting
 		})
 }
 
-func createCurrencyRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
+func createCurrencyRule(
+	integrationRepo repositories.IntegrationRepository,
+) validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
 	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("currency").
 		OnUpdate().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
 		WithValidation(func(
-			_ context.Context,
+			ctx context.Context,
 			entity *accountingcontrol.AccountingControl,
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
@@ -393,8 +405,46 @@ func createCurrencyRule() validationframework.TenantedRule[*accountingcontrol.Ac
 				"Realized FX loss account is required when currency mode is MultiCurrency",
 			)
 
-			return nil
+			return requireEnabledOANDAIntegration(ctx, integrationRepo, entity, multiErr)
 		})
+}
+
+func requireEnabledOANDAIntegration(
+	ctx context.Context,
+	integrationRepo repositories.IntegrationRepository,
+	entity *accountingcontrol.AccountingControl,
+	multiErr *errortypes.MultiError,
+) error {
+	if integrationRepo == nil {
+		return nil
+	}
+
+	record, err := integrationRepo.GetByType(ctx, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}, integration.TypeOANDAExchangeRates)
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			addOANDAReadinessError(multiErr)
+			return nil
+		}
+		return err
+	}
+
+	spec := integration.ConfigSpecs[integration.TypeOANDAExchangeRates]
+	if !record.Enabled || !integration.HasRequiredConfiguration(record.Configuration, spec) {
+		addOANDAReadinessError(multiErr)
+	}
+
+	return nil
+}
+
+func addOANDAReadinessError(multiErr *errortypes.MultiError) {
+	multiErr.Add(
+		"currencyMode",
+		errortypes.ErrInvalidOperation,
+		"Multi-currency accounting requires an enabled OANDA exchange-rate integration with an API key",
+	)
 }
 
 func createReconciliationRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {

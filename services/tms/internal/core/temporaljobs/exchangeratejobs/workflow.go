@@ -30,7 +30,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        RefreshExchangeRatesWorkflowName,
 			Fn:          RefreshExchangeRatesWorkflow,
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
-			Description: "Refresh cached exchange rates from ExchangeRate-API for all enabled tenants",
+			Description: "Refresh cached exchange rates from OANDA for all enabled tenants",
 		},
 	}
 }
@@ -54,7 +54,6 @@ func RefreshExchangeRatesWorkflow(ctx workflow.Context) (*RefreshExchangeRatesRe
 	for _, tenant := range tenantsResult.Tenants {
 		payload := &RefreshExchangeRateTenantPayload{
 			TenantWorkItem: tenant,
-			BaseCurrency:   "USD",
 		}
 		if err := workflow.ExecuteActivity(
 			activityCtx,

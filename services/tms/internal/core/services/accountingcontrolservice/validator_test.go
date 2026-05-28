@@ -4,8 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -25,6 +28,42 @@ func (c *capturingReferenceChecker) CheckReference(
 	c.requests = append(c.requests, req)
 	return c.valid, nil
 }
+
+type stubAccountingControlIntegrationRepo struct {
+	record *integration.Integration
+	err    error
+}
+
+func (s *stubAccountingControlIntegrationRepo) ListByTenant(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) ([]*integration.Integration, error) {
+	return nil, nil
+}
+
+func (s *stubAccountingControlIntegrationRepo) ListEnabledByType(
+	_ context.Context,
+	_ integration.Type,
+) ([]*integration.Integration, error) {
+	return nil, nil
+}
+
+func (s *stubAccountingControlIntegrationRepo) GetByType(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ integration.Type,
+) (*integration.Integration, error) {
+	return s.record, s.err
+}
+
+func (s *stubAccountingControlIntegrationRepo) Upsert(
+	_ context.Context,
+	_ *integration.Integration,
+) (*integration.Integration, error) {
+	return nil, nil
+}
+
+var _ repositories.IntegrationRepository = (*stubAccountingControlIntegrationRepo)(nil)
 
 func TestNewTestValidator(t *testing.T) {
 	t.Parallel()
@@ -56,6 +95,74 @@ func TestValidateUpdate_RejectsUnknownCurrencyCode(t *testing.T) {
 
 	require.NotNil(t, multiErr)
 	assertErrorField(t, multiErr, "functionalCurrencyCode")
+}
+
+func TestValidateUpdate_RejectsMultiCurrencyWhenOANDAConfigMissing(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+		err: errortypes.NewNotFoundError("integration not found"),
+	})
+	entity := validMultiCurrencyAccountingControl()
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "currencyMode")
+}
+
+func TestValidateUpdate_RejectsMultiCurrencyWhenOANDADisabled(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+		record: validOANDAIntegration(false, "encrypted-key"),
+	})
+	entity := validMultiCurrencyAccountingControl()
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "currencyMode")
+}
+
+func TestValidateUpdate_RejectsMultiCurrencyWhenOANDAAPIKeyMissing(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+		record: validOANDAIntegration(true, ""),
+	})
+	entity := validMultiCurrencyAccountingControl()
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "currencyMode")
+}
+
+func TestValidateUpdate_AllowsMultiCurrencyWhenOANDAEnabledAndConfigured(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidatorWithIntegrationRepository(&stubAccountingControlIntegrationRepo{
+		record: validOANDAIntegration(true, "encrypted-key"),
+	})
+	entity := validMultiCurrencyAccountingControl()
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	assert.Nil(t, multiErr)
+}
+
+func TestValidateUpdate_RequiresDisallowedExchangeRateOverridesForSingleCurrency(t *testing.T) {
+	t.Parallel()
+
+	v := NewTestValidator()
+	entity := validAccountingControl()
+	entity.ExchangeRateOverridePolicy = tenant.ExchangeRateOverrideRequireApproval
+
+	multiErr := v.ValidateUpdate(t.Context(), entity)
+
+	require.NotNil(t, multiErr)
+	assertErrorField(t, multiErr, "exchangeRateOverridePolicy")
 }
 
 func TestValidateUpdate_RejectsDuplicateAutoPostEvents(t *testing.T) {
@@ -227,4 +334,25 @@ func assertErrorField(t *testing.T, multiErr *errortypes.MultiError, field strin
 	}
 
 	t.Fatalf("expected validation error for field %q, got %#v", field, multiErr.Errors)
+}
+
+func validMultiCurrencyAccountingControl() *tenant.AccountingControl {
+	entity := validAccountingControl()
+	entity.CurrencyMode = tenant.CurrencyModeMultiCurrency
+	entity.ExchangeRateOverridePolicy = tenant.ExchangeRateOverrideRequireApproval
+	entity.RealizedFXGainAccountID = pulid.MustNew("gla_")
+	entity.RealizedFXLossAccountID = pulid.MustNew("gla_")
+	return entity
+}
+
+func validOANDAIntegration(enabled bool, apiKey string) *integration.Integration {
+	return &integration.Integration{
+		Type:    integration.TypeOANDAExchangeRates,
+		Enabled: enabled,
+		Configuration: map[string]any{
+			"apiKey":          apiKey,
+			"baseUrl":         "https://exchange-rates-api.oanda.com",
+			"defaultRateType": "mid",
+		},
+	}
 }

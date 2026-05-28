@@ -1,8 +1,13 @@
-const exchangeRateAPILogo = "/integrations/logos/exchangerateapi.webp";
+const oandaLogoLight = "/integrations/logos/oanada-light.svg";
+const oandaLogoDark = "/integrations/logos/oanada-dark.svg";
+
 import trenovaLogo from "@/assets/logo.webp";
 import { SensitiveField } from "@/components/fields/sensitive-field";
+import { SelectField } from "@/components/fields/select-field";
+import { InputField } from "@/components/fields/input-field";
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
@@ -12,14 +17,32 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { UpdateIntegrationConfigRequest } from "@/types/integration";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-const INTEGRATION_TYPE = "ExchangeRateAPI";
+const INTEGRATION_TYPE = "OANDAExchangeRates";
 
-export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose: () => void }) {
+const rateTypeOptions = [
+  {
+    label: "Midpoint",
+    value: "mid",
+    description: "Default settlement policy",
+  },
+  {
+    label: "Bid",
+    value: "bid",
+    description: "Provider bid rate",
+  },
+  {
+    label: "Ask",
+    value: "ask",
+    description: "Provider ask rate",
+  },
+];
+
+export function OANDAExchangeRatesForm({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
@@ -32,6 +55,8 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
       enabled: false,
       configuration: {
         apiKey: "",
+        baseUrl: "https://exchange-rates-api.oanda.com",
+        defaultRateType: "mid",
       },
     },
   });
@@ -44,10 +69,13 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
       return;
     }
 
+    const valueByKey = new Map(response.fields.map((field) => [field.key, field.value ?? ""]));
     reset({
       enabled: response.enabled,
       configuration: {
         apiKey: "",
+        baseUrl: valueByKey.get("baseUrl") || "https://exchange-rates-api.oanda.com",
+        defaultRateType: valueByKey.get("defaultRateType") || "mid",
       },
     });
   }, [open, response, reset]);
@@ -56,9 +84,9 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
     mutationFn: (payload: UpdateIntegrationConfigRequest) =>
       apiService.integrationService.updateConfig(INTEGRATION_TYPE, payload),
     setFormError: setError,
-    resourceName: "ExchangeRate-API configuration",
+    resourceName: "OANDA exchange-rate configuration",
     onSuccess: async () => {
-      toast.success("ExchangeRate-API integration updated");
+      toast.success("OANDA exchange-rate integration updated");
       await Promise.all([
         queryClient.invalidateQueries({
           queryKey: queries.integration.config(INTEGRATION_TYPE).queryKey,
@@ -70,17 +98,30 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
     },
   });
 
+  const testConnectionMutation = useMutation({
+    mutationFn: () => apiService.integrationService.testConnection(INTEGRATION_TYPE),
+    onSuccess: async () => {
+      toast.success("OANDA connection successful");
+      await queryClient.invalidateQueries({
+        queryKey: queries.integration.catalog().queryKey,
+      });
+    },
+    onError: () => {
+      toast.error("OANDA connection test failed");
+    },
+  });
+
   return (
     <div className="space-y-4">
-      <ExchangeRateAPIFormHeader />
+      <OANDAExchangeRatesFormHeader />
       <Form onSubmit={handleSubmit((data) => saveMutation.mutateAsync(data))} className="space-y-4">
         <FormGroup cols={1}>
           <FormControl cols="full">
             <div className="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <div>
-                <Label htmlFor="er-api-enabled">Enable ExchangeRate-API</Label>
+                <Label htmlFor="oanda-enabled">Enable OANDA FX</Label>
                 <p className="text-xs text-muted-foreground">
-                  Toggle integration state for this business unit.
+                  Toggle settlement-grade FX data for this business unit.
                 </p>
               </div>
               <Controller
@@ -88,7 +129,7 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
                 control={control}
                 render={({ field }) => (
                   <Switch
-                    id="er-api-enabled"
+                    id="oanda-enabled"
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
@@ -102,7 +143,25 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
               control={control}
               label={`API Key ${hasApiKey ? "(leave blank to keep existing key)" : ""}`}
               autoComplete="off"
-              placeholder={hasApiKey ? "********" : "Enter your ExchangeRate-API Key"}
+              placeholder={hasApiKey ? "********" : "Enter your OANDA API key"}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              name="configuration.baseUrl"
+              control={control}
+              label="Base URL"
+              autoComplete="off"
+              placeholder="https://exchange-rates-api.oanda.com"
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <SelectField
+              name="configuration.defaultRateType"
+              control={control}
+              label="Default Rate Type"
+              options={rateTypeOptions}
+              placeholder="Select rate type"
             />
           </FormControl>
         </FormGroup>
@@ -110,22 +169,38 @@ export function ExchangeRateAPIForm({ open, onClose }: { open: boolean; onClose:
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            size="sm"
-            type="submit"
-            isLoading={saveMutation.isPending}
-            loadingText="Saving..."
-            disabled={configQuery.isLoading}
-          >
-            Save Changes
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => testConnectionMutation.mutateAsync()}
+              isLoading={testConnectionMutation.isPending}
+              loadingText="Testing..."
+              disabled={configQuery.isLoading || saveMutation.isPending}
+            >
+              Test Connection
+            </Button>
+            <Button
+              size="sm"
+              type="submit"
+              isLoading={saveMutation.isPending}
+              loadingText="Saving..."
+              disabled={configQuery.isLoading}
+            >
+              Save Changes
+            </Button>
+          </div>
         </DialogFooter>
       </Form>
     </div>
   );
 }
 
-function ExchangeRateAPIFormHeader() {
+function OANDAExchangeRatesFormHeader() {
+  const { theme } = useTheme();
+  const logo = theme === "dark" ? oandaLogoDark : oandaLogoLight;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-center gap-4">
@@ -135,14 +210,17 @@ function ExchangeRateAPIFormHeader() {
           <div className="size-1 rounded-full bg-muted-foreground" />
           <div className="size-1 rounded-full bg-muted-foreground" />
         </div>
-        <LazyImage src={exchangeRateAPILogo} alt="ExchangeRate-API Logo" className="size-8" />
+        <LazyImage src={logo} alt="OANDA Logo" className="size-20 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
-        <h3 className="text-lg font-semibold">Connect with ExchangeRate-API</h3>
+        <h3 className="text-lg font-semibold">Connect with OANDA Exchange Rates</h3>
         <div className="flex flex-row items-center justify-center gap-1">
-          <p className="text-xs text-muted-foreground">To get a free API key, visit</p>
-          <ExternalLink href="https://www.exchangerate-api.com/" className="text-xs">
-            ExchangeRate-API.
+          <p className="text-xs text-muted-foreground">Midpoint is used by default for quotes.</p>
+          <ExternalLink
+            href="https://www.oanda.com/foreign-exchange-data-services/en/exchange-rates-api/"
+            className="text-xs"
+          >
+            OANDA FXDS
           </ExternalLink>
         </div>
       </div>

@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { PTOFilterPopover } from "../pto-filter-popover";
 import { HeaderContent } from "../pto-header-components";
 import { usePTOFilters } from "../use-pto-filters";
-import { ptoSearchParamsParser } from "../use-pto-state";
+import { requestPTOFiltersSearchParamsParser } from "../use-pto-state";
 import {
   RequestedPTOEmptyState,
   RequestedPTOErrorState,
@@ -18,7 +18,7 @@ import {
 import { UpcomingPTOCard } from "./upcoming-pto-card";
 
 export function RequestedPTOOverview() {
-  const [searchParams] = useQueryStates(ptoSearchParamsParser);
+  const [searchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
 
   const query = useInfiniteQuery({
     queryKey: [
@@ -157,7 +157,7 @@ function RequestedPTOOverviewOuter({
 }
 
 function RequestedPTOHeader() {
-  const [, setSearchParams] = useQueryStates(ptoSearchParamsParser);
+  const [, setSearchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
   const { defaultValues } = usePTOFilters();
 
   const handleFilterSubmit = useCallback(

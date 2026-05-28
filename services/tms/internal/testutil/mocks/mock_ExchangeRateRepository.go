@@ -41,6 +41,74 @@ func (_m *MockExchangeRateRepository) EXPECT() *MockExchangeRateRepository_Expec
 	return &MockExchangeRateRepository_Expecter{mock: &_m.Mock}
 }
 
+// CreateSettlementQuote provides a mock function for the type MockExchangeRateRepository
+func (_mock *MockExchangeRateRepository) CreateSettlementQuote(ctx context.Context, req *repositories.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSettlementQuote")
+	}
+
+	var r0 *exchangerate.SettlementQuote
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CreateSettlementQuoteRequest) *exchangerate.SettlementQuote); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*exchangerate.SettlementQuote)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CreateSettlementQuoteRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockExchangeRateRepository_CreateSettlementQuote_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSettlementQuote'
+type MockExchangeRateRepository_CreateSettlementQuote_Call struct {
+	*mock.Call
+}
+
+// CreateSettlementQuote is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CreateSettlementQuoteRequest
+func (_e *MockExchangeRateRepository_Expecter) CreateSettlementQuote(ctx interface{}, req interface{}) *MockExchangeRateRepository_CreateSettlementQuote_Call {
+	return &MockExchangeRateRepository_CreateSettlementQuote_Call{Call: _e.mock.On("CreateSettlementQuote", ctx, req)}
+}
+
+func (_c *MockExchangeRateRepository_CreateSettlementQuote_Call) Run(run func(ctx context.Context, req *repositories.CreateSettlementQuoteRequest)) *MockExchangeRateRepository_CreateSettlementQuote_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CreateSettlementQuoteRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CreateSettlementQuoteRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockExchangeRateRepository_CreateSettlementQuote_Call) Return(settlementQuote *exchangerate.SettlementQuote, err error) *MockExchangeRateRepository_CreateSettlementQuote_Call {
+	_c.Call.Return(settlementQuote, err)
+	return _c
+}
+
+func (_c *MockExchangeRateRepository_CreateSettlementQuote_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error)) *MockExchangeRateRepository_CreateSettlementQuote_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetLatestDate provides a mock function for the type MockExchangeRateRepository
 func (_mock *MockExchangeRateRepository) GetLatestDate(ctx context.Context, tenantInfo pagination.TenantInfo) (*time.Time, error) {
 	ret := _mock.Called(ctx, tenantInfo)

@@ -16,14 +16,14 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            "exchange-rate-refresh",
-			Description:   "Refresh cached exchange rates from ExchangeRate-API daily for all enabled tenants",
+			Description:   "Refresh cached exchange rates from OANDA daily for all enabled tenants",
 			Spec:          schedule.Cron("0 6 * * *"),
 			Workflow:      RefreshExchangeRatesWorkflow,
 			TaskQueue:     temporaltype.IntegrationTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "exchange-rate-refresh",
-				"source":  "v6.exchangerate-api.com",
+				"source":  "exchange-rates-api.oanda.com",
 			},
 		},
 	}

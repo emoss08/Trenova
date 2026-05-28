@@ -4,9 +4,11 @@ import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormSaveDock } from "@/components/form-save-dock";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import { usePermissions } from "@/hooks/use-permission";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
   accountingBasisChoices,
@@ -26,16 +28,31 @@ import {
   revenueRecognitionPolicyChoices,
 } from "@/lib/choices";
 import { queries } from "@/lib/queries";
+import { OANDAExchangeRatesIntegrationModal } from "@/routes/admin/integrations/_components/oanda/oanda-integration-modal";
 import { apiService } from "@/services/api";
-import type {
-  AccountingControl,
-  JournalSourceEvent,
-} from "@/types/accounting-control";
+import type { AccountingControl, JournalSourceEvent } from "@/types/accounting-control";
 import { accountingControlSchema } from "@/types/accounting-control";
+import { Resource } from "@/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Settings2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { FormProvider, type Resolver, useForm, useFormContext, useWatch } from "react-hook-form";
+
+const OANDA_INTEGRATION_TYPE = "OANDAExchangeRates";
+
+function sanitizeAccountingControlForSubmit(values: AccountingControl): AccountingControl {
+  if (values.currencyMode !== "SingleCurrency") {
+    return values;
+  }
+
+  return {
+    ...values,
+    exchangeRateOverridePolicy: "Disallow",
+    realizedFxGainAccountId: null,
+    realizedFxLossAccountId: null,
+  };
+}
 
 export default function AccountingControlForm() {
   const { data } = useSuspenseQuery({
@@ -61,7 +78,7 @@ export default function AccountingControlForm() {
 
   const onSubmit = useCallback(
     async (values: AccountingControl) => {
-      await mutateAsync(values);
+      await mutateAsync(sanitizeAccountingControlForSubmit(values));
     },
     [mutateAsync],
   );
@@ -134,7 +151,6 @@ function RecognitionPolicyCard() {
 function JournalPolicyCard() {
   const { control, getValues, setValue } = useFormContext<AccountingControl>();
   const journalPostingMode = useWatch({ control, name: "journalPostingMode" });
-  const currencyMode = useWatch({ control, name: "currencyMode" });
   const autoPostSourceEvents = useWatch({ control, name: "autoPostSourceEvents" }) ?? [];
 
   const toggleEvent = useCallback(
@@ -172,17 +188,15 @@ function JournalPolicyCard() {
               <div className="flex flex-col gap-3">
                 <Label className="text-sm font-medium">Auto-Post Source Events</Label>
                 <p className="text-sm text-muted-foreground">
-                  Select the posted business events that are allowed to generate journal entries automatically.
+                  Select the posted business events that are allowed to generate journal entries
+                  automatically.
                 </p>
                 <FormGroup cols={2}>
                   {journalSourceEventChoices.map((option) => {
                     const checked = autoPostSourceEvents.includes(option.value);
 
                     return (
-                      <label
-                        key={option.value}
-                        className="flex items-center gap-2 text-sm"
-                      >
+                      <label key={option.value} className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={checked}
                           onCheckedChange={(nextChecked) =>
@@ -296,30 +310,6 @@ function JournalPolicyCard() {
               clearable
             />
           </FormControl>
-          {currencyMode === "MultiCurrency" && (
-            <>
-              <FormControl className="max-w-[420px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  name="realizedFxGainAccountId"
-                  label="Realized FX Gain Account"
-                  placeholder="Select FX gain account"
-                  description="Default account for realized foreign exchange gains in multi-currency accounting."
-                  clearable
-                />
-              </FormControl>
-              <FormControl className="max-w-[420px]">
-                <GLAccountAutocompleteField
-                  control={control}
-                  name="realizedFxLossAccountId"
-                  label="Realized FX Loss Account"
-                  placeholder="Select FX loss account"
-                  description="Default account for realized foreign exchange losses in multi-currency accounting."
-                  clearable
-                />
-              </FormControl>
-            </>
-          )}
         </FormGroup>
       </CardContent>
     </Card>
@@ -426,61 +416,205 @@ function PeriodAndReconciliationCard() {
 }
 
 function CurrencyAndAccountsCard() {
-  const { control } = useFormContext<AccountingControl>();
+  const { control, getValues, setValue } = useFormContext<AccountingControl>();
+  const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
+  const currencyMode = useWatch({ control, name: "currencyMode" });
+  const isMultiCurrency = currencyMode === "MultiCurrency";
+  const integrationPermissions = usePermissions(Resource.Integration);
+  const canReadIntegrations = integrationPermissions.canRead;
+
+  const runtimeConfigQuery = useQuery({
+    ...queries.integration.runtimeConfig(OANDA_INTEGRATION_TYPE),
+    enabled: isMultiCurrency,
+    throwOnError: false,
+  });
+
+  useEffect(() => {
+    if (currencyMode !== "SingleCurrency") {
+      return;
+    }
+
+    if (getValues("exchangeRateOverridePolicy") !== "Disallow") {
+      setValue("exchangeRateOverridePolicy", "Disallow", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+    if (getValues("realizedFxGainAccountId")) {
+      setValue("realizedFxGainAccountId", null, { shouldDirty: true, shouldValidate: true });
+    }
+    if (getValues("realizedFxLossAccountId")) {
+      setValue("realizedFxLossAccountId", null, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [currencyMode, getValues, setValue]);
+
+  const oandaEnabled = runtimeConfigQuery.data?.enabled ?? false;
+  const oandaConfigured = runtimeConfigQuery.data?.configured ?? false;
+  const oandaReady = runtimeConfigQuery.data?.ready ?? false;
+  const hasOANDAApiKey =
+    runtimeConfigQuery.data?.missingRequiredFields.includes("apiKey") === false;
+  const showCurrencyPolicy = isMultiCurrency && oandaReady;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Currency Policy</CardTitle>
-        <CardDescription>
-          Configure functional currency, exchange-rate date selection, and override handling for
-          single-currency or multi-currency accounting.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="max-w-prose">
-        <FormGroup cols={1}>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="currencyMode"
-              label="Currency Mode"
-              description="Determines whether the organization operates in a single functional currency or supports foreign-currency transactions."
-              options={currencyModeChoices}
-              rules={{ required: true }}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Currency Settings</CardTitle>
+          <CardDescription>
+            Configure the accounting currency mode and functional currency for financial reporting.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="max-w-prose">
+          <FormGroup cols={1}>
+            {isMultiCurrency ? (
+              <OANDAReadinessPanel
+                enabled={oandaEnabled}
+                configured={oandaConfigured}
+                hasApiKey={hasOANDAApiKey}
+                loading={runtimeConfigQuery.isLoading}
+                canReadIntegrations={canReadIntegrations}
+                ready={oandaReady}
+                onConfigure={() => setIsOANDAModalOpen(true)}
+              />
+            ) : null}
+            <FormControl className="max-w-[420px]">
+              <SelectField
+                control={control}
+                name="currencyMode"
+                label="Currency Mode"
+                description="Determines whether the organization operates in a single functional currency or supports foreign-currency transactions."
+                options={currencyModeChoices}
+                rules={{ required: true }}
+              />
+            </FormControl>
+            <FormControl className="max-w-[420px]">
+              <SelectField
+                control={control}
+                name="functionalCurrencyCode"
+                label="Functional Currency"
+                description="Base currency used for organization accounting and financial reporting."
+                options={currencyChoices}
+                rules={{ required: true }}
+              />
+            </FormControl>
+            {isMultiCurrency && showCurrencyPolicy && (
+              <>
+                <div className="flex flex-col gap-1 border-t pt-4">
+                  <h3 className="text-sm font-medium">Currency Policy</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure exchange-rate date selection, override handling, and realized FX
+                    accounts.
+                  </p>
+                </div>
+                <FormControl className="max-w-[420px]">
+                  <SelectField
+                    control={control}
+                    name="exchangeRateDatePolicy"
+                    label="Exchange Rate Date Policy"
+                    description="Determines which date is used to select the exchange rate for multi-currency accounting."
+                    options={exchangeRateDatePolicyChoices}
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl className="max-w-[420px]">
+                  <SelectField
+                    control={control}
+                    name="exchangeRateOverridePolicy"
+                    label="Exchange Rate Override Policy"
+                    description="Controls whether users may override exchange rates and whether those overrides require approval."
+                    options={exchangeRateOverridePolicyChoices}
+                    rules={{ required: true }}
+                  />
+                </FormControl>
+                <FormControl className="max-w-[420px]">
+                  <GLAccountAutocompleteField
+                    control={control}
+                    name="realizedFxGainAccountId"
+                    label="Realized FX Gain Account"
+                    placeholder="Select FX gain account"
+                    description="Default account for realized foreign exchange gains in multi-currency accounting."
+                    clearable
+                  />
+                </FormControl>
+                <FormControl className="max-w-[420px]">
+                  <GLAccountAutocompleteField
+                    control={control}
+                    name="realizedFxLossAccountId"
+                    label="Realized FX Loss Account"
+                    placeholder="Select FX loss account"
+                    description="Default account for realized foreign exchange losses in multi-currency accounting."
+                    clearable
+                  />
+                </FormControl>
+              </>
+            )}
+          </FormGroup>
+        </CardContent>
+      </Card>
+      <OANDAExchangeRatesIntegrationModal
+        open={isOANDAModalOpen && canReadIntegrations}
+        onOpenChange={setIsOANDAModalOpen}
+      />
+    </>
+  );
+}
+
+function OANDAReadinessPanel({
+  enabled,
+  configured,
+  hasApiKey,
+  loading,
+  canReadIntegrations,
+  ready,
+  onConfigure,
+}: {
+  enabled: boolean;
+  configured: boolean;
+  hasApiKey: boolean;
+  loading: boolean;
+  canReadIntegrations: boolean;
+  ready: boolean;
+  onConfigure: () => void;
+}) {
+  const title = ready ? "OANDA connected" : "OANDA required";
+  let description = "Connect OANDA to unlock multi-currency exchange-rate policy fields.";
+  if (loading) {
+    description = "Checking OANDA readiness.";
+  } else if (ready) {
+    description = "Multi-currency exchange-rate policy fields are available.";
+  } else if (enabled && configured && hasApiKey) {
+    description = "Enable OANDA to unlock multi-currency exchange-rate policy fields.";
+  }
+
+  return (
+    <div className="max-w-[420px] rounded-md border border-border bg-background px-3.5 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-2">
+            <span
+              className={
+                ready
+                  ? "size-1.5 shrink-0 rounded-full bg-success"
+                  : "size-1.5 shrink-0 rounded-full bg-muted-foreground/50"
+              }
             />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="functionalCurrencyCode"
-              label="Functional Currency"
-              description="Base currency used for organization accounting and financial reporting."
-              options={currencyChoices}
-              rules={{ required: true }}
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="exchangeRateDatePolicy"
-              label="Exchange Rate Date Policy"
-              description="Determines which date is used to select the exchange rate for multi-currency accounting."
-              options={exchangeRateDatePolicyChoices}
-              rules={{ required: true }}
-            />
-          </FormControl>
-          <FormControl className="max-w-[420px]">
-            <SelectField
-              control={control}
-              name="exchangeRateOverridePolicy"
-              label="Exchange Rate Override Policy"
-              description="Controls whether users may override exchange rates and whether those overrides require approval."
-              options={exchangeRateOverridePolicyChoices}
-              rules={{ required: true }}
-            />
-          </FormControl>
-        </FormGroup>
-      </CardContent>
-    </Card>
+            <p className="text-sm font-medium text-foreground">{title}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-fit shrink-0"
+          onClick={onConfigure}
+          disabled={!canReadIntegrations}
+          title={!canReadIntegrations ? "Integration permission required" : "Configure OANDA"}
+        >
+          <Settings2 className="size-4" />
+          Configure
+        </Button>
+      </div>
+    </div>
   );
 }

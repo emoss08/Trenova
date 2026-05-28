@@ -144,8 +144,8 @@ export function CurrencyConverter() {
   });
 
   const result = convertQuery.data as RateConversionResult | undefined;
-  const rate = result ? result.rate : null;
-  const converted = result ? result.converted : null;
+  const rate = result ? Number.parseFloat(result.rate) : null;
+  const converted = result ? Number.parseFloat(result.converted) : null;
 
   return (
     <div className="space-y-4">
@@ -193,7 +193,8 @@ export function CurrencyConverter() {
               {toCurrency}
             </div>
             <div className="text-xs text-muted-foreground">
-              1 {fromCurrency} = {rate.toLocaleString(undefined, {
+              1 {fromCurrency} ={" "}
+              {rate.toLocaleString(undefined, {
                 minimumFractionDigits: 6,
                 maximumFractionDigits: 6,
               })}{" "}
@@ -201,6 +202,11 @@ export function CurrencyConverter() {
             </div>
             {result?.date && (
               <div className="text-xs text-muted-foreground">Rate as of {result.date}</div>
+            )}
+            {result?.provider && (
+              <div className="text-xs text-muted-foreground">
+                {result.provider} {result.rateType ?? "mid"} rate - not a settlement quote
+              </div>
             )}
           </div>
         ) : (

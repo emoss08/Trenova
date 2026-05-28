@@ -533,6 +533,22 @@ func (r *Registry) registerWorkerResources() {
 		},
 		DefaultSensitivity: SensitivityRestricted,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceWorkerPTO.String(),
+		DisplayName: "Worker PTO",
+		Description: "Worker paid time off requests and approvals",
+		Category:    "Workers",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View worker PTO requests"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create worker PTO requests"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify worker PTO requests"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export worker PTO data"},
+			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve worker PTO requests"},
+			{Operation: OpReject, DisplayName: "Reject", Description: "Reject worker PTO requests"},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
 }
 
 func (r *Registry) registerOperationsResources() {
@@ -823,6 +839,42 @@ func (r *Registry) registerCommodityResources() {
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
 func (r *Registry) registerAccountingResources() {
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAccountingControl.String(),
+		DisplayName:        "Accounting Control",
+		Description:        "Accounting policy and posting control configuration",
+		Category:           "Accounting",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceBillingControl.String(),
+		DisplayName:        "Billing Control",
+		Description:        "Billing policy and workflow control configuration",
+		Category:           "Accounting",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceInvoiceAdjustmentControl.String(),
+		DisplayName:        "Invoice Adjustment Control",
+		Description:        "Invoice adjustment policy and approval control configuration",
+		Category:           "Accounting",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceAccountType.String(),
+		DisplayName:        "Account Type",
+		Description:        "Chart of accounts type definitions",
+		Category:           "Accounting",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceGeneralLedgerAccount.String(),
 		DisplayName:        "General Ledger Account",

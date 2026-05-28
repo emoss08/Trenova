@@ -8,7 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
-import { searchParamsParser } from "@/hooks/use-organization-setting-state";
+import {
+  organizationSettingsTabParser,
+  type OrganizationSettingsTabValue,
+} from "@/hooks/use-organization-setting-state";
 import { timezoneGroupedChoices } from "@/lib/choices";
 import { validateCroppableImage } from "@/lib/images/crop-image";
 import { IMAGE_UPLOAD_ACCEPT, organizationLogoCropConfig } from "@/lib/images/upload-config";
@@ -20,9 +23,9 @@ import { organizationSettingsSchema, type OrganizationSettings } from "@/types/o
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, CircleXIcon, CreditCardIcon, ShieldIcon, UploadIcon } from "lucide-react";
-import { useQueryStates } from "nuqs";
+import { useQueryState } from "nuqs";
 import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Activity, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { BillingUsageTab } from "./billing-usage-tab";
@@ -64,7 +67,7 @@ export default function OrganizationSettingsForm() {
     defaultValues: emptyOrganizationDefaults,
   });
 
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [tab, setTab] = useQueryState("tab", organizationSettingsTabParser);
 
   const { handleSubmit, setError, reset } = form;
 
@@ -142,15 +145,8 @@ export default function OrganizationSettingsForm() {
 
   return (
     <Tabs
-      value={searchParams.tab}
-      onValueChange={(value) =>
-        setSearchParams({
-          tab: value,
-          securityTab: value === "security" ? searchParams.securityTab : null,
-          activityView: value === "security" ? searchParams.activityView : null,
-          directoryId: value === "security" ? searchParams.directoryId : null,
-        })
-      }
+      value={tab}
+      onValueChange={(value) => void setTab(value as OrganizationSettingsTabValue)}
       className="gap-1 px-4"
     >
       <TabsList variant="underline">
@@ -168,21 +164,27 @@ export default function OrganizationSettingsForm() {
         </TabsTab>
       </TabsList>
       <TabsContent value="general" className="pb-10">
-        <FormProvider {...form}>
-          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-            <LogoForm organizationId={organizationId} onLogoUpdated={handleLogoUpdated} />
-            <GeneralForm />
-            <ComplianceForm />
-            <AddressForm />
-            <FormSaveDock saveButtonContent="Save Changes" />
-          </Form>
-        </FormProvider>
+        <Activity mode={tab === "general" ? "visible" : "hidden"}>
+          <FormProvider {...form}>
+            <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+              <LogoForm organizationId={organizationId} onLogoUpdated={handleLogoUpdated} />
+              <GeneralForm />
+              <ComplianceForm />
+              <AddressForm />
+              <FormSaveDock saveButtonContent="Save Changes" />
+            </Form>
+          </FormProvider>
+        </Activity>
       </TabsContent>
       <TabsContent value="security">
-        <SecurityAccessWorkspace organizationId={organizationId} />
+        <Activity mode={tab === "security" ? "visible" : "hidden"}>
+          <SecurityAccessWorkspace organizationId={organizationId} />
+        </Activity>
       </TabsContent>
       <TabsContent value="billing-usage" className="pb-10">
-        <BillingUsageTab />
+        <Activity mode={tab === "billing-usage" ? "visible" : "hidden"}>
+          <BillingUsageTab />
+        </Activity>
       </TabsContent>
     </Tabs>
   );

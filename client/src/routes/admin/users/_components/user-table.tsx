@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
@@ -8,6 +9,7 @@ import type { User } from "@/types/user";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { CircleCheckIcon, LayersPlus } from "lucide-react";
+import { useQueryStates } from "nuqs";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./user-columns";
@@ -17,6 +19,7 @@ export default function UserTable() {
   const { onlineUserIDs } = useOnlineUsers();
   const columns = useMemo(() => getColumns(onlineUserIDs), [onlineUserIDs]);
   const queryClient = useQueryClient();
+  const [, setPanelSearchParams] = useQueryStates(panelSearchParamsParser);
 
   const handleBulkStatusUpdate = useCallback(
     async (rows: User[], status: string) => {
@@ -59,21 +62,30 @@ export default function UserTable() {
     [handleBulkStatusUpdate],
   );
 
-  const handleAddMembership = useCallback((_row: Row<User>) => {
-    // TODO: implement add membership dialog
-  }, []);
+  const handleManageMemberships = useCallback(
+    (row: Row<User>) => {
+      const userId = row.original.id;
+      if (!userId) return;
+
+      void setPanelSearchParams({
+        panelType: "edit",
+        panelEntityId: userId,
+      });
+    },
+    [setPanelSearchParams],
+  );
 
   const contextMenuActions = useMemo<RowAction<User>[]>(
     () => [
       {
-        id: "add-membership",
-        label: "Add Membership",
+        id: "manage-memberships",
+        label: "Manage Memberships",
         icon: LayersPlus,
-        onClick: handleAddMembership,
+        onClick: handleManageMemberships,
         hidden: (row) => row.original.status === "Inactive",
       },
     ],
-    [handleAddMembership],
+    [handleManageMemberships],
   );
 
   return (

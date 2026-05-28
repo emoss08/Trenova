@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -39,6 +40,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/convert", h.convert)
 	api.GET("/latest", h.latest)
 	api.POST("/refresh", h.refresh)
+	api.POST("/settlement-quotes", h.createSettlementQuote)
 }
 
 func (h *Handler) convert(c *gin.Context) {
@@ -129,4 +131,30 @@ func (h *Handler) refresh(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func (h *Handler) createSettlementQuote(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(services.CreateSettlementQuoteRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	result, err := h.service.CreateSettlementQuote(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		req,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, result)
 }

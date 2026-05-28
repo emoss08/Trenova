@@ -29,7 +29,7 @@ import { useQueryStates } from "nuqs";
 import { useDeferredValue, useEffect, useState } from "react";
 import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
-import { queueSearchParamsParser } from "../use-billing-queue-state";
+import { queueSidebarSearchParamsParser } from "../use-billing-queue-state";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueCancelDialog } from "./billing-queue-cancel-dialog";
 import { BillingQueueItemCard } from "./billing-queue-item-card";
@@ -70,7 +70,7 @@ export function BillingQueueSidebar({
   selectedItemId: string | null;
   onSelectItem: (id: string) => void;
 }) {
-  const [searchParams, setSearchParams] = useQueryStates(queueSearchParamsParser);
+  const [searchParams, setSearchParams] = useQueryStates(queueSidebarSearchParamsParser);
   const {
     status: statusFilter,
     query: search,
