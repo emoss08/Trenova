@@ -371,6 +371,7 @@ func TestResource_String(t *testing.T) {
 		{ResourceInvoice, "invoice"},
 		{ResourceCustomer, "customer"},
 		{ResourceWorker, "worker"},
+		{ResourceWorkerPTO, "worker_pto"},
 		{ResourceTractor, "tractor"},
 		{ResourceTrailer, "trailer"},
 		{ResourceLocation, "location"},
@@ -418,6 +419,7 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 		ResourceInvoice.String(),
 		ResourceCustomer.String(),
 		ResourceWorker.String(),
+		ResourceWorkerPTO.String(),
 		ResourceTractor.String(),
 		ResourceTrailer.String(),
 		ResourceLocation.String(),
@@ -429,6 +431,29 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 	for _, res := range knownResources {
 		assert.True(t, reg.HasResource(res), "registry should have resource %s", res)
 	}
+}
+
+func TestRegistry_RegisterWorkerPTOResource(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+
+	def, ok := reg.Get(ResourceWorkerPTO.String())
+	require.True(t, ok)
+	assert.Equal(t, "Worker PTO", def.DisplayName)
+	assert.Equal(t, "Workers", def.Category)
+	assert.Empty(t, def.ParentResource)
+	assert.Equal(t, SensitivityRestricted, def.DefaultSensitivity)
+
+	ops := reg.GetOperationsForResource(ResourceWorkerPTO.String())
+	assert.ElementsMatch(t, []Operation{
+		OpRead,
+		OpCreate,
+		OpUpdate,
+		OpExport,
+		OpApprove,
+		OpReject,
+	}, ops)
 }
 
 func TestRegistry_HasHazmatSegregationRuleResource(t *testing.T) {

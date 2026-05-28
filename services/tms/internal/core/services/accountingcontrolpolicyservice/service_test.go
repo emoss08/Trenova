@@ -57,3 +57,41 @@ func TestValidateManualPeriodClose(t *testing.T) {
 	require.Error(t, svc.ValidateManualPeriodClose(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeSystemScheduled}))
 	require.Error(t, svc.ValidateManualPeriodClose(&tenant.AccountingControl{PeriodCloseMode: tenant.PeriodCloseModeManualOnly, RequirePeriodCloseApproval: true}))
 }
+
+func TestResolveFXQuoteDate(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{Logger: zap.NewNop()})
+
+	tests := []struct {
+		name     string
+		policy   tenant.ExchangeRateDatePolicy
+		expected int64
+	}{
+		{
+			name:     "document date policy",
+			policy:   tenant.ExchangeRateDatePolicyDocumentDate,
+			expected: 1_700_000_000,
+		},
+		{
+			name:     "accounting date policy",
+			policy:   tenant.ExchangeRateDatePolicyAccountingDate,
+			expected: 1_700_086_400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual, err := svc.ResolveFXQuoteDate(ResolveFXQuoteDateRequest{
+				Policy:         tt.policy,
+				DocumentDate:   1_700_000_000,
+				AccountingDate: 1_700_086_400,
+			})
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

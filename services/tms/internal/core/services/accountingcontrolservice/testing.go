@@ -2,6 +2,7 @@ package accountingcontrolservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -22,6 +23,14 @@ func NewTestValidatorWithReferenceChecker(
 
 	return &Validator{
 		validator: builder.Build(),
+	}
+}
+
+func NewTestValidatorWithIntegrationRepository(
+	integrationRepo repositories.IntegrationRepository,
+) *Validator {
+	return &Validator{
+		validator: newValidatorBuilderWithIntegrationRepo(integrationRepo).Build(),
 	}
 }
 

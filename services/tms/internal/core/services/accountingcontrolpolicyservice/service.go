@@ -15,6 +15,12 @@ type Params struct {
 
 type Service struct{ l *zap.Logger }
 
+type ResolveFXQuoteDateRequest struct {
+	Policy         tenant.ExchangeRateDatePolicy
+	DocumentDate   int64
+	AccountingDate int64
+}
+
 func New(p Params) *Service {
 	return &Service{l: p.Logger.Named("service.accounting-control-policy")}
 }
@@ -90,4 +96,15 @@ func (s *Service) ValidateManualPeriodClose(control *tenant.AccountingControl) e
 	}
 
 	return nil
+}
+
+func (s *Service) ResolveFXQuoteDate(req ResolveFXQuoteDateRequest) (int64, error) {
+	switch req.Policy {
+	case tenant.ExchangeRateDatePolicyDocumentDate:
+		return req.DocumentDate, nil
+	case tenant.ExchangeRateDatePolicyAccountingDate:
+		return req.AccountingDate, nil
+	default:
+		return 0, errortypes.NewBusinessError("unsupported exchange rate date policy")
+	}
 }
