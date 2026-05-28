@@ -1,3 +1,6 @@
+const reactScanScriptSource = "https://unpkg.com";
+const reactScanConnectSource = "https://www.react-grab.com";
+
 const scriptSources = [
   "'self'",
   "'unsafe-eval'",
@@ -14,6 +17,7 @@ const localDevelopmentScriptSources = [
   "https://static.cloudflareinsights.com",
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
+  reactScanScriptSource,
 ] as const;
 const styleSources = ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"] as const;
 const fontSources = ["'self'", "data:", "https://fonts.gstatic.com"] as const;
@@ -30,10 +34,7 @@ const imageSources = [
   "https://tile.openweathermap.org",
   "https://storage.trenova.app",
 ] as const;
-const localDevelopmentImageSources = [
-  "http://localhost:9000",
-  "http://127.0.0.1:9000",
-] as const;
+const localDevelopmentImageSources = ["http://localhost:9000", "http://127.0.0.1:9000"] as const;
 const connectSources = [
   "'self'",
   "https://api.trenova.app",
@@ -55,6 +56,7 @@ const localDevelopmentConnectSources = [
   "http://127.0.0.1:*",
   "ws://localhost:*",
   "ws://127.0.0.1:*",
+  reactScanConnectSource,
 ] as const;
 
 const baseSecurityHeaders = {

@@ -1,13 +1,12 @@
 import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import path from "path";
 // import { visualizer } from "rollup-plugin-visualizer";
+import { cloudflare } from "@cloudflare/vite-plugin";
+import react from "@vitejs/plugin-react";
 import { defineConfig, normalizePath } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-
-import { cloudflare } from "@cloudflare/vite-plugin";
 
 const require = createRequire(import.meta.url);
 
@@ -15,23 +14,28 @@ const pdfjsDistPath = path.dirname(require.resolve("pdfjs-dist/package.json"));
 const cMapsDir = normalizePath(path.join(pdfjsDistPath, "cmaps"));
 
 export default defineConfig({
-  plugins: [react(), // babel({ presets: [reactCompilerPreset()] }),
-  tailwindcss(), compression({
-    algorithms: ["gzip", "brotliCompress"],
-    threshold: 10240,
-  }), // visualizer({
-  //   open: !process.env.CI,
-  //   gzipSize: true,
-  //   brotliSize: true,
-  // }),
-  viteStaticCopy({
-    targets: [
-      {
-        src: cMapsDir,
-        dest: "",
-      },
-    ],
-  }), cloudflare()],
+  plugins: [
+    react(),
+    // babel({ presets: [reactCompilerPreset()] }),
+    tailwindcss(),
+    compression({
+      algorithms: ["gzip", "brotliCompress"],
+      threshold: 10240,
+    }), // visualizer({
+    //   open: !process.env.CI,
+    //   gzipSize: true,
+    //   brotliSize: true,
+    // }),
+    viteStaticCopy({
+      targets: [
+        {
+          src: cMapsDir,
+          dest: "",
+        },
+      ],
+    }),
+    cloudflare(),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
