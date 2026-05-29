@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 5
+const expectedCatalogItems = 6
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
@@ -131,9 +131,10 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Len(t, resp.Items, expectedCatalogItems)
 	require.Equal(t, integration.TypeSamsara, resp.Items[0].Type)
 	require.Equal(t, integration.TypeGoogleMaps, resp.Items[1].Type)
-	require.Equal(t, integration.TypeOpenWeatherMap, resp.Items[2].Type)
-	require.Equal(t, integration.TypeOpenAI, resp.Items[3].Type)
-	require.Equal(t, integration.TypeOANDAExchangeRates, resp.Items[4].Type)
+	require.Equal(t, integration.TypePCMiler, resp.Items[2].Type)
+	require.Equal(t, integration.TypeOpenWeatherMap, resp.Items[3].Type)
+	require.Equal(t, integration.TypeOpenAI, resp.Items[4].Type)
+	require.Equal(t, integration.TypeOANDAExchangeRates, resp.Items[5].Type)
 }
 
 func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {

@@ -3,7 +3,7 @@ import { z } from "zod";
 export const configFieldSpecSchema = z.object({
   key: z.string(),
   label: z.string(),
-  type: z.enum(["string", "url", "password", "select"]),
+  type: z.enum(["string", "url", "password", "select", "boolean", "number", "multi-select"]),
   required: z.boolean(),
   sensitive: z.boolean(),
   placeholder: z.string().optional(),

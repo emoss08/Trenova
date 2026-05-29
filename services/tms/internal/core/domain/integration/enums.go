@@ -9,7 +9,7 @@ const (
 	TypeOpenAI             = Type("OpenAI")
 	TypeOpenWeatherMap     = Type("OpenWeatherMap")
 	TypeOANDAExchangeRates = Type("OANDAExchangeRates")
-	// TypePCMiler    Type = "PCMiler"
+	TypePCMiler            = Type("PCMiler")
 	// TypeMotive     Type = "Motive"
 )
 

@@ -25,6 +25,7 @@ import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
 import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-modal";
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
+import { PCMilerIntegrationModal } from "./pcmiler/pcmiler-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -60,6 +61,7 @@ export function IntegrationCatalogCard() {
   const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
   const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
   const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
+  const [isPCMilerModalOpen, setIsPCMilerModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -138,6 +140,9 @@ export function IntegrationCatalogCard() {
       case "OANDAExchangeRates":
         setIsOANDAModalOpen(true);
         break;
+      case "PCMiler":
+        setIsPCMilerModalOpen(true);
+        break;
       default:
         break;
     }
@@ -148,7 +153,8 @@ export function IntegrationCatalogCard() {
     type === "GoogleMaps" ||
     type === "OpenAI" ||
     type === "OpenWeatherMap" ||
-    type === "OANDAExchangeRates";
+    type === "OANDAExchangeRates" ||
+    type === "PCMiler";
 
   return (
     <>
@@ -326,6 +332,7 @@ export function IntegrationCatalogCard() {
         open={isOANDAModalOpen}
         onOpenChange={setIsOANDAModalOpen}
       />
+      <PCMilerIntegrationModal open={isPCMilerModalOpen} onOpenChange={setIsPCMilerModalOpen} />
     </>
   );
 }

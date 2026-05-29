@@ -11,6 +11,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/shared/pcmiler"
 	sharedsamsara "github.com/emoss08/trenova/shared/samsara"
 	"github.com/emoss08/trenova/shared/samsara/drivers"
 )
@@ -22,6 +23,7 @@ type connectionTester interface {
 var connectionTesters = map[integration.Type]connectionTester{
 	integration.TypeSamsara:            &samsaraConnectionTester{},
 	integration.TypeOANDAExchangeRates: &oandaExchangeRatesConnectionTester{},
+	integration.TypePCMiler:            &pcmilerConnectionTester{},
 }
 
 type oandaExchangeRatesConnectionTester struct{}
@@ -109,5 +111,51 @@ func (t *samsaraConnectionTester) Test(ctx context.Context, cfg map[string]strin
 	}
 
 	_, err = client.Drivers.List(ctx, drivers.ListParams{Limit: 1})
+	return err
+}
+
+type pcmilerConnectionTester struct{}
+
+func (t *pcmilerConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	client, err := pcmiler.New(pcmiler.Config{
+		APIKey:  cfg["apiKey"],
+		BaseURL: cfg["baseUrl"],
+	})
+	if err != nil {
+		return err
+	}
+
+	options := pcmiler.RouteOptions{
+		DataVersion:         "Current",
+		Region:              "NA",
+		RoutingType:         "Practical",
+		DistanceUnits:       "Miles",
+		VehicleType:         "Truck",
+		LocationGranularity: "PostalCode",
+		TollRoads:           true,
+		BordersOpen:         true,
+	}
+	if err = testPCMilerMileage(ctx, client, options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func testPCMilerMileage(
+	ctx context.Context,
+	client *pcmiler.Client,
+	options pcmiler.RouteOptions,
+) error {
+	_, err := client.Mileage(ctx, []pcmiler.RouteRequest{
+		{
+			RouteID: "connection-test",
+			Stops: []pcmiler.Stop{
+				{City: "Princeton", State: "NJ", PostalCode: "08540"},
+				{City: "Philadelphia", State: "PA", PostalCode: "19104"},
+			},
+			Options: options,
+		},
+	})
 	return err
 }

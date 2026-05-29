@@ -161,6 +161,36 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          40,
 		PrimaryActionLabel: "View Integration",
 	},
+	{
+		Type:          integration.TypePCMiler,
+		Name:          "PC*Miler",
+		Description:   "Server-side mileage rating with Trimble PC*Miler route reports, data versions, and truck routing options.",
+		Category:      integration.CategoryMappingRouting,
+		CategoryLabel: "Mapping & Routing",
+		LogoURL:       "/integrations/empty-state/map-preview.webp",
+		LogoLightURL:  "/integrations/empty-state/map-preview.webp",
+		LogoDarkURL:   "/integrations/empty-state/map-preview.webp",
+		DocsURL:       "https://developer.trimblemaps.com/restful-apis/routing/route-reports/post-route-reports/",
+		WebsiteURL:    "https://maps.trimble.com/pcmiler/",
+		Color:         "#155e75",
+		GlowFrom:      "#155e75",
+		GlowTo:        "#84cc16",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://developer.trimblemaps.com/restful-apis/routing/route-reports/post-route-reports/",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://maps.trimble.com/pcmiler/",
+			},
+		},
+		Featured:           false,
+		SortOrder:          21,
+		PrimaryActionLabel: "View Integration",
+	},
 }
 
 type CatalogLinkKind string

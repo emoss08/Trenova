@@ -288,6 +288,9 @@ func (s *Service) TestConnection(
 
 	if err = tester.Test(ctx, cfg.Config); err != nil {
 		log.Error("connection test failed", zap.Error(err))
+		if typ == integration.TypePCMiler {
+			return nil, errortypes.NewBusinessError(err.Error()).WithInternal(err)
+		}
 		return nil, errortypes.NewBusinessError(
 			"failed to connect to " + string(typ),
 		).WithInternal(err)

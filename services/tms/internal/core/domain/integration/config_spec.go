@@ -9,6 +9,9 @@ const (
 	ConfigFieldTypeURL      ConfigFieldType = "url"
 	ConfigFieldTypePassword ConfigFieldType = "password"
 	ConfigFieldTypeSelect   ConfigFieldType = "select"
+	ConfigFieldTypeBoolean  ConfigFieldType = "boolean"
+	ConfigFieldTypeNumber   ConfigFieldType = "number"
+	ConfigFieldTypeMulti    ConfigFieldType = "multi-select"
 )
 
 type ConfigFieldSpec struct {
@@ -116,6 +119,26 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 				Default:  "mid",
 				Options:  []string{"mid", "bid", "ask"},
 				HelpText: "Midpoint is the default settlement policy for FX quotes.",
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypePCMiler: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Trimble Maps API key. The key is used only by the server and is never exposed to browsers.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
+				Placeholder: "https://pcmiler.alk.com/apis/rest/v1.0/Service.svc",
 			},
 		},
 		SupportsTestConnect: true,
