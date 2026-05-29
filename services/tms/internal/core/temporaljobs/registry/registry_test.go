@@ -16,7 +16,7 @@ func TestDefaultWorkerConfig(t *testing.T) {
 	assert.Equal(t, 10, cfg.MaxConcurrentWorkflowTaskExecutionSize)
 	assert.Equal(t, 2, cfg.MaxConcurrentWorkflowTaskPollers)
 	assert.Equal(t, 2, cfg.MaxConcurrentActivityTaskPollers)
-	assert.True(t, cfg.EnableSessionWorker)
+	assert.False(t, cfg.EnableSessionWorker)
 	assert.Equal(t, 30*time.Second, cfg.WorkerStopTimeout)
 }
 

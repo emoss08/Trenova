@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sync"
 	"time"
 
@@ -34,7 +35,7 @@ func DefaultWorkerConfig() WorkerConfig {
 		MaxConcurrentWorkflowTaskExecutionSize: 10,
 		MaxConcurrentWorkflowTaskPollers:       2,
 		MaxConcurrentActivityTaskPollers:       2,
-		EnableSessionWorker:                    true,
+		EnableSessionWorker:                    false,
 		WorkerStopTimeout:                      30 * time.Second,
 	}
 }
@@ -51,19 +52,23 @@ func (c WorkerConfig) ToWorkerOptions() worker.Options {
 }
 
 type WorkerManager struct {
-	client     client.Client
-	workers    map[string]worker.Worker
-	registries []WorkerRegistry
-	logger     *zap.Logger
-	mu         sync.RWMutex
+	client       client.Client
+	workers      map[string]worker.Worker
+	queueWorkers map[string]worker.Worker
+	queueOptions map[string]worker.Options
+	registries   []WorkerRegistry
+	logger       *zap.Logger
+	mu           sync.RWMutex
 }
 
 func NewWorkerManager(c client.Client, logger *zap.Logger) *WorkerManager {
 	return &WorkerManager{
-		client:     c,
-		workers:    make(map[string]worker.Worker),
-		registries: make([]WorkerRegistry, 0),
-		logger:     logger.Named("worker-manager"),
+		client:       c,
+		workers:      make(map[string]worker.Worker),
+		queueWorkers: make(map[string]worker.Worker),
+		queueOptions: make(map[string]worker.Options),
+		registries:   make([]WorkerRegistry, 0),
+		logger:       logger.Named("worker-manager"),
 	}
 }
 
@@ -85,12 +90,27 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 		return fmt.Errorf("%w: worker=%s", ErrTemporalClientNotConfigured, name)
 	}
 
+	opts := registry.GetWorkerOptions()
+	w, exists := m.queueWorkers[taskQueue]
+	if exists && !workerOptionsEqual(m.queueOptions[taskQueue], opts) {
+		return fmt.Errorf(
+			"worker options for task queue %q are incompatible with registry %q",
+			taskQueue,
+			name,
+		)
+	}
+
 	m.logger.Info("registering worker",
 		zap.String("name", name),
 		zap.String("taskQueue", taskQueue),
+		zap.Bool("sharedTaskQueue", exists),
 	)
 
-	w := worker.New(m.client, taskQueue, registry.GetWorkerOptions())
+	createdQueueWorker := false
+	if !exists {
+		w = worker.New(m.client, taskQueue, opts)
+		createdQueueWorker = true
+	}
 
 	if err := registry.RegisterActivities(w); err != nil {
 		return fmt.Errorf("failed to register activities for %s: %w", name, err)
@@ -100,6 +120,10 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 		return fmt.Errorf("failed to register workflows for %s: %w", name, err)
 	}
 
+	if createdQueueWorker {
+		m.queueWorkers[taskQueue] = w
+		m.queueOptions[taskQueue] = opts
+	}
 	m.workers[name] = w
 	m.registries = append(m.registries, registry)
 
@@ -115,24 +139,24 @@ func (m *WorkerManager) StartAll(_ context.Context) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	if len(m.workers) == 0 {
+	if len(m.queueWorkers) == 0 {
 		return ErrNoWorkersRegistered
 	}
 
-	m.logger.Info("starting all workers", zap.Int("count", len(m.workers)))
+	m.logger.Info("starting all workers", zap.Int("count", len(m.queueWorkers)))
 
 	var startErrors []error
-	for name, w := range m.workers {
-		m.logger.Info("starting worker", zap.String("name", name))
+	for taskQueue, w := range m.queueWorkers {
+		m.logger.Info("starting worker", zap.String("taskQueue", taskQueue))
 
 		if err := w.Start(); err != nil {
 			m.logger.Error("failed to start worker",
-				zap.String("name", name),
+				zap.String("taskQueue", taskQueue),
 				zap.Error(err),
 			)
-			startErrors = append(startErrors, fmt.Errorf("start worker %s: %w", name, err))
+			startErrors = append(startErrors, fmt.Errorf("start worker for task queue %s: %w", taskQueue, err))
 		} else {
-			m.logger.Info("worker started successfully", zap.String("name", name))
+			m.logger.Info("worker started successfully", zap.String("taskQueue", taskQueue))
 		}
 	}
 
@@ -148,10 +172,10 @@ func (m *WorkerManager) StopAll(_ context.Context) error {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	m.logger.Info("stopping all workers", zap.Int("count", len(m.workers)))
+	m.logger.Info("stopping all workers", zap.Int("count", len(m.queueWorkers)))
 
-	for name, w := range m.workers {
-		m.logger.Info("stopping worker", zap.String("name", name))
+	for taskQueue, w := range m.queueWorkers {
+		m.logger.Info("stopping worker", zap.String("taskQueue", taskQueue))
 		w.Stop()
 	}
 
@@ -165,6 +189,10 @@ func (m *WorkerManager) GetWorker(name string) (worker.Worker, bool) {
 
 	w, exists := m.workers[name]
 	return w, exists
+}
+
+func workerOptionsEqual(left, right worker.Options) bool {
+	return reflect.DeepEqual(left, right)
 }
 
 type DomainConfig struct {

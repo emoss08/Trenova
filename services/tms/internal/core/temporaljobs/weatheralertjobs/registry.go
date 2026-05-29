@@ -10,16 +10,10 @@ import (
 var DomainConfig = registry.DomainConfig{
 	Name:         "weather-alert-worker",
 	TaskQueue:    temporaltype.TaskQueueWeatherAlert.String(),
-	WorkerConfig: weatherAlertWorkerConfig(),
+	WorkerConfig: registry.DefaultWorkerConfig(),
 }
 
 var Workflows = convertWorkflows(RegisterWorkflows())
-
-func weatherAlertWorkerConfig() registry.WorkerConfig {
-	config := registry.DefaultWorkerConfig()
-	config.EnableSessionWorker = false
-	return config
-}
 
 func convertWorkflows(wfs []temporaltype.WorkflowDefinition) []registry.WorkflowDefinition {
 	result := make([]registry.WorkflowDefinition, len(wfs))

@@ -17,7 +17,7 @@ func TestDomainConfig(t *testing.T) {
 	assert.Equal(t, temporaltype.AuditTaskQueue, DomainConfig.TaskQueue)
 	assert.Equal(t, 10, DomainConfig.WorkerConfig.MaxConcurrentActivityExecutionSize)
 	assert.Equal(t, 10, DomainConfig.WorkerConfig.MaxConcurrentWorkflowTaskExecutionSize)
-	assert.True(t, DomainConfig.WorkerConfig.EnableSessionWorker)
+	assert.False(t, DomainConfig.WorkerConfig.EnableSessionWorker)
 	assert.Equal(t, 30*time.Second, DomainConfig.WorkerConfig.WorkerStopTimeout)
 }
 

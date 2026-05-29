@@ -2,11 +2,17 @@ package registry
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/nexus-rpc/sdk-go/nexus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/worker"
+	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
 )
 
@@ -55,7 +61,7 @@ func TestWorkerConfig_DefaultValues(t *testing.T) {
 	assert.Equal(t, 10, opts.MaxConcurrentWorkflowTaskExecutionSize)
 	assert.Equal(t, 2, opts.MaxConcurrentWorkflowTaskPollers)
 	assert.Equal(t, 2, opts.MaxConcurrentActivityTaskPollers)
-	assert.True(t, opts.EnableSessionWorker)
+	assert.False(t, opts.EnableSessionWorker)
 	assert.Equal(t, 30*time.Second, opts.WorkerStopTimeout)
 }
 
@@ -320,3 +326,207 @@ func TestWorkerManager_Register_NilClient(t *testing.T) {
 	assert.ErrorIs(t, err, ErrTemporalClientNotConfigured)
 	assert.ErrorContains(t, err, "worker=test-reg")
 }
+
+func TestWorkerManager_Register_SharedTaskQueueUsesOneWorker(t *testing.T) {
+	t.Parallel()
+
+	c, err := client.NewLazyClient(client.Options{})
+	require.NoError(t, err)
+	t.Cleanup(c.Close)
+
+	wm := NewWorkerManager(c, zap.NewNop())
+	first := newTestWorkerRegistry("first-worker", "shared-queue", DefaultWorkerConfig())
+	second := newTestWorkerRegistry("second-worker", "shared-queue", DefaultWorkerConfig())
+
+	require.NoError(t, wm.Register(first))
+	require.NoError(t, wm.Register(second))
+
+	firstWorker, exists := wm.GetWorker("first-worker")
+	require.True(t, exists)
+	secondWorker, exists := wm.GetWorker("second-worker")
+	require.True(t, exists)
+
+	assert.Equal(t, firstWorker, secondWorker)
+	assert.Equal(t, first.registeredWorker, second.registeredWorker)
+	assert.Len(t, wm.queueWorkers, 1)
+	assert.Len(t, wm.workers, 2)
+	assert.Equal(t, 1, first.activityRegistrations)
+	assert.Equal(t, 1, first.workflowRegistrations)
+	assert.Equal(t, 1, second.activityRegistrations)
+	assert.Equal(t, 1, second.workflowRegistrations)
+}
+
+func TestWorkerManager_StartAllStopAll_UsesUniqueQueueWorkers(t *testing.T) {
+	t.Parallel()
+
+	sharedWorker := &countingWorker{}
+	otherWorker := &countingWorker{}
+	wm := NewWorkerManager(nil, zap.NewNop())
+	wm.workers["first-worker"] = sharedWorker
+	wm.workers["second-worker"] = sharedWorker
+	wm.workers["third-worker"] = otherWorker
+	wm.queueWorkers["shared-queue"] = sharedWorker
+	wm.queueWorkers["other-queue"] = otherWorker
+
+	require.NoError(t, wm.StartAll(context.TODO()))
+	require.NoError(t, wm.StopAll(context.TODO()))
+
+	assert.Equal(t, 1, sharedWorker.startCount)
+	assert.Equal(t, 1, sharedWorker.stopCount)
+	assert.Equal(t, 1, otherWorker.startCount)
+	assert.Equal(t, 1, otherWorker.stopCount)
+}
+
+func TestWorkerManager_StartAll_ReturnsQueueWorkerErrors(t *testing.T) {
+	t.Parallel()
+
+	expectedErr := errors.New("start failed")
+	failingWorker := &countingWorker{startErr: expectedErr}
+	wm := NewWorkerManager(nil, zap.NewNop())
+	wm.workers["first-worker"] = failingWorker
+	wm.queueWorkers["shared-queue"] = failingWorker
+
+	err := wm.StartAll(context.TODO())
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "failed to start 1 worker(s)")
+	assert.ErrorContains(t, err, "shared-queue")
+	assert.Equal(t, 1, failingWorker.startCount)
+}
+
+func TestWorkerManager_Register_DuplicateRegistryNameFails(t *testing.T) {
+	t.Parallel()
+
+	c, err := client.NewLazyClient(client.Options{})
+	require.NoError(t, err)
+	t.Cleanup(c.Close)
+
+	wm := NewWorkerManager(c, zap.NewNop())
+	first := newTestWorkerRegistry("duplicate-worker", "first-queue", DefaultWorkerConfig())
+	second := newTestWorkerRegistry("duplicate-worker", "second-queue", DefaultWorkerConfig())
+
+	require.NoError(t, wm.Register(first))
+
+	err = wm.Register(second)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "worker duplicate-worker already registered")
+	assert.Len(t, wm.queueWorkers, 1)
+	assert.Len(t, wm.workers, 1)
+}
+
+func TestWorkerManager_Register_IncompatibleSharedQueueOptionsFail(t *testing.T) {
+	t.Parallel()
+
+	c, err := client.NewLazyClient(client.Options{})
+	require.NoError(t, err)
+	t.Cleanup(c.Close)
+
+	wm := NewWorkerManager(c, zap.NewNop())
+	firstConfig := DefaultWorkerConfig()
+	secondConfig := DefaultWorkerConfig()
+	secondConfig.MaxConcurrentActivityExecutionSize++
+	first := newTestWorkerRegistry("first-worker", "shared-queue", firstConfig)
+	second := newTestWorkerRegistry("second-worker", "shared-queue", secondConfig)
+
+	require.NoError(t, wm.Register(first))
+
+	err = wm.Register(second)
+
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `worker options for task queue "shared-queue" are incompatible`)
+	assert.Len(t, wm.queueWorkers, 1)
+	assert.Len(t, wm.workers, 1)
+	_, exists := wm.GetWorker("second-worker")
+	assert.False(t, exists)
+}
+
+type testWorkerRegistry struct {
+	name                  string
+	taskQueue             string
+	options               worker.Options
+	registeredWorker      worker.Worker
+	activityRegistrations int
+	workflowRegistrations int
+}
+
+func newTestWorkerRegistry(name, taskQueue string, cfg WorkerConfig) *testWorkerRegistry {
+	return &testWorkerRegistry{
+		name:      name,
+		taskQueue: taskQueue,
+		options:   cfg.ToWorkerOptions(),
+	}
+}
+
+func (r *testWorkerRegistry) GetName() string {
+	return r.name
+}
+
+func (r *testWorkerRegistry) GetTaskQueue() string {
+	return r.taskQueue
+}
+
+func (r *testWorkerRegistry) RegisterActivities(w worker.Worker) error {
+	r.registeredWorker = w
+	r.activityRegistrations++
+	return nil
+}
+
+func (r *testWorkerRegistry) RegisterWorkflows(w worker.Worker) error {
+	r.registeredWorker = w
+	r.workflowRegistrations++
+	return nil
+}
+
+func (r *testWorkerRegistry) GetWorkerOptions() worker.Options {
+	return r.options
+}
+
+type countingWorker struct {
+	startCount int
+	stopCount  int
+	startErr   error
+}
+
+func (w *countingWorker) Start() error {
+	w.startCount++
+	return w.startErr
+}
+
+func (w *countingWorker) Run(_ <-chan interface{}) error {
+	return w.Start()
+}
+
+func (w *countingWorker) Stop() {
+	w.stopCount++
+}
+
+func (w *countingWorker) RegisterWorkflow(_ interface{}) {}
+
+func (w *countingWorker) RegisterWorkflowWithOptions(
+	_ interface{},
+	_ workflow.RegisterOptions,
+) {
+}
+
+func (w *countingWorker) RegisterDynamicWorkflow(
+	_ interface{},
+	_ workflow.DynamicRegisterOptions,
+) {
+}
+
+func (w *countingWorker) RegisterActivity(_ interface{}) {}
+
+func (w *countingWorker) RegisterActivityWithOptions(
+	_ interface{},
+	_ activity.RegisterOptions,
+) {
+}
+
+func (w *countingWorker) RegisterDynamicActivity(
+	_ interface{},
+	_ activity.DynamicRegisterOptions,
+) {
+}
+
+func (w *countingWorker) RegisterNexusService(_ *nexus.Service) {}
