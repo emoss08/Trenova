@@ -55,6 +55,7 @@ import type { ResourceType } from "@/types/document-packet-rule";
 import type { InvoiceStatus } from "@/types/invoice";
 import type { DocumentKind } from "@/types/document-parsing-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
+import type { DistanceProfile } from "@/types/distance-profile";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@/types/fields";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
@@ -116,6 +117,96 @@ export const statusChoices = [
   { label: "Active", value: "Active", color: "#15803d" },
   { label: "Inactive", value: "Inactive", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<Status>>;
+
+export const distanceProfileProviderChoices = [
+  {
+    label: "PC*Miler",
+    value: "PCMiler",
+    color: "#2563eb",
+    description: "Use Trimble PC*Miler Route Reports for mileage calculations.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["provider"]>>;
+
+export const distanceProfileStatusChoices = [
+  {
+    label: "Active",
+    value: "Active",
+    color: "#15803d",
+    description: "Available for default selection and shipment mileage calculations.",
+  },
+  {
+    label: "Inactive",
+    value: "Inactive",
+    color: "#dc2626",
+    description: "Hidden from default selection while preserving historical audit data.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["status"]>>;
+
+export const distanceProfileRegionChoices = [
+  {
+    label: "North America",
+    value: "NA",
+    description: "Default PC*Miler region for North American routing.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["region"]>>;
+
+export const distanceProfileRoutingTypeChoices = [
+  {
+    label: "Practical",
+    value: "Practical",
+    color: "#0f766e",
+    description: "Preferred freight policy for balanced mileage and road suitability.",
+  },
+  {
+    label: "Shortest",
+    value: "Shortest",
+    color: "#f59e0b",
+    description: "Minimizes distance and may use less operationally preferred roads.",
+  },
+  {
+    label: "Fastest",
+    value: "Fastest",
+    color: "#2563eb",
+    description: "Prioritizes travel time where PC*Miler data supports it.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["routingType"]>>;
+
+export const distanceProfileDistanceUnitChoices = [
+  { label: "Miles", value: "Miles", description: "Store and return mileage in miles." },
+  {
+    label: "Kilometers",
+    value: "Kilometers",
+    description: "Store and return mileage in kilometers.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["distanceUnits"]>>;
+
+export const distanceProfileLocationGranularityChoices = [
+  {
+    label: "Postal Code",
+    value: "PostalCode",
+    description: "Use postal codes from stop locations for stable mileage lookups.",
+  },
+  {
+    label: "City / State",
+    value: "CityState",
+    description: "Use city and state when postal codes are unavailable or inconsistent.",
+  },
+  {
+    label: "Street Address",
+    value: "StreetAddress",
+    description: "Use street-level addresses for more precise routing.",
+  },
+  {
+    label: "Coordinates",
+    value: "Coordinates",
+    description: "Use latitude and longitude from geocoded locations.",
+  },
+  {
+    label: "Trimble Place ID",
+    value: "TrimblePlaceId",
+    description: "Use Trimble place identifiers stored on locations.",
+  },
+] satisfies ReadonlyArray<GenericSelectOption<DistanceProfile["locationGranularity"]>>;
 
 export const locationGeofenceTypeChoices = [
   { label: "Auto", value: "auto" },

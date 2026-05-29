@@ -560,11 +560,38 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "distance-controls",
+                loader: createPermissionLoader(Resource.DistanceControl),
+                async lazy() {
+                  const { DistanceControlsPage } =
+                    await import("@/routes/admin/distance-controls/page");
+                  return { Component: DistanceControlsPage };
+                },
+              },
+              {
                 path: "distance-overrides",
                 loader: createPermissionLoader(Resource.DistanceOverride),
                 async lazy() {
                   const { DistanceOverridesPage } = await import("@/routes/distance-override/page");
                   return { Component: DistanceOverridesPage };
+                },
+              },
+              {
+                path: "distance-profiles",
+                loader: createPermissionLoader(Resource.DistanceProfile),
+                async lazy() {
+                  const { DistanceProfilesPage } =
+                    await import("@/routes/admin/distance-profiles/page");
+                  return { Component: DistanceProfilesPage };
+                },
+              },
+              {
+                path: "stored-mileages",
+                loader: createPermissionLoader(Resource.StoredMileage),
+                async lazy() {
+                  const { StoredMileagesPage } =
+                    await import("@/routes/admin/stored-mileages/page");
+                  return { Component: StoredMileagesPage };
                 },
               },
               {

@@ -125,7 +125,7 @@ export default function ShipmentMapPanel({
       <div
         className={cn(
           "flex items-center justify-center rounded-lg border bg-card px-6 text-center text-sm text-muted-foreground",
-          isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-[420px]",
+          isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-full",
         )}
       >
         Google Maps is not configured for this environment, so the live shipment map cannot be

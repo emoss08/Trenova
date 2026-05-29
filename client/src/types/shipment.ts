@@ -162,6 +162,14 @@ const shipmentMoveBaseSchema = z.object({
   loaded: z.boolean().default(true),
   sequence: z.number().int().nonnegative().default(0),
   distance: z.number().nullable().optional(),
+  distanceSource: z.string().optional(),
+  distanceProvider: z.string().optional(),
+  distanceCalculatedAt: z.number().nullable().optional(),
+  distanceRouteSignature: z.string().optional(),
+  distanceDataVersion: z.string().optional(),
+  distanceRoutingType: z.string().optional(),
+  distanceUnits: z.string().optional(),
+  distanceMetadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const shipmentMoveReadMetadataSchema = z.object({
@@ -361,6 +369,26 @@ export const shipmentTotalsResponseSchema = z.object({
   totalChargeAmount: decimalStringSchema,
 });
 export type ShipmentTotalsResponse = z.infer<typeof shipmentTotalsResponseSchema>;
+
+export const shipmentDistanceMoveResultSchema = z.object({
+  moveId: optionalStringSchema,
+  moveIndex: z.number(),
+  distance: z.number(),
+  source: z.string(),
+  provider: z.string().optional(),
+  routingType: z.string().optional(),
+  dataVersion: z.string().optional(),
+  warnings: z.array(z.string()).optional(),
+  calculatedAt: z.number(),
+});
+
+export const shipmentDistanceResponseSchema = z.object({
+  shipmentId: optionalStringSchema,
+  totalDistance: z.number(),
+  moves: z.array(shipmentDistanceMoveResultSchema),
+});
+
+export type ShipmentDistanceResponse = z.infer<typeof shipmentDistanceResponseSchema>;
 
 export const shipmentUIPolicySchema = z.object({
   allowMoveRemovals: z.boolean(),

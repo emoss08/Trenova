@@ -52,6 +52,7 @@ export function MoveCard({
   } = useFormContext<Shipment>();
   const queryClient = useQueryClient();
   const move = useWatch({ control, name: `moves.${moveIndex}` });
+  const shipmentId = useWatch({ control, name: "id" });
   const [assignmentOpen, setAssignmentOpen] = useState(false);
   const [splitOpen, setSplitOpen] = useState(false);
 
@@ -85,6 +86,15 @@ export function MoveCard({
     },
   });
 
+  const recalculateDistanceMutation = useMutation({
+    mutationFn: () => apiService.shipmentService.recalculateDistance(shipmentId!),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
+      toast.success("Distance recalculated");
+    },
+    onError: () => toast.error("Failed to recalculate distance"),
+  });
+
   return (
     <div className="rounded-lg border bg-card">
       <div className="flex items-center justify-between border-b px-4 py-2.5">
@@ -94,6 +104,7 @@ export function MoveCard({
           {move?.distance ? (
             <span className="text-xs text-muted-foreground">{move.distance} mi</span>
           ) : null}
+          {move?.distanceSource ? <Badge variant="outline">{move.distanceSource}</Badge> : null}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -143,6 +154,14 @@ export function MoveCard({
                 title="Split"
                 startContent={<ScissorsIcon className="size-3.5" />}
                 onClick={() => setSplitOpen(true)}
+              />
+            )}
+            {shipmentId && (
+              <DropdownMenuItem
+                label="Recalculate Distance"
+                title="Recalculate Distance"
+                startContent={<TruckIcon className="size-3.5" />}
+                onClick={() => recalculateDistanceMutation.mutateAsync()}
               />
             )}
             <DropdownMenuSeparator />

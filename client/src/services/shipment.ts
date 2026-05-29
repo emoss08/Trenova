@@ -12,6 +12,7 @@ import {
   previousRatesResponseSchema,
   shipmentBillingReadinessSchema,
   shipmentCreateSchema,
+  shipmentDistanceResponseSchema,
   shipmentSchema,
   shipmentTotalsResponseSchema,
   shipmentUIPolicySchema,
@@ -25,6 +26,7 @@ import {
   type Shipment,
   type ShipmentBillingReadiness,
   type ShipmentCreateInput,
+  type ShipmentDistanceResponse,
   type ShipmentTotalsResponse,
   type ShipmentUIPolicy,
   type ShipmentUpdateInput,
@@ -105,6 +107,22 @@ export class ShipmentService {
       { signal },
     );
     return safeParse(shipmentTotalsResponseSchema, response, "Shipment Totals");
+  }
+
+  public async calculateDistance(payload: Shipment, signal?: AbortSignal) {
+    const response = await api.post<ShipmentDistanceResponse>(
+      "/shipments/calculate-distance/",
+      payload,
+      { signal },
+    );
+    return safeParse(shipmentDistanceResponseSchema, response, "Shipment Distance");
+  }
+
+  public async recalculateDistance(shipmentId: Shipment["id"]) {
+    const response = await api.post<ShipmentDistanceResponse>(
+      `/shipments/${shipmentId}/recalculate-distance/`,
+    );
+    return safeParse(shipmentDistanceResponseSchema, response, "Shipment Distance");
   }
 
   public async checkForDuplicateBOLs(bol: string, shipmentId?: string) {

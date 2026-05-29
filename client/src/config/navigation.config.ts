@@ -673,6 +673,16 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["distance", "override"],
     },
     {
+      id: "create-distance-profile",
+      label: "Create Distance Profile",
+      description: "Add a new distance routing profile",
+      path: "/admin/distance-profiles",
+      resource: Resource.DistanceProfile,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["distance", "profile", "routing"],
+    },
+    {
       id: "create-user",
       label: "Create User",
       description: "Add a new user",
@@ -798,10 +808,31 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/distance-controls/",
+    title: "Distance Controls",
+    group: "Organization",
+    resource: Resource.DistanceControl,
+    requiredOperation: Operation.Read,
+  },
+  {
     href: "/admin/distance-overrides/",
     title: "Distance Overrides",
     group: "Organization",
     resource: Resource.DistanceOverride,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/distance-profiles/",
+    title: "Distance Profiles",
+    group: "Organization",
+    resource: Resource.DistanceProfile,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/stored-mileages/",
+    title: "Stored Mileages",
+    group: "Organization",
+    resource: Resource.StoredMileage,
     requiredOperation: Operation.Read,
   },
   {
