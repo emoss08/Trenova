@@ -22,6 +22,10 @@ type DeleteDistanceProfileRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type DistanceProfileSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+}
+
 type DistanceProfileRepository interface {
 	List(ctx context.Context, req *ListDistanceProfileRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
 	GetByID(ctx context.Context, req GetDistanceProfileByIDRequest) (*distanceprofile.DistanceProfile, error)
@@ -31,4 +35,5 @@ type DistanceProfileRepository interface {
 	Update(ctx context.Context, entity *distanceprofile.DistanceProfile) (*distanceprofile.DistanceProfile, error)
 	Delete(ctx context.Context, req DeleteDistanceProfileRequest) error
 	SetDefault(ctx context.Context, req GetDistanceProfileByIDRequest) (*distanceprofile.DistanceProfile, error)
+	SelectOptions(ctx context.Context, req *DistanceProfileSelectOptionsRequest) (*pagination.ListResult[*distanceprofile.DistanceProfile], error)
 }

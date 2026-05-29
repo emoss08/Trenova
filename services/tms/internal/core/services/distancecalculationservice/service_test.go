@@ -61,6 +61,54 @@ func TestCanResolveMoveDistance(t *testing.T) {
 	}))
 }
 
+func TestRoundDistance(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		distance float64
+		want     float64
+	}{
+		{name: "long float rounds up", distance: 2361.7169999999996, want: 2361.72},
+		{name: "half cent rounds up", distance: 3752.4249999999997, want: 3752.43},
+		{name: "already rounded unchanged", distance: 12.34, want: 12.34},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, roundDistance(tt.distance))
+		})
+	}
+}
+
+func TestMoveResultRoundsDistance(t *testing.T) {
+	t.Parallel()
+
+	distance := 2361.7169999999996
+	move := &shipment.ShipmentMove{
+		ID:       pulid.MustNew("sm_"),
+		Distance: &distance,
+	}
+
+	result := moveResult(move, 0, nil)
+
+	assert.Equal(t, 2361.72, result.Distance)
+}
+
+func TestApplyMoveDistanceRoundsStoredValue(t *testing.T) {
+	t.Parallel()
+
+	move := &shipment.ShipmentMove{}
+	applyMoveDistance(moveDistanceParams{
+		move:     move,
+		distance: 2361.7169999999996,
+	})
+
+	assert.NotNil(t, move.Distance)
+	assert.Equal(t, 2361.72, *move.Distance)
+}
+
 func TestHazmatTypesForShipment(t *testing.T) {
 	t.Parallel()
 

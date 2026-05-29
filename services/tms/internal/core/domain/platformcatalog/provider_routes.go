@@ -125,6 +125,7 @@ func dispatchRouteRefs() []RouteRef {
 			"/api/v1/distance-profiles/",
 			"/api/v1/distance-profiles/:distanceProfileID/",
 			"/api/v1/distance-profiles/select-options/",
+			"/api/v1/distance-profiles/select-options/:distanceProfileID",
 			"/api/v1/hold-reasons/",
 			"/api/v1/hold-reasons/:holdReasonID",
 			"/api/v1/hold-reasons/select-options/",

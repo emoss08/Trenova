@@ -7,6 +7,7 @@ import type { FiscalYear } from "@/types/fiscal-year";
 import type { AccountType } from "@/types/account-type";
 import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
+import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
 import type {
@@ -939,6 +940,30 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
               {option?.description}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DistanceProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<DistanceProfile, T>) {
+  return (
+    <AutocompleteField<DistanceProfile, T>
+      link="/distance-profiles/select-options/"
+      popoutLink="/admin/distance-profiles"
+      initialLimit={50}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full min-w-0 flex-col items-start">
+          <span className="w-full truncate">{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.routingType} · {option.distanceUnits}
+            {option.isDefault ? " · Default" : ""}
+          </span>
         </div>
       )}
       {...props}

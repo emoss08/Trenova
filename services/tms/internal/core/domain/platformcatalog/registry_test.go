@@ -682,6 +682,7 @@ func protectedProductRouteFeatures() []protectedProductRouteFeature {
 		{method: "GET", pattern: "/api/v1/distance-profiles/", featureKey: FeatureDispatch},
 		{method: "GET", pattern: "/api/v1/distance-profiles/:distanceProfileID/", featureKey: FeatureDispatch},
 		{method: "GET", pattern: "/api/v1/distance-profiles/select-options/", featureKey: FeatureDispatch},
+		{method: "GET", pattern: "/api/v1/distance-profiles/select-options/:distanceProfileID", featureKey: FeatureDispatch},
 		{method: "POST", pattern: "/api/v1/distance-profiles/", featureKey: FeatureDispatch},
 		{method: "POST", pattern: "/api/v1/distance-profiles/:distanceProfileID/set-default/", featureKey: FeatureDispatch},
 		{method: "PUT", pattern: "/api/v1/distance-profiles/:distanceProfileID/", featureKey: FeatureDispatch},

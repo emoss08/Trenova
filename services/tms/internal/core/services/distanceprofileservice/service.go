@@ -149,9 +149,9 @@ func (s *Service) SetDefault(
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	req *repositories.ListDistanceProfileRequest,
+	req *repositories.DistanceProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
-	return s.repo.List(ctx, req)
+	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) logAudit(

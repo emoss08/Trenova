@@ -420,6 +420,7 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 		ResourceCustomer.String(),
 		ResourceWorker.String(),
 		ResourceWorkerPTO.String(),
+		ResourceDistanceOverride.String(),
 		ResourceTractor.String(),
 		ResourceTrailer.String(),
 		ResourceLocation.String(),
@@ -468,6 +469,19 @@ func TestRegistry_HasShipmentControlResource(t *testing.T) {
 
 	reg := NewRegistry()
 	assert.True(t, reg.HasResource(ResourceShipmentControl.String()))
+}
+
+func TestRegistry_HasDistanceOverrideResource(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+
+	def, ok := reg.Get(ResourceDistanceOverride.String())
+	require.True(t, ok)
+	assert.Equal(t, "Distance Override", def.DisplayName)
+	assert.Equal(t, "Operations", def.Category)
+	assert.Equal(t, SensitivityInternal, def.DefaultSensitivity)
+	assert.Contains(t, reg.GetOperationsForResource(ResourceDistanceOverride.String()), OpRead)
 }
 
 func TestRegistry_ParentChildRelationships(t *testing.T) {

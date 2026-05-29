@@ -2,6 +2,7 @@ package distancecalculationservice
 
 import (
 	"context"
+	"math"
 	"slices"
 	"sort"
 	"strconv"
@@ -28,6 +29,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const distancePrecision = 100
 
 type Params struct {
 	fx.In
@@ -103,7 +106,7 @@ func (s *Service) ResolveForShipment(
 		if !canResolveMoveDistance(move) {
 			distance := applyManualDistance(move, signature, now)
 			resp.Moves = append(resp.Moves, moveResult(move, idx, nil))
-			resp.TotalDistance += distance
+			resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 			continue
 		}
 
@@ -120,7 +123,7 @@ func (s *Service) ResolveForShipment(
 				calculatedAt: now,
 			})
 			resp.Moves = append(resp.Moves, moveResult(move, idx, nil))
-			resp.TotalDistance += distance
+			resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 			continue
 		}
 
@@ -159,7 +162,7 @@ func (s *Service) ResolveForShipment(
 					calculatedAt: now,
 				})
 				resp.Moves = append(resp.Moves, moveResult(move, idx, nil))
-				resp.TotalDistance += storedDistance.Distance
+				resp.TotalDistance = addDistance(resp.TotalDistance, storedDistance.Distance)
 				s.incrementStoredMileageHit(entity, storedDistance.ID)
 				continue
 			}
@@ -178,7 +181,7 @@ func (s *Service) ResolveForShipment(
 
 		distance = applyManualDistance(move, signature, now)
 		resp.Moves = append(resp.Moves, moveResult(move, idx, nil))
-		resp.TotalDistance += distance
+		resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 	}
 
 	if len(pcRequests) == 0 {
@@ -196,7 +199,7 @@ func (s *Service) ResolveForShipment(
 				timeutils.NowUnix(),
 			)
 			resp.Moves = append(resp.Moves, moveResult(target.move, target.index, nil))
-			resp.TotalDistance += distance
+			resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 		}
 		return resp, nil
 	}
@@ -227,7 +230,7 @@ func (s *Service) ResolveForShipment(
 			calculatedAt: timeutils.NowUnix(),
 		})
 		resp.Moves = append(resp.Moves, moveResult(target.move, target.index, result.Warnings))
-		resp.TotalDistance += result.Distance
+		resp.TotalDistance = addDistance(resp.TotalDistance, result.Distance)
 		s.enqueueStoredMileageCandidate(
 			ctx,
 			entity,
@@ -249,7 +252,7 @@ func (s *Service) ResolveForShipment(
 			timeutils.NowUnix(),
 		)
 		resp.Moves = append(resp.Moves, moveResult(target.move, target.index, nil))
-		resp.TotalDistance += distance
+		resp.TotalDistance = addDistance(resp.TotalDistance, distance)
 	}
 
 	sort.SliceStable(resp.Moves, func(i, j int) bool {
@@ -498,7 +501,9 @@ func (s *Service) storedMileage(
 		}
 		return nil, false, err
 	}
-	found.Distance = storedmileage.ConvertDistance(found.Distance, found.DistanceUnits, options.DistanceUnits)
+	found.Distance = roundDistance(
+		storedmileage.ConvertDistance(found.Distance, found.DistanceUnits, options.DistanceUnits),
+	)
 	return found, true, nil
 }
 
@@ -586,7 +591,7 @@ func buildStoredMileageCandidate(
 		IntermediateKeys:    keys[1 : len(keys)-1],
 		RouteSignature:      routeSignature,
 		RouteHash:           hashutils.SHA256Hex(routeSignature),
-		Distance:            distance,
+		Distance:            roundDistance(distance),
 		DistanceUnits:       options.DistanceUnits,
 		Provider:            string(integration.TypePCMiler),
 		Source:              storedmileage.SourcePCMiler,
@@ -752,6 +757,7 @@ type moveDistanceParams struct {
 }
 
 func applyMoveDistance(params moveDistanceParams) {
+	params.distance = roundDistance(params.distance)
 	params.move.Distance = &params.distance
 	params.move.DistanceSource = params.source
 	params.move.DistanceProvider = params.provider
@@ -764,7 +770,7 @@ func applyMoveDistance(params moveDistanceParams) {
 }
 
 func applyManualDistance(move *shipment.ShipmentMove, signature string, calculatedAt int64) float64 {
-	distance := manualDistance(move)
+	distance := roundDistance(manualDistance(move))
 	applyMoveDistance(moveDistanceParams{
 		move:         move,
 		distance:     distance,
@@ -777,9 +783,9 @@ func applyManualDistance(move *shipment.ShipmentMove, signature string, calculat
 }
 
 func moveResult(move *shipment.ShipmentMove, idx int, warnings []string) services.DistanceMoveResult {
-	distance := manualDistance(move)
+	distance := roundDistance(manualDistance(move))
 	if move.Distance != nil {
-		distance = *move.Distance
+		distance = roundDistance(*move.Distance)
 	}
 	calculatedAt := int64(0)
 	if move.DistanceCalculatedAt != nil {
@@ -799,6 +805,17 @@ func moveResult(move *shipment.ShipmentMove, idx int, warnings []string) service
 		Warnings:            warnings,
 		CalculatedAt:        calculatedAt,
 	}
+}
+
+func addDistance(total, distance float64) float64 {
+	return roundDistance(total + distance)
+}
+
+func roundDistance(distance float64) float64 {
+	if math.IsNaN(distance) || math.IsInf(distance, 0) {
+		return distance
+	}
+	return math.Round(distance*distancePrecision) / distancePrecision
 }
 
 func profileIDFromMetadata(metadata map[string]any) string {

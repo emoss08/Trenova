@@ -1,8 +1,4 @@
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { API_BASE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
@@ -17,17 +13,13 @@ import { AutocompleteTrigger } from "./autocomplete-input";
 const optionRequestQueueByLink = new Map<string, Promise<void>>();
 let optionRequestSequence = 0;
 
-function logOptionRequestDebug(
-  event: string,
-  details: Record<string, unknown>,
-) {
+function logOptionRequestDebug(event: string, details: Record<string, unknown>) {
   if (!import.meta.env.DEV) return;
   console.debug("[AutocompleteOption]", event, details);
 }
 
 async function fetchOptionQueued(url: string, link: string): Promise<Response> {
-  const previousRequest =
-    optionRequestQueueByLink.get(link) ?? Promise.resolve();
+  const previousRequest = optionRequestQueueByLink.get(link) ?? Promise.resolve();
   const requestId = ++optionRequestSequence;
   const queuedAt = Date.now();
 
@@ -76,12 +68,8 @@ async function fetchOptionQueued(url: string, link: string): Promise<Response> {
       link,
       url,
       durationMs: Date.now() - startedAt,
-      isAbortError:
-        error instanceof DOMException && error.name === "AbortError",
-      error:
-        error instanceof Error
-          ? { name: error.name, message: error.message }
-          : String(error),
+      isAbortError: error instanceof DOMException && error.name === "AbortError",
+      error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
     });
     throw error;
   } finally {
@@ -98,11 +86,65 @@ async function fetchOptionQueued(url: string, link: string): Promise<Response> {
   }
 }
 
+type SelectedValueLookupCandidate = {
+  lookupLink: string;
+  url: string;
+};
+
 function getFallbackLookupLink(link: string): API_ENDPOINTS | null {
   if (!link.endsWith("select-options/")) {
     return null;
   }
   return link.replace("select-options/", "") as API_ENDPOINTS;
+}
+
+function appendSelectedValueLookupCandidate(
+  candidates: SelectedValueLookupCandidate[],
+  seenURLs: Set<string>,
+  lookupLink: string,
+  value: string,
+) {
+  const url = new URL(`${API_BASE_URL}${lookupLink}${value}`, window.location.origin);
+
+  if (!seenURLs.has(url.href)) {
+    candidates.push({ lookupLink, url: url.href });
+    seenURLs.add(url.href);
+  }
+
+  if (url.pathname.endsWith("/")) {
+    return;
+  }
+
+  url.pathname = `${url.pathname}/`;
+  if (!seenURLs.has(url.href)) {
+    candidates.push({ lookupLink, url: url.href });
+    seenURLs.add(url.href);
+  }
+}
+
+export function buildSelectedValueLookupCandidates(
+  lookupLink: string,
+  value: string,
+): SelectedValueLookupCandidate[] {
+  const candidates: SelectedValueLookupCandidate[] = [];
+  const seenURLs = new Set<string>();
+
+  appendSelectedValueLookupCandidate(candidates, seenURLs, lookupLink, value);
+
+  const fallbackLookupLink = getFallbackLookupLink(lookupLink);
+  if (fallbackLookupLink) {
+    appendSelectedValueLookupCandidate(candidates, seenURLs, fallbackLookupLink, value);
+  }
+
+  return candidates;
+}
+
+function isAuthFailure(response: Response): boolean {
+  return response.status === 401 || response.status === 403;
+}
+
+function isRouteStyleLookupFailure(response: Response): boolean {
+  return response.status === 404 || response.status === 405;
 }
 
 export interface AutocompleteFormControlProps<T extends FieldValues> {
@@ -209,60 +251,67 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     queryKey: ["autocomplete-option", link, valueLookupLink, value],
     queryFn: async () => {
       if (!value) return null;
-      const fetchURL = new URL(
-        `${API_BASE_URL}${valueLookupLink}${value}`,
-        window.location.origin,
-      );
+      const candidates = buildSelectedValueLookupCandidates(valueLookupLink, value);
 
-      let response: Response;
-      try {
-        response = await fetchOptionQueued(fetchURL.href, valueLookupLink);
-      } catch (error) {
-        const fallbackLookupLink = getFallbackLookupLink(valueLookupLink);
-        if (!fallbackLookupLink) {
-          throw error;
+      for (const [index, candidate] of candidates.entries()) {
+        let response: Response;
+
+        try {
+          response = await fetchOptionQueued(candidate.url, candidate.lookupLink);
+        } catch (error) {
+          if (index === candidates.length - 1) {
+            throw error;
+          }
+
+          const nextCandidate = candidates[index + 1];
+          logOptionRequestDebug("fallback_retry", {
+            value,
+            primaryLink: candidate.lookupLink,
+            primaryUrl: candidate.url,
+            fallbackLink: nextCandidate.lookupLink,
+            fallbackUrl: nextCandidate.url,
+            error:
+              error instanceof Error ? { name: error.name, message: error.message } : String(error),
+          });
+          continue;
         }
 
-        const fallbackURL = new URL(
-          `${API_BASE_URL}${fallbackLookupLink}${value}`,
-          window.location.origin,
-        );
-        logOptionRequestDebug("fallback_retry", {
-          value,
-          primaryLink: valueLookupLink,
-          primaryUrl: fetchURL.href,
-          fallbackLink: fallbackLookupLink,
-          fallbackUrl: fallbackURL.href,
-          error:
-            error instanceof Error
-              ? { name: error.name, message: error.message }
-              : String(error),
-        });
-        response = await fetchOptionQueued(
-          fallbackURL.href,
-          fallbackLookupLink,
-        );
-      }
+        if (response.ok) {
+          return await response.json();
+        }
 
-      if (!response.ok) {
         logOptionRequestDebug("not_ok", {
           link,
           valueLookupLink,
           value,
-          url: fetchURL.href,
+          url: candidate.url,
           status: response.status,
           statusText: response.statusText,
         });
-        throw new Error("Failed to fetch option");
+
+        if (
+          isAuthFailure(response) ||
+          !isRouteStyleLookupFailure(response) ||
+          index === candidates.length - 1
+        ) {
+          throw new Error("Failed to fetch option");
+        }
+
+        const nextCandidate = candidates[index + 1];
+        logOptionRequestDebug("fallback_retry", {
+          value,
+          primaryLink: candidate.lookupLink,
+          primaryUrl: candidate.url,
+          fallbackLink: nextCandidate.lookupLink,
+          fallbackUrl: nextCandidate.url,
+          status: response.status,
+          statusText: response.statusText,
+        });
       }
 
-      const data = await response.json();
-
-      return data;
+      return null;
     },
-    enabled:
-      !!value &&
-      (!userSelectedOptionState || userSelectedOptionState.value !== value),
+    enabled: !!value && (!userSelectedOptionState || userSelectedOptionState.value !== value),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
@@ -320,9 +369,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             setOpen={setOpen}
             setSelectedOption={(option) =>
               setUserSelectedOptionState(
-                option
-                  ? { option, value: getOptionValue(option).toString() }
-                  : null,
+                option ? { option, value: getOptionValue(option).toString() } : null,
               )
             }
             selectedOption={selectedOption}

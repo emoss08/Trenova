@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -43,8 +45,14 @@ func (r *repository) List(
 	total, err := r.db.DBForContext(ctx).NewSelect().
 		Model(&entities).
 		Apply(func(q *bun.SelectQuery) *bun.SelectQuery {
-			q = querybuilder.ApplyFilters(q, "dp", req.Filter, (*distanceprofile.DistanceProfile)(nil))
-			return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+			q = querybuilder.ApplyFilters(
+				q,
+				"dp",
+				req.Filter,
+				(*distanceprofile.DistanceProfile)(nil),
+			)
+			return q.Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset())
 		}).
 		ScanAndCount(ctx)
 	if err != nil {
@@ -52,7 +60,10 @@ func (r *repository) List(
 		return nil, err
 	}
 
-	return &pagination.ListResult[*distanceprofile.DistanceProfile]{Items: entities, Total: total}, nil
+	return &pagination.ListResult[*distanceprofile.DistanceProfile]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func (r *repository) GetByID(
@@ -77,7 +88,7 @@ func (r *repository) GetDefault(
 	tenantInfo pagination.TenantInfo,
 ) (*distanceprofile.DistanceProfile, error) {
 	entity := new(distanceprofile.DistanceProfile)
-	err := r.db.DBForContext(ctx).NewSelect().
+	err := r.db.DB().NewSelect().
 		Model(entity).
 		Where("dp.organization_id = ?", tenantInfo.OrgID).
 		Where("dp.business_unit_id = ?", tenantInfo.BuID).
@@ -134,7 +145,10 @@ func (r *repository) Create(
 		return err
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "Distance profile is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Distance profile is busy. Retry the request.",
+		)
 	}
 	return entity, nil
 }
@@ -145,14 +159,19 @@ func (r *repository) Update(
 ) (*distanceprofile.DistanceProfile, error) {
 	previousVersion := entity.Version
 	entity.Version++
+
+	cols := buncolgen.DistanceProfileColumns
 	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
 		if entity.IsDefault {
 			if _, err := r.db.DBForContext(c).NewUpdate().
 				Model((*distanceprofile.DistanceProfile)(nil)).
-				Set("is_default = false").
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Where("id <> ?", entity.ID).
+				Set(cols.IsDefault.Set(), false).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return buncolgen.DistanceProfileScopeTenantUpdate(uq, pagination.TenantInfo{
+						OrgID: entity.OrganizationID,
+						BuID:  entity.BusinessUnitID,
+					}).Where(cols.ID.NotEq(), entity.ID)
+				}).
 				Exec(c); err != nil {
 				return err
 			}
@@ -169,17 +188,25 @@ func (r *repository) Update(
 		return dberror.CheckRowsAffected(result, "DistanceProfile", entity.ID.String())
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "Distance profile is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Distance profile is busy. Retry the request.",
+		)
 	}
 	return entity, nil
 }
 
-func (r *repository) Delete(ctx context.Context, req repositories.DeleteDistanceProfileRequest) error {
+func (r *repository) Delete(
+	ctx context.Context,
+	req repositories.DeleteDistanceProfileRequest,
+) error {
+	cols := buncolgen.DistanceProfileColumns
 	result, err := r.db.DBForContext(ctx).NewDelete().
 		Model((*distanceprofile.DistanceProfile)(nil)).
-		Where("dp.id = ?", req.ID).
-		Where("dp.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dp.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.DistanceProfileScopeTenantDelete(dq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		return err
@@ -226,7 +253,53 @@ func (r *repository) SetDefault(
 		return nil
 	})
 	if err != nil {
-		return nil, dberror.MapRetryableTransactionError(err, "Distance profile is busy. Retry the request.")
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Distance profile is busy. Retry the request.",
+		)
 	}
 	return entity, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.DistanceProfileSelectOptionsRequest,
+) (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
+	cols := buncolgen.DistanceProfileColumns
+	return dbhelper.SelectOptions[*distanceprofile.DistanceProfile](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				cols.ID,
+				cols.Name,
+				cols.Description,
+				cols.Status,
+				cols.IsDefault,
+				cols.Provider,
+				cols.DataVersion,
+				cols.Region,
+				cols.RoutingType,
+				cols.DistanceUnits,
+				cols.LocationGranularity,
+				cols.ProfileName,
+			},
+			OrgColumnRef: &cols.OrganizationID,
+			BuColumnRef:  &cols.BusinessUnitID,
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.Status.Eq(), distanceprofile.StatusActive).
+					Order(cols.IsDefault.OrderDesc()).
+					Order(cols.Name.OrderAsc())
+			},
+			EntityName: "DistanceProfile",
+			SearchColumnRefs: []buncolgen.Column{
+				cols.Name,
+				cols.Description,
+				cols.ProfileName,
+				cols.RoutingType,
+				cols.DistanceUnits,
+			},
+		},
+	)
 }

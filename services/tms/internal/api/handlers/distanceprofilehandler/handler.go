@@ -38,6 +38,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/distance-profiles")
 	api.GET("/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.list)
 	api.GET("/select-options/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.selectOptions)
+	api.GET("/select-options/:distanceProfileID", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.getOption)
 	api.POST("/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpCreate), h.create)
 	api.GET("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpRead), h.get)
 	api.PUT("/:distanceProfileID/", h.pm.RequirePermission(permission.ResourceDistanceProfile.String(), permission.OpUpdate), h.update)
@@ -55,7 +56,24 @@ func (h *Handler) list(c *gin.Context) {
 }
 
 func (h *Handler) selectOptions(c *gin.Context) {
-	h.list(c)
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*distanceprofile.DistanceProfile], error) {
+			return h.service.SelectOptions(
+				c.Request.Context(),
+				&repositories.DistanceProfileSelectOptionsRequest{SelectQueryRequest: req},
+			)
+		},
+	)
+}
+
+func (h *Handler) getOption(c *gin.Context) {
+	h.get(c)
 }
 
 func (h *Handler) get(c *gin.Context) {

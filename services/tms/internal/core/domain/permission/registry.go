@@ -645,6 +645,15 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDistanceOverride.String(),
+		DisplayName:        "Distance Override",
+		Description:        "Lane-specific distance overrides",
+		Category:           "Operations",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceDistanceControl.String(),
 		DisplayName:        "Distance Control",
 		Description:        "Distance calculation settings and profile assignments",

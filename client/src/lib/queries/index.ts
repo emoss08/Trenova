@@ -14,6 +14,7 @@ import { billingControl } from "./billing-control";
 import { billingQueue } from "./billing-queue";
 import { customer } from "./customer";
 import { dataEntryControl } from "./data-entry-control";
+import { distanceControl } from "./distance-control";
 import { documentControl } from "./document-control";
 import { documentParsingRule } from "./document-parsing-rule";
 import { dispatchControl } from "./dispatch-control";
@@ -53,6 +54,7 @@ export const queries = mergeQueryKeys(
   billingControl,
   billingQueue,
   dataEntryControl,
+  distanceControl,
   dispatchControl,
   edi,
   documentControl,
