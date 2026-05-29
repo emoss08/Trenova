@@ -73,6 +73,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getBillingReadiness,
 	)
+	api.POST(
+		"/:shipmentID/recalculate-distance/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
+		h.recalculateDistance,
+	)
+	api.GET(
+		"/:shipmentID",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.get,
+	)
 	api.GET(
 		"/:shipmentID/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
@@ -87,6 +97,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 		"/calculate-totals/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.calculateTotals,
+	)
+	api.POST(
+		"/calculate-distance/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.calculateDistance,
 	)
 	api.POST(
 		"/duplicate/",
@@ -545,6 +560,67 @@ func (h *Handler) calculateTotals(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, totals)
+}
+
+// @Summary Calculate shipment distance
+// @ID calculateShipmentDistance
+// @Tags Shipments
+// @Accept json
+// @Produce json
+// @Param request body shipment.Shipment true "Shipment payload"
+// @Success 200 {object} services.DistanceCalculationResponse
+// @Security BearerAuth
+// @Router /shipments/calculate-distance/ [post]
+func (h *Handler) calculateDistance(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	entity := new(shipment.Shipment)
+	if err := c.ShouldBindJSON(entity); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	authctx.AddContextToRequest(authCtx, entity)
+	resp, err := h.service.CalculateDistance(c.Request.Context(), entity)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// @Summary Recalculate shipment distance
+// @ID recalculateShipmentDistance
+// @Tags Shipments
+// @Produce json
+// @Param shipmentID path string true "Shipment ID"
+// @Success 200 {object} services.DistanceCalculationResponse
+// @Security BearerAuth
+// @Router /shipments/{shipmentID}/recalculate-distance/ [post]
+func (h *Handler) recalculateDistance(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	shipmentID, err := pulid.MustParse(c.Param("shipmentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	resp, err := h.service.RecalculateDistance(
+		c.Request.Context(),
+		shipmentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 // @Summary Duplicate a shipment

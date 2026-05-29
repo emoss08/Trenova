@@ -54,6 +54,39 @@ type ShipmentBillingReadiness struct {
 	ShouldAutoTransferToBilling  bool                           `json:"shouldAutoTransferToBilling"`
 }
 
+type DistanceMoveResult struct {
+	MoveID              pulid.ID `json:"moveId,omitempty"`
+	MoveIndex           int      `json:"moveIndex"`
+	Distance            float64  `json:"distance"`
+	Source              string   `json:"source"`
+	Provider            string   `json:"provider,omitempty"`
+	RoutingType         string   `json:"routingType,omitempty"`
+	DataVersion         string   `json:"dataVersion,omitempty"`
+	DistanceUnits       string   `json:"distanceUnits,omitempty"`
+	DistanceProfileID   string   `json:"distanceProfileId,omitempty"`
+	DistanceProfileName string   `json:"distanceProfileName,omitempty"`
+	Warnings            []string `json:"warnings,omitempty"`
+	CalculatedAt        int64    `json:"calculatedAt"`
+}
+
+type DistanceCalculationResponse struct {
+	ShipmentID    pulid.ID             `json:"shipmentId,omitempty"`
+	TotalDistance float64              `json:"totalDistance"`
+	Moves         []DistanceMoveResult `json:"moves"`
+}
+
+type DistanceCalculationService interface {
+	ResolveForShipment(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*DistanceCalculationResponse, error)
+	RecalculateShipment(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*DistanceCalculationResponse, error)
+}
+
 type TransferShipmentToBillingRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 	BillType   billingqueue.BillType `json:"billType"`
@@ -168,6 +201,15 @@ type ShipmentService interface {
 		entity *shipment.Shipment,
 		userID pulid.ID,
 	) (*repositories.ShipmentTotalsResponse, error)
+	CalculateDistance(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*DistanceCalculationResponse, error)
+	RecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*DistanceCalculationResponse, error)
 	AutoMarkReadyToInvoiceIfEligible(
 		ctx context.Context,
 		shipmentID pulid.ID,

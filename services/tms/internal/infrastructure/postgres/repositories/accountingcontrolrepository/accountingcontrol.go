@@ -6,8 +6,10 @@ import (
 	accountingcontrol "github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,10 +42,13 @@ func (r *repository) GetByOrgID(
 		zap.String("orgID", orgID.String()),
 	)
 
+	cols := buncolgen.AccountingControlColumns
+
 	entity := new(accountingcontrol.AccountingControl)
-	if err := r.db.DBForContext(ctx).NewSelect().
+	if err := r.db.DB().
+		NewSelect().
 		Model(entity).
-		Where("ac.organization_id = ?", orgID).
+		Where(cols.OrganizationID.Eq(), orgID).
 		Scan(ctx); err != nil {
 		log.Error("failed to get accounting control", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "AccountingControl")
@@ -57,12 +62,16 @@ func (r *repository) ListWithScheduledPeriodClose(
 ) ([]*accountingcontrol.AccountingControl, error) {
 	log := r.l.With(zap.String("operation", "ListWithScheduledPeriodClose"))
 
+	cols := buncolgen.AccountingControlColumns
+
 	entities := make([]*accountingcontrol.AccountingControl, 0)
 	if err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Where("ac.period_close_mode = ?", accountingcontrol.PeriodCloseModeSystemScheduled).
-		Where("ac.require_period_close_approval = FALSE").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(cols.PeriodCloseMode.Eq(), accountingcontrol.PeriodCloseModeSystemScheduled).
+				Where(cols.RequirePeriodCloseApproval.IsFalse())
+		}).
 		Scan(ctx); err != nil {
 		log.Error("failed to list accounting controls with scheduled period close", zap.Error(err))
 		return nil, err
@@ -83,11 +92,12 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
+	cols := buncolgen.AccountingControlColumns
 	result, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
+		Where(cols.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

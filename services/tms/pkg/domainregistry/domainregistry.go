@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
+	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -45,7 +47,9 @@ func RegisterEntities() []any {
 		&equipmentcontinuity.EquipmentContinuity{},
 		&accessorialcharge.AccessorialCharge{},
 		&servicetype.ServiceType{},
+		&distancecontrol.DistanceControl{},
 		&distanceoverride.DistanceOverride{},
+		&storedmileage.StoredMileage{},
 		&edi.EDIPartner{},
 		&edi.EDIConnection{},
 		&edi.EDICommunicationProfile{},

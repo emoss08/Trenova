@@ -29,7 +29,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/distancecalculationservice"
+	"github.com/emoss08/trenova/internal/core/services/distancecontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
+	"github.com/emoss08/trenova/internal/core/services/distanceprofileservice"
 	"github.com/emoss08/trenova/internal/core/services/documentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/documentintelligenceservice"
 	"github.com/emoss08/trenova/internal/core/services/documentoperationsservice"
@@ -85,6 +88,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/storedmileageservice"
 	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/tenantprovisioningservice"
@@ -232,7 +236,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *documentparsingruleservice.Service) services.DocumentParsingRuleAdminService { return s },
 	documentpacketruleservice.New,
 	workerptoservice.New,
+	distancecalculationservice.New,
+	distancecontrolservice.New,
 	distanceoverrideservice.New,
+	distanceprofileservice.New,
+	storedmileageservice.New,
 	exchangerateservice.New,
 	apikeyservice.New,
 	notificationservice.New,

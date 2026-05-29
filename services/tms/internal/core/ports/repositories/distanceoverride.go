@@ -43,4 +43,9 @@ type DistanceOverrideRepository interface {
 		ctx context.Context,
 		req DeleteDistanceOverrideRequest,
 	) error
+	GetByRouteSignature(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		routeSignature string,
+	) (*distanceoverride.DistanceOverride, error)
 }

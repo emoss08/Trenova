@@ -61,6 +61,7 @@ type Params struct {
 	WorkflowStarter     services.WorkflowStarter
 	Coordinator         *shipmentstate.Coordinator
 	Commercial          *shipmentcommercial.Calculator
+	DistanceCalculation services.DistanceCalculationService `optional:"true"`
 }
 
 type service struct {
@@ -88,6 +89,7 @@ type service struct {
 	workflowStarter     services.WorkflowStarter
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
+	distanceCalculation services.DistanceCalculationService
 }
 
 func New(p Params) services.ShipmentService { //nolint:gocritic // stable API shape
@@ -116,6 +118,7 @@ func New(p Params) services.ShipmentService { //nolint:gocritic // stable API sh
 		workflowStarter:     p.WorkflowStarter,
 		coordinator:         p.Coordinator,
 		commercial:          p.Commercial,
+		distanceCalculation: p.DistanceCalculation,
 	}
 }
 
@@ -230,6 +233,12 @@ func (s *service) Create(
 		return nil, err
 	}
 
+	if s.distanceCalculation != nil {
+		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+			return nil, err
+		}
+	}
+
 	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
 		return nil, err
 	}
@@ -341,6 +350,12 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 
 	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
 		return nil, err
+	}
+
+	if s.distanceCalculation != nil {
+		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+			return nil, err
+		}
 	}
 
 	if err = s.commercial.Recalculate(ctx, entity, control, auditActor.UserID); err != nil {
@@ -955,6 +970,12 @@ func (s *service) CalculateTotals(
 		return nil, err
 	}
 
+	if s.distanceCalculation != nil {
+		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
+			return nil, err
+		}
+	}
+
 	resp, err := s.commercial.CalculateTotals(ctx, entity, control, userID)
 	if err != nil {
 		s.l.Error("failed to calculate shipment totals", zap.Error(err))
@@ -962,6 +983,30 @@ func (s *service) CalculateTotals(
 	}
 
 	return resp, nil
+}
+
+func (s *service) CalculateDistance(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*services.DistanceCalculationResponse, error) {
+	if s.distanceCalculation == nil {
+		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
+	}
+	if err := s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
+		return nil, err
+	}
+	return s.distanceCalculation.ResolveForShipment(ctx, entity)
+}
+
+func (s *service) RecalculateDistance(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*services.DistanceCalculationResponse, error) {
+	if s.distanceCalculation == nil {
+		return nil, errortypes.NewBusinessError("distance calculation service is not configured")
+	}
+	return s.distanceCalculation.RecalculateShipment(ctx, shipmentID, tenantInfo)
 }
 
 func (s *service) validateTransferActor(

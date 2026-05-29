@@ -1784,29 +1784,45 @@ var ShipmentMoveTable = TableInfo{
 //	q.Where(ShipmentMoveColumns.ID.Eq(), id)           // WHERE sm.id = ?
 //	q.Order(ShipmentMoveColumns.CreatedAt.OrderDesc())  // ORDER BY sm.created_at DESC
 var ShipmentMoveColumns = struct {
-	ID             Column // "id" → qualified: "sm.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "sm.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "sm.organization_id"
-	ShipmentID     Column // "shipment_id" → qualified: "sm.shipment_id"
-	Status         Column // "status" → qualified: "sm.status"
-	Loaded         Column // "loaded" → qualified: "sm.loaded"
-	Sequence       Column // "sequence" → qualified: "sm.sequence"
-	Distance       Column // "distance" → qualified: "sm.distance"
-	Version        Column // "version" → qualified: "sm.version"
-	CreatedAt      Column // "created_at" → qualified: "sm.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "sm.updated_at"
+	ID                     Column // "id" → qualified: "sm.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "sm.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "sm.organization_id"
+	ShipmentID             Column // "shipment_id" → qualified: "sm.shipment_id"
+	Status                 Column // "status" → qualified: "sm.status"
+	Loaded                 Column // "loaded" → qualified: "sm.loaded"
+	Sequence               Column // "sequence" → qualified: "sm.sequence"
+	Distance               Column // "distance" → qualified: "sm.distance"
+	DistanceSource         Column // "distance_source" → qualified: "sm.distance_source"
+	DistanceProvider       Column // "distance_provider" → qualified: "sm.distance_provider"
+	DistanceCalculatedAt   Column // "distance_calculated_at" → qualified: "sm.distance_calculated_at"
+	DistanceRouteSignature Column // "distance_route_signature" → qualified: "sm.distance_route_signature"
+	DistanceDataVersion    Column // "distance_data_version" → qualified: "sm.distance_data_version"
+	DistanceRoutingType    Column // "distance_routing_type" → qualified: "sm.distance_routing_type"
+	DistanceUnits          Column // "distance_units" → qualified: "sm.distance_units"
+	DistanceMetadata       Column // "distance_metadata" → qualified: "sm.distance_metadata"
+	Version                Column // "version" → qualified: "sm.version"
+	CreatedAt              Column // "created_at" → qualified: "sm.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "sm.updated_at"
 }{
-	ID:             NewColumn("id", "sm"),
-	BusinessUnitID: NewColumn("business_unit_id", "sm"),
-	OrganizationID: NewColumn("organization_id", "sm"),
-	ShipmentID:     NewColumn("shipment_id", "sm"),
-	Status:         NewColumn("status", "sm"),
-	Loaded:         NewColumn("loaded", "sm"),
-	Sequence:       NewColumn("sequence", "sm"),
-	Distance:       NewColumn("distance", "sm"),
-	Version:        NewColumn("version", "sm"),
-	CreatedAt:      NewColumn("created_at", "sm"),
-	UpdatedAt:      NewColumn("updated_at", "sm"),
+	ID:                     NewColumn("id", "sm"),
+	BusinessUnitID:         NewColumn("business_unit_id", "sm"),
+	OrganizationID:         NewColumn("organization_id", "sm"),
+	ShipmentID:             NewColumn("shipment_id", "sm"),
+	Status:                 NewColumn("status", "sm"),
+	Loaded:                 NewColumn("loaded", "sm"),
+	Sequence:               NewColumn("sequence", "sm"),
+	Distance:               NewColumn("distance", "sm"),
+	DistanceSource:         NewColumn("distance_source", "sm"),
+	DistanceProvider:       NewColumn("distance_provider", "sm"),
+	DistanceCalculatedAt:   NewColumn("distance_calculated_at", "sm"),
+	DistanceRouteSignature: NewColumn("distance_route_signature", "sm"),
+	DistanceDataVersion:    NewColumn("distance_data_version", "sm"),
+	DistanceRoutingType:    NewColumn("distance_routing_type", "sm"),
+	DistanceUnits:          NewColumn("distance_units", "sm"),
+	DistanceMetadata:       NewColumn("distance_metadata", "sm"),
+	Version:                NewColumn("version", "sm"),
+	CreatedAt:              NewColumn("created_at", "sm"),
+	UpdatedAt:              NewColumn("updated_at", "sm"),
 }
 
 // ShipmentMoveFieldMap maps JSON API field names to database column names.
@@ -1814,17 +1830,25 @@ var ShipmentMoveColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by ShipmentMove.GetStaticFieldMap().
 var ShipmentMoveFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"shipmentId":     "shipment_id",
-	"status":         "status",
-	"loaded":         "loaded",
-	"sequence":       "sequence",
-	"distance":       "distance",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"shipmentId":             "shipment_id",
+	"status":                 "status",
+	"loaded":                 "loaded",
+	"sequence":               "sequence",
+	"distance":               "distance",
+	"distanceSource":         "distance_source",
+	"distanceProvider":       "distance_provider",
+	"distanceCalculatedAt":   "distance_calculated_at",
+	"distanceRouteSignature": "distance_route_signature",
+	"distanceDataVersion":    "distance_data_version",
+	"distanceRoutingType":    "distance_routing_type",
+	"distanceUnits":          "distance_units",
+	"distanceMetadata":       "distance_metadata",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // ShipmentMoveInsertableColumns lists column names suitable for INSERT statements on the "shipment_moves" table.
@@ -1838,6 +1862,14 @@ var ShipmentMoveInsertableColumns = []string{
 	"loaded",
 	"sequence",
 	"distance",
+	"distance_source",
+	"distance_provider",
+	"distance_calculated_at",
+	"distance_route_signature",
+	"distance_data_version",
+	"distance_routing_type",
+	"distance_units",
+	"distance_metadata",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1908,17 +1940,25 @@ func ShipmentMoveApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *b
 //	ShipmentMoveFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var ShipmentMoveFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShipmentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Loaded         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loaded" → DB: "loaded"
-	Sequence       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
-	Distance       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distance" → DB: "distance"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShipmentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Loaded                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "loaded" → DB: "loaded"
+	Sequence               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sequence" → DB: "sequence"
+	Distance               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distance" → DB: "distance"
+	DistanceSource         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceSource" → DB: "distance_source"
+	DistanceProvider       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceProvider" → DB: "distance_provider"
+	DistanceCalculatedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceCalculatedAt" → DB: "distance_calculated_at"
+	DistanceRouteSignature func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceRouteSignature" → DB: "distance_route_signature"
+	DistanceDataVersion    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceDataVersion" → DB: "distance_data_version"
+	DistanceRoutingType    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceRoutingType" → DB: "distance_routing_type"
+	DistanceUnits          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceUnits" → DB: "distance_units"
+	DistanceMetadata       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "distanceMetadata" → DB: "distance_metadata"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1943,6 +1983,30 @@ var ShipmentMoveFilter = struct {
 	},
 	Distance: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("distance", op, value)
+	},
+	DistanceSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceSource", op, value)
+	},
+	DistanceProvider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceProvider", op, value)
+	},
+	DistanceCalculatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceCalculatedAt", op, value)
+	},
+	DistanceRouteSignature: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceRouteSignature", op, value)
+	},
+	DistanceDataVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceDataVersion", op, value)
+	},
+	DistanceRoutingType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceRoutingType", op, value)
+	},
+	DistanceUnits: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceUnits", op, value)
+	},
+	DistanceMetadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("distanceMetadata", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -50,6 +50,9 @@ const (
 	ResourceShipmentControl       Resource = "shipment_control"
 	ResourceHazmatSegregationRule Resource = "hazmat_segregation_rule"
 	ResourceDistanceOverride      Resource = "distance_override"
+	ResourceDistanceProfile       Resource = "distance_profile"
+	ResourceDistanceControl       Resource = "distance_control"
+	ResourceStoredMileage         Resource = "stored_mileage"
 
 	// Billing
 	ResourceInvoice           Resource = "invoice"

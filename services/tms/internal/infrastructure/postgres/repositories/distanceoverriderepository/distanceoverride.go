@@ -252,3 +252,23 @@ func (r *repository) Delete(
 
 	return dberror.CheckRowsAffected(result, "DistanceOverride", req.ID.String())
 }
+
+func (r *repository) GetByRouteSignature(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	routeSignature string,
+) (*distanceoverride.DistanceOverride, error) {
+	entity := new(distanceoverride.DistanceOverride)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("diso.organization_id = ?", tenantInfo.OrgID).
+		Where("diso.business_unit_id = ?", tenantInfo.BuID).
+		Where("diso.route_signature = ?", routeSignature).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "DistanceOverride")
+	}
+
+	return entity, nil
+}

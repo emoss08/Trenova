@@ -413,6 +413,58 @@ func (_c *MockShipmentService_CalculateTotals_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// CalculateDistance provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) CalculateDistance(ctx context.Context, entity *shipment.Shipment) (*services.DistanceCalculationResponse, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CalculateDistance")
+	}
+
+	var r0 *services.DistanceCalculationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) (*services.DistanceCalculationResponse, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) *services.DistanceCalculationResponse); ok {
+		r0 = returnFunc(ctx, entity)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*services.DistanceCalculationResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// RecalculateDistance provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) RecalculateDistance(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.DistanceCalculationResponse, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecalculateDistance")
+	}
+
+	var r0 *services.DistanceCalculationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.DistanceCalculationResponse, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.DistanceCalculationResponse); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*services.DistanceCalculationResponse)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
 // Cancel provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest, actor *services.RequestActor) (*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req, actor)

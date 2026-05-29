@@ -24,7 +24,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
@@ -73,6 +75,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfigurationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
@@ -162,7 +165,10 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	documentcontrolhandler.New,
 	documentparsingrulehandler.New,
 	workerptohandler.New,
+	distancecontrolhandler.New,
 	distanceoverridehandler.New,
+	distanceprofilehandler.New,
+	storedmileagehandler.New,
 	exchangeratehandler.New,
 	analyticshandler.New,
 	apikeyhandler.New,

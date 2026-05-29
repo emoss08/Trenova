@@ -233,6 +233,32 @@ func (_c *MockDistanceOverrideRepository_GetByID_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// GetByRouteSignature provides a mock function for the type MockDistanceOverrideRepository
+func (_mock *MockDistanceOverrideRepository) GetByRouteSignature(ctx context.Context, tenantInfo pagination.TenantInfo, routeSignature string) (*distanceoverride.DistanceOverride, error) {
+	ret := _mock.Called(ctx, tenantInfo, routeSignature)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByRouteSignature")
+	}
+
+	var r0 *distanceoverride.DistanceOverride
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string) (*distanceoverride.DistanceOverride, error)); ok {
+		return returnFunc(ctx, tenantInfo, routeSignature)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string) *distanceoverride.DistanceOverride); ok {
+		r0 = returnFunc(ctx, tenantInfo, routeSignature)
+	} else if ret.Get(0) != nil {
+		r0 = ret.Get(0).(*distanceoverride.DistanceOverride)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, string) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, routeSignature)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
 // List provides a mock function for the type MockDistanceOverrideRepository
 func (_mock *MockDistanceOverrideRepository) List(ctx context.Context, req *repositories.ListDistanceOverrideRequest) (*pagination.ListResult[*distanceoverride.DistanceOverride], error) {
 	ret := _mock.Called(ctx, req)

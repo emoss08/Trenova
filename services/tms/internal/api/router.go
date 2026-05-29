@@ -26,7 +26,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
@@ -75,6 +77,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/storedmileagehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfigurationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
@@ -186,7 +189,10 @@ type RouterParams struct {
 	DocumentParsingRuleHandler      *documentparsingrulehandler.Handler
 	WorkerPTOHandler                *workerptohandler.Handler
 	ExchangeRateHandler             *exchangeratehandler.Handler
+	DistanceControlHandler          *distancecontrolhandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
+	DistanceProfileHandler          *distanceprofilehandler.Handler
+	StoredMileageHandler            *storedmileagehandler.Handler
 	AnalyticsHandler                *analyticshandler.Handler
 	ApiKeyHandler                   *apikeyhandler.Handler //nolint:revive // field name follows existing router wiring
 	TableChangeAlertHandler         *tablechangealerthandler.Handler
@@ -278,7 +284,10 @@ type Router struct {
 	documentParsingRuleHandler      *documentparsingrulehandler.Handler
 	workerPTOHandler                *workerptohandler.Handler
 	exchangeRateHandler             *exchangeratehandler.Handler
+	distanceControlHandler          *distancecontrolhandler.Handler
 	distanceOverrideHandler         *distanceoverridehandler.Handler
+	distanceProfileHandler          *distanceprofilehandler.Handler
+	storedMileageHandler            *storedmileagehandler.Handler
 	analyticsHandler                *analyticshandler.Handler
 	apiKeyHandler                   *apikeyhandler.Handler
 	tableChangeAlertHandler         *tablechangealerthandler.Handler
@@ -372,7 +381,10 @@ func NewRouter(p RouterParams) *Router {
 		documentParsingRuleHandler:      p.DocumentParsingRuleHandler,
 		workerPTOHandler:                p.WorkerPTOHandler,
 		exchangeRateHandler:             p.ExchangeRateHandler,
+		distanceControlHandler:          p.DistanceControlHandler,
 		distanceOverrideHandler:         p.DistanceOverrideHandler,
+		distanceProfileHandler:          p.DistanceProfileHandler,
+		storedMileageHandler:            p.StoredMileageHandler,
 		analyticsHandler:                p.AnalyticsHandler,
 		apiKeyHandler:                   p.ApiKeyHandler,
 		tableChangeAlertHandler:         p.TableChangeAlertHandler,
@@ -515,7 +527,10 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)
 	r.documentParsingRuleHandler.RegisterRoutes(protected)
+	r.distanceControlHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
+	r.distanceProfileHandler.RegisterRoutes(protected)
+	r.storedMileageHandler.RegisterRoutes(protected)
 	r.exchangeRateHandler.RegisterRoutes(protected)
 	r.workerPTOHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)

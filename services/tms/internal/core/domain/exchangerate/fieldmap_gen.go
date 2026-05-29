@@ -10,3 +10,10 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 func (e *ExchangeRate) GetStaticFieldMap() map[string]string {
 	return buncolgen.ExchangeRateFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SettlementQuote].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.SettlementQuoteFieldMap] instead of parsing struct tags via reflection.
+func (e *SettlementQuote) GetStaticFieldMap() map[string]string {
+	return buncolgen.SettlementQuoteFieldMap
+}

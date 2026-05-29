@@ -26,7 +26,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dataentrycontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/datarententionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distancecalculationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distancecontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceoverriderepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentaiextractionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontrolrepository"
@@ -99,6 +102,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/storedmileagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
@@ -223,7 +227,11 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	manualjournalrepository.New,
 	billingcontrolrepository.New,
 	billingqueuerepository.New,
+	distancecalculationrepository.New,
+	distancecontrolrepository.New,
 	distanceoverriderepository.New,
+	distanceprofilerepository.New,
+	storedmileagerepository.New,
 	exchangeraterepository.New,
 	tcasubscriptionrepository.New,
 	tcaallowlistrepository.New,

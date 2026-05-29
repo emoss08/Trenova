@@ -636,6 +636,33 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDistanceProfile.String(),
+		DisplayName:        "Distance Profile",
+		Description:        "Distance calculation routing profiles",
+		Category:           "Operations",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDistanceControl.String(),
+		DisplayName:        "Distance Control",
+		Description:        "Distance calculation settings and profile assignments",
+		Category:           "Operations",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceStoredMileage.String(),
+		DisplayName:        "Stored Mileage",
+		Description:        "Reusable stored mileage lane records",
+		Category:           "Operations",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceDataEntryControl.String(),
 		DisplayName:        "Data Entry Control",
 		Description:        "Data entry case formatting settings",
