@@ -100,6 +100,14 @@ func TestWithDefault(t *testing.T) {
 	}
 }
 
+func TestParse(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 42, intutils.Parse(" 42 "))
+	assert.Equal(t, 0, intutils.Parse(""))
+	assert.Equal(t, 0, intutils.Parse("bad"))
+}
+
 func TestClamp(t *testing.T) {
 	t.Parallel()
 
