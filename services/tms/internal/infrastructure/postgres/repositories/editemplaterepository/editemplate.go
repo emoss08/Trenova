@@ -87,6 +87,13 @@ func (r *repository) List(
 	return &pagination.ListResult[*edi.EDITemplate]{Items: entities, Total: total}, nil
 }
 
+func (r *repository) ListTemplates(
+	ctx context.Context,
+	req *repositories.ListEDITemplatesRequest,
+) (*pagination.ListResult[*edi.EDITemplate], error) {
+	return r.List(ctx, req)
+}
+
 func (r *repository) listDocumentTypes(
 	ctx context.Context,
 	req repositories.ListEDIDocumentTypesRequest,
