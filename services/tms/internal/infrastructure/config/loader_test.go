@@ -293,19 +293,15 @@ func TestValidateConfig(t *testing.T) {
 		assert.ErrorIs(t, err, ErrInvalidHostPrefixCookie)
 	})
 
-	t.Run("production overrides session cookie to host prefix settings", func(t *testing.T) {
+	t.Run("production rejects insecure session cookie settings", func(t *testing.T) {
 		l := NewLoader(WithEnvironment(EnvProduction))
 		cfg := newValidConfig()
+		cfg.Database.SSLMode = "require"
 
-		err := l.applyEnvironmentOverrides(cfg)
+		err := l.validateConfig(cfg)
 
-		require.NoError(t, err)
-		assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
-		assert.True(t, cfg.Security.Session.Secure)
-		assert.True(t, cfg.Security.Session.HTTPOnly)
-		assert.Equal(t, "strict", cfg.Security.Session.SameSite)
-		assert.Equal(t, "/", cfg.Security.Session.Path)
-		assert.Empty(t, cfg.Security.Session.Domain)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, ErrProductionSessionCookieRequired)
 	})
 
 	t.Run("logging output file but no file config", func(t *testing.T) {
@@ -334,19 +330,13 @@ func TestApplyEnvironmentOverrides(t *testing.T) {
 		cfg := newValidConfig()
 		cfg.App.Debug = true
 		cfg.Server.Mode = "debug"
-		cfg.Security.Session.Secure = false
-		cfg.Security.Session.HTTPOnly = false
 		cfg.Logging.Stacktrace = true
-		cfg.Database.SSLMode = "disable"
 
 		require.NoError(t, l.applyEnvironmentOverrides(cfg))
 
 		assert.False(t, cfg.App.Debug)
 		assert.Equal(t, "release", cfg.Server.Mode)
-		assert.True(t, cfg.Security.Session.Secure)
-		assert.True(t, cfg.Security.Session.HTTPOnly)
 		assert.False(t, cfg.Logging.Stacktrace)
-		assert.Equal(t, "disable", cfg.Database.SSLMode)
 		assert.Equal(t, "production", cfg.App.Env)
 	})
 
@@ -832,6 +822,12 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+security:
+  encryption:
+    mode: envelope
+    keyManager: gcp-autokey
+    gcpKms:
+      cryptoKey: projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova
 `,
 		},
 	}
@@ -1128,14 +1124,17 @@ database:
   name: testdb
   user: postgres
   password: testpass
-  sslMode: disable
+  sslMode: require
 security:
   session:
     secret: "a-very-long-secret-that-is-at-least-32-characters-long"
-    name: "trv-session-id"
+    name: "__Host-trenova_session"
     maxAge: "24h"
-    sameSite: "lax"
+    httpOnly: true
+    secure: true
+    sameSite: "strict"
     path: "/"
+    domain: ""
   csrf:
     tokenName: "csrf_token"
     headerName: "X-CSRF-Token"
@@ -1143,7 +1142,11 @@ security:
     requestsPerMinute: 60
     burstSize: 10
   encryption:
+    mode: envelope
+    keyManager: gcp-autokey
     key: "a-very-long-encryption-key-that-is-at-least-32-chars"
+    gcpKms:
+      cryptoKey: "projects/test/locations/us/keyRings/autokey/cryptoKeys/trenova"
 logging:
   level: info
   format: json

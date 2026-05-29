@@ -99,17 +99,6 @@ storage:
   maxFileSize: 52428800 # Maximum size per uploaded file in bytes
   maxFilesPerUpload: 10 # Maximum files accepted by a bulk upload request
 
-# Cloudflare R2 production environment variables:
-# TRENOVA_STORAGE_PROVIDER=r2
-# TRENOVA_STORAGE_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-# TRENOVA_STORAGE_BUCKET=<bucket-name>
-# TRENOVA_STORAGE_ACCESSKEY=<r2-access-key-id>
-# TRENOVA_STORAGE_SECRETKEY=<r2-secret-access-key>
-# TRENOVA_STORAGE_REGION=auto
-# TRENOVA_STORAGE_USESSL=true
-# TRENOVA_STORAGE_AUTOCREATEBUCKET=false
-# TRENOVA_STORAGE_PUBLICENDPOINT=
-
 documentIntelligence:
   enabled: true # Enable async extraction/classification
   ocrCommand: tesseract # OCR binary path
@@ -151,7 +140,15 @@ security:
     browserGuard:
       mode: report # enforce, report, or off
   encryption:
+    mode: envelope # envelope, disabled (tests only)
+    keyManager: local # local for dev/test; production/staging must use gcp-autokey
     key: super-secret-key # Encryption key (min 32 chars)
+    gcpKms:
+      cryptoKey: "" # Full Cloud KMS crypto key name for production/staging
+      credentialsMode: adc # adc, workload-identity, or credentials-file
+      credentialsFile: ""
+      timeout: 10s
+      retryAttempts: 3
 
 # Logging configuration
 logging:

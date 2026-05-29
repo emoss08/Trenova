@@ -60,6 +60,14 @@ security:
       - https://cloud.trenova.app
     browserGuard:
       mode: enforce
+  encryption:
+    mode: envelope
+    keyManager: gcp-autokey
+    gcpKms:
+      cryptoKey: projects/trenova-production/locations/us/keyRings/autokey/cryptoKeys/trenova-envelope
+      credentialsMode: workload-identity
+      timeout: 10s
+      retryAttempts: 3
 
 logging:
   level: info

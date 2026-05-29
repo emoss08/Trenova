@@ -47,6 +47,10 @@ security:
     tokenName: test_csrf_token
   rateLimit:
     enabled: false
+  encryption:
+    mode: envelope
+    keyManager: local
+    key: test-local-encryption-key-for-testing-only-32chars
 
 logging:
   level: debug

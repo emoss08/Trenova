@@ -116,8 +116,29 @@ type SecurityConfig struct {
 	Encryption EncryptionConfig `mapstructure:"encryption"`
 }
 
+const (
+	EncryptionModeEnvelope = "envelope"
+	EncryptionModeDisabled = "disabled"
+
+	EncryptionKeyManagerLocal      = "local"
+	EncryptionKeyManagerGCPAutokey = "gcp-autokey"
+	EncryptionKeyManagerDisabled   = "disabled"
+)
+
 type EncryptionConfig struct {
-	Key string `mapstructure:"key" validate:"required,min=32"`
+	Mode       string       `mapstructure:"mode"       validate:"omitempty,oneof=envelope disabled"`
+	KeyManager string       `mapstructure:"keyManager" validate:"omitempty,oneof=local gcp-autokey disabled"`
+	Key        string       `mapstructure:"key"        validate:"omitempty,min=32"`
+	GCPKMS     GCPKMSConfig `mapstructure:"gcpKms"`
+}
+
+type GCPKMSConfig struct {
+	CryptoKey       string        `mapstructure:"cryptoKey"`
+	KeyResource     string        `mapstructure:"keyResource"`
+	CredentialsMode string        `mapstructure:"credentialsMode" validate:"omitempty,oneof=adc workload-identity credentials-file"`
+	CredentialsFile string        `mapstructure:"credentialsFile"`
+	Timeout         time.Duration `mapstructure:"timeout"`
+	RetryAttempts   int           `mapstructure:"retryAttempts" validate:"omitempty,min=1,max=10"`
 }
 
 type SessionConfig struct {

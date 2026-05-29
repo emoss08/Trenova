@@ -289,18 +289,20 @@ func (l *Loader) loadConfigFiles() error {
 		}
 	}
 
-	if l.env != EnvDevelopment {
-		envConfig := filepath.Join(l.configPath, fmt.Sprintf("config.%s.yaml", l.env))
-		if l.env == EnvProduction {
-			if _, err := os.Stat(envConfig); os.IsNotExist(err) {
-				envConfig = filepath.Join(l.configPath, "config.prod.yaml")
-			}
+	if l.env == EnvDevelopment {
+		return nil
+	}
+
+	envConfig := filepath.Join(l.configPath, fmt.Sprintf("config.%s.yaml", l.env))
+	if l.env == EnvProduction {
+		if _, err := os.Stat(envConfig); os.IsNotExist(err) {
+			envConfig = filepath.Join(l.configPath, "config.prod.yaml")
 		}
-		if _, err := os.Stat(envConfig); err == nil {
-			l.viper.SetConfigFile(envConfig)
-			if err = l.viper.MergeInConfig(); err != nil {
-				return fmt.Errorf("error merging %s config: %w", l.env, err)
-			}
+	}
+	if _, err := os.Stat(envConfig); err == nil {
+		l.viper.SetConfigFile(envConfig)
+		if err = l.viper.MergeInConfig(); err != nil {
+			return fmt.Errorf("error merging %s config: %w", l.env, err)
 		}
 	}
 
@@ -312,42 +314,89 @@ func (l *Loader) validateConfig(config *Config) error {
 		return l.formatValidationError(err)
 	}
 
+	validators := []func(*Config) error{
+		validateDatabasePool,
+		validateServerTimeouts,
+		validateHostPrefixCookie,
+		validateLoggingConfig,
+		validatePlatformConfig,
+		validateR2PublicEndpoint,
+	}
+	for _, validator := range validators {
+		if err := validator(config); err != nil {
+			return err
+		}
+	}
+
+	if err := validateCORSConfig(config, l.env); err != nil {
+		return err
+	}
+	if isProductionLike(l.env) {
+		return validateProductionSecurity(config)
+	}
+
+	return nil
+}
+
+func validateDatabasePool(config *Config) error {
 	if config.Database.MaxIdleConns > config.Database.MaxOpenConns {
 		return ErrMaxIdleConnsExceedsMaxOpenConns
 	}
 
+	return nil
+}
+
+func validateServerTimeouts(config *Config) error {
 	if config.Server.RequestTimeout > 0 &&
 		config.Server.WriteTimeout > 0 &&
 		config.Server.RequestTimeout >= config.Server.WriteTimeout {
 		return ErrRequestTimeoutExceedsWriteTimeout
 	}
 
-	if config.Server.CORS.Enabled {
-		if len(config.Server.CORS.AllowedOrigins) == 0 {
-			return ErrCorsEnabledButNoAllowedOrigins
-		}
-	}
+	return nil
+}
 
-	if isProductionLike(l.env) &&
-		config.Server.CORS.Enabled &&
+func validateCORSConfig(config *Config, env string) error {
+	if !config.Server.CORS.Enabled {
+		return nil
+	}
+	if len(config.Server.CORS.AllowedOrigins) == 0 {
+		return ErrCorsEnabledButNoAllowedOrigins
+	}
+	if isProductionLike(env) &&
 		config.Server.CORS.Credentials &&
 		slices.Contains(config.Server.CORS.AllowedOrigins, "*") {
 		return ErrCredentialedWildcardCORS
 	}
 
-	if strings.HasPrefix(config.Security.Session.Name, "__Host-") &&
-		(!config.Security.Session.Secure ||
-			!config.Security.Session.HTTPOnly ||
-			config.Security.Session.Domain != "" ||
-			config.Security.Session.Path != "/" ||
-			!strings.EqualFold(config.Security.Session.SameSite, "strict")) {
+	return nil
+}
+
+func validateHostPrefixCookie(config *Config) error {
+	if !strings.HasPrefix(config.Security.Session.Name, "__Host-") {
+		return nil
+	}
+
+	if !config.Security.Session.Secure ||
+		!config.Security.Session.HTTPOnly ||
+		config.Security.Session.Domain != "" ||
+		config.Security.Session.Path != "/" ||
+		!strings.EqualFold(config.Security.Session.SameSite, "strict") {
 		return ErrInvalidHostPrefixCookie
 	}
 
+	return nil
+}
+
+func validateLoggingConfig(config *Config) error {
 	if config.Logging.Output == "file" && config.Logging.File == nil {
 		return ErrLoggingOutputIsFileButFileConfigIsMissing
 	}
 
+	return nil
+}
+
+func validatePlatformConfig(config *Config) error {
 	if config.Platform.GetMode() == PlatformModeCloud && !config.Platform.ControlPlane.Enabled {
 		return fmt.Errorf(
 			"platform.controlplane.enabled is required for %s platform mode",
@@ -373,6 +422,10 @@ func (l *Loader) validateConfig(config *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateR2PublicEndpoint(config *Config) error {
 	if config.Storage.GetProvider() == StorageProviderR2 && config.Storage.PublicEndpoint != "" {
 		return errors.New(
 			"storage.publicEndpoint cannot be set when storage.provider is r2; private R2 presigned URLs must use the R2 S3 API endpoint",
@@ -382,16 +435,42 @@ func (l *Loader) validateConfig(config *Config) error {
 	return nil
 }
 
+func validateProductionSecurity(config *Config) error {
+	if strings.EqualFold(config.Database.SSLMode, "disable") {
+		return ErrProductionDatabaseSSLRequired
+	}
+	if !config.Security.Session.Secure ||
+		!config.Security.Session.HTTPOnly ||
+		!strings.EqualFold(config.Security.Session.SameSite, "strict") {
+		return ErrProductionSessionCookieRequired
+	}
+	encryptionMode := strings.ToLower(strings.TrimSpace(config.Security.Encryption.Mode))
+	if encryptionMode != EncryptionModeEnvelope {
+		return ErrProductionEncryptionModeRequired
+	}
+	keyManager := strings.ToLower(strings.TrimSpace(config.Security.Encryption.KeyManager))
+	if keyManager != EncryptionKeyManagerGCPAutokey {
+		return ErrProductionKMSRequired
+	}
+	gcpKey := strings.TrimSpace(config.Security.Encryption.GCPKMS.CryptoKey)
+	if gcpKey == "" {
+		gcpKey = strings.TrimSpace(config.Security.Encryption.GCPKMS.KeyResource)
+	}
+	if gcpKey == "" {
+		return ErrProductionGCPKMSConfigRequired
+	}
+	if config.Storage.GetProvider() == StorageProviderR2 &&
+		(!config.Storage.UseSSL || !strings.HasPrefix(config.Storage.Endpoint, "https://")) {
+		return ErrProductionStorageTLSRequired
+	}
+
+	return nil
+}
+
 func (l *Loader) applyEnvironmentOverrides(config *Config) error {
 	if isProductionLike(l.env) {
 		config.App.Debug = false
 		config.Server.Mode = "release"
-		config.Security.Session.Name = "__Host-trenova_session"
-		config.Security.Session.HTTPOnly = true
-		config.Security.Session.Secure = true
-		config.Security.Session.SameSite = "strict"
-		config.Security.Session.Path = "/"
-		config.Security.Session.Domain = ""
 		config.Logging.Stacktrace = false
 	}
 
@@ -413,6 +492,19 @@ func isProductionLike(env string) bool {
 	return env == EnvProduction || env == EnvStaging
 }
 
+func isInsecureDefault(value string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	if normalized == "" {
+		return true
+	}
+	for _, marker := range InsecureDefaultValues {
+		if strings.Contains(normalized, marker) {
+			return true
+		}
+	}
+	return false
+}
+
 func (l *Loader) registerValidators() {
 	_ = l.validator.RegisterValidation("semver", func(fl validator.FieldLevel) bool {
 		version := fl.Field().String()
@@ -420,7 +512,6 @@ func (l *Loader) registerValidators() {
 		if len(parts) != 3 {
 			return false
 		}
-		// TODO(wolfred): Basic check - could be enhanced with proper semver parsing
 		return true
 	})
 

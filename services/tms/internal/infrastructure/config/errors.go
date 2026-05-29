@@ -12,6 +12,27 @@ var (
 	ErrSessionSecretIsInsecure      = errors.New(
 		"session secret contains insecure default value",
 	)
+	ErrEncryptionKeyIsInsecure = errors.New(
+		"encryption key contains insecure default value",
+	)
+	ErrProductionEncryptionModeRequired = errors.New(
+		"production and staging require security.encryption.mode=envelope",
+	)
+	ErrProductionKMSRequired = errors.New(
+		"production and staging require security.encryption.keyManager=gcp-autokey",
+	)
+	ErrProductionGCPKMSConfigRequired = errors.New(
+		"production and staging require a GCP KMS crypto key resource",
+	)
+	ErrProductionDatabaseSSLRequired = errors.New(
+		"production and staging require database.sslMode other than disable",
+	)
+	ErrProductionSessionCookieRequired = errors.New(
+		"production and staging require secure, httpOnly, sameSite=strict session cookies",
+	)
+	ErrProductionStorageTLSRequired = errors.New(
+		"production and staging require TLS for non-local object storage endpoints",
+	)
 	ErrMaxIdleConnsExceedsMaxOpenConns = errors.New(
 		"max idle connections cannot exceed max open connections",
 	)
