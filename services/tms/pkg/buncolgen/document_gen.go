@@ -65,6 +65,8 @@ var DocumentColumns = struct {
 	StorageRetentionMode  Column // "storage_retention_mode" → qualified: "doc.storage_retention_mode"
 	StorageRetentionUntil Column // "storage_retention_until" → qualified: "doc.storage_retention_until"
 	StorageLegalHold      Column // "storage_legal_hold" → qualified: "doc.storage_legal_hold"
+	CryptoMode            Column // "crypto_mode" → qualified: "doc.crypto_mode"
+	CryptoVersion         Column // "crypto_version" → qualified: "doc.crypto_version"
 	Status                Column // "status" → qualified: "doc.status"
 	Description           Column // "description" → qualified: "doc.description"
 	ResourceID            Column // "resource_id" → qualified: "doc.resource_id"
@@ -106,6 +108,8 @@ var DocumentColumns = struct {
 	StorageRetentionMode:  NewColumn("storage_retention_mode", "doc"),
 	StorageRetentionUntil: NewColumn("storage_retention_until", "doc"),
 	StorageLegalHold:      NewColumn("storage_legal_hold", "doc"),
+	CryptoMode:            NewColumn("crypto_mode", "doc"),
+	CryptoVersion:         NewColumn("crypto_version", "doc"),
 	Status:                NewColumn("status", "doc"),
 	Description:           NewColumn("description", "doc"),
 	ResourceID:            NewColumn("resource_id", "doc"),
@@ -153,6 +157,8 @@ var DocumentFieldMap = map[string]string{
 	"storageRetentionMode":  "storage_retention_mode",
 	"storageRetentionUntil": "storage_retention_until",
 	"storageLegalHold":      "storage_legal_hold",
+	"cryptoMode":            "crypto_mode",
+	"cryptoVersion":         "crypto_version",
 	"status":                "status",
 	"description":           "description",
 	"resourceId":            "resource_id",
@@ -196,6 +202,8 @@ var DocumentInsertableColumns = []string{
 	"storage_retention_mode",
 	"storage_retention_until",
 	"storage_legal_hold",
+	"crypto_mode",
+	"crypto_version",
 	"status",
 	"description",
 	"resource_id",
@@ -301,6 +309,8 @@ var DocumentFilter = struct {
 	StorageRetentionMode  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageRetentionMode" → DB: "storage_retention_mode"
 	StorageRetentionUntil func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageRetentionUntil" → DB: "storage_retention_until"
 	StorageLegalHold      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageLegalHold" → DB: "storage_legal_hold"
+	CryptoMode            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoMode" → DB: "crypto_mode"
+	CryptoVersion         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoVersion" → DB: "crypto_version"
 	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	Description           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
 	ResourceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
@@ -371,6 +381,12 @@ var DocumentFilter = struct {
 	},
 	StorageLegalHold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("storageLegalHold", op, value)
+	},
+	CryptoMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cryptoMode", op, value)
+	},
+	CryptoVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cryptoVersion", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

@@ -1,9 +1,11 @@
 package documentuploadservice
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"strings"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
@@ -25,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -57,6 +61,7 @@ type Params struct {
 	UsageProvider      services.UsageProvider `optional:"true"`
 	DocTypeRepo        repositories.DocumentTypeRepository
 	Redis              *goredis.Client `optional:"true"`
+	Encryption         *encryptionservice.Service
 }
 
 type Service struct {
@@ -72,6 +77,7 @@ type Service struct {
 	usageProvider      services.UsageProvider
 	docTypeRepo        repositories.DocumentTypeRepository
 	redis              *goredis.Client
+	encryption         *encryptionservice.Service
 }
 
 //nolint:gocritic // dependency injection param
@@ -89,10 +95,18 @@ func New(p Params) *Service {
 		usageProvider:      p.UsageProvider,
 		docTypeRepo:        p.DocTypeRepo,
 		redis:              p.Redis,
+		encryption:         p.Encryption,
 	}
 }
 
-//nolint:funlen // existing workflow or route registration is intentionally kept together
+type UploadPartRequest struct {
+	TenantInfo pagination.TenantInfo
+	SessionID  pulid.ID
+	PartNumber int
+	Body       io.Reader
+	Size       int64
+}
+
 func (s *Service) CreateSession(
 	ctx context.Context,
 	req *services.CreateSessionRequest,
@@ -184,32 +198,9 @@ func (s *Service) CreateSession(
 		}
 	}
 
-	if req.FileSize >= multipartThreshold {
-		session.Strategy = documentupload.StrategyMultipart
-		session.PartSize = defaultPartSize
-		uploadID, uploadIDErr := s.storage.InitiateMultipartUpload(
-			ctx,
-			&storage.MultipartUploadParams{
-				Key:         session.StoragePath,
-				ContentType: req.ContentType,
-				Metadata: map[string]string{
-					"original_name": req.FileName,
-					"resource_id":   req.ResourceID,
-					"resource_type": req.ResourceType,
-				},
-			},
-		)
-		if uploadIDErr != nil {
-			return nil, errortypes.NewDatabaseError("Failed to initialize multipart upload").
-				WithInternal(uploadIDErr)
-		}
-		session.StorageProviderUploadID = uploadID
-		session.Status = documentupload.StatusUploading
-	} else {
-		session.Strategy = documentupload.StrategySingle
-		session.PartSize = req.FileSize
-		session.Status = documentupload.StatusInitiated
-	}
+	session.Strategy = documentupload.StrategySingle
+	session.PartSize = req.FileSize
+	session.Status = documentupload.StatusInitiated
 
 	return s.sessionRepo.Create(ctx, session)
 }
@@ -280,57 +271,114 @@ func (s *Service) GetPartUploadTargets(
 	if session.Strategy == documentupload.StrategySingle {
 		return s.partUploadTargetsSingle(ctx, session)
 	}
-	return s.partUploadTargetsMultipart(ctx, session, partNumbers)
+	return s.partUploadTargetsMultipart(session, partNumbers)
 }
 
 func (s *Service) partUploadTargetsSingle(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 ) ([]services.PartUploadTarget, error) {
-	url, err := s.storage.GetPresignedUploadURL(ctx, &storage.PresignedUploadURLParams{
-		Key:         session.StoragePath,
-		Expiry:      s.config.GetPresignedURLExpiry(),
-		ContentType: session.ContentType,
-	})
-	if err != nil {
-		return nil, errortypes.NewDatabaseError("Failed to generate upload URL").WithInternal(err)
-	}
-
-	return []services.PartUploadTarget{{PartNumber: 1, URL: url}}, nil
+	_ = ctx
+	return []services.PartUploadTarget{{
+		PartNumber: 1,
+		URL:        uploadPartAPIPath(session.ID, 1),
+		Method:     "PUT",
+	}}, nil
 }
 
 func (s *Service) partUploadTargetsMultipart(
-	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 	partNumbers []int,
 ) ([]services.PartUploadTarget, error) {
 	targets := make([]services.PartUploadTarget, 0, len(partNumbers))
 	for _, partNumber := range partNumbers {
-		url, urlErr := s.storage.GetMultipartUploadPartURL(
-			ctx,
-			&storage.MultipartUploadPartURLParams{
-				Key:        session.StoragePath,
-				UploadID:   session.StorageProviderUploadID,
-				PartNumber: partNumber,
-				Expiry:     s.config.GetPresignedURLExpiry(),
-			},
-		)
-		if urlErr != nil {
-			if storage.IsMissingMultipartUploadError(urlErr) {
-				_, _ = s.markSessionFailed(
-					ctx,
-					session,
-					documentupload.FailureMultipartUploadMissing.String(),
-					"Upload session is no longer active",
-				)
-				return nil, errortypes.NewConflictError("Upload session is no longer active")
-			}
-			return nil, errortypes.NewDatabaseError("Failed to generate upload URL").
-				WithInternal(urlErr)
-		}
-		targets = append(targets, services.PartUploadTarget{PartNumber: partNumber, URL: url})
+		targets = append(targets, services.PartUploadTarget{
+			PartNumber: partNumber,
+			URL:        uploadPartAPIPath(session.ID, partNumber),
+			Method:     "PUT",
+		})
 	}
 	return targets, nil
+}
+
+func (s *Service) UploadPart(
+	ctx context.Context,
+	req *UploadPartRequest,
+) (*documentupload.DocumentUploadSession, error) {
+	if req.PartNumber != 1 {
+		return nil, errortypes.NewValidationError(
+			"partNumber",
+			errortypes.ErrInvalid,
+			"Encrypted upload sessions accept a single API-mediated part",
+		)
+	}
+
+	session, err := s.sessionRepo.GetByID(ctx, repositories.GetDocumentUploadSessionByIDRequest{
+		ID:         req.SessionID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if session.Status.IsTerminal() {
+		return nil, errortypes.NewConflictError("Upload session is no longer active")
+	}
+	if req.Size > 0 && req.Size != session.FileSize {
+		return nil, errortypes.NewConflictError(
+			"Uploaded file size does not match the original file",
+		)
+	}
+
+	plaintext, err := io.ReadAll(io.LimitReader(req.Body, session.FileSize+1))
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to read uploaded file").WithInternal(err)
+	}
+	if int64(len(plaintext)) != session.FileSize {
+		return nil, errortypes.NewConflictError(
+			"Uploaded file size does not match the original file",
+		)
+	}
+
+	if s.encryption == nil {
+		return nil, errortypes.NewBusinessError("Document encryption is not configured")
+	}
+	encrypted, encErr := s.encryption.EncryptBytesWithAAD(
+		plaintext,
+		uploadSessionStorageAAD(session),
+	)
+	if encErr != nil {
+		return nil, errortypes.NewBusinessError("Failed to encrypt document upload").
+			WithInternal(encErr)
+	}
+	uploadBody := []byte(encrypted)
+	cryptoMode := encryptionservice.CryptoModeForCiphertext(encrypted)
+	cryptoVersion := int16(1)
+
+	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+		Key:         session.StoragePath,
+		ContentType: session.ContentType,
+		Size:        int64(len(uploadBody)),
+		Body:        bytes.NewReader(uploadBody),
+		Metadata: map[string]string{
+			"original_name": session.OriginalName,
+			"resource_id":   session.ResourceID,
+			"resource_type": session.ResourceType,
+			"crypto_mode":   cryptoMode,
+		},
+	}); err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to upload document").WithInternal(err)
+	}
+
+	session.Status = documentupload.StatusUploaded
+	session.ChecksumSHA256 = hashutils.SHA256BytesHex(plaintext)
+	session.CryptoMode = cryptoMode
+	session.CryptoVersion = cryptoVersion
+	session.UploadedParts = []storage.UploadedPart{{
+		PartNumber: 1,
+		Size:       session.FileSize,
+	}}
+	session.LastActivityAt = timeutils.NowUnix()
+	return s.sessionRepo.Update(ctx, session)
 }
 
 func (s *Service) Complete(
@@ -461,7 +509,7 @@ func (s *Service) getUploadedParts(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 ) ([]storage.UploadedPart, error) {
-	if session.Status.IsTerminal() && len(session.UploadedParts) > 0 {
+	if len(session.UploadedParts) > 0 {
 		return storage.ToDomainParts(session.UploadedParts), nil
 	}
 
@@ -644,14 +692,16 @@ func (s *Service) runSynchronousFinalization(
 		}
 	}
 
-	fileInfo, err := s.storage.GetFileInfo(ctx, session.StoragePath)
-	if err != nil {
+	if _, err := s.storage.GetFileInfo(ctx, session.StoragePath); err != nil {
 		return nil, errortypes.NewDatabaseError("Failed to verify uploaded file").WithInternal(err)
 	}
 
-	if fileInfo.Size != session.FileSize {
+	if session.CryptoMode != encryptionservice.CryptoModeEnvelopeV1 {
+		return nil, errortypes.NewConflictError("Uploaded file is not encrypted")
+	}
+	if len(session.UploadedParts) == 0 {
 		return nil, errortypes.NewConflictError(
-			"Uploaded file size does not match the original file",
+			"Encrypted upload session is missing verified plaintext part metadata",
 		)
 	}
 
@@ -663,6 +713,9 @@ func (s *Service) runSynchronousFinalization(
 		FileSize:           session.FileSize,
 		FileType:           session.ContentType,
 		StoragePath:        session.StoragePath,
+		ChecksumSHA256:     session.ChecksumSHA256,
+		CryptoMode:         session.CryptoMode,
+		CryptoVersion:      session.CryptoVersion,
 		Status:             document.StatusActive,
 		Description:        session.Description,
 		ResourceID:         session.ResourceID,
@@ -704,7 +757,7 @@ func (s *Service) runSynchronousFinalization(
 	if s.thumbnailGenerator.SupportsThumbnail(createdDoc.FileType) {
 		s.startThumbnailWorkflow(ctx, createdDoc)
 	}
-	s.recordDocumentUploadUsage(ctx, createdDoc, req.TenantInfo, req.Actor)
+	s.recordDocumentUploadUsage(ctx, createdDoc, req.TenantInfo, &req.Actor)
 
 	return createdDoc, nil
 }
@@ -713,14 +766,14 @@ func (s *Service) recordDocumentUploadUsage(
 	ctx context.Context,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-	actor services.RequestActor,
+	actor *services.RequestActor,
 ) {
 	if _, err := usageservice.RecordDocumentUpload(
 		ctx,
 		s.usageProvider,
 		usageservice.DocumentUploadUsageParams{
 			TenantInfo: tenantInfo,
-			Actor:      actor,
+			Actor:      *actor,
 			DocumentID: doc.ID,
 		},
 	); err != nil {
@@ -734,6 +787,19 @@ func (s *Service) recordDocumentUploadUsage(
 
 func completionLeaseKey(sessionID string) string {
 	return "document-upload:completion:" + sessionID
+}
+
+func uploadPartAPIPath(sessionID pulid.ID, partNumber int) string {
+	return fmt.Sprintf("/api/v1/documents/uploads/%s/parts/%d/", sessionID.String(), partNumber)
+}
+
+func uploadSessionStorageAAD(session *documentupload.DocumentUploadSession) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: session.OrganizationID,
+		BusinessUnitID: session.BusinessUnitID,
+		ResourceID:     session.StoragePath,
+	}
 }
 
 func (s *Service) cancelSupersededSession(

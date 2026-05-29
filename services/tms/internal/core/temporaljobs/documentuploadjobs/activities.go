@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
@@ -44,6 +45,7 @@ type ActivitiesParams struct {
 	AuditService         services.AuditService
 	SearchProjection     services.DocumentSearchProjectionService
 	ThumbnailGenerator   *thumbnailservice.Generator
+	Encryption           *encryptionservice.Service
 	WorkflowStarter      services.WorkflowStarter
 	UsageProvider        services.UsageProvider `optional:"true"`
 	Redis                *goredis.Client        `optional:"true"`
@@ -58,6 +60,7 @@ type Activities struct {
 	auditService         services.AuditService
 	searchProjection     services.DocumentSearchProjectionService
 	thumbnailGenerator   *thumbnailservice.Generator
+	encryption           *encryptionservice.Service
 	workflowStarter      services.WorkflowStarter
 	usageProvider        services.UsageProvider
 	redis                *goredis.Client
@@ -89,6 +92,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		auditService:         p.AuditService,
 		searchProjection:     searchProjection,
 		thumbnailGenerator:   p.ThumbnailGenerator,
+		encryption:           p.Encryption,
 		workflowStarter:      workflowStarter,
 		usageProvider:        p.UsageProvider,
 		redis:                p.Redis,
@@ -237,8 +241,7 @@ func (a *Activities) finalizeValidateStoredObject(
 		}
 	}
 
-	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
-	if err != nil {
+	if _, err := a.storage.GetFileInfo(ctx, session.StoragePath); err != nil {
 		return a.failSession(
 			ctx,
 			session,
@@ -247,12 +250,20 @@ func (a *Activities) finalizeValidateStoredObject(
 		)
 	}
 
-	if fileInfo.Size != session.FileSize {
+	if session.CryptoMode != encryptionservice.CryptoModeEnvelopeV1 {
 		return a.failSession(
 			ctx,
 			session,
 			documentupload.FailureFileSizeMismatch.String(),
-			"Uploaded file size does not match the original file",
+			"Uploaded file is not encrypted",
+		)
+	}
+	if len(session.UploadedParts) == 0 {
+		return a.failSession(
+			ctx,
+			session,
+			documentupload.FailureFileSizeMismatch.String(),
+			"Encrypted upload session is missing verified plaintext part metadata",
 		)
 	}
 
@@ -689,7 +700,10 @@ func (a *Activities) newDocumentForUpload(
 		FileSize:           session.FileSize,
 		FileType:           session.ContentType,
 		StoragePath:        session.StoragePath,
+		ChecksumSHA256:     session.ChecksumSHA256,
 		StorageVersionID:   fileInfo.VersionID,
+		CryptoMode:         session.CryptoMode,
+		CryptoVersion:      session.CryptoVersion,
 		Status:             document.StatusActive,
 		Description:        session.Description,
 		ResourceID:         session.ResourceID,
@@ -866,6 +880,11 @@ func (a *Activities) isSessionReadyToFinalize(
 	session *documentupload.DocumentUploadSession,
 ) (bool, error) {
 	if session.Strategy == documentupload.StrategySingle {
+		if len(session.UploadedParts) > 0 {
+			return storage.SumUploadedPartSizes(storage.ToDomainParts(session.UploadedParts)) ==
+				session.FileSize, nil
+		}
+
 		info, err := a.storage.GetFileInfo(ctx, session.StoragePath)
 		if err != nil {
 			return false, nil //nolint:nilerr // we want to return false if we can't get the file info
@@ -923,16 +942,16 @@ func (a *Activities) getUploadedParts(
 	ctx context.Context,
 	session *documentupload.DocumentUploadSession,
 ) ([]storage.UploadedPart, error) {
+	if len(session.UploadedParts) > 0 {
+		return storage.ToDomainParts(session.UploadedParts), nil
+	}
+
 	if session.Strategy == documentupload.StrategySingle {
 		fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
 		if err != nil {
 			return nil, err
 		}
 		return []storage.UploadedPart{{PartNumber: 1, Size: fileInfo.Size}}, nil
-	}
-
-	if len(session.UploadedParts) > 0 {
-		return storage.ToDomainParts(session.UploadedParts), nil
 	}
 
 	return a.storage.ListMultipartUploadParts(ctx, &storage.ListMultipartUploadPartsParams{

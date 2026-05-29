@@ -3,7 +3,9 @@ package documenthandler_test
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -231,8 +234,12 @@ func setupHandlerWithConfig(
 		Return(nil, repositories.ErrCacheMiss).
 		Maybe()
 	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
-	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
-	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
+	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).
+		Maybe().
+		Return(nil)
 
 	service := documentservice.NewTestService(
 		logger,
@@ -258,6 +265,44 @@ func setupHandlerWithConfig(
 	})
 
 	return documenthandler.NewTestHandlerWithConfig(service, errorHandler, pm, cfg)
+}
+
+func encryptedDocumentBody(t *testing.T, body string, storagePath string) string {
+	t.Helper()
+
+	svc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
+	encrypted, err := svc.EncryptBytesWithAAD(
+		[]byte(body),
+		encryptionservice.AAD{
+			Purpose:        encryptionservice.PurposeDocument,
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+			ResourceID:     storagePath,
+		},
+	)
+	require.NoError(t, err)
+	return encrypted
+}
+
+func encryptedPreviewBody(t *testing.T, body string, storagePath string) string {
+	t.Helper()
+
+	svc := encryptionservice.NewWithKeyManager(
+		encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+	)
+	encrypted, err := svc.EncryptBytesWithAAD(
+		[]byte(body),
+		encryptionservice.AAD{
+			Purpose:        encryptionservice.PurposeDocument,
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+			ResourceID:     storagePath,
+		},
+	)
+	require.NoError(t, err)
+	return encrypted
 }
 
 func TestDocumentHandler_List_Success(t *testing.T) {
@@ -443,15 +488,21 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 				BusinessUnitID: testutil.TestBuID,
 				FileName:       "download.pdf",
 				OriginalName:   "download.pdf",
+				FileType:       "application/pdf",
 				StoragePath:    "org/trailer/download.pdf",
 				Status:         document.StatusActive,
 			}, nil
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
-			assert.Contains(t, params.ContentDisposition, "attachment")
-			return "https://storage.example.com/download?token=xyz", nil
+		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+			assert.Equal(t, "org/trailer/download.pdf", key)
+			body := encryptedDocumentBody(t, "download-body", "org/trailer/download.pdf")
+			return &storage.DownloadResult{
+				Body:        io.NopCloser(strings.NewReader(body)),
+				ContentType: "application/pdf",
+				Size:        int64(len(body)),
+			}, nil
 		},
 	}
 
@@ -466,10 +517,10 @@ func TestDocumentHandler_Download_Success(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "https://storage.example.com/download?token=xyz", resp["url"])
+	assert.Equal(t, "download-body", ginCtx.Recorder.Body.String())
+	assert.Equal(t, "application/pdf", ginCtx.Recorder.Header().Get("Content-Type"))
+	assert.Empty(t, ginCtx.Recorder.Header().Get("Content-Length"))
+	assert.Contains(t, ginCtx.Recorder.Header().Get("Content-Disposition"), "attachment")
 }
 
 func TestDocumentHandler_Download_NotFound(t *testing.T) {
@@ -556,15 +607,21 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 				ID:           req.ID,
 				FileName:     "view.pdf",
 				OriginalName: "view.pdf",
+				FileType:     "application/pdf",
 				StoragePath:  "org/trailer/view.pdf",
 				Status:       document.StatusActive,
 			}, nil
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
-			assert.Contains(t, params.ContentDisposition, "inline")
-			return "https://storage.example.com/view?token=abc", nil
+		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+			assert.Equal(t, "org/trailer/view.pdf", key)
+			body := encryptedDocumentBody(t, "view-body", "org/trailer/view.pdf")
+			return &storage.DownloadResult{
+				Body:        io.NopCloser(strings.NewReader(body)),
+				ContentType: "application/pdf",
+				Size:        int64(len(body)),
+			}, nil
 		},
 	}
 
@@ -579,10 +636,10 @@ func TestDocumentHandler_View_Success(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "https://storage.example.com/view?token=abc", resp["url"])
+	assert.Equal(t, "view-body", ginCtx.Recorder.Body.String())
+	assert.Equal(t, "application/pdf", ginCtx.Recorder.Header().Get("Content-Type"))
+	assert.Empty(t, ginCtx.Recorder.Header().Get("Content-Length"))
+	assert.Contains(t, ginCtx.Recorder.Header().Get("Content-Disposition"), "inline")
 }
 
 func TestDocumentHandler_View_NotFound(t *testing.T) {
@@ -677,9 +734,14 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 		})
 
 	storageClient := &mockStorageClient{
-		getPresignedFunc: func(_ context.Context, params *storage.PresignedURLParams) (string, error) {
-			assert.Equal(t, "org/trailer/preview-thumb.webp", params.Key)
-			return "https://storage.example.com/preview?token=prev", nil
+		downloadFunc: func(_ context.Context, key string) (*storage.DownloadResult, error) {
+			assert.Equal(t, "org/trailer/preview-thumb.webp", key)
+			body := encryptedPreviewBody(t, "preview-body", key)
+			return &storage.DownloadResult{
+				Body:        io.NopCloser(strings.NewReader(body)),
+				ContentType: "image/webp",
+				Size:        int64(len(body)),
+			}, nil
 		},
 	}
 
@@ -694,10 +756,9 @@ func TestDocumentHandler_Preview_Success(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
-
-	var resp map[string]any
-	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, "https://storage.example.com/preview?token=prev", resp["url"])
+	assert.Equal(t, "preview-body", ginCtx.Recorder.Body.String())
+	assert.Equal(t, "image/webp", ginCtx.Recorder.Header().Get("Content-Type"))
+	assert.Empty(t, ginCtx.Recorder.Header().Get("Content-Length"))
 }
 
 func TestDocumentHandler_Preview_NoPreviewAvailable(t *testing.T) {

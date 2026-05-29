@@ -29,6 +29,9 @@ type DocumentUploadSession struct {
 	FileSize                int64                      `json:"fileSize"                bun:"file_size,type:BIGINT,notnull"`
 	StoragePath             string                     `json:"storagePath"             bun:"storage_path,type:VARCHAR(500),notnull"`
 	StorageProviderUploadID string                     `json:"storageProviderUploadId" bun:"storage_provider_upload_id,type:VARCHAR(255),nullzero"`
+	ChecksumSHA256          string                     `json:"checksumSha256"          bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
+	CryptoMode              string                     `json:"cryptoMode"              bun:"crypto_mode,type:VARCHAR(32),notnull,default:'envelope_v1'"`
+	CryptoVersion           int16                      `json:"cryptoVersion"           bun:"crypto_version,type:SMALLINT,notnull,default:1"`
 	Strategy                Strategy                   `json:"strategy"                bun:"strategy,type:VARCHAR(20),notnull"`
 	Status                  Status                     `json:"status"                  bun:"status,type:document_upload_session_status_enum,notnull,default:'Initiated'"`
 	Description             string                     `json:"description"             bun:"description,type:TEXT,nullzero"`
@@ -54,6 +57,12 @@ func (s *DocumentUploadSession) BeforeAppendModel(_ context.Context, query bun.Q
 		}
 		if s.ProcessingProfile == "" {
 			s.ProcessingProfile = document.ProcessingProfileNone
+		}
+		if s.CryptoMode == "" {
+			s.CryptoMode = "envelope_v1"
+		}
+		if s.CryptoVersion == 0 {
+			s.CryptoVersion = 1
 		}
 		s.CreatedAt = now
 		s.UpdatedAt = now

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -54,7 +55,10 @@ func NewTestService(
 		documentIntelligence: noopDocumentContentService{},
 		searchProjection:     noopDocumentSearchProjectionService{},
 		config:               cfg,
-		thumbnailGenerator:   thumbnailGenerator,
+		encryption: encryptionservice.NewWithKeyManager(
+			encryptionservice.NewLocalKeyManager("unit-test-encryption-key-with-at-least-32-bytes"),
+		),
+		thumbnailGenerator: thumbnailGenerator,
 		workflowStarter: workflowstarter.New(workflowstarter.Params{
 			TemporalClient: temporalClient,
 		}),

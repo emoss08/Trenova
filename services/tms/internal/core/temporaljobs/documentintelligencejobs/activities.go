@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	services "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -57,6 +58,7 @@ type ActivitiesParams struct {
 	WorkflowStarter     services.WorkflowStarter
 	ParsingRuleRuntime  services.DocumentParsingRuleRuntime
 	TemporalClient      client.Client `optional:"true"`
+	Encryption          *encryptionservice.Service
 }
 
 type Activities struct {
@@ -75,6 +77,7 @@ type Activities struct {
 	workflowStarter     services.WorkflowStarter
 	parsingRuleRuntime  services.DocumentParsingRuleRuntime
 	temporalClient      client.Client
+	encryption          *encryptionservice.Service
 }
 
 //nolint:gocritic // dependency injection param
@@ -115,6 +118,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		workflowStarter:     workflowStarter,
 		parsingRuleRuntime:  parsingRuleRuntime,
 		temporalClient:      p.TemporalClient,
+		encryption:          p.Encryption,
 	}
 }
 
@@ -362,7 +366,29 @@ func (a *Activities) runExtractionPipeline(
 		)
 	}
 
-	extracted, err := a.extractContent(ctx, doc, buf.Bytes(), control)
+	documentBytes := buf.Bytes()
+	if a.encryption != nil && encryptionservice.IsEnvelope(string(documentBytes)) {
+		documentBytes, err = a.encryption.DecryptBytesWithAAD(
+			string(documentBytes),
+			encryptionservice.AAD{
+				Purpose:        encryptionservice.PurposeDocument,
+				OrganizationID: doc.OrganizationID,
+				BusinessUnitID: doc.BusinessUnitID,
+				ResourceID:     doc.StoragePath,
+			},
+		)
+		if err != nil {
+			return nil, a.markFailed(
+				ctx,
+				doc,
+				content,
+				documentupload.FailureReadFailed.String(),
+				"Failed to decrypt document bytes",
+			)
+		}
+	}
+
+	extracted, err := a.extractContent(ctx, doc, documentBytes, control)
 	if err != nil {
 		return nil, a.markFailed(
 			ctx,

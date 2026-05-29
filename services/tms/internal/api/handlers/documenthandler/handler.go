@@ -2,6 +2,7 @@ package documenthandler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -154,6 +155,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/uploads/:uploadSessionID/parts/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
 		h.getUploadPartURLs,
+	)
+	api.PUT(
+		"/uploads/:uploadSessionID/parts/:partNumber/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.uploadSessionPart,
 	)
 	api.POST(
 		"/uploads/:uploadSessionID/complete/",
@@ -497,7 +503,7 @@ func (h *Handler) download(c *gin.Context) {
 		return
 	}
 
-	url, err := h.service.GetDownloadURL(
+	content, err := h.service.GetDownloadContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
 			ID: id,
@@ -511,8 +517,10 @@ func (h *Handler) download(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	defer content.Body.Close()
 
-	c.JSON(http.StatusOK, gin.H{"url": url})
+	c.Header("Content-Disposition", content.ContentDisposition)
+	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
 }
 
 // @Summary Get a document view URL
@@ -536,7 +544,7 @@ func (h *Handler) view(c *gin.Context) {
 		return
 	}
 
-	url, err := h.service.GetViewURL(
+	content, err := h.service.GetViewContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
 			ID: id,
@@ -550,8 +558,10 @@ func (h *Handler) view(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	defer content.Body.Close()
 
-	c.JSON(http.StatusOK, gin.H{"url": url})
+	c.Header("Content-Disposition", content.ContentDisposition)
+	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
 }
 
 // @Summary Get a document preview URL
@@ -575,7 +585,7 @@ func (h *Handler) preview(c *gin.Context) {
 		return
 	}
 
-	url, err := h.service.GetPreviewURL(
+	content, err := h.service.GetPreviewContent(
 		c.Request.Context(),
 		repositories.GetDocumentByIDRequest{
 			ID: id,
@@ -589,8 +599,10 @@ func (h *Handler) preview(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
+	defer content.Body.Close()
 
-	c.JSON(http.StatusOK, gin.H{"url": url})
+	c.Header("Content-Disposition", content.ContentDisposition)
+	c.DataFromReader(http.StatusOK, -1, content.ContentType, content.Body, nil)
 }
 
 type uploadRequest struct {
@@ -798,6 +810,46 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"parts": targets})
+}
+
+func (h *Handler) uploadSessionPart(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	partNumber, err := strconv.Atoi(c.Param("partNumber"))
+	if err != nil {
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"partNumber",
+			errortypes.ErrInvalid,
+			"Invalid part number",
+		))
+		return
+	}
+
+	session, err := h.uploadService.UploadPart(
+		c.Request.Context(),
+		&documentuploadservice.UploadPartRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			SessionID:  id,
+			PartNumber: partNumber,
+			Body:       c.Request.Body,
+			Size:       c.Request.ContentLength,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, session)
 }
 
 func (h *Handler) completeUploadSession(c *gin.Context) {

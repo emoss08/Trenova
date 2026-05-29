@@ -431,7 +431,13 @@ func (r *Router) setupMiddleware() {
 	r.s.router.Use(requestid.New())
 	r.s.router.Use(middleware.NewCSRFBrowserGuard(r.cfg, r.errorHandler, r.l).Guard())
 	r.s.router.Use(
-		gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/metrics", "/health"})),
+		gzip.Gzip(
+			gzip.DefaultCompression,
+			gzip.WithExcludedPaths([]string{"/metrics", "/health"}),
+			gzip.WithExcludedPathsRegexs([]string{
+				`^/api/v1/documents/[^/]+/(download|view|preview)/$`,
+			}),
+		),
 	)
 	r.s.router.Use(ginzap.Ginzap(r.l, time.RFC3339, true))
 	r.s.router.Use(r.observabilityMiddleware.TracingMiddleware())

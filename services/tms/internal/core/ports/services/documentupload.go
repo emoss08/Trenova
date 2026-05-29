@@ -44,6 +44,7 @@ type CancelRequest struct {
 type PartUploadTarget struct {
 	PartNumber int    `json:"partNumber"`
 	URL        string `json:"url"`
+	Method     string `json:"method"`
 }
 
 type SessionState struct {

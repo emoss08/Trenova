@@ -2,9 +2,8 @@
 package documentservice
 
 import (
+	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/usageservice"
 	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
@@ -29,10 +29,11 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/fileutils"
+	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
@@ -61,6 +62,7 @@ type Params struct {
 	UsageProvider        services.UsageProvider `optional:"true"`
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
+	Encryption           *encryptionservice.Service
 }
 
 type Service struct {
@@ -82,6 +84,7 @@ type Service struct {
 	usageProvider        services.UsageProvider
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
+	encryption           *encryptionservice.Service
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -119,6 +122,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		usageProvider:        p.UsageProvider,
 		config:               p.Config.GetStorageConfig(),
 		thumbnailGenerator:   p.ThumbnailGenerator,
+		encryption:           p.Encryption,
 	}
 }
 
@@ -137,6 +141,14 @@ type UploadRequest struct {
 
 type UploadResult struct {
 	Document *document.Document
+}
+
+type DocumentContent struct {
+	Document           *document.Document
+	Body               io.ReadCloser
+	ContentType        string
+	ContentLength      int64
+	ContentDisposition string
 }
 
 type BulkUploadRequest struct {
@@ -230,7 +242,7 @@ func (s *Service) Upload(
 	defer file.Close()
 
 	contentType := req.File.Header.Get("Content-Type")
-	storagePath := s.generateStoragePath(
+	storagePath := fileutils.GenerateStoragePath(
 		req.TenantInfo.OrgID.String(),
 		req.ResourceType,
 		req.File.Filename,
@@ -248,41 +260,36 @@ func (s *Service) Upload(
 		return nil, err
 	}
 
-	lineageID := docID
-	var lineageInfo *document.Document
-	if strings.TrimSpace(req.LineageID) != "" {
-		parsedLineageID, parseErr := pulid.MustParse(req.LineageID)
-		if parseErr != nil {
-			return nil, errortypes.NewValidationError(
-				"lineageId",
-				errortypes.ErrInvalid,
-				"Invalid lineage ID",
-			)
-		}
-		lineageInfo, err = s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
-		if err != nil {
-			return nil, err
-		}
-		if lineageInfo.ResourceID != req.ResourceID ||
-			lineageInfo.ResourceType != req.ResourceType {
-			return nil, errortypes.NewConflictError(
-				"Document lineage does not belong to the selected resource",
-			)
-		}
-		lineageID = lineageInfo.LineageID
+	lineageID, lineageInfo, err := s.prepareUploadLineage(ctx, req, docID)
+	if err != nil {
+		return nil, err
 	}
 
-	hasher := sha256.New()
-	tee := io.TeeReader(file, hasher)
+	plaintext, err := io.ReadAll(file)
+	if err != nil {
+		log.Error("failed to read uploaded file", zap.Error(err))
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded file").WithInternal(err)
+	}
+
+	uploadBody, cryptoMode, cryptoVersion, err := s.documentUploadBody(
+		plaintext,
+		req.TenantInfo,
+		storagePath,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	fileInfo, err := s.storage.Upload(ctx, &storage.UploadParams{
 		Key:         storagePath,
 		ContentType: contentType,
-		Size:        req.File.Size,
-		Body:        tee,
+		Size:        int64(len(uploadBody)),
+		Body:        bytes.NewReader(uploadBody),
 		Metadata: map[string]string{
 			"original_name": req.File.Filename,
 			"resource_id":   req.ResourceID,
 			"resource_type": req.ResourceType,
+			"crypto_mode":   cryptoMode,
 		},
 	})
 	if err != nil {
@@ -302,8 +309,10 @@ func (s *Service) Upload(
 		FileSize:           req.File.Size,
 		FileType:           contentType,
 		StoragePath:        storagePath,
-		ChecksumSHA256:     hex.EncodeToString(hasher.Sum(nil)),
+		ChecksumSHA256:     hashutils.SHA256BytesHex(plaintext),
 		StorageVersionID:   fileInfo.VersionID,
+		CryptoMode:         cryptoMode,
+		CryptoVersion:      cryptoVersion,
 		PreviewStoragePath: "",
 		Status:             document.StatusActive,
 		Description:        req.Description,
@@ -365,9 +374,61 @@ func (s *Service) Upload(
 		req.TenantInfo,
 		req.TenantInfo.UserID,
 	)
-	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, req.Actor)
+	s.recordDocumentUploadUsage(ctx, log, createdDoc, req.TenantInfo, &req.Actor)
 
 	return &UploadResult{Document: createdDoc}, nil
+}
+
+func (s *Service) prepareUploadLineage(
+	ctx context.Context,
+	req *UploadRequest,
+	docID pulid.ID,
+) (pulid.ID, *document.Document, error) {
+	if strings.TrimSpace(req.LineageID) == "" {
+		return docID, nil, nil
+	}
+
+	parsedLineageID, err := pulid.MustParse(req.LineageID)
+	if err != nil {
+		return "", nil, errortypes.NewValidationError(
+			"lineageId",
+			errortypes.ErrInvalid,
+			"Invalid lineage ID",
+		)
+	}
+
+	lineageInfo, err := s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
+	if err != nil {
+		return "", nil, err
+	}
+	if lineageInfo.ResourceID != req.ResourceID || lineageInfo.ResourceType != req.ResourceType {
+		return "", nil, errortypes.NewConflictError(
+			"Document lineage does not belong to the selected resource",
+		)
+	}
+
+	return lineageInfo.LineageID, lineageInfo, nil
+}
+
+func (s *Service) documentUploadBody(
+	plaintext []byte,
+	tenantInfo pagination.TenantInfo,
+	storagePath string,
+) (body []byte, cryptoMode string, cryptoVersion int16, err error) {
+	if s.encryption == nil {
+		return nil, "", 0, errortypes.NewBusinessError("Document encryption is not configured")
+	}
+
+	encrypted, err := s.encryption.EncryptBytesWithAAD(
+		plaintext,
+		documentStorageAAD(tenantInfo, storagePath),
+	)
+	if err != nil {
+		return nil, "", 0, errortypes.NewBusinessError("Failed to encrypt document").
+			WithInternal(err)
+	}
+
+	return []byte(encrypted), encryptionservice.CryptoModeForCiphertext(encrypted), 1, nil
 }
 
 func (s *Service) recordDocumentUploadUsage(
@@ -375,14 +436,14 @@ func (s *Service) recordDocumentUploadUsage(
 	log *zap.Logger,
 	doc *document.Document,
 	tenantInfo pagination.TenantInfo,
-	actor services.RequestActor,
+	actor *services.RequestActor,
 ) {
 	if _, err := usageservice.RecordDocumentUpload(
 		ctx,
 		s.usageProvider,
 		usageservice.DocumentUploadUsageParams{
 			TenantInfo: tenantInfo,
-			Actor:      actor,
+			Actor:      *actor,
 			DocumentID: doc.ID,
 		},
 	); err != nil {
@@ -535,7 +596,7 @@ func (s *Service) GetDownloadURL(
 	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
 		Key:                doc.StoragePath,
 		Expiry:             s.config.GetPresignedURLExpiry(),
-		ContentDisposition: fmt.Sprintf("attachment; filename=\"%q\"", doc.OriginalName),
+		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
 	})
 	if err != nil {
 		log.Error("failed to generate presigned URL", zap.Error(err))
@@ -572,13 +633,131 @@ func (s *Service) GetViewURL(
 	return url, nil
 }
 
+func (s *Service) GetDownloadContent(
+	ctx context.Context,
+	req repositories.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        doc.FileType,
+		ContentLength:      int64(len(body)),
+		ContentDisposition: fileutils.ContentDisposition("attachment", doc.OriginalName),
+	}, nil
+}
+
+func (s *Service) GetViewContent(
+	ctx context.Context,
+	req repositories.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := s.readDocumentObject(ctx, doc, req.TenantInfo, doc.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        doc.FileType,
+		ContentLength:      int64(len(body)),
+		ContentDisposition: viewContentDisposition(doc),
+	}, nil
+}
+
+func (s *Service) GetPreviewContent(
+	ctx context.Context,
+	req repositories.GetDocumentByIDRequest,
+) (*DocumentContent, error) {
+	doc, err := s.repo.GetByID(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if doc.PreviewStatus != document.PreviewStatusReady || doc.PreviewStoragePath == "" {
+		return nil, errortypes.NewNotFoundError("Preview not available for this document")
+	}
+
+	body, err := s.readStoredObject(
+		ctx,
+		doc.PreviewStoragePath,
+		documentStorageAAD(req.TenantInfo, doc.PreviewStoragePath),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DocumentContent{
+		Document:           doc,
+		Body:               io.NopCloser(bytes.NewReader(body)),
+		ContentType:        "image/webp",
+		ContentLength:      int64(len(body)),
+		ContentDisposition: "inline",
+	}, nil
+}
+
+func (s *Service) readDocumentObject(
+	ctx context.Context,
+	doc *document.Document,
+	tenantInfo pagination.TenantInfo,
+	storagePath string,
+) ([]byte, error) {
+	return s.readStoredObject(ctx, storagePath, documentStorageAAD(tenantInfo, doc.StoragePath))
+}
+
+func (s *Service) readStoredObject(
+	ctx context.Context,
+	storagePath string,
+	aad encryptionservice.AAD,
+) ([]byte, error) {
+	download, err := s.storage.Download(ctx, storagePath)
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to download document").WithInternal(err)
+	}
+	if download == nil || download.Body == nil {
+		return nil, errortypes.NewDatabaseError("Failed to download document")
+	}
+	defer download.Body.Close()
+
+	data, err := io.ReadAll(download.Body)
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to read document").WithInternal(err)
+	}
+	if s.encryption == nil {
+		return nil, errortypes.NewBusinessError("Document encryption is not configured")
+	}
+	if !encryptionservice.IsEnvelope(string(data)) {
+		return nil, errortypes.NewBusinessError("Stored document is not encrypted")
+	}
+
+	plaintext, err := s.encryption.DecryptBytesWithAAD(string(data), aad)
+	if err != nil {
+		return nil, errortypes.NewBusinessError("Failed to decrypt document").WithInternal(err)
+	}
+	return plaintext, nil
+}
+
 func viewContentDisposition(doc *document.Document) string {
 	disposition := "inline"
 	if isActiveContentType(doc.FileType) {
 		disposition = "attachment"
 	}
 
-	return fmt.Sprintf("%s; filename=\"%q\"", disposition, doc.OriginalName)
+	return fileutils.ContentDisposition(disposition, doc.OriginalName)
 }
 
 func isActiveContentType(contentType string) bool {
@@ -587,6 +766,18 @@ func isActiveContentType(contentType string) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func documentStorageAAD(
+	tenantInfo pagination.TenantInfo,
+	storagePath string,
+) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeDocument,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     storagePath,
 	}
 }
 
@@ -924,12 +1115,6 @@ func (s *Service) GetPreviewURL(
 	}
 
 	return url, nil
-}
-
-func (s *Service) generateStoragePath(orgID, resourceType, filename string) string {
-	ext := filepath.Ext(filename)
-	uniqueID := uuid.New().String()
-	return fmt.Sprintf("%s/%s/%s%s", orgID, resourceType, uniqueID, strings.ToLower(ext))
 }
 
 func (s *Service) cleanupDocumentStorage(

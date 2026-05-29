@@ -63,6 +63,9 @@ var DocumentUploadSessionColumns = struct {
 	FileSize                Column // "file_size" → qualified: "dus.file_size"
 	StoragePath             Column // "storage_path" → qualified: "dus.storage_path"
 	StorageProviderUploadID Column // "storage_provider_upload_id" → qualified: "dus.storage_provider_upload_id"
+	ChecksumSHA256          Column // "checksum_sha256" → qualified: "dus.checksum_sha256"
+	CryptoMode              Column // "crypto_mode" → qualified: "dus.crypto_mode"
+	CryptoVersion           Column // "crypto_version" → qualified: "dus.crypto_version"
 	Strategy                Column // "strategy" → qualified: "dus.strategy"
 	Status                  Column // "status" → qualified: "dus.status"
 	Description             Column // "description" → qualified: "dus.description"
@@ -91,6 +94,9 @@ var DocumentUploadSessionColumns = struct {
 	FileSize:                NewColumn("file_size", "dus"),
 	StoragePath:             NewColumn("storage_path", "dus"),
 	StorageProviderUploadID: NewColumn("storage_provider_upload_id", "dus"),
+	ChecksumSHA256:          NewColumn("checksum_sha256", "dus"),
+	CryptoMode:              NewColumn("crypto_mode", "dus"),
+	CryptoVersion:           NewColumn("crypto_version", "dus"),
 	Strategy:                NewColumn("strategy", "dus"),
 	Status:                  NewColumn("status", "dus"),
 	Description:             NewColumn("description", "dus"),
@@ -125,6 +131,9 @@ var DocumentUploadSessionFieldMap = map[string]string{
 	"fileSize":                "file_size",
 	"storagePath":             "storage_path",
 	"storageProviderUploadId": "storage_provider_upload_id",
+	"checksumSha256":          "checksum_sha256",
+	"cryptoMode":              "crypto_mode",
+	"cryptoVersion":           "crypto_version",
 	"strategy":                "strategy",
 	"status":                  "status",
 	"description":             "description",
@@ -157,6 +166,9 @@ var DocumentUploadSessionInsertableColumns = []string{
 	"file_size",
 	"storage_path",
 	"storage_provider_upload_id",
+	"checksum_sha256",
+	"crypto_mode",
+	"crypto_version",
 	"strategy",
 	"status",
 	"description",
@@ -236,6 +248,9 @@ var DocumentUploadSessionFilter = struct {
 	FileSize                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileSize" → DB: "file_size"
 	StoragePath             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storagePath" → DB: "storage_path"
 	StorageProviderUploadID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageProviderUploadId" → DB: "storage_provider_upload_id"
+	ChecksumSHA256          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checksumSha256" → DB: "checksum_sha256"
+	CryptoMode              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoMode" → DB: "crypto_mode"
+	CryptoVersion           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cryptoVersion" → DB: "crypto_version"
 	Strategy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "strategy" → DB: "strategy"
 	Status                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	Description             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
@@ -291,6 +306,15 @@ var DocumentUploadSessionFilter = struct {
 	},
 	StorageProviderUploadID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("storageProviderUploadId", op, value)
+	},
+	ChecksumSHA256: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("checksumSha256", op, value)
+	},
+	CryptoMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cryptoMode", op, value)
+	},
+	CryptoVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cryptoVersion", op, value)
 	},
 	Strategy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("strategy", op, value)
