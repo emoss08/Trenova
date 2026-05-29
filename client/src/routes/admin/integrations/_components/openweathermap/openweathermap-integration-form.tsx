@@ -85,11 +85,7 @@ export function OpenWeatherMapForm({ open, onClose }: { open: boolean; onClose: 
                 name="enabled"
                 control={control}
                 render={({ field }) => (
-                  <Switch
-                    id="owm-enabled"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
+                  <Switch id="owm-enabled" checked={field.value} onCheckedChange={field.onChange} />
                 )}
               />
             </div>
@@ -133,7 +129,11 @@ function OpenWeatherMapFormHeader() {
           <div className="size-1 rounded-full bg-muted-foreground" />
           <div className="size-1 rounded-full bg-muted-foreground" />
         </div>
-        <LazyImage src={openWeatherMapLogo} alt="OpenWeatherMap Logo" className="size-8" />
+        <LazyImage
+          src={openWeatherMapLogo}
+          alt="OpenWeatherMap Logo"
+          className="h-8 max-w-28 object-contain"
+        />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with OpenWeatherMap</h3>

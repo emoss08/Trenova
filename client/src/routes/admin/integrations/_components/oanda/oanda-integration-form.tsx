@@ -210,7 +210,7 @@ function OANDAExchangeRatesFormHeader() {
           <div className="size-1 rounded-full bg-muted-foreground" />
           <div className="size-1 rounded-full bg-muted-foreground" />
         </div>
-        <LazyImage src={logo} alt="OANDA Logo" className="size-20 object-contain" />
+        <LazyImage src={logo} alt="OANDA Logo" className="h-8 max-w-24 object-contain" />
       </div>
       <div className="flex flex-col gap-2 text-center">
         <h3 className="text-lg font-semibold">Connect with OANDA Exchange Rates</h3>

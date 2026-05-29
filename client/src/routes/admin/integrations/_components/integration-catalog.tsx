@@ -16,6 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useState } from "react";
@@ -52,6 +53,28 @@ const statusOptions = [
   { label: "Connected", value: "connected" },
   { label: "Disconnected", value: "disconnected" },
 ];
+
+const catalogLogoSizeByType: Record<
+  string,
+  { containerClassName: string; imageClassName: string }
+> = {
+  OpenAI: {
+    containerClassName: "-top-7 -right-12 size-28",
+    imageClassName: "size-32",
+  },
+  OpenWeatherMap: {
+    containerClassName: "-top-7 -right-6 h-24 w-32",
+    imageClassName: "h-28 w-36",
+  },
+  PCMiler: {
+    containerClassName: "-top-7 -right-8 h-24 w-36",
+    imageClassName: "h-28 w-40",
+  },
+};
+
+function getCatalogLogoSize(type: string) {
+  return catalogLogoSizeByType[type];
+}
 
 export function IntegrationCatalogCard() {
   const { theme } = useTheme();
@@ -235,6 +258,7 @@ export function IntegrationCatalogCard() {
                   theme === "dark"
                     ? item.logoDarkUrl || item.logoLightUrl || item.logoUrl
                     : item.logoLightUrl || item.logoDarkUrl || item.logoUrl;
+                const logoSize = getCatalogLogoSize(item.type);
 
                 return (
                   <MagicCard
@@ -249,7 +273,7 @@ export function IntegrationCatalogCard() {
                     <Card className="group relative overflow-hidden border-none bg-transparent transition-all">
                       <CardHeader className="space-y-2 pb-3">
                         <div className="relative flex items-start justify-between gap-3">
-                          <div className="space-y-1 pr-14">
+                          <div className="space-y-1 pr-20">
                             <CardTitle className="text-base">{item.name}</CardTitle>
                             <CardDescription className="text-xs">
                               <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -265,12 +289,17 @@ export function IntegrationCatalogCard() {
                               </div>
                             </CardDescription>
                           </div>
-                          <div className="absolute -top-5 -right-10 inline-flex size-20">
+                          <div
+                            className={cn(
+                              "absolute -top-5 -right-10 inline-flex size-20 items-center justify-center",
+                              logoSize?.containerClassName,
+                            )}
+                          >
                             {logoURL ? (
                               <LazyImage
                                 src={logoURL}
                                 alt={`${item.name} logo`}
-                                className="size-24 object-contain"
+                                className={cn("size-24 object-contain", logoSize?.imageClassName)}
                               />
                             ) : (
                               <span className="text-xs font-semibold text-foreground/80">
