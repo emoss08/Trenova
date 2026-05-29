@@ -28,7 +28,7 @@ import {
   UserXIcon,
   XIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { createElement, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { AssignmentDialog } from "../assignment-dialog";
@@ -206,7 +206,7 @@ export function MoveCard({
 
             return (
               <StopTimelineItem
-                key={stopIdx}
+                key={stopTimelineKey(stop, stopIdx)}
                 stop={stop}
                 isLast={isLast}
                 moveStatus={move?.status ?? "New"}
@@ -365,6 +365,17 @@ function stopHasInfo(stop: Stop): boolean {
   );
 }
 
+function stopTimelineKey(stop: Stop, fallbackIndex: number): string {
+  return [
+    stop.shipmentMoveId,
+    stop.sequence,
+    stop.locationId,
+    stop.type,
+    stop.scheduledWindowStart,
+    fallbackIndex,
+  ].join(":");
+}
+
 function StopTimelineItem({
   stop,
   isLast,
@@ -386,7 +397,7 @@ function StopTimelineItem({
   const userTimezone = user?.timezone || "auto";
   const userTimeFormat = user?.timeFormat || "12-hour";
   const status = stop.status ?? "New";
-  const Icon = getStatusIcon(status, isLast, moveStatus);
+  const statusIcon = getStatusIcon(status, isLast, moveStatus);
   const hasInfo = stopHasInfo(stop);
   const scheduled =
     stop.scheduledWindowStart && stop.scheduledWindowStart > 0
@@ -422,7 +433,7 @@ function StopTimelineItem({
         <div
           className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full ${stopStatusBgColor[status]}`}
         >
-          <Icon className="size-3 text-white" />
+          {createElement(statusIcon, { className: "size-3 text-white" })}
         </div>
         {hasErrors && errorMessages && errorMessages.length > 0 && (
           <Tooltip>
@@ -436,8 +447,8 @@ function StopTimelineItem({
             <TooltipContent side="top" className="max-w-xs">
               <div className="space-y-1">
                 <p className="text-xs font-semibold">Validation Errors:</p>
-                {errorMessages.map((msg, idx) => (
-                  <p key={idx} className="text-xs">
+                {errorMessages.map((msg) => (
+                  <p key={msg} className="text-xs">
                     • {msg}
                   </p>
                 ))}
@@ -497,7 +508,7 @@ function AssignmentDetails({ assignmentId }: { assignmentId?: string }) {
   if (isLoading) {
     return (
       <div className="rounded-b-md border-t bg-muted p-3">
-        <p className="text-2xs text-muted-foreground">Loading assignment...</p>
+        <p className="text-2xs text-muted-foreground">Loading assignment…</p>
       </div>
     );
   }

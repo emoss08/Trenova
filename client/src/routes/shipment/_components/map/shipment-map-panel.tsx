@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { GeofenceOverlay } from "./geofence-overlay";
 import { GeofencePopover } from "./geofence-popover";
 import { LocationAddressMarker } from "./location-address-marker";
@@ -51,15 +51,14 @@ export default function ShipmentMapPanel({
     refetchOnWindowFocus: false,
     enabled: backgroundEnabled,
   });
-  const locations = useMemo(() => locationsQuery.data?.results ?? [], [locationsQuery.data]);
-  const allGeofences = useMemo(() => collectGeofencesFromLocations(locations), [locations]);
-  const locationsById = useMemo(() => {
-    const lookup = new globalThis.Map<string, (typeof locations)[number]>();
-    for (const loc of locations) {
-      if (loc.id) lookup.set(loc.id, loc);
+  const locations = locationsQuery.data?.results ?? [];
+  const allGeofences = collectGeofencesFromLocations(locations);
+  const locationsById = new globalThis.Map<string, (typeof locations)[number]>();
+  for (const loc of locations) {
+    if (loc.id) {
+      locationsById.set(loc.id, loc);
     }
-    return lookup;
-  }, [locations]);
+  }
   const {
     overlays,
     toggleOverlay,
@@ -81,36 +80,31 @@ export default function ShipmentMapPanel({
 
   const owmApiKey = owmQuery.data?.config.apiKey ?? "";
 
-  const selectedGeofence = useMemo(
-    () => allGeofences.find((g) => g.id === selectedGeofenceId) ?? null,
-    [allGeofences, selectedGeofenceId],
-  );
+  const selectedGeofence = allGeofences.find((g) => g.id === selectedGeofenceId) ?? null;
 
-  const boundsPoints = useMemo<google.maps.LatLngLiteral[]>(() => {
-    const points: google.maps.LatLngLiteral[] = [];
-    for (const loc of locations) {
-      if (
-        loc.latitude != null &&
-        loc.longitude != null &&
-        Number.isFinite(loc.latitude) &&
-        Number.isFinite(loc.longitude)
-      ) {
-        points.push({ lat: loc.latitude, lng: loc.longitude });
-      }
+  const boundsPoints: google.maps.LatLngLiteral[] = [];
+  for (const loc of locations) {
+    if (
+      loc.latitude != null &&
+      loc.longitude != null &&
+      Number.isFinite(loc.latitude) &&
+      Number.isFinite(loc.longitude)
+    ) {
+      boundsPoints.push({ lat: loc.latitude, lng: loc.longitude });
     }
-    for (const g of allGeofences) {
-      if (g.kind === "polygon") {
-        for (const p of g.path) points.push(p);
-      }
+  }
+  for (const g of allGeofences) {
+    if (g.kind === "polygon") {
+      boundsPoints.push(...g.path);
     }
-    return points;
-  }, [locations, allGeofences]);
+  }
 
-  useEffect(() => {
-    if (!overlays.geofences) {
+  const handleToggleOverlay = (overlay: Parameters<typeof toggleOverlay>[0]) => {
+    if (overlay === "geofences" && overlays.geofences) {
       setSelectedGeofenceId(null);
     }
-  }, [overlays.geofences]);
+    toggleOverlay(overlay);
+  };
 
   const owmLayerId = OWM_LAYER_MAP[weatherLayer];
   const showWeather = overlays.weather;
@@ -155,7 +149,7 @@ export default function ShipmentMapPanel({
             mapStyle={mapStyle}
             onMapStyleChange={setMapStyle}
             overlays={overlays}
-            onToggleOverlay={toggleOverlay}
+            onToggleOverlay={handleToggleOverlay}
             isFullscreen={isFullscreen}
             onToggleFullscreen={toggleFullscreen}
             boundsPoints={boundsPoints}
@@ -230,10 +224,9 @@ function LiveMapSyncOverlay({
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    setNow(Date.now());
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(interval);
-  }, [dataUpdatedAt, lastEventAt]);
+  }, []);
 
   const syncedAt = Math.max(lastEventAt ?? 0, dataUpdatedAt ?? 0);
   const live = connectionState === "connected";

@@ -18,7 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { integrationCatalogSearchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
@@ -67,61 +67,49 @@ export function IntegrationCatalogCard() {
     ...queries.integration.catalog(),
   });
 
-  const items = useMemo(() => catalogQuery.data?.items ?? [], [catalogQuery.data?.items]);
+  const items = catalogQuery.data?.items ?? [];
+  const uniqueCategories = new Map<string, string>();
+  for (const item of items) {
+    if (!item.category) {
+      continue;
+    }
+    if (!uniqueCategories.has(item.category)) {
+      uniqueCategories.set(item.category, item.categoryLabel || item.category);
+    }
+  }
+  const categoryOptions = [
+    { label: "All Categories", value: "all" },
+    ...Array.from(uniqueCategories.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((left, right) => left.label.localeCompare(right.label)),
+  ];
 
-  const categoryOptions = useMemo(() => {
-    const uniqueCategories = new Map<string, string>();
-    for (const item of items) {
-      if (!item.category) {
-        continue;
-      }
-      if (!uniqueCategories.has(item.category)) {
-        uniqueCategories.set(item.category, item.categoryLabel || item.category);
-      }
+  const normalizedSearch = searchParams.query.trim().toLowerCase();
+  const filteredItems = items.filter((item) => {
+    if (searchParams.status === "connected" && !item.enabled) {
+      return false;
+    }
+    if (searchParams.status === "disconnected" && item.enabled) {
+      return false;
+    }
+    if (searchParams.category !== "all" && item.category !== searchParams.category) {
+      return false;
     }
 
-    return [
-      { label: "All Categories", value: "all" },
-      ...Array.from(uniqueCategories.entries())
-        .map(([value, label]) => ({ value, label }))
-        .sort((left, right) => left.label.localeCompare(right.label)),
-    ];
-  }, [items]);
+    if (!normalizedSearch) {
+      return true;
+    }
 
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = searchParams.query.trim().toLowerCase();
-
-    return items.filter((item) => {
-      if (searchParams.status === "connected" && !item.enabled) {
-        return false;
-      }
-      if (searchParams.status === "disconnected" && item.enabled) {
-        return false;
-      }
-      if (searchParams.category !== "all" && item.category !== searchParams.category) {
-        return false;
-      }
-
-      if (!normalizedSearch) {
-        return true;
-      }
-
-      return (
-        item.name.toLowerCase().includes(normalizedSearch) ||
-        item.description.toLowerCase().includes(normalizedSearch) ||
-        item.categoryLabel.toLowerCase().includes(normalizedSearch)
-      );
-    });
-  }, [items, searchParams.status, searchParams.category, searchParams.query]);
-
-  const filteredAndSortedItems = useMemo(() => {
-    const sortedItems = [...filteredItems];
-    sortedItems.sort((left, right) => {
-      const comparison = left.name.localeCompare(right.name);
-      return searchParams.sortBy === "name_asc" ? comparison : -comparison;
-    });
-    return sortedItems;
-  }, [filteredItems, searchParams.sortBy]);
+    return (
+      item.name.toLowerCase().includes(normalizedSearch) ||
+      item.description.toLowerCase().includes(normalizedSearch) ||
+      item.categoryLabel.toLowerCase().includes(normalizedSearch)
+    );
+  });
+  const filteredAndSortedItems = [...filteredItems].sort((left, right) => {
+    const comparison = left.name.localeCompare(right.name);
+    return searchParams.sortBy === "name_asc" ? comparison : -comparison;
+  });
 
   const openModal = (type: string) => {
     switch (type) {

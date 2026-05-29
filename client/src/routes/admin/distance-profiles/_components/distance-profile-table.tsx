@@ -17,21 +17,18 @@ import { Resource } from "@/types/permission";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { CheckCircleIcon, Loader2Icon, TrashIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./distance-profile-columns";
 import { DistanceProfilePanel } from "./distance-profile-panel";
 
 const distanceProfileService = new DistanceProfileService();
+const columns = getColumns();
 
 export default function DistanceProfileTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<DistanceProfile | null>(null);
-
-  const invalidateList = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
-  }, [queryClient]);
+  const selectedProfileRef = useRef<DistanceProfile | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -39,9 +36,9 @@ export default function DistanceProfileTable() {
     },
     onSuccess: () => {
       toast.success("Distance profile deleted");
-      invalidateList();
+      void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
       setDeleteDialogOpen(false);
-      setSelectedProfile(null);
+      selectedProfileRef.current = null;
     },
     onError: (error) => {
       toast.error("Failed to delete distance profile", {
@@ -54,7 +51,7 @@ export default function DistanceProfileTable() {
     mutationFn: (id: string) => distanceProfileService.setDefault(id),
     onSuccess: () => {
       toast.success("Default distance profile updated");
-      invalidateList();
+      void queryClient.invalidateQueries({ queryKey: ["distance-profile-list"] });
     },
     onError: (error) => {
       toast.error("Failed to set default profile", {
@@ -62,44 +59,35 @@ export default function DistanceProfileTable() {
       });
     },
   });
-  const { mutate: setDefault } = setDefaultMutation;
 
-  const handleDelete = useCallback((row: Row<DistanceProfile>) => {
-    setSelectedProfile(row.original);
+  const handleDelete = (row: Row<DistanceProfile>) => {
+    selectedProfileRef.current = row.original;
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
-  const handleSetDefault = useCallback(
-    (row: Row<DistanceProfile>) => {
-      if (row.original.id) {
-        setDefault(row.original.id);
-      }
+  const handleSetDefault = (row: Row<DistanceProfile>) => {
+    if (row.original.id) {
+      setDefaultMutation.mutate(row.original.id);
+    }
+  };
+
+  const contextMenuActions: RowAction<DistanceProfile>[] = [
+    {
+      id: "set-default",
+      label: "Set Default",
+      icon: CheckCircleIcon,
+      disabled: (row) => row.original.isDefault || row.original.status !== "Active",
+      onClick: handleSetDefault,
     },
-    [setDefault],
-  );
-
-  const columns = useMemo(() => getColumns(), []);
-
-  const contextMenuActions = useMemo<RowAction<DistanceProfile>[]>(
-    () => [
-      {
-        id: "set-default",
-        label: "Set Default",
-        icon: CheckCircleIcon,
-        disabled: (row) => row.original.isDefault || row.original.status !== "Active",
-        onClick: handleSetDefault,
-      },
-      {
-        id: "delete",
-        label: "Delete",
-        icon: TrashIcon,
-        variant: "destructive",
-        disabled: (row) => row.original.isDefault,
-        onClick: handleDelete,
-      },
-    ],
-    [handleDelete, handleSetDefault],
-  );
+    {
+      id: "delete",
+      label: "Delete",
+      icon: TrashIcon,
+      variant: "destructive",
+      disabled: (row) => row.original.isDefault,
+      onClick: handleDelete,
+    },
+  ];
 
   return (
     <>
@@ -113,7 +101,15 @@ export default function DistanceProfileTable() {
         contextMenuActions={contextMenuActions}
         TablePanel={DistanceProfilePanel}
       />
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            selectedProfileRef.current = null;
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
@@ -130,8 +126,8 @@ export default function DistanceProfileTable() {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                if (selectedProfile?.id) {
-                  deleteMutation.mutate(selectedProfile.id);
+                if (selectedProfileRef.current?.id) {
+                  deleteMutation.mutate(selectedProfileRef.current.id);
                 }
               }}
               disabled={deleteMutation.isPending}

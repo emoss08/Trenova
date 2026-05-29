@@ -17,20 +17,17 @@ import type { StoredMileage } from "@/types/stored-mileage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { Loader2Icon, TrashIcon } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./stored-mileage-columns";
 
 const storedMileageService = new StoredMileageService();
+const columns = getColumns();
 
 export default function StoredMileageTable() {
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedMileage, setSelectedMileage] = useState<StoredMileage | null>(null);
-
-  const invalidateList = useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["stored-mileage-list"] });
-  }, [queryClient]);
+  const selectedMileageRef = useRef<StoredMileage | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -38,9 +35,9 @@ export default function StoredMileageTable() {
     },
     onSuccess: () => {
       toast.success("Stored mileage deactivated");
-      invalidateList();
+      void queryClient.invalidateQueries({ queryKey: ["stored-mileage-list"] });
       setDeleteDialogOpen(false);
-      setSelectedMileage(null);
+      selectedMileageRef.current = null;
     },
     onError: (error) => {
       toast.error("Failed to deactivate stored mileage", {
@@ -49,25 +46,21 @@ export default function StoredMileageTable() {
     },
   });
 
-  const handleDelete = useCallback((row: Row<StoredMileage>) => {
-    setSelectedMileage(row.original);
+  const handleDelete = (row: Row<StoredMileage>) => {
+    selectedMileageRef.current = row.original;
     setDeleteDialogOpen(true);
-  }, []);
+  };
 
-  const columns = useMemo(() => getColumns(), []);
-  const contextMenuActions = useMemo<RowAction<StoredMileage>[]>(
-    () => [
-      {
-        id: "deactivate",
-        label: "Deactivate",
-        icon: TrashIcon,
-        variant: "destructive",
-        disabled: (row) => row.original.status !== "Active",
-        onClick: handleDelete,
-      },
-    ],
-    [handleDelete],
-  );
+  const contextMenuActions: RowAction<StoredMileage>[] = [
+    {
+      id: "deactivate",
+      label: "Deactivate",
+      icon: TrashIcon,
+      variant: "destructive",
+      disabled: (row) => row.original.status !== "Active",
+      onClick: handleDelete,
+    },
+  ];
 
   return (
     <>
@@ -80,7 +73,15 @@ export default function StoredMileageTable() {
         columns={columns}
         contextMenuActions={contextMenuActions}
       />
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) {
+            selectedMileageRef.current = null;
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogMedia>
@@ -96,8 +97,8 @@ export default function StoredMileageTable() {
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                if (selectedMileage?.id) {
-                  deleteMutation.mutate(selectedMileage.id);
+                if (selectedMileageRef.current?.id) {
+                  deleteMutation.mutate(selectedMileageRef.current.id);
                 }
               }}
               disabled={deleteMutation.isPending}
