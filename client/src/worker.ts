@@ -34,7 +34,12 @@ const imageSources = [
   "https://tile.openweathermap.org",
   "https://storage.trenova.app",
 ] as const;
-const localDevelopmentImageSources = ["http://localhost:9000", "http://127.0.0.1:9000"] as const;
+const localDevelopmentImageSources = [
+  "http://localhost:8080",
+  "http://127.0.0.1:8080",
+  "http://localhost:9000",
+  "http://127.0.0.1:9000",
+] as const;
 const connectSources = [
   "'self'",
   "https://api.trenova.app",

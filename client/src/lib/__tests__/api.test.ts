@@ -192,6 +192,26 @@ describe("api csrf headers", () => {
     expect(xhr?.headers.get("content-type")).toBe("application/pdf");
     expect(xhr?.headers.has("x-csrf-token")).toBe(false);
   });
+
+  it("adds credentials and CSRF token to internal file upload targets", async () => {
+    setCsrfToken("part-token");
+    vi.stubGlobal("XMLHttpRequest", MockXMLHttpRequest);
+
+    await api.putFileWithProgress(
+      "/api/v1/documents/uploads/dus_123/parts/1/",
+      new Blob(["content"]),
+      undefined,
+      undefined,
+      "application/pdf",
+    );
+
+    const xhr = MockXMLHttpRequest.instances.at(-1);
+    expect(xhr?.method).toBe("PUT");
+    expect(xhr?.url).toBe("/api/v1/documents/uploads/dus_123/parts/1/");
+    expect(xhr?.withCredentials).toBe(true);
+    expect(xhr?.headers.get("content-type")).toBe("application/pdf");
+    expect(xhr?.headers.get("x-csrf-token")).toBe("part-token");
+  });
 });
 
 describe("ApiRequestError constructor", () => {

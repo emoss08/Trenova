@@ -56,12 +56,13 @@ export function DocumentCard({
   const canPreview = isImage || document.fileType === "application/pdf";
 
   useEffect(() => {
-    if (document.previewStatus !== "Ready" || !document.previewStoragePath) {
+    if (document.previewStatus !== "Ready") {
+      setPreviewUrl(null);
       return;
     }
 
     void apiService.documentService.getPreviewUrl(document.id).then(setPreviewUrl);
-  }, [document.id, document.previewStatus, document.previewStoragePath]);
+  }, [document.id, document.previewStatus]);
 
   const handleCheckboxChange = () => {
     if (onSelect) {
@@ -103,10 +104,7 @@ export function DocumentCard({
       />
 
       <div className="min-w-0 flex-1">
-        <p
-          className="truncate text-sm font-medium"
-          title={document.originalName}
-        >
+        <p className="truncate text-sm font-medium" title={document.originalName}>
           {document.originalName}
         </p>
         <p className="text-xs text-muted-foreground">
@@ -131,8 +129,7 @@ export function DocumentCard({
                 variant="secondary"
                 className="h-5 cursor-pointer px-1.5 py-0 text-[10px] hover:bg-secondary/80"
               >
-                <HistoryIcon className="mr-0.5 size-3" />
-                v{document.versionNumber}
+                <HistoryIcon className="mr-0.5 size-3" />v{document.versionNumber}
               </Badge>
             </button>
           )}

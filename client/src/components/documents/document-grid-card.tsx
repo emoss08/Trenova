@@ -76,11 +76,7 @@ export function DocumentGridCard({
   const canPreview = isImage || document.fileType === "application/pdf";
   const canHaveThumbnail = supportsThumbnail(document.fileType);
   const showThumbnail =
-    canHaveThumbnail &&
-    previewUrl &&
-    !imageError &&
-    document.previewStatus === "Ready" &&
-    document.previewStoragePath;
+    canHaveThumbnail && previewUrl && !imageError && document.previewStatus === "Ready";
   const isGeneratingThumbnail = document.previewStatus === "Pending";
   const isPreviewUnavailable = document.previewStatus === "Failed";
   const hasActions = Boolean(
@@ -88,12 +84,15 @@ export function DocumentGridCard({
   );
 
   useEffect(() => {
-    if (document.previewStatus !== "Ready" || !document.previewStoragePath) {
+    setImageError(false);
+
+    if (document.previewStatus !== "Ready") {
+      setPreviewUrl(null);
       return;
     }
 
     void apiService.documentService.getPreviewUrl(document.id).then(setPreviewUrl);
-  }, [document.id, document.previewStatus, document.previewStoragePath]);
+  }, [document.id, document.previewStatus]);
 
   const handleCheckboxChange = () => {
     if (onSelect) {

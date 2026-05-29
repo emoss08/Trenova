@@ -162,6 +162,32 @@ function shouldBootstrapCsrf(endpoint: string | undefined): boolean {
   return !CSRF_EXEMPT_ENDPOINTS.has(path) && path !== CSRF_BOOTSTRAP_ENDPOINT;
 }
 
+function internalApiEndpoint(url: string): string | null {
+  if (url.startsWith("/api/")) {
+    return url;
+  }
+
+  if (API_BASE_URL.startsWith("/") && url.startsWith(API_BASE_URL)) {
+    return url;
+  }
+
+  if (!API_BASE_URL.startsWith("http")) {
+    return null;
+  }
+
+  try {
+    const target = new URL(url);
+    const apiBase = new URL(API_BASE_URL);
+    if (target.origin !== apiBase.origin || !target.pathname.startsWith(apiBase.pathname)) {
+      return null;
+    }
+
+    return `${target.pathname}${target.search}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function withCsrfHeader(
   method: string | undefined,
   headers?: HeadersInit,
@@ -330,13 +356,23 @@ async function uploadWithProgress<T>(
   });
 }
 
-function putFileWithProgress(
+async function putFileWithProgress(
   url: string,
   file: Blob,
   onProgress?: (percent: number) => void,
   signal?: AbortSignal,
   contentType?: string,
 ): Promise<void> {
+  const endpoint = internalApiEndpoint(url);
+  const headers = new Headers();
+  if (contentType) {
+    headers.set("Content-Type", contentType);
+  }
+
+  const uploadHeaders = endpoint
+    ? await withCsrfHeader("PUT", headers, endpoint)
+    : headers;
+
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
@@ -382,9 +418,10 @@ function putFileWithProgress(
     });
 
     xhr.open("PUT", url);
-    if (contentType) {
-      xhr.setRequestHeader("Content-Type", contentType);
-    }
+    xhr.withCredentials = Boolean(endpoint);
+    uploadHeaders.forEach((value, key) => {
+      xhr.setRequestHeader(key, value);
+    });
     xhr.send(file);
   });
 }

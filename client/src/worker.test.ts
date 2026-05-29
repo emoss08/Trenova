@@ -45,6 +45,8 @@ describe("Cloudflare SPA worker", () => {
     expect(response.headers.get("Content-Security-Policy")).not.toContain("sha256-");
     expect(response.headers.get("Content-Security-Policy")).toContain("ws://127.0.0.1:*");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:*");
+    expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:8080");
+    expect(response.headers.get("Content-Security-Policy")).toContain("http://127.0.0.1:8080");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://localhost:9000");
     expect(response.headers.get("Content-Security-Policy")).toContain("http://127.0.0.1:9000");
   });
@@ -123,9 +125,7 @@ describe("Cloudflare SPA worker", () => {
       throw new Error("expected forwarded API request");
     }
 
-    expect(forwardedRequest.url).toBe(
-      "http://localhost:8080/api/v1/auth/login?next=%2Fshipments",
-    );
+    expect(forwardedRequest.url).toBe("http://localhost:8080/api/v1/auth/login?next=%2Fshipments");
     expect(forwardedRequest.method).toBe("POST");
     expect(forwardedRequest.headers.get("X-CSRF-Token")).toBe("dev-csrf-token");
     expect(await forwardedRequest.text()).toBe(
@@ -252,7 +252,10 @@ function createAssetEnv(
           });
         }
 
-        if (options.fallbackForNavigations && request.headers.get("Sec-Fetch-Mode") === "navigate") {
+        if (
+          options.fallbackForNavigations &&
+          request.headers.get("Sec-Fetch-Mode") === "navigate"
+        ) {
           return new Response(defaultIndexFixture.body, {
             status: 200,
             headers: defaultIndexFixture.headers,
@@ -293,6 +296,8 @@ function expectSecurityHeaders(headers: Headers): void {
   );
   expect(headers.get("Content-Security-Policy")).toContain("https://cloudflareinsights.com");
   expect(headers.get("Content-Security-Policy")).toContain("https://storage.trenova.app");
+  expect(headers.get("Content-Security-Policy")).not.toContain("http://localhost:8080");
+  expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:8080");
   expect(headers.get("Content-Security-Policy")).not.toContain("http://localhost:9000");
   expect(headers.get("Content-Security-Policy")).not.toContain("http://127.0.0.1:9000");
   expect(headers.get("Content-Security-Policy")).toContain("https://tilecache.rainviewer.com");

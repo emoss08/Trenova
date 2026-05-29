@@ -17,7 +17,6 @@ import {
   type DocumentUploadPartTarget,
   type DocumentUploadSession,
   type DocumentUploadSessionState,
-  type DownloadUrlResponse,
   type UploadDocumentParams,
   bulkUploadDocumentResponseSchema,
   documentContentSchema,
@@ -27,9 +26,19 @@ import {
   documentUploadPartTargetSchema,
   documentUploadSessionSchema,
   documentUploadSessionStateSchema,
-  downloadUrlResponseSchema,
 } from "@/types/document";
 import { z } from "zod";
+
+type DocumentContentAction = "download" | "view" | "preview";
+
+function documentContentUrl(documentId: string, action: DocumentContentAction): string {
+  const baseUrl =
+    import.meta.env.DEV && API_BASE_URL.startsWith("/")
+      ? "http://localhost:8080/api/v1"
+      : API_BASE_URL;
+
+  return `${baseUrl}/documents/${encodeURIComponent(documentId)}/${action}/`;
+}
 
 export class DocumentService {
   public async upload(params: UploadDocumentParams): Promise<Document> {
@@ -61,9 +70,7 @@ export class DocumentService {
     return safeParse(documentSchema, response, "Document");
   }
 
-  public async bulkUpload(
-    params: BulkUploadDocumentParams,
-  ): Promise<BulkUploadDocumentResponse> {
+  public async bulkUpload(params: BulkUploadDocumentParams): Promise<BulkUploadDocumentResponse> {
     const formData = new FormData();
     formData.append("resourceId", params.resourceId);
     formData.append("resourceType", params.resourceType);
@@ -97,17 +104,9 @@ export class DocumentService {
     return safeParse(z.array(documentUploadSessionSchema), response, "Document Upload Sessions");
   }
 
-  public async getUploadSession(
-    sessionId: string,
-  ): Promise<DocumentUploadSessionState> {
-    const response = await api.get<DocumentUploadSessionState>(
-      `/documents/uploads/${sessionId}/`,
-    );
-    return safeParse(
-      documentUploadSessionStateSchema,
-      response,
-      "Document Upload Session State",
-    );
+  public async getUploadSession(sessionId: string): Promise<DocumentUploadSessionState> {
+    const response = await api.get<DocumentUploadSessionState>(`/documents/uploads/${sessionId}/`);
+    return safeParse(documentUploadSessionStateSchema, response, "Document Upload Session State");
   }
 
   public async getUploadPartTargets(
@@ -120,9 +119,9 @@ export class DocumentService {
     );
     return (
       await safeParse(
-      z.object({ parts: z.array(documentUploadPartTargetSchema) }),
-      response,
-      "Document Upload Part Targets",
+        z.object({ parts: z.array(documentUploadPartTargetSchema) }),
+        response,
+        "Document Upload Part Targets",
       )
     ).parts;
   }
@@ -183,10 +182,9 @@ export class DocumentService {
   }
 
   public async attachToShipment(documentId: string, shipmentId: string): Promise<Document> {
-    const response = await api.post<Document>(
-      `/documents/${documentId}/attach-to-shipment/`,
-      { shipmentId },
-    );
+    const response = await api.post<Document>(`/documents/${documentId}/attach-to-shipment/`, {
+      shipmentId,
+    });
     return safeParse(documentSchema, response, "Document");
   }
 
@@ -206,31 +204,15 @@ export class DocumentService {
   }
 
   public async getDownloadUrl(documentId: string): Promise<string> {
-    const response = await api.get<DownloadUrlResponse>(
-      `/documents/${documentId}/download/`,
-    );
-    const parsed = await safeParse(downloadUrlResponseSchema, response, "Download URL");
-    return parsed.url;
+    return documentContentUrl(documentId, "download");
   }
 
   public async getViewUrl(documentId: string): Promise<string> {
-    const response = await api.get<DownloadUrlResponse>(
-      `/documents/${documentId}/view/`,
-    );
-    const parsed = await safeParse(downloadUrlResponseSchema, response, "View URL");
-    return parsed.url;
+    return documentContentUrl(documentId, "view");
   }
 
   public async getPreviewUrl(documentId: string): Promise<string | null> {
-    try {
-      const response = await api.get<DownloadUrlResponse>(
-        `/documents/${documentId}/preview/`,
-      );
-      const parsed = await safeParse(downloadUrlResponseSchema, response, "Preview URL");
-      return parsed.url;
-    } catch {
-      return null;
-    }
+    return documentContentUrl(documentId, "preview");
   }
 
   public async delete(documentId: string): Promise<void> {
@@ -254,7 +236,13 @@ export class DocumentService {
       onTextDelta?: (delta: string) => void;
       onNewMessage?: () => void;
       onToolCallStart?: (name: string, callId: string) => void;
-      onToolCallDone?: (name: string, callId: string, status: string, result: string, actions: ImportAssistantChatResponse["actions"]) => void;
+      onToolCallDone?: (
+        name: string,
+        callId: string,
+        status: string,
+        result: string,
+        actions: ImportAssistantChatResponse["actions"],
+      ) => void;
       onSuggestions?: (suggestions: ImportAssistantChatResponse["suggestions"]) => void;
       onDone?: (conversationId: string, actions: ImportAssistantChatResponse["actions"]) => void;
       onError?: (message: string) => void;
@@ -310,7 +298,13 @@ export class DocumentService {
                 handlers.onToolCallStart?.(data.name, data.callId);
                 break;
               case "tool_call_done":
-                handlers.onToolCallDone?.(data.name, data.callId, data.status, data.result, data.actions ?? []);
+                handlers.onToolCallDone?.(
+                  data.name,
+                  data.callId,
+                  data.status,
+                  data.result,
+                  data.actions ?? [],
+                );
                 break;
               case "suggestions":
                 handlers.onSuggestions?.(data.suggestions ?? []);
