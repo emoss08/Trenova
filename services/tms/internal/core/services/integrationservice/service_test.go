@@ -140,13 +140,15 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 	t.Parallel()
 
-	encryption := encryptionservice.New(encryptionservice.Params{Config: &config.Config{}})
+	encryption := testEncryptionService()
+	apiKey, err := encryption.EncryptString("browser-map-key")
+	require.NoError(t, err)
 	repo := &stubIntegrationRepo{
 		getByTypeResult: &integration.Integration{
 			Type:    integration.TypeGoogleMaps,
 			Enabled: true,
 			Configuration: map[string]any{
-				"apiKey": "browser-map-key",
+				"apiKey": apiKey,
 			},
 		},
 	}
@@ -168,6 +170,18 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 	require.True(t, resp.Ready)
 	require.Empty(t, resp.MissingRequiredFields)
 	require.Equal(t, map[string]string{"apiKey": "browser-map-key"}, resp.Config)
+}
+
+func testEncryptionService() *encryptionservice.Service {
+	return encryptionservice.New(encryptionservice.Params{
+		Config: &config.Config{
+			Security: config.SecurityConfig{
+				Encryption: config.EncryptionConfig{
+					Key: "unit-test-encryption-key-with-at-least-32-bytes",
+				},
+			},
+		},
+	})
 }
 
 func TestGetClientRuntimeConfigReturnsReadinessForUnconfiguredIntegration(t *testing.T) {

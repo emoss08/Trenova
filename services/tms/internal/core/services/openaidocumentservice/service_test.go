@@ -51,6 +51,18 @@ func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
 	metricRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
+	encryption := encryptionservice.New(encryptionservice.Params{
+		Config: &config.Config{
+			Security: config.SecurityConfig{
+				Encryption: config.EncryptionConfig{
+					Key: "unit-test-encryption-key-with-at-least-32-bytes",
+				},
+			},
+		},
+	})
+	apiKey, err := encryption.EncryptString("test-api-key")
+	require.NoError(t, err)
+
 	integrationRepo := mocks.NewMockIntegrationRepository(t)
 	integrationRepo.EXPECT().GetByType(mock.Anything, mock.Anything, integration.TypeOpenAI).Return(&integration.Integration{
 		ID:             pulid.MustNew("intg_"),
@@ -59,13 +71,10 @@ func newTestService(t *testing.T, handler http.HandlerFunc) *Service {
 		Type:           integration.TypeOpenAI,
 		Enabled:        true,
 		Configuration: map[string]any{
-			"apiKey": "test-api-key",
+			"apiKey": apiKey,
 		},
 	}, nil)
 
-	encryption := encryptionservice.New(encryptionservice.Params{
-		Config: &config.Config{},
-	})
 	integrationSvc := integrationservice.New(integrationservice.Params{
 		Logger:       zap.NewNop(),
 		Repo:         integrationRepo,

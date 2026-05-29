@@ -297,6 +297,18 @@ func newTestService(
 ) *Service {
 	t.Helper()
 
+	encryption := encryptionservice.New(encryptionservice.Params{
+		Config: &config.Config{
+			Security: config.SecurityConfig{
+				Encryption: config.EncryptionConfig{
+					Key: "unit-test-encryption-key-with-at-least-32-bytes",
+				},
+			},
+		},
+	})
+	apiKey, err := encryption.EncryptString("test-key")
+	require.NoError(t, err)
+
 	integrationSvc := integrationservice.New(integrationservice.Params{
 		Logger: zap.NewNop(),
 		Repo: &stubIntegrationRepo{
@@ -304,13 +316,13 @@ func newTestService(
 				Type:    integration.TypeOANDAExchangeRates,
 				Enabled: true,
 				Configuration: map[string]any{
-					"apiKey":          "test-key",
+					"apiKey":          apiKey,
 					"baseUrl":         baseURL,
 					"defaultRateType": defaultRateType,
 				},
 			},
 		},
-		Encryption: encryptionservice.New(encryptionservice.Params{Config: &config.Config{}}),
+		Encryption: encryption,
 	})
 
 	return New(Params{

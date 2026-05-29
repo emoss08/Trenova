@@ -6,7 +6,6 @@ import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
-	"errors"
 	"net/url"
 	"strings"
 	"time"
@@ -238,7 +237,7 @@ func (s *Service) StartSSOLogin(
 
 	oauthCfg := oauth2.Config{
 		ClientID:     ssoConfig.OIDCClientID,
-		ClientSecret: mustDecryptSecret(s.enc, ssoConfig.OIDCClientSecret),
+		ClientSecret: decryptSSOSecret(s.enc, ssoConfig),
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  ssoConfig.OIDCRedirectURL,
 		Scopes:       ssoConfig.OIDCScopes,
@@ -322,7 +321,7 @@ func (s *Service) HandleSSOCallback( //nolint:cyclop // legacy workflow
 
 	oauthCfg := oauth2.Config{
 		ClientID:     ssoConfig.OIDCClientID,
-		ClientSecret: mustDecryptSecret(s.enc, ssoConfig.OIDCClientSecret),
+		ClientSecret: decryptSSOSecret(s.enc, ssoConfig),
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  ssoConfig.OIDCRedirectURL,
 		Scopes:       ssoConfig.OIDCScopes,
@@ -969,17 +968,49 @@ func randomURLToken(size int) string {
 }
 
 func mustDecryptSecret(enc *encryptionservice.Service, secret string) string {
-	if enc == nil {
-		return secret
-	}
-
 	plaintext, err := enc.DecryptString(secret)
-	if err != nil && !errors.Is(err, encryptionservice.ErrValueRequired) {
-		return secret
-	}
 	if err != nil {
-		return secret
+		return ""
 	}
 
 	return plaintext
+}
+
+func decryptSSOSecret(enc *encryptionservice.Service, cfg *tenant.SSOConfig) string {
+	if cfg == nil {
+		return ""
+	}
+	if enc == nil {
+		return ""
+	}
+
+	if encryptionservice.IsEnvelope(cfg.OIDCClientSecret) {
+		for _, resourceID := range ssoSecretAADResourceIDs(cfg.Provider) {
+			plaintext, err := enc.DecryptStringWithAAD(
+				cfg.OIDCClientSecret,
+				encryptionservice.AAD{
+					Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+					OrganizationID: cfg.OrganizationID,
+					BusinessUnitID: cfg.BusinessUnitID,
+					ResourceID:     resourceID,
+				},
+			)
+			if err == nil {
+				return plaintext
+			}
+		}
+		return ""
+	}
+
+	return ""
+}
+
+func ssoSecretAADResourceIDs(provider tenant.SSOProvider) []string {
+	resourceID := string(provider)
+	normalized := strings.ToLower(strings.TrimSpace(resourceID))
+	if normalized == "" || normalized == resourceID {
+		return []string{resourceID}
+	}
+
+	return []string{resourceID, normalized}
 }

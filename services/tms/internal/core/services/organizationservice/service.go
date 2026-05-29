@@ -370,8 +370,9 @@ func (s *service) UpsertMicrosoftSSOConfig(
 		return nil, err
 	}
 
-	clientSecret := strings.TrimSpace(cfg.ClientSecret)
-	if clientSecret == "" && !errortypes.IsNotFoundError(err) {
+	rawClientSecret := strings.TrimSpace(cfg.ClientSecret)
+	clientSecret := rawClientSecret
+	if rawClientSecret == "" && !errortypes.IsNotFoundError(err) {
 		clientSecret = existing.OIDCClientSecret
 	}
 
@@ -394,8 +395,11 @@ func (s *service) UpsertMicrosoftSSOConfig(
 		}
 	}
 
-	if clientSecret != "" {
-		clientSecret, err = s.enc.EncryptString(clientSecret)
+	if rawClientSecret != "" {
+		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
+			tenantInfo,
+			string(tenant.SSOProviderAzureAD),
+		))
 		if err != nil {
 			return nil, errortypes.NewBusinessError("Failed to encrypt Entra ID client secret").
 				WithInternal(err)
@@ -454,6 +458,15 @@ func microsoftIssuerURL(tenantID string) string {
 	return fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0", tenantID)
 }
 
+func ssoSecretAAD(tenantInfo pagination.TenantInfo, provider string) encryptionservice.AAD {
+	return encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     provider,
+	}
+}
+
 func (s *service) GetOktaSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
@@ -496,8 +509,9 @@ func (s *service) UpsertOktaSSOConfig(
 		return nil, err
 	}
 
-	clientSecret := strings.TrimSpace(cfg.ClientSecret)
-	if clientSecret == "" && !errortypes.IsNotFoundError(err) {
+	rawClientSecret := strings.TrimSpace(cfg.ClientSecret)
+	clientSecret := rawClientSecret
+	if rawClientSecret == "" && !errortypes.IsNotFoundError(err) {
 		clientSecret = existing.OIDCClientSecret
 	}
 
@@ -520,8 +534,11 @@ func (s *service) UpsertOktaSSOConfig(
 		}
 	}
 
-	if clientSecret != "" {
-		clientSecret, err = s.enc.EncryptString(clientSecret)
+	if rawClientSecret != "" {
+		clientSecret, err = s.enc.EncryptStringWithAAD(clientSecret, ssoSecretAAD(
+			tenantInfo,
+			string(tenant.SSOProviderOkta),
+		))
 		if err != nil {
 			return nil, errortypes.NewBusinessError("Failed to encrypt Okta client secret").
 				WithInternal(err)

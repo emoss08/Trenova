@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
@@ -58,6 +59,41 @@ func newTestUser(t *testing.T) *tenant.User {
 	require.NoError(t, err)
 	usr.Password = hashed
 	return usr
+}
+
+func TestDecryptSSOSecretSupportsIAMSlugAAD(t *testing.T) {
+	t.Parallel()
+
+	enc := encryptionservice.New(encryptionservice.Params{
+		Config: &config.Config{
+			Security: config.SecurityConfig{
+				Encryption: config.EncryptionConfig{
+					Key: "unit-test-encryption-key-with-at-least-32-bytes",
+				},
+			},
+		},
+	})
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	ciphertext, err := enc.EncryptStringWithAAD(
+		"client-secret",
+		encryptionservice.AAD{
+			Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			ResourceID:     "azuread",
+		},
+	)
+	require.NoError(t, err)
+
+	plaintext := decryptSSOSecret(enc, &tenant.SSOConfig{
+		OrganizationID:   orgID,
+		BusinessUnitID:   buID,
+		Provider:         tenant.SSOProviderAzureAD,
+		OIDCClientSecret: ciphertext,
+	})
+
+	require.Equal(t, "client-secret", plaintext)
 }
 
 func TestLogin_Success(t *testing.T) {
@@ -255,7 +291,8 @@ func TestActivateSessionRoles_IncludesRoleSummaries(t *testing.T) {
 	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(sess, nil)
 	deps.sessionRepo.On("Update", mock.Anything, mock.MatchedBy(func(updated *session.Session) bool {
 		return len(updated.ActiveRoleIDs) == 1 && updated.ActiveRoleIDs[0] == roleID
-	})).Return(nil)
+	})).
+		Return(nil)
 
 	result, err := deps.svc.ActivateSessionRoles(ctx, services.ActivateSessionRolesRequest{
 		SessionID: sessionID,

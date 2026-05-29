@@ -125,7 +125,8 @@ func (s *service) identityProviderFromRequest(
 		)
 	}
 
-	secret, err := s.resolveOIDCSecret(req.OIDCClientSecret, existing)
+	slug := normalizeProviderSlug(req.Slug, req.Name)
+	secret, err := s.resolveOIDCSecret(tenantInfo, slug, req.OIDCClientSecret, existing)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (s *service) identityProviderFromRequest(
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		Name:              strings.TrimSpace(req.Name),
-		Slug:              normalizeProviderSlug(req.Slug, req.Name),
+		Slug:              slug,
 		Protocol:          protocol,
 		Enabled:           req.Enabled,
 		EnforceSSO:        req.EnforceSSO,
@@ -158,6 +159,8 @@ func (s *service) identityProviderFromRequest(
 }
 
 func (s *service) resolveOIDCSecret(
+	tenantInfo pagination.TenantInfo,
+	slug string,
 	rawSecret string,
 	existing *iam.IdentityProvider,
 ) (string, error) {
@@ -168,7 +171,12 @@ func (s *service) resolveOIDCSecret(
 	if trimmed == "" {
 		return "", nil
 	}
-	encrypted, err := s.enc.EncryptString(trimmed)
+	encrypted, err := s.enc.EncryptStringWithAAD(trimmed, encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeIAMOIDCClientSecret,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		ResourceID:     slug,
+	})
 	if err != nil {
 		return "", errortypes.NewBusinessError("Failed to encrypt identity provider secret").
 			WithInternal(err)

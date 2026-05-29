@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (s *Service) ListCommunicationProfiles(
@@ -156,13 +158,22 @@ func (s *Service) buildCommunicationProfile(
 		config = existing.Config
 	}
 
-	secrets, err := s.resolveProfileSecrets(req.Secrets, existing)
+	profileID := req.ProfileID
+	if profileID.IsNil() {
+		if existing != nil {
+			profileID = existing.ID
+		} else {
+			profileID = pulid.MustNew("edicp_")
+		}
+	}
+
+	secrets, err := s.resolveProfileSecrets(req, profileID, existing)
 	if err != nil {
 		return nil, err
 	}
 
 	entity := &edi.EDICommunicationProfile{
-		ID:               req.ProfileID,
+		ID:               profileID,
 		BusinessUnitID:   req.TenantInfo.BuID,
 		OrganizationID:   req.TenantInfo.OrgID,
 		EDIConnectionID:  req.EDIConnectionID,
@@ -238,7 +249,8 @@ func (s *Service) ensureProfileReferences(
 }
 
 func (s *Service) resolveProfileSecrets(
-	incoming map[string]string,
+	req *UpsertEDICommunicationProfileRequest,
+	profileID pulid.ID,
 	existing *edi.EDICommunicationProfile,
 ) (map[string]string, error) {
 	secrets := map[string]string{}
@@ -248,14 +260,14 @@ func (s *Service) resolveProfileSecrets(
 		}
 	}
 
-	for key, value := range incoming {
+	for key, value := range req.Secrets {
 		trimmedKey := strings.TrimSpace(key)
 		trimmedValue := strings.TrimSpace(value)
 		if trimmedKey == "" || trimmedValue == "" {
 			continue
 		}
 
-		encrypted, err := s.encryptProfileSecret(trimmedValue)
+		encrypted, err := s.encryptProfileSecret(req, profileID, trimmedKey, trimmedValue)
 		if err != nil {
 			return nil, err
 		}
@@ -264,12 +276,23 @@ func (s *Service) resolveProfileSecrets(
 	return secrets, nil
 }
 
-func (s *Service) encryptProfileSecret(value string) (string, error) {
+func (s *Service) encryptProfileSecret(
+	req *UpsertEDICommunicationProfileRequest,
+	profileID pulid.ID,
+	key string,
+	value string,
+) (string, error) {
 	if s.encryption == nil {
 		return value, nil
 	}
 
-	encrypted, err := s.encryption.EncryptString(value)
+	resourceID := profileID.String() + ":" + key
+	encrypted, err := s.encryption.EncryptStringWithAAD(value, encryptionservice.AAD{
+		Purpose:        encryptionservice.PurposeEDICommunicationProfileItem,
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		ResourceID:     resourceID,
+	})
 	if err != nil {
 		return "", errortypes.NewBusinessError(
 			"failed to encrypt EDI communication profile secret",
