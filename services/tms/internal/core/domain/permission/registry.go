@@ -544,7 +544,11 @@ func (r *Registry) registerWorkerResources() {
 			{Operation: OpCreate, DisplayName: "Create", Description: "Create worker PTO requests"},
 			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify worker PTO requests"},
 			{Operation: OpExport, DisplayName: "Export", Description: "Export worker PTO data"},
-			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve worker PTO requests"},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve worker PTO requests",
+			},
 			{Operation: OpReject, DisplayName: "Reject", Description: "Reject worker PTO requests"},
 		},
 		DefaultSensitivity: SensitivityRestricted,
@@ -687,6 +691,21 @@ func (r *Registry) registerOperationsResources() {
 		Category:           "Operations",
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceHoldReason.String(),
+		DisplayName: "Hold Reason",
+		Description: "Hold reason management",
+		Category:    "Operations",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View hold reasons"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create new hold reasons"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify hold reasons"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export hold reason data"},
+			{Operation: OpImport, DisplayName: "Import", Description: "Import hold reasons"},
+		},
+		DefaultSensitivity: SensitivityInternal,
 	})
 }
 
