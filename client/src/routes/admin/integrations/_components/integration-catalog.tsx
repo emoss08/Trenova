@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import type { IntegrationCatalogItem } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useState } from "react";
@@ -27,6 +28,8 @@ import { OANDAExchangeRatesIntegrationModal } from "./oanda/oanda-integration-mo
 import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { OpenWeatherMapIntegrationModal } from "./openweathermap/openweathermap-integration-modal";
 import { PCMilerIntegrationModal } from "./pcmiler/pcmiler-integration-modal";
+import { PostmarkIntegrationModal } from "./postmark/postmark-integration-modal";
+import { ResendIntegrationModal } from "./resend/resend-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -76,6 +79,119 @@ function getCatalogLogoSize(type: string) {
   return catalogLogoSizeByType[type];
 }
 
+type CatalogCategoryGroup = {
+  key: string;
+  label: string;
+  items: IntegrationCatalogItem[];
+};
+
+function groupCatalogItemsByCategory(items: IntegrationCatalogItem[]): CatalogCategoryGroup[] {
+  const groups = new Map<string, CatalogCategoryGroup>();
+
+  for (const item of items) {
+    const key = item.category || "uncategorized";
+    const label = item.categoryLabel || "Uncategorized";
+    const group = groups.get(key);
+
+    if (group) {
+      group.items.push(item);
+      continue;
+    }
+
+    groups.set(key, {
+      key,
+      label,
+      items: [item],
+    });
+  }
+
+  return Array.from(groups.values()).sort((left, right) => left.label.localeCompare(right.label));
+}
+
+type CatalogItemCardProps = {
+  item: IntegrationCatalogItem;
+  canConfigure: boolean;
+  logoURL: string;
+  onOpen: (type: string) => void;
+};
+
+function CatalogItemCard({ item, canConfigure, logoURL, onOpen }: CatalogItemCardProps) {
+  const logoSize = getCatalogLogoSize(item.type);
+
+  return (
+    <MagicCard
+      mode="orb"
+      gradientFrom={item.glowFrom ?? item.color}
+      gradientTo={item.glowTo ?? item.color}
+      glowFrom={item.glowFrom ?? item.color}
+      glowTo={item.glowTo ?? item.color}
+      className="rounded-xl"
+    >
+      <Card className="group relative overflow-hidden border-none bg-transparent transition-all">
+        <CardHeader className="space-y-2 pb-3">
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="space-y-1 pr-20">
+              <CardTitle className="text-base">{item.name}</CardTitle>
+              <CardDescription className="text-xs">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {item.links.map((link) => (
+                    <ExternalLink
+                      key={`${item.type}-${link.kind}-${link.url}`}
+                      href={link.url}
+                      className="inline-flex items-center gap-1 hover:text-foreground"
+                    >
+                      {link.label}
+                    </ExternalLink>
+                  ))}
+                </div>
+              </CardDescription>
+            </div>
+            <div
+              className={cn(
+                "absolute -top-5 -right-10 inline-flex size-20 items-center justify-center",
+                logoSize?.containerClassName,
+              )}
+            >
+              {logoURL ? (
+                <LazyImage
+                  src={logoURL}
+                  alt={`${item.name} logo`}
+                  className={cn("size-24 object-contain", logoSize?.imageClassName)}
+                />
+              ) : (
+                <span className="text-xs font-semibold text-foreground/80">
+                  {getProviderMonogram(item.name)}
+                </span>
+              )}
+            </div>
+          </div>
+          <CatalogItemDescription description={item.description} />
+        </CardHeader>
+        <CardContent className="space-y-3 pt-0">
+          <div className="flex items-center justify-between gap-2 border-t border-border/80 pt-3">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onOpen(item.type)}
+              disabled={!canConfigure}
+            >
+              {item.primaryActionLabel}
+            </Button>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={item.enabled}
+                aria-label={`${item.name} integration enabled`}
+                onCheckedChange={() => onOpen(item.type)}
+                disabled={!canConfigure}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </MagicCard>
+  );
+}
+
 export function IntegrationCatalogCard() {
   const { theme } = useTheme();
   const [searchParams, setSearchParams] = useQueryStates(integrationCatalogSearchParamsParser);
@@ -85,6 +201,8 @@ export function IntegrationCatalogCard() {
   const [isOpenWeatherMapModalOpen, setIsOpenWeatherMapModalOpen] = useState(false);
   const [isOANDAModalOpen, setIsOANDAModalOpen] = useState(false);
   const [isPCMilerModalOpen, setIsPCMilerModalOpen] = useState(false);
+  const [isResendModalOpen, setIsResendModalOpen] = useState(false);
+  const [isPostmarkModalOpen, setIsPostmarkModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
@@ -133,6 +251,7 @@ export function IntegrationCatalogCard() {
     const comparison = left.name.localeCompare(right.name);
     return searchParams.sortBy === "name_asc" ? comparison : -comparison;
   });
+  const categoryGroups = groupCatalogItemsByCategory(filteredAndSortedItems);
 
   const openModal = (type: string) => {
     switch (type) {
@@ -154,6 +273,12 @@ export function IntegrationCatalogCard() {
       case "PCMiler":
         setIsPCMilerModalOpen(true);
         break;
+      case "Resend":
+        setIsResendModalOpen(true);
+        break;
+      case "Postmark":
+        setIsPostmarkModalOpen(true);
+        break;
       default:
         break;
     }
@@ -165,7 +290,9 @@ export function IntegrationCatalogCard() {
     type === "OpenAI" ||
     type === "OpenWeatherMap" ||
     type === "OANDAExchangeRates" ||
-    type === "PCMiler";
+    type === "PCMiler" ||
+    type === "Resend" ||
+    type === "Postmark";
 
   return (
     <>
@@ -251,89 +378,37 @@ export function IntegrationCatalogCard() {
             </div>
           )}
           {!catalogQuery.isLoading && filteredAndSortedItems.length > 0 && (
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {filteredAndSortedItems.map((item) => {
-                const canConfigure = hasModal(item.type);
-                const logoURL =
-                  theme === "dark"
-                    ? item.logoDarkUrl || item.logoLightUrl || item.logoUrl
-                    : item.logoLightUrl || item.logoDarkUrl || item.logoUrl;
-                const logoSize = getCatalogLogoSize(item.type);
+            <div className="space-y-6">
+              {categoryGroups.map((group) => (
+                <section key={group.key} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                      {group.label}
+                    </h2>
+                    <span className="text-xs text-muted-foreground/70">
+                      {group.items.length} {group.items.length === 1 ? "integration" : "integrations"}
+                    </span>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {group.items.map((item) => {
+                      const logoURL =
+                        theme === "dark"
+                          ? item.logoDarkUrl || item.logoLightUrl || item.logoUrl
+                          : item.logoLightUrl || item.logoDarkUrl || item.logoUrl;
 
-                return (
-                  <MagicCard
-                    key={item.type}
-                    mode="orb"
-                    gradientFrom={item.glowFrom ?? item.color}
-                    gradientTo={item.glowTo ?? item.color}
-                    glowFrom={item.glowFrom ?? item.color}
-                    glowTo={item.glowTo ?? item.color}
-                    className="rounded-xl"
-                  >
-                    <Card className="group relative overflow-hidden border-none bg-transparent transition-all">
-                      <CardHeader className="space-y-2 pb-3">
-                        <div className="relative flex items-start justify-between gap-3">
-                          <div className="space-y-1 pr-20">
-                            <CardTitle className="text-base">{item.name}</CardTitle>
-                            <CardDescription className="text-xs">
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                {item.links.map((link) => (
-                                  <ExternalLink
-                                    key={`${item.type}-${link.kind}-${link.url}`}
-                                    href={link.url}
-                                    className="inline-flex items-center gap-1 hover:text-foreground"
-                                  >
-                                    {link.label}
-                                  </ExternalLink>
-                                ))}
-                              </div>
-                            </CardDescription>
-                          </div>
-                          <div
-                            className={cn(
-                              "absolute -top-5 -right-10 inline-flex size-20 items-center justify-center",
-                              logoSize?.containerClassName,
-                            )}
-                          >
-                            {logoURL ? (
-                              <LazyImage
-                                src={logoURL}
-                                alt={`${item.name} logo`}
-                                className={cn("size-24 object-contain", logoSize?.imageClassName)}
-                              />
-                            ) : (
-                              <span className="text-xs font-semibold text-foreground/80">
-                                {getProviderMonogram(item.name)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <CatalogItemDescription description={item.description} />
-                      </CardHeader>
-                      <CardContent className="space-y-3 pt-0">
-                        <div className="flex items-center justify-between gap-2 border-t border-border/80 pt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openModal(item.type)}
-                            disabled={!canConfigure}
-                          >
-                            {item.primaryActionLabel}
-                          </Button>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={item.enabled}
-                              aria-label={`${item.name} integration enabled`}
-                              onCheckedChange={() => openModal(item.type)}
-                              disabled={!canConfigure}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </MagicCard>
-                );
-              })}
+                      return (
+                        <CatalogItemCard
+                          key={item.type}
+                          item={item}
+                          canConfigure={hasModal(item.type)}
+                          logoURL={logoURL}
+                          onOpen={openModal}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
         </div>
@@ -350,6 +425,8 @@ export function IntegrationCatalogCard() {
         onOpenChange={setIsOANDAModalOpen}
       />
       <PCMilerIntegrationModal open={isPCMilerModalOpen} onOpenChange={setIsPCMilerModalOpen} />
+      <ResendIntegrationModal open={isResendModalOpen} onOpenChange={setIsResendModalOpen} />
+      <PostmarkIntegrationModal open={isPostmarkModalOpen} onOpenChange={setIsPostmarkModalOpen} />
     </>
   );
 }

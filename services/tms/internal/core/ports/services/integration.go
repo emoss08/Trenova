@@ -7,6 +7,99 @@ import (
 
 var CatalogDefinitions = []CatalogItem{
 	{
+		Type:          integration.TypeResend,
+		Name:          "Resend",
+		Description:   "Transactional email delivery for invoices, authentication, reporting, and operational notifications.",
+		Category:      integration.CategoryEmail,
+		CategoryLabel: "Email",
+		LogoURL:       "/integrations/logos/resend_logo_light.svg",
+		LogoLightURL:  "/integrations/logos/resend_logo_light.svg",
+		LogoDarkURL:   "/integrations/logos/resend_logo_dark.svg",
+		DocsURL:       "https://resend.com/docs",
+		WebsiteURL:    "https://resend.com/",
+		Color:         "#111827",
+		GlowFrom:      "#111827",
+		GlowTo:        "#22c55e",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://resend.com/docs",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://resend.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          5,
+		PrimaryActionLabel: "View Integration",
+	},
+	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+		Type:         integration.TypeAmazonSES,
+		Name:         "Amazon SES",
+		Description:  "Planned support for Amazon Simple Email Service transactional delivery.",
+		DocsURL:      "https://docs.aws.amazon.com/ses/",
+		WebsiteURL:   "https://aws.amazon.com/ses/",
+		Color:        "#ff9900",
+		LogoLightURL: "/integrations/logos/aws_light.svg",
+		LogoDarkURL:  "/integrations/logos/aws_dark.svg",
+		SortOrder:    55,
+	}),
+	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+		Type:         integration.TypeSendGrid,
+		Name:         "SendGrid",
+		Description:  "Planned support for SendGrid transactional email delivery.",
+		DocsURL:      "https://www.twilio.com/docs/sendgrid",
+		WebsiteURL:   "https://sendgrid.com/",
+		Color:        "#1a82e2",
+		LogoLightURL: "/integrations/logos/sendgrid_light.svg",
+		LogoDarkURL:  "/integrations/logos/sendgrid_dark.svg",
+		SortOrder:    56,
+	}),
+	plannedEmailCatalogItem(plannedEmailCatalogItemParams{
+		Type:         integration.TypeMailgun,
+		Name:         "Mailgun",
+		Description:  "Planned support for Mailgun transactional email delivery.",
+		DocsURL:      "https://documentation.mailgun.com/",
+		WebsiteURL:   "https://www.mailgun.com/",
+		Color:        "#c21f32",
+		LogoLightURL: "/integrations/logos/mailgun_light.svg",
+		LogoDarkURL:  "/integrations/logos/mailgun_dark.svg",
+		SortOrder:    57,
+	}),
+	{
+		Type:          integration.TypePostmark,
+		Name:          "Postmark",
+		Description:   "Transactional email delivery with server streams, attachments, and delivery event webhooks.",
+		Category:      integration.CategoryEmail,
+		CategoryLabel: "Email",
+		LogoURL:       "/integrations/logos/postmark_all.png",
+		LogoLightURL:  "/integrations/logos/postmark_all.png",
+		LogoDarkURL:   "/integrations/logos/postmark_all.png",
+		DocsURL:       "https://postmarkapp.com/developer",
+		WebsiteURL:    "https://postmarkapp.com/",
+		Color:         "#ffde00",
+		GlowFrom:      "#ffde00",
+		GlowTo:        "#0f172a",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   "https://postmarkapp.com/developer",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   "https://postmarkapp.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          6,
+		PrimaryActionLabel: "View Integration",
+	},
+	{
 		Type:          integration.TypeSamsara,
 		Name:          "Samsara",
 		Description:   "Seamlessly connect your Samsara account to Trenova for real-time telematics data, driver performance insights, and streamlined fleet management. Unlock the full potential of your fleet with our powerful integration.",
@@ -191,6 +284,52 @@ var CatalogDefinitions = []CatalogItem{
 		SortOrder:          21,
 		PrimaryActionLabel: "View Integration",
 	},
+}
+
+type plannedEmailCatalogItemParams struct {
+	Type         integration.Type
+	Name         string
+	Description  string
+	DocsURL      string
+	WebsiteURL   string
+	Color        string
+	LogoLightURL string
+	LogoDarkURL  string
+	SortOrder    int
+}
+
+func plannedEmailCatalogItem(p plannedEmailCatalogItemParams) CatalogItem {
+	return CatalogItem{
+		Type:          p.Type,
+		Name:          p.Name,
+		Description:   p.Description,
+		Category:      integration.CategoryEmail,
+		CategoryLabel: "Email",
+		LogoURL:       p.LogoLightURL,
+		LogoLightURL:  p.LogoLightURL,
+		LogoDarkURL:   p.LogoDarkURL,
+		Color:         p.Color,
+		GlowFrom:      p.Color,
+		GlowTo:        "#64748b",
+		DocsURL:       p.DocsURL,
+		WebsiteURL:    p.WebsiteURL,
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: "Docs",
+				URL:   p.DocsURL,
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: "Website",
+				URL:   p.WebsiteURL,
+			},
+		},
+		Featured:           false,
+		SortOrder:          p.SortOrder,
+		PrimaryActionLabel: "Planned",
+		ConfigSpec:         []integration.ConfigFieldSpec{},
+	}
 }
 
 type CatalogLinkKind string

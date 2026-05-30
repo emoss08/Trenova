@@ -318,6 +318,33 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceEmailProfile.String(),
+		DisplayName:        "Email Profile",
+		Description:        "Transactional email sender profiles and assignments",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceEmailLog.String(),
+		DisplayName:        "Email Log",
+		Description:        "Transactional email send and delivery logs",
+		Category:           "Administration",
+		Operations:         readOnlyOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceEmailSuppression.String(),
+		DisplayName:        "Email Suppression",
+		Description:        "Email bounce, complaint, and manual suppression records",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceEDI.String(),
 		DisplayName:        "EDI",
 		Description:        "EDI partner setup, mapping profiles, and load tender transfers",

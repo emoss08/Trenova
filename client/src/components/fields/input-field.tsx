@@ -1,3 +1,4 @@
+import type React from "react";
 import type { FormControlProps } from "@/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Input, type InputProps } from "../ui/input";
@@ -5,8 +6,8 @@ import { Skeleton } from "../ui/skeleton";
 import { FieldWrapper } from "./field-components";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
-  label?: string;
-  description?: string;
+  label?: React.ReactNode;
+  description?: React.ReactNode;
   inputClassProps?: string;
   hideLabel?: boolean;
   maxLength?: number;

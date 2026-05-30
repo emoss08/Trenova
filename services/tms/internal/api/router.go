@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
+	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
@@ -158,6 +159,7 @@ type RouterParams struct {
 	HazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	DotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	EDIHandler                      *edihandler.Handler
+	EmailHandler                    *emailhandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CustomerHandler                 *customerhandler.Handler
 	CustomerPaymentHandler          *customerpaymenthandler.Handler
@@ -253,6 +255,7 @@ type Router struct {
 	hazmatSegregationRuleHandler    *hazmatsegregationrulehandler.Handler
 	dotHazmatReferenceHandler       *dothazmatreferencehandler.Handler
 	ediHandler                      *edihandler.Handler
+	emailHandler                    *emailhandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	customerHandler                 *customerhandler.Handler
 	customerPaymentHandler          *customerpaymenthandler.Handler
@@ -350,6 +353,7 @@ func NewRouter(p RouterParams) *Router {
 		hazmatSegregationRuleHandler:    p.HazmatSegregationRuleHandler,
 		dotHazmatReferenceHandler:       p.DotHazmatReferenceHandler,
 		ediHandler:                      p.EDIHandler,
+		emailHandler:                    p.EmailHandler,
 		commodityHandler:                p.CommodityHandler,
 		customerHandler:                 p.CustomerHandler,
 		customerPaymentHandler:          p.CustomerPaymentHandler,
@@ -455,6 +459,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.authHandler.RegisterRoutes(rg)
 	r.versionHandler.RegisterPublicRoutes(rg)
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
+	r.emailHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together
@@ -503,6 +508,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.hazmatSegregationRuleHandler.RegisterRoutes(protected)
 	r.dotHazmatReferenceHandler.RegisterRoutes(protected)
 	r.ediHandler.RegisterRoutes(protected)
+	r.emailHandler.RegisterRoutes(protected)
 	r.commodityHandler.RegisterRoutes(protected)
 	r.customerHandler.RegisterRoutes(protected)
 	r.customerPaymentHandler.RegisterRoutes(protected)

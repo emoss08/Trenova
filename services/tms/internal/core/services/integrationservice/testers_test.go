@@ -8,6 +8,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPostmarkConnectionTesterCallsServerEndpoint(t *testing.T) {
+	t.Parallel()
+
+	var called bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		require.Equal(t, "/server", r.URL.Path)
+		require.Equal(t, "server-token", r.Header.Get("X-Postmark-Server-Token"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"Name":"Trenova"}`))
+	}))
+	defer server.Close()
+
+	err := (&postmarkConnectionTester{}).Test(t.Context(), map[string]string{
+		"serverToken": "server-token",
+		"baseUrl":     server.URL,
+	})
+
+	require.NoError(t, err)
+	require.True(t, called)
+}
+
 func TestPCMilerConnectionTesterUsesRouteReportsForCurrentDataVersion(t *testing.T) {
 	t.Parallel()
 

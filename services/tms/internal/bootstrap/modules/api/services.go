@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
@@ -192,6 +193,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	ediservice.New,
+	emailservice.New,
+	func(s *emailservice.Service) services.EmailService { return s },
 	commodityservice.New,
 	fx.Annotate(
 		customerpaymentservice.New,

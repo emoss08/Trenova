@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
+	"github.com/emoss08/trenova/internal/api/handlers/emailhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/exchangeratehandler"
@@ -138,6 +139,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	hazmatsegregationrulehandler.New,
 	dothazmatreferencehandler.New,
 	edihandler.New,
+	emailhandler.New,
 	commodityhandler.New,
 	customerhandler.New,
 	customerpaymenthandler.New,

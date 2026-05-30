@@ -10,6 +10,11 @@ const (
 	TypeOpenWeatherMap     = Type("OpenWeatherMap")
 	TypeOANDAExchangeRates = Type("OANDAExchangeRates")
 	TypePCMiler            = Type("PCMiler")
+	TypeResend             = Type("Resend")
+	TypeAmazonSES          = Type("AmazonSES")
+	TypeSendGrid           = Type("SendGrid")
+	TypeMailgun            = Type("Mailgun")
+	TypePostmark           = Type("Postmark")
 	// TypeMotive     Type = "Motive"
 )
 
@@ -22,4 +27,5 @@ const (
 	CategoryArtificialIntelligence = Category("ArtificialIntelligence")
 	CategoryWeather                = Category("Weather")
 	CategoryFinancialData          = Category("FinancialData")
+	CategoryEmail                  = Category("Email")
 )

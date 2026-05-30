@@ -29,6 +29,7 @@ import { DocumentOperationsService } from "./document-operations";
 import { DocumentPacketRuleService } from "./document-packet-rule";
 import { DocumentParsingRuleService } from "./document-parsing-rule";
 import { EDIService } from "./edi";
+import { EmailService } from "./email";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
 import { ExchangeRateService } from "./exchange-rate";
@@ -141,6 +142,7 @@ class APIService {
   public weatherAlertService: WeatherAlertService;
   public weatherRadarService: WeatherRadarService;
   public ediService: EDIService;
+  public emailService: EmailService;
   public platformBillingService: PlatformBillingService;
 
   constructor() {
@@ -214,6 +216,7 @@ class APIService {
     this.weatherAlertService = new WeatherAlertService();
     this.weatherRadarService = new WeatherRadarService();
     this.ediService = new EDIService();
+    this.emailService = new EmailService();
     this.platformBillingService = new PlatformBillingService();
   }
 }

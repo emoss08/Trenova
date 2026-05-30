@@ -87,7 +87,10 @@ export type BaseEndpoint =
   | "/edi/messages/"
   | "/edi/test-cases/"
   | "/edi/transfers/"
-  | "/edi/load-tenders/";
+  | "/edi/load-tenders/"
+  | "/email-profiles/"
+  | "/email-logs/"
+  | "/email-suppressions/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

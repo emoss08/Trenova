@@ -48,6 +48,22 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/organization/email-profiles",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailProfile)),
+            async lazy() {
+              const { EmailProfilesPage } = await import("@/routes/organization/email-profiles/page");
+              return { Component: EmailProfilesPage };
+            },
+          },
+          {
+            path: "/organization/email-logs",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EmailLog)),
+            async lazy() {
+              const { EmailLogsPage } = await import("@/routes/organization/email-logs/page");
+              return { Component: EmailLogsPage };
+            },
+          },
+          {
             path: "/shipment-management/shipments",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Shipment)),
             async lazy() {

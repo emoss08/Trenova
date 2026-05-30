@@ -899,16 +899,18 @@ export const adminLinks: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "#",
+    href: "/organization/email-logs/",
     title: "Email Logs",
     group: "Email & SMS",
-    disabled: true,
+    resource: Resource.EmailLog,
+    requiredOperation: Operation.Read,
   },
   {
     href: "/organization/email-profiles/",
     title: "Email Profile(s)",
     group: "Email & SMS",
-    disabled: true,
+    resource: Resource.EmailProfile,
+    requiredOperation: Operation.Read,
   },
   {
     href: "#",

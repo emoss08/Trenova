@@ -14,6 +14,7 @@ const (
 	TaskQueueThumbnail            TaskQueue = "thumbnail-queue"
 	TaskQueueUpload               TaskQueue = "upload-queue"
 	TaskQueueSMS                  TaskQueue = "sms-queue"
+	TaskQueueEmail                TaskQueue = "email-queue"
 	TaskQueueFiscal               TaskQueue = "fiscal-queue"
 	TaskQueueEDI                  TaskQueue = "edi-queue"
 )
@@ -27,6 +28,7 @@ const DocumentIntelligenceTaskQueue = string(TaskQueueDocumentIntelligence)
 const ThumbnailTaskQueue = string(TaskQueueThumbnail)
 const UploadTaskQueue = string(TaskQueueUpload)
 const SMSTaskQueue = string(TaskQueueSMS)
+const EmailTaskQueue = string(TaskQueueEmail)
 const FiscalTaskQueue = string(TaskQueueFiscal)
 const IntegrationTaskQueue = string(TaskQueueIntegration)
 const DistanceMileageTaskQueue = string(TaskQueueDistanceMileage)

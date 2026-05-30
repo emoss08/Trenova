@@ -2,6 +2,8 @@ package integrationservice
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"sort"
 	"strings"
 
@@ -126,6 +128,25 @@ func sortCatalogItems(items []services.CatalogItem) {
 	})
 }
 
+func webhookTokenPrefix(typ integration.Type) string {
+	switch typ {
+	case integration.TypeResend:
+		return "resend_"
+	case integration.TypePostmark:
+		return "postmark_"
+	default:
+		return ""
+	}
+}
+
+func newWebhookToken(prefix string) (string, error) {
+	var tokenBytes [24]byte
+	if _, err := rand.Read(tokenBytes[:]); err != nil {
+		return "", err
+	}
+	return prefix + hex.EncodeToString(tokenBytes[:]), nil
+}
+
 func (s *Service) GetConfig(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -202,6 +223,13 @@ func (s *Service) UpdateConfig(
 	finalConfig, err := s.buildFinalConfig(spec, req.Configuration, existing)
 	if err != nil {
 		return nil, err
+	}
+	if prefix := webhookTokenPrefix(typ); prefix != "" &&
+		integration.ReadConfigString(finalConfig, "webhookToken") == "" {
+		finalConfig["webhookToken"], err = newWebhookToken(prefix)
+		if err != nil {
+			return nil, errortypes.NewBusinessError("failed to generate webhook token").WithInternal(err)
+		}
 	}
 
 	if err = validateRequiredFields(spec, finalConfig, req.Enabled); err != nil {

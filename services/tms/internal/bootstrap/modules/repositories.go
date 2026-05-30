@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editestcaserepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/emailrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentcontinuityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
@@ -217,6 +218,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documenttyperepository.New,
 	holdreasonrepository.New,
 	integrationrepository.New,
+	emailrepository.New,
 	invoiceadjustmentcontrolrepository.New,
 	invoiceadjustmentrepository.New,
 	invoicerepository.New,

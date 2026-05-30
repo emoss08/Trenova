@@ -24,6 +24,76 @@ var connectionTesters = map[integration.Type]connectionTester{
 	integration.TypeSamsara:            &samsaraConnectionTester{},
 	integration.TypeOANDAExchangeRates: &oandaExchangeRatesConnectionTester{},
 	integration.TypePCMiler:            &pcmilerConnectionTester{},
+	integration.TypeResend:             &resendConnectionTester{},
+	integration.TypePostmark:           &postmarkConnectionTester{},
+}
+
+type resendConnectionTester struct{}
+
+func (t *resendConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	apiKey := cfg["apiKey"]
+	if apiKey == "" {
+		return fmt.Errorf("API key is required")
+	}
+
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg["baseUrl"]), "/")
+	if baseURL == "" {
+		baseURL = "https://api.resend.com"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/domains", nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to connect to Resend: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("Resend returned status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+type postmarkConnectionTester struct{}
+
+func (t *postmarkConnectionTester) Test(ctx context.Context, cfg map[string]string) error {
+	serverToken := cfg["serverToken"]
+	if serverToken == "" {
+		return fmt.Errorf("server token is required")
+	}
+
+	baseURL := strings.TrimRight(strings.TrimSpace(cfg["baseUrl"]), "/")
+	if baseURL == "" {
+		baseURL = "https://api.postmarkapp.com"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/server", nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("X-Postmark-Server-Token", serverToken)
+	req.Header.Set("Accept", "application/json")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to connect to Postmark: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return fmt.Errorf("Postmark returned status %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 type oandaExchangeRatesConnectionTester struct{}

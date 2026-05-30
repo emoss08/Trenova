@@ -1,0 +1,188 @@
+package emailservice
+
+import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/stretchr/testify/require"
+)
+
+func TestHandleProviderEventUsesExplicitProviderMessageID(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	msg := testEmailMessage(tenantInfo)
+	repo := &handleProviderEventRepo{
+		message: msg,
+	}
+	svc := &Service{repo: repo}
+
+	event := testEmailEvent(tenantInfo, email.EventTypeDelivered)
+	event.Raw = map[string]any{
+		"MessageID": "wrong-raw-provider-message-id",
+	}
+
+	err := svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+		TenantInfo:        tenantInfo,
+		Event:             event,
+		ProviderMessageID: msg.ProviderMessageID,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, msg.ID, event.MessageID)
+	require.Equal(t, msg.ProviderMessageID, repo.providerMessageIDLookup)
+	require.Equal(t, email.MessageStatusDelivered, repo.updatedMessage.Status)
+	require.Empty(t, repo.suppressions)
+}
+
+func TestHandleProviderEventCreatesSuppressionOnlyWithReason(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		eventType         email.EventType
+		suppressionReason email.SuppressionReason
+		expectedStatus    email.MessageStatus
+		wantSuppression   bool
+	}{
+		{
+			name:           "bounce without suppression reason",
+			eventType:      email.EventTypeBounced,
+			expectedStatus: email.MessageStatusBounced,
+		},
+		{
+			name:              "hard bounce suppression",
+			eventType:         email.EventTypeBounced,
+			suppressionReason: email.SuppressionReasonHardBounce,
+			expectedStatus:    email.MessageStatusBounced,
+			wantSuppression:   true,
+		},
+		{
+			name:              "complaint suppression",
+			eventType:         email.EventTypeComplained,
+			suppressionReason: email.SuppressionReasonComplaint,
+			expectedStatus:    email.MessageStatusComplained,
+			wantSuppression:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tenantInfo := testTenantInfo()
+			msg := testEmailMessage(tenantInfo)
+			event := testEmailEvent(tenantInfo, tt.eventType)
+			event.MessageID = msg.ID
+			repo := &handleProviderEventRepo{message: msg}
+			svc := &Service{repo: repo}
+
+			err := svc.HandleProviderEvent(t.Context(), HandleProviderEventParams{
+				TenantInfo:        tenantInfo,
+				Event:             event,
+				SuppressionReason: tt.suppressionReason,
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedStatus, repo.updatedMessage.Status)
+			if !tt.wantSuppression {
+				require.Empty(t, repo.suppressions)
+				return
+			}
+			require.Len(t, repo.suppressions, 1)
+			require.Equal(t, tt.suppressionReason, repo.suppressions[0].Reason)
+			require.Equal(t, event.ProviderEventID, repo.suppressions[0].SourceEventID)
+		})
+	}
+}
+
+type handleProviderEventRepo struct {
+	repositories.EmailRepository
+
+	message                 *email.Message
+	updatedMessage          *email.Message
+	providerMessageIDLookup string
+	suppressions            []*email.Suppression
+}
+
+func (r *handleProviderEventRepo) GetMessage(
+	_ context.Context,
+	req repositories.GetEmailEntityRequest,
+) (*email.Message, error) {
+	if r.message == nil || r.message.ID != req.ID {
+		return nil, errortypes.NewNotFoundError("EmailMessage not found")
+	}
+	return r.message, nil
+}
+
+func (r *handleProviderEventRepo) GetMessageByProviderID(
+	_ context.Context,
+	req repositories.GetEmailMessageByProviderIDRequest,
+) (*email.Message, error) {
+	r.providerMessageIDLookup = req.ProviderMessageID
+	if r.message == nil || r.message.ProviderMessageID != req.ProviderMessageID {
+		return nil, errortypes.NewNotFoundError("EmailMessage not found")
+	}
+	return r.message, nil
+}
+
+func (r *handleProviderEventRepo) UpdateMessage(
+	_ context.Context,
+	msg *email.Message,
+) (*email.Message, error) {
+	r.updatedMessage = msg
+	return msg, nil
+}
+
+func (r *handleProviderEventRepo) CreateEvent(
+	_ context.Context,
+	event *email.Event,
+) (bool, error) {
+	return true, nil
+}
+
+func (r *handleProviderEventRepo) CreateSuppression(
+	_ context.Context,
+	suppression *email.Suppression,
+) (*email.Suppression, error) {
+	r.suppressions = append(r.suppressions, suppression)
+	return suppression, nil
+}
+
+func testTenantInfo() pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: pulid.MustNew("org_"),
+		BuID:  pulid.MustNew("bu_"),
+	}
+}
+
+func testEmailMessage(tenantInfo pagination.TenantInfo) *email.Message {
+	return &email.Message{
+		ID:                pulid.MustNew("emlmsg_"),
+		BusinessUnitID:    tenantInfo.BuID,
+		OrganizationID:    tenantInfo.OrgID,
+		Provider:          email.ProviderPostmark,
+		ProviderMessageID: "provider-message-id",
+		Status:            email.MessageStatusSent,
+	}
+}
+
+func testEmailEvent(
+	tenantInfo pagination.TenantInfo,
+	eventType email.EventType,
+) *email.Event {
+	return &email.Event{
+		BusinessUnitID:  tenantInfo.BuID,
+		OrganizationID:  tenantInfo.OrgID,
+		Provider:        email.ProviderPostmark,
+		ProviderEventID: "provider-event-id",
+		Type:            eventType,
+		Recipient:       "ops@example.com",
+		Raw:             map[string]any{},
+	}
+}

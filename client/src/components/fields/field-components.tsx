@@ -37,7 +37,7 @@ export function FieldDescription({
 }
 
 type FieldWrapperProps = {
-  label?: string;
+  label?: React.ReactNode;
   description?: string | React.ReactNode;
   warning?: WarningProps;
   required?: boolean;
@@ -46,10 +46,18 @@ type FieldWrapperProps = {
   error?: string;
 };
 
-export function FieldLabel({ label, required }: { label?: string; required?: boolean }) {
-  return label ? (
-    <Label className={cn("block text-xs font-medium", required && "required")}>{label}</Label>
-  ) : null;
+export function FieldLabel({ label, required }: { label?: React.ReactNode; required?: boolean }) {
+  if (!label) {
+    return null;
+  }
+
+  if (React.isValidElement(label)) {
+    return (
+      <div className={cn("block text-xs font-medium", required && "required")}>{label}</div>
+    );
+  }
+
+  return <Label className={cn("block text-xs font-medium", required && "required")}>{label}</Label>;
 }
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {

@@ -19,6 +19,7 @@ import { documentControl } from "./document-control";
 import { documentParsingRule } from "./document-parsing-rule";
 import { dispatchControl } from "./dispatch-control";
 import { edi } from "./edi";
+import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { integration } from "./integration";
@@ -57,6 +58,7 @@ export const queries = mergeQueryKeys(
   distanceControl,
   dispatchControl,
   edi,
+  email,
   documentControl,
   documentParsingRule,
   userOrganization,

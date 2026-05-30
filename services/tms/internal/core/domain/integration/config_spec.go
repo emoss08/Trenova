@@ -143,6 +143,72 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 		},
 		SupportsTestConnect: true,
 	},
+	TypeResend: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "apiKey",
+				Label:     "API Key",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Resend API key used by Trenova for transactional email sends.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.resend.com",
+				Placeholder: "https://api.resend.com",
+			},
+			{
+				Key:       "webhookSigningSecret",
+				Label:     "Webhook Signing Secret",
+				Type:      ConfigFieldTypePassword,
+				Sensitive: true,
+				HelpText:  "Svix signing secret from the Resend webhook endpoint.",
+			},
+			{
+				Key:       "webhookToken",
+				Label:     "Webhook Token",
+				Type:      ConfigFieldTypeString,
+				Sensitive: false,
+			},
+		},
+		SupportsTestConnect: true,
+	},
+	TypePostmark: {
+		Fields: []ConfigFieldSpec{
+			{
+				Key:       "serverToken",
+				Label:     "Server Token",
+				Type:      ConfigFieldTypePassword,
+				Required:  true,
+				Sensitive: true,
+				HelpText:  "Postmark server token used by Trenova for transactional email sends.",
+			},
+			{
+				Key:         "baseUrl",
+				Label:       "Base URL",
+				Type:        ConfigFieldTypeURL,
+				Default:     "https://api.postmarkapp.com",
+				Placeholder: "https://api.postmarkapp.com",
+			},
+			{
+				Key:         "messageStream",
+				Label:       "Message Stream",
+				Type:        ConfigFieldTypeString,
+				Default:     "outbound",
+				Placeholder: "outbound",
+			},
+			{
+				Key:       "webhookToken",
+				Label:     "Webhook Token",
+				Type:      ConfigFieldTypeString,
+				Sensitive: false,
+			},
+		},
+		SupportsTestConnect: true,
+	},
 }
 
 func HasRequiredConfiguration(configuration map[string]any, spec IntegrationSpec) bool {
