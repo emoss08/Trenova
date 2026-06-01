@@ -47,6 +47,7 @@ const (
 	x12SegmentISA = "ISA"
 	x12SegmentGS  = "GS"
 	x12SegmentST  = "ST"
+	x12SegmentAT7 = "AT7"
 	x12SegmentSE  = "SE"
 	x12SegmentGE  = "GE"
 	x12SegmentIEA = "IEA"
@@ -130,6 +131,7 @@ func RenderX12(input *RenderInput) (*RenderResult, error) {
 			if !segmentHasValue && !segment.Required {
 				continue
 			}
+			diagnostics = append(diagnostics, validateRenderedSegment(segment, elements)...)
 			rendered = append(rendered, strings.Join(
 				append([]string{segment.SegmentID}, trimTrailingEmpty(elements)...),
 				input.Profile.Envelope.ElementSeparator,
@@ -407,15 +409,53 @@ func formatElementValue(
 	element *edi.TemplateElement,
 	value any,
 ) string {
-	if segment.SegmentID == "G62" {
+	if segment.SegmentID == "G62" || segment.SegmentID == x12SegmentAT7 {
 		switch element.Position {
 		case 2:
+			if segment.SegmentID == x12SegmentAT7 {
+				break
+			}
 			return formatX12Date(value)
 		case 4:
+			if segment.SegmentID == x12SegmentAT7 {
+				break
+			}
+			return formatX12Time(value)
+		case 5:
+			return formatX12Date(value)
+		case 6:
 			return formatX12Time(value)
 		}
 	}
 	return valueToString(value)
+}
+
+func validateRenderedSegment(segment *edi.EDITemplateSegment, elements []string) []Diagnostic {
+	if segment == nil || segment.SegmentID != x12SegmentAT7 {
+		return nil
+	}
+	if !strings.EqualFold(segmentElementValue(elements, 1), "SD") ||
+		strings.TrimSpace(segmentElementValue(elements, 2)) != "" {
+		return nil
+	}
+
+	return []Diagnostic{{
+		Severity:        edi.ValidationSeverityError,
+		Code:            "shipment_status_reason_required",
+		SegmentID:       x12SegmentAT7,
+		ElementPosition: 2,
+		Path:            "shipmentStatus.statusReasonCode",
+		Message:         "Shipment status reason code is required when AT7 shipment status code is SD",
+		SuggestedFix:    "Set shipmentStatus.statusReasonCode for service failure shipment status payloads.",
+	}}
+}
+
+func segmentElementValue(elements []string, position int) string {
+	if position <= 0 || position > len(elements) {
+		return ""
+	}
+
+	return elements[position-1]
 }
 
 func formatX12Date(value any) string {

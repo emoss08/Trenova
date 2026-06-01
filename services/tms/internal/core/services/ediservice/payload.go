@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -227,10 +228,12 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 	payload := edi.ShipmentStatusPayload{
 		ShipmentID: source.ID,
 		BOL:        source.BOL,
+		ProNumber:  source.ProNumber,
 		StatusCode: "X3",
 		References: map[string]string{
 			"shipmentId": source.ID.String(),
 			"bol":        source.BOL,
+			"pro":        source.ProNumber,
 		},
 	}
 	if len(source.Moves) > 0 &&
@@ -240,12 +243,7 @@ func buildShipmentStatusPayload(source *shipment.Shipment) edi.DocumentPayload {
 		stop := source.Moves[0].Stops[0]
 		payload.EventDate = stop.ScheduledWindowStart
 		payload.EventTime = stop.ScheduledWindowStart
-		if stop.Location != nil {
-			payload.City = stop.Location.City
-			if stop.Location.State != nil {
-				payload.StateCode = stop.Location.State.Abbreviation
-			}
-		}
+		applyShipmentStatusStop(&payload, stop)
 	}
 	return edi.DocumentPayload{
 		TransactionSet: edi.TransactionSet214,
@@ -260,6 +258,7 @@ func buildShipmentEventStatusPayload(
 	payload := edi.ShipmentStatusPayload{
 		ShipmentID: event.ShipmentID,
 		BOL:        shipmentBOL(source),
+		ProNumber:  shipmentProNumber(source),
 		StatusCode: shipmentEventStatusCode(event),
 		EventDate:  event.OccurredAt,
 		EventTime:  event.OccurredAt,
@@ -274,16 +273,25 @@ func buildShipmentEventStatusPayload(
 	if event.Summary != "" {
 		payload.References["summary"] = event.Summary
 	}
-	if reason := metadataString(event.Metadata, "reason"); reason != "" {
+	if reason := stringutils.FirstNonEmpty(
+		metadataString(event.Metadata, "statusReasonCode"),
+		metadataString(event.Metadata, "reasonCode"),
+		metadataString(event.Metadata, "reason"),
+	); reason != "" {
 		payload.StatusReasonCode = reason
+		payload.ReasonCode = reason
+	}
+	if reasonDescription := metadataString(event.Metadata, "reasonDescription"); reasonDescription != "" {
+		payload.ReasonDescription = reasonDescription
+	}
+	if exceptionCode := metadataString(event.Metadata, "exceptionCode"); exceptionCode != "" {
+		payload.ExceptionCode = exceptionCode
+	}
+	if lateMinutes, ok := metadataInt64(event.Metadata, "lateMinutes"); ok {
+		payload.LateMinutes = &lateMinutes
 	}
 	stop := shipmentEventStop(event, source)
-	if stop != nil && stop.Location != nil {
-		payload.City = stop.Location.City
-		if stop.Location.State != nil {
-			payload.StateCode = stop.Location.State.Abbreviation
-		}
-	}
+	applyShipmentStatusStop(&payload, stop)
 	return edi.DocumentPayload{
 		TransactionSet: edi.TransactionSet214,
 		ShipmentStatus: &payload,
@@ -339,6 +347,35 @@ func shipmentEventStatusCode(event *shipmentevent.Event) string {
 	return "X3"
 }
 
+func applyShipmentStatusStop(payload *edi.ShipmentStatusPayload, stop *shipment.Stop) {
+	if payload == nil || stop == nil {
+		return
+	}
+
+	payload.StopID = stop.ID
+	payload.StopType = string(stop.Type)
+	payload.StopSequence = stop.Sequence
+	payload.LocationID = stop.LocationID
+	payload.AddressLine = stop.AddressLine
+	payload.ScheduledWindowStart = stop.ScheduledWindowStart
+	payload.ScheduledWindowEnd = stop.ScheduledWindowEnd
+	payload.ActualArrival = stop.ActualArrival
+	payload.ActualDeparture = stop.ActualDeparture
+
+	if stop.Location == nil {
+		return
+	}
+
+	payload.LocationName = stop.Location.Name
+	payload.LocationCode = stop.Location.Code
+	payload.AddressLine = stringutils.FirstNonEmpty(payload.AddressLine, locationAddress(stop.Location))
+	payload.City = stop.Location.City
+	payload.PostalCode = stop.Location.PostalCode
+	if stop.Location.State != nil {
+		payload.StateCode = stop.Location.State.Abbreviation
+	}
+}
+
 func shipmentEventStop(event *shipmentevent.Event, source *shipment.Shipment) *shipment.Stop {
 	if source == nil {
 		return nil
@@ -367,6 +404,31 @@ func shipmentEventStop(event *shipmentevent.Event, source *shipment.Shipment) *s
 		return source.Moves[0].Stops[0]
 	}
 	return nil
+}
+
+func metadataInt64(metadata map[string]any, key string) (int64, bool) {
+	value, ok := metadata[key]
+	if !ok || value == nil {
+		return 0, false
+	}
+	switch typed := value.(type) {
+	case int64:
+		return typed, true
+	case int:
+		return int64(typed), true
+	case float64:
+		return int64(typed), true
+	case float32:
+		return int64(typed), true
+	case string:
+		parsed, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0, false
+		}
+		return parsed, true
+	default:
+		return 0, false
+	}
 }
 
 func metadataString(metadata map[string]any, key string) string {

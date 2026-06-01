@@ -198,10 +198,19 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 				ID: moveID,
 				Stops: []*shipment.Stop{
 					{
-						ID: stopID,
+						ID:                   stopID,
+						LocationID:           pulid.MustNew("loc_"),
+						Type:                 shipment.StopTypeDelivery,
+						Sequence:             2,
+						ScheduledWindowStart: 1715814000,
+						ScheduledWindowEnd:   int64Ptr(1715817600),
 						Location: &location.Location{
-							City:  "Dallas",
-							State: &usstate.UsState{Abbreviation: "TX"},
+							Code:         "DAL",
+							Name:         "Dallas Terminal",
+							AddressLine1: "123 Main St",
+							City:         "Dallas",
+							PostalCode:   "75001",
+							State:        &usstate.UsState{Abbreviation: "TX"},
 						},
 					},
 				},
@@ -216,6 +225,11 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 		Type:       shipmentevent.TypeStopCompleted,
 		Summary:    "Stop completed",
 		OccurredAt: 1715817600,
+		Metadata: map[string]any{
+			"statusReasonCode":  "NS",
+			"reasonDescription": "Late pickup",
+			"lateMinutes":       "45",
+		},
 	}
 
 	payload := buildShipmentEventStatusPayload(event, source)
@@ -224,10 +238,23 @@ func TestBuildShipmentEventStatusPayload(t *testing.T) {
 	require.NotNil(t, payload.ShipmentStatus)
 	require.Equal(t, shipmentID, payload.ShipmentStatus.ShipmentID)
 	require.Equal(t, "BOL-214", payload.ShipmentStatus.BOL)
+	require.Equal(t, "PRO-214", payload.ShipmentStatus.ProNumber)
 	require.Equal(t, "D1", payload.ShipmentStatus.StatusCode)
+	require.Equal(t, "NS", payload.ShipmentStatus.StatusReasonCode)
+	require.Equal(t, "NS", payload.ShipmentStatus.ReasonCode)
+	require.Equal(t, "Late pickup", payload.ShipmentStatus.ReasonDescription)
 	require.Equal(t, int64(1715817600), payload.ShipmentStatus.EventDate)
+	require.Equal(t, stopID, payload.ShipmentStatus.StopID)
+	require.Equal(t, string(shipment.StopTypeDelivery), payload.ShipmentStatus.StopType)
+	require.Equal(t, int64(2), payload.ShipmentStatus.StopSequence)
+	require.Equal(t, "Dallas Terminal", payload.ShipmentStatus.LocationName)
+	require.Equal(t, "DAL", payload.ShipmentStatus.LocationCode)
+	require.Equal(t, "123 Main St, Dallas, TX, 75001", payload.ShipmentStatus.AddressLine)
 	require.Equal(t, "Dallas", payload.ShipmentStatus.City)
 	require.Equal(t, "TX", payload.ShipmentStatus.StateCode)
+	require.Equal(t, "75001", payload.ShipmentStatus.PostalCode)
+	require.NotNil(t, payload.ShipmentStatus.LateMinutes)
+	require.Equal(t, int64(45), *payload.ShipmentStatus.LateMinutes)
 	require.Equal(t, eventID.String(), payload.ShipmentStatus.References["eventId"])
 	require.Equal(t, "PRO-214", payload.ShipmentStatus.References["pro"])
 }
@@ -251,6 +278,22 @@ func TestBuildShipmentStatusPayloadSkipsNilMoveFallback(t *testing.T) {
 	require.Zero(t, payload.ShipmentStatus.EventDate)
 }
 
+func TestBuildShipmentEventStatusPayload_PreservesDelayedMappingToA3(t *testing.T) {
+	t.Parallel()
+
+	payload := buildShipmentEventStatusPayload(&shipmentevent.Event{
+		ID:         pulid.MustNew("se_"),
+		ShipmentID: pulid.MustNew("shp_"),
+		Type:       shipmentevent.TypeStatusChanged,
+		Metadata: map[string]any{
+			"newStatus": string(shipment.StatusDelayed),
+		},
+	}, nil)
+
+	require.NotNil(t, payload.ShipmentStatus)
+	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
+}
+
 func TestAddRequiredIDDeduplicatesAndSkipsNil(t *testing.T) {
 	required := map[edi.MappingEntityType][]pulid.ID{}
 	id := pulid.MustNew("cus_")
@@ -260,4 +303,8 @@ func TestAddRequiredIDDeduplicatesAndSkipsNil(t *testing.T) {
 	addRequiredID(required, edi.MappingEntityTypeCustomer, id)
 
 	require.Equal(t, []pulid.ID{id}, required[edi.MappingEntityTypeCustomer])
+}
+
+func int64Ptr(v int64) *int64 {
+	return &v
 }

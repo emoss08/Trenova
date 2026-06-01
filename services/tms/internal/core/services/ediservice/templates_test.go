@@ -229,6 +229,32 @@ func TestValidateTemplateVersionDefinition_SourceContextPaths(t *testing.T) {
 	}
 }
 
+func TestValidateTemplateVersionDefinition_SourceContextPathsFor214ShipmentStatus(t *testing.T) {
+	tenantInfo := testTenantInfo()
+	versionID := pulid.MustNew("editv_")
+	version := &edi.EDITemplateVersion{
+		ID:                versionID,
+		BusinessUnitID:    tenantInfo.BuID,
+		OrganizationID:    tenantInfo.OrgID,
+		TemplateID:        pulid.MustNew("editpl_"),
+		VersionNumber:     1,
+		X12Version:        edi.DefaultX12204Version,
+		FunctionalGroupID: "QM",
+		Status:            edi.TemplateStatusDraft,
+		Segments:          editemplates.Base214Segments(tenantInfo, versionID),
+	}
+
+	diagnostics := validateTemplateVersionDefinitionWithSourceContext(
+		version,
+		testSourceContextIndex(),
+		false,
+		testTemplatePartnerSettingIndex(),
+	)
+
+	requireNoDiagnosticCode(t, diagnostics, sourceContextPathUnknownCode)
+	requireNoDiagnosticCode(t, diagnostics, sourceContextRootInvalidCode)
+}
+
 func TestService_CertifyTemplateVersionRequiresCleanValidation(t *testing.T) {
 	tenantInfo := testTenantInfo()
 	version := validTemplateVersion(tenantInfo)
@@ -882,6 +908,39 @@ func testSourceContextIndex() *sourceContextIndex {
 		sourceContextField("shipment.totalChargeAmount", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.ratingDetail.paymentMethod", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.ratingDetail.note", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.proNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.statusCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.statusReasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.eventDate", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.eventTime", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.stopId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.stopType", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.stopSequence", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.locationId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.locationName", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.locationCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.addressLine", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.city", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.stateCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.postalCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.countryCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.appointmentNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.scheduledWindowStart", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.scheduledWindowEnd", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.actualArrival", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.actualDeparture", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.equipmentNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.equipmentType", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.exceptionCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.reasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.reasonDescription", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.lateMinutes", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.serviceFailureId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.serviceFailureNumber", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.serviceFailureReasonCodeId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.serviceFailureReasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("repeat.locationName", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
 		sourceContextField("repeat.locationAddressLine1", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),
 		sourceContextField("repeat.locationAddressLine2", "moves.0.stops", edi.SourceContextKindRepeat, edi.SourceContextFieldStatusActive),

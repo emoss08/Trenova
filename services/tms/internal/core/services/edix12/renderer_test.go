@@ -848,6 +848,41 @@ func TestRenderX12_StarterTemplatesRenderTransactionSets(t *testing.T) {
 	}
 }
 
+func TestRenderX12_214AT7UsesPayloadStatusReasonAndFormatsDateTime(t *testing.T) {
+	t.Parallel()
+
+	eventTime := time.Date(2026, 5, 16, 14, 30, 0, 0, time.UTC).Unix()
+	result := renderStarter214(t, edi.ValidationModeStrict, &edi.ShipmentStatusPayload{
+		ShipmentID:       pulid.MustNew("shp_"),
+		BOL:              "BOL-SD",
+		StatusCode:       "SD",
+		StatusReasonCode: "NS",
+		EventDate:        eventTime,
+		EventTime:        eventTime,
+	})
+
+	require.Empty(t, result.Diagnostics)
+	assert.Contains(t, result.RawX12, "AT7*SD*NS***20260516*1430~")
+}
+
+func TestRenderX12_214ServiceFailureStatusRequiresReasonCode(t *testing.T) {
+	t.Parallel()
+
+	result := renderStarter214(t, edi.ValidationModeStrict, &edi.ShipmentStatusPayload{
+		ShipmentID: pulid.MustNew("shp_"),
+		BOL:        "BOL-SD",
+		StatusCode: "SD",
+	})
+
+	require.Len(t, result.Diagnostics, 1)
+	diagnostic := result.Diagnostics[0]
+	assert.Equal(t, edi.ValidationSeverityError, diagnostic.Severity)
+	assert.Equal(t, "shipment_status_reason_required", diagnostic.Code)
+	assert.Equal(t, "AT7", diagnostic.SegmentID)
+	assert.Equal(t, 2, diagnostic.ElementPosition)
+	assert.Equal(t, "shipmentStatus.statusReasonCode", diagnostic.Path)
+}
+
 func TestRenderX12_StarlarkReadsDocumentRoots(t *testing.T) {
 	t.Parallel()
 
@@ -927,6 +962,48 @@ func TestRenderX12_StarlarkReadsDocumentRoots(t *testing.T) {
 			assert.Contains(t, result.RawX12, tt.want)
 		})
 	}
+}
+
+func renderStarter214(
+	t *testing.T,
+	mode edi.ValidationMode,
+	payload *edi.ShipmentStatusPayload,
+) *RenderResult {
+	t.Helper()
+
+	segments, err := editemplates.StarterSegments(
+		pagination.TenantInfo{},
+		pulid.MustNew("editv_"),
+		edi.TransactionSet214,
+	)
+	require.NoError(t, err)
+
+	profile := &edi.EDIPartnerDocumentProfile{
+		TransactionSet:    edi.TransactionSet214,
+		FunctionalGroupID: edi.FunctionalGroupDefault(edi.TransactionSet214),
+		Envelope:          edi.DefaultX12EnvelopeSettings(),
+		ValidationMode:    mode,
+		PartnerSettings: map[string]any{
+			"carrier": map[string]any{"scac": "TEST"},
+		},
+	}
+	runtime := RuntimeValues(profile, "004010")
+	SetProvisionalControlNumbers(runtime)
+
+	result, err := RenderX12(&RenderInput{
+		Profile: profile,
+		TemplateVersion: &edi.EDITemplateVersion{
+			Segments: segments,
+		},
+		DocumentPayload: edi.DocumentPayload{
+			TransactionSet: edi.TransactionSet214,
+			ShipmentStatus: payload,
+		},
+		Runtime: runtime,
+	})
+	require.NoError(t, err)
+
+	return result
 }
 
 func TestRender204_StarlarkRuntimeDiagnosticPreservesMetadata(t *testing.T) {

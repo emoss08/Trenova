@@ -118,7 +118,7 @@ func validateSourceContextReferences(
 				Severity:     edi.ValidationSeverityError,
 				Code:         sourceContextRootInvalidCode,
 				Message:      fmt.Sprintf("Source context root %q is not supported", root),
-				SuggestedFix: "Use shipment, repeat, partner, runtime, or mapping source paths.",
+				SuggestedFix: "Use shipment, shipmentStatus, repeat, partner, runtime, or mapping source paths.",
 			}))
 			continue
 		}
@@ -368,7 +368,7 @@ func normalizeSourceContextPath(path string) string {
 func isPrefixedSourceContextPath(path string) bool {
 	root := sourceContextRoot(path)
 	switch root {
-	case "shipment", "repeat", "partner", "runtime", "mapping":
+	case "shipment", "shipmentStatus", "repeat", "partner", "runtime", "mapping":
 		return true
 	default:
 		return false
@@ -386,6 +386,7 @@ func sourceContextRoot(path string) string {
 func isSupportedSourceContextRoot(root string) bool {
 	switch root {
 	case string(edi.SourceContextKindShipment),
+		"shipmentStatus",
 		string(edi.SourceContextKindRepeat),
 		string(edi.SourceContextKindPartner),
 		string(edi.SourceContextKindRuntime),

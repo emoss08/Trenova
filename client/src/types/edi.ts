@@ -376,7 +376,44 @@ const ediAcknowledgmentDiagnosticSchema = z.object({
 });
 
 const freightInvoicePayloadSchema = z.object({}).catchall(z.unknown());
-const shipmentStatusPayloadSchema = z.object({}).catchall(z.unknown());
+const shipmentStatusPayloadSchema = z
+  .object({
+    shipmentId: z.string().nullish(),
+    bol: z.string().nullish(),
+    proNumber: z.string().nullish(),
+    statusCode: z.string().nullish(),
+    statusReasonCode: z.string().nullish(),
+    eventDate: nullableNumberSchema,
+    eventTime: nullableNumberSchema,
+    stopId: z.string().nullish(),
+    stopType: z.string().nullish(),
+    stopSequence: nullableNumberSchema,
+    locationId: z.string().nullish(),
+    locationName: z.string().nullish(),
+    locationCode: z.string().nullish(),
+    addressLine: z.string().nullish(),
+    city: z.string().nullish(),
+    stateCode: z.string().nullish(),
+    postalCode: z.string().nullish(),
+    countryCode: z.string().nullish(),
+    appointmentNumber: z.string().nullish(),
+    scheduledWindowStart: nullableNumberSchema,
+    scheduledWindowEnd: nullableNumberSchema,
+    actualArrival: nullableNumberSchema,
+    actualDeparture: nullableNumberSchema,
+    equipmentNumber: z.string().nullish(),
+    equipmentType: z.string().nullish(),
+    exceptionCode: z.string().nullish(),
+    reasonCode: z.string().nullish(),
+    reasonDescription: z.string().nullish(),
+    lateMinutes: nullableNumberSchema,
+    serviceFailureId: z.string().nullish(),
+    serviceFailureNumber: z.string().nullish(),
+    serviceFailureReasonCodeId: z.string().nullish(),
+    serviceFailureReasonCode: z.string().nullish(),
+    references: z.record(z.string(), z.string()).nullish(),
+  })
+  .catchall(z.unknown());
 const tenderResponsePayloadSchema = z.object({}).catchall(z.unknown());
 const functionalAcknowledgmentPayloadSchema = z
   .object({ diagnostics: z.array(ediAcknowledgmentDiagnosticSchema).nullish() })
