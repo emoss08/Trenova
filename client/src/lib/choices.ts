@@ -775,11 +775,17 @@ export const serviceFailureStatusChoices = [
 export const serviceFailureSourceChoices = [
   { value: "Detected", label: "Detected", color: "#0ea5e9" },
   { value: "Manual", label: "Manual", color: "#8b5cf6" },
+  { value: "EDI", label: "EDI", color: "#2563eb" },
+  { value: "Integration", label: "Integration", color: "#0891b2" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureSource>>;
 
 export const serviceFailureTypeChoices = [
   { value: "LatePickup", label: "Late Pickup", color: "#f97316" },
   { value: "LateDelivery", label: "Late Delivery", color: "#dc2626" },
+  { value: "MissedPickup", label: "Missed Pickup", color: "#ea580c" },
+  { value: "MissedDelivery", label: "Missed Delivery", color: "#b91c1c" },
+  { value: "AppointmentMissed", label: "Appointment Missed", color: "#7c3aed" },
+  { value: "Other", label: "Other", color: "#737373" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureType>>;
 
 export const serviceFailureReasonCategoryChoices = [
@@ -789,6 +795,10 @@ export const serviceFailureReasonCategoryChoices = [
   { value: "Weather", label: "Weather", color: "#0ea5e9" },
   { value: "Equipment", label: "Equipment", color: "#ef4444" },
   { value: "Documentation", label: "Documentation", color: "#64748b" },
+  { value: "Driver", label: "Driver", color: "#4f46e5" },
+  { value: "Shipper", label: "Shipper", color: "#0f766e" },
+  { value: "Consignee", label: "Consignee", color: "#0369a1" },
+  { value: "Appointment", label: "Appointment", color: "#7c3aed" },
   { value: "Other", label: "Other", color: "#737373" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureReasonCategory>>;
 
@@ -796,6 +806,7 @@ export const serviceFailureReasonCodeAppliesToChoices = [
   { value: "Pickup", label: "Pickup" },
   { value: "Delivery", label: "Delivery" },
   { value: "Both", label: "Pickup & Delivery" },
+  { value: "All", label: "All Stops" },
 ] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureReasonCodeAppliesTo>>;
 
 export function findChoice<TValue extends string | boolean | number>(

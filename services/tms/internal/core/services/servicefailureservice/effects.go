@@ -79,10 +79,7 @@ func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 
 	opts := []services.LogOption{
 		auditservice.WithComment(params.comment),
-		auditservice.WithMetadata(map[string]any{
-			"shipmentId":       params.entity.ShipmentID.String(),
-			"serviceFailureId": params.entity.ID.String(),
-		}),
+		auditservice.WithMetadata(serviceFailureMetadata(params.entity, params.actor)),
 	}
 	if params.previous != nil && params.current != nil {
 		opts = append(opts, auditservice.WithDiff(params.previous, params.current))
@@ -90,6 +87,69 @@ func (s *service) logServiceFailureAction(params serviceFailureActionParams) {
 	if err := s.auditService.LogAction(logParams, opts...); err != nil {
 		s.l.Warn("failed to log service failure audit", zap.Error(err))
 	}
+}
+
+func serviceFailureLifecycleMetadata(
+	previous *servicefailure.ServiceFailure,
+	current *servicefailure.ServiceFailure,
+	actor *services.RequestActor,
+) map[string]any {
+	metadata := serviceFailureMetadata(current, actor)
+	if previous != nil {
+		metadata["previousStatus"] = string(previous.Status)
+		metadata["previousReasonCodeId"] = optionalIDString(previous.ReasonCodeID)
+		if previous.ReasonCode != nil {
+			metadata["previousReasonCode"] = previous.ReasonCode.Code
+			metadata["previousReasonLabel"] = previous.ReasonCode.Label
+		}
+	}
+	return metadata
+}
+
+func serviceFailureMetadata(
+	entity *servicefailure.ServiceFailure,
+	actor *services.RequestActor,
+) map[string]any {
+	metadata := map[string]any{}
+	if entity == nil {
+		return metadata
+	}
+	metadata["serviceFailureId"] = entity.ID.String()
+	metadata["serviceFailureNumber"] = entity.Number
+	metadata["shipmentId"] = entity.ShipmentID.String()
+	metadata["stopId"] = entity.StopID.String()
+	metadata["stopType"] = string(entity.StopType)
+	metadata["source"] = string(entity.Source)
+	metadata["status"] = string(entity.Status)
+	metadata["lateMinutes"] = entity.LateMinutes
+	metadata["reasonCodeId"] = optionalIDString(entity.ReasonCodeID)
+	metadata["x12StatusCode"] = entity.X12StatusCodeOverride
+	metadata["x12ReasonCode"] = entity.X12ReasonCodeOverride
+	if entity.Stop != nil {
+		metadata["stopSequence"] = entity.Stop.Sequence
+	}
+	if entity.ReasonCode != nil {
+		metadata["reasonCode"] = entity.ReasonCode.Code
+		metadata["reasonLabel"] = entity.ReasonCode.Label
+		metadata["reasonCategory"] = string(entity.ReasonCode.Category)
+		metadata["reasonAppliesTo"] = string(entity.ReasonCode.AppliesTo)
+		if entity.X12ReasonCodeOverride == "" {
+			metadata["x12ReasonCode"] = entity.ReasonCode.DefaultReasonCode
+		}
+		if entity.X12StatusCodeOverride == "" {
+			metadata["x12StatusCode"] = entity.ReasonCode.DefaultStatusCode
+		}
+	}
+	auditActor := actor.AuditActorOrSystem()
+	metadata["principalType"] = string(auditActor.PrincipalType)
+	metadata["principalId"] = auditActor.PrincipalID.String()
+	if auditActor.UserID.IsNotNil() {
+		metadata["userId"] = auditActor.UserID.String()
+	}
+	if auditActor.APIKeyID.IsNotNil() {
+		metadata["apiKeyId"] = auditActor.APIKeyID.String()
+	}
+	return metadata
 }
 
 func (s *service) publishInvalidation(

@@ -65,11 +65,12 @@ type UpdateServiceFailureRequest struct {
 }
 
 type ServiceFailureLifecycleRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	ID         pulid.ID              `json:"id"`
-	ShipmentID pulid.ID              `json:"shipmentId"`
-	Notes      string                `json:"notes"`
-	Version    int64                 `json:"version"`
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	ID           pulid.ID              `json:"id"`
+	ShipmentID   pulid.ID              `json:"shipmentId"`
+	ReasonCodeID pulid.ID              `json:"reasonCodeId"`
+	Notes        string                `json:"notes"`
+	Version      int64                 `json:"version"`
 }
 
 type BuildServiceFailureEDIPayloadRequest struct {

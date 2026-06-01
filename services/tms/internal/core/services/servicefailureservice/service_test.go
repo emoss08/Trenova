@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -67,6 +66,7 @@ func TestNormalizedGracePeriodFallsBackToDispatchDefault(t *testing.T) {
 
 func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 	override := true
+	disabledOverride := false
 	shipperStop := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup}
 	otherPickup := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypePickup}
 	delivery := &shipment.Stop{ID: pulid.MustNew("stp_"), Type: shipment.StopTypeDelivery}
@@ -75,6 +75,11 @@ func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 		ID:                pulid.MustNew("stp_"),
 		Type:              shipment.StopTypeDelivery,
 		CountLateOverride: &override,
+	}
+	disabledPickup := &shipment.Stop{
+		ID:                pulid.MustNew("stp_"),
+		Type:              shipment.StopTypePickup,
+		CountLateOverride: &disabledOverride,
 	}
 
 	tests := []struct {
@@ -92,6 +97,7 @@ func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 		{name: "all except shipper excludes shipper stop", stop: shipperStop, policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper},
 		{name: "all except shipper accepts other pickup", stop: otherPickup, policy: dispatchcontrol.ServiceIncidentTypeAllExceptShipper, want: true},
 		{name: "count late override bypasses stop type policy", stop: overrideDelivery, policy: dispatchcontrol.ServiceIncidentTypePickup, want: true},
+		{name: "count late override false skips otherwise matching stop", stop: disabledPickup, policy: dispatchcontrol.ServiceIncidentTypePickup},
 		{name: "never policy skips stop", stop: delivery, policy: dispatchcontrol.ServiceIncidentTypeNever},
 	}
 
@@ -109,128 +115,23 @@ func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 	}
 }
 
-func TestCreateManualCreatesFailureWithScopedStopContext(t *testing.T) {
+func TestCreateManualRejectsWithoutTouchingRepositories(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	shipmentID := pulid.MustNew("sp_")
-	moveID := pulid.MustNew("sm_")
-	stopID := pulid.MustNew("stp_")
-	reasonID := pulid.MustNew("sfrc_")
-	userID := pulid.MustNew("usr_")
-	actualArrival := int64(1_301)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	source := serviceFailureShipmentFixture(orgID, buID, shipmentID, moveID, stopID, shipment.StopTypeDelivery, actualArrival)
-
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
-	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
-	repo := mocks.NewMockServiceFailureRepository(t)
-	audit := mocks.NewMockAuditService(t)
-	realtime := mocks.NewMockRealtimeService(t)
-	svc := &service{
-		l:              zap.NewNop(),
-		repo:           repo,
-		reasonCodeRepo: reasonRepo,
-		shipmentRepo:   shipmentRepo,
-		dispatchRepo:   dispatchRepo,
-		auditService:   audit,
-		realtime:       realtime,
-	}
-
-	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(source, nil).
-		Once()
-	reasonRepo.EXPECT().
-		GetByID(mock.Anything, repositories.GetServiceFailureReasonCodeByIDRequest{
-			ID:         reasonID,
-			TenantInfo: tenantInfo,
-		}).
-		Return(&servicefailure.ReasonCode{
-			ID:             reasonID,
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			Code:           "LATE",
-			Label:          "Late delivery",
-			Active:         true,
-			AppliesTo:      servicefailure.ReasonCodeAppliesToDelivery,
-		}, nil).
-		Once()
-	dispatchRepo.EXPECT().
-		GetOrCreate(mock.Anything, orgID, buID).
-		Return(&dispatchcontrol.DispatchControl{}, nil).
-		Once()
-	repo.EXPECT().
-		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
-		Return(nil, errortypes.NewNotFoundError("not found")).
-		Once()
-	repo.EXPECT().
-		Create(mock.Anything, mock.AnythingOfType("*servicefailure.ServiceFailure")).
-		RunAndReturn(func(_ context.Context, entity *servicefailure.ServiceFailure) (*servicefailure.ServiceFailure, error) {
-			require.Equal(t, shipmentID, entity.ShipmentID)
-			require.Equal(t, moveID, entity.ShipmentMoveID)
-			require.Equal(t, stopID, entity.StopID)
-			require.Equal(t, servicefailure.TypeLateDelivery, entity.Type)
-			require.Equal(t, servicefailure.SourceManual, entity.Source)
-			require.Equal(t, servicefailure.StatusOpen, entity.Status)
-			require.NotNil(t, entity.CreatedByID)
-			require.Equal(t, userID, *entity.CreatedByID)
-			require.Equal(t, int64(1), entity.LateMinutes)
-			return entity, nil
-		}).
-		Once()
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
-	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
-
-	created, err := svc.CreateManual(t.Context(), &serviceports.CreateManualServiceFailureRequest{
-		TenantInfo:     tenantInfo,
-		ShipmentID:     shipmentID,
-		ShipmentMoveID: moveID,
-		StopID:         stopID,
-		ReasonCodeID:   reasonID,
-		Type:           servicefailure.TypeLateDelivery,
-	}, &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
-		PrincipalID:    userID,
-		UserID:         userID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, created)
-}
-
-func TestCreateManualRejectsStopTypeMismatch(t *testing.T) {
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	shipmentID := pulid.MustNew("sp_")
-	moveID := pulid.MustNew("sm_")
-	stopID := pulid.MustNew("stp_")
-	reasonID := pulid.MustNew("sfrc_")
-	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
-	source := serviceFailureShipmentFixture(orgID, buID, shipmentID, moveID, stopID, shipment.StopTypePickup, 1_301)
-	shipmentRepo := mocks.NewMockShipmentRepository(t)
-	svc := &service{
-		l:            zap.NewNop(),
-		shipmentRepo: shipmentRepo,
-	}
-
-	shipmentRepo.EXPECT().
-		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
-		Return(source, nil).
-		Once()
+	svc := &service{l: zap.NewNop()}
 
 	_, err := svc.CreateManual(t.Context(), &serviceports.CreateManualServiceFailureRequest{
 		TenantInfo:     tenantInfo,
-		ShipmentID:     shipmentID,
-		ShipmentMoveID: moveID,
-		StopID:         stopID,
-		ReasonCodeID:   reasonID,
+		ShipmentID:     pulid.MustNew("sp_"),
+		ShipmentMoveID: pulid.MustNew("sm_"),
+		StopID:         pulid.MustNew("stp_"),
+		ReasonCodeID:   pulid.MustNew("sfrc_"),
 		Type:           servicefailure.TypeLateDelivery,
 	}, nil)
 
 	require.Error(t, err)
+	require.ErrorContains(t, err, "Manual service failure creation is disabled")
 }
 
 func TestCreateOrUpdateDetectedUpdatesExistingSnapshotIdempotently(t *testing.T) {
@@ -295,11 +196,13 @@ func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
+	reasonID := pulid.MustNew("sfrc_")
 	entity := &servicefailure.ServiceFailure{
 		ID:                 pulid.MustNew("sf_"),
 		ShipmentID:         pulid.MustNew("sp_"),
 		ShipmentMoveID:     pulid.MustNew("sm_"),
 		StopID:             pulid.MustNew("stp_"),
+		ReasonCodeID:       &reasonID,
 		OrganizationID:     orgID,
 		BusinessUnitID:     buID,
 		Type:               servicefailure.TypeLateDelivery,

@@ -1,10 +1,14 @@
 import { DataTableLazyComponent } from "@/components/error-boundary";
 import { PageHeader } from "@/components/page-header";
 import { lazy } from "react";
+import { useSearchParams } from "react-router";
 
 const Table = lazy(() => import("./_components/service-failure-table"));
 
 export function ServiceFailuresPage() {
+  const [searchParams] = useSearchParams();
+  const shipmentId = searchParams.get("shipmentId") ?? undefined;
+
   return (
     <div className="flex h-full flex-col">
       <PageHeader
@@ -13,7 +17,7 @@ export function ServiceFailuresPage() {
       />
       <div className="p-4">
         <DataTableLazyComponent>
-          <Table />
+          <Table shipmentId={shipmentId} />
         </DataTableLazyComponent>
       </div>
     </div>

@@ -8,12 +8,21 @@ export const serviceFailureReasonCategorySchema = z.enum([
   "Weather",
   "Equipment",
   "Documentation",
+  "Driver",
+  "Shipper",
+  "Consignee",
+  "Appointment",
   "Other",
 ]);
 
 export type ServiceFailureReasonCategory = z.infer<typeof serviceFailureReasonCategorySchema>;
 
-export const serviceFailureReasonCodeAppliesToSchema = z.enum(["Pickup", "Delivery", "Both"]);
+export const serviceFailureReasonCodeAppliesToSchema = z.enum([
+  "Pickup",
+  "Delivery",
+  "Both",
+  "All",
+]);
 
 export type ServiceFailureReasonCodeAppliesTo = z.infer<
   typeof serviceFailureReasonCodeAppliesToSchema

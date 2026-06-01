@@ -7,7 +7,6 @@ import {
   type ServiceFailure,
   type ServiceFailureEdiPayloadResult,
   type ServiceFailureLifecycleRequest,
-  type ServiceFailureManualCreate,
   type ServiceFailureUpdate,
 } from "@/types/service-failure";
 import type { GenericLimitOffsetResponse } from "@/types/server";
@@ -51,11 +50,6 @@ export class ServiceFailureService {
       ...response,
       results,
     };
-  }
-
-  async createManual(data: ServiceFailureManualCreate) {
-    const response = await api.post<ServiceFailure>("/service-failures/", data);
-    return safeParse(serviceFailureSchema, response, "ServiceFailure");
   }
 
   async evaluateShipment(shipmentId: string, force = false) {

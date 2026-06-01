@@ -145,18 +145,20 @@ func (h *Handler) get(c *gin.Context) {
 
 func (h *Handler) createManual(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
-	req := new(services.CreateManualServiceFailureRequest)
-	req.TenantInfo = pagination.TenantInfo{OrgID: authCtx.OrganizationID, BuID: authCtx.BusinessUnitID}
-	if err := c.ShouldBindJSON(req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-	created, err := h.service.CreateManual(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	_, err := h.service.CreateManual(
+		c.Request.Context(),
+		&services.CreateManualServiceFailureRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+		actorutil.FromAuthContext(authCtx),
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, created)
 }
 
 func (h *Handler) evaluateShipment(c *gin.Context) {

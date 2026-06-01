@@ -10,10 +10,17 @@ import { serviceFailureReasonCodeSchema } from "./service-failure-reason-code";
 
 const nullableTimestampSchema = z.number().int().nullable().optional();
 
-export const serviceFailureTypeSchema = z.enum(["LatePickup", "LateDelivery"]);
+export const serviceFailureTypeSchema = z.enum([
+  "LatePickup",
+  "LateDelivery",
+  "MissedPickup",
+  "MissedDelivery",
+  "AppointmentMissed",
+  "Other",
+]);
 export type ServiceFailureType = z.infer<typeof serviceFailureTypeSchema>;
 
-export const serviceFailureSourceSchema = z.enum(["Detected", "Manual"]);
+export const serviceFailureSourceSchema = z.enum(["Detected", "Manual", "EDI", "Integration"]);
 export type ServiceFailureSource = z.infer<typeof serviceFailureSourceSchema>;
 
 export const serviceFailureStatusSchema = z.enum(["Open", "Reviewed", "Resolved", "Voided"]);
@@ -80,25 +87,6 @@ export const serviceFailureSchema = z.object({
 
 export type ServiceFailure = z.infer<typeof serviceFailureSchema>;
 
-export const serviceFailureManualCreateSchema = z.object({
-  shipmentId: z.string().min(1, { message: "Shipment is required" }),
-  shipmentMoveId: z.string().min(1, { message: "Move is required" }),
-  stopId: z.string().min(1, { message: "Stop is required" }),
-  reasonCodeId: z.string().min(1, { message: "Reason code is required" }),
-  type: serviceFailureTypeSchema,
-  notes: nullableTextSchema,
-  internalNotes: nullableTextSchema,
-  x12StatusCodeOverride: optionalStringSchema.default(""),
-  x12ReasonCodeOverride: optionalStringSchema.default(""),
-  x12ExceptionCode: optionalStringSchema.default(""),
-  scheduledCutoff: z.number().int().positive().nullable().optional(),
-  actualArrival: z.number().int().positive().nullable().optional(),
-  gracePeriodMinutes: z.number().int().positive().nullable().optional(),
-  lateMinutes: z.number().int().positive().nullable().optional(),
-});
-
-export type ServiceFailureManualCreate = z.infer<typeof serviceFailureManualCreateSchema>;
-
 export const serviceFailureUpdateSchema = z.object({
   id: z.string(),
   shipmentId: z.string(),
@@ -116,6 +104,7 @@ export type ServiceFailureUpdate = z.infer<typeof serviceFailureUpdateSchema>;
 
 export type ServiceFailureLifecycleRequest = {
   shipmentId: string;
+  reasonCodeId?: string;
   notes?: string;
   version: number;
 };

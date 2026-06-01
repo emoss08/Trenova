@@ -146,10 +146,6 @@ func (s *service) evaluateShipment(
 		result.Skipped++
 		return result, nil
 	}
-	if !params.force && params.control.RecordServiceFailures == dispatchcontrol.ServiceIncidentTypeNever {
-		result.Skipped++
-		return result, nil
-	}
 
 	shipperStop := params.source.ShipperStop()
 	gracePeriod := normalizedGracePeriod(params.control)
@@ -198,9 +194,6 @@ func (s *service) qualifyingFailure(params qualifyingFailureParams) (*detectedAc
 	if params.stop.IsCanceled() {
 		return nil, "stop canceled"
 	}
-	if !params.stop.IsCompleted() {
-		return nil, "stop not completed"
-	}
 	if params.stop.ActualArrival == nil || *params.stop.ActualArrival <= 0 {
 		return nil, "missing actual arrival"
 	}
@@ -208,13 +201,18 @@ func (s *service) qualifyingFailure(params qualifyingFailureParams) (*detectedAc
 	if cutoff <= 0 {
 		return nil, "missing scheduled cutoff"
 	}
-	if !params.force && !shouldEvaluateStop(shouldEvaluateStopParams{
-		source:      params.source,
-		stop:        params.stop,
-		shipperStop: params.shipperStop,
-		policy:      params.control.RecordServiceFailures,
-	}) {
-		return nil, "policy skipped"
+	if params.stop.CountLateOverride != nil && !*params.stop.CountLateOverride {
+		return nil, "count late override disabled"
+	}
+	if !params.force {
+		if !shouldEvaluateStop(shouldEvaluateStopParams{
+			source:      params.source,
+			stop:        params.stop,
+			shipperStop: params.shipperStop,
+			policy:      params.control.RecordServiceFailures,
+		}) {
+			return nil, "policy skipped"
+		}
 	}
 
 	graceSeconds := int64(params.gracePeriod) * 60
@@ -289,13 +287,9 @@ func (s *service) createOrUpdateDetected(
 	}
 	s.afterServiceFailureCreate(ctx, created, actor, "Service failure detected")
 	s.comment(ctx, commentParams{
-		entity:  created,
-		comment: "Service failure detected",
-		metadata: map[string]any{
-			"serviceFailureId": created.ID.String(),
-			"source":           string(created.Source),
-			"lateMinutes":      created.LateMinutes,
-		},
+		entity:   created,
+		comment:  "Service failure detected",
+		metadata: serviceFailureMetadata(created, actor),
 	})
 	return created, nil
 }

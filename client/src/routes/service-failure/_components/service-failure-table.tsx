@@ -13,9 +13,14 @@ import { ServiceFailurePanel } from "./service-failure-panel";
 
 type LifecycleAction = "review" | "resolve" | "void";
 
-export default function ServiceFailureTable() {
+type ServiceFailureTableProps = {
+  shipmentId?: string;
+};
+
+export default function ServiceFailureTable({ shipmentId }: ServiceFailureTableProps) {
   const queryClient = useQueryClient();
   const canApprove = usePermission(Resource.ServiceFailure, Operation.Approve);
+  const canUpdate = usePermission(Resource.ServiceFailure, Operation.Update);
   const canArchive = usePermission(Resource.ServiceFailure, Operation.Archive);
   const canExport = usePermission(Resource.ServiceFailure, Operation.Export);
   const columns = getColumns();
@@ -33,6 +38,7 @@ export default function ServiceFailureTable() {
     const entity = row.original;
     const payload = {
       shipmentId: entity.shipmentId,
+      reasonCodeId: entity.reasonCodeId ?? undefined,
       version: entity.version ?? 0,
     };
 
@@ -43,7 +49,12 @@ export default function ServiceFailureTable() {
       await apiService.serviceFailureService.resolve(entity.id ?? "", payload);
       toast.success("Service failure resolved");
     } else {
-      await apiService.serviceFailureService.void(entity.id ?? "", payload);
+      const notes = window.prompt("Enter a void reason");
+      if (!notes?.trim()) return;
+      await apiService.serviceFailureService.void(entity.id ?? "", {
+        ...payload,
+        notes: notes.trim(),
+      });
       toast.success("Service failure voided");
     }
     invalidate(entity.shipmentId);
@@ -67,13 +78,18 @@ export default function ServiceFailureTable() {
       icon: ShieldCheckIcon,
       onClick: (row) => void handleLifecycle(row, "review"),
       hidden: (row) => !canApprove.allowed || row.original.status !== "Open",
+      disabled: (row) => !row.original.reasonCodeId,
     },
     {
       id: "resolve",
       label: "Resolve",
       icon: CheckCircle2Icon,
       onClick: (row) => void handleLifecycle(row, "resolve"),
-      hidden: (row) => row.original.status === "Resolved" || row.original.status === "Voided",
+      hidden: (row) =>
+        !canUpdate.allowed ||
+        row.original.status === "Resolved" ||
+        row.original.status === "Voided",
+      disabled: (row) => !row.original.reasonCodeId,
     },
     {
       id: "void",
@@ -100,6 +116,7 @@ export default function ServiceFailureTable() {
       exportModelName="service-failure"
       resource={Resource.ServiceFailure}
       columns={columns}
+      extraSearchParams={shipmentId ? { shipmentId } : undefined}
       contextMenuActions={contextMenuActions}
       TablePanel={ServiceFailurePanel}
       enableCreateAction={false}

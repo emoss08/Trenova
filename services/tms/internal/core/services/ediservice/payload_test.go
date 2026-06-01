@@ -370,6 +370,38 @@ func TestBuildServiceFailureShipmentStatusPayload_UsesReasonDefaultsWithoutOverr
 	require.Empty(t, serviceFailurePayloadDiagnostics(payload.ShipmentStatus))
 }
 
+func TestBuildServiceFailureShipmentStatusPayload_UsesServiceFailureTimestampPrecedence(t *testing.T) {
+	t.Parallel()
+
+	base := &servicefailure.ServiceFailure{
+		ID:             pulid.MustNew("sf_"),
+		ShipmentID:     pulid.MustNew("sp_"),
+		ShipmentMoveID: pulid.MustNew("sm_"),
+		StopID:         pulid.MustNew("stp_"),
+		Number:         "SF-1003",
+		Type:           servicefailure.TypeLateDelivery,
+		Status:         servicefailure.StatusOpen,
+		ActualArrival:  100,
+		CreatedAt:      200,
+		DetectedAt:     300,
+		LateMinutes:    1,
+	}
+
+	payload := buildServiceFailureShipmentStatusPayload(base, nil)
+	require.Equal(t, int64(300), payload.ShipmentStatus.EventDate)
+	require.Equal(t, int64(300), payload.ShipmentStatus.EventTime)
+
+	base.DetectedAt = 0
+	payload = buildServiceFailureShipmentStatusPayload(base, nil)
+	require.Equal(t, int64(200), payload.ShipmentStatus.EventDate)
+	require.Equal(t, int64(200), payload.ShipmentStatus.EventTime)
+
+	base.CreatedAt = 0
+	payload = buildServiceFailureShipmentStatusPayload(base, nil)
+	require.Equal(t, int64(100), payload.ShipmentStatus.EventDate)
+	require.Equal(t, int64(100), payload.ShipmentStatus.EventTime)
+}
+
 func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	t.Parallel()
 
@@ -386,6 +418,9 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 		StatusCode:       "SD",
 		StatusReasonCode: "NS",
 	}))
+	require.Len(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode: " sd ",
+	}), 1)
 	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode: "A3",
 	}))

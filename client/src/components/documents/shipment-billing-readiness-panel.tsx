@@ -174,7 +174,7 @@ export function ShipmentBillingReadinessPanel({
               </ul>
               {readiness.serviceFailureContext.hasUnresolved && (
                 <a
-                  href="/shipment-management/service-failures"
+                  href={`/shipment-management/service-failures?shipmentId=${shipment?.id ?? ""}`}
                   className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
                 >
                   View {readiness.serviceFailureContext.unresolvedCount} service failure

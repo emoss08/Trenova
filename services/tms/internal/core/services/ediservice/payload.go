@@ -338,14 +338,15 @@ func buildServiceFailureShipmentStatusPayload(
 	failure *servicefailure.ServiceFailure,
 	source *shipment.Shipment,
 ) edi.DocumentPayload {
+	eventTimestamp := serviceFailureEventTimestamp(failure)
 	status := edi.ShipmentStatusPayload{
 		ShipmentID:           failure.ShipmentID,
 		BOL:                  shipmentBOL(source),
 		ProNumber:            shipmentProNumber(source),
 		StatusCode:           serviceFailureStatusCode(failure),
 		StatusReasonCode:     serviceFailureReasonCode(failure),
-		EventDate:            failure.ActualArrival,
-		EventTime:            failure.ActualArrival,
+		EventDate:            eventTimestamp,
+		EventTime:            eventTimestamp,
 		ExceptionCode:        serviceFailureExceptionCode(failure),
 		ReasonCode:           serviceFailureReasonCode(failure),
 		ReasonDescription:    serviceFailureReasonDescription(failure),
@@ -428,6 +429,19 @@ func serviceFailureExceptionCode(failure *servicefailure.ServiceFailure) string 
 	return ""
 }
 
+func serviceFailureEventTimestamp(failure *servicefailure.ServiceFailure) int64 {
+	if failure == nil {
+		return 0
+	}
+	if failure.DetectedAt > 0 {
+		return failure.DetectedAt
+	}
+	if failure.CreatedAt > 0 {
+		return failure.CreatedAt
+	}
+	return failure.ActualArrival
+}
+
 func serviceFailureReasonDescription(failure *servicefailure.ServiceFailure) string {
 	if failure == nil || failure.ReasonCode == nil {
 		return ""
@@ -481,7 +495,9 @@ func applyServiceFailureEquipment(
 }
 
 func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edix12.Diagnostic {
-	if payload == nil || payload.StatusCode != "SD" || strings.TrimSpace(payload.StatusReasonCode) != "" {
+	if payload == nil ||
+		strings.ToUpper(strings.TrimSpace(payload.StatusCode)) != "SD" ||
+		strings.TrimSpace(payload.StatusReasonCode) != "" {
 		return nil
 	}
 	return []edix12.Diagnostic{

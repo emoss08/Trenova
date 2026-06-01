@@ -72,6 +72,7 @@ export function ServiceFailurePanel({
     handleSubmit,
     reset,
   } = form;
+  const terminal = row?.status === "Resolved" || row?.status === "Voided";
 
   const handleClose = () => {
     onOpenChange(false);
@@ -146,7 +147,7 @@ export function ServiceFailurePanel({
             id="panel-edit-form"
             onSubmit={handleSubmit((values) => onSubmit(values, defaultAction))}
           >
-            <ServiceFailureForm disabled={row.status === "Voided"} />
+            <ServiceFailureForm disabled={terminal} stopType={row.stopType} />
           </Form>
         </FormProvider>
       )}

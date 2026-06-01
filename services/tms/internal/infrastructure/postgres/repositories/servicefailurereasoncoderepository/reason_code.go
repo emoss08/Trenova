@@ -104,6 +104,7 @@ func (r *repository) FindDefault(
 		Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
 			appliesTo,
 			servicefailure.ReasonCodeAppliesToBoth,
+			servicefailure.ReasonCodeAppliesToAll,
 		})).
 		OrderExpr("CASE WHEN sfrc.applies_to = ? THEN 0 ELSE 1 END", appliesTo).
 		Order("sfrc.sort_order ASC").
@@ -303,6 +304,7 @@ func (r *repository) SelectOptions(
 					q = q.Where("sfrc.applies_to IN (?)", bun.In([]servicefailure.ReasonCodeAppliesTo{
 						req.AppliesTo,
 						servicefailure.ReasonCodeAppliesToBoth,
+						servicefailure.ReasonCodeAppliesToAll,
 					}))
 				}
 				return q.Order("sfrc.sort_order ASC", "sfrc.code ASC")

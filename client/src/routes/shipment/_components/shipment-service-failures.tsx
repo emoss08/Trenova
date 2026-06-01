@@ -1,9 +1,5 @@
-import { ServiceFailureReasonCodeAutocompleteField } from "@/components/autocomplete-fields";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { SelectField } from "@/components/fields/select-field";
-import { TextareaField } from "@/components/fields/textarea-field";
 import { ColorOptionValue } from "@/components/fields/select-components";
 import { usePermission } from "@/hooks/use-permission";
 import { findChoice, serviceFailureStatusChoices, serviceFailureTypeChoices } from "@/lib/choices";
@@ -11,75 +7,21 @@ import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import { Operation, Resource } from "@/types/permission";
-import type { ServiceFailure, ServiceFailureManualCreate } from "@/types/service-failure";
-import { serviceFailureManualCreateSchema } from "@/types/service-failure";
-import type { Shipment, StopType } from "@/types/shipment";
-import { zodResolver } from "@hookform/resolvers/zod";
+import type { ServiceFailure } from "@/types/service-failure";
+import type { Shipment } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
-  PlusIcon,
   RefreshCwIcon,
   ShieldCheckIcon,
   XCircleIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 type ShipmentServiceFailuresProps = {
   shipment?: Shipment | null;
 };
-
-type StopContext = {
-  stopId: string;
-  shipmentMoveId: string;
-  label: string;
-  type: StopType;
-  failureType: ServiceFailureManualCreate["type"];
-};
-
-const defaultCreateValues: ServiceFailureManualCreate = {
-  shipmentId: "",
-  shipmentMoveId: "",
-  stopId: "",
-  reasonCodeId: "",
-  type: "LateDelivery",
-  notes: "",
-  internalNotes: "",
-  x12StatusCodeOverride: "",
-  x12ReasonCodeOverride: "",
-  x12ExceptionCode: "",
-};
-
-function failureTypeForStop(stopType: StopType): ServiceFailureManualCreate["type"] {
-  return stopType === "Pickup" || stopType === "SplitPickup" ? "LatePickup" : "LateDelivery";
-}
-
-function buildStopContexts(shipment?: Shipment | null): StopContext[] {
-  if (!shipment?.moves) return [];
-
-  return shipment.moves.flatMap((move, moveIndex) => {
-    const stops: StopContext[] = [];
-    if (!move.id) return stops;
-
-    for (const stop of move.stops ?? []) {
-      if (!stop.id) continue;
-
-      const location = stop.location?.name ?? stop.locationId ?? "Unknown location";
-      stops.push({
-        stopId: stop.id,
-        shipmentMoveId: move.id,
-        type: stop.type,
-        failureType: failureTypeForStop(stop.type),
-        label: `Move ${moveIndex + 1} · ${stop.type} #${stop.sequence + 1} · ${location}`,
-      });
-    }
-
-    return stops;
-  });
-}
 
 export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFailuresProps) {
   const shipmentId = shipment?.id ?? "";
@@ -88,35 +30,11 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
   const canUpdate = usePermission(Resource.ServiceFailure, Operation.Update);
   const canApprove = usePermission(Resource.ServiceFailure, Operation.Approve);
   const canArchive = usePermission(Resource.ServiceFailure, Operation.Archive);
-  const [showManualForm, setShowManualForm] = useState(false);
-  const stopContexts = buildStopContexts(shipment);
-  const stopOptions = stopContexts.map((stop) => ({
-    label: stop.label,
-    value: stop.stopId,
-  }));
 
   const failuresQuery = useQuery({
     ...queries.serviceFailure.listByShipment(shipmentId),
     enabled: !!shipmentId,
   });
-
-  const form = useForm<ServiceFailureManualCreate>({
-    resolver: zodResolver(serviceFailureManualCreateSchema) as Resolver<ServiceFailureManualCreate>,
-    defaultValues: defaultCreateValues,
-  });
-  const { control, handleSubmit, reset, setValue } = form;
-
-  useEffect(() => {
-    if (!shipmentId) return;
-    const firstStop = stopContexts[0];
-    reset({
-      ...defaultCreateValues,
-      shipmentId,
-      shipmentMoveId: firstStop?.shipmentMoveId ?? "",
-      stopId: firstStop?.stopId ?? "",
-      type: firstStop?.failureType ?? "LateDelivery",
-    });
-  }, [reset, shipmentId, stopContexts]);
 
   const evaluateMutation = useMutation({
     mutationFn: () => apiService.serviceFailureService.evaluateShipment(shipmentId),
@@ -124,18 +42,6 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       toast.success("Service failure evaluation complete", {
         description: `${result.createdIds.length} created, ${result.updatedIds.length} updated, ${result.skipped} skipped.`,
       });
-      void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
-      void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (values: ServiceFailureManualCreate) =>
-      apiService.serviceFailureService.createManual(values),
-    onSuccess: () => {
-      toast.success("Manual service failure recorded");
-      setShowManualForm(false);
       void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
@@ -152,6 +58,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
     }) => {
       const payload = {
         shipmentId: failure.shipmentId,
+        reasonCodeId: failure.reasonCodeId ?? undefined,
         version: failure.version ?? 0,
       };
       if (action === "review") {
@@ -160,7 +67,12 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       if (action === "resolve") {
         return apiService.serviceFailureService.resolve(failure.id ?? "", payload);
       }
-      return apiService.serviceFailureService.void(failure.id ?? "", payload);
+      const notes = window.prompt("Enter a void reason");
+      if (!notes?.trim()) return Promise.resolve(failure);
+      return apiService.serviceFailureService.void(failure.id ?? "", {
+        ...payload,
+        notes: notes.trim(),
+      });
     },
     onSuccess: () => {
       toast.success("Service failure updated");
@@ -169,24 +81,6 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
     },
   });
-
-  const onStopChange = (stopId: string) => {
-    const stop = stopContexts.find((candidate) => candidate.stopId === stopId);
-    if (!stop) return;
-    setValue("shipmentMoveId", stop.shipmentMoveId, { shouldDirty: true });
-    setValue("type", stop.failureType, { shouldDirty: true });
-  };
-
-  const onSubmit = (values: ServiceFailureManualCreate) => {
-    const stop = stopContexts.find((candidate) => candidate.stopId === values.stopId);
-    if (!stop) return;
-    createMutation.mutate({
-      ...values,
-      shipmentId,
-      shipmentMoveId: stop.shipmentMoveId,
-      type: stop.failureType,
-    });
-  };
 
   const failures = failuresQuery.data?.results ?? [];
 
@@ -210,74 +104,8 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
             <RefreshCwIcon className="size-3.5" />
             Evaluate
           </Button>
-          <Button
-            type="button"
-            size="xs"
-            onClick={() => setShowManualForm((value) => !value)}
-            disabled={!canCreate.allowed || stopContexts.length === 0}
-          >
-            <PlusIcon className="size-3.5" />
-            Manual
-          </Button>
         </div>
       </div>
-
-      {showManualForm && (
-        <div className="rounded-md border bg-muted/20 p-3">
-          <FormProvider {...form}>
-            <Form onSubmit={handleSubmit(onSubmit)}>
-              <FormGroup cols={2}>
-                <FormControl cols="full">
-                  <SelectField
-                    control={control}
-                    name="stopId"
-                    label="Stop"
-                    placeholder="Select Stop"
-                    options={stopOptions}
-                    onValueChange={onStopChange}
-                    rules={{ required: true }}
-                  />
-                </FormControl>
-                <FormControl cols="full">
-                  <ServiceFailureReasonCodeAutocompleteField
-                    control={control}
-                    name="reasonCodeId"
-                    label="Reason Code"
-                    placeholder="Select Reason Code"
-                    rules={{ required: true }}
-                  />
-                </FormControl>
-                <FormControl cols="full">
-                  <TextareaField
-                    control={control}
-                    name="notes"
-                    label="Operations Notes"
-                    placeholder="Add operational context"
-                  />
-                </FormControl>
-              </FormGroup>
-              <div className="mt-3 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="xs"
-                  onClick={() => setShowManualForm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="xs"
-                  isLoading={createMutation.isPending}
-                  loadingText="Recording..."
-                >
-                  Record Failure
-                </Button>
-              </div>
-            </Form>
-          </FormProvider>
-        </div>
-      )}
 
       <div className="flex flex-col gap-2">
         {failures.length === 0 && (
@@ -318,6 +146,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                     disabled={
                       !canApprove.allowed ||
                       failure.status !== "Open" ||
+                      !failure.reasonCodeId ||
                       lifecycleMutation.isPending
                     }
                     onClick={() => lifecycleMutation.mutate({ failure, action: "review" })}
@@ -329,7 +158,12 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                     variant="outline"
                     size="icon-xs"
                     title="Resolve"
-                    disabled={!canUpdate.allowed || terminal || lifecycleMutation.isPending}
+                    disabled={
+                      !canUpdate.allowed ||
+                      terminal ||
+                      !failure.reasonCodeId ||
+                      lifecycleMutation.isPending
+                    }
                     onClick={() => lifecycleMutation.mutate({ failure, action: "resolve" })}
                   >
                     <CheckCircle2Icon className="size-3.5" />

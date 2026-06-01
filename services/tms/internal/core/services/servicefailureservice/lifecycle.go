@@ -54,6 +54,13 @@ func (s *service) Update(
 	updated.X12ExceptionCode = strings.TrimSpace(req.X12ExceptionCode)
 	switch {
 	case req.ClearReasonCode:
+		if original.Status == servicefailure.StatusReviewed {
+			return nil, errortypes.NewValidationError(
+				"reasonCodeId",
+				errortypes.ErrInvalidOperation,
+				"Reviewed service failures must retain a reason code",
+			)
+		}
 		updated.ReasonCodeID = nil
 	case req.ReasonCodeID.IsNotNil():
 		reason, reasonErr := s.activeReasonCode(ctx, activeReasonCodeParams{
@@ -92,12 +99,9 @@ func (s *service) Update(
 	})
 	if reasonChanged(original, saved) {
 		s.comment(ctx, commentParams{
-			entity:  saved,
-			comment: "Service failure reason changed",
-			metadata: map[string]any{
-				"serviceFailureId": saved.ID.String(),
-				"reasonCodeId":     optionalIDString(saved.ReasonCodeID),
-			},
+			entity:   saved,
+			comment:  "Service failure reason changed",
+			metadata: serviceFailureLifecycleMetadata(original, saved, actor),
 		})
 	}
 	return saved, nil
@@ -181,20 +185,45 @@ func (s *service) lifecycle(
 	updated := *original
 	updated.Version = params.req.Version
 	updated.Status = params.next
+	if params.req.ReasonCodeID.IsNotNil() {
+		reason, reasonErr := s.activeReasonCode(ctx, activeReasonCodeParams{
+			reasonCodeID: params.req.ReasonCodeID,
+			tenantInfo:   params.req.TenantInfo,
+			stop:         original.Stop,
+		})
+		if reasonErr != nil {
+			return nil, reasonErr
+		}
+		updated.ReasonCodeID = pulid.PtrOrNil(reason.ID)
+		updated.ReasonCode = reason
+	}
 	switch params.next {
 	case servicefailure.StatusReviewed:
+		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
+			return nil, reasonRequiredError()
+		}
 		updated.ReviewedAt = &now
 		updated.ReviewedByID = pulid.PtrOrNil(actorUserID)
 		if strings.TrimSpace(params.req.Notes) != "" {
 			updated.InternalNotes = strings.TrimSpace(params.req.Notes)
 		}
 	case servicefailure.StatusResolved:
+		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
+			return nil, reasonRequiredError()
+		}
 		updated.ResolvedAt = &now
 		updated.ResolvedByID = pulid.PtrOrNil(actorUserID)
 		if strings.TrimSpace(params.req.Notes) != "" {
 			updated.InternalNotes = strings.TrimSpace(params.req.Notes)
 		}
 	case servicefailure.StatusVoided:
+		if strings.TrimSpace(params.req.Notes) == "" {
+			return nil, errortypes.NewValidationError(
+				"notes",
+				errortypes.ErrRequired,
+				"Void reason is required",
+			)
+		}
 		updated.VoidedAt = &now
 		updated.VoidedByID = pulid.PtrOrNil(actorUserID)
 		updated.VoidReason = strings.TrimSpace(params.req.Notes)
@@ -232,14 +261,19 @@ func (s *service) lifecycle(
 		payload: saved,
 	})
 	s.comment(ctx, commentParams{
-		entity:  saved,
-		comment: params.comment,
-		metadata: map[string]any{
-			"serviceFailureId": saved.ID.String(),
-			"status":           string(saved.Status),
-		},
+		entity:   saved,
+		comment:  params.comment,
+		metadata: serviceFailureLifecycleMetadata(original, saved, params.actor),
 	})
 	return saved, nil
+}
+
+func reasonRequiredError() error {
+	return errortypes.NewValidationError(
+		"reasonCodeId",
+		errortypes.ErrRequired,
+		"Reason code is required",
+	)
 }
 
 func reasonChanged(previous, current *servicefailure.ServiceFailure) bool {

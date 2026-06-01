@@ -13,8 +13,8 @@ type shouldEvaluateStopParams struct {
 }
 
 func shouldEvaluateStop(params shouldEvaluateStopParams) bool {
-	if params.stop.CountLateOverride != nil && *params.stop.CountLateOverride {
-		return true
+	if params.stop.CountLateOverride != nil {
+		return *params.stop.CountLateOverride
 	}
 
 	switch params.policy {

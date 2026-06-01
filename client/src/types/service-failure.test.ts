@@ -1,7 +1,15 @@
 import { findChoice, serviceFailureStatusChoices } from "@/lib/choices";
 import { nullableTextSchema } from "@/types/helpers";
-import { serviceFailureManualCreateSchema } from "@/types/service-failure";
-import { serviceFailureReasonCodeSchema } from "@/types/service-failure-reason-code";
+import {
+  serviceFailureSourceSchema,
+  serviceFailureTypeSchema,
+  serviceFailureUpdateSchema,
+} from "@/types/service-failure";
+import {
+  serviceFailureReasonCategorySchema,
+  serviceFailureReasonCodeAppliesToSchema,
+  serviceFailureReasonCodeSchema,
+} from "@/types/service-failure-reason-code";
 import { describe, expect, it } from "vitest";
 
 describe("service failure shared schemas", () => {
@@ -11,13 +19,10 @@ describe("service failure shared schemas", () => {
     expect(nullableTextSchema.parse("notes")).toBe("notes");
   });
 
-  it("uses shared nullable text schema in service failure inputs", () => {
-    const parsed = serviceFailureManualCreateSchema.parse({
+  it("uses shared nullable text schema in service failure updates", () => {
+    const parsed = serviceFailureUpdateSchema.parse({
+      id: "sf_123",
       shipmentId: "sp_123",
-      shipmentMoveId: "sm_123",
-      stopId: "stp_123",
-      reasonCodeId: "sfrc_123",
-      type: "LateDelivery",
       notes: null,
       internalNotes: undefined,
     });
@@ -39,6 +44,19 @@ describe("service failure shared schemas", () => {
 
     expect(parsed.description).toBe("");
     expect(parsed.defaultNote).toBe("");
+  });
+
+  it("accepts expanded service failure enum values", () => {
+    expect(serviceFailureSourceSchema.parse("EDI")).toBe("EDI");
+    expect(serviceFailureSourceSchema.parse("Integration")).toBe("Integration");
+    expect(serviceFailureTypeSchema.parse("MissedPickup")).toBe("MissedPickup");
+    expect(serviceFailureTypeSchema.parse("MissedDelivery")).toBe("MissedDelivery");
+    expect(serviceFailureTypeSchema.parse("AppointmentMissed")).toBe("AppointmentMissed");
+    expect(serviceFailureReasonCategorySchema.parse("Driver")).toBe("Driver");
+    expect(serviceFailureReasonCategorySchema.parse("Shipper")).toBe("Shipper");
+    expect(serviceFailureReasonCategorySchema.parse("Consignee")).toBe("Consignee");
+    expect(serviceFailureReasonCategorySchema.parse("Appointment")).toBe("Appointment");
+    expect(serviceFailureReasonCodeAppliesToSchema.parse("All")).toBe("All");
   });
 });
 
