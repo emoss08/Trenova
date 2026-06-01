@@ -2,11 +2,20 @@ package services
 
 import "github.com/emoss08/trenova/shared/pulid"
 
+const SystemPrincipalID = pulid.ID("system")
+
 type AuditActor struct {
 	PrincipalType PrincipalType
 	PrincipalID   pulid.ID
 	UserID        pulid.ID
 	APIKeyID      pulid.ID
+}
+
+func SystemAuditActor() AuditActor {
+	return AuditActor{
+		PrincipalType: PrincipalTypeSystem,
+		PrincipalID:   SystemPrincipalID,
+	}
 }
 
 func (a *RequestActor) AuditActor() AuditActor {
@@ -33,6 +42,9 @@ func (a *RequestActor) AuditActor() AuditActor {
 		auditActor.APIKeyID = pulid.Nil
 	case PrincipalTypeAPIKey:
 		auditActor.UserID = pulid.Nil
+	case PrincipalTypeSystem:
+		auditActor.UserID = pulid.Nil
+		auditActor.APIKeyID = pulid.Nil
 	}
 
 	if auditActor.PrincipalID.IsNil() {
@@ -41,6 +53,8 @@ func (a *RequestActor) AuditActor() AuditActor {
 			auditActor.PrincipalID = auditActor.APIKeyID
 		case PrincipalTypeUser:
 			auditActor.PrincipalID = auditActor.UserID
+		case PrincipalTypeSystem:
+			auditActor.PrincipalID = SystemPrincipalID
 		}
 	}
 
@@ -52,6 +66,14 @@ func (a *RequestActor) AuditActor() AuditActor {
 		auditActor.APIKeyID = pulid.Nil
 		if auditActor.UserID.IsNil() {
 			auditActor.UserID = auditActor.PrincipalID
+		}
+	}
+
+	if auditActor.PrincipalType == PrincipalTypeSystem {
+		auditActor.UserID = pulid.Nil
+		auditActor.APIKeyID = pulid.Nil
+		if auditActor.PrincipalID.IsNil() {
+			auditActor.PrincipalID = SystemPrincipalID
 		}
 	}
 

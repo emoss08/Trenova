@@ -60,7 +60,7 @@ export const shipmentCommentSchema = z.object({
   businessUnitId: z.string().optional(),
   organizationId: z.string().optional(),
   shipmentId: z.string(),
-  userId: z.string(),
+  userId: z.string().nullish(),
   comment: z.string(),
   type: commentTypeEnum,
   visibility: commentVisibilityEnum,

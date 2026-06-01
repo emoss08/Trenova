@@ -24,7 +24,7 @@ type ShipmentComment struct {
 	BusinessUnitID   pulid.ID          `json:"businessUnitId"             bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID   pulid.ID          `json:"organizationId"             bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	ShipmentID       pulid.ID          `json:"shipmentId"                 bun:"shipment_id,pk,type:VARCHAR(100),notnull"`
-	UserID           pulid.ID          `json:"userId"                     bun:"user_id,type:VARCHAR(100),notnull"`
+	UserID           pulid.ID          `json:"userId"                     bun:"user_id,type:VARCHAR(100),nullzero"`
 	Comment          string            `json:"comment"                    bun:"comment,type:TEXT,notnull"`
 	Type             CommentType       `json:"type"                       bun:"type,type:VARCHAR(50),notnull,default:'Internal'"`
 	Visibility       CommentVisibility `json:"visibility"                 bun:"visibility,type:VARCHAR(50),notnull,default:'Internal'"`
@@ -56,6 +56,10 @@ type ShipmentCommentMention struct {
 }
 
 func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
+	if c.Source == "" {
+		c.Source = CommentSourceUser
+	}
+
 	err := validation.ValidateStruct(
 		c,
 		validation.Field(
@@ -72,13 +76,25 @@ func (c *ShipmentComment) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(
 			&c.UserID,
-			validation.Required.Error("User ID is required"),
+			validation.When(
+				c.Source != CommentSourceSystem,
+				validation.Required.Error("User ID is required"),
+			),
 		),
 		validation.Field(
 			&c.Comment,
 			validation.Required.Error("Comment is required"),
 			validation.Length(1, MaxCommentLength).
 				Error("Comment must be between 1 and 5000 characters"),
+		),
+		validation.Field(
+			&c.Source,
+			validation.In(
+				CommentSourceUser,
+				CommentSourceSystem,
+				CommentSourceIntegration,
+				CommentSourceAI,
+			).Error("Source must be a valid comment source"),
 		),
 		validation.Field(
 			&c.MentionedUserIDs,

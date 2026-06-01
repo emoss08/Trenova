@@ -86,6 +86,25 @@ func TestEntry_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "system principal allows null user",
+			modify: func(e *Entry) {
+				e.PrincipalType = "system"
+				e.PrincipalID = pulid.ID("system")
+				e.UserID = pulid.Nil
+				e.APIKeyID = pulid.Nil
+			},
+			wantErr: false,
+		},
+		{
+			name: "system principal rejects user id",
+			modify: func(e *Entry) {
+				e.PrincipalType = "system"
+				e.PrincipalID = pulid.ID("system")
+				e.APIKeyID = pulid.Nil
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

@@ -115,6 +115,74 @@ func (_c *MockShipmentCommentService_Create_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// CreateSystem provides a mock function for the type MockShipmentCommentService
+func (_mock *MockShipmentCommentService) CreateSystem(ctx context.Context, req *services.CreateSystemShipmentCommentRequest) (*shipment.ShipmentComment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSystem")
+	}
+
+	var r0 *shipment.ShipmentComment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateSystemShipmentCommentRequest) (*shipment.ShipmentComment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CreateSystemShipmentCommentRequest) *shipment.ShipmentComment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.ShipmentComment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CreateSystemShipmentCommentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentCommentService_CreateSystem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSystem'
+type MockShipmentCommentService_CreateSystem_Call struct {
+	*mock.Call
+}
+
+// CreateSystem is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.CreateSystemShipmentCommentRequest
+func (_e *MockShipmentCommentService_Expecter) CreateSystem(ctx interface{}, req interface{}) *MockShipmentCommentService_CreateSystem_Call {
+	return &MockShipmentCommentService_CreateSystem_Call{Call: _e.mock.On("CreateSystem", ctx, req)}
+}
+
+func (_c *MockShipmentCommentService_CreateSystem_Call) Run(run func(ctx context.Context, req *services.CreateSystemShipmentCommentRequest)) *MockShipmentCommentService_CreateSystem_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.CreateSystemShipmentCommentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.CreateSystemShipmentCommentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentCommentService_CreateSystem_Call) Return(shipmentComment *shipment.ShipmentComment, err error) *MockShipmentCommentService_CreateSystem_Call {
+	_c.Call.Return(shipmentComment, err)
+	return _c
+}
+
+func (_c *MockShipmentCommentService_CreateSystem_Call) RunAndReturn(run func(ctx context.Context, req *services.CreateSystemShipmentCommentRequest) (*shipment.ShipmentComment, error)) *MockShipmentCommentService_CreateSystem_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function for the type MockShipmentCommentService
 func (_mock *MockShipmentCommentService) Delete(ctx context.Context, req *repositories.DeleteShipmentCommentRequest, actor *services.RequestActor) error {
 	ret := _mock.Called(ctx, req, actor)

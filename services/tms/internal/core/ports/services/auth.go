@@ -77,6 +77,7 @@ type PrincipalType string
 const (
 	PrincipalTypeUser   PrincipalType = "session_user"
 	PrincipalTypeAPIKey PrincipalType = "api_key"
+	PrincipalTypeSystem PrincipalType = "system"
 )
 
 type AuthenticatedPrincipal struct {

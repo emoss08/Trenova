@@ -69,7 +69,9 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 
 	repo.EXPECT().
 		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
-			return comment.UserID == testutil.TestUserID && comment.Comment == "hello world" && len(comment.MentionedUsers) == 2
+			return comment.UserID == testutil.TestUserID &&
+				comment.Comment == "hello world" &&
+				len(comment.MentionedUsers) == 2
 		})).
 		RunAndReturn(func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
 			comment.ID = pulid.MustNew("shc_")
@@ -85,14 +87,17 @@ func TestCreate_NormalizesMentionsAuditsAndPublishes(t *testing.T) {
 		Return(nil).Once()
 
 	realtime.EXPECT().
-		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
-			return req.Resource == permission.ResourceShipmentComment.String() &&
-				req.Action == "created" &&
-				req.RecordID == shipmentID &&
-				req.OrganizationID == testutil.TestOrgID &&
-				req.BusinessUnitID == testutil.TestBuID &&
-				req.ActorUserID == testutil.TestUserID
-		})).
+		PublishResourceInvalidation(
+			mock.Anything,
+			mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+				return req.Resource == permission.ResourceShipmentComment.String() &&
+					req.Action == "created" &&
+					req.RecordID == shipmentID &&
+					req.OrganizationID == testutil.TestOrgID &&
+					req.BusinessUnitID == testutil.TestBuID &&
+					req.ActorUserID == testutil.TestUserID
+			}),
+		).
 		Return(nil).Once()
 
 	created, err := svc.Create(t.Context(), entity, testActor())
@@ -141,6 +146,124 @@ func TestCreate_RejectsUnknownMentionedUsers(t *testing.T) {
 	assert.True(t, errortypes.IsError(err))
 }
 
+func TestCreate_RequiresUserActor(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger:       zap.NewNop(),
+		Repo:         mocks.NewMockShipmentCommentRepository(t),
+		ShipmentRepo: mocks.NewMockShipmentRepository(t),
+		UserRepo:     mocks.NewMockUserRepository(t),
+		AuditService: mocks.NewMockAuditService(t),
+		EventService: noopShipmentEventService{},
+		Realtime:     mocks.NewMockRealtimeService(t),
+	})
+
+	created, err := svc.Create(t.Context(), &shipment.ShipmentComment{
+		ShipmentID:     pulid.MustNew("shp_"),
+		OrganizationID: testutil.TestOrgID,
+		BusinessUnitID: testutil.TestBuID,
+		Comment:        "hello",
+	}, nil)
+
+	require.Error(t, err)
+	assert.Nil(t, created)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+}
+
+func TestCreateSystem_CreatesTenantScopedCommentWithoutUser(t *testing.T) {
+	t.Parallel()
+
+	repo := mocks.NewMockShipmentCommentRepository(t)
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	userRepo := mocks.NewMockUserRepository(t)
+	audit := mocks.NewMockAuditService(t)
+	realtime := mocks.NewMockRealtimeService(t)
+
+	svc := New(Params{
+		Logger:       zap.NewNop(),
+		Repo:         repo,
+		ShipmentRepo: shipmentRepo,
+		UserRepo:     userRepo,
+		AuditService: audit,
+		EventService: noopShipmentEventService{},
+		Realtime:     realtime,
+	})
+
+	shipmentID := pulid.MustNew("shp_")
+	metadata := map[string]any{
+		"source": "auto-delay",
+		"code":   "late-stop",
+	}
+
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == shipmentID &&
+				req.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.TenantInfo.BuID == testutil.TestBuID
+		})).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
+
+	repo.EXPECT().
+		Create(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
+			return comment.UserID.IsNil() &&
+				comment.Source == shipment.CommentSourceSystem &&
+				comment.OrganizationID == testutil.TestOrgID &&
+				comment.BusinessUnitID == testutil.TestBuID &&
+				comment.ShipmentID == shipmentID &&
+				comment.Comment == "internal note" &&
+				comment.Metadata["source"] == "auto-delay"
+		})).
+		RunAndReturn(func(_ context.Context, comment *shipment.ShipmentComment) (*shipment.ShipmentComment, error) {
+			comment.ID = pulid.MustNew("shc_")
+			return comment, nil
+		}).
+		Once()
+
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything).
+		Run(func(params *servicesport.LogActionParams, _ ...servicesport.LogOption) {
+			assert.Equal(t, permission.ResourceShipmentComment, params.Resource)
+			assert.Equal(t, servicesport.PrincipalTypeSystem, params.PrincipalType)
+			assert.Equal(t, servicesport.SystemPrincipalID, params.PrincipalID)
+			assert.True(t, params.UserID.IsNil())
+			assert.Equal(t, testutil.TestOrgID, params.OrganizationID)
+		}).
+		Return(nil).
+		Once()
+
+	realtime.EXPECT().
+		PublishResourceInvalidation(
+			mock.Anything,
+			mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+				return req.Resource == permission.ResourceShipmentComment.String() &&
+					req.Action == "created" &&
+					req.RecordID == shipmentID &&
+					req.ActorType == servicesport.PrincipalTypeSystem &&
+					req.ActorID == servicesport.SystemPrincipalID &&
+					req.ActorUserID.IsNil()
+			}),
+		).
+		Return(nil).
+		Once()
+
+	created, err := svc.CreateSystem(t.Context(), &servicesport.CreateSystemShipmentCommentRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: testutil.TestOrgID,
+			BuID:  testutil.TestBuID,
+		},
+		ShipmentID: shipmentID,
+		Comment:    " internal note ",
+		Metadata:   metadata,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, created)
+	assert.True(t, created.UserID.IsNil())
+	assert.Equal(t, shipment.CommentSourceSystem, created.Source)
+	assert.Equal(t, "auto-delay", created.Metadata["source"])
+}
+
 func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 	t.Parallel()
 
@@ -168,11 +291,26 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentCommentByIDRequest) bool {
 			return req.CommentID == commentID
 		})).
-		Return(&shipment.ShipmentComment{ID: commentID, ShipmentID: shipmentID, UserID: testutil.TestUserID, OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID, Comment: "before", Version: 3, CreatedAt: 100}, nil).
+		Return(&shipment.ShipmentComment{
+			ID:             commentID,
+			ShipmentID:     shipmentID,
+			UserID:         testutil.TestUserID,
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+			Comment:        "before",
+			Version:        3,
+			CreatedAt:      100,
+		}, nil).
 		Once()
 
-	shipmentRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&shipment.Shipment{ID: shipmentID}, nil).Once()
-	userRepo.EXPECT().GetByIDs(mock.Anything, mock.Anything).Return([]*tenant.User{{ID: mentionID, Name: "Alice"}}, nil).Once()
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&shipment.Shipment{ID: shipmentID}, nil).
+		Once()
+	userRepo.EXPECT().
+		GetByIDs(mock.Anything, mock.Anything).
+		Return([]*tenant.User{{ID: mentionID, Name: "Alice"}}, nil).
+		Once()
 
 	repo.EXPECT().
 		Update(mock.Anything, mock.MatchedBy(func(comment *shipment.ShipmentComment) bool {
@@ -191,9 +329,17 @@ func TestUpdate_RequiresOwnerSetsEditedAtAndPublishes(t *testing.T) {
 		}).
 		Return(nil).Once()
 
-	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
-		return req.Resource == permission.ResourceShipmentComment.String() && req.Action == "updated" && req.RecordID == shipmentID
-	})).Return(nil).Once()
+	realtime.EXPECT().
+		PublishResourceInvalidation(
+			mock.Anything,
+			mock.MatchedBy(func(req *servicesport.PublishResourceInvalidationRequest) bool {
+				return req.Resource == permission.ResourceShipmentComment.String() &&
+					req.Action == "updated" &&
+					req.RecordID == shipmentID
+			}),
+		).
+		Return(nil).
+		Once()
 
 	updated, err := svc.Update(t.Context(), &shipment.ShipmentComment{
 		ID:               commentID,
@@ -228,7 +374,16 @@ func TestDelete_RejectsNonOwner(t *testing.T) {
 		Realtime:     realtime,
 	})
 
-	repo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(&shipment.ShipmentComment{ID: pulid.MustNew("shc_"), ShipmentID: pulid.MustNew("shp_"), UserID: pulid.MustNew("usr_"), OrganizationID: testutil.TestOrgID, BusinessUnitID: testutil.TestBuID}, nil).Once()
+	repo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(&shipment.ShipmentComment{
+			ID:             pulid.MustNew("shc_"),
+			ShipmentID:     pulid.MustNew("shp_"),
+			UserID:         pulid.MustNew("usr_"),
+			OrganizationID: testutil.TestOrgID,
+			BusinessUnitID: testutil.TestBuID,
+		}, nil).
+		Once()
 
 	err := svc.Delete(t.Context(), &repositories.DeleteShipmentCommentRequest{
 		ShipmentID: pulid.MustNew("shp_"),

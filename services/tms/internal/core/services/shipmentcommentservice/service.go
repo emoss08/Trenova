@@ -178,6 +178,72 @@ func (s *service) Create(
 	return created, nil
 }
 
+func (s *service) CreateSystem(
+	ctx context.Context,
+	req *services.CreateSystemShipmentCommentRequest,
+) (*shipment.ShipmentComment, error) {
+	if req == nil {
+		return nil, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"System shipment comment request is required",
+		)
+	}
+
+	entity := &shipment.ShipmentComment{
+		ShipmentID:     req.ShipmentID,
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		Comment:        strings.TrimSpace(req.Comment),
+		Type:           defaultCommentType(req.Type),
+		Visibility:     defaultCommentVisibility(req.Visibility),
+		Priority:       defaultCommentPriority(req.Priority),
+		Source:         shipment.CommentSourceSystem,
+		Metadata:       req.Metadata,
+	}
+	if entity.Metadata == nil {
+		entity.Metadata = map[string]any{}
+	}
+
+	if multiErr := s.validateComment(entity); multiErr != nil {
+		return nil, multiErr
+	}
+
+	if err := s.ensureShipmentExists(ctx, entity.ShipmentID, pagination.TenantInfo{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	}); err != nil {
+		return nil, err
+	}
+
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	normalizeCommentView(created)
+	auditActor := services.SystemAuditActor()
+	s.logCommentAction(
+		created,
+		auditActor,
+		permission.OpCreate,
+		nil,
+		created,
+		"System shipment comment created",
+	)
+	s.publishCommentInvalidation(ctx, created, auditActor, "created", created)
+	s.recordCommentEvent(ctx, shipmenteventservice.BuildCommentPosted(
+		shipmenteventservice.TenantRef{
+			OrganizationID: created.OrganizationID,
+			BusinessUnitID: created.BusinessUnitID,
+		},
+		created,
+		auditActor,
+	))
+
+	return created, nil
+}
+
 //nolint:govet // existing scoped variable reuse is local and behavior-preserving
 func (s *service) Update(
 	ctx context.Context,
@@ -514,6 +580,30 @@ func uniqueMentionIDs(ids []pulid.ID) []pulid.ID {
 	}
 
 	return unique
+}
+
+func defaultCommentType(value shipment.CommentType) shipment.CommentType {
+	if value == "" {
+		return shipment.CommentTypeInternal
+	}
+
+	return value
+}
+
+func defaultCommentVisibility(value shipment.CommentVisibility) shipment.CommentVisibility {
+	if value == "" {
+		return shipment.CommentVisibilityInternal
+	}
+
+	return value
+}
+
+func defaultCommentPriority(value shipment.CommentPriority) shipment.CommentPriority {
+	if value == "" {
+		return shipment.CommentPriorityNormal
+	}
+
+	return value
 }
 
 func normalizeCommentView(entity *shipment.ShipmentComment) {
