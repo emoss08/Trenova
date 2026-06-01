@@ -21,6 +21,7 @@ const (
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRolePermissionsSync SeedID = "OrganizationRolePermissionsSync" // from 08_organization_role_permissions_sync.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
+	SeedServiceFailureReasonCode SeedID = "ServiceFailureReasonCode" // from 09_service_failure_reason_code.go
 	SeedShipment SeedID = "Shipment" // from 07_shipment.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
 	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
@@ -42,6 +43,7 @@ var AllSeedIDs = []SeedID{
 	SeedNormalAccount,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
+	SeedServiceFailureReasonCode,
 	SeedShipment,
 	SeedSystemAccount,
 	SeedTCAAllowlistedTables,
@@ -58,6 +60,7 @@ var BaseSeedIDs = []SeedID{
 	SeedGLAccount,
 	SeedOrganizationRolePermissionsSync,
 	SeedOrganizationRoles,
+	SeedServiceFailureReasonCode,
 	SeedSystemAccount,
 	SeedTCAAllowlistedTables,
 	SeedUSStates,

@@ -51,6 +51,13 @@ func Must(prefix string) *ID {
 	return &id
 }
 
+func PtrOrNil(id ID) *ID {
+	if id.IsNil() {
+		return nil
+	}
+	return &id
+}
+
 func (u *ID) Scan(src any) error {
 	if src == nil {
 		*u = Nil

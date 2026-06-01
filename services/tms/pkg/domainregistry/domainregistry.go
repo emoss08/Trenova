@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
@@ -80,6 +81,8 @@ func RegisterEntities() []any {
 		&shipment.ShipmentComment{},
 		&shipment.ShipmentCommentMention{},
 		&shipment.ShipmentHold{},
+		&servicefailure.ReasonCode{},
+		&servicefailure.ServiceFailure{},
 		&shipment.Shipment{},
 		&shipmentimportchat.Conversation{},
 		&shipmentimportchat.Turn{},

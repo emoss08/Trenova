@@ -154,6 +154,29 @@ func TestConvertFromPtr(t *testing.T) {
 	})
 }
 
+func TestPtrOrNil(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns nil for Nil", func(t *testing.T) {
+		t.Parallel()
+		assert.Nil(t, pulid.PtrOrNil(pulid.Nil))
+	})
+
+	t.Run("returns nil for empty ID", func(t *testing.T) {
+		t.Parallel()
+		assert.Nil(t, pulid.PtrOrNil(""))
+	})
+
+	t.Run("returns pointer for non-nil ID", func(t *testing.T) {
+		t.Parallel()
+		id := pulid.MustNew("usr_")
+		ptr := pulid.PtrOrNil(id)
+
+		assert.NotNil(t, ptr)
+		assert.Equal(t, id, *ptr)
+	})
+}
+
 func TestEquals(t *testing.T) {
 	t.Parallel()
 

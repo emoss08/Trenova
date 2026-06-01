@@ -72,6 +72,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/rolehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/searchhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/sequenceconfighandler"
+	"github.com/emoss08/trenova/internal/api/handlers/servicefailurehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/servicefailurereasoncodehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenteventhandler"
@@ -149,6 +151,8 @@ type RouterParams struct {
 	ControlPlaneProvisioningHandler *controlplaneprovisioninghandler.Handler
 	WeatherAlertHandler             *weatheralerthandler.Handler
 	ServiceTypeHandler              *servicetypehandler.Handler
+	ServiceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
+	ServiceFailureHandler           *servicefailurehandler.Handler
 	SequenceConfigHandler           *sequenceconfighandler.Handler
 	ShipmentControlHandler          *shipmentcontrolhandler.Handler
 	ShipmentMoveHandler             *shipmentmovehandler.Handler
@@ -224,6 +228,8 @@ type Router struct {
 	tableConfigurationHandler       *tableconfigurationhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
+	serviceFailureReasonCodeHandler *servicefailurereasoncodehandler.Handler
+	serviceFailureHandler           *servicefailurehandler.Handler
 	sequenceConfigHandler           *sequenceconfighandler.Handler
 	shipmentControlHandler          *shipmentcontrolhandler.Handler
 	shipmentMoveHandler             *shipmentmovehandler.Handler
@@ -322,6 +328,8 @@ func NewRouter(p RouterParams) *Router {
 		tableConfigurationHandler:       p.TableConfigurationHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
+		serviceFailureReasonCodeHandler: p.ServiceFailureReasonCodeHandler,
+		serviceFailureHandler:           p.ServiceFailureHandler,
 		sequenceConfigHandler:           p.SequenceConfigHandler,
 		shipmentControlHandler:          p.ShipmentControlHandler,
 		shipmentMoveHandler:             p.ShipmentMoveHandler,
@@ -499,6 +507,8 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
+	r.serviceFailureReasonCodeHandler.RegisterRoutes(protected)
+	r.serviceFailureHandler.RegisterRoutes(protected)
 	r.sequenceConfigHandler.RegisterRoutes(protected)
 	r.shipmentControlHandler.RegisterRoutes(protected)
 	r.shipmentMoveHandler.RegisterRoutes(protected)

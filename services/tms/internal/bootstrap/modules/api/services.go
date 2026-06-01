@@ -79,6 +79,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/sequenceconfigservice"
+	"github.com/emoss08/trenova/internal/core/services/servicefailurereasoncodeservice"
+	"github.com/emoss08/trenova/internal/core/services/servicefailureservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetypeservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
@@ -183,11 +185,17 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	bankreceiptworkitemservice.New,
 	versionservice.New,
 	servicetypeservice.New,
+	servicefailurereasoncodeservice.New,
 	sequenceconfigservice.New,
 	shipmentcontrolservice.New,
 	shipmentcommentservice.New,
 	shipmenteventservice.New,
 	shipmentholdservice.New,
+	fx.Annotate(
+		servicefailureservice.New,
+		fx.As(new(services.ServiceFailureService)),
+		fx.As(new(services.ServiceFailureEvaluator)),
+	),
 	shipmentmoveservice.New,
 	shipmentservice.New,
 	shipmenttypeservice.New,

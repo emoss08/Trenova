@@ -12,6 +12,7 @@ import (
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/equipmentavailabilityhelper"
 	"github.com/emoss08/trenova/internal/core/services/equipmentcontinuityhelper"
+	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,47 +26,50 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             ports.DBConnection
-	Repo           repositories.ShipmentMoveRepository
-	AssignmentRepo repositories.AssignmentRepository
-	ShipmentRepo   repositories.ShipmentRepository
-	HoldRepo       repositories.ShipmentHoldRepository
-	ControlRepo    repositories.ShipmentControlRepository
-	ContinuityRepo repositories.EquipmentContinuityRepository
-	Coordinator    *shipmentstate.Coordinator
-	Commercial     *shipmentcommercial.Calculator
-	EventService   portservices.ShipmentEventService
+	Logger          *zap.Logger
+	DB              ports.DBConnection
+	Repo            repositories.ShipmentMoveRepository
+	AssignmentRepo  repositories.AssignmentRepository
+	ShipmentRepo    repositories.ShipmentRepository
+	HoldRepo        repositories.ShipmentHoldRepository
+	ControlRepo     repositories.ShipmentControlRepository
+	ContinuityRepo  repositories.EquipmentContinuityRepository
+	Coordinator     *shipmentstate.Coordinator
+	Commercial      *shipmentcommercial.Calculator
+	EventService    portservices.ShipmentEventService
+	ServiceFailures portservices.ServiceFailureEvaluator `optional:"true"`
 }
 
 type service struct {
-	l              *zap.Logger
-	db             ports.DBConnection
-	repo           repositories.ShipmentMoveRepository
-	assignmentRepo repositories.AssignmentRepository
-	shipmentRepo   repositories.ShipmentRepository
-	holdRepo       repositories.ShipmentHoldRepository
-	controlRepo    repositories.ShipmentControlRepository
-	continuityRepo repositories.EquipmentContinuityRepository
-	coordinator    *shipmentstate.Coordinator
-	commercial     *shipmentcommercial.Calculator
-	eventService   portservices.ShipmentEventService
+	l               *zap.Logger
+	db              ports.DBConnection
+	repo            repositories.ShipmentMoveRepository
+	assignmentRepo  repositories.AssignmentRepository
+	shipmentRepo    repositories.ShipmentRepository
+	holdRepo        repositories.ShipmentHoldRepository
+	controlRepo     repositories.ShipmentControlRepository
+	continuityRepo  repositories.EquipmentContinuityRepository
+	coordinator     *shipmentstate.Coordinator
+	commercial      *shipmentcommercial.Calculator
+	eventService    portservices.ShipmentEventService
+	serviceFailures portservices.ServiceFailureEvaluator
 }
 
 //nolint:gocritic // service constructor
 func New(p Params) portservices.ShipmentMoveService {
 	return &service{
-		l:              p.Logger.Named("service.shipment-move"),
-		db:             p.DB,
-		repo:           p.Repo,
-		assignmentRepo: p.AssignmentRepo,
-		shipmentRepo:   p.ShipmentRepo,
-		holdRepo:       p.HoldRepo,
-		controlRepo:    p.ControlRepo,
-		continuityRepo: p.ContinuityRepo,
-		coordinator:    p.Coordinator,
-		commercial:     p.Commercial,
-		eventService:   p.EventService,
+		l:               p.Logger.Named("service.shipment-move"),
+		db:              p.DB,
+		repo:            p.Repo,
+		assignmentRepo:  p.AssignmentRepo,
+		shipmentRepo:    p.ShipmentRepo,
+		holdRepo:        p.HoldRepo,
+		controlRepo:     p.ControlRepo,
+		continuityRepo:  p.ContinuityRepo,
+		coordinator:     p.Coordinator,
+		commercial:      p.Commercial,
+		eventService:    p.EventService,
+		serviceFailures: p.ServiceFailures,
 	}
 }
 
@@ -175,6 +179,9 @@ func (s *service) UpdateStatus(
 			actorForMoveTenant(req.TenantInfo),
 		))
 	}
+	if updatedMove != nil {
+		s.evaluateServiceFailuresAfterMoveStatus(ctx, updatedMove.ShipmentID, req.TenantInfo)
+	}
 
 	return updatedMove, nil
 }
@@ -199,8 +206,8 @@ func (s *service) BulkUpdateStatus(
 
 	var updatedMoves []*shipment.ShipmentMove
 	previousStatuses := make(map[pulid.ID]shipment.MoveStatus, len(req.MoveIDs))
+	shipmentIDs := make(map[pulid.ID]struct{}, len(req.MoveIDs))
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		shipmentIDs := make(map[pulid.ID]struct{}, len(req.MoveIDs))
 		seenTractors := make(map[pulid.ID]pulid.ID, len(req.MoveIDs))
 		seenTrailers := make(map[pulid.ID]pulid.ID, len(req.MoveIDs))
 
@@ -276,8 +283,31 @@ func (s *service) BulkUpdateStatus(
 	}
 
 	s.emitBulkMoveStatusEvents(ctx, req.TenantInfo, updatedMoves, previousStatuses)
+	for shipmentID := range shipmentIDs {
+		s.evaluateServiceFailuresAfterMoveStatus(ctx, shipmentID, req.TenantInfo)
+	}
 
 	return updatedMoves, nil
+}
+
+func (s *service) evaluateServiceFailuresAfterMoveStatus(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) {
+	err := servicefailuretrigger.EvaluateShipment(
+		ctx,
+		s.serviceFailures,
+		shipmentID,
+		tenantInfo,
+		servicefailuretrigger.ActorFromTenant(tenantInfo),
+	)
+	if err != nil {
+		s.l.Warn("failed to evaluate service failures after move status update",
+			zap.String("shipmentID", shipmentID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *service) emitBulkMoveStatusEvents(

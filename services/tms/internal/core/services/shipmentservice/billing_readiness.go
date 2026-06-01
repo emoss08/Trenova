@@ -273,6 +273,12 @@ func (s *service) evaluateBillingReadiness(
 		billingControl,
 		docs,
 	)
+	if err = s.applyServiceFailureBillingContext(ctx, entity, readiness); err != nil {
+		s.l.Warn("failed to apply service failure billing context",
+			zap.String("shipmentId", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 	s.l.Debug(
 		"evaluated shipment billing readiness",
 		zap.String("shipmentId", entity.ID.String()),
@@ -291,6 +297,50 @@ func (s *service) evaluateBillingReadiness(
 		zap.Int("validationFailureCount", len(readiness.ValidationFailures)),
 	)
 	return readiness, nil
+}
+
+func (s *service) applyServiceFailureBillingContext(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	readiness *services.ShipmentBillingReadiness,
+) error {
+	if s.serviceFailureRepo == nil || entity == nil || readiness == nil {
+		return nil
+	}
+
+	unresolved, err := s.serviceFailureRepo.ListUnresolvedByShipment(ctx, &repositories.ServiceFailuresByShipmentRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		ShipmentID: entity.ID,
+	})
+	if err != nil {
+		return err
+	}
+	if len(unresolved) == 0 {
+		return nil
+	}
+
+	ids := make([]string, 0, len(unresolved))
+	for _, failure := range unresolved {
+		if failure == nil {
+			continue
+		}
+		ids = append(ids, failure.ID.String())
+	}
+	readiness.ServiceFailureContext.HasUnresolved = len(ids) > 0
+	readiness.ServiceFailureContext.UnresolvedCount = len(ids)
+	readiness.ServiceFailureContext.ServiceFailureIDs = ids
+	readiness.Warnings = append(readiness.Warnings, services.ShipmentBillingWarning{
+		Code:    "unresolved_service_failures",
+		Message: "Shipment has unresolved service failures",
+		Context: map[string]any{
+			"serviceFailureIds": ids,
+			"unresolvedCount":   len(ids),
+		},
+	})
+	return nil
 }
 
 func buildShipmentBillingReadiness(

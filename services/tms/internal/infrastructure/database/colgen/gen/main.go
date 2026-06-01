@@ -16,6 +16,13 @@ var (
 	outputDir = flag.String("output", "", "Output directory for generated column files")
 )
 
+var excludedPackages = map[string]struct{}{
+	// Email has manual field maps and model names that collide with existing
+	// generated helpers in other packages until buncolgen supports package
+	// qualified symbol names.
+	"email": {},
+}
+
 func main() {
 	flag.Parse()
 
@@ -46,6 +53,9 @@ func main() {
 
 	for _, entry := range entries {
 		if !entry.IsDir() {
+			continue
+		}
+		if _, excluded := excludedPackages[entry.Name()]; excluded {
 			continue
 		}
 

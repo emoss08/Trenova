@@ -603,6 +603,16 @@ func (rr *RouteRegistry) registerOperationsRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/shipment-management/service-failures",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceServiceFailure, Operation: OpRead},
+		},
+		DisplayName: "Service Failures",
+		Category:    "Operations",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/dispatch/control",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
@@ -859,6 +869,16 @@ func (rr *RouteRegistry) registerHoldReasonRoutes() {
 			{Resource: ResourceShipmentControl, Operation: OpRead},
 		},
 		DisplayName: "Shipment Controls",
+		Category:    "Organization",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/service-failure-reason-codes",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceServiceFailureReasonCode, Operation: OpRead},
+		},
+		DisplayName: "Service Failure Reason Codes",
 		Category:    "Organization",
 	})
 

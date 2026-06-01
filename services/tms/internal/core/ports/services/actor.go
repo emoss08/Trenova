@@ -18,6 +18,21 @@ func SystemAuditActor() AuditActor {
 	}
 }
 
+func (a *RequestActor) UserIDOrNil() pulid.ID {
+	if a == nil {
+		return pulid.Nil
+	}
+	return a.UserID
+}
+
+func (a *RequestActor) AuditActorOrSystem() AuditActor {
+	auditActor := a.AuditActor()
+	if auditActor.PrincipalType == "" {
+		return SystemAuditActor()
+	}
+	return auditActor
+}
+
 func (a *RequestActor) AuditActor() AuditActor {
 	if a == nil {
 		return AuditActor{}

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/core/services/servicefailuretrigger"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
@@ -52,7 +53,9 @@ type Params struct {
 	DocumentRepo        repositories.DocumentRepository
 	BillingRepo         repositories.BillingControlRepository
 	NotificationRepo    repositories.NotificationRepository
-	BillingQueueService services.BillingQueueService `optional:"true"`
+	BillingQueueService services.BillingQueueService          `optional:"true"`
+	ServiceFailureRepo  repositories.ServiceFailureRepository `optional:"true"`
+	ServiceFailures     services.ServiceFailureEvaluator      `optional:"true"`
 	Permissions         services.PermissionEngine
 	Validator           *Validator
 	AuditService        services.AuditService
@@ -81,6 +84,8 @@ type service struct {
 	billingRepo         repositories.BillingControlRepository
 	notificationRepo    repositories.NotificationRepository
 	billingQueueService services.BillingQueueService
+	serviceFailureRepo  repositories.ServiceFailureRepository
+	serviceFailures     services.ServiceFailureEvaluator
 	permissions         services.PermissionEngine
 	validator           *Validator
 	auditService        services.AuditService
@@ -110,6 +115,8 @@ func New(p Params) services.ShipmentService { //nolint:gocritic // stable API sh
 		billingRepo:         p.BillingRepo,
 		notificationRepo:    p.NotificationRepo,
 		billingQueueService: p.BillingQueueService,
+		serviceFailureRepo:  p.ServiceFailureRepo,
+		serviceFailures:     p.ServiceFailures,
 		permissions:         p.Permissions,
 		validator:           p.Validator,
 		auditService:        p.AuditService,
@@ -409,6 +416,7 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	s.emitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
+	s.evaluateServiceFailuresAfterShipmentUpdate(ctx, updatedEntity, actor)
 
 	if updatedEntity.Status == shipment.StatusCompleted &&
 		s.customerRepo != nil &&
@@ -434,6 +442,32 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 	}
 
 	return updatedEntity, nil
+}
+
+func (s *service) evaluateServiceFailuresAfterShipmentUpdate(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	actor *services.RequestActor,
+) {
+	if entity == nil {
+		return
+	}
+	err := servicefailuretrigger.EvaluateShipment(
+		ctx,
+		s.serviceFailures,
+		entity.ID,
+		pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		actor,
+	)
+	if err != nil {
+		s.l.Warn("failed to evaluate service failures after shipment update",
+			zap.String("shipmentID", entity.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *service) TransferOwnership(
