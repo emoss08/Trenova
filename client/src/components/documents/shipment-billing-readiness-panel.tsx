@@ -10,6 +10,7 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   Clock3Icon,
+  ExternalLinkIcon,
   UploadIcon,
 } from "lucide-react";
 
@@ -155,6 +156,32 @@ export function ShipmentBillingReadinessPanel({
                   </li>
                 ))}
               </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {readiness.warnings.length > 0 && (
+          <Alert className="mb-3 border-amber-500/40 bg-amber-500/10">
+            <AlertCircleIcon className="size-4 text-amber-600" />
+            <AlertTitle>Billing warnings</AlertTitle>
+            <AlertDescription>
+              <ul className="list-inside list-disc space-y-0.5">
+                {readiness.warnings.map((warning) => (
+                  <li key={`${warning.code}-${warning.message}`} className="text-xs">
+                    {warning.message}
+                  </li>
+                ))}
+              </ul>
+              {readiness.serviceFailureContext.hasUnresolved && (
+                <a
+                  href="/shipment-management/service-failures"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  View {readiness.serviceFailureContext.unresolvedCount} service failure
+                  {readiness.serviceFailureContext.unresolvedCount === 1 ? "" : "s"}
+                  <ExternalLinkIcon className="size-3" />
+                </a>
+              )}
             </AlertDescription>
           </Alert>
         )}

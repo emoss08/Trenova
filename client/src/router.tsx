@@ -72,6 +72,17 @@ const routes: RouteObject[] = [
             },
           },
           {
+            path: "/shipment-management/service-failures",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.ServiceFailure),
+            ),
+            async lazy() {
+              const { ServiceFailuresPage } = await import("@/routes/service-failure/page");
+              return { Component: ServiceFailuresPage };
+            },
+          },
+          {
             path: "/shipment-management/shipments/import",
             loader: combineLoaders(
               protectedLoader,
@@ -654,6 +665,19 @@ const routes: RouteObject[] = [
                 async lazy() {
                   const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
                   return { Component: HoldReasonsPage };
+                },
+              },
+              {
+                path: "service-failure-reason-codes",
+                loader: combineLoaders(
+                  protectedLoader,
+                  createPermissionLoader(Resource.ServiceFailureReasonCode),
+                ),
+                async lazy() {
+                  const { ServiceFailureReasonCodesPage } = await import(
+                    "@/routes/service-failure-reason-code/page"
+                  );
+                  return { Component: ServiceFailureReasonCodesPage };
                 },
               },
               {

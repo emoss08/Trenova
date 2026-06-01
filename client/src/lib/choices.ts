@@ -66,6 +66,15 @@ import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-se
 import type { EquipmentStatus, Status } from "@/types/helpers";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type {
+  ServiceFailureReasonCategory,
+  ServiceFailureReasonCodeAppliesTo,
+} from "@/types/service-failure-reason-code";
+import type {
+  ServiceFailureSource,
+  ServiceFailureStatus,
+  ServiceFailureType,
+} from "@/types/service-failure";
+import type {
   AdjustmentAccountingDatePolicy,
   AdjustmentAttachmentPolicy,
   AdjustmentEligibilityPolicy,
@@ -755,6 +764,46 @@ export const holdSeverityChoices = [
   { value: "Advisory", label: "Advisory", color: "#f59e0b" },
   { value: "Blocking", label: "Blocking", color: "#dc2626" },
 ] satisfies ReadonlyArray<GenericSelectOption<HoldSeverity>>;
+
+export const serviceFailureStatusChoices = [
+  { value: "Open", label: "Open", color: "#dc2626" },
+  { value: "Reviewed", label: "Reviewed", color: "#f59e0b" },
+  { value: "Resolved", label: "Resolved", color: "#15803d" },
+  { value: "Voided", label: "Voided", color: "#64748b" },
+] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureStatus>>;
+
+export const serviceFailureSourceChoices = [
+  { value: "Detected", label: "Detected", color: "#0ea5e9" },
+  { value: "Manual", label: "Manual", color: "#8b5cf6" },
+] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureSource>>;
+
+export const serviceFailureTypeChoices = [
+  { value: "LatePickup", label: "Late Pickup", color: "#f97316" },
+  { value: "LateDelivery", label: "Late Delivery", color: "#dc2626" },
+] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureType>>;
+
+export const serviceFailureReasonCategoryChoices = [
+  { value: "Carrier", label: "Carrier", color: "#2563eb" },
+  { value: "Customer", label: "Customer", color: "#8b5cf6" },
+  { value: "Facility", label: "Facility", color: "#f59e0b" },
+  { value: "Weather", label: "Weather", color: "#0ea5e9" },
+  { value: "Equipment", label: "Equipment", color: "#ef4444" },
+  { value: "Documentation", label: "Documentation", color: "#64748b" },
+  { value: "Other", label: "Other", color: "#737373" },
+] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureReasonCategory>>;
+
+export const serviceFailureReasonCodeAppliesToChoices = [
+  { value: "Pickup", label: "Pickup" },
+  { value: "Delivery", label: "Delivery" },
+  { value: "Both", label: "Pickup & Delivery" },
+] satisfies ReadonlyArray<GenericSelectOption<ServiceFailureReasonCodeAppliesTo>>;
+
+export function findChoice<TValue extends string | boolean | number>(
+  choices: ReadonlyArray<GenericSelectOption<TValue>>,
+  value: TValue,
+) {
+  return choices.find((choice) => choice.value === value);
+}
 
 export const transferScheduleChoices = [
   { value: "Continuous", label: "Continuous", color: "#15803d" },

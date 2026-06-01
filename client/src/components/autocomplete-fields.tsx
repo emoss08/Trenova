@@ -30,6 +30,7 @@ import type { LocationCategory } from "@/types/location-category";
 import type { OrganizationSelectOption } from "@/types/organization";
 import type { Role } from "@/types/role";
 import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
+import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
 import type { Tractor } from "@/types/tractor";
@@ -1052,6 +1053,28 @@ export function DocumentMultiSelectAutocompleteField<T extends FieldValues>({
           <span className="w-full truncate">{option.originalName || option.fileName}</span>
           <span className="w-full truncate text-2xs text-muted-foreground">
             {option.documentType?.name || option.resourceType}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<ServiceFailureReasonCode, T>) {
+  return (
+    <AutocompleteField<ServiceFailureReasonCode, T>
+      link="/service-failure-reason-codes/select-options/"
+      selectedValueLink="/service-failure-reason-codes/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.code || option.label || ""}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate font-medium">{option.code}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.label}
           </span>
         </div>
       )}

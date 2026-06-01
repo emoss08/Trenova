@@ -52,6 +52,8 @@ export type BaseEndpoint =
   | "/document-types/"
   | "/documents/"
   | "/hold-reasons/"
+  | "/service-failures/"
+  | "/service-failure-reason-codes/"
   | "/hazmat-segregation-rules/"
   | "/distance-overrides/"
   | "/distance-profiles/"

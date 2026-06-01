@@ -2,11 +2,7 @@ import { FormCreatePanel } from "@/components/form-create-panel";
 import { TabbedFormEditPanel } from "@/components/tabbed-form-edit-panel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@/types/data-table";
 import {
@@ -19,19 +15,21 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlertTriangleIcon,
   ContainerIcon,
   FileTextIcon,
   HistoryIcon,
   MessageSquareIcon,
 } from "lucide-react";
 import { parseAsBoolean, useQueryState } from "nuqs";
-import { lazy, useMemo } from "react";
+import { lazy } from "react";
 import { useForm } from "react-hook-form";
 import { ShipmentForm } from "./shipment-form";
 
 const AuditTab = lazy(() => import("@/components/audit-tab"));
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const ShipmentCommentsTab = lazy(() => import("./shipment-comments"));
+const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   const { data: owner, isLoading } = useQuery({
@@ -112,12 +110,7 @@ const defaultValues: ShipmentCreateInput = {
   ],
 };
 
-export function ShipmentPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Shipment>) {
+export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Shipment>) {
   const createForm = useForm({
     resolver: zodResolver(shipmentCreateSchema),
     defaultValues,
@@ -137,49 +130,61 @@ export function ShipmentPanel({
     staleTime: 30_000,
   });
   const commentCount = commentCountData?.count ?? 0;
+  const { data: serviceFailures } = useQuery({
+    queryKey: ["shipment-service-failure-count", row?.id],
+    queryFn: () => apiService.serviceFailureService.listByShipment(row!.id!, "limit=100"),
+    enabled: !!row?.id && mode === "edit",
+    staleTime: 30_000,
+  });
+  const serviceFailureCount = serviceFailures?.count ?? 0;
 
-  const extraTabs = useMemo(
-    () => [
-      {
-        value: "documents",
-        label: "Documents",
-        icon: FileTextIcon,
-        hideFooter: true,
-        content: DocumentsTab,
-        contentProps: {
-          resourceType: "shipment",
-          resourceId: row?.id,
-        },
+  const extraTabs = [
+    {
+      value: "service-failures",
+      label:
+        serviceFailureCount > 0 ? `Service Failures (${serviceFailureCount})` : "Service Failures",
+      icon: AlertTriangleIcon,
+      hideFooter: true,
+      content: ShipmentServiceFailuresTab,
+      contentProps: {
+        shipment: row,
       },
-      {
-        value: "comments",
-        label: commentCount > 0 ? `Comments (${commentCount})` : "Comments",
-        icon: MessageSquareIcon,
-        manageScroll: true,
-        hideFooter: true,
-        content: ShipmentCommentsTab,
-        contentProps: {
-          shipmentId: row?.id,
-        },
+    },
+    {
+      value: "documents",
+      label: "Documents",
+      icon: FileTextIcon,
+      hideFooter: true,
+      content: DocumentsTab,
+      contentProps: {
+        resourceType: "shipment",
+        resourceId: row?.id,
       },
-      {
-        value: "history",
-        label: "History",
-        icon: HistoryIcon,
-        hideFooter: true,
-        content: AuditTab,
-        contentProps: {
-          resourceId: row?.id,
-        },
+    },
+    {
+      value: "comments",
+      label: commentCount > 0 ? `Comments (${commentCount})` : "Comments",
+      icon: MessageSquareIcon,
+      manageScroll: true,
+      hideFooter: true,
+      content: ShipmentCommentsTab,
+      contentProps: {
+        shipmentId: row?.id,
       },
-    ],
-    [row?.id, commentCount],
-  );
+    },
+    {
+      value: "history",
+      label: "History",
+      icon: HistoryIcon,
+      hideFooter: true,
+      content: AuditTab,
+      contentProps: {
+        resourceId: row?.id,
+      },
+    },
+  ];
 
-  const [, setLoadPlannerOpen] = useQueryState(
-    "loadPlanner",
-    parseAsBoolean.withDefault(false),
-  );
+  const [, setLoadPlannerOpen] = useQueryState("loadPlanner", parseAsBoolean.withDefault(false));
 
   if (mode === "edit") {
     return (

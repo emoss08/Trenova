@@ -8,6 +8,10 @@ export const decimalStringSchema = z
   ])
   .nullish();
 export const optionalStringSchema = z.string().optional();
+export const nullableTextSchema = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? "");
 export const versionSchema = z.number().int().min(0).optional();
 export const timestampSchema = z.number().int().positive().optional();
 export const nullableStringSchema = z

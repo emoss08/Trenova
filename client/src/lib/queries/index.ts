@@ -31,6 +31,8 @@ import { organization } from "./organization";
 import { pageFavoite } from "./page-favorite";
 import { platformBilling } from "./platform-billing";
 import { sequenceConfig } from "./sequence-config";
+import { serviceFailure } from "./service-failure";
+import { serviceFailureReasonCode } from "./service-failure-reason-code";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
 import { notification } from "./notification";
@@ -77,6 +79,8 @@ export const queries = mergeQueryKeys(
   shipment,
   formulaTemplate,
   googleMaps,
+  serviceFailure,
+  serviceFailureReasonCode,
   shipmentControl,
   sequenceConfig,
   analytics,

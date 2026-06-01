@@ -56,6 +56,8 @@ import { PageFavoriteService } from "./page-favorite";
 import { PlatformBillingService } from "./platform-billing";
 import { RealtimeService } from "./realtime";
 import { SequenceConfigService } from "./sequence-config";
+import { ServiceFailureService } from "./service-failure";
+import { ServiceFailureReasonCodeService } from "./service-failure-reason-code";
 import { ServiceTypeService } from "./service-type";
 import { ShipmentService } from "./shipment";
 import { ShipmentCommentService } from "./shipment-comment";
@@ -144,6 +146,8 @@ class APIService {
   public ediService: EDIService;
   public emailService: EmailService;
   public platformBillingService: PlatformBillingService;
+  public serviceFailureService: ServiceFailureService;
+  public serviceFailureReasonCodeService: ServiceFailureReasonCodeService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -218,6 +222,8 @@ class APIService {
     this.ediService = new EDIService();
     this.emailService = new EmailService();
     this.platformBillingService = new PlatformBillingService();
+    this.serviceFailureService = new ServiceFailureService();
+    this.serviceFailureReasonCodeService = new ServiceFailureReasonCodeService();
   }
 }
 

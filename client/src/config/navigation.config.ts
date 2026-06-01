@@ -55,6 +55,12 @@ const shipmentManagementModule: NavModule = {
       resource: Resource.Shipment,
     },
     {
+      id: "service-failures",
+      label: "Service Failures",
+      path: "/shipment-management/service-failures",
+      resource: Resource.ServiceFailure,
+    },
+    {
       id: "config-files-group",
       label: "Configuration Files",
       defaultOpen: false,
@@ -659,6 +665,16 @@ export const navigationConfig: NavigationConfig = {
       keywords: ["hold", "reason"],
     },
     {
+      id: "create-service-failure-reason-code",
+      label: "Create Service Failure Reason",
+      description: "Add a service failure reason code",
+      path: "/admin/service-failure-reason-codes",
+      resource: Resource.ServiceFailureReasonCode,
+      requiredOperation: Operation.Create,
+      query: { panelType: "create" },
+      keywords: ["service", "failure", "reason"],
+    },
+    {
       id: "create-hazmat-segregation-rule",
       label: "Create Hazmat Segregation Rule",
       description: "Add a new hazmat segregation rule",
@@ -871,6 +887,13 @@ export const adminLinks: SidebarLink[] = [
     title: "Hold Reasons",
     group: "Organization",
     resource: Resource.HoldReason,
+    requiredOperation: Operation.Read,
+  },
+  {
+    href: "/admin/service-failure-reason-codes/",
+    title: "Service Failure Reasons",
+    group: "Organization",
+    resource: Resource.ServiceFailureReasonCode,
     requiredOperation: Operation.Read,
   },
   {
