@@ -96,6 +96,10 @@ func isAllowedShipmentStatusTransition(from, to shipment.Status) bool {
 	return allowed
 }
 
+func CanTransitionShipmentStatus(from, to shipment.Status) bool {
+	return isAllowedShipmentStatusTransition(from, to)
+}
+
 func isAllowedMoveStatusTransition(from, to shipment.MoveStatus) bool {
 	if from == to || from == "" || to == "" {
 		return true

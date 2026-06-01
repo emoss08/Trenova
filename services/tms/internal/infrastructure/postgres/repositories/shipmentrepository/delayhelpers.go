@@ -212,7 +212,7 @@ func (r *repository) getDelayedShipments(
 		Where("sp.id IN (SELECT shipment_id FROM move_cte)").
 		Where("sp.organization_id = ?", tenantInfo.OrgID).
 		Where("sp.business_unit_id = ?", tenantInfo.BuID).
-		Where("sp.status NOT IN (?)", bun.List(nonDelayedEligibleShipmentStatuses())).
+		Where("sp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedShipmentStatuses())).
 		Order(buncolgen.ShipmentColumns.ID.OrderAsc()).
 		Limit(limit).
 		Scan(ctx)
@@ -283,18 +283,16 @@ func buildAutoDelayedShipmentCTE(dba bun.IDB, currentTime int64) *bun.SelectQuer
 		Join("JOIN shipments AS sp ON sp.id = sm.shipment_id").
 		Join("JOIN shipment_controls AS sc ON sc.organization_id = sp.organization_id AND sc.business_unit_id = sp.business_unit_id").
 		Where("sc.auto_delay_shipments = TRUE").
-		Where("stp.status NOT IN (?)", bun.List([]shipment.StopStatus{
-			shipment.StopStatusCompleted,
-			shipment.StopStatusCanceled,
-		})).
+		Where("stp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedStopStatuses())).
 		Where("stp.actual_departure IS NULL").
 		Where("COALESCE(stp.scheduled_window_end, stp.scheduled_window_start) > 0").
-		Where("COALESCE(stp.scheduled_window_end, stp.scheduled_window_start) + (COALESCE(sc.auto_delay_shipments_threshold, ?) * 60) < ?", shipmentstate.DefaultDelayThresholdMinutes, currentTime).
-		Where("sm.status NOT IN (?)", bun.List([]shipment.MoveStatus{
-			shipment.MoveStatusCompleted,
-			shipment.MoveStatusCanceled,
-		})).
-		Where("sp.status NOT IN (?)", bun.List(nonDelayedEligibleShipmentStatuses()))
+		Where(
+			"COALESCE(stp.scheduled_window_end, stp.scheduled_window_start) + (COALESCE(sc.auto_delay_shipments_threshold, ?) * 60) < ?",
+			shipmentstate.DefaultDelayThresholdMinutes,
+			currentTime,
+		).
+		Where("sm.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedMoveStatuses())).
+		Where("sp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedShipmentStatuses()))
 }
 
 func buildDelayedShipmentCTEs(
@@ -307,10 +305,7 @@ func buildDelayedShipmentCTEs(
 	stopCte = dba.NewSelect().
 		Column("stp.shipment_move_id").
 		TableExpr("stops AS stp").
-		Where("stp.status NOT IN (?)", bun.List([]shipment.StopStatus{
-			shipment.StopStatusCompleted,
-			shipment.StopStatusCanceled,
-		})).
+		Where("stp.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedStopStatuses())).
 		Where("stp.actual_departure IS NULL").
 		Where("COALESCE(stp.scheduled_window_end, stp.scheduled_window_start) > 0").
 		Where("COALESCE(stp.scheduled_window_end, stp.scheduled_window_start) + ? < ?", thresholdSeconds, currentTime)
@@ -319,21 +314,9 @@ func buildDelayedShipmentCTEs(
 		ColumnExpr("DISTINCT sm.shipment_id").
 		TableExpr("shipment_moves AS sm").
 		Where("sm.id IN (SELECT shipment_move_id FROM stop_cte)").
-		Where("sm.status NOT IN (?)", bun.List([]shipment.MoveStatus{
-			shipment.MoveStatusCompleted,
-			shipment.MoveStatusCanceled,
-		}))
+		Where("sm.status NOT IN (?)", bun.List(shipmentstate.DelayedExcludedMoveStatuses()))
 
 	return stopCte, moveCte
-}
-
-func nonDelayedEligibleShipmentStatuses() []shipment.Status {
-	return []shipment.Status{
-		shipment.StatusDelayed,
-		shipment.StatusCanceled,
-		shipment.StatusCompleted,
-		shipment.StatusInvoiced,
-	}
 }
 
 func shipmentIDsFromEntities(entities []*shipment.Shipment) []pulid.ID {

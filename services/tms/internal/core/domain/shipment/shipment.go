@@ -157,6 +157,45 @@ func (s *Shipment) ApplyEntryMethodDefault(original *Shipment) {
 	s.EntryMethod = EntryMethodManual
 }
 
+func (s *Shipment) ShipperStop() *Stop {
+	if s == nil {
+		return nil
+	}
+
+	return FirstShipperStop(s.Moves)
+}
+
+func FirstShipperStop(moves []*ShipmentMove) *Stop {
+	var best *Stop
+	var bestMoveSeq int64
+	var bestStopSeq int64
+	bestStopID := ""
+
+	for _, move := range moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop == nil || !stop.IsOriginStop() {
+				continue
+			}
+			stopID := stop.ID.String()
+			if best == nil ||
+				move.Sequence < bestMoveSeq ||
+				(move.Sequence == bestMoveSeq &&
+					(stop.Sequence < bestStopSeq ||
+						(stop.Sequence == bestStopSeq && stopID < bestStopID))) {
+				best = stop
+				bestMoveSeq = move.Sequence
+				bestStopSeq = stop.Sequence
+				bestStopID = stopID
+			}
+		}
+	}
+
+	return best
+}
+
 func (s *Shipment) GetID() pulid.ID {
 	return s.ID
 }

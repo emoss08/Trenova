@@ -83,7 +83,7 @@ func (s *Stop) IsNew() bool {
 	return s.Status == StopStatusNew
 }
 
-func (s *Stop) EffectiveScheduledWindowEnd() int64 {
+func (s *Stop) EffectiveScheduledCutoff() int64 {
 	if s == nil {
 		return 0
 	}
@@ -93,6 +93,10 @@ func (s *Stop) EffectiveScheduledWindowEnd() int64 {
 	}
 
 	return s.ScheduledWindowStart
+}
+
+func (s *Stop) EffectiveScheduledWindowEnd() int64 {
+	return s.EffectiveScheduledCutoff()
 }
 
 func (s *Stop) HasScheduledWindow() bool {
