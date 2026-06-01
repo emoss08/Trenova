@@ -11,9 +11,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -295,6 +298,202 @@ func buildShipmentEventStatusPayload(
 	return edi.DocumentPayload{
 		TransactionSet: edi.TransactionSet214,
 		ShipmentStatus: &payload,
+	}
+}
+
+func (s *Service) BuildShipmentStatusPayloadForServiceFailure(
+	ctx context.Context,
+	req *services.BuildServiceFailureEDIPayloadRequest,
+) (*services.ServiceFailureEDIPayloadResult, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+	failure, err := s.serviceFailureRepo.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
+		ID:         req.ServiceFailureID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	source, err := s.shipmentSvc.Get(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         failure.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload := buildServiceFailureShipmentStatusPayload(failure, source)
+	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus)
+	return &services.ServiceFailureEDIPayloadResult{
+		Payload:     payload,
+		Diagnostics: diagnostics,
+	}, nil
+}
+
+func buildServiceFailureShipmentStatusPayload(
+	failure *servicefailure.ServiceFailure,
+	source *shipment.Shipment,
+) edi.DocumentPayload {
+	status := edi.ShipmentStatusPayload{
+		ShipmentID:           failure.ShipmentID,
+		BOL:                  shipmentBOL(source),
+		ProNumber:            shipmentProNumber(source),
+		StatusCode:           serviceFailureStatusCode(failure),
+		StatusReasonCode:     serviceFailureReasonCode(failure),
+		EventDate:            failure.ActualArrival,
+		EventTime:            failure.ActualArrival,
+		ExceptionCode:        serviceFailureExceptionCode(failure),
+		ReasonCode:           serviceFailureReasonCode(failure),
+		ReasonDescription:    serviceFailureReasonDescription(failure),
+		LateMinutes:          &failure.LateMinutes,
+		ServiceFailureID:     &failure.ID,
+		ServiceFailureNumber: failure.Number,
+		References: map[string]string{
+			"shipmentId":       failure.ShipmentID.String(),
+			"serviceFailureId": failure.ID.String(),
+			"serviceFailure":   failure.Number,
+			"bol":              shipmentBOL(source),
+			"pro":              shipmentProNumber(source),
+			"type":             string(failure.Type),
+			"status":           string(failure.Status),
+		},
+	}
+	if failure.ReasonCodeID != nil {
+		status.ServiceFailureReasonCodeID = failure.ReasonCodeID
+	}
+	if failure.ReasonCode != nil {
+		status.ServiceFailureReasonCode = failure.ReasonCode.Code
+		if status.ReasonDescription == "" {
+			status.ReasonDescription = stringutils.FirstNonEmpty(failure.ReasonCode.Label, failure.ReasonCode.Description)
+		}
+	}
+	if strings.TrimSpace(failure.Notes) != "" {
+		status.References["notes"] = strings.TrimSpace(failure.Notes)
+	}
+
+	move := serviceFailureMove(source, failure.ShipmentMoveID)
+	stop := serviceFailureStop(source, failure.StopID)
+	if stop == nil {
+		stop = failure.Stop
+	}
+	applyShipmentStatusStop(&status, stop)
+	applyServiceFailureEquipment(&status, source, move)
+
+	return edi.DocumentPayload{
+		TransactionSet: edi.TransactionSet214,
+		ShipmentStatus: &status,
+	}
+}
+
+func serviceFailureStatusCode(failure *servicefailure.ServiceFailure) string {
+	if failure == nil {
+		return "SD"
+	}
+	if value := strings.TrimSpace(failure.X12StatusCodeOverride); value != "" {
+		return strings.ToUpper(value)
+	}
+	if failure.ReasonCode != nil && strings.TrimSpace(failure.ReasonCode.DefaultStatusCode) != "" {
+		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultStatusCode))
+	}
+	return "SD"
+}
+
+func serviceFailureReasonCode(failure *servicefailure.ServiceFailure) string {
+	if failure == nil {
+		return ""
+	}
+	if value := strings.TrimSpace(failure.X12ReasonCodeOverride); value != "" {
+		return strings.ToUpper(value)
+	}
+	if failure.ReasonCode != nil {
+		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultReasonCode))
+	}
+	return ""
+}
+
+func serviceFailureExceptionCode(failure *servicefailure.ServiceFailure) string {
+	if failure == nil {
+		return ""
+	}
+	if value := strings.TrimSpace(failure.X12ExceptionCode); value != "" {
+		return strings.ToUpper(value)
+	}
+	if failure.ReasonCode != nil {
+		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultExceptionCode))
+	}
+	return ""
+}
+
+func serviceFailureReasonDescription(failure *servicefailure.ServiceFailure) string {
+	if failure == nil || failure.ReasonCode == nil {
+		return ""
+	}
+	return stringutils.FirstNonEmpty(failure.ReasonCode.Label, failure.ReasonCode.Description)
+}
+
+func serviceFailureMove(source *shipment.Shipment, moveID pulid.ID) *shipment.ShipmentMove {
+	if source == nil {
+		return nil
+	}
+	for _, move := range source.Moves {
+		if move != nil && move.ID == moveID {
+			return move
+		}
+	}
+	return nil
+}
+
+func serviceFailureStop(source *shipment.Shipment, stopID pulid.ID) *shipment.Stop {
+	if source == nil {
+		return nil
+	}
+	for _, move := range source.Moves {
+		if move == nil {
+			continue
+		}
+		for _, stop := range move.Stops {
+			if stop != nil && stop.ID == stopID {
+				return stop
+			}
+		}
+	}
+	return nil
+}
+
+func applyServiceFailureEquipment(
+	payload *edi.ShipmentStatusPayload,
+	source *shipment.Shipment,
+	move *shipment.ShipmentMove,
+) {
+	if payload == nil {
+		return
+	}
+	if move != nil && move.Assignment != nil && move.Assignment.Trailer != nil {
+		payload.EquipmentNumber = move.Assignment.Trailer.Code
+	}
+	if source != nil && source.TrailerType != nil {
+		payload.EquipmentType = source.TrailerType.Code
+	}
+}
+
+func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edix12.Diagnostic {
+	if payload == nil || payload.StatusCode != "SD" || strings.TrimSpace(payload.StatusReasonCode) != "" {
+		return nil
+	}
+	return []edix12.Diagnostic{
+		{
+			Severity:        edi.ValidationSeverityError,
+			Code:            "required",
+			SegmentID:       "AT7",
+			ElementPosition: 2,
+			Path:            "shipmentStatus.statusReasonCode",
+			Message:         "X12 214 service failure status code SD requires a status reason code",
+			SuggestedFix:    "Set an override reason code or configure a default reason code on the service failure reason code.",
+		},
 	}
 }
 

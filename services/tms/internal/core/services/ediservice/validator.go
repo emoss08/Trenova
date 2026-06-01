@@ -202,6 +202,7 @@ func (v *Validator) ValidatePreviewDocumentRequest(
 		req.ShipmentID.IsNotNil() ||
 		req.InvoiceID.IsNotNil() ||
 		req.ShipmentEventID.IsNotNil() ||
+		req.ServiceFailureID.IsNotNil() ||
 		req.SourceMessageID.IsNotNil()
 	if !hasPayloadSource {
 		multiErr.Add(

@@ -53,6 +53,7 @@ type Params struct {
 	TestCaseRepo        repositories.EDITestCaseRepository
 	InvoiceRepo         repositories.InvoiceRepository
 	ShipmentEventRepo   repositories.ShipmentEventRepository
+	ServiceFailureRepo  repositories.ServiceFailureRepository
 	ShipmentLinkRepo    repositories.EDIShipmentLinkRepository
 	TransferChangeRepo  repositories.EDITransferChangeRepository
 	ShipmentCommentRepo repositories.ShipmentCommentRepository
@@ -82,6 +83,7 @@ type Service struct {
 	testCaseRepo        repositories.EDITestCaseRepository
 	invoiceRepo         repositories.InvoiceRepository
 	shipmentEventRepo   repositories.ShipmentEventRepository
+	serviceFailureRepo  repositories.ServiceFailureRepository
 	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
 	transferChangeRepo  repositories.EDITransferChangeRepository
 	shipmentCommentRepo repositories.ShipmentCommentRepository
@@ -112,6 +114,7 @@ func New(p Params) *Service {
 		testCaseRepo:        p.TestCaseRepo,
 		invoiceRepo:         p.InvoiceRepo,
 		shipmentEventRepo:   p.ShipmentEventRepo,
+		serviceFailureRepo:  p.ServiceFailureRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,
 		transferChangeRepo:  p.TransferChangeRepo,
 		shipmentCommentRepo: p.ShipmentCommentRepo,

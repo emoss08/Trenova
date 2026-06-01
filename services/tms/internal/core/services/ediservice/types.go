@@ -103,6 +103,7 @@ type PreviewEDIDocumentRequest struct {
 	TransferID               pulid.ID              `json:"transferId"`
 	InvoiceID                pulid.ID              `json:"invoiceId"`
 	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
+	ServiceFailureID         pulid.ID              `json:"serviceFailureId"`
 	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
 	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
 	Direction                edi.DocumentDirection `json:"direction"`
@@ -117,6 +118,7 @@ type GenerateEDIDocumentRequest struct {
 	TransferID               pulid.ID              `json:"transferId"`
 	InvoiceID                pulid.ID              `json:"invoiceId"`
 	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
+	ServiceFailureID         pulid.ID              `json:"serviceFailureId"`
 	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
 	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
 	Direction                edi.DocumentDirection `json:"direction"`

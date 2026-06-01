@@ -391,6 +391,7 @@ func (s *Service) GenerateDocument(
 		TransferID:               req.TransferID,
 		InvoiceID:                req.InvoiceID,
 		ShipmentEventID:          req.ShipmentEventID,
+		ServiceFailureID:         req.ServiceFailureID,
 		SourceMessageID:          req.SourceMessageID,
 		TransactionSet:           req.TransactionSet,
 		Direction:                req.Direction,
@@ -818,6 +819,24 @@ func (s *Service) resolvePayload(
 			return edi.DocumentPayload{}, err
 		}
 		return buildShipmentEventStatusPayload(event, source), nil
+	}
+	if !req.ServiceFailureID.IsNil() {
+		if transactionSet != edi.TransactionSet214 {
+			return edi.DocumentPayload{}, sourceTransactionSetError(
+				"serviceFailureId",
+				"service failure",
+				transactionSet,
+				edi.TransactionSet214,
+			)
+		}
+		result, err := s.BuildShipmentStatusPayloadForServiceFailure(ctx, &services.BuildServiceFailureEDIPayloadRequest{
+			TenantInfo:       req.TenantInfo,
+			ServiceFailureID: req.ServiceFailureID,
+		})
+		if err != nil {
+			return edi.DocumentPayload{}, err
+		}
+		return result.Payload, nil
 	}
 	if req.ShipmentID.IsNil() {
 		return edi.DocumentPayload{}, missingSourceError(transactionSet)

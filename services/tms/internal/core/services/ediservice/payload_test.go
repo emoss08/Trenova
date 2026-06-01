@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
@@ -292,6 +293,102 @@ func TestBuildShipmentEventStatusPayload_PreservesDelayedMappingToA3(t *testing.
 
 	require.NotNil(t, payload.ShipmentStatus)
 	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
+}
+
+func TestBuildServiceFailureShipmentStatusPayload_UsesOverridesBeforeReasonDefaults(t *testing.T) {
+	t.Parallel()
+
+	reasonID := pulid.MustNew("sfrc_")
+	failure := &servicefailure.ServiceFailure{
+		ID:                    pulid.MustNew("sf_"),
+		ShipmentID:            pulid.MustNew("sp_"),
+		ShipmentMoveID:        pulid.MustNew("sm_"),
+		StopID:                pulid.MustNew("stp_"),
+		ReasonCodeID:          &reasonID,
+		Number:                "SF-1001",
+		Type:                  servicefailure.TypeLateDelivery,
+		Status:                servicefailure.StatusOpen,
+		X12StatusCodeOverride: "sd",
+		X12ReasonCodeOverride: "zz",
+		X12ExceptionCode:      "e1",
+		ActualArrival:         1715817600,
+		LateMinutes:           35,
+		ReasonCode: &servicefailure.ReasonCode{
+			ID:                   reasonID,
+			Code:                 "LATE",
+			Label:                "Late delivery",
+			DefaultStatusCode:    "a3",
+			DefaultReasonCode:    "ns",
+			DefaultExceptionCode: "x2",
+		},
+	}
+
+	payload := buildServiceFailureShipmentStatusPayload(failure, &shipment.Shipment{
+		ID:        failure.ShipmentID,
+		BOL:       "BOL-SF",
+		ProNumber: "PRO-SF",
+	})
+
+	require.NotNil(t, payload.ShipmentStatus)
+	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
+	require.Equal(t, "ZZ", payload.ShipmentStatus.StatusReasonCode)
+	require.Equal(t, "ZZ", payload.ShipmentStatus.ReasonCode)
+	require.Equal(t, "E1", payload.ShipmentStatus.ExceptionCode)
+	require.Equal(t, "Late delivery", payload.ShipmentStatus.ReasonDescription)
+	require.Equal(t, reasonID, *payload.ShipmentStatus.ServiceFailureReasonCodeID)
+}
+
+func TestBuildServiceFailureShipmentStatusPayload_UsesReasonDefaultsWithoutOverrides(t *testing.T) {
+	t.Parallel()
+
+	failure := &servicefailure.ServiceFailure{
+		ID:             pulid.MustNew("sf_"),
+		ShipmentID:     pulid.MustNew("sp_"),
+		ShipmentMoveID: pulid.MustNew("sm_"),
+		StopID:         pulid.MustNew("stp_"),
+		Number:         "SF-1002",
+		Type:           servicefailure.TypeLatePickup,
+		Status:         servicefailure.StatusOpen,
+		ActualArrival:  1715817600,
+		LateMinutes:    12,
+		ReasonCode: &servicefailure.ReasonCode{
+			Code:                 "PULATE",
+			Label:                "Late pickup",
+			DefaultStatusCode:    "a3",
+			DefaultReasonCode:    "ns",
+			DefaultExceptionCode: "x2",
+		},
+	}
+
+	payload := buildServiceFailureShipmentStatusPayload(failure, nil)
+
+	require.NotNil(t, payload.ShipmentStatus)
+	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
+	require.Equal(t, "NS", payload.ShipmentStatus.StatusReasonCode)
+	require.Equal(t, "NS", payload.ShipmentStatus.ReasonCode)
+	require.Equal(t, "X2", payload.ShipmentStatus.ExceptionCode)
+	require.Empty(t, serviceFailurePayloadDiagnostics(payload.ShipmentStatus))
+}
+
+func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode: "SD",
+	})
+
+	require.Len(t, diagnostics, 1)
+	require.Equal(t, "required", diagnostics[0].Code)
+	require.Equal(t, "AT7", diagnostics[0].SegmentID)
+	require.Equal(t, 2, diagnostics[0].ElementPosition)
+	require.Equal(t, "shipmentStatus.statusReasonCode", diagnostics[0].Path)
+	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode:       "SD",
+		StatusReasonCode: "NS",
+	}))
+	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode: "A3",
+	}))
 }
 
 func TestAddRequiredIDDeduplicatesAndSkipsNil(t *testing.T) {
