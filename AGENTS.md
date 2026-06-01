@@ -8,8 +8,6 @@ This is a Go monorepo with a frontend client.
 - `shared/`: shared Go utilities used by both services.
 - `client/`: React + TypeScript app (Vite), UI routes/components in `client/src/`.
 - `deploy/`, `docker-compose-local.yml`, `config/`: local infrastructure and deployment configs.
-- `legacy/`: older code paths kept for reference/migration.
-- `MIGRATION_GUIDE.md`: required playbook for legacy-to-new domain ports.
 - `CLAUDE.md`: repository-specific conventions and architecture notes for agent-driven work.
 
 ## Build, Test, and Development Commands
