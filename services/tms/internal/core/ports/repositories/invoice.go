@@ -31,6 +31,24 @@ type CountPostedInvoiceReconciliationDiscrepanciesRequest struct {
 	ToleranceAmount decimal.Decimal `json:"toleranceAmount"`
 }
 
+type ListInvoiceEmailAttemptsRequest struct {
+	InvoiceID  pulid.ID                 `json:"invoiceId"`
+	TenantInfo pagination.TenantInfo    `json:"tenantInfo"`
+	Filter     *pagination.QueryOptions `json:"filter"`
+}
+
+type UpsertInvoiceAttachmentsRequest struct {
+	InvoiceID      pulid.ID              `json:"invoiceId"`
+	DocumentIDs    []pulid.ID            `json:"documentIds"`
+	OrganizationID pulid.ID              `json:"organizationId"`
+	BusinessUnitID pulid.ID              `json:"businessUnitId"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type GetInvoiceDocumentShareTokenRequest struct {
+	TokenHash string `json:"-"`
+}
+
 type InvoiceRepository interface {
 	List(
 		ctx context.Context,
@@ -56,4 +74,38 @@ type InvoiceRepository interface {
 		ctx context.Context,
 		entity *invoice.Invoice,
 	) (*invoice.Invoice, error)
+	UpsertAttachments(
+		ctx context.Context,
+		req UpsertInvoiceAttachmentsRequest,
+	) ([]*invoice.Attachment, error)
+	ListAttachments(
+		ctx context.Context,
+		req ListInvoiceEmailAttemptsRequest,
+	) ([]*invoice.Attachment, error)
+	CreateEmailAttempt(
+		ctx context.Context,
+		attempt *invoice.EmailAttempt,
+		attachments []*invoice.EmailAttemptAttachment,
+	) (*invoice.EmailAttempt, error)
+	ListEmailAttempts(
+		ctx context.Context,
+		req ListInvoiceEmailAttemptsRequest,
+	) (*pagination.ListResult[*invoice.EmailAttempt], error)
+	SyncEmailAttemptsForMessage(
+		ctx context.Context,
+		messageID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) error
+	CreateDocumentShareToken(
+		ctx context.Context,
+		token *invoice.DocumentShareToken,
+	) (*invoice.DocumentShareToken, error)
+	GetDocumentShareToken(
+		ctx context.Context,
+		req GetInvoiceDocumentShareTokenRequest,
+	) (*invoice.DocumentShareToken, error)
+	UpdateDocumentShareToken(
+		ctx context.Context,
+		token *invoice.DocumentShareToken,
+	) (*invoice.DocumentShareToken, error)
 }

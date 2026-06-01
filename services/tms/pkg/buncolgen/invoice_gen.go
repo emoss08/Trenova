@@ -24,6 +24,891 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// Attachment — table "invoice_attachments", alias "inva"
+// ---------------------------------------------------------------------------
+
+// AttachmentTable holds the table name, alias, and primary key columns
+// for the "invoice_attachments" table. The alias "inva" is used in all generated
+// SQL fragments (e.g. "inva.id = ?").
+var AttachmentTable = TableInfo{
+	Name:       "invoice_attachments",
+	Alias:      "inva",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// AttachmentColumns provides type-safe column references for the "invoice_attachments" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AttachmentColumns.ID.String())
+//	// SELECT inva.id FROM invoice_attachments AS inva
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AttachmentColumns.ID.Eq(), id)           // WHERE inva.id = ?
+//	q.Order(AttachmentColumns.CreatedAt.OrderDesc())  // ORDER BY inva.created_at DESC
+var AttachmentColumns = struct {
+	ID             Column // "id" → qualified: "inva.id"
+	OrganizationID Column // "organization_id" → qualified: "inva.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "inva.business_unit_id"
+	InvoiceID      Column // "invoice_id" → qualified: "inva.invoice_id"
+	DocumentID     Column // "document_id" → qualified: "inva.document_id"
+	Selected       Column // "selected" → qualified: "inva.selected"
+	SortOrder      Column // "sort_order" → qualified: "inva.sort_order"
+	CreatedAt      Column // "created_at" → qualified: "inva.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "inva.updated_at"
+}{
+	ID:             NewColumn("id", "inva"),
+	OrganizationID: NewColumn("organization_id", "inva"),
+	BusinessUnitID: NewColumn("business_unit_id", "inva"),
+	InvoiceID:      NewColumn("invoice_id", "inva"),
+	DocumentID:     NewColumn("document_id", "inva"),
+	Selected:       NewColumn("selected", "inva"),
+	SortOrder:      NewColumn("sort_order", "inva"),
+	CreatedAt:      NewColumn("created_at", "inva"),
+	UpdatedAt:      NewColumn("updated_at", "inva"),
+}
+
+// AttachmentFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Attachment.GetStaticFieldMap().
+var AttachmentFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"invoiceId":      "invoice_id",
+	"documentId":     "document_id",
+	"selected":       "selected",
+	"sortOrder":      "sort_order",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// AttachmentInsertableColumns lists column names suitable for INSERT statements on the "invoice_attachments" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AttachmentInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"invoice_id",
+	"document_id",
+	"selected",
+	"sort_order",
+	"created_at",
+	"updated_at",
+}
+
+// AttachmentRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AttachmentRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var AttachmentRelations = struct {
+	Invoice  string
+	Document string
+}{
+	Invoice:  "Invoice",
+	Document: "Document",
+}
+
+// AttachmentScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE inva.organization_id = ? AND inva.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AttachmentScopeTenant(sq, ti).
+//		Where(buncolgen.AttachmentColumns.ID.Eq(), id)
+func AttachmentScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AttachmentColumns.OrganizationID, AttachmentColumns.BusinessUnitID, ti)
+}
+
+// AttachmentScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AttachmentScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AttachmentColumns.ID.In(), bun.List(ids))
+//	})
+func AttachmentScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AttachmentColumns.OrganizationID, AttachmentColumns.BusinessUnitID, ti)
+}
+
+// AttachmentScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AttachmentScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AttachmentColumns.ID.Eq(), id)
+//	})
+func AttachmentScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AttachmentColumns.OrganizationID, AttachmentColumns.BusinessUnitID, ti)
+}
+
+// AttachmentApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AttachmentApplyTenant(tenantInfo))
+func AttachmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AttachmentColumns.OrganizationID, AttachmentColumns.BusinessUnitID, ti)
+}
+
+// AttachmentFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_attachments" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AttachmentFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AttachmentFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	DocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	Selected       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "selected" → DB: "selected"
+	SortOrder      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sortOrder" → DB: "sort_order"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentId", op, value)
+	},
+	Selected: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("selected", op, value)
+	},
+	SortOrder: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sortOrder", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// DocumentShareToken — table "invoice_document_share_tokens", alias "indst"
+// ---------------------------------------------------------------------------
+
+// DocumentShareTokenTable holds the table name, alias, and primary key columns
+// for the "invoice_document_share_tokens" table. The alias "indst" is used in all generated
+// SQL fragments (e.g. "indst.id = ?").
+var DocumentShareTokenTable = TableInfo{
+	Name:       "invoice_document_share_tokens",
+	Alias:      "indst",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// DocumentShareTokenColumns provides type-safe column references for the "invoice_document_share_tokens" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(DocumentShareTokenColumns.ID.String())
+//	// SELECT indst.id FROM invoice_document_share_tokens AS indst
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(DocumentShareTokenColumns.ID.Eq(), id)           // WHERE indst.id = ?
+//	q.Order(DocumentShareTokenColumns.CreatedAt.OrderDesc())  // ORDER BY indst.created_at DESC
+var DocumentShareTokenColumns = struct {
+	ID             Column // "id" → qualified: "indst.id"
+	OrganizationID Column // "organization_id" → qualified: "indst.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "indst.business_unit_id"
+	InvoiceID      Column // "invoice_id" → qualified: "indst.invoice_id"
+	DocumentID     Column // "document_id" → qualified: "indst.document_id"
+	TokenHash      Column // "token_hash" → qualified: "indst.token_hash"
+	ExpiresAt      Column // "expires_at" → qualified: "indst.expires_at"
+	DownloadedAt   Column // "downloaded_at" → qualified: "indst.downloaded_at"
+	RevokedAt      Column // "revoked_at" → qualified: "indst.revoked_at"
+	CreatedByID    Column // "created_by_id" → qualified: "indst.created_by_id"
+	CreatedAt      Column // "created_at" → qualified: "indst.created_at"
+	UpdatedAt      Column // "updated_at" → qualified: "indst.updated_at"
+}{
+	ID:             NewColumn("id", "indst"),
+	OrganizationID: NewColumn("organization_id", "indst"),
+	BusinessUnitID: NewColumn("business_unit_id", "indst"),
+	InvoiceID:      NewColumn("invoice_id", "indst"),
+	DocumentID:     NewColumn("document_id", "indst"),
+	TokenHash:      NewColumn("token_hash", "indst"),
+	ExpiresAt:      NewColumn("expires_at", "indst"),
+	DownloadedAt:   NewColumn("downloaded_at", "indst"),
+	RevokedAt:      NewColumn("revoked_at", "indst"),
+	CreatedByID:    NewColumn("created_by_id", "indst"),
+	CreatedAt:      NewColumn("created_at", "indst"),
+	UpdatedAt:      NewColumn("updated_at", "indst"),
+}
+
+// DocumentShareTokenFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by DocumentShareToken.GetStaticFieldMap().
+var DocumentShareTokenFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"invoiceId":      "invoice_id",
+	"documentId":     "document_id",
+	"expiresAt":      "expires_at",
+	"downloadedAt":   "downloaded_at",
+	"revokedAt":      "revoked_at",
+	"createdById":    "created_by_id",
+	"createdAt":      "created_at",
+	"updatedAt":      "updated_at",
+}
+
+// DocumentShareTokenInsertableColumns lists column names suitable for INSERT statements on the "invoice_document_share_tokens" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var DocumentShareTokenInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"invoice_id",
+	"document_id",
+	"token_hash",
+	"expires_at",
+	"downloaded_at",
+	"revoked_at",
+	"created_by_id",
+	"created_at",
+	"updated_at",
+}
+
+// DocumentShareTokenRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(DocumentShareTokenRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var DocumentShareTokenRelations = struct {
+	Invoice      string
+	Document     string
+	Organization string
+}{
+	Invoice:      "Invoice",
+	Document:     "Document",
+	Organization: "Organization",
+}
+
+// DocumentShareTokenScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE indst.organization_id = ? AND indst.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.DocumentShareTokenScopeTenant(sq, ti).
+//		Where(buncolgen.DocumentShareTokenColumns.ID.Eq(), id)
+func DocumentShareTokenScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, DocumentShareTokenColumns.OrganizationID, DocumentShareTokenColumns.BusinessUnitID, ti)
+}
+
+// DocumentShareTokenScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.DocumentShareTokenScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.DocumentShareTokenColumns.ID.In(), bun.List(ids))
+//	})
+func DocumentShareTokenScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, DocumentShareTokenColumns.OrganizationID, DocumentShareTokenColumns.BusinessUnitID, ti)
+}
+
+// DocumentShareTokenScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.DocumentShareTokenScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.DocumentShareTokenColumns.ID.Eq(), id)
+//	})
+func DocumentShareTokenScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, DocumentShareTokenColumns.OrganizationID, DocumentShareTokenColumns.BusinessUnitID, ti)
+}
+
+// DocumentShareTokenApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.DocumentShareTokenApplyTenant(tenantInfo))
+func DocumentShareTokenApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(DocumentShareTokenColumns.OrganizationID, DocumentShareTokenColumns.BusinessUnitID, ti)
+}
+
+// DocumentShareTokenFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_document_share_tokens" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	DocumentShareTokenFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var DocumentShareTokenFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	DocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	ExpiresAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	DownloadedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "downloadedAt" → DB: "downloaded_at"
+	RevokedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revokedAt" → DB: "revoked_at"
+	CreatedByID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentId", op, value)
+	},
+	ExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expiresAt", op, value)
+	},
+	DownloadedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("downloadedAt", op, value)
+	},
+	RevokedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("revokedAt", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EmailAttempt — table "invoice_email_attempts", alias "inea"
+// ---------------------------------------------------------------------------
+
+// EmailAttemptTable holds the table name, alias, and primary key columns
+// for the "invoice_email_attempts" table. The alias "inea" is used in all generated
+// SQL fragments (e.g. "inea.id = ?").
+var EmailAttemptTable = TableInfo{
+	Name:       "invoice_email_attempts",
+	Alias:      "inea",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// EmailAttemptColumns provides type-safe column references for the "invoice_email_attempts" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EmailAttemptColumns.ID.String())
+//	// SELECT inea.id FROM invoice_email_attempts AS inea
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EmailAttemptColumns.ID.Eq(), id)           // WHERE inea.id = ?
+//	q.Order(EmailAttemptColumns.CreatedAt.OrderDesc())  // ORDER BY inea.created_at DESC
+var EmailAttemptColumns = struct {
+	ID                Column // "id" → qualified: "inea.id"
+	OrganizationID    Column // "organization_id" → qualified: "inea.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "inea.business_unit_id"
+	InvoiceID         Column // "invoice_id" → qualified: "inea.invoice_id"
+	EmailMessageID    Column // "email_message_id" → qualified: "inea.email_message_id"
+	AttemptNumber     Column // "attempt_number" → qualified: "inea.attempt_number"
+	PartNumber        Column // "part_number" → qualified: "inea.part_number"
+	TotalParts        Column // "total_parts" → qualified: "inea.total_parts"
+	Status            Column // "status" → qualified: "inea.status"
+	Provider          Column // "provider" → qualified: "inea.provider"
+	ProviderMessageID Column // "provider_message_id" → qualified: "inea.provider_message_id"
+	ToRecipients      Column // "to_recipients" → qualified: "inea.to_recipients"
+	CCRecipients      Column // "cc_recipients" → qualified: "inea.cc_recipients"
+	BCCRecipients     Column // "bcc_recipients" → qualified: "inea.bcc_recipients"
+	Subject           Column // "subject" → qualified: "inea.subject"
+	Body              Column // "body" → qualified: "inea.body"
+	EstimatedSize     Column // "estimated_size" → qualified: "inea.estimated_size"
+	Warnings          Column // "warnings" → qualified: "inea.warnings"
+	Error             Column // "error" → qualified: "inea.error"
+	SentAt            Column // "sent_at" → qualified: "inea.sent_at"
+	CreatedByID       Column // "created_by_id" → qualified: "inea.created_by_id"
+	CreatedAt         Column // "created_at" → qualified: "inea.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "inea.updated_at"
+}{
+	ID:                NewColumn("id", "inea"),
+	OrganizationID:    NewColumn("organization_id", "inea"),
+	BusinessUnitID:    NewColumn("business_unit_id", "inea"),
+	InvoiceID:         NewColumn("invoice_id", "inea"),
+	EmailMessageID:    NewColumn("email_message_id", "inea"),
+	AttemptNumber:     NewColumn("attempt_number", "inea"),
+	PartNumber:        NewColumn("part_number", "inea"),
+	TotalParts:        NewColumn("total_parts", "inea"),
+	Status:            NewColumn("status", "inea"),
+	Provider:          NewColumn("provider", "inea"),
+	ProviderMessageID: NewColumn("provider_message_id", "inea"),
+	ToRecipients:      NewColumn("to_recipients", "inea"),
+	CCRecipients:      NewColumn("cc_recipients", "inea"),
+	BCCRecipients:     NewColumn("bcc_recipients", "inea"),
+	Subject:           NewColumn("subject", "inea"),
+	Body:              NewColumn("body", "inea"),
+	EstimatedSize:     NewColumn("estimated_size", "inea"),
+	Warnings:          NewColumn("warnings", "inea"),
+	Error:             NewColumn("error", "inea"),
+	SentAt:            NewColumn("sent_at", "inea"),
+	CreatedByID:       NewColumn("created_by_id", "inea"),
+	CreatedAt:         NewColumn("created_at", "inea"),
+	UpdatedAt:         NewColumn("updated_at", "inea"),
+}
+
+// EmailAttemptFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EmailAttempt.GetStaticFieldMap().
+var EmailAttemptFieldMap = map[string]string{
+	"id":                "id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"invoiceId":         "invoice_id",
+	"emailMessageId":    "email_message_id",
+	"attemptNumber":     "attempt_number",
+	"partNumber":        "part_number",
+	"totalParts":        "total_parts",
+	"status":            "status",
+	"provider":          "provider",
+	"providerMessageId": "provider_message_id",
+	"toRecipients":      "to_recipients",
+	"ccRecipients":      "cc_recipients",
+	"bccRecipients":     "bcc_recipients",
+	"subject":           "subject",
+	"body":              "body",
+	"estimatedSize":     "estimated_size",
+	"warnings":          "warnings",
+	"error":             "error",
+	"sentAt":            "sent_at",
+	"createdById":       "created_by_id",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// EmailAttemptInsertableColumns lists column names suitable for INSERT statements on the "invoice_email_attempts" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EmailAttemptInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"invoice_id",
+	"email_message_id",
+	"attempt_number",
+	"part_number",
+	"total_parts",
+	"status",
+	"provider",
+	"provider_message_id",
+	"to_recipients",
+	"cc_recipients",
+	"bcc_recipients",
+	"subject",
+	"body",
+	"estimated_size",
+	"warnings",
+	"error",
+	"sent_at",
+	"created_by_id",
+	"created_at",
+	"updated_at",
+}
+
+// EmailAttemptRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EmailAttemptRelations.Invoice)
+//	// Bun eager-loads the Invoice association via a separate query
+var EmailAttemptRelations = struct {
+	Invoice     string
+	Email       string
+	Attachments string
+}{
+	Invoice:     "Invoice",
+	Email:       "Email",
+	Attachments: "Attachments",
+}
+
+// EmailAttemptScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE inea.organization_id = ? AND inea.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EmailAttemptScopeTenant(sq, ti).
+//		Where(buncolgen.EmailAttemptColumns.ID.Eq(), id)
+func EmailAttemptScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EmailAttemptColumns.OrganizationID, EmailAttemptColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EmailAttemptScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EmailAttemptColumns.ID.In(), bun.List(ids))
+//	})
+func EmailAttemptScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EmailAttemptColumns.OrganizationID, EmailAttemptColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EmailAttemptScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EmailAttemptColumns.ID.Eq(), id)
+//	})
+func EmailAttemptScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EmailAttemptColumns.OrganizationID, EmailAttemptColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EmailAttemptApplyTenant(tenantInfo))
+func EmailAttemptApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EmailAttemptColumns.OrganizationID, EmailAttemptColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_email_attempts" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EmailAttemptFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EmailAttemptFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	InvoiceID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceId" → DB: "invoice_id"
+	EmailMessageID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailMessageId" → DB: "email_message_id"
+	AttemptNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attemptNumber" → DB: "attempt_number"
+	PartNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "partNumber" → DB: "part_number"
+	TotalParts        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalParts" → DB: "total_parts"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Provider          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "provider" → DB: "provider"
+	ProviderMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerMessageId" → DB: "provider_message_id"
+	ToRecipients      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toRecipients" → DB: "to_recipients"
+	CCRecipients      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccRecipients" → DB: "cc_recipients"
+	BCCRecipients     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bccRecipients" → DB: "bcc_recipients"
+	Subject           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
+	Body              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "body" → DB: "body"
+	EstimatedSize     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "estimatedSize" → DB: "estimated_size"
+	Warnings          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "warnings" → DB: "warnings"
+	Error             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "error" → DB: "error"
+	SentAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
+	CreatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdById" → DB: "created_by_id"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	InvoiceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceId", op, value)
+	},
+	EmailMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailMessageId", op, value)
+	},
+	AttemptNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attemptNumber", op, value)
+	},
+	PartNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("partNumber", op, value)
+	},
+	TotalParts: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("totalParts", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	Provider: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("provider", op, value)
+	},
+	ProviderMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("providerMessageId", op, value)
+	},
+	ToRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toRecipients", op, value)
+	},
+	CCRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ccRecipients", op, value)
+	},
+	BCCRecipients: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("bccRecipients", op, value)
+	},
+	Subject: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subject", op, value)
+	},
+	Body: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("body", op, value)
+	},
+	EstimatedSize: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("estimatedSize", op, value)
+	},
+	Warnings: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("warnings", op, value)
+	},
+	Error: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("error", op, value)
+	},
+	SentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sentAt", op, value)
+	},
+	CreatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdById", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// EmailAttemptAttachment — table "invoice_email_attempt_attachments", alias "ineaa"
+// ---------------------------------------------------------------------------
+
+// EmailAttemptAttachmentTable holds the table name, alias, and primary key columns
+// for the "invoice_email_attempt_attachments" table. The alias "ineaa" is used in all generated
+// SQL fragments (e.g. "ineaa.id = ?").
+var EmailAttemptAttachmentTable = TableInfo{
+	Name:       "invoice_email_attempt_attachments",
+	Alias:      "ineaa",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// EmailAttemptAttachmentColumns provides type-safe column references for the "invoice_email_attempt_attachments" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EmailAttemptAttachmentColumns.ID.String())
+//	// SELECT ineaa.id FROM invoice_email_attempt_attachments AS ineaa
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EmailAttemptAttachmentColumns.ID.Eq(), id)           // WHERE ineaa.id = ?
+//	q.Order(EmailAttemptAttachmentColumns.CreatedAt.OrderDesc())  // ORDER BY ineaa.created_at DESC
+var EmailAttemptAttachmentColumns = struct {
+	ID             Column // "id" → qualified: "ineaa.id"
+	OrganizationID Column // "organization_id" → qualified: "ineaa.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "ineaa.business_unit_id"
+	AttemptID      Column // "attempt_id" → qualified: "ineaa.attempt_id"
+	DocumentID     Column // "document_id" → qualified: "ineaa.document_id"
+	FileName       Column // "file_name" → qualified: "ineaa.file_name"
+	ContentType    Column // "content_type" → qualified: "ineaa.content_type"
+	SizeBytes      Column // "size_bytes" → qualified: "ineaa.size_bytes"
+	EncodedBytes   Column // "encoded_bytes" → qualified: "ineaa.encoded_bytes"
+	Method         Column // "method" → qualified: "ineaa.method"
+	ShareTokenID   Column // "share_token_id" → qualified: "ineaa.share_token_id"
+	Reason         Column // "reason" → qualified: "ineaa.reason"
+	CreatedAt      Column // "created_at" → qualified: "ineaa.created_at"
+}{
+	ID:             NewColumn("id", "ineaa"),
+	OrganizationID: NewColumn("organization_id", "ineaa"),
+	BusinessUnitID: NewColumn("business_unit_id", "ineaa"),
+	AttemptID:      NewColumn("attempt_id", "ineaa"),
+	DocumentID:     NewColumn("document_id", "ineaa"),
+	FileName:       NewColumn("file_name", "ineaa"),
+	ContentType:    NewColumn("content_type", "ineaa"),
+	SizeBytes:      NewColumn("size_bytes", "ineaa"),
+	EncodedBytes:   NewColumn("encoded_bytes", "ineaa"),
+	Method:         NewColumn("method", "ineaa"),
+	ShareTokenID:   NewColumn("share_token_id", "ineaa"),
+	Reason:         NewColumn("reason", "ineaa"),
+	CreatedAt:      NewColumn("created_at", "ineaa"),
+}
+
+// EmailAttemptAttachmentFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EmailAttemptAttachment.GetStaticFieldMap().
+var EmailAttemptAttachmentFieldMap = map[string]string{
+	"id":             "id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"attemptId":      "attempt_id",
+	"documentId":     "document_id",
+	"fileName":       "file_name",
+	"contentType":    "content_type",
+	"sizeBytes":      "size_bytes",
+	"encodedBytes":   "encoded_bytes",
+	"method":         "method",
+	"shareTokenId":   "share_token_id",
+	"reason":         "reason",
+	"createdAt":      "created_at",
+}
+
+// EmailAttemptAttachmentInsertableColumns lists column names suitable for INSERT statements on the "invoice_email_attempt_attachments" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EmailAttemptAttachmentInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"attempt_id",
+	"document_id",
+	"file_name",
+	"content_type",
+	"size_bytes",
+	"encoded_bytes",
+	"method",
+	"share_token_id",
+	"reason",
+	"created_at",
+}
+
+// EmailAttemptAttachmentRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EmailAttemptAttachmentRelations.Attempt)
+//	// Bun eager-loads the Attempt association via a separate query
+var EmailAttemptAttachmentRelations = struct {
+	Attempt    string
+	Document   string
+	ShareToken string
+}{
+	Attempt:    "Attempt",
+	Document:   "Document",
+	ShareToken: "ShareToken",
+}
+
+// EmailAttemptAttachmentScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ineaa.organization_id = ? AND ineaa.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EmailAttemptAttachmentScopeTenant(sq, ti).
+//		Where(buncolgen.EmailAttemptAttachmentColumns.ID.Eq(), id)
+func EmailAttemptAttachmentScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EmailAttemptAttachmentColumns.OrganizationID, EmailAttemptAttachmentColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptAttachmentScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EmailAttemptAttachmentScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EmailAttemptAttachmentColumns.ID.In(), bun.List(ids))
+//	})
+func EmailAttemptAttachmentScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EmailAttemptAttachmentColumns.OrganizationID, EmailAttemptAttachmentColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptAttachmentScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EmailAttemptAttachmentScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EmailAttemptAttachmentColumns.ID.Eq(), id)
+//	})
+func EmailAttemptAttachmentScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EmailAttemptAttachmentColumns.OrganizationID, EmailAttemptAttachmentColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptAttachmentApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EmailAttemptAttachmentApplyTenant(tenantInfo))
+func EmailAttemptAttachmentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EmailAttemptAttachmentColumns.OrganizationID, EmailAttemptAttachmentColumns.BusinessUnitID, ti)
+}
+
+// EmailAttemptAttachmentFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "invoice_email_attempt_attachments" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EmailAttemptAttachmentFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EmailAttemptAttachmentFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	AttemptID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attemptId" → DB: "attempt_id"
+	DocumentID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	FileName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
+	ContentType    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentType" → DB: "content_type"
+	SizeBytes      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sizeBytes" → DB: "size_bytes"
+	EncodedBytes   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "encodedBytes" → DB: "encoded_bytes"
+	Method         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	ShareTokenID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shareTokenId" → DB: "share_token_id"
+	Reason         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reason" → DB: "reason"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	AttemptID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attemptId", op, value)
+	},
+	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentId", op, value)
+	},
+	FileName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fileName", op, value)
+	},
+	ContentType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("contentType", op, value)
+	},
+	SizeBytes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sizeBytes", op, value)
+	},
+	EncodedBytes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("encodedBytes", op, value)
+	},
+	Method: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("method", op, value)
+	},
+	ShareTokenID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shareTokenId", op, value)
+	},
+	Reason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reason", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // InoviceLine — table "invoice_lines", alias "invl"
 // ---------------------------------------------------------------------------
 
@@ -301,6 +1186,19 @@ var InvoiceColumns = struct {
 	AppliedAmountMinor        Column // "applied_amount_minor" → qualified: "inv.applied_amount_minor"
 	SettlementStatus          Column // "settlement_status" → qualified: "inv.settlement_status"
 	DisputeStatus             Column // "dispute_status" → qualified: "inv.dispute_status"
+	PDFDocumentID             Column // "pdf_document_id" → qualified: "inv.pdf_document_id"
+	SendStatus                Column // "send_status" → qualified: "inv.send_status"
+	SentAt                    Column // "sent_at" → qualified: "inv.sent_at"
+	SentByID                  Column // "sent_by_id" → qualified: "inv.sent_by_id"
+	LastSendError             Column // "last_send_error" → qualified: "inv.last_send_error"
+	LastSendWarning           Column // "last_send_warning" → qualified: "inv.last_send_warning"
+	Memo                      Column // "memo" → qualified: "inv.memo"
+	RemittanceInstructions    Column // "remittance_instructions" → qualified: "inv.remittance_instructions"
+	EmailSubjectSnapshot      Column // "email_subject_snapshot" → qualified: "inv.email_subject_snapshot"
+	EmailBodySnapshot         Column // "email_body_snapshot" → qualified: "inv.email_body_snapshot"
+	EmailToSnapshot           Column // "email_to_snapshot" → qualified: "inv.email_to_snapshot"
+	EmailCCSnapshot           Column // "email_cc_snapshot" → qualified: "inv.email_cc_snapshot"
+	EmailBCCSnapshot          Column // "email_bcc_snapshot" → qualified: "inv.email_bcc_snapshot"
 	CorrectionGroupID         Column // "correction_group_id" → qualified: "inv.correction_group_id"
 	SupersedesInvoiceID       Column // "supersedes_invoice_id" → qualified: "inv.supersedes_invoice_id"
 	SupersededByInvoiceID     Column // "superseded_by_invoice_id" → qualified: "inv.superseded_by_invoice_id"
@@ -345,6 +1243,19 @@ var InvoiceColumns = struct {
 	AppliedAmountMinor:        NewColumn("applied_amount_minor", "inv"),
 	SettlementStatus:          NewColumn("settlement_status", "inv"),
 	DisputeStatus:             NewColumn("dispute_status", "inv"),
+	PDFDocumentID:             NewColumn("pdf_document_id", "inv"),
+	SendStatus:                NewColumn("send_status", "inv"),
+	SentAt:                    NewColumn("sent_at", "inv"),
+	SentByID:                  NewColumn("sent_by_id", "inv"),
+	LastSendError:             NewColumn("last_send_error", "inv"),
+	LastSendWarning:           NewColumn("last_send_warning", "inv"),
+	Memo:                      NewColumn("memo", "inv"),
+	RemittanceInstructions:    NewColumn("remittance_instructions", "inv"),
+	EmailSubjectSnapshot:      NewColumn("email_subject_snapshot", "inv"),
+	EmailBodySnapshot:         NewColumn("email_body_snapshot", "inv"),
+	EmailToSnapshot:           NewColumn("email_to_snapshot", "inv"),
+	EmailCCSnapshot:           NewColumn("email_cc_snapshot", "inv"),
+	EmailBCCSnapshot:          NewColumn("email_bcc_snapshot", "inv"),
 	CorrectionGroupID:         NewColumn("correction_group_id", "inv"),
 	SupersedesInvoiceID:       NewColumn("supersedes_invoice_id", "inv"),
 	SupersededByInvoiceID:     NewColumn("superseded_by_invoice_id", "inv"),
@@ -395,6 +1306,19 @@ var InvoiceFieldMap = map[string]string{
 	"appliedAmountMinor":        "applied_amount_minor",
 	"settlementStatus":          "settlement_status",
 	"disputeStatus":             "dispute_status",
+	"pdfDocumentId":             "pdf_document_id",
+	"sendStatus":                "send_status",
+	"sentAt":                    "sent_at",
+	"sentById":                  "sent_by_id",
+	"lastSendError":             "last_send_error",
+	"lastSendWarning":           "last_send_warning",
+	"memo":                      "memo",
+	"remittanceInstructions":    "remittance_instructions",
+	"emailSubjectSnapshot":      "email_subject_snapshot",
+	"emailBodySnapshot":         "email_body_snapshot",
+	"emailToSnapshot":           "email_to_snapshot",
+	"emailCcSnapshot":           "email_cc_snapshot",
+	"emailBccSnapshot":          "email_bcc_snapshot",
 	"correctionGroupId":         "correction_group_id",
 	"supersedesInvoiceId":       "supersedes_invoice_id",
 	"supersededByInvoiceId":     "superseded_by_invoice_id",
@@ -443,6 +1367,19 @@ var InvoiceInsertableColumns = []string{
 	"applied_amount_minor",
 	"settlement_status",
 	"dispute_status",
+	"pdf_document_id",
+	"send_status",
+	"sent_at",
+	"sent_by_id",
+	"last_send_error",
+	"last_send_warning",
+	"memo",
+	"remittance_instructions",
+	"email_subject_snapshot",
+	"email_body_snapshot",
+	"email_to_snapshot",
+	"email_cc_snapshot",
+	"email_bcc_snapshot",
 	"correction_group_id",
 	"supersedes_invoice_id",
 	"superseded_by_invoice_id",
@@ -462,12 +1399,18 @@ var InvoiceRelations = struct {
 	BillingQueueItem string
 	Shipment         string
 	Customer         string
+	PDFDocument      string
 	Lines            string
+	Attachments      string
+	EmailAttempts    string
 }{
 	BillingQueueItem: "BillingQueueItem",
 	Shipment:         "Shipment",
 	Customer:         "Customer",
+	PDFDocument:      "PDFDocument",
 	Lines:            "Lines",
+	Attachments:      "Attachments",
+	EmailAttempts:    "EmailAttempts",
 }
 
 // InvoiceScopeTenant restricts a query to a single tenant by adding:
@@ -555,6 +1498,19 @@ var InvoiceFilter = struct {
 	AppliedAmountMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appliedAmountMinor" → DB: "applied_amount_minor"
 	SettlementStatus          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementStatus" → DB: "settlement_status"
 	DisputeStatus             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disputeStatus" → DB: "dispute_status"
+	PDFDocumentID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pdfDocumentId" → DB: "pdf_document_id"
+	SendStatus                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendStatus" → DB: "send_status"
+	SentAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentAt" → DB: "sent_at"
+	SentByID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sentById" → DB: "sent_by_id"
+	LastSendError             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSendError" → DB: "last_send_error"
+	LastSendWarning           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastSendWarning" → DB: "last_send_warning"
+	Memo                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memo" → DB: "memo"
+	RemittanceInstructions    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remittanceInstructions" → DB: "remittance_instructions"
+	EmailSubjectSnapshot      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailSubjectSnapshot" → DB: "email_subject_snapshot"
+	EmailBodySnapshot         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailBodySnapshot" → DB: "email_body_snapshot"
+	EmailToSnapshot           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailToSnapshot" → DB: "email_to_snapshot"
+	EmailCCSnapshot           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailCcSnapshot" → DB: "email_cc_snapshot"
+	EmailBCCSnapshot          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "emailBccSnapshot" → DB: "email_bcc_snapshot"
 	CorrectionGroupID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "correctionGroupId" → DB: "correction_group_id"
 	SupersedesInvoiceID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersedesInvoiceId" → DB: "supersedes_invoice_id"
 	SupersededByInvoiceID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "supersededByInvoiceId" → DB: "superseded_by_invoice_id"
@@ -668,6 +1624,45 @@ var InvoiceFilter = struct {
 	},
 	DisputeStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("disputeStatus", op, value)
+	},
+	PDFDocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pdfDocumentId", op, value)
+	},
+	SendStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sendStatus", op, value)
+	},
+	SentAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sentAt", op, value)
+	},
+	SentByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sentById", op, value)
+	},
+	LastSendError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastSendError", op, value)
+	},
+	LastSendWarning: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastSendWarning", op, value)
+	},
+	Memo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("memo", op, value)
+	},
+	RemittanceInstructions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("remittanceInstructions", op, value)
+	},
+	EmailSubjectSnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailSubjectSnapshot", op, value)
+	},
+	EmailBodySnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailBodySnapshot", op, value)
+	},
+	EmailToSnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailToSnapshot", op, value)
+	},
+	EmailCCSnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailCcSnapshot", op, value)
+	},
+	EmailBCCSnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("emailBccSnapshot", op, value)
 	},
 	CorrectionGroupID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("correctionGroupId", op, value)

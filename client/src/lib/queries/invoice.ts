@@ -6,4 +6,12 @@ export const invoice = createQueryKeys("invoice", {
     queryKey: ["get", invoiceId],
     queryFn: async () => apiService.invoiceService.getById(invoiceId),
   }),
+  sendPlan: (invoiceId: string) => ({
+    queryKey: ["send-plan", invoiceId],
+    queryFn: async () => apiService.invoiceService.getSendPlan(invoiceId),
+  }),
+  emailAttempts: (invoiceId: string) => ({
+    queryKey: ["email-attempts", invoiceId],
+    queryFn: async () => apiService.invoiceService.listEmailAttempts(invoiceId),
+  }),
 });

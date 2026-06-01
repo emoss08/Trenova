@@ -50,9 +50,11 @@ func (a *Activities) SendEmailActivity(
 			OrgID: payload.OrganizationID,
 			BuID:  payload.BusinessUnitID,
 		},
-		MessageID: payload.MessageID,
-		HTML:      payload.HTML,
-		Text:      payload.Text,
+		MessageID:    payload.MessageID,
+		HTML:         payload.HTML,
+		Text:         payload.Text,
+		Headers:      payload.Headers,
+		OpenTracking: payload.OpenTracking,
 	})
 	if err != nil {
 		logger.Error("Failed to send email", "messageId", payload.MessageID.String(), "error", err)
@@ -75,7 +77,7 @@ func classifySendError(err error) error {
 		return temporaltype.NewRetryableError("Email provider temporarily failed", err).ToTemporalError()
 	}
 	if errors.Is(err, services.ErrNonRetryableEmailSend) {
-		return temporaltype.NewNonRetryableError("Email provider rejected the message", err).ToTemporalError()
+		return temporaltype.NewNonRetryableError("Email send failed permanently", err).ToTemporalError()
 	}
 	return temporaltype.ClassifyError(err).ToTemporalError()
 }

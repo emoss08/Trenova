@@ -169,7 +169,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	documentoperationsservice.New,
 	documentsearchprojectionservice.New,
 	documentservice.New,
+	func(s *documentservice.Service) services.InvoiceDocumentService { return s },
 	documentuploadservice.New,
+	func(s *documentuploadservice.Service) services.DocumentUploadService { return s },
 	accessorialchargeservice.New,
 	assignmentservice.New,
 	fx.Annotate(

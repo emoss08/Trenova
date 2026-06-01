@@ -2,6 +2,7 @@ package emailservice
 
 import (
 	"context"
+	"net/mail"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
@@ -46,6 +47,12 @@ func (v *Validator) ValidateSend(_ context.Context, req *services.SendEmailReque
 	for i, recipient := range req.To {
 		if !strings.Contains(strings.TrimSpace(recipient), "@") {
 			multiErr.WithIndex("to", i).Add("", errortypes.ErrInvalid, "Recipient email is invalid")
+		}
+	}
+	if strings.TrimSpace(req.FromEmail) != "" {
+		parsed, err := mail.ParseAddress(strings.TrimSpace(req.FromEmail))
+		if err != nil || parsed.Address != strings.TrimSpace(req.FromEmail) {
+			multiErr.Add("fromEmail", errortypes.ErrInvalid, "Sender email is invalid")
 		}
 	}
 	if strings.TrimSpace(req.Subject) == "" {

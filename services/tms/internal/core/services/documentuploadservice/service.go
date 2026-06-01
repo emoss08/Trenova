@@ -99,14 +99,6 @@ func New(p Params) *Service {
 	}
 }
 
-type UploadPartRequest struct {
-	TenantInfo pagination.TenantInfo
-	SessionID  pulid.ID
-	PartNumber int
-	Body       io.Reader
-	Size       int64
-}
-
 func (s *Service) CreateSession(
 	ctx context.Context,
 	req *services.CreateSessionRequest,
@@ -303,7 +295,7 @@ func (s *Service) partUploadTargetsMultipart(
 
 func (s *Service) UploadPart(
 	ctx context.Context,
-	req *UploadPartRequest,
+	req *services.UploadPartRequest,
 ) (*documentupload.DocumentUploadSession, error) {
 	if req.PartNumber != 1 {
 		return nil, errortypes.NewValidationError(

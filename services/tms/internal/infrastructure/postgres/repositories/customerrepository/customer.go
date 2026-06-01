@@ -336,7 +336,7 @@ func (r *repository) saveBillingProfile(
 		Set("auto_credit_hold = EXCLUDED.auto_credit_hold").
 		Set("credit_hold_reason = EXCLUDED.credit_hold_reason").
 		Set("invoice_method = EXCLUDED.invoice_method").
-		Set("summary_transmit_on_generation = EXCLUDED.summary_transmit_on_generation").
+		Set("auto_send_invoice_on_generation = EXCLUDED.auto_send_invoice_on_generation").
 		Set("allow_invoice_consolidation = EXCLUDED.allow_invoice_consolidation").
 		Set("consolidation_period_days = EXCLUDED.consolidation_period_days").
 		Set("consolidation_group_by = EXCLUDED.consolidation_group_by").
@@ -410,7 +410,6 @@ func (r *repository) saveEmailProfile(
 		Set("bcc_recipients = EXCLUDED.bcc_recipients").
 		Set("attachment_name = EXCLUDED.attachment_name").
 		Set("read_receipt = EXCLUDED.read_receipt").
-		Set("send_invoice_on_generation = EXCLUDED.send_invoice_on_generation").
 		Set("include_shipment_detail = EXCLUDED.include_shipment_detail").
 		Set("version = cem.version + 1").
 		Set("updated_at = EXCLUDED.updated_at").

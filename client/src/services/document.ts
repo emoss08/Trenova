@@ -32,12 +32,7 @@ import { z } from "zod";
 type DocumentContentAction = "download" | "view" | "preview";
 
 function documentContentUrl(documentId: string, action: DocumentContentAction): string {
-  const baseUrl =
-    import.meta.env.DEV && API_BASE_URL.startsWith("/")
-      ? "http://localhost:8080/api/v1"
-      : API_BASE_URL;
-
-  return `${baseUrl}/documents/${encodeURIComponent(documentId)}/${action}/`;
+  return `${API_BASE_URL}/documents/${encodeURIComponent(documentId)}/${action}/`;
 }
 
 export class DocumentService {

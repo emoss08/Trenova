@@ -1,4 +1,5 @@
 import { apiService } from "@/services/api";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -14,8 +15,8 @@ export function usePostInvoice() {
       void queryClient.invalidateQueries({ queryKey: ["billing-queue-list"] });
       toast.success(`${updated.number} posted`);
     },
-    onError: () => {
-      toast.error("Failed to post invoice");
+    onError: (error) => {
+      handleMutationError({ error, resourceName: "invoice posting" });
     },
   });
 }

@@ -359,7 +359,7 @@ var CustomerBillingProfileColumns = struct {
 	AutoCreditHold                            Column // "auto_credit_hold" → qualified: "cbp.auto_credit_hold"
 	CreditHoldReason                          Column // "credit_hold_reason" → qualified: "cbp.credit_hold_reason"
 	InvoiceMethod                             Column // "invoice_method" → qualified: "cbp.invoice_method"
-	SummaryTransmitOnGeneration               Column // "summary_transmit_on_generation" → qualified: "cbp.summary_transmit_on_generation"
+	AutoSendInvoiceOnGeneration               Column // "auto_send_invoice_on_generation" → qualified: "cbp.auto_send_invoice_on_generation"
 	AllowInvoiceConsolidation                 Column // "allow_invoice_consolidation" → qualified: "cbp.allow_invoice_consolidation"
 	ConsolidationPeriodDays                   Column // "consolidation_period_days" → qualified: "cbp.consolidation_period_days"
 	ConsolidationGroupBy                      Column // "consolidation_group_by" → qualified: "cbp.consolidation_group_by"
@@ -410,7 +410,7 @@ var CustomerBillingProfileColumns = struct {
 	AutoCreditHold:                       NewColumn("auto_credit_hold", "cbp"),
 	CreditHoldReason:                     NewColumn("credit_hold_reason", "cbp"),
 	InvoiceMethod:                        NewColumn("invoice_method", "cbp"),
-	SummaryTransmitOnGeneration:          NewColumn("summary_transmit_on_generation", "cbp"),
+	AutoSendInvoiceOnGeneration:          NewColumn("auto_send_invoice_on_generation", "cbp"),
 	AllowInvoiceConsolidation:            NewColumn("allow_invoice_consolidation", "cbp"),
 	ConsolidationPeriodDays:              NewColumn("consolidation_period_days", "cbp"),
 	ConsolidationGroupBy:                 NewColumn("consolidation_group_by", "cbp"),
@@ -467,7 +467,7 @@ var CustomerBillingProfileFieldMap = map[string]string{
 	"autoCreditHold":                            "auto_credit_hold",
 	"creditHoldReason":                          "credit_hold_reason",
 	"invoiceMethod":                             "invoice_method",
-	"summaryTransmitOnGeneration":               "summary_transmit_on_generation",
+	"autoSendInvoiceOnGeneration":               "auto_send_invoice_on_generation",
 	"allowInvoiceConsolidation":                 "allow_invoice_consolidation",
 	"consolidationPeriodDays":                   "consolidation_period_days",
 	"consolidationGroupBy":                      "consolidation_group_by",
@@ -522,7 +522,7 @@ var CustomerBillingProfileInsertableColumns = []string{
 	"auto_credit_hold",
 	"credit_hold_reason",
 	"invoice_method",
-	"summary_transmit_on_generation",
+	"auto_send_invoice_on_generation",
 	"allow_invoice_consolidation",
 	"consolidation_period_days",
 	"consolidation_group_by",
@@ -643,7 +643,7 @@ var CustomerBillingProfileFilter = struct {
 	AutoCreditHold                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoCreditHold" → DB: "auto_credit_hold"
 	CreditHoldReason                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "creditHoldReason" → DB: "credit_hold_reason"
 	InvoiceMethod                             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceMethod" → DB: "invoice_method"
-	SummaryTransmitOnGeneration               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "summaryTransmitOnGeneration" → DB: "summary_transmit_on_generation"
+	AutoSendInvoiceOnGeneration               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSendInvoiceOnGeneration" → DB: "auto_send_invoice_on_generation"
 	AllowInvoiceConsolidation                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allowInvoiceConsolidation" → DB: "allow_invoice_consolidation"
 	ConsolidationPeriodDays                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationPeriodDays" → DB: "consolidation_period_days"
 	ConsolidationGroupBy                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "consolidationGroupBy" → DB: "consolidation_group_by"
@@ -724,8 +724,8 @@ var CustomerBillingProfileFilter = struct {
 	InvoiceMethod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("invoiceMethod", op, value)
 	},
-	SummaryTransmitOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("summaryTransmitOnGeneration", op, value)
+	AutoSendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoSendInvoiceOnGeneration", op, value)
 	},
 	AllowInvoiceConsolidation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("allowInvoiceConsolidation", op, value)
@@ -964,41 +964,39 @@ var CustomerEmailProfileTable = TableInfo{
 //	q.Where(CustomerEmailProfileColumns.ID.Eq(), id)           // WHERE cem.id = ?
 //	q.Order(CustomerEmailProfileColumns.CreatedAt.OrderDesc())  // ORDER BY cem.created_at DESC
 var CustomerEmailProfileColumns = struct {
-	ID                      Column // "id" → qualified: "cem.id"
-	BusinessUnitID          Column // "business_unit_id" → qualified: "cem.business_unit_id"
-	OrganizationID          Column // "organization_id" → qualified: "cem.organization_id"
-	CustomerID              Column // "customer_id" → qualified: "cem.customer_id"
-	Subject                 Column // "subject" → qualified: "cem.subject"
-	Comment                 Column // "comment" → qualified: "cem.comment"
-	FromEmail               Column // "from_email" → qualified: "cem.from_email"
-	ToRecipients            Column // "to_recipients" → qualified: "cem.to_recipients"
-	CCRecipients            Column // "cc_recipients" → qualified: "cem.cc_recipients"
-	BCCRecipients           Column // "bcc_recipients" → qualified: "cem.bcc_recipients"
-	AttachmentName          Column // "attachment_name" → qualified: "cem.attachment_name"
-	ReadReceipt             Column // "read_receipt" → qualified: "cem.read_receipt"
-	SendInvoiceOnGeneration Column // "send_invoice_on_generation" → qualified: "cem.send_invoice_on_generation"
-	IncludeShipmentDetail   Column // "include_shipment_detail" → qualified: "cem.include_shipment_detail"
-	Version                 Column // "version" → qualified: "cem.version"
-	CreatedAt               Column // "created_at" → qualified: "cem.created_at"
-	UpdatedAt               Column // "updated_at" → qualified: "cem.updated_at"
+	ID                    Column // "id" → qualified: "cem.id"
+	BusinessUnitID        Column // "business_unit_id" → qualified: "cem.business_unit_id"
+	OrganizationID        Column // "organization_id" → qualified: "cem.organization_id"
+	CustomerID            Column // "customer_id" → qualified: "cem.customer_id"
+	Subject               Column // "subject" → qualified: "cem.subject"
+	Comment               Column // "comment" → qualified: "cem.comment"
+	FromEmail             Column // "from_email" → qualified: "cem.from_email"
+	ToRecipients          Column // "to_recipients" → qualified: "cem.to_recipients"
+	CCRecipients          Column // "cc_recipients" → qualified: "cem.cc_recipients"
+	BCCRecipients         Column // "bcc_recipients" → qualified: "cem.bcc_recipients"
+	AttachmentName        Column // "attachment_name" → qualified: "cem.attachment_name"
+	ReadReceipt           Column // "read_receipt" → qualified: "cem.read_receipt"
+	IncludeShipmentDetail Column // "include_shipment_detail" → qualified: "cem.include_shipment_detail"
+	Version               Column // "version" → qualified: "cem.version"
+	CreatedAt             Column // "created_at" → qualified: "cem.created_at"
+	UpdatedAt             Column // "updated_at" → qualified: "cem.updated_at"
 }{
-	ID:                      NewColumn("id", "cem"),
-	BusinessUnitID:          NewColumn("business_unit_id", "cem"),
-	OrganizationID:          NewColumn("organization_id", "cem"),
-	CustomerID:              NewColumn("customer_id", "cem"),
-	Subject:                 NewColumn("subject", "cem"),
-	Comment:                 NewColumn("comment", "cem"),
-	FromEmail:               NewColumn("from_email", "cem"),
-	ToRecipients:            NewColumn("to_recipients", "cem"),
-	CCRecipients:            NewColumn("cc_recipients", "cem"),
-	BCCRecipients:           NewColumn("bcc_recipients", "cem"),
-	AttachmentName:          NewColumn("attachment_name", "cem"),
-	ReadReceipt:             NewColumn("read_receipt", "cem"),
-	SendInvoiceOnGeneration: NewColumn("send_invoice_on_generation", "cem"),
-	IncludeShipmentDetail:   NewColumn("include_shipment_detail", "cem"),
-	Version:                 NewColumn("version", "cem"),
-	CreatedAt:               NewColumn("created_at", "cem"),
-	UpdatedAt:               NewColumn("updated_at", "cem"),
+	ID:                    NewColumn("id", "cem"),
+	BusinessUnitID:        NewColumn("business_unit_id", "cem"),
+	OrganizationID:        NewColumn("organization_id", "cem"),
+	CustomerID:            NewColumn("customer_id", "cem"),
+	Subject:               NewColumn("subject", "cem"),
+	Comment:               NewColumn("comment", "cem"),
+	FromEmail:             NewColumn("from_email", "cem"),
+	ToRecipients:          NewColumn("to_recipients", "cem"),
+	CCRecipients:          NewColumn("cc_recipients", "cem"),
+	BCCRecipients:         NewColumn("bcc_recipients", "cem"),
+	AttachmentName:        NewColumn("attachment_name", "cem"),
+	ReadReceipt:           NewColumn("read_receipt", "cem"),
+	IncludeShipmentDetail: NewColumn("include_shipment_detail", "cem"),
+	Version:               NewColumn("version", "cem"),
+	CreatedAt:             NewColumn("created_at", "cem"),
+	UpdatedAt:             NewColumn("updated_at", "cem"),
 }
 
 // CustomerEmailProfileFieldMap maps JSON API field names to database column names.
@@ -1006,23 +1004,22 @@ var CustomerEmailProfileColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by CustomerEmailProfile.GetStaticFieldMap().
 var CustomerEmailProfileFieldMap = map[string]string{
-	"id":                      "id",
-	"businessUnitId":          "business_unit_id",
-	"organizationId":          "organization_id",
-	"customerId":              "customer_id",
-	"subject":                 "subject",
-	"comment":                 "comment",
-	"fromEmail":               "from_email",
-	"toRecipients":            "to_recipients",
-	"ccRecipients":            "cc_recipients",
-	"bccRecipients":           "bcc_recipients",
-	"attachmentName":          "attachment_name",
-	"readReceipt":             "read_receipt",
-	"sendInvoiceOnGeneration": "send_invoice_on_generation",
-	"includeShipmentDetail":   "include_shipment_detail",
-	"version":                 "version",
-	"createdAt":               "created_at",
-	"updatedAt":               "updated_at",
+	"id":                    "id",
+	"businessUnitId":        "business_unit_id",
+	"organizationId":        "organization_id",
+	"customerId":            "customer_id",
+	"subject":               "subject",
+	"comment":               "comment",
+	"fromEmail":             "from_email",
+	"toRecipients":          "to_recipients",
+	"ccRecipients":          "cc_recipients",
+	"bccRecipients":         "bcc_recipients",
+	"attachmentName":        "attachment_name",
+	"readReceipt":           "read_receipt",
+	"includeShipmentDetail": "include_shipment_detail",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // CustomerEmailProfileInsertableColumns lists column names suitable for INSERT statements on the "customer_email_profiles" table.
@@ -1040,7 +1037,6 @@ var CustomerEmailProfileInsertableColumns = []string{
 	"bcc_recipients",
 	"attachment_name",
 	"read_receipt",
-	"send_invoice_on_generation",
 	"include_shipment_detail",
 	"version",
 	"created_at",
@@ -1110,23 +1106,22 @@ func CustomerEmailProfileApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQ
 //	CustomerEmailProfileFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var CustomerEmailProfileFilter = struct {
-	ID                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	CustomerID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
-	Subject                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
-	Comment                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
-	FromEmail               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromEmail" → DB: "from_email"
-	ToRecipients            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toRecipients" → DB: "to_recipients"
-	CCRecipients            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccRecipients" → DB: "cc_recipients"
-	BCCRecipients           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bccRecipients" → DB: "bcc_recipients"
-	AttachmentName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachmentName" → DB: "attachment_name"
-	ReadReceipt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "readReceipt" → DB: "read_receipt"
-	SendInvoiceOnGeneration func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sendInvoiceOnGeneration" → DB: "send_invoice_on_generation"
-	IncludeShipmentDetail   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "includeShipmentDetail" → DB: "include_shipment_detail"
-	Version                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CustomerID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	Subject               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subject" → DB: "subject"
+	Comment               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comment" → DB: "comment"
+	FromEmail             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fromEmail" → DB: "from_email"
+	ToRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toRecipients" → DB: "to_recipients"
+	CCRecipients          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ccRecipients" → DB: "cc_recipients"
+	BCCRecipients         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bccRecipients" → DB: "bcc_recipients"
+	AttachmentName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attachmentName" → DB: "attachment_name"
+	ReadReceipt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "readReceipt" → DB: "read_receipt"
+	IncludeShipmentDetail func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "includeShipmentDetail" → DB: "include_shipment_detail"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1163,9 +1158,6 @@ var CustomerEmailProfileFilter = struct {
 	},
 	ReadReceipt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("readReceipt", op, value)
-	},
-	SendInvoiceOnGeneration: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
-		return NewFieldFilter("sendInvoiceOnGeneration", op, value)
 	},
 	IncludeShipmentDetail: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("includeShipmentDetail", op, value)

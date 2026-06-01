@@ -52,6 +52,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	profiles := rg.Group("/email-profiles")
 	profiles.GET("/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.listProfiles)
 	profiles.POST("/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpCreate), h.createProfile)
+	profiles.GET("/select-options/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.selectProfileOptions)
+	profiles.GET("/select-options/:profileID", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.getProfileOption)
 	profiles.GET("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpRead), h.getProfile)
 	profiles.PUT("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpUpdate), h.updateProfile)
 	profiles.DELETE("/:profileID/", h.pm.RequirePermission(permission.ResourceEmailProfile.String(), permission.OpDelete), h.deleteProfile)
@@ -82,6 +84,43 @@ func (h *Handler) listProfiles(c *gin.Context) {
 			Filter: req,
 		})
 	})
+}
+
+func (h *Handler) selectProfileOptions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewSelectQueryRequest(c, authCtx)
+
+	pagination.SelectOptions(
+		c,
+		req,
+		h.eh,
+		func() (*pagination.ListResult[*email.Profile], error) {
+			return h.service.SelectProfileOptions(
+				c.Request.Context(),
+				&repositories.EmailProfileSelectOptionsRequest{
+					SelectQueryRequest: req,
+				},
+			)
+		},
+	)
+}
+
+func (h *Handler) getProfileOption(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.Parse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	profile, err := h.service.GetProfile(c.Request.Context(), repositories.GetEmailEntityRequest{
+		ID:         id,
+		TenantInfo: tenantInfo(authCtx),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, profile)
 }
 
 func (h *Handler) getProfile(c *gin.Context) {

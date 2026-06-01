@@ -8,6 +8,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
@@ -129,6 +130,80 @@ func (_c *MockExchangeRateService_Convert_Call) Return(rateConversionResult *ser
 }
 
 func (_c *MockExchangeRateService_Convert_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, fromCurrency string, toCurrency string, amount decimal.Decimal, date time.Time) (*services.RateConversionResult, error)) *MockExchangeRateService_Convert_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateSettlementQuote provides a mock function for the type MockExchangeRateService
+func (_mock *MockExchangeRateService) CreateSettlementQuote(ctx context.Context, tenantInfo pagination.TenantInfo, req *services.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error) {
+	ret := _mock.Called(ctx, tenantInfo, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSettlementQuote")
+	}
+
+	var r0 *exchangerate.SettlementQuote
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error)); ok {
+		return returnFunc(ctx, tenantInfo, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.CreateSettlementQuoteRequest) *exchangerate.SettlementQuote); ok {
+		r0 = returnFunc(ctx, tenantInfo, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*exchangerate.SettlementQuote)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, *services.CreateSettlementQuoteRequest) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockExchangeRateService_CreateSettlementQuote_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSettlementQuote'
+type MockExchangeRateService_CreateSettlementQuote_Call struct {
+	*mock.Call
+}
+
+// CreateSettlementQuote is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - req *services.CreateSettlementQuoteRequest
+func (_e *MockExchangeRateService_Expecter) CreateSettlementQuote(ctx interface{}, tenantInfo interface{}, req interface{}) *MockExchangeRateService_CreateSettlementQuote_Call {
+	return &MockExchangeRateService_CreateSettlementQuote_Call{Call: _e.mock.On("CreateSettlementQuote", ctx, tenantInfo, req)}
+}
+
+func (_c *MockExchangeRateService_CreateSettlementQuote_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, req *services.CreateSettlementQuoteRequest)) *MockExchangeRateService_CreateSettlementQuote_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 *services.CreateSettlementQuoteRequest
+		if args[2] != nil {
+			arg2 = args[2].(*services.CreateSettlementQuoteRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockExchangeRateService_CreateSettlementQuote_Call) Return(settlementQuote *exchangerate.SettlementQuote, err error) *MockExchangeRateService_CreateSettlementQuote_Call {
+	_c.Call.Return(settlementQuote, err)
+	return _c
+}
+
+func (_c *MockExchangeRateService_CreateSettlementQuote_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, req *services.CreateSettlementQuoteRequest) (*exchangerate.SettlementQuote, error)) *MockExchangeRateService_CreateSettlementQuote_Call {
 	_c.Call.Return(run)
 	return _c
 }

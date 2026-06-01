@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -174,6 +175,148 @@ func (_c *MockInvoiceRepository_Create_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// CreateDocumentShareToken provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) CreateDocumentShareToken(ctx context.Context, token *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error) {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDocumentShareToken")
+	}
+
+	var r0 *invoice.DocumentShareToken
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error)); ok {
+		return returnFunc(ctx, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.DocumentShareToken) *invoice.DocumentShareToken); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.DocumentShareToken)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoice.DocumentShareToken) error); ok {
+		r1 = returnFunc(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_CreateDocumentShareToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDocumentShareToken'
+type MockInvoiceRepository_CreateDocumentShareToken_Call struct {
+	*mock.Call
+}
+
+// CreateDocumentShareToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token *invoice.DocumentShareToken
+func (_e *MockInvoiceRepository_Expecter) CreateDocumentShareToken(ctx interface{}, token interface{}) *MockInvoiceRepository_CreateDocumentShareToken_Call {
+	return &MockInvoiceRepository_CreateDocumentShareToken_Call{Call: _e.mock.On("CreateDocumentShareToken", ctx, token)}
+}
+
+func (_c *MockInvoiceRepository_CreateDocumentShareToken_Call) Run(run func(ctx context.Context, token *invoice.DocumentShareToken)) *MockInvoiceRepository_CreateDocumentShareToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoice.DocumentShareToken
+		if args[1] != nil {
+			arg1 = args[1].(*invoice.DocumentShareToken)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_CreateDocumentShareToken_Call) Return(documentShareToken *invoice.DocumentShareToken, err error) *MockInvoiceRepository_CreateDocumentShareToken_Call {
+	_c.Call.Return(documentShareToken, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_CreateDocumentShareToken_Call) RunAndReturn(run func(ctx context.Context, token *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error)) *MockInvoiceRepository_CreateDocumentShareToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateEmailAttempt provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) CreateEmailAttempt(ctx context.Context, attempt *invoice.EmailAttempt, attachments []*invoice.EmailAttemptAttachment) (*invoice.EmailAttempt, error) {
+	ret := _mock.Called(ctx, attempt, attachments)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateEmailAttempt")
+	}
+
+	var r0 *invoice.EmailAttempt
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.EmailAttempt, []*invoice.EmailAttemptAttachment) (*invoice.EmailAttempt, error)); ok {
+		return returnFunc(ctx, attempt, attachments)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.EmailAttempt, []*invoice.EmailAttemptAttachment) *invoice.EmailAttempt); ok {
+		r0 = returnFunc(ctx, attempt, attachments)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.EmailAttempt)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoice.EmailAttempt, []*invoice.EmailAttemptAttachment) error); ok {
+		r1 = returnFunc(ctx, attempt, attachments)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_CreateEmailAttempt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateEmailAttempt'
+type MockInvoiceRepository_CreateEmailAttempt_Call struct {
+	*mock.Call
+}
+
+// CreateEmailAttempt is a helper method to define mock.On call
+//   - ctx context.Context
+//   - attempt *invoice.EmailAttempt
+//   - attachments []*invoice.EmailAttemptAttachment
+func (_e *MockInvoiceRepository_Expecter) CreateEmailAttempt(ctx interface{}, attempt interface{}, attachments interface{}) *MockInvoiceRepository_CreateEmailAttempt_Call {
+	return &MockInvoiceRepository_CreateEmailAttempt_Call{Call: _e.mock.On("CreateEmailAttempt", ctx, attempt, attachments)}
+}
+
+func (_c *MockInvoiceRepository_CreateEmailAttempt_Call) Run(run func(ctx context.Context, attempt *invoice.EmailAttempt, attachments []*invoice.EmailAttemptAttachment)) *MockInvoiceRepository_CreateEmailAttempt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoice.EmailAttempt
+		if args[1] != nil {
+			arg1 = args[1].(*invoice.EmailAttempt)
+		}
+		var arg2 []*invoice.EmailAttemptAttachment
+		if args[2] != nil {
+			arg2 = args[2].([]*invoice.EmailAttemptAttachment)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_CreateEmailAttempt_Call) Return(emailAttempt *invoice.EmailAttempt, err error) *MockInvoiceRepository_CreateEmailAttempt_Call {
+	_c.Call.Return(emailAttempt, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_CreateEmailAttempt_Call) RunAndReturn(run func(ctx context.Context, attempt *invoice.EmailAttempt, attachments []*invoice.EmailAttemptAttachment) (*invoice.EmailAttempt, error)) *MockInvoiceRepository_CreateEmailAttempt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetByBillingQueueItemID provides a mock function for the type MockInvoiceRepository
 func (_mock *MockInvoiceRepository) GetByBillingQueueItemID(ctx context.Context, req repositories.GetInvoiceByBillingQueueItemIDRequest) (*invoice.Invoice, error) {
 	ret := _mock.Called(ctx, req)
@@ -310,6 +453,74 @@ func (_c *MockInvoiceRepository_GetByID_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// GetDocumentShareToken provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) GetDocumentShareToken(ctx context.Context, req repositories.GetInvoiceDocumentShareTokenRequest) (*invoice.DocumentShareToken, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDocumentShareToken")
+	}
+
+	var r0 *invoice.DocumentShareToken
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceDocumentShareTokenRequest) (*invoice.DocumentShareToken, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetInvoiceDocumentShareTokenRequest) *invoice.DocumentShareToken); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.DocumentShareToken)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetInvoiceDocumentShareTokenRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_GetDocumentShareToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDocumentShareToken'
+type MockInvoiceRepository_GetDocumentShareToken_Call struct {
+	*mock.Call
+}
+
+// GetDocumentShareToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetInvoiceDocumentShareTokenRequest
+func (_e *MockInvoiceRepository_Expecter) GetDocumentShareToken(ctx interface{}, req interface{}) *MockInvoiceRepository_GetDocumentShareToken_Call {
+	return &MockInvoiceRepository_GetDocumentShareToken_Call{Call: _e.mock.On("GetDocumentShareToken", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_GetDocumentShareToken_Call) Run(run func(ctx context.Context, req repositories.GetInvoiceDocumentShareTokenRequest)) *MockInvoiceRepository_GetDocumentShareToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetInvoiceDocumentShareTokenRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetInvoiceDocumentShareTokenRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_GetDocumentShareToken_Call) Return(documentShareToken *invoice.DocumentShareToken, err error) *MockInvoiceRepository_GetDocumentShareToken_Call {
+	_c.Call.Return(documentShareToken, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_GetDocumentShareToken_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetInvoiceDocumentShareTokenRequest) (*invoice.DocumentShareToken, error)) *MockInvoiceRepository_GetDocumentShareToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // List provides a mock function for the type MockInvoiceRepository
 func (_mock *MockInvoiceRepository) List(ctx context.Context, req *repositories.ListInvoicesRequest) (*pagination.ListResult[*invoice.Invoice], error) {
 	ret := _mock.Called(ctx, req)
@@ -378,6 +589,205 @@ func (_c *MockInvoiceRepository_List_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// ListAttachments provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) ListAttachments(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) ([]*invoice.Attachment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAttachments")
+	}
+
+	var r0 []*invoice.Attachment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) ([]*invoice.Attachment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) []*invoice.Attachment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*invoice.Attachment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_ListAttachments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAttachments'
+type MockInvoiceRepository_ListAttachments_Call struct {
+	*mock.Call
+}
+
+// ListAttachments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListInvoiceEmailAttemptsRequest
+func (_e *MockInvoiceRepository_Expecter) ListAttachments(ctx interface{}, req interface{}) *MockInvoiceRepository_ListAttachments_Call {
+	return &MockInvoiceRepository_ListAttachments_Call{Call: _e.mock.On("ListAttachments", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_ListAttachments_Call) Run(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest)) *MockInvoiceRepository_ListAttachments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListInvoiceEmailAttemptsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListInvoiceEmailAttemptsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListAttachments_Call) Return(attachments []*invoice.Attachment, err error) *MockInvoiceRepository_ListAttachments_Call {
+	_c.Call.Return(attachments, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListAttachments_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) ([]*invoice.Attachment, error)) *MockInvoiceRepository_ListAttachments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListEmailAttempts provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) ListEmailAttempts(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) (*pagination.ListResult[*invoice.EmailAttempt], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEmailAttempts")
+	}
+
+	var r0 *pagination.ListResult[*invoice.EmailAttempt]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) (*pagination.ListResult[*invoice.EmailAttempt], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) *pagination.ListResult[*invoice.EmailAttempt]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*invoice.EmailAttempt])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.ListInvoiceEmailAttemptsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_ListEmailAttempts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEmailAttempts'
+type MockInvoiceRepository_ListEmailAttempts_Call struct {
+	*mock.Call
+}
+
+// ListEmailAttempts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.ListInvoiceEmailAttemptsRequest
+func (_e *MockInvoiceRepository_Expecter) ListEmailAttempts(ctx interface{}, req interface{}) *MockInvoiceRepository_ListEmailAttempts_Call {
+	return &MockInvoiceRepository_ListEmailAttempts_Call{Call: _e.mock.On("ListEmailAttempts", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_ListEmailAttempts_Call) Run(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest)) *MockInvoiceRepository_ListEmailAttempts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.ListInvoiceEmailAttemptsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.ListInvoiceEmailAttemptsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListEmailAttempts_Call) Return(listResult *pagination.ListResult[*invoice.EmailAttempt], err error) *MockInvoiceRepository_ListEmailAttempts_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListEmailAttempts_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) (*pagination.ListResult[*invoice.EmailAttempt], error)) *MockInvoiceRepository_ListEmailAttempts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SyncEmailAttemptsForMessage provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) SyncEmailAttemptsForMessage(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error {
+	ret := _mock.Called(ctx, messageID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SyncEmailAttemptsForMessage")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r0 = returnFunc(ctx, messageID, tenantInfo)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockInvoiceRepository_SyncEmailAttemptsForMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SyncEmailAttemptsForMessage'
+type MockInvoiceRepository_SyncEmailAttemptsForMessage_Call struct {
+	*mock.Call
+}
+
+// SyncEmailAttemptsForMessage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - messageID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockInvoiceRepository_Expecter) SyncEmailAttemptsForMessage(ctx interface{}, messageID interface{}, tenantInfo interface{}) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	return &MockInvoiceRepository_SyncEmailAttemptsForMessage_Call{Call: _e.mock.On("SyncEmailAttemptsForMessage", ctx, messageID, tenantInfo)}
+}
+
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Run(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo)) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) Return(err error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call) RunAndReturn(run func(ctx context.Context, messageID pulid.ID, tenantInfo pagination.TenantInfo) error) *MockInvoiceRepository_SyncEmailAttemptsForMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockInvoiceRepository
 func (_mock *MockInvoiceRepository) Update(ctx context.Context, entity *invoice.Invoice) (*invoice.Invoice, error) {
 	ret := _mock.Called(ctx, entity)
@@ -442,6 +852,142 @@ func (_c *MockInvoiceRepository_Update_Call) Return(invoice1 *invoice.Invoice, e
 }
 
 func (_c *MockInvoiceRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *invoice.Invoice) (*invoice.Invoice, error)) *MockInvoiceRepository_Update_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateDocumentShareToken provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) UpdateDocumentShareToken(ctx context.Context, token *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error) {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateDocumentShareToken")
+	}
+
+	var r0 *invoice.DocumentShareToken
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error)); ok {
+		return returnFunc(ctx, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoice.DocumentShareToken) *invoice.DocumentShareToken); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*invoice.DocumentShareToken)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoice.DocumentShareToken) error); ok {
+		r1 = returnFunc(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_UpdateDocumentShareToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDocumentShareToken'
+type MockInvoiceRepository_UpdateDocumentShareToken_Call struct {
+	*mock.Call
+}
+
+// UpdateDocumentShareToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token *invoice.DocumentShareToken
+func (_e *MockInvoiceRepository_Expecter) UpdateDocumentShareToken(ctx interface{}, token interface{}) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
+	return &MockInvoiceRepository_UpdateDocumentShareToken_Call{Call: _e.mock.On("UpdateDocumentShareToken", ctx, token)}
+}
+
+func (_c *MockInvoiceRepository_UpdateDocumentShareToken_Call) Run(run func(ctx context.Context, token *invoice.DocumentShareToken)) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *invoice.DocumentShareToken
+		if args[1] != nil {
+			arg1 = args[1].(*invoice.DocumentShareToken)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpdateDocumentShareToken_Call) Return(documentShareToken *invoice.DocumentShareToken, err error) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
+	_c.Call.Return(documentShareToken, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpdateDocumentShareToken_Call) RunAndReturn(run func(ctx context.Context, token *invoice.DocumentShareToken) (*invoice.DocumentShareToken, error)) *MockInvoiceRepository_UpdateDocumentShareToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpsertAttachments provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) UpsertAttachments(ctx context.Context, req repositories.UpsertInvoiceAttachmentsRequest) ([]*invoice.Attachment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertAttachments")
+	}
+
+	var r0 []*invoice.Attachment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.UpsertInvoiceAttachmentsRequest) ([]*invoice.Attachment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.UpsertInvoiceAttachmentsRequest) []*invoice.Attachment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*invoice.Attachment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.UpsertInvoiceAttachmentsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_UpsertAttachments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertAttachments'
+type MockInvoiceRepository_UpsertAttachments_Call struct {
+	*mock.Call
+}
+
+// UpsertAttachments is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.UpsertInvoiceAttachmentsRequest
+func (_e *MockInvoiceRepository_Expecter) UpsertAttachments(ctx interface{}, req interface{}) *MockInvoiceRepository_UpsertAttachments_Call {
+	return &MockInvoiceRepository_UpsertAttachments_Call{Call: _e.mock.On("UpsertAttachments", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_UpsertAttachments_Call) Run(run func(ctx context.Context, req repositories.UpsertInvoiceAttachmentsRequest)) *MockInvoiceRepository_UpsertAttachments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.UpsertInvoiceAttachmentsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.UpsertInvoiceAttachmentsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpsertAttachments_Call) Return(attachments []*invoice.Attachment, err error) *MockInvoiceRepository_UpsertAttachments_Call {
+	_c.Call.Return(attachments, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_UpsertAttachments_Call) RunAndReturn(run func(ctx context.Context, req repositories.UpsertInvoiceAttachmentsRequest) ([]*invoice.Attachment, error)) *MockInvoiceRepository_UpsertAttachments_Call {
 	_c.Call.Return(run)
 	return _c
 }

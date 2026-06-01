@@ -1,6 +1,9 @@
 package services
 
 import (
+	"context"
+	"io"
+
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -41,6 +44,14 @@ type CancelRequest struct {
 	SessionID  pulid.ID
 }
 
+type UploadPartRequest struct {
+	TenantInfo pagination.TenantInfo
+	SessionID  pulid.ID
+	PartNumber int
+	Body       io.Reader
+	Size       int64
+}
+
 type PartUploadTarget struct {
 	PartNumber int    `json:"partNumber"`
 	URL        string `json:"url"`
@@ -50,4 +61,15 @@ type PartUploadTarget struct {
 type SessionState struct {
 	Session *documentupload.DocumentUploadSession `json:"session"`
 	Parts   []storage.UploadedPart                `json:"parts"`
+}
+
+type DocumentUploadService interface {
+	CreateSession(
+		ctx context.Context,
+		req *CreateSessionRequest,
+	) (*documentupload.DocumentUploadSession, error)
+	UploadPart(
+		ctx context.Context,
+		req *UploadPartRequest,
+	) (*documentupload.DocumentUploadSession, error)
 }

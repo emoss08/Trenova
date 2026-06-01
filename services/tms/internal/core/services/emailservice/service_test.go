@@ -4,12 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestHandleProviderEventUsesExplicitProviderMessageID(t *testing.T) {
@@ -38,6 +42,144 @@ func TestHandleProviderEventUsesExplicitProviderMessageID(t *testing.T) {
 	require.Equal(t, msg.ProviderMessageID, repo.providerMessageIDLookup)
 	require.Equal(t, email.MessageStatusDelivered, repo.updatedMessage.Status)
 	require.Empty(t, repo.suppressions)
+}
+
+func TestUpsertAssignmentsRejectsInactiveProfile(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	profileID := pulid.MustNew("emlprof_")
+	repo := &assignmentRepo{
+		profiles: map[pulid.ID]*email.Profile{
+			profileID: {
+				ID:             profileID,
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				Status:         email.ProfileStatusInactive,
+			},
+		},
+	}
+	svc := &Service{
+		repo:         repo,
+		auditService: noopAuditService{},
+		l:            zap.NewNop(),
+	}
+
+	_, err := svc.UpsertAssignments(
+		t.Context(),
+		tenantInfo,
+		[]*email.ProfileAssignment{{
+			Purpose:   email.PurposeBilling,
+			ProfileID: profileID,
+		}},
+		pulid.MustNew("usr_"),
+	)
+
+	require.Error(t, err)
+	require.Empty(t, repo.updatedAssignments)
+}
+
+func TestUpsertAssignmentsReplacesAssignmentSet(t *testing.T) {
+	t.Parallel()
+
+	tenantInfo := testTenantInfo()
+	billingProfileID := pulid.MustNew("emlprof_")
+	repo := &assignmentRepo{
+		profiles: map[pulid.ID]*email.Profile{
+			billingProfileID: {
+				ID:             billingProfileID,
+				BusinessUnitID: tenantInfo.BuID,
+				OrganizationID: tenantInfo.OrgID,
+				Status:         email.ProfileStatusActive,
+			},
+		},
+	}
+	svc := &Service{
+		repo:         repo,
+		auditService: noopAuditService{},
+		l:            zap.NewNop(),
+	}
+
+	assignments, err := svc.UpsertAssignments(
+		t.Context(),
+		tenantInfo,
+		[]*email.ProfileAssignment{{
+			Purpose:   email.PurposeBilling,
+			ProfileID: billingProfileID,
+		}},
+		pulid.MustNew("usr_"),
+	)
+
+	require.NoError(t, err)
+	require.Len(t, repo.updatedAssignments, 1)
+	require.Equal(t, email.PurposeBilling, repo.updatedAssignments[0].Purpose)
+	require.Equal(t, billingProfileID, repo.updatedAssignments[0].ProfileID)
+	require.Equal(t, repo.updatedAssignments, assignments)
+}
+
+type assignmentRepo struct {
+	repositories.EmailRepository
+
+	profiles           map[pulid.ID]*email.Profile
+	updatedAssignments []*email.ProfileAssignment
+}
+
+func (r *assignmentRepo) GetProfile(
+	_ context.Context,
+	req repositories.GetEmailEntityRequest,
+) (*email.Profile, error) {
+	profile, ok := r.profiles[req.ID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("EmailProfile not found")
+	}
+	if profile.OrganizationID != req.TenantInfo.OrgID || profile.BusinessUnitID != req.TenantInfo.BuID {
+		return nil, errortypes.NewNotFoundError("EmailProfile not found")
+	}
+	return profile, nil
+}
+
+func (r *assignmentRepo) UpsertAssignments(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	assignments []*email.ProfileAssignment,
+) ([]*email.ProfileAssignment, error) {
+	r.updatedAssignments = append([]*email.ProfileAssignment{}, assignments...)
+	return r.updatedAssignments, nil
+}
+
+type noopAuditService struct{}
+
+func (noopAuditService) List(
+	context.Context,
+	*repositories.ListAuditEntriesRequest,
+) (*pagination.ListResult[*audit.Entry], error) {
+	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
+}
+
+func (noopAuditService) ListByResourceID(
+	context.Context,
+	*repositories.ListByResourceIDRequest,
+) (*pagination.ListResult[*audit.Entry], error) {
+	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
+}
+
+func (noopAuditService) GetByID(
+	context.Context,
+	repositories.GetAuditEntryByIDOptions,
+) (*audit.Entry, error) {
+	return nil, errortypes.NewNotFoundError("AuditEntry not found")
+}
+
+func (noopAuditService) LogAction(*services.LogActionParams, ...services.LogOption) error {
+	return nil
+}
+
+func (noopAuditService) LogActions([]services.BulkLogEntry) error {
+	return nil
+}
+
+func (noopAuditService) RegisterSensitiveFields(permission.Resource, []services.SensitiveField) error {
+	return nil
 }
 
 func TestHandleProviderEventCreatesSuppressionOnlyWithReason(t *testing.T) {

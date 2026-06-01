@@ -248,8 +248,10 @@ func (_mock *MockDistanceOverrideRepository) GetByRouteSignature(ctx context.Con
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string) *distanceoverride.DistanceOverride); ok {
 		r0 = returnFunc(ctx, tenantInfo, routeSignature)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*distanceoverride.DistanceOverride)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*distanceoverride.DistanceOverride)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, string) error); ok {
 		r1 = returnFunc(ctx, tenantInfo, routeSignature)
@@ -257,6 +259,52 @@ func (_mock *MockDistanceOverrideRepository) GetByRouteSignature(ctx context.Con
 		r1 = ret.Error(1)
 	}
 	return r0, r1
+}
+
+// MockDistanceOverrideRepository_GetByRouteSignature_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByRouteSignature'
+type MockDistanceOverrideRepository_GetByRouteSignature_Call struct {
+	*mock.Call
+}
+
+// GetByRouteSignature is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - routeSignature string
+func (_e *MockDistanceOverrideRepository_Expecter) GetByRouteSignature(ctx interface{}, tenantInfo interface{}, routeSignature interface{}) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+	return &MockDistanceOverrideRepository_GetByRouteSignature_Call{Call: _e.mock.On("GetByRouteSignature", ctx, tenantInfo, routeSignature)}
+}
+
+func (_c *MockDistanceOverrideRepository_GetByRouteSignature_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, routeSignature string)) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDistanceOverrideRepository_GetByRouteSignature_Call) Return(distanceOverride *distanceoverride.DistanceOverride, err error) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+	_c.Call.Return(distanceOverride, err)
+	return _c
+}
+
+func (_c *MockDistanceOverrideRepository_GetByRouteSignature_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, routeSignature string) (*distanceoverride.DistanceOverride, error)) *MockDistanceOverrideRepository_GetByRouteSignature_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // List provides a mock function for the type MockDistanceOverrideRepository

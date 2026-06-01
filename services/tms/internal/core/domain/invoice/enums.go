@@ -31,6 +31,25 @@ const (
 	DisputeStatusDisputed = DisputeStatus("Disputed")
 )
 
+type SendStatus string
+
+const (
+	SendStatusNotSent       = SendStatus("NotSent")
+	SendStatusSending       = SendStatus("Sending")
+	SendStatusSent          = SendStatus("Sent")
+	SendStatusPartiallySent = SendStatus("PartiallySent")
+	SendStatusFailed        = SendStatus("Failed")
+)
+
+type AttachmentDeliveryMethod string
+
+const (
+	AttachmentDeliveryMethodAttached = AttachmentDeliveryMethod("Attached")
+	AttachmentDeliveryMethodLink     = AttachmentDeliveryMethod("Link")
+	AttachmentDeliveryMethodSkipped  = AttachmentDeliveryMethod("Skipped")
+	AttachmentDeliveryMethodFailed   = AttachmentDeliveryMethod("Failed")
+)
+
 const (
 	PaymentTermNet10        = PaymentTerm("Net10")
 	PaymentTermNet15        = PaymentTerm("Net15")
@@ -86,6 +105,31 @@ func (s SettlementStatus) IsValid() bool {
 func (s DisputeStatus) IsValid() bool {
 	switch s {
 	case DisputeStatusNone, DisputeStatusDisputed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s SendStatus) IsValid() bool {
+	switch s {
+	case SendStatusNotSent,
+		SendStatusSending,
+		SendStatusSent,
+		SendStatusPartiallySent,
+		SendStatusFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m AttachmentDeliveryMethod) IsValid() bool {
+	switch m {
+	case AttachmentDeliveryMethodAttached,
+		AttachmentDeliveryMethodLink,
+		AttachmentDeliveryMethodSkipped,
+		AttachmentDeliveryMethodFailed:
 		return true
 	default:
 		return false

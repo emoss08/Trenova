@@ -52,24 +52,6 @@ func createTransferAutomationRule() validationframework.TenantedRule[*tenant.Bil
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			if entity.BillingQueueTransferMode == tenant.BillingQueueTransferModeManualOnly {
-				if entity.BillingQueueTransferSchedule != "" {
-					multiErr.Add(
-						"billingQueueTransferSchedule",
-						errortypes.ErrInvalidOperation,
-						"Billing queue transfer schedule must be empty when transfer mode is ManualOnly",
-					)
-				}
-				if entity.BillingQueueTransferBatchSize != 0 {
-					multiErr.Add(
-						"billingQueueTransferBatchSize",
-						errortypes.ErrInvalidOperation,
-						"Billing queue transfer batch size must be empty when transfer mode is ManualOnly",
-					)
-				}
-				return nil
-			}
-
 			if entity.BillingQueueTransferSchedule == "" {
 				multiErr.Add(
 					"billingQueueTransferSchedule",

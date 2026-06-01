@@ -2410,9 +2410,13 @@ func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.Inovic
 		if qty.LessThanOrEqual(decimal.Zero) {
 			qty = decimal.NewFromInt(1)
 		}
-		unitPrice := charge.Amount
+		amount := shipmentcommercial.CalculateAdditionalCharge(
+			charge,
+			shp.FreightChargeAmount.Decimal,
+		)
+		unitPrice := amount
 		if qty.GreaterThan(decimal.Zero) {
-			unitPrice = charge.Amount.Div(qty)
+			unitPrice = amount.Div(qty)
 		}
 		description := "Accessorial charge"
 		if charge.AccessorialCharge != nil &&
@@ -2425,7 +2429,7 @@ func buildReplacementLinesFromShipment(shp *shipment.Shipment) []*invoice.Inovic
 			Description: description,
 			Quantity:    qty,
 			UnitPrice:   unitPrice,
-			Amount:      charge.Amount,
+			Amount:      amount,
 		})
 	}
 	return lines

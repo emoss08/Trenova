@@ -48,7 +48,7 @@ export function CustomerEmailProfileForm() {
             name="emailProfile.subject"
             label="Subject Line"
             placeholder="e.g., Invoice #{number} from {company}"
-            description="Email subject used when sending invoices. Supports template variables for invoice number and company name."
+            description="Email subject used when sending invoices. Supports {number}, {customer}, and {company}."
           />
         </FormControl>
         <FormControl>
@@ -102,8 +102,8 @@ export function CustomerEmailProfileForm() {
             control={control}
             name="emailProfile.attachmentName"
             label="Attachment Filename"
-            placeholder="e.g., Invoice-{number}.pdf"
-            description="Filename for the PDF invoice attachment. Supports template variables. A consistent naming convention helps the customer's AP team file invoices."
+            placeholder="e.g., Invoice-{number}-{customer}.pdf"
+            description="Filename for the PDF invoice attachment. Supports {number}, {customer}, and {company}."
           />
         </FormControl>
         <FormControl cols="full">
@@ -111,8 +111,8 @@ export function CustomerEmailProfileForm() {
             control={control}
             name="emailProfile.comment"
             label="Email Body"
-            placeholder="e.g., Please find the attached invoice. Payment is due within the terms specified. Contact us at billing@yourcompany.com with any questions."
-            description="Default message included in the email body above the invoice details. Keep it professional and include payment instructions or contact information."
+            placeholder="e.g., Please find invoice {number} attached for {customer}."
+            description="Default message included in the email body above the invoice details. Supports {number}, {customer}, and {company}."
           />
         </FormControl>
       </FormGroup>
@@ -122,18 +122,9 @@ export function CustomerEmailProfileForm() {
       <SectionHeader
         icon={SettingsIcon}
         title="Delivery Options"
-        description="Automated sending behavior and email content preferences"
+        description="Email content preferences"
       />
       <FormGroup cols={1}>
-        <FormControl className="min-h-[3em]">
-          <SwitchField
-            control={control}
-            name="emailProfile.sendInvoiceOnGeneration"
-            label="Send Automatically on Generation"
-            description="Immediately email the invoice to all configured recipients as soon as it is generated, without requiring a manual send step."
-            position="left"
-          />
-        </FormControl>
         <FormControl className="min-h-[3em]">
           <SwitchField
             control={control}

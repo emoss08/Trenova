@@ -17,9 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/billingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -45,14 +47,20 @@ type Params struct {
 	BillingQueueRepo   repositories.BillingQueueRepository
 	ShipmentRepo       repositories.ShipmentRepository
 	CustomerRepo       repositories.CustomerRepository
+	OrganizationRepo   repositories.OrganizationRepository
+	DocumentTypeRepo   repositories.DocumentTypeRepository
 	CustomerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	BillingRepo        repositories.BillingControlRepository
 	AccountingRepo     repositories.AccountingControlRepository
 	JournalRepo        repositories.JournalPostingRepository
 	AdjustmentRepo     repositories.InvoiceAdjustmentRepository
 	NotificationRepo   repositories.NotificationRepository
+	EmailRepo          repositories.EmailRepository
 	Validator          *Validator
 	AuditService       servicesports.AuditService
+	DocumentService    servicesports.InvoiceDocumentService `optional:"true"`
+	EmailService       servicesports.EmailService
+	Storage            storage.Client
 	Realtime           servicesports.RealtimeService
 	WorkflowStarter    servicesports.WorkflowStarter
 	SequenceGenerator  seqgen.Generator
@@ -67,14 +75,20 @@ type Service struct {
 	billingQueueRepo   repositories.BillingQueueRepository
 	shipmentRepo       repositories.ShipmentRepository
 	customerRepo       repositories.CustomerRepository
+	organizationRepo   repositories.OrganizationRepository
+	documentTypeRepo   repositories.DocumentTypeRepository
 	customerLedgerRepo repositories.CustomerLedgerProjectionRepository
 	billingRepo        repositories.BillingControlRepository
 	accountingRepo     repositories.AccountingControlRepository
 	journalRepo        repositories.JournalPostingRepository
 	adjustmentRepo     repositories.InvoiceAdjustmentRepository
 	notificationRepo   repositories.NotificationRepository
+	emailRepo          repositories.EmailRepository
 	validator          *Validator
 	auditService       servicesports.AuditService
+	documentService    servicesports.InvoiceDocumentService
+	emailService       servicesports.EmailService
+	storage            storage.Client
 	realtime           servicesports.RealtimeService
 	workflowStarter    servicesports.WorkflowStarter
 	sequenceGenerator  seqgen.Generator
@@ -108,14 +122,20 @@ func New(p Params) servicesports.InvoiceService { //nolint:gocritic // stable AP
 		billingQueueRepo:   p.BillingQueueRepo,
 		shipmentRepo:       p.ShipmentRepo,
 		customerRepo:       p.CustomerRepo,
+		organizationRepo:   p.OrganizationRepo,
+		documentTypeRepo:   p.DocumentTypeRepo,
 		customerLedgerRepo: p.CustomerLedgerRepo,
 		billingRepo:        p.BillingRepo,
 		accountingRepo:     p.AccountingRepo,
 		journalRepo:        p.JournalRepo,
 		adjustmentRepo:     p.AdjustmentRepo,
 		notificationRepo:   p.NotificationRepo,
+		emailRepo:          p.EmailRepo,
 		validator:          p.Validator,
 		auditService:       p.AuditService,
+		documentService:    p.DocumentService,
+		emailService:       p.EmailService,
+		storage:            p.Storage,
 		realtime:           p.Realtime,
 		workflowStarter:    p.WorkflowStarter,
 		sequenceGenerator:  p.SequenceGenerator,
@@ -332,10 +352,10 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return updateErr
 		}
 
-		shp, shipErr := s.shipmentRepo.GetByID(txCtx, &repositories.GetShipmentByIDRequest{
-			ID:         updated.ShipmentID,
-			TenantInfo: req.TenantInfo,
-		})
+		shp, shipErr := s.shipmentRepo.GetByID(
+			txCtx,
+			basicShipmentByIDRequest(updated.ShipmentID, req.TenantInfo),
+		)
 		if shipErr != nil {
 			return shipErr
 		}
@@ -507,15 +527,16 @@ func (s *Service) getInvoiceDependencies(
 	req *servicesports.CreateInvoiceFromBillingQueueRequest,
 	item *billingqueue.BillingQueueItem,
 ) (*invoiceDependencies, error) {
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         item.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
+	shp := item.Shipment
+	if shp == nil || shp.ID != item.ShipmentID || shp.CustomerID.IsNil() {
+		var err error
+		shp, err = s.shipmentRepo.GetByID(
+			ctx,
+			expandedShipmentByIDRequest(item.ShipmentID, req.TenantInfo),
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	cus, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
@@ -611,6 +632,7 @@ func (s *Service) buildInvoiceEntity(
 		paymentTerm = invoice.PaymentTermNet30
 	}
 
+	lines := buildInvoiceLines(item.BillType, shp)
 	entity := &invoice.Invoice{
 		OrganizationID:     item.OrganizationID,
 		BusinessUnitID:     item.BusinessUnitID,
@@ -633,13 +655,10 @@ func (s *Service) buildInvoiceEntity(
 		BillToAddressLine2: cus.AddressLine2,
 		BillToCity:         cus.City,
 		BillToPostalCode:   cus.PostalCode,
-		SubtotalAmount:     signedAmount(item.BillType, shp.FreightChargeAmount.Decimal),
-		OtherAmount:        signedAmount(item.BillType, shp.OtherChargeAmount.Decimal),
-		TotalAmount:        signedAmount(item.BillType, shp.TotalChargeAmount.Decimal),
 		AppliedAmount:      decimal.Zero,
 		SettlementStatus:   invoice.SettlementStatusUnpaid,
 		DisputeStatus:      invoice.DisputeStatusNone,
-		Lines:              buildInvoiceLines(item.BillType, shp),
+		Lines:              lines,
 	}
 
 	if cus.State != nil {
@@ -647,6 +666,7 @@ func (s *Service) buildInvoiceEntity(
 		entity.BillToCountry = cus.State.CountryName
 	}
 
+	syncInvoiceTotalsFromLines(entity)
 	entity.SyncMinorAmounts()
 
 	return entity
@@ -718,9 +738,6 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		BillToAddressLine2:        cus.AddressLine2,
 		BillToCity:                cus.City,
 		BillToPostalCode:          cus.PostalCode,
-		SubtotalAmount:            ctx.SubtotalAmount,
-		OtherAmount:               ctx.OtherAmount,
-		TotalAmount:               ctx.TotalAmount,
 		AppliedAmount:             decimal.Zero,
 		SettlementStatus:          invoice.SettlementStatusUnpaid,
 		DisputeStatus:             invoice.DisputeStatusNone,
@@ -729,19 +746,19 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		SourceInvoiceAdjustmentID: ctx.SourceAdjustmentID,
 		Lines:                     lines,
 	}
-	if ctx.SubtotalAmount.IsZero() && ctx.OtherAmount.IsZero() {
-		entity.SubtotalAmount = sumLinesByType(lines, invoice.InvoiceLineTypeFreight)
-		entity.OtherAmount = sumLinesByType(lines, invoice.InvoiceLineTypeAccessorial)
-	}
-	if ctx.TotalAmount.IsZero() {
-		entity.TotalAmount = sumLinesByType(lines, "")
-	}
 	if cus.State != nil {
 		entity.BillToState = cus.State.Abbreviation
 		entity.BillToCountry = cus.State.CountryName
 	}
+	syncInvoiceTotalsFromLines(entity)
 	entity.SyncMinorAmounts()
 	return entity
+}
+
+func syncInvoiceTotalsFromLines(entity *invoice.Invoice) {
+	entity.SubtotalAmount = sumLinesByType(entity.Lines, invoice.InvoiceLineTypeFreight)
+	entity.OtherAmount = sumLinesByType(entity.Lines, invoice.InvoiceLineTypeAccessorial)
+	entity.TotalAmount = sumLinesByType(entity.Lines, "")
 }
 
 func sumLinesByType(
@@ -785,7 +802,13 @@ func buildInvoiceLines(
 			quantity = decimal.NewFromInt(1)
 		}
 
-		amount := signedAmount(billType, charge.Amount)
+		amount := signedAmount(
+			billType,
+			shipmentcommercial.CalculateAdditionalCharge(
+				charge,
+				shp.FreightChargeAmount.Decimal,
+			),
+		)
 		unitPrice := amount
 		if !quantity.IsZero() {
 			unitPrice = amount.Div(quantity)

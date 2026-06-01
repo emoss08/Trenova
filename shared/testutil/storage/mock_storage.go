@@ -17,10 +17,11 @@ type MockStorageClient struct {
 	uploads []UploadCall
 	deletes []string
 
-	UploadFunc          func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	DownloadFunc        func(ctx context.Context, key string) (*storage.DownloadResult, error)
-	DeleteFunc          func(ctx context.Context, key string) error
-	GetPresignedURLFunc func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	UploadFunc                func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
+	DownloadFunc              func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	DeleteFunc                func(ctx context.Context, key string) error
+	DeleteObjectFunc          func(ctx context.Context, params *storage.DeleteObjectParams) error
+	GetPresignedURLFunc       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
 	GetPresignedUploadURLFunc func(
 		ctx context.Context,
 		params *storage.PresignedUploadURLParams,
@@ -45,8 +46,8 @@ type MockStorageClient struct {
 		ctx context.Context,
 		params *storage.ListMultipartUploadPartsParams,
 	) ([]storage.UploadedPart, error)
-	ExistsFunc          func(ctx context.Context, key string) (bool, error)
-	GetFileInfoFunc     func(ctx context.Context, key string) (*storage.FileInfo, error)
+	ExistsFunc      func(ctx context.Context, key string) (bool, error)
+	GetFileInfoFunc func(ctx context.Context, key string) (*storage.FileInfo, error)
 }
 
 type MockFile struct {
@@ -150,6 +151,19 @@ func (m *MockStorageClient) Delete(ctx context.Context, key string) error {
 	m.deletes = append(m.deletes, key)
 
 	return nil
+}
+
+func (m *MockStorageClient) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
+	if m.DeleteObjectFunc != nil {
+		return m.DeleteObjectFunc(ctx, params)
+	}
+	if params == nil {
+		return fmt.Errorf("delete object params are required")
+	}
+	return m.Delete(ctx, params.Key)
 }
 
 func (m *MockStorageClient) GetPresignedURL(

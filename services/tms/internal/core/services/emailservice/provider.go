@@ -35,6 +35,8 @@ type SendProviderMessage struct {
 	HTML           string
 	Text           string
 	Attachments    []ProviderAttachment
+	Headers        map[string]string
+	OpenTracking   bool
 }
 
 type ProviderAttachment struct {

@@ -41,6 +41,74 @@ func (_m *MockAuthService) EXPECT() *MockAuthService_Expecter {
 	return &MockAuthService_Expecter{mock: &_m.Mock}
 }
 
+// ActivateSessionRoles provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) ActivateSessionRoles(ctx context.Context, req services.ActivateSessionRolesRequest) (*services.ActivateSessionRolesResponse, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ActivateSessionRoles")
+	}
+
+	var r0 *services.ActivateSessionRolesResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ActivateSessionRolesRequest) (*services.ActivateSessionRolesResponse, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ActivateSessionRolesRequest) *services.ActivateSessionRolesResponse); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ActivateSessionRolesResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ActivateSessionRolesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_ActivateSessionRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ActivateSessionRoles'
+type MockAuthService_ActivateSessionRoles_Call struct {
+	*mock.Call
+}
+
+// ActivateSessionRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req services.ActivateSessionRolesRequest
+func (_e *MockAuthService_Expecter) ActivateSessionRoles(ctx interface{}, req interface{}) *MockAuthService_ActivateSessionRoles_Call {
+	return &MockAuthService_ActivateSessionRoles_Call{Call: _e.mock.On("ActivateSessionRoles", ctx, req)}
+}
+
+func (_c *MockAuthService_ActivateSessionRoles_Call) Run(run func(ctx context.Context, req services.ActivateSessionRolesRequest)) *MockAuthService_ActivateSessionRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 services.ActivateSessionRolesRequest
+		if args[1] != nil {
+			arg1 = args[1].(services.ActivateSessionRolesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_ActivateSessionRoles_Call) Return(activateSessionRolesResponse *services.ActivateSessionRolesResponse, err error) *MockAuthService_ActivateSessionRoles_Call {
+	_c.Call.Return(activateSessionRolesResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_ActivateSessionRoles_Call) RunAndReturn(run func(ctx context.Context, req services.ActivateSessionRolesRequest) (*services.ActivateSessionRolesResponse, error)) *MockAuthService_ActivateSessionRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AuthenticateAPIKey provides a mock function for the type MockAuthService
 func (_mock *MockAuthService) AuthenticateAPIKey(ctx context.Context, token string, ipAddress string, userAgent string) (*services.AuthenticatedPrincipal, error) {
 	ret := _mock.Called(ctx, token, ipAddress, userAgent)
@@ -257,74 +325,6 @@ func (_c *MockAuthService_GetTenantLoginMetadata_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
-// ListAuthProviders provides a mock function for the type MockAuthService
-func (_mock *MockAuthService) ListAuthProviders(ctx context.Context, organizationSlug string) ([]services.AuthProviderSummary, error) {
-	ret := _mock.Called(ctx, organizationSlug)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListAuthProviders")
-	}
-
-	var r0 []services.AuthProviderSummary
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]services.AuthProviderSummary, error)); ok {
-		return returnFunc(ctx, organizationSlug)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []services.AuthProviderSummary); ok {
-		r0 = returnFunc(ctx, organizationSlug)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]services.AuthProviderSummary)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, organizationSlug)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockAuthService_ListAuthProviders_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAuthProviders'
-type MockAuthService_ListAuthProviders_Call struct {
-	*mock.Call
-}
-
-// ListAuthProviders is a helper method to define mock.On call
-//   - ctx context.Context
-//   - organizationSlug string
-func (_e *MockAuthService_Expecter) ListAuthProviders(ctx interface{}, organizationSlug interface{}) *MockAuthService_ListAuthProviders_Call {
-	return &MockAuthService_ListAuthProviders_Call{Call: _e.mock.On("ListAuthProviders", ctx, organizationSlug)}
-}
-
-func (_c *MockAuthService_ListAuthProviders_Call) Run(run func(ctx context.Context, organizationSlug string)) *MockAuthService_ListAuthProviders_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAuthService_ListAuthProviders_Call) Return(authProviderSummaries []services.AuthProviderSummary, err error) *MockAuthService_ListAuthProviders_Call {
-	_c.Call.Return(authProviderSummaries, err)
-	return _c
-}
-
-func (_c *MockAuthService_ListAuthProviders_Call) RunAndReturn(run func(ctx context.Context, organizationSlug string) ([]services.AuthProviderSummary, error)) *MockAuthService_ListAuthProviders_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // HandleSSOCallback provides a mock function for the type MockAuthService
 func (_mock *MockAuthService) HandleSSOCallback(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error) {
 	ret := _mock.Called(ctx, req)
@@ -389,6 +389,142 @@ func (_c *MockAuthService_HandleSSOCallback_Call) Return(sSOCallbackResponse *se
 }
 
 func (_c *MockAuthService_HandleSSOCallback_Call) RunAndReturn(run func(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error)) *MockAuthService_HandleSSOCallback_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListAuthProviders provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) ListAuthProviders(ctx context.Context, organizationSlug string) ([]services.AuthProviderSummary, error) {
+	ret := _mock.Called(ctx, organizationSlug)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAuthProviders")
+	}
+
+	var r0 []services.AuthProviderSummary
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]services.AuthProviderSummary, error)); ok {
+		return returnFunc(ctx, organizationSlug)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []services.AuthProviderSummary); ok {
+		r0 = returnFunc(ctx, organizationSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]services.AuthProviderSummary)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, organizationSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_ListAuthProviders_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAuthProviders'
+type MockAuthService_ListAuthProviders_Call struct {
+	*mock.Call
+}
+
+// ListAuthProviders is a helper method to define mock.On call
+//   - ctx context.Context
+//   - organizationSlug string
+func (_e *MockAuthService_Expecter) ListAuthProviders(ctx interface{}, organizationSlug interface{}) *MockAuthService_ListAuthProviders_Call {
+	return &MockAuthService_ListAuthProviders_Call{Call: _e.mock.On("ListAuthProviders", ctx, organizationSlug)}
+}
+
+func (_c *MockAuthService_ListAuthProviders_Call) Run(run func(ctx context.Context, organizationSlug string)) *MockAuthService_ListAuthProviders_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_ListAuthProviders_Call) Return(authProviderSummarys []services.AuthProviderSummary, err error) *MockAuthService_ListAuthProviders_Call {
+	_c.Call.Return(authProviderSummarys, err)
+	return _c
+}
+
+func (_c *MockAuthService_ListAuthProviders_Call) RunAndReturn(run func(ctx context.Context, organizationSlug string) ([]services.AuthProviderSummary, error)) *MockAuthService_ListAuthProviders_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListAuthorizedSessionRoles provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) ListAuthorizedSessionRoles(ctx context.Context, sessionID pulid.ID) (*services.AuthorizedSessionRolesResponse, error) {
+	ret := _mock.Called(ctx, sessionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAuthorizedSessionRoles")
+	}
+
+	var r0 *services.AuthorizedSessionRolesResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*services.AuthorizedSessionRolesResponse, error)); ok {
+		return returnFunc(ctx, sessionID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *services.AuthorizedSessionRolesResponse); ok {
+		r0 = returnFunc(ctx, sessionID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.AuthorizedSessionRolesResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, sessionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuthService_ListAuthorizedSessionRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAuthorizedSessionRoles'
+type MockAuthService_ListAuthorizedSessionRoles_Call struct {
+	*mock.Call
+}
+
+// ListAuthorizedSessionRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID pulid.ID
+func (_e *MockAuthService_Expecter) ListAuthorizedSessionRoles(ctx interface{}, sessionID interface{}) *MockAuthService_ListAuthorizedSessionRoles_Call {
+	return &MockAuthService_ListAuthorizedSessionRoles_Call{Call: _e.mock.On("ListAuthorizedSessionRoles", ctx, sessionID)}
+}
+
+func (_c *MockAuthService_ListAuthorizedSessionRoles_Call) Run(run func(ctx context.Context, sessionID pulid.ID)) *MockAuthService_ListAuthorizedSessionRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuthService_ListAuthorizedSessionRoles_Call) Return(authorizedSessionRolesResponse *services.AuthorizedSessionRolesResponse, err error) *MockAuthService_ListAuthorizedSessionRoles_Call {
+	_c.Call.Return(authorizedSessionRolesResponse, err)
+	return _c
+}
+
+func (_c *MockAuthService_ListAuthorizedSessionRoles_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID) (*services.AuthorizedSessionRolesResponse, error)) *MockAuthService_ListAuthorizedSessionRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -650,54 +786,4 @@ func (_c *MockAuthService_ValidateSession_Call) Return(session1 *session.Session
 func (_c *MockAuthService_ValidateSession_Call) RunAndReturn(run func(ctx context.Context, sessionID pulid.ID) (*session.Session, error)) *MockAuthService_ValidateSession_Call {
 	_c.Call.Return(run)
 	return _c
-}
-
-func (_mock *MockAuthService) ListAuthorizedSessionRoles(
-	ctx context.Context,
-	sessionID pulid.ID,
-) (*services.AuthorizedSessionRolesResponse, error) {
-	ret := _mock.Called(ctx, sessionID)
-	if len(ret) == 0 {
-		panic("no return value specified for ListAuthorizedSessionRoles")
-	}
-
-	var r0 *services.AuthorizedSessionRolesResponse
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *services.AuthorizedSessionRolesResponse); ok {
-		r0 = returnFunc(ctx, sessionID)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*services.AuthorizedSessionRolesResponse)
-	}
-
-	var r1 error
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
-		r1 = returnFunc(ctx, sessionID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-func (_mock *MockAuthService) ActivateSessionRoles(
-	ctx context.Context,
-	req services.ActivateSessionRolesRequest,
-) (*services.ActivateSessionRolesResponse, error) {
-	ret := _mock.Called(ctx, req)
-	if len(ret) == 0 {
-		panic("no return value specified for ActivateSessionRoles")
-	}
-
-	var r0 *services.ActivateSessionRolesResponse
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.ActivateSessionRolesRequest) *services.ActivateSessionRolesResponse); ok {
-		r0 = returnFunc(ctx, req)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*services.ActivateSessionRolesResponse)
-	}
-
-	var r1 error
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.ActivateSessionRolesRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
 }

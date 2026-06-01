@@ -60,6 +60,19 @@ func (s *PostmarkSender) Send(
 	if len(msg.BCC) > 0 {
 		payload["Bcc"] = strings.Join(msg.BCC, ",")
 	}
+	if len(msg.Headers) > 0 {
+		headers := make([]map[string]string, 0, len(msg.Headers))
+		for name, value := range msg.Headers {
+			headers = append(headers, map[string]string{
+				"Name":  name,
+				"Value": value,
+			})
+		}
+		payload["Headers"] = headers
+	}
+	if msg.OpenTracking {
+		payload["TrackOpens"] = true
+	}
 	if msg.HTML != "" {
 		payload["HtmlBody"] = msg.HTML
 	}
@@ -113,7 +126,7 @@ func (s *PostmarkSender) Send(
 	}
 
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("%w: postmark status %d", ErrRetryableSend, resp.StatusCode)
+		return nil, providerStatusError(ErrRetryableSend, "postmark", resp.StatusCode, respBody)
 	}
-	return nil, fmt.Errorf("%w: postmark status %d", ErrNonRetryableSend, resp.StatusCode)
+	return nil, providerStatusError(ErrNonRetryableSend, "postmark", resp.StatusCode, respBody)
 }

@@ -264,6 +264,7 @@ export function BillingQueueSidebar({
               value={search}
               onChange={(e) => void setSearchParams({ query: e.target.value })}
               className="h-7 flex-1 text-xs"
+              inputContainerClassName="w-full"
             />
             <PopoverTrigger
               render={
@@ -279,7 +280,7 @@ export function BillingQueueSidebar({
               }
             />
           </div>
-          <PopoverContent sideOffset={4} className="dark w-[400px] p-3">
+          <PopoverContent sideOffset={4} className="dark w-100 p-3">
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium">Filters</span>
@@ -301,7 +302,7 @@ export function BillingQueueSidebar({
                         void setSearchParams({ status: v === "all" ? null : v })
                       }
                     >
-                      <SelectTrigger className="h-7 w-[150px] text-xs">
+                      <SelectTrigger className="h-7 w-37.5 text-xs">
                         <SelectValue placeholder="All statuses" />
                       </SelectTrigger>
                       <SelectContent>
@@ -325,7 +326,7 @@ export function BillingQueueSidebar({
                         })
                       }
                     >
-                      <SelectTrigger className="h-7 w-[150px] text-xs">
+                      <SelectTrigger className="h-7 w-37.5 text-xs">
                         <SelectValue placeholder="All bill types" />
                       </SelectTrigger>
                       <SelectContent>

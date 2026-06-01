@@ -32,7 +32,7 @@ type CustomerBillingProfile struct {
 	AutoCreditHold                            bool                                      `json:"autoCreditHold"                            bun:"auto_credit_hold,type:BOOLEAN,notnull,default:false"`
 	CreditHoldReason                          string                                    `json:"creditHoldReason"                          bun:"credit_hold_reason,type:TEXT,nullzero"`
 	InvoiceMethod                             InvoiceMethod                             `json:"invoiceMethod"                             bun:"invoice_method,type:invoice_method_enum,notnull,default:'Individual'"`
-	SummaryTransmitOnGeneration               bool                                      `json:"summaryTransmitOnGeneration"               bun:"summary_transmit_on_generation,type:BOOLEAN,notnull,default:true"`
+	AutoSendInvoiceOnGeneration               bool                                      `json:"autoSendInvoiceOnGeneration"              bun:"auto_send_invoice_on_generation,type:BOOLEAN,notnull,default:true"`
 	AllowInvoiceConsolidation                 bool                                      `json:"allowInvoiceConsolidation"                 bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:false"`
 	ConsolidationPeriodDays                   int8                                      `json:"consolidationPeriodDays"                   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
 	ConsolidationGroupBy                      ConsolidationGroupBy                      `json:"consolidationGroupBy"                      bun:"consolidation_group_by,type:consolidation_group_by_enum,notnull,default:'None'"`
@@ -91,9 +91,10 @@ func (b *CustomerBillingProfile) GetID() string {
 
 func NewDefaultBillingProfile(orgID, buID, customerID pulid.ID) *CustomerBillingProfile {
 	return &CustomerBillingProfile{
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
-		CustomerID:     customerID,
+		OrganizationID:              orgID,
+		BusinessUnitID:              buID,
+		CustomerID:                  customerID,
+		AutoSendInvoiceOnGeneration: true,
 		InvoiceAdjustmentSupportingDocumentPolicy: InvoiceAdjustmentSupportingDocumentPolicyInherit,
 	}
 }

@@ -55,6 +55,9 @@ func (s *ResendSender) Send(
 	if len(msg.BCC) > 0 {
 		payload["bcc"] = msg.BCC
 	}
+	if len(msg.Headers) > 0 {
+		payload["headers"] = msg.Headers
+	}
 	if msg.HTML != "" {
 		payload["html"] = msg.HTML
 	}
@@ -111,7 +114,7 @@ func (s *ResendSender) Send(
 	}
 
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-		return nil, fmt.Errorf("%w: resend status %d", ErrRetryableSend, resp.StatusCode)
+		return nil, providerStatusError(ErrRetryableSend, "resend", resp.StatusCode, respBody)
 	}
-	return nil, fmt.Errorf("%w: resend status %d", ErrNonRetryableSend, resp.StatusCode)
+	return nil, providerStatusError(ErrNonRetryableSend, "resend", resp.StatusCode, respBody)
 }

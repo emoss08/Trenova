@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"go.temporal.io/sdk/temporal"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,6 +107,19 @@ func TestNewNonRetryableError(t *testing.T) {
 	assert.Equal(t, "corrupt input", err.Message)
 	assert.Equal(t, cause, err.Cause)
 	assert.False(t, err.Retryable)
+}
+
+func TestNewNonRetryableErrorToTemporalError(t *testing.T) {
+	t.Parallel()
+
+	err := NewNonRetryableError("invalid provider configuration", errors.New("decrypt failed")).
+		ToTemporalError()
+
+	var appErr *temporal.ApplicationError
+	require.ErrorAs(t, err, &appErr)
+	assert.Equal(t, ErrorTypeNonRetryable.String(), appErr.Type())
+	assert.True(t, appErr.NonRetryable())
+	assert.False(t, IsRetryable(err))
 }
 
 func TestNewInvalidInputError(t *testing.T) {

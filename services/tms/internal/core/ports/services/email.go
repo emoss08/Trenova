@@ -18,6 +18,7 @@ type SendEmailRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"-"`
 	ProfileID      pulid.ID              `json:"profileId"`
 	Purpose        email.Purpose         `json:"purpose"`
+	FromEmail      string                `json:"fromEmail"`
 	To             []string              `json:"to"`
 	CC             []string              `json:"cc"`
 	BCC            []string              `json:"bcc"`
@@ -25,6 +26,8 @@ type SendEmailRequest struct {
 	HTML           string                `json:"html"`
 	Text           string                `json:"text"`
 	Attachments    []EmailAttachment     `json:"attachments"`
+	Headers        map[string]string     `json:"headers"`
+	OpenTracking   bool                  `json:"openTracking"`
 	IdempotencyKey string                `json:"idempotencyKey"`
 }
 
@@ -37,10 +40,12 @@ type EmailAttachment struct {
 }
 
 type SendPersistedEmailRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	MessageID  pulid.ID              `json:"messageId"`
-	HTML       string                `json:"html"`
-	Text       string                `json:"text"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	MessageID    pulid.ID              `json:"messageId"`
+	HTML         string                `json:"html"`
+	Text         string                `json:"text"`
+	Headers      map[string]string     `json:"headers"`
+	OpenTracking bool                  `json:"openTracking"`
 }
 
 type TestEmailProfileRequest struct {

@@ -1,11 +1,13 @@
 package emailservice
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/bytedance/sonic"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,6 +26,9 @@ func TestResendSenderSendsMessageWithAttachments(t *testing.T) {
 		require.Equal(t, []any{"billing@example.com"}, payload["cc"])
 		require.Equal(t, "Subject", payload["subject"])
 		require.Equal(t, "<p>Hello</p>", payload["html"])
+		headers, ok := payload["headers"].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "dispatch@example.com", headers["Disposition-Notification-To"])
 
 		attachments, ok := payload["attachments"].([]any)
 		require.True(t, ok)
@@ -51,6 +56,9 @@ func TestResendSenderSendsMessageWithAttachments(t *testing.T) {
 			CC:             []string{"billing@example.com"},
 			Subject:        "Subject",
 			HTML:           "<p>Hello</p>",
+			Headers: map[string]string{
+				"Disposition-Notification-To": "dispatch@example.com",
+			},
 			Attachments: []ProviderAttachment{
 				{
 					FileName:    "invoice.pdf",
@@ -63,4 +71,31 @@ func TestResendSenderSendsMessageWithAttachments(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "resend-message-id", result.ProviderMessageID)
+}
+
+func TestResendSenderIncludesProviderFailureBody(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"message":"domain is not verified"}`))
+	}))
+	defer server.Close()
+
+	_, err := NewResendSender().Send(t.Context(), SendProviderRequest{
+		Config: map[string]string{
+			"apiKey":  "resend-api-key",
+			"baseUrl": server.URL,
+		},
+		Message: SendProviderMessage{
+			From:    "Dispatch <dispatch@example.com>",
+			To:      []string{"ops@example.com"},
+			Subject: "Subject",
+			Text:    "Hello",
+		},
+	})
+
+	require.Error(t, err)
+	require.True(t, errors.Is(err, serviceports.ErrNonRetryableEmailSend))
+	require.Contains(t, err.Error(), "domain is not verified")
 }

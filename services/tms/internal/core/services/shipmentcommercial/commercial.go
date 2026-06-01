@@ -99,7 +99,7 @@ func CalculateAdditionalCharges(
 			continue
 		}
 
-		total = total.Add(calculateAdditionalCharge(charge, baseCharge))
+		total = total.Add(CalculateAdditionalCharge(charge, baseCharge))
 	}
 
 	return total
@@ -129,10 +129,14 @@ func (c *Calculator) calculateCommercialTotals(
 	), ratingDetail, nil
 }
 
-func calculateAdditionalCharge(
+func CalculateAdditionalCharge(
 	charge *shipment.AdditionalCharge,
 	baseCharge decimal.Decimal,
 ) decimal.Decimal {
+	if charge == nil {
+		return decimal.Zero
+	}
+
 	switch charge.Method {
 	case accessorialcharge.MethodFlat:
 		unit := max(charge.Unit, 1)

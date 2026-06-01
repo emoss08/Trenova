@@ -51,6 +51,15 @@ func (e *ApplicationError) Unwrap() error {
 }
 
 func (e *ApplicationError) ToTemporalError() error {
+	if !e.Retryable {
+		return temporal.NewNonRetryableApplicationError(
+			e.Message,
+			string(e.Type),
+			e.Cause,
+			e.Details,
+		)
+	}
+
 	return temporal.NewApplicationError(
 		e.Message,
 		string(e.Type),

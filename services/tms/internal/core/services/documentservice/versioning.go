@@ -450,14 +450,6 @@ func (s *Service) AttachLineageToResource(
 		s.l.Warn("failed to log document lineage reassignment", zap.Error(err))
 	}
 
-	s.tryAutoMarkShipmentReadyToInvoice(
-		ctx,
-		resourceType,
-		resourceID,
-		tenantInfo,
-		userID,
-	)
-
 	return updated, nil
 }
 

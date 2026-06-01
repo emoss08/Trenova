@@ -29,10 +29,20 @@ export const customerPaymentTermSchema = z.enum([
 ]);
 export type CustomerPaymentTerm = z.infer<typeof customerPaymentTermSchema>;
 
-export const creditStatusSchema = z.enum(["Active", "Warning", "Hold", "Suspended", "Review"]);
+export const creditStatusSchema = z.enum([
+  "Active",
+  "Warning",
+  "Hold",
+  "Suspended",
+  "Review",
+]);
 export type CreditStatus = z.infer<typeof creditStatusSchema>;
 
-export const invoiceMethodSchema = z.enum(["Individual", "Summary", "SummaryWithDetail"]);
+export const invoiceMethodSchema = z.enum([
+  "Individual",
+  "Summary",
+  "SummaryWithDetail",
+]);
 export type InvoiceMethod = z.infer<typeof invoiceMethodSchema>;
 
 export const consolidationGroupBySchema = z.enum([
@@ -44,7 +54,11 @@ export const consolidationGroupBySchema = z.enum([
 ]);
 export type ConsolidationGroupBy = z.infer<typeof consolidationGroupBySchema>;
 
-export const invoiceNumberFormatSchema = z.enum(["Default", "CustomPrefix", "POBased"]);
+export const invoiceNumberFormatSchema = z.enum([
+  "Default",
+  "CustomPrefix",
+  "POBased",
+]);
 export type InvoiceNumberFormat = z.infer<typeof invoiceNumberFormatSchema>;
 
 export const invoiceAdjustmentSupportingDocumentPolicySchema = z.enum([
@@ -75,7 +89,7 @@ export const customerBillingProfileSchema = z.object({
   autoCreditHold: z.boolean().default(false),
   creditHoldReason: z.string().default(""),
   invoiceMethod: invoiceMethodSchema.default("Individual"),
-  summaryTransmitOnGeneration: z.boolean().default(true),
+  autoSendInvoiceOnGeneration: z.boolean().default(true),
   allowInvoiceConsolidation: z.boolean().default(false),
   consolidationPeriodDays: z.number().int().default(7),
   consolidationGroupBy: consolidationGroupBySchema.default("None"),
@@ -111,7 +125,9 @@ export const customerBillingProfileSchema = z.object({
   documentTypes: z.array(z.any()).nullish(),
 });
 
-export type CustomerBillingProfile = z.infer<typeof customerBillingProfileSchema>;
+export type CustomerBillingProfile = z.infer<
+  typeof customerBillingProfileSchema
+>;
 
 export const customerEmailProfileSchema = z.object({
   id: z.string().optional(),
@@ -129,7 +145,6 @@ export const customerEmailProfileSchema = z.object({
   bccRecipients: z.string().default(""),
   attachmentName: z.string().default(""),
   readReceipt: z.boolean().default(false),
-  sendInvoiceOnGeneration: z.boolean().default(true),
   includeShipmentDetail: z.boolean().default(false),
 });
 
@@ -178,7 +193,8 @@ export const customerSchema = z
     },
     {
       path: ["allowConsolidation"],
-      message: "Allow consolidation is required when exclusive consolidation is true",
+      message:
+        "Allow consolidation is required when exclusive consolidation is true",
     },
   );
 
@@ -189,7 +205,9 @@ export const bulkUpdateCustomerStatusRequestSchema = z.object({
   status: statusSchema,
 });
 
-export type BulkUpdateCustomerStatusRequest = z.infer<typeof bulkUpdateCustomerStatusRequestSchema>;
+export type BulkUpdateCustomerStatusRequest = z.infer<
+  typeof bulkUpdateCustomerStatusRequestSchema
+>;
 
 export const bulkUpdateCustomerStatusResponseSchema = z.array(customerSchema);
 

@@ -38,6 +38,13 @@ func (s *Service) createInvoiceJournalPosting( //nolint:cyclop // legacy workflo
 	if !s.accountingPolicyService().CanCreateInvoiceLedgerEntry(accountingControl, event) {
 		return nil
 	}
+	if !invoicePostingHasRequiredAccounts(accountingControl) {
+		return errortypes.NewValidationError(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"Invoice posting requires default Accounts Receivable and revenue accounts",
+		)
+	}
 
 	period, postingDate, err := s.resolveInvoicePostingPeriod(ctx, entity, accountingControl)
 	if err != nil {
@@ -84,13 +91,6 @@ func (s *Service) createInvoiceJournalPosting( //nolint:cyclop // legacy workflo
 	if entity.BillType == billingqueue.BillTypeCreditMemo {
 		debitAccountID = accountingControl.DefaultRevenueAccountID
 		creditAccountID = accountingControl.DefaultARAccountID
-	}
-	if debitAccountID.IsNil() || creditAccountID.IsNil() {
-		return errortypes.NewValidationError(
-			"accountingControl",
-			errortypes.ErrRequired,
-			"Default AR and revenue accounts are required for invoice posting",
-		)
 	}
 
 	batchID := pulid.MustNew("jb_")
@@ -203,6 +203,13 @@ func (s *Service) resolveInvoicePostingPeriod(
 		},
 	)
 	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, 0, errortypes.NewValidationError(
+				"postedAt",
+				errortypes.ErrRequired,
+				"No fiscal period covers the invoice posting date",
+			)
+		}
 		return nil, 0, err
 	}
 
@@ -245,6 +252,11 @@ func (s *Service) resolveInvoicePostingPeriod(
 			"Invoice posting cannot create ledger output in an inactive fiscal period",
 		)
 	}
+}
+
+func invoicePostingHasRequiredAccounts(accountingControl *tenant.AccountingControl) bool {
+	return !accountingControl.DefaultARAccountID.IsNil() &&
+		!accountingControl.DefaultRevenueAccountID.IsNil()
 }
 
 func invoicePostingSourceEvent(billType billingqueue.BillType) tenant.JournalSourceEventType {

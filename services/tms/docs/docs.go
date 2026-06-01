@@ -17368,6 +17368,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/shipments/calculate-distance/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Calculate shipment distance",
+                "operationId": "calculateShipmentDistance",
+                "parameters": [
+                    {
+                        "description": "Shipment payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_shipment.Shipment"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.DistanceCalculationResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/shipments/calculate-totals/": {
             "post": {
                 "security": [
@@ -18744,6 +18783,40 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                }
+            }
+        },
+        "/shipments/{shipmentID}/recalculate-distance/": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Shipments"
+                ],
+                "summary": "Recalculate shipment distance",
+                "operationId": "recalculateShipmentDistance",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Shipment ID",
+                        "name": "shipmentID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.DistanceCalculationResponse"
                         }
                     }
                 }
@@ -23656,6 +23729,9 @@ const docTemplate = `{
                 "autoMarkReadyToBill": {
                     "type": "boolean"
                 },
+                "autoSendInvoiceOnGeneration": {
+                    "type": "boolean"
+                },
                 "autoTransfer": {
                     "type": "boolean"
                 },
@@ -23779,9 +23855,6 @@ const docTemplate = `{
                 "revenueAccountId": {
                     "type": "string"
                 },
-                "summaryTransmitOnGeneration": {
-                    "type": "boolean"
-                },
                 "taxExempt": {
                     "type": "boolean"
                 },
@@ -23836,9 +23909,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "readReceipt": {
-                    "type": "boolean"
-                },
-                "sendInvoiceOnGeneration": {
                     "type": "boolean"
                 },
                 "subject": {
@@ -24264,6 +24334,12 @@ const docTemplate = `{
                 "createdAt": {
                     "type": "integer"
                 },
+                "cryptoMode": {
+                    "type": "string"
+                },
+                "cryptoVersion": {
+                    "type": "integer"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -24573,6 +24649,248 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.Attachment": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "contentType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "messageId": {
+                    "type": "string"
+                },
+                "objectKey": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "sizeBytes": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.Message": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Attachment"
+                    }
+                },
+                "attempts": {
+                    "type": "integer"
+                },
+                "bccRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "bodyHtmlSize": {
+                    "type": "integer"
+                },
+                "bodyTextSize": {
+                    "type": "integer"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "ccRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "deliveredAt": {
+                    "type": "integer"
+                },
+                "failedAt": {
+                    "type": "integer"
+                },
+                "fromEmail": {
+                    "type": "string"
+                },
+                "fromName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "idempotencyKey": {
+                    "type": "string"
+                },
+                "lastError": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "profile": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Profile"
+                },
+                "profileId": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Provider"
+                },
+                "providerMessageId": {
+                    "type": "string"
+                },
+                "purpose": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Purpose"
+                },
+                "replyToEmail": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.MessageStatus"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "toRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.MessageStatus": {
+            "type": "string",
+            "enum": [
+                "Queued",
+                "Sending",
+                "Sent",
+                "Delivered",
+                "Failed",
+                "Bounced",
+                "Complained",
+                "Opened",
+                "Clicked",
+                "Suppressed"
+            ],
+            "x-enum-varnames": [
+                "MessageStatusQueued",
+                "MessageStatusSending",
+                "MessageStatusSent",
+                "MessageStatusDelivered",
+                "MessageStatusFailed",
+                "MessageStatusBounced",
+                "MessageStatusComplained",
+                "MessageStatusOpened",
+                "MessageStatusClicked",
+                "MessageStatusSuppressed"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.Profile": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "provider": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Provider"
+                },
+                "replyToEmail": {
+                    "type": "string"
+                },
+                "senderEmail": {
+                    "type": "string"
+                },
+                "senderName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.ProfileStatus"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.ProfileStatus": {
+            "type": "string",
+            "enum": [
+                "Active",
+                "Inactive"
+            ],
+            "x-enum-varnames": [
+                "ProfileStatusActive",
+                "ProfileStatusInactive"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.Provider": {
+            "type": "string",
+            "enum": [
+                "Resend",
+                "Postmark"
+            ],
+            "x-enum-varnames": [
+                "ProviderResend",
+                "ProviderPostmark"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_email.Purpose": {
+            "type": "string",
+            "enum": [
+                "General",
+                "Billing",
+                "Reporting",
+                "Operations",
+                "Authentication",
+                "Notifications"
+            ],
+            "x-enum-varnames": [
+                "PurposeGeneral",
+                "PurposeBilling",
+                "PurposeReporting",
+                "PurposeOperations",
+                "PurposeAuthentication",
+                "PurposeNotifications"
+            ]
         },
         "github_com_emoss08_trenova_internal_core_domain_equipmentmanufacturer.EquipmentManufacturer": {
             "type": "object",
@@ -25632,6 +25950,56 @@ const docTemplate = `{
                 "HoldTypeFinance"
             ]
         },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.Attachment": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "document": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Document"
+                },
+                "documentId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "selected": {
+                    "type": "boolean"
+                },
+                "sortOrder": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.AttachmentDeliveryMethod": {
+            "type": "string",
+            "enum": [
+                "Attached",
+                "Link",
+                "Skipped",
+                "Failed"
+            ],
+            "x-enum-varnames": [
+                "AttachmentDeliveryMethodAttached",
+                "AttachmentDeliveryMethodLink",
+                "AttachmentDeliveryMethodSkipped",
+                "AttachmentDeliveryMethodFailed"
+            ]
+        },
         "github_com_emoss08_trenova_internal_core_domain_invoice.DisputeStatus": {
             "type": "string",
             "enum": [
@@ -25642,6 +26010,192 @@ const docTemplate = `{
                 "DisputeStatusNone",
                 "DisputeStatusDisputed"
             ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.DocumentShareToken": {
+            "type": "object",
+            "properties": {
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "createdById": {
+                    "type": "string"
+                },
+                "document": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Document"
+                },
+                "documentId": {
+                    "type": "string"
+                },
+                "downloadedAt": {
+                    "type": "integer"
+                },
+                "expiresAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "revokedAt": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttempt": {
+            "type": "object",
+            "properties": {
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttemptAttachment"
+                    }
+                },
+                "attemptNumber": {
+                    "type": "integer"
+                },
+                "bccRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "body": {
+                    "type": "string"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "ccRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "createdById": {
+                    "type": "string"
+                },
+                "email": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Message"
+                },
+                "emailMessageId": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                },
+                "estimatedSize": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "invoiceId": {
+                    "type": "string"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "partNumber": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_email.Provider"
+                },
+                "providerMessageId": {
+                    "type": "string"
+                },
+                "sentAt": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus"
+                },
+                "subject": {
+                    "type": "string"
+                },
+                "toRecipients": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "totalParts": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttemptAttachment": {
+            "type": "object",
+            "properties": {
+                "attemptId": {
+                    "type": "string"
+                },
+                "businessUnitId": {
+                    "type": "string"
+                },
+                "contentType": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "document": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Document"
+                },
+                "documentId": {
+                    "type": "string"
+                },
+                "encodedBytes": {
+                    "type": "integer"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.AttachmentDeliveryMethod"
+                },
+                "organizationId": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "shareToken": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.DocumentShareToken"
+                },
+                "shareTokenId": {
+                    "type": "string"
+                },
+                "sizeBytes": {
+                    "type": "integer"
+                }
+            }
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.InoviceLine": {
             "type": "object",
@@ -25698,6 +26252,12 @@ const docTemplate = `{
                 },
                 "appliedAmountMinor": {
                     "type": "integer"
+                },
+                "attachments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.Attachment"
+                    }
                 },
                 "billToAddressLine1": {
                     "type": "string"
@@ -25756,6 +26316,36 @@ const docTemplate = `{
                 "dueDate": {
                     "type": "integer"
                 },
+                "emailAttempts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.EmailAttempt"
+                    }
+                },
+                "emailBccSnapshot": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "emailBodySnapshot": {
+                    "type": "string"
+                },
+                "emailCcSnapshot": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "emailSubjectSnapshot": {
+                    "type": "string"
+                },
+                "emailToSnapshot": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "id": {
                     "type": "string"
                 },
@@ -25765,11 +26355,20 @@ const docTemplate = `{
                 "isAdjustmentArtifact": {
                     "type": "boolean"
                 },
+                "lastSendError": {
+                    "type": "string"
+                },
+                "lastSendWarning": {
+                    "type": "string"
+                },
                 "lines": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.InoviceLine"
                     }
+                },
+                "memo": {
+                    "type": "string"
                 },
                 "number": {
                     "type": "string"
@@ -25786,8 +26385,26 @@ const docTemplate = `{
                 "paymentTerm": {
                     "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.PaymentTerm"
                 },
+                "pdfDocument": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_document.Document"
+                },
+                "pdfDocumentId": {
+                    "type": "string"
+                },
                 "postedAt": {
                     "type": "integer"
+                },
+                "remittanceInstructions": {
+                    "type": "string"
+                },
+                "sendStatus": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus"
+                },
+                "sentAt": {
+                    "type": "integer"
+                },
+                "sentById": {
+                    "type": "string"
                 },
                 "serviceDate": {
                     "type": "integer"
@@ -25869,6 +26486,23 @@ const docTemplate = `{
                 "PaymentTermNet60",
                 "PaymentTermNet90",
                 "PaymentTermDueOnReceipt"
+            ]
+        },
+        "github_com_emoss08_trenova_internal_core_domain_invoice.SendStatus": {
+            "type": "string",
+            "enum": [
+                "NotSent",
+                "Sending",
+                "Sent",
+                "PartiallySent",
+                "Failed"
+            ],
+            "x-enum-varnames": [
+                "SendStatusNotSent",
+                "SendStatusSending",
+                "SendStatusSent",
+                "SendStatusPartiallySent",
+                "SendStatusFailed"
             ]
         },
         "github_com_emoss08_trenova_internal_core_domain_invoice.SettlementStatus": {
@@ -26240,12 +26874,23 @@ const docTemplate = `{
                 "custom_field_definition",
                 "sequence_config",
                 "integration",
+                "email_profile",
+                "email_log",
+                "email_suppression",
                 "edi",
                 "api_key",
                 "data_entry_control",
                 "platform_catalog",
                 "database_session",
                 "document_operation",
+                "identity_provider",
+                "scim_directory",
+                "provisioning_audit",
+                "access_policy",
+                "auth_event",
+                "risk_decision",
+                "external_identity",
+                "mfa_authenticator",
                 "equipment_type",
                 "equipment_manufacturer",
                 "trailer",
@@ -26263,6 +26908,9 @@ const docTemplate = `{
                 "shipment_control",
                 "hazmat_segregation_rule",
                 "distance_override",
+                "distance_profile",
+                "distance_control",
+                "stored_mileage",
                 "invoice",
                 "billing_queue",
                 "accessorial_charge",
@@ -26315,12 +26963,23 @@ const docTemplate = `{
                 "ResourceCustomFieldDefinition",
                 "ResourceSequenceConfig",
                 "ResourceIntegration",
+                "ResourceEmailProfile",
+                "ResourceEmailLog",
+                "ResourceEmailSuppression",
                 "ResourceEDI",
                 "ResourceAPIKey",
                 "ResourceDataEntryControl",
                 "ResourcePlatformCatalog",
                 "ResourceDatabaseSession",
                 "ResourceDocumentOperation",
+                "ResourceIdentityProvider",
+                "ResourceSCIMDirectory",
+                "ResourceProvisioningAudit",
+                "ResourceAccessPolicy",
+                "ResourceAuthEvent",
+                "ResourceRiskDecision",
+                "ResourceExternalIdentity",
+                "ResourceMFAAuthenticator",
                 "ResourceEquipmentType",
                 "ResourceEquipmentManufacturer",
                 "ResourceTrailer",
@@ -26338,6 +26997,9 @@ const docTemplate = `{
                 "ResourceShipmentControl",
                 "ResourceHazmatSegregationRule",
                 "ResourceDistanceOverride",
+                "ResourceDistanceProfile",
+                "ResourceDistanceControl",
+                "ResourceStoredMileage",
                 "ResourceInvoice",
                 "ResourceBillingQueue",
                 "ResourceAccessorialCharge",
@@ -27291,6 +27953,31 @@ const docTemplate = `{
                 },
                 "distance": {
                     "type": "number"
+                },
+                "distanceCalculatedAt": {
+                    "type": "integer"
+                },
+                "distanceDataVersion": {
+                    "type": "string"
+                },
+                "distanceMetadata": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "distanceProvider": {
+                    "type": "string"
+                },
+                "distanceRouteSignature": {
+                    "type": "string"
+                },
+                "distanceRoutingType": {
+                    "type": "string"
+                },
+                "distanceSource": {
+                    "type": "string"
+                },
+                "distanceUnits": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -30000,6 +30687,67 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.APIKeyPermissionInput"
+                    }
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.DistanceCalculationResponse": {
+            "type": "object",
+            "properties": {
+                "moves": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.DistanceMoveResult"
+                    }
+                },
+                "shipmentId": {
+                    "type": "string"
+                },
+                "totalDistance": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.DistanceMoveResult": {
+            "type": "object",
+            "properties": {
+                "calculatedAt": {
+                    "type": "integer"
+                },
+                "dataVersion": {
+                    "type": "string"
+                },
+                "distance": {
+                    "type": "number"
+                },
+                "distanceProfileId": {
+                    "type": "string"
+                },
+                "distanceProfileName": {
+                    "type": "string"
+                },
+                "distanceUnits": {
+                    "type": "string"
+                },
+                "moveId": {
+                    "type": "string"
+                },
+                "moveIndex": {
+                    "type": "integer"
+                },
+                "provider": {
+                    "type": "string"
+                },
+                "routingType": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 }
             }

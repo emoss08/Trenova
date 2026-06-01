@@ -10,6 +10,7 @@ import type { Customer } from "@/types/customer";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
+import type { EmailProfile } from "@/types/email";
 import type {
   EDICommunicationProfile,
   EDIDocumentType,
@@ -756,6 +757,27 @@ export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
               {option.partner.code} - {option.partner.name}
             </span>
           ) : null}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function EmailProfileAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EmailProfile, T>) {
+  return (
+    <AutocompleteField<EmailProfile, T>
+      link="/email-profiles/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex size-full min-w-0 flex-col items-start pr-4">
+          <span className="w-full truncate">{option.name}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {option.senderEmail} · {option.provider} · {option.status}
+          </span>
         </div>
       )}
       {...props}

@@ -39,7 +39,7 @@ const DEFAULT_VALUES: Customer = {
     creditHoldReason: "",
     hasBillingControlOverrides: false,
     invoiceMethod: "Individual",
-    summaryTransmitOnGeneration: true,
+    autoSendInvoiceOnGeneration: true,
     allowInvoiceConsolidation: false,
     consolidationPeriodDays: 7,
     consolidationGroupBy: "None",
@@ -81,12 +81,16 @@ const DEFAULT_VALUES: Customer = {
     bccRecipients: "",
     attachmentName: "",
     readReceipt: false,
-    sendInvoiceOnGeneration: true,
     includeShipmentDetail: false,
   },
 };
 
-export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Customer>) {
+export function CustomerPanel({
+  open,
+  onOpenChange,
+  mode,
+  row,
+}: DataTablePanelProps<Customer>) {
   const user = useAuthStore((s) => s.user);
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(

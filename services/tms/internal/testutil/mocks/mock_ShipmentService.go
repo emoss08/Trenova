@@ -271,6 +271,74 @@ func (_c *MockShipmentService_BulkTransferToBilling_Call) RunAndReturn(run func(
 	return _c
 }
 
+// CalculateDistance provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) CalculateDistance(ctx context.Context, entity *shipment.Shipment) (*services.DistanceCalculationResponse, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CalculateDistance")
+	}
+
+	var r0 *services.DistanceCalculationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) (*services.DistanceCalculationResponse, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) *services.DistanceCalculationResponse); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.DistanceCalculationResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_CalculateDistance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CalculateDistance'
+type MockShipmentService_CalculateDistance_Call struct {
+	*mock.Call
+}
+
+// CalculateDistance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *shipment.Shipment
+func (_e *MockShipmentService_Expecter) CalculateDistance(ctx interface{}, entity interface{}) *MockShipmentService_CalculateDistance_Call {
+	return &MockShipmentService_CalculateDistance_Call{Call: _e.mock.On("CalculateDistance", ctx, entity)}
+}
+
+func (_c *MockShipmentService_CalculateDistance_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockShipmentService_CalculateDistance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *shipment.Shipment
+		if args[1] != nil {
+			arg1 = args[1].(*shipment.Shipment)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateDistance_Call) Return(distanceCalculationResponse *services.DistanceCalculationResponse, err error) *MockShipmentService_CalculateDistance_Call {
+	_c.Call.Return(distanceCalculationResponse, err)
+	return _c
+}
+
+func (_c *MockShipmentService_CalculateDistance_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) (*services.DistanceCalculationResponse, error)) *MockShipmentService_CalculateDistance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CalculateLoadingOptimization provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) CalculateLoadingOptimization(ctx context.Context, req *repositories.LoadingOptimizationRequest) (*repositories.LoadingOptimizationResult, error) {
 	ret := _mock.Called(ctx, req)
@@ -411,58 +479,6 @@ func (_c *MockShipmentService_CalculateTotals_Call) Return(shipmentTotalsRespons
 func (_c *MockShipmentService_CalculateTotals_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment, userID pulid.ID) (*repositories.ShipmentTotalsResponse, error)) *MockShipmentService_CalculateTotals_Call {
 	_c.Call.Return(run)
 	return _c
-}
-
-// CalculateDistance provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) CalculateDistance(ctx context.Context, entity *shipment.Shipment) (*services.DistanceCalculationResponse, error) {
-	ret := _mock.Called(ctx, entity)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CalculateDistance")
-	}
-
-	var r0 *services.DistanceCalculationResponse
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) (*services.DistanceCalculationResponse, error)); ok {
-		return returnFunc(ctx, entity)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) *services.DistanceCalculationResponse); ok {
-		r0 = returnFunc(ctx, entity)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*services.DistanceCalculationResponse)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment) error); ok {
-		r1 = returnFunc(ctx, entity)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// RecalculateDistance provides a mock function for the type MockShipmentService
-func (_mock *MockShipmentService) RecalculateDistance(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.DistanceCalculationResponse, error) {
-	ret := _mock.Called(ctx, shipmentID, tenantInfo)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RecalculateDistance")
-	}
-
-	var r0 *services.DistanceCalculationResponse
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.DistanceCalculationResponse, error)); ok {
-		return returnFunc(ctx, shipmentID, tenantInfo)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.DistanceCalculationResponse); ok {
-		r0 = returnFunc(ctx, shipmentID, tenantInfo)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(*services.DistanceCalculationResponse)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
-		r1 = returnFunc(ctx, shipmentID, tenantInfo)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
 }
 
 // Cancel provides a mock function for the type MockShipmentService
@@ -1415,6 +1431,80 @@ func (_c *MockShipmentService_List_Call) Return(listResult *pagination.ListResul
 }
 
 func (_c *MockShipmentService_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentService_List_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RecalculateDistance provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) RecalculateDistance(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.DistanceCalculationResponse, error) {
+	ret := _mock.Called(ctx, shipmentID, tenantInfo)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecalculateDistance")
+	}
+
+	var r0 *services.DistanceCalculationResponse
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) (*services.DistanceCalculationResponse, error)); ok {
+		return returnFunc(ctx, shipmentID, tenantInfo)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, pagination.TenantInfo) *services.DistanceCalculationResponse); ok {
+		r0 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.DistanceCalculationResponse)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, pagination.TenantInfo) error); ok {
+		r1 = returnFunc(ctx, shipmentID, tenantInfo)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_RecalculateDistance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecalculateDistance'
+type MockShipmentService_RecalculateDistance_Call struct {
+	*mock.Call
+}
+
+// RecalculateDistance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - shipmentID pulid.ID
+//   - tenantInfo pagination.TenantInfo
+func (_e *MockShipmentService_Expecter) RecalculateDistance(ctx interface{}, shipmentID interface{}, tenantInfo interface{}) *MockShipmentService_RecalculateDistance_Call {
+	return &MockShipmentService_RecalculateDistance_Call{Call: _e.mock.On("RecalculateDistance", ctx, shipmentID, tenantInfo)}
+}
+
+func (_c *MockShipmentService_RecalculateDistance_Call) Run(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo)) *MockShipmentService_RecalculateDistance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 pagination.TenantInfo
+		if args[2] != nil {
+			arg2 = args[2].(pagination.TenantInfo)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_RecalculateDistance_Call) Return(distanceCalculationResponse *services.DistanceCalculationResponse, err error) *MockShipmentService_RecalculateDistance_Call {
+	_c.Call.Return(distanceCalculationResponse, err)
+	return _c
+}
+
+func (_c *MockShipmentService_RecalculateDistance_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.DistanceCalculationResponse, error)) *MockShipmentService_RecalculateDistance_Call {
 	_c.Call.Return(run)
 	return _c
 }

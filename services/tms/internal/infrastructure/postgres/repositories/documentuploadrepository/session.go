@@ -59,11 +59,11 @@ func (r *repository) Create(
 				Set(cols.FailureCode.Set(), documentupload.FailureCodeSuspendedByNewerSession).
 				Set(cols.FailureMessage.Set(), "Superseded by a newer upload session").
 				Set(cols.LastActivityAt.Set(), timeutils.NowUnix()).
-				Where(cols.OrganizationID.Eq(), entity.OrganizationID).
-				Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
-				Where(cols.LineageID.Eq(), *entity.LineageID).
-				Where(cols.ID.NotEq(), entity.ID).
-				Where(cols.Status.In(), bun.List([]documentupload.Status{
+				Where("? = ?", bun.Ident(cols.OrganizationID.Name), entity.OrganizationID).
+				Where("? = ?", bun.Ident(cols.BusinessUnitID.Name), entity.BusinessUnitID).
+				Where("? = ?", bun.Ident(cols.LineageID.Name), *entity.LineageID).
+				Where("? <> ?", bun.Ident(cols.ID.Name), entity.ID).
+				Where("? IN (?)", bun.Ident(cols.Status.Name), bun.List([]documentupload.Status{
 					documentupload.StatusInitiated,
 					documentupload.StatusUploading,
 					documentupload.StatusUploaded,
@@ -256,9 +256,9 @@ func (r *repository) ClearDocumentReference(
 		NewUpdate().
 		Table(buncolgen.DocumentUploadSessionTable.Name).
 		Set(cols.DocumentID.Set(), nil).
-		Where(cols.DocumentID.Eq(), documentID).
-		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where("? = ?", bun.Ident(cols.DocumentID.Name), documentID).
+		Where("? = ?", bun.Ident(cols.OrganizationID.Name), tenantInfo.OrgID).
+		Where("? = ?", bun.Ident(cols.BusinessUnitID.Name), tenantInfo.BuID).
 		Exec(ctx)
 	return err
 }
@@ -277,9 +277,9 @@ func (r *repository) ClearDocumentReferences(
 		NewUpdate().
 		Table(buncolgen.DocumentUploadSessionTable.Name).
 		Set(cols.DocumentID.Set(), nil).
-		Where(cols.DocumentID.In(), bun.List(documentIDs)).
-		Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
+		Where("? IN (?)", bun.Ident(cols.DocumentID.Name), bun.List(documentIDs)).
+		Where("? = ?", bun.Ident(cols.OrganizationID.Name), tenantInfo.OrgID).
+		Where("? = ?", bun.Ident(cols.BusinessUnitID.Name), tenantInfo.BuID).
 		Exec(ctx)
 	return err
 }

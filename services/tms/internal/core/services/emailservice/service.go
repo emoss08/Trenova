@@ -36,6 +36,7 @@ type Params struct {
 
 	Logger             *zap.Logger
 	Repo               repositories.EmailRepository
+	InvoiceRepo        repositories.InvoiceRepository
 	Validator          *Validator
 	IntegrationService *integrationservice.Service
 	EncryptionService  *encryptionservice.Service
@@ -47,6 +48,7 @@ type Params struct {
 type Service struct {
 	l                  *zap.Logger
 	repo               repositories.EmailRepository
+	invoiceRepo        repositories.InvoiceRepository
 	validator          *Validator
 	integrationService *integrationservice.Service
 	encryptionService  *encryptionservice.Service
@@ -67,6 +69,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:                  p.Logger.Named("service.email"),
 		repo:               p.Repo,
+		invoiceRepo:        p.InvoiceRepo,
 		validator:          p.Validator,
 		integrationService: p.IntegrationService,
 		encryptionService:  p.EncryptionService,
@@ -85,6 +88,13 @@ func (s *Service) ListProfiles(
 	req *repositories.ListEmailProfilesRequest,
 ) (*pagination.ListResult[*email.Profile], error) {
 	return s.repo.ListProfiles(ctx, req)
+}
+
+func (s *Service) SelectProfileOptions(
+	ctx context.Context,
+	req *repositories.EmailProfileSelectOptionsRequest,
+) (*pagination.ListResult[*email.Profile], error) {
+	return s.repo.SelectProfileOptions(ctx, req)
 }
 
 func (s *Service) GetProfile(
@@ -183,6 +193,7 @@ func (s *Service) UpsertAssignments(
 	assignments []*email.ProfileAssignment,
 	userID pulid.ID,
 ) ([]*email.ProfileAssignment, error) {
+	seen := make(map[email.Purpose]struct{}, len(assignments))
 	for _, assignment := range assignments {
 		if assignment == nil {
 			continue
@@ -190,11 +201,23 @@ func (s *Service) UpsertAssignments(
 		if !email.IsValidPurpose(assignment.Purpose) {
 			return nil, errortypes.NewValidationError("purpose", errortypes.ErrInvalid, "Invalid email purpose")
 		}
-		if _, err := s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
+		if assignment.ProfileID.IsNil() {
+			return nil, errortypes.NewValidationError("profileId", errortypes.ErrRequired, "Email profile is required")
+		}
+		if _, ok := seen[assignment.Purpose]; ok {
+			return nil, errortypes.NewValidationError("purpose", errortypes.ErrDuplicate, "Email purpose is duplicated")
+		}
+		seen[assignment.Purpose] = struct{}{}
+
+		profile, err := s.repo.GetProfile(ctx, repositories.GetEmailEntityRequest{
 			ID:         assignment.ProfileID,
 			TenantInfo: tenantInfo,
-		}); err != nil {
+		})
+		if err != nil {
 			return nil, err
+		}
+		if profile.Status != email.ProfileStatusActive {
+			return nil, errortypes.NewValidationError("profileId", errortypes.ErrInvalid, "Email profile must be active")
 		}
 	}
 	updated, err := s.repo.UpsertAssignments(ctx, tenantInfo, assignments)
@@ -206,7 +229,7 @@ func (s *Service) UpsertAssignments(
 		ResourceID:     tenantInfo.OrgID.String() + ":" + tenantInfo.BuID.String(),
 		Operation:      permission.OpUpdate,
 		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(updated),
+		CurrentState:   jsonutils.MustToJSON(map[string]any{"assignments": updated}),
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 	}, auditservice.WithComment("Email profile assignments updated")); err != nil {
@@ -239,6 +262,10 @@ func (s *Service) Send(
 	if req.IdempotencyKey == "" {
 		req.IdempotencyKey = newIdempotencyKey()
 	}
+	fromEmail := strings.TrimSpace(req.FromEmail)
+	if fromEmail == "" {
+		fromEmail = profile.SenderEmail
+	}
 	msg := &email.Message{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,
@@ -247,7 +274,7 @@ func (s *Service) Send(
 		Provider:       profile.Provider,
 		IdempotencyKey: req.IdempotencyKey,
 		Status:         email.MessageStatusQueued,
-		FromEmail:      profile.SenderEmail,
+		FromEmail:      fromEmail,
 		FromName:       profile.SenderName,
 		ReplyToEmail:   profile.ReplyToEmail,
 		ToRecipients:   stringutils.NormalizeEmailAddresses(req.To),
@@ -267,7 +294,7 @@ func (s *Service) Send(
 		}
 		return nil, err
 	}
-	if err = s.startSendWorkflow(ctx, msg, req.HTML, req.Text); err != nil {
+	if err = s.startSendWorkflow(ctx, msg, req.HTML, req.Text, req.Headers, req.OpenTracking); err != nil {
 		if _, updateErr := s.markFailed(ctx, msg, err); updateErr != nil {
 			return nil, updateErr
 		}
@@ -308,6 +335,11 @@ func (s *Service) SendPersisted(
 	if err != nil {
 		return nil, err
 	}
+	msg.Status = email.MessageStatusSending
+	msg.Attempts++
+	if msg, err = s.repo.UpdateMessage(ctx, msg); err != nil {
+		return nil, err
+	}
 
 	sender, ok := s.providerSenders[msg.Provider]
 	if !ok {
@@ -323,12 +355,7 @@ func (s *Service) SendPersisted(
 		BuID:  msg.BusinessUnitID,
 	}, sender.IntegrationType())
 	if err != nil {
-		return s.markFailed(ctx, msg, fmt.Errorf("%w: %w", ErrNonRetryableSend, err))
-	}
-	msg.Status = email.MessageStatusSending
-	msg.Attempts++
-	if msg, err = s.repo.UpdateMessage(ctx, msg); err != nil {
-		return nil, err
+		return s.markFailed(ctx, msg, providerConfigurationError(msg.Provider, err))
 	}
 	attachments, err := s.providerAttachments(ctx, req.TenantInfo, msg.ID)
 	if err != nil {
@@ -348,6 +375,8 @@ func (s *Service) SendPersisted(
 			HTML:           req.HTML,
 			Text:           req.Text,
 			Attachments:    attachments,
+			Headers:        req.Headers,
+			OpenTracking:   req.OpenTracking,
 		},
 	})
 	if err != nil {
@@ -358,7 +387,12 @@ func (s *Service) SendPersisted(
 	msg.ProviderMessageID = result.ProviderMessageID
 	msg.SentAt = timeutils.NowUnix()
 	msg.LastError = ""
-	return s.repo.UpdateMessage(ctx, msg)
+	msg, err = s.repo.UpdateMessage(ctx, msg)
+	if err != nil {
+		return nil, err
+	}
+	s.syncInvoiceAttempts(ctx, msg)
+	return msg, nil
 }
 
 func (s *Service) persistAttachments(
@@ -476,6 +510,8 @@ func (s *Service) startSendWorkflow(
 	msg *email.Message,
 	html string,
 	text string,
+	headers map[string]string,
+	openTracking bool,
 ) error {
 	if !s.workflowStarter.Enabled() {
 		return services.ErrWorkflowStarterDisabled
@@ -501,9 +537,11 @@ func (s *Service) startSendWorkflow(
 				BusinessUnitID: msg.BusinessUnitID,
 				Timestamp:      timeutils.NowUnix(),
 			},
-			MessageID: msg.ID,
-			HTML:      html,
-			Text:      text,
+			MessageID:    msg.ID,
+			HTML:         html,
+			Text:         text,
+			Headers:      headers,
+			OpenTracking: openTracking,
 		},
 	)
 	return err
@@ -569,6 +607,7 @@ func (s *Service) HandleProviderEvent(
 	if _, err = s.repo.UpdateMessage(ctx, msg); err != nil {
 		return err
 	}
+	s.syncInvoiceAttempts(ctx, msg)
 	if params.SuppressionReason != "" {
 		_, err = s.repo.CreateSuppression(ctx, &email.Suppression{
 			BusinessUnitID: tenantInfo.BuID,
@@ -704,7 +743,20 @@ func (s *Service) markFailed(
 	if updateErr != nil {
 		return nil, updateErr
 	}
+	s.syncInvoiceAttempts(ctx, updated)
 	return updated, err
+}
+
+func (s *Service) syncInvoiceAttempts(ctx context.Context, msg *email.Message) {
+	if s.invoiceRepo == nil || msg == nil || msg.ID.IsNil() {
+		return
+	}
+	if err := s.invoiceRepo.SyncEmailAttemptsForMessage(ctx, msg.ID, pagination.TenantInfo{
+		OrgID: msg.OrganizationID,
+		BuID:  msg.BusinessUnitID,
+	}); err != nil && s.l != nil {
+		s.l.Error("failed to sync invoice email attempts", zap.Error(err), zap.String("messageId", msg.ID.String()))
+	}
 }
 
 type emailProfileAuditParams struct {

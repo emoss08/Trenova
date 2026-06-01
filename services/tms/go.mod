@@ -29,6 +29,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
+	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/meilisearch/meilisearch-go v0.36.2
 	github.com/minio/minio-go/v7 v7.1.0
 	github.com/openai/openai-go/v3 v3.37.0

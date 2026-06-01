@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -24,6 +25,7 @@ type ValidatorParams struct {
 	AccountingRepo   repositories.AccountingControlRepository
 	FiscalPeriodRepo repositories.FiscalPeriodRepository
 	ShipmentRepo     repositories.ShipmentRepository
+	AccountingPolicy *accountingcontrolpolicyservice.Service
 }
 
 type Validator struct {
@@ -32,6 +34,7 @@ type Validator struct {
 	accountingRepo   repositories.AccountingControlRepository
 	fiscalPeriodRepo repositories.FiscalPeriodRepository
 	shipmentRepo     repositories.ShipmentRepository
+	accountingPolicy *accountingcontrolpolicyservice.Service
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -44,6 +47,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,
 		shipmentRepo:     p.ShipmentRepo,
+		accountingPolicy: p.AccountingPolicy,
 	}
 }
 
@@ -51,7 +55,8 @@ func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *invoice.Invoice,
 ) *errortypes.MultiError {
-	return v.validator.ValidateCreate(ctx, entity)
+	multiErr := v.validator.ValidateCreate(ctx, entity)
+	return validateLineDerivedTotals(entity, multiErr)
 }
 
 func (v *Validator) ValidateUpdate(
@@ -79,6 +84,51 @@ func (v *Validator) ValidatePost(
 	return nil
 }
 
+func validateLineDerivedTotals(
+	entity *invoice.Invoice,
+	multiErr *errortypes.MultiError,
+) *errortypes.MultiError {
+	if entity == nil || len(entity.Lines) == 0 {
+		return multiErr
+	}
+
+	if multiErr == nil {
+		multiErr = errortypes.NewMultiError()
+	}
+
+	expectedSubtotal := sumLinesByType(entity.Lines, invoice.InvoiceLineTypeFreight)
+	expectedOther := sumLinesByType(entity.Lines, invoice.InvoiceLineTypeAccessorial)
+	expectedTotal := sumLinesByType(entity.Lines, "")
+
+	if !entity.SubtotalAmount.Equal(expectedSubtotal) {
+		multiErr.Add(
+			"subtotalAmount",
+			errortypes.ErrInvalid,
+			"Invoice subtotal must equal the sum of freight lines",
+		)
+	}
+	if !entity.OtherAmount.Equal(expectedOther) {
+		multiErr.Add(
+			"otherAmount",
+			errortypes.ErrInvalid,
+			"Invoice other amount must equal the sum of accessorial lines",
+		)
+	}
+	if !entity.TotalAmount.Equal(expectedTotal) {
+		multiErr.Add(
+			"totalAmount",
+			errortypes.ErrInvalid,
+			"Invoice total must equal the sum of invoice lines",
+		)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
 func (v *Validator) validatePostingPeriodPolicy(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -97,6 +147,16 @@ func (v *Validator) validatePostingPeriodPolicy(
 		multiErr.Add("postedAt", errortypes.ErrSystemError, "Failed to load accounting control")
 		return
 	}
+	if v.accountingPolicyService().
+		CanCreateInvoiceLedgerEntry(control, invoicePostingSourceEvent(entity.BillType)) &&
+		!invoicePostingHasRequiredAccounts(control) {
+		multiErr.Add(
+			"accountingControl",
+			errortypes.ErrRequired,
+			"Invoice posting requires default Accounts Receivable and revenue accounts",
+		)
+		return
+	}
 
 	period, err := v.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
 		OrgID: entity.OrganizationID,
@@ -105,6 +165,11 @@ func (v *Validator) validatePostingPeriodPolicy(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
+			multiErr.Add(
+				"postedAt",
+				errortypes.ErrRequired,
+				"No fiscal period covers the invoice posting date",
+			)
 			return
 		}
 		multiErr.Add("postedAt", errortypes.ErrSystemError, "Failed to resolve accounting period")
@@ -132,6 +197,15 @@ func (v *Validator) validatePostingPeriodPolicy(
 	}
 }
 
+func (v *Validator) accountingPolicyService() *accountingcontrolpolicyservice.Service {
+	if v.accountingPolicy != nil {
+		return v.accountingPolicy
+	}
+	return accountingcontrolpolicyservice.New(
+		accountingcontrolpolicyservice.Params{Logger: zap.NewNop()},
+	)
+}
+
 func (v *Validator) validatePostingReconciliation(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -155,10 +229,10 @@ func (v *Validator) validatePostingReconciliation(
 		return
 	}
 
-	shp, err := v.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         entity.ShipmentID,
-		TenantInfo: tenantInfo,
-	})
+	shp, err := v.shipmentRepo.GetByID(
+		ctx,
+		basicShipmentByIDRequest(entity.ShipmentID, tenantInfo),
+	)
 	if err != nil {
 		multiErr.Add(
 			"shipmentId",

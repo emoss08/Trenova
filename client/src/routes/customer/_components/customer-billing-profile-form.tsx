@@ -50,7 +50,9 @@ function SectionHeader({
         <Icon className="size-4" />
       </div>
       <div>
-        <h3 className="text-sm leading-none font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-sm leading-none font-semibold tracking-tight">
+          {title}
+        </h3>
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>
       </div>
     </div>
@@ -86,8 +88,10 @@ export function CustomerBillingProfileForm() {
     name: "billingProfile.detentionBillingEnabled",
   });
 
-  const showDayOfWeek = billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
-  const showCreditHoldReason = creditStatus === "Hold" || creditStatus === "Suspended";
+  const showDayOfWeek =
+    billingCycleType === "Weekly" || billingCycleType === "BiWeekly";
+  const showCreditHoldReason =
+    creditStatus === "Hold" || creditStatus === "Suspended";
   const showCustomPrefix = invoiceNumberFormat === "CustomPrefix";
 
   return (
@@ -256,9 +260,9 @@ export function CustomerBillingProfileForm() {
         <FormControl>
           <SwitchField
             control={control}
-            name="billingProfile.summaryTransmitOnGeneration"
-            label="Auto-Transmit on Generation"
-            description="Automatically send summary invoices to the customer as soon as they are generated, without requiring manual review first."
+            name="billingProfile.autoSendInvoiceOnGeneration"
+            label="Auto-Send After PDF Generation"
+            description="Email the invoice to the configured recipients after the invoice PDF is generated."
           />
         </FormControl>
         <FormControl>

@@ -4,6 +4,34 @@ package invoice
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Attachment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AttachmentFieldMap] instead of parsing struct tags via reflection.
+func (e *Attachment) GetStaticFieldMap() map[string]string {
+	return buncolgen.AttachmentFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [DocumentShareToken].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.DocumentShareTokenFieldMap] instead of parsing struct tags via reflection.
+func (e *DocumentShareToken) GetStaticFieldMap() map[string]string {
+	return buncolgen.DocumentShareTokenFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EmailAttempt].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EmailAttemptFieldMap] instead of parsing struct tags via reflection.
+func (e *EmailAttempt) GetStaticFieldMap() map[string]string {
+	return buncolgen.EmailAttemptFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EmailAttemptAttachment].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EmailAttemptAttachmentFieldMap] instead of parsing struct tags via reflection.
+func (e *EmailAttemptAttachment) GetStaticFieldMap() map[string]string {
+	return buncolgen.EmailAttemptAttachmentFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [InoviceLine].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.InoviceLineFieldMap] instead of parsing struct tags via reflection.

@@ -832,7 +832,7 @@ func (h *Handler) uploadSessionPart(c *gin.Context) {
 
 	session, err := h.uploadService.UploadPart(
 		c.Request.Context(),
-		&documentuploadservice.UploadPartRequest{
+		&serviceports.UploadPartRequest{
 			TenantInfo: pagination.TenantInfo{
 				OrgID:  authCtx.OrganizationID,
 				BuID:   authCtx.BusinessUnitID,

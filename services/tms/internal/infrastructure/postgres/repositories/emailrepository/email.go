@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -28,6 +29,24 @@ type repository struct {
 	db *postgres.Connection
 	l  *zap.Logger
 }
+
+const profileReturningColumns = `
+	id,
+	business_unit_id,
+	organization_id,
+	name,
+	description,
+	from_name,
+	from_address,
+	reply_to,
+	provider_type,
+	auth_type,
+	encryption_type,
+	status,
+	version,
+	created_at,
+	updated_at
+`
 
 func New(p Params) repositories.EmailRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.email-repository")}
@@ -59,6 +78,43 @@ func (r *repository) ListProfiles(
 	return &pagination.ListResult[*email.Profile]{Items: entities, Total: total}, nil
 }
 
+func (r *repository) SelectProfileOptions(
+	ctx context.Context,
+	req *repositories.EmailProfileSelectOptionsRequest,
+) (*pagination.ListResult[*email.Profile], error) {
+	return dbhelper.SelectOptions[*email.Profile](
+		ctx,
+		r.db.DB(),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			Columns: []string{
+				"id",
+				"business_unit_id",
+				"organization_id",
+				"name",
+				"from_name",
+				"from_address",
+				"reply_to",
+				"provider_type",
+				"status",
+				"updated_at",
+			},
+			OrgColumn: "ep.organization_id",
+			BuColumn:  "ep.business_unit_id",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where("ep.status = ?", email.ProfileStatusActive).
+					OrderExpr("ep.name ASC")
+			},
+			EntityName: "EmailProfile",
+			SearchColumns: []string{
+				"ep.name",
+				"ep.from_address",
+				"ep.from_name",
+			},
+		},
+	)
+}
+
 func (r *repository) GetProfile(
 	ctx context.Context,
 	req repositories.GetEmailEntityRequest,
@@ -74,7 +130,7 @@ func (r *repository) GetProfile(
 }
 
 func (r *repository) CreateProfile(ctx context.Context, entity *email.Profile) (*email.Profile, error) {
-	_, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx)
+	_, err := r.db.DB().NewInsert().Model(entity).Returning(profileReturningColumns).Exec(ctx)
 	return entity, err
 }
 
@@ -86,7 +142,7 @@ func (r *repository) UpdateProfile(ctx context.Context, entity *email.Profile) (
 		WherePK().
 		Where("version = ?", previousVersion).
 		OmitZero().
-		Returning("*").
+		Returning(profileReturningColumns).
 		Exec(ctx)
 	if err != nil {
 		return nil, err
@@ -132,10 +188,14 @@ func (r *repository) UpsertAssignments(
 	assignments []*email.ProfileAssignment,
 ) ([]*email.ProfileAssignment, error) {
 	err := r.db.DB().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		purposes := email.Purposes()
+		provided := make(map[email.Purpose]struct{}, len(assignments))
+
 		for _, assignment := range assignments {
 			if assignment == nil {
 				continue
 			}
+			provided[assignment.Purpose] = struct{}{}
 			assignment.OrganizationID = tenantInfo.OrgID
 			assignment.BusinessUnitID = tenantInfo.BuID
 			_, err := tx.NewInsert().
@@ -149,6 +209,27 @@ func (r *repository) UpsertAssignments(
 				return err
 			}
 		}
+
+		missing := make([]email.Purpose, 0, len(purposes))
+		for _, purpose := range purposes {
+			if _, ok := provided[purpose]; !ok {
+				missing = append(missing, purpose)
+			}
+		}
+		if len(missing) == 0 {
+			return nil
+		}
+
+		_, err := tx.NewDelete().
+			Model((*email.ProfileAssignment)(nil)).
+			Where("organization_id = ?", tenantInfo.OrgID).
+			Where("business_unit_id = ?", tenantInfo.BuID).
+			Where("purpose IN (?)", bun.In(missing)).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -180,7 +261,20 @@ func (r *repository) CreateMessage(ctx context.Context, entity *email.Message) (
 }
 
 func (r *repository) UpdateMessage(ctx context.Context, entity *email.Message) (*email.Message, error) {
-	_, err := r.db.DB().NewUpdate().Model(entity).WherePK().OmitZero().Returning("*").Exec(ctx)
+	_, err := r.db.DB().
+		NewUpdate().
+		Model(entity).
+		WherePK().
+		Set("provider_message_id = ?", entity.ProviderMessageID).
+		Set("status = ?", entity.Status).
+		Set("attempts = ?", entity.Attempts).
+		Set("last_error = ?", entity.LastError).
+		Set("sent_at = ?", entity.SentAt).
+		Set("delivered_at = ?", entity.DeliveredAt).
+		Set("failed_at = ?", entity.FailedAt).
+		Set("updated_at = ?", entity.UpdatedAt).
+		Returning("*").
+		Exec(ctx)
 	return entity, err
 }
 

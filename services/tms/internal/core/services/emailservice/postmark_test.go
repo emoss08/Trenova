@@ -26,6 +26,15 @@ func TestPostmarkSenderSendsMessageWithAttachments(t *testing.T) {
 		require.Equal(t, "outbound", payload["MessageStream"])
 		require.Equal(t, "Subject", payload["Subject"])
 		require.Equal(t, "<p>Hello</p>", payload["HtmlBody"])
+		require.Equal(t, true, payload["TrackOpens"])
+
+		headers, ok := payload["Headers"].([]any)
+		require.True(t, ok)
+		require.Len(t, headers, 1)
+		header, ok := headers[0].(map[string]any)
+		require.True(t, ok)
+		require.Equal(t, "Disposition-Notification-To", header["Name"])
+		require.Equal(t, "dispatch@example.com", header["Value"])
 
 		attachments, ok := payload["Attachments"].([]any)
 		require.True(t, ok)
@@ -53,6 +62,10 @@ func TestPostmarkSenderSendsMessageWithAttachments(t *testing.T) {
 			CC:      []string{"billing@example.com"},
 			Subject: "Subject",
 			HTML:    "<p>Hello</p>",
+			Headers: map[string]string{
+				"Disposition-Notification-To": "dispatch@example.com",
+			},
+			OpenTracking: true,
 			Attachments: []ProviderAttachment{
 				{
 					FileName:    "invoice.pdf",
@@ -105,6 +118,7 @@ func TestPostmarkSenderClassifiesFailures(t *testing.T) {
 			require.Error(t, err)
 			require.Equal(t, tt.retryable, errors.Is(err, serviceports.ErrRetryableEmailSend))
 			require.Equal(t, !tt.retryable, errors.Is(err, serviceports.ErrNonRetryableEmailSend))
+			require.Contains(t, err.Error(), "failure")
 		})
 	}
 }
