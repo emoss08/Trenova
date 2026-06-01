@@ -305,6 +305,10 @@ func buildShipmentBillingReadiness(
 		Requirements:        []services.ShipmentBillingRequirement{},
 		MissingRequirements: []services.ShipmentBillingRequirement{},
 		ValidationFailures:  []services.ShipmentBillingValidation{},
+		Warnings:            []services.ShipmentBillingWarning{},
+		ServiceFailureContext: services.ShipmentServiceFailureBillingContext{
+			ServiceFailureIDs: []string{},
+		},
 		Policy: services.ShipmentBillingReadinessPolicy{
 			ShipmentBillingRequirementEnforcement: resolveShipmentBillingRequirementEnforcement(
 				billingProfile,

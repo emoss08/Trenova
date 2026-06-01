@@ -58,6 +58,18 @@ export const shipmentBillingValidationSchema = z.object({
   message: z.string(),
 });
 
+export const shipmentBillingWarningSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+  context: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const shipmentServiceFailureBillingContextSchema = z.object({
+  hasUnresolved: z.boolean(),
+  unresolvedCount: z.number(),
+  serviceFailureIds: z.array(z.string()),
+});
+
 export const shipmentBillingRequirementSchema = z.object({
   documentTypeId: z.string(),
   documentTypeCode: z.string(),
@@ -74,6 +86,12 @@ export const shipmentBillingReadinessSchema = z.object({
   requirements: z.array(shipmentBillingRequirementSchema),
   missingRequirements: z.array(shipmentBillingRequirementSchema),
   validationFailures: z.array(shipmentBillingValidationSchema),
+  warnings: z.array(shipmentBillingWarningSchema).default([]),
+  serviceFailureContext: shipmentServiceFailureBillingContextSchema.default({
+    hasUnresolved: false,
+    unresolvedCount: 0,
+    serviceFailureIds: [],
+  }),
   canMarkReadyToInvoice: z.boolean(),
   shouldAutoMarkReadyToInvoice: z.boolean(),
   shouldAutoTransferToBilling: z.boolean(),
@@ -82,6 +100,10 @@ export const shipmentBillingReadinessSchema = z.object({
 export type ShipmentBillingReadiness = z.infer<typeof shipmentBillingReadinessSchema>;
 export type ShipmentBillingRequirement = z.infer<typeof shipmentBillingRequirementSchema>;
 export type ShipmentBillingValidation = z.infer<typeof shipmentBillingValidationSchema>;
+export type ShipmentBillingWarning = z.infer<typeof shipmentBillingWarningSchema>;
+export type ShipmentServiceFailureBillingContext = z.infer<
+  typeof shipmentServiceFailureBillingContextSchema
+>;
 
 export const moveStatusSchema = z.enum(["New", "Assigned", "InTransit", "Completed", "Canceled"]);
 export type MoveStatus = z.infer<typeof moveStatusSchema>;

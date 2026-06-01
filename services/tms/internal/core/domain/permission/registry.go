@@ -658,6 +658,38 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceServiceFailure.String(),
+		DisplayName: "Service Failure",
+		Description: "Service failure investigation and approval records",
+		Category:    "Operations",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View service failures"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create service failures"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify service failures"},
+			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve service failures"},
+			{Operation: OpArchive, DisplayName: "Archive", Description: "Archive service failures"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export service failures"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceServiceFailureReasonCode.String(),
+		DisplayName: "Service Failure Reason Code",
+		Description: "Service failure reason code reference data",
+		Category:    "Operations",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View service failure reason codes"},
+			{Operation: OpCreate, DisplayName: "Create", Description: "Create service failure reason codes"},
+			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify service failure reason codes"},
+			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve service failure reason codes"},
+			{Operation: OpArchive, DisplayName: "Archive", Description: "Archive service failure reason codes"},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export service failure reason codes"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceDispatchControl.String(),
 		DisplayName:        "Dispatch Control",
 		Description:        "Dispatch settings and configuration",

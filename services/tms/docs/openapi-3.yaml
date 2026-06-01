@@ -2957,6 +2957,8 @@ components:
                 - shipment_move
                 - shipment_stop
                 - shipment_hold
+                - service_failure
+                - service_failure_reason_code
                 - dispatch_control
                 - hold_reason
                 - shipment_control
@@ -3046,6 +3048,8 @@ components:
                 - ResourceShipmentMove
                 - ResourceShipmentStop
                 - ResourceShipmentHold
+                - ResourceServiceFailure
+                - ResourceServiceFailureReasonCode
                 - ResourceDispatchControl
                 - ResourceHoldReason
                 - ResourceShipmentControl
@@ -5889,6 +5893,8 @@ components:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement'
                     type: array
+                serviceFailureContext:
+                    $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShipmentServiceFailureBillingContext'
                 shipmentId:
                     type: string
                 shipmentStatus:
@@ -5900,6 +5906,10 @@ components:
                 validationFailures:
                     items:
                         $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation'
+                    type: array
+                warnings:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingWarning'
                     type: array
             type: object
         github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingReadinessPolicy:
@@ -5942,6 +5952,27 @@ components:
                     type: string
                 message:
                     type: string
+            type: object
+        github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingWarning:
+            properties:
+                code:
+                    type: string
+                context:
+                    additionalProperties: {}
+                    type: object
+                message:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_internal_core_ports_services.ShipmentServiceFailureBillingContext:
+            properties:
+                hasUnresolved:
+                    type: boolean
+                serviceFailureIds:
+                    items:
+                        type: string
+                    type: array
+                unresolvedCount:
+                    type: integer
             type: object
         github_com_emoss08_trenova_internal_core_ports_services.ShipmentUIPolicy:
             properties:

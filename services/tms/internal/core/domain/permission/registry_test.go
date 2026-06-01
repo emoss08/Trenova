@@ -416,6 +416,8 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 		ResourceRole.String(),
 		ResourceIntegration.String(),
 		ResourceShipment.String(),
+		ResourceServiceFailure.String(),
+		ResourceServiceFailureReasonCode.String(),
 		ResourceInvoice.String(),
 		ResourceCustomer.String(),
 		ResourceWorker.String(),
@@ -431,6 +433,34 @@ func TestRegistry_RegisterAll_KnownResources(t *testing.T) {
 
 	for _, res := range knownResources {
 		assert.True(t, reg.HasResource(res), "registry should have resource %s", res)
+	}
+}
+
+func TestRegistry_ServiceFailureResourcesUseReadinessOperations(t *testing.T) {
+	t.Parallel()
+
+	reg := NewRegistry()
+	wantOps := []Operation{
+		OpRead,
+		OpCreate,
+		OpUpdate,
+		OpApprove,
+		OpArchive,
+		OpExport,
+	}
+
+	for _, resource := range []Resource{
+		ResourceServiceFailure,
+		ResourceServiceFailureReasonCode,
+	} {
+		t.Run(resource.String(), func(t *testing.T) {
+			t.Parallel()
+
+			def, ok := reg.Get(resource.String())
+			require.True(t, ok)
+			assert.Equal(t, "Operations", def.Category)
+			assert.ElementsMatch(t, wantOps, reg.GetOperationsForResource(resource.String()))
+		})
 	}
 }
 

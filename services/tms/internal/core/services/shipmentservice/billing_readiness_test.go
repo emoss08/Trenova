@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
@@ -248,12 +249,24 @@ func TestBuildShipmentBillingReadiness_UsesEmptyArraysForUnsetCollections(t *tes
 	assert.Empty(t, readiness.Requirements)
 	assert.Empty(t, readiness.MissingRequirements)
 	assert.Empty(t, readiness.ValidationFailures)
+	assert.Empty(t, readiness.Warnings)
+	assert.False(t, readiness.ServiceFailureContext.HasUnresolved)
+	assert.Zero(t, readiness.ServiceFailureContext.UnresolvedCount)
+	assert.Empty(t, readiness.ServiceFailureContext.ServiceFailureIDs)
 
 	payload, err := json.Marshal(readiness)
 	require.NoError(t, err)
 	assert.Contains(t, string(payload), `"requirements":[]`)
 	assert.Contains(t, string(payload), `"missingRequirements":[]`)
 	assert.Contains(t, string(payload), `"validationFailures":[]`)
+	assert.Contains(t, string(payload), `"warnings":[]`)
+	assert.Contains(t, string(payload), `"serviceFailureIds":[]`)
+}
+
+func TestBuildShipmentBillingReadiness_ServiceFailureExceptionReasonRemainsValid(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, billingqueue.ExceptionServiceFailure.IsValid())
 }
 
 func TestBuildShipmentBillingReadiness_BlocksOnRateVarianceWhenConfigured(t *testing.T) {

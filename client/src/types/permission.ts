@@ -90,6 +90,8 @@ export const Resource = {
   ShipmentType: "shipment_type",
   ShipmentMove: "shipment_move",
   ShipmentStop: "shipment_stop",
+  ServiceFailure: "service_failure",
+  ServiceFailureReasonCode: "service_failure_reason_code",
   DataEntryControl: "data_entry_control",
   PlatformCatalog: "platform_catalog",
   DatabaseSession: "database_session",

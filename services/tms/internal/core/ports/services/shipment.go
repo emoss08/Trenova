@@ -33,6 +33,18 @@ type ShipmentBillingValidation struct {
 	Message string `json:"message"`
 }
 
+type ShipmentBillingWarning struct {
+	Code    string         `json:"code"`
+	Message string         `json:"message"`
+	Context map[string]any `json:"context,omitempty"`
+}
+
+type ShipmentServiceFailureBillingContext struct {
+	HasUnresolved     bool     `json:"hasUnresolved"`
+	UnresolvedCount   int      `json:"unresolvedCount"`
+	ServiceFailureIDs []string `json:"serviceFailureIds"`
+}
+
 type ShipmentBillingRequirement struct {
 	DocumentTypeID   string   `json:"documentTypeId"`
 	DocumentTypeCode string   `json:"documentTypeCode"`
@@ -43,15 +55,17 @@ type ShipmentBillingRequirement struct {
 }
 
 type ShipmentBillingReadiness struct {
-	ShipmentID                   string                         `json:"shipmentId"`
-	ShipmentStatus               shipment.Status                `json:"shipmentStatus"`
-	Policy                       ShipmentBillingReadinessPolicy `json:"policy"`
-	Requirements                 []ShipmentBillingRequirement   `json:"requirements"`
-	MissingRequirements          []ShipmentBillingRequirement   `json:"missingRequirements"`
-	ValidationFailures           []ShipmentBillingValidation    `json:"validationFailures"`
-	CanMarkReadyToInvoice        bool                           `json:"canMarkReadyToInvoice"`
-	ShouldAutoMarkReadyToInvoice bool                           `json:"shouldAutoMarkReadyToInvoice"`
-	ShouldAutoTransferToBilling  bool                           `json:"shouldAutoTransferToBilling"`
+	ShipmentID                   string                               `json:"shipmentId"`
+	ShipmentStatus               shipment.Status                      `json:"shipmentStatus"`
+	Policy                       ShipmentBillingReadinessPolicy       `json:"policy"`
+	Requirements                 []ShipmentBillingRequirement         `json:"requirements"`
+	MissingRequirements          []ShipmentBillingRequirement         `json:"missingRequirements"`
+	ValidationFailures           []ShipmentBillingValidation          `json:"validationFailures"`
+	Warnings                     []ShipmentBillingWarning             `json:"warnings"`
+	ServiceFailureContext        ShipmentServiceFailureBillingContext `json:"serviceFailureContext"`
+	CanMarkReadyToInvoice        bool                                 `json:"canMarkReadyToInvoice"`
+	ShouldAutoMarkReadyToInvoice bool                                 `json:"shouldAutoMarkReadyToInvoice"`
+	ShouldAutoTransferToBilling  bool                                 `json:"shouldAutoTransferToBilling"`
 }
 
 type DistanceMoveResult struct {

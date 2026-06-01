@@ -26903,6 +26903,8 @@ const docTemplate = `{
                 "shipment_move",
                 "shipment_stop",
                 "shipment_hold",
+                "service_failure",
+                "service_failure_reason_code",
                 "dispatch_control",
                 "hold_reason",
                 "shipment_control",
@@ -26992,6 +26994,8 @@ const docTemplate = `{
                 "ResourceShipmentMove",
                 "ResourceShipmentStop",
                 "ResourceShipmentHold",
+                "ResourceServiceFailure",
+                "ResourceServiceFailureReasonCode",
                 "ResourceDispatchControl",
                 "ResourceHoldReason",
                 "ResourceShipmentControl",
@@ -31118,6 +31122,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingRequirement"
                     }
                 },
+                "serviceFailureContext": {
+                    "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentServiceFailureBillingContext"
+                },
                 "shipmentId": {
                     "type": "string"
                 },
@@ -31134,6 +31141,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingValidation"
+                    }
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingWarning"
                     }
                 }
             }
@@ -31198,6 +31211,38 @@ const docTemplate = `{
                 },
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentBillingWarning": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "context": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.ShipmentServiceFailureBillingContext": {
+            "type": "object",
+            "properties": {
+                "hasUnresolved": {
+                    "type": "boolean"
+                },
+                "serviceFailureIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unresolvedCount": {
+                    "type": "integer"
                 }
             }
         },
