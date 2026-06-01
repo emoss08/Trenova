@@ -44,6 +44,7 @@ type invoicePDFData struct {
 	Subtotal      string
 	Other         string
 	Total         string
+	BalanceDue    string
 	Terms         []string
 	InvoiceTerms  []string
 	InvoiceFooter string
@@ -170,7 +171,7 @@ func buildInvoicePDFDataWithLogo(
 	data := invoicePDFData{
 		InvoiceNumber: entity.Number,
 		InvoiceDate:   unixDate(entity.InvoiceDate),
-		DueDate:       unixDatePtr(entity.DueDate),
+		DueDate:       invoicePDFDueDate(entity, control),
 		PaymentTerm:   string(entity.PaymentTerm),
 		CurrencyCode:  entity.CurrencyCode,
 		Organization:  organizationPDFAddressBlock(org),
@@ -185,12 +186,8 @@ func buildInvoicePDFDataWithLogo(
 		Subtotal:      moneyString(entity.CurrencyCode, entity.SubtotalAmount.StringFixed(2)),
 		Other:         moneyString(entity.CurrencyCode, entity.OtherAmount.StringFixed(2)),
 		Total:         moneyString(entity.CurrencyCode, entity.TotalAmount.StringFixed(2)),
-		Terms: stringutils.FilterEmpty(
-			[]string{
-				labeledPDFLine("Payment Terms", string(entity.PaymentTerm)),
-				labeledPDFLine("Due Date", unixDatePtr(entity.DueDate)),
-			},
-		),
+		BalanceDue:    invoicePDFBalanceDue(entity, control),
+		Terms:         invoicePDFTerms(entity, control),
 		InvoiceTerms:  billingControlPDFInvoiceTerms(control),
 		InvoiceFooter: billingControlPDFInvoiceFooter(control),
 		Notes:         stringutils.FilterEmpty([]string{entity.Memo}),
@@ -408,7 +405,14 @@ func drawInvoicePDFCharges(pdf *gofpdf.Fpdf, data invoicePDFData) {
 	pdf.Ln(1.0)
 	drawTotalLine(pdf, "Subtotal", data.Subtotal, false)
 	drawTotalLine(pdf, "Accessorial/Other", data.Other, false)
-	drawTotalLine(pdf, "Total", data.Total, true)
+	if data.DueDate != "" && len(data.InvoiceTerms) > 0 {
+		drawTotalLine(pdf, "Due Date", invoicePDFMetadataDate(data.DueDate), false)
+	}
+	showBalanceDue := data.BalanceDue != ""
+	drawTotalLine(pdf, "Total", data.Total, !showBalanceDue)
+	if showBalanceDue {
+		drawTotalLine(pdf, "Balance Due", data.BalanceDue, true)
+	}
 }
 
 func drawInvoicePDFFooter(pdf *gofpdf.Fpdf, data invoicePDFData) {
@@ -998,6 +1002,38 @@ func proHeaderValue(rows []invoicePDFKeyValue) string {
 		}
 	}
 	return ""
+}
+
+func invoicePDFTerms(entity *invoice.Invoice, control *tenant.BillingControl) []string {
+	rows := []string{
+		labeledPDFLine("Payment Terms", string(entity.PaymentTerm)),
+	}
+	if invoicePDFShowDueDate(control) {
+		rows = append(rows, labeledPDFLine("Due Date", unixDatePtr(entity.DueDate)))
+	}
+	return stringutils.FilterEmpty(rows)
+}
+
+func invoicePDFDueDate(entity *invoice.Invoice, control *tenant.BillingControl) string {
+	if !invoicePDFShowDueDate(control) {
+		return ""
+	}
+	return unixDatePtr(entity.DueDate)
+}
+
+func invoicePDFBalanceDue(entity *invoice.Invoice, control *tenant.BillingControl) string {
+	if !invoicePDFShowBalanceDue(control) {
+		return ""
+	}
+	return moneyString(entity.CurrencyCode, entity.OpenBalanceAmount().StringFixed(2))
+}
+
+func invoicePDFShowDueDate(control *tenant.BillingControl) bool {
+	return control == nil || control.ShowDueDateOnInvoice
+}
+
+func invoicePDFShowBalanceDue(control *tenant.BillingControl) bool {
+	return control == nil || control.ShowBalanceDueOnInvoice
 }
 
 func billingControlPDFInvoiceTerms(control *tenant.BillingControl) []string {

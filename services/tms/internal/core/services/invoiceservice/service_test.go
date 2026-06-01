@@ -694,6 +694,42 @@ func TestBuildInvoicePDFDataUsesBillingControlTermsAndFooter(t *testing.T) {
 	require.Equal(t, "Thank you for your business.", data.InvoiceFooter)
 }
 
+func TestBuildInvoicePDFDataUsesBillingControlInvoiceDisplayOptions(t *testing.T) {
+	t.Parallel()
+
+	dueDate := int64(1_700_086_400)
+	entity := &invoice.Invoice{
+		CurrencyCode:   "USD",
+		PaymentTerm:    invoice.PaymentTermNet30,
+		DueDate:        &dueDate,
+		TotalAmount:    decimal.NewFromInt(1250),
+		AppliedAmount:  decimal.NewFromInt(250),
+		SubtotalAmount: decimal.NewFromInt(1250),
+	}
+
+	defaulted := buildInvoicePDFData(entity, nil)
+	require.Equal(t, "2023-11-15", defaulted.DueDate)
+	require.Equal(t, "USD 1000.00", defaulted.BalanceDue)
+	require.Contains(t, defaulted.Terms, "Due Date: 2023-11-15")
+
+	shown := buildInvoicePDFData(entity, &invoiceDeliveryProfile{
+		BillingControl: &tenant.BillingControl{
+			ShowDueDateOnInvoice:    true,
+			ShowBalanceDueOnInvoice: true,
+		},
+	})
+	require.Equal(t, "2023-11-15", shown.DueDate)
+	require.Equal(t, "USD 1000.00", shown.BalanceDue)
+	require.Contains(t, shown.Terms, "Due Date: 2023-11-15")
+
+	hidden := buildInvoicePDFData(entity, &invoiceDeliveryProfile{
+		BillingControl: &tenant.BillingControl{},
+	})
+	require.Empty(t, hidden.DueDate)
+	require.Empty(t, hidden.BalanceDue)
+	require.Equal(t, []string{"Payment Terms: Net30"}, hidden.Terms)
+}
+
 func TestResolveDeliveryProfileIncludesBillingControlWhenRequested(t *testing.T) {
 	t.Parallel()
 
@@ -1470,6 +1506,8 @@ func testInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 			ScacCode:     "TRNV",
 		},
 		BillingControl: &tenant.BillingControl{
+			ShowDueDateOnInvoice:    true,
+			ShowBalanceDueOnInvoice: true,
 			DefaultInvoiceTerms: strings.Join([]string{
 				"Carrier agrees that all services are performed subject to the terms and conditions previously executed between Carrier and Customer.",
 				"Invoice charges are true and correct and transportation services were performed as described above.",

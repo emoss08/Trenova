@@ -118,6 +118,8 @@ func previewInvoicePDFDeliveryProfile() *invoiceDeliveryProfile {
 			ScacCode:     "TRNV",
 		},
 		BillingControl: &tenant.BillingControl{
+			ShowDueDateOnInvoice:    true,
+			ShowBalanceDueOnInvoice: true,
 			DefaultInvoiceTerms: strings.Join([]string{
 				"Carrier agrees that all services are performed subject to the terms and conditions previously executed between Carrier and Customer.",
 				"Invoice charges are true and correct and transportation services were performed as described above.",
