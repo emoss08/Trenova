@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -79,9 +80,18 @@ type BuildServiceFailureEDIPayloadRequest struct {
 }
 
 type ServiceFailureEvaluationResult struct {
-	CreatedIDs []pulid.ID `json:"createdIds"`
-	UpdatedIDs []pulid.ID `json:"updatedIds"`
-	Skipped    int        `json:"skipped"`
+	CreatedIDs   []pulid.ID                  `json:"createdIds"`
+	UpdatedIDs   []pulid.ID                  `json:"updatedIds"`
+	SkippedStops []ServiceFailureSkippedStop `json:"skippedStops"`
+	Skipped      int                         `json:"skipped"`
+}
+
+type ServiceFailureSkippedStop struct {
+	ShipmentID   pulid.ID          `json:"shipmentId"`
+	StopID       pulid.ID          `json:"stopId,omitempty"`
+	StopSequence int64             `json:"stopSequence,omitempty"`
+	StopType     shipment.StopType `json:"stopType,omitempty"`
+	Reason       string            `json:"reason"`
 }
 
 type ServiceFailureEDIPayloadResult struct {

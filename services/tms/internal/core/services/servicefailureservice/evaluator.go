@@ -37,6 +37,14 @@ type qualifyingFailureParams struct {
 	force       bool
 }
 
+func newServiceFailureEvaluationResult() *services.ServiceFailureEvaluationResult {
+	return &services.ServiceFailureEvaluationResult{
+		CreatedIDs:   make([]pulid.ID, 0),
+		UpdatedIDs:   make([]pulid.ID, 0),
+		SkippedStops: make([]services.ServiceFailureSkippedStop, 0),
+	}
+}
+
 func (s *service) EvaluateShipment(
 	ctx context.Context,
 	req *services.EvaluateShipmentServiceFailuresRequest,
@@ -114,10 +122,10 @@ func (s *service) BulkEvaluate(
 		return nil, multiErr
 	}
 
-	result := &services.ServiceFailureEvaluationResult{}
+	result := newServiceFailureEvaluationResult()
 	for _, shipmentID := range req.ShipmentIDs {
 		if shipmentID.IsNil() {
-			result.Skipped++
+			addSkippedEvaluation(result, pulid.Nil, nil, "missing shipment ID")
 			continue
 		}
 		current, err := s.EvaluateShipment(ctx, &services.EvaluateShipmentServiceFailuresRequest{
@@ -138,12 +146,12 @@ func (s *service) evaluateShipment(
 	ctx context.Context,
 	params evaluateShipmentParams,
 ) (*services.ServiceFailureEvaluationResult, error) {
-	result := &services.ServiceFailureEvaluationResult{}
+	result := newServiceFailureEvaluationResult()
 	if params.source == nil {
 		return result, nil
 	}
 	if params.source.Status == shipment.StatusCanceled {
-		result.Skipped++
+		addSkippedEvaluation(result, params.source.ID, nil, "shipment canceled")
 		return result, nil
 	}
 
@@ -170,7 +178,7 @@ func (s *service) evaluateShipment(
 				force:       params.force,
 			})
 			if action == nil {
-				result.Skipped++
+				addSkippedEvaluation(result, params.source.ID, stop, reason)
 				s.l.Debug("service failure stop skipped", zap.String("stopID", stop.ID.String()), zap.String("reason", reason))
 				continue
 			}
@@ -237,6 +245,7 @@ func (s *service) qualifyingFailure(params qualifyingFailureParams) (*detectedAc
 		LateMinutes:        lateMinutes,
 		DetectedAt:         timeutils.NowUnix(),
 	}
+	entity.Normalize()
 	return &detectedAction{entity: entity}, ""
 }
 
@@ -300,5 +309,28 @@ func mergeEvaluationResult(target, source *services.ServiceFailureEvaluationResu
 	}
 	target.CreatedIDs = append(target.CreatedIDs, source.CreatedIDs...)
 	target.UpdatedIDs = append(target.UpdatedIDs, source.UpdatedIDs...)
+	target.SkippedStops = append(target.SkippedStops, source.SkippedStops...)
 	target.Skipped += source.Skipped
+}
+
+func addSkippedEvaluation(
+	result *services.ServiceFailureEvaluationResult,
+	shipmentID pulid.ID,
+	stop *shipment.Stop,
+	reason string,
+) {
+	if result == nil {
+		return
+	}
+	result.Skipped++
+	detail := services.ServiceFailureSkippedStop{
+		ShipmentID: shipmentID,
+		Reason:     reason,
+	}
+	if stop != nil {
+		detail.StopID = stop.ID
+		detail.StopSequence = stop.Sequence
+		detail.StopType = stop.Type
+	}
+	result.SkippedStops = append(result.SkippedStops, detail)
 }

@@ -9,6 +9,21 @@ import { stopTypeSchema } from "./shipment";
 import { serviceFailureReasonCodeSchema } from "./service-failure-reason-code";
 
 const nullableTimestampSchema = z.number().int().nullable().optional();
+const evaluationResultIdsSchema = z
+  .array(z.string())
+  .nullish()
+  .transform((value) => value ?? []);
+const serviceFailureSkippedStopSchema = z.object({
+  shipmentId: optionalStringSchema,
+  stopId: optionalStringSchema,
+  stopSequence: nullableIntegerSchema,
+  stopType: stopTypeSchema.optional(),
+  reason: optionalStringSchema,
+});
+const skippedStopsSchema = z
+  .array(serviceFailureSkippedStopSchema)
+  .nullish()
+  .transform((value) => value ?? []);
 
 export const serviceFailureTypeSchema = z.enum([
   "LatePickup",
@@ -110,9 +125,14 @@ export type ServiceFailureLifecycleRequest = {
 };
 
 export const serviceFailureEvaluationResultSchema = z.object({
-  createdIds: z.array(z.string()).default([]),
-  updatedIds: z.array(z.string()).default([]),
-  skipped: z.number().int().default(0),
+  createdIds: evaluationResultIdsSchema,
+  updatedIds: evaluationResultIdsSchema,
+  skippedStops: skippedStopsSchema,
+  skipped: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? 0),
 });
 
 export type ServiceFailureEvaluationResult = z.infer<typeof serviceFailureEvaluationResultSchema>;

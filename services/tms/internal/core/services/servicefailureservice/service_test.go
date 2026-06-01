@@ -64,6 +64,17 @@ func TestNormalizedGracePeriodFallsBackToDispatchDefault(t *testing.T) {
 	}
 }
 
+func TestNewServiceFailureEvaluationResultUsesEmptySlices(t *testing.T) {
+	result := newServiceFailureEvaluationResult()
+
+	require.NotNil(t, result.CreatedIDs)
+	require.NotNil(t, result.UpdatedIDs)
+	require.NotNil(t, result.SkippedStops)
+	require.Empty(t, result.CreatedIDs)
+	require.Empty(t, result.UpdatedIDs)
+	require.Empty(t, result.SkippedStops)
+}
+
 func TestShouldEvaluateStopHonorsServiceIncidentPolicy(t *testing.T) {
 	override := true
 	disabledOverride := false
@@ -190,6 +201,62 @@ func TestCreateOrUpdateDetectedUpdatesExistingSnapshotIdempotently(t *testing.T)
 
 	require.NoError(t, err)
 	require.Equal(t, existing.ID, updated.ID)
+}
+
+func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	entity := &servicefailure.ServiceFailure{
+		ShipmentID:         pulid.MustNew("sp_"),
+		ShipmentMoveID:     pulid.MustNew("sm_"),
+		StopID:             pulid.MustNew("stp_"),
+		OrganizationID:     orgID,
+		BusinessUnitID:     buID,
+		Type:               servicefailure.TypeLateDelivery,
+		Source:             servicefailure.SourceDetected,
+		Status:             servicefailure.StatusOpen,
+		StopType:           shipment.StopTypeDelivery,
+		ScheduledCutoff:    1_000,
+		ActualArrival:      1_301,
+		GracePeriodMinutes: 5,
+		LateMinutes:        1,
+	}
+	repo := mocks.NewMockServiceFailureRepository(t)
+	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
+	audit := mocks.NewMockAuditService(t)
+	realtime := mocks.NewMockRealtimeService(t)
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           repo,
+		reasonCodeRepo: reasonRepo,
+		auditService:   audit,
+		realtime:       realtime,
+	}
+
+	reasonRepo.EXPECT().
+		FindDefault(mock.Anything, pagination.TenantInfo{OrgID: orgID, BuID: buID}, servicefailure.ReasonCodeAppliesToDelivery).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	repo.EXPECT().
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*servicefailure.ServiceFailure")).
+		RunAndReturn(func(_ context.Context, created *servicefailure.ServiceFailure) (*servicefailure.ServiceFailure, error) {
+			require.False(t, created.ID.IsNil())
+			require.NotEmpty(t, created.Number)
+			require.Contains(t, created.Number, "SF-")
+			return created, nil
+		}).
+		Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
+
+	created, err := svc.createOrUpdateDetected(t.Context(), &detectedAction{entity: entity}, nil)
+
+	require.NoError(t, err)
+	require.NotEmpty(t, created.Number)
 }
 
 func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {

@@ -1,6 +1,7 @@
 import { findChoice, serviceFailureStatusChoices } from "@/lib/choices";
 import { nullableTextSchema } from "@/types/helpers";
 import {
+  serviceFailureEvaluationResultSchema,
   serviceFailureSourceSchema,
   serviceFailureTypeSchema,
   serviceFailureUpdateSchema,
@@ -57,6 +58,40 @@ describe("service failure shared schemas", () => {
     expect(serviceFailureReasonCategorySchema.parse("Consignee")).toBe("Consignee");
     expect(serviceFailureReasonCategorySchema.parse("Appointment")).toBe("Appointment");
     expect(serviceFailureReasonCodeAppliesToSchema.parse("All")).toBe("All");
+  });
+
+  it("normalizes nullish service failure evaluation results", () => {
+    const parsed = serviceFailureEvaluationResultSchema.parse({
+      createdIds: null,
+      updatedIds: null,
+      skippedStops: null,
+      skipped: null,
+    });
+
+    expect(parsed.createdIds).toEqual([]);
+    expect(parsed.updatedIds).toEqual([]);
+    expect(parsed.skippedStops).toEqual([]);
+    expect(parsed.skipped).toBe(0);
+  });
+
+  it("accepts service failure evaluation skipped stop details", () => {
+    const parsed = serviceFailureEvaluationResultSchema.parse({
+      createdIds: [],
+      updatedIds: [],
+      skipped: 1,
+      skippedStops: [
+        {
+          shipmentId: "shp_123",
+          stopId: "stp_123",
+          stopSequence: 2,
+          stopType: "Delivery",
+          reason: "missing actual arrival",
+        },
+      ],
+    });
+
+    expect(parsed.skippedStops[0]?.stopSequence).toBe(2);
+    expect(parsed.skippedStops[0]?.reason).toBe("missing actual arrival");
   });
 });
 
