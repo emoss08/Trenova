@@ -14,9 +14,10 @@ func TestDispatchControl_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		entity  DispatchControl
-		wantErr bool
+		name            string
+		entity          DispatchControl
+		wantGracePeriod *int
+		wantErr         bool
 	}{
 		{
 			name: "valid entity passes",
@@ -29,10 +30,11 @@ func TestDispatchControl_Validate(t *testing.T) {
 				RecordServiceFailures:      ServiceIncidentTypeNever,
 				ServiceFailureGracePeriod:  nil,
 			},
-			wantErr: false,
+			wantGracePeriod: nil,
+			wantErr:         false,
 		},
 		{
-			name: "grace period required when recording service failures",
+			name: "pickup service failures default missing grace period",
 			entity: DispatchControl{
 				ID:                         pulid.MustNew("dc_"),
 				BusinessUnitID:             pulid.MustNew("bu_"),
@@ -42,7 +44,8 @@ func TestDispatchControl_Validate(t *testing.T) {
 				RecordServiceFailures:      ServiceIncidentTypePickup,
 				ServiceFailureGracePeriod:  nil,
 			},
-			wantErr: true,
+			wantGracePeriod: intPtr(DefaultServiceFailureGracePeriod),
+			wantErr:         false,
 		},
 		{
 			name: "grace period must be greater than zero when recording service failures",
@@ -53,7 +56,20 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeDelivery,
-				ServiceFailureGracePeriod:  new(0),
+				ServiceFailureGracePeriod:  intPtr(0),
+			},
+			wantErr: true,
+		},
+		{
+			name: "negative grace period rejected after normalization",
+			entity: DispatchControl{
+				ID:                         pulid.MustNew("dc_"),
+				BusinessUnitID:             pulid.MustNew("bu_"),
+				OrganizationID:             pulid.MustNew("org_"),
+				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
+				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
+				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
+				ServiceFailureGracePeriod:  intPtr(-1),
 			},
 			wantErr: true,
 		},
@@ -66,9 +82,10 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyAvailability,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
-				ServiceFailureGracePeriod:  new(15),
+				ServiceFailureGracePeriod:  intPtr(15),
 			},
-			wantErr: false,
+			wantGracePeriod: intPtr(15),
+			wantErr:         false,
 		},
 		{
 			name: "invalid auto assignment strategy fails",
@@ -115,7 +132,7 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyAvailability,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelBlock,
 				RecordServiceFailures:      ServiceIncidentTypePickup,
-				ServiceFailureGracePeriod:  new(10),
+				ServiceFailureGracePeriod:  intPtr(10),
 			},
 			wantErr: false,
 		},
@@ -128,7 +145,7 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyLoadBalancing,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelAudit,
 				RecordServiceFailures:      ServiceIncidentTypeDelivery,
-				ServiceFailureGracePeriod:  new(10),
+				ServiceFailureGracePeriod:  intPtr(10),
 			},
 			wantErr: false,
 		},
@@ -141,7 +158,7 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypeAllExceptShipper,
-				ServiceFailureGracePeriod:  new(10),
+				ServiceFailureGracePeriod:  intPtr(10),
 			},
 			wantErr: false,
 		},
@@ -154,7 +171,7 @@ func TestDispatchControl_Validate(t *testing.T) {
 				AutoAssignmentStrategy:     AutoAssignmentStrategyProximity,
 				ComplianceEnforcementLevel: ComplianceEnforcementLevelWarning,
 				RecordServiceFailures:      ServiceIncidentTypePickupDelivery,
-				ServiceFailureGracePeriod:  new(10),
+				ServiceFailureGracePeriod:  intPtr(10),
 			},
 			wantErr: false,
 		},
@@ -208,6 +225,84 @@ func TestDispatchControl_Validate(t *testing.T) {
 			} else {
 				assert.False(t, multiErr.HasErrors())
 			}
+			if tt.wantGracePeriod != nil {
+				require.NotNil(t, tt.entity.ServiceFailureGracePeriod)
+				assert.Equal(t, *tt.wantGracePeriod, *tt.entity.ServiceFailureGracePeriod)
+			}
+		})
+	}
+}
+
+func TestDispatchControl_NormalizeServiceFailureSettings(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		incidentType    ServiceIncidentType
+		gracePeriod     *int
+		wantGracePeriod *int
+	}{
+		{
+			name:            "never preserves nil grace period",
+			incidentType:    ServiceIncidentTypeNever,
+			gracePeriod:     nil,
+			wantGracePeriod: nil,
+		},
+		{
+			name:            "pickup defaults nil grace period",
+			incidentType:    ServiceIncidentTypePickup,
+			gracePeriod:     nil,
+			wantGracePeriod: intPtr(DefaultServiceFailureGracePeriod),
+		},
+		{
+			name:            "delivery defaults nil grace period",
+			incidentType:    ServiceIncidentTypeDelivery,
+			gracePeriod:     nil,
+			wantGracePeriod: intPtr(DefaultServiceFailureGracePeriod),
+		},
+		{
+			name:            "pickup delivery defaults nil grace period",
+			incidentType:    ServiceIncidentTypePickupDelivery,
+			gracePeriod:     nil,
+			wantGracePeriod: intPtr(DefaultServiceFailureGracePeriod),
+		},
+		{
+			name:            "all except shipper defaults nil grace period",
+			incidentType:    ServiceIncidentTypeAllExceptShipper,
+			gracePeriod:     nil,
+			wantGracePeriod: intPtr(DefaultServiceFailureGracePeriod),
+		},
+		{
+			name:            "explicit valid grace period is preserved",
+			incidentType:    ServiceIncidentTypeDelivery,
+			gracePeriod:     intPtr(45),
+			wantGracePeriod: intPtr(45),
+		},
+		{
+			name:            "explicit zero grace period is preserved for validation",
+			incidentType:    ServiceIncidentTypePickup,
+			gracePeriod:     intPtr(0),
+			wantGracePeriod: intPtr(0),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			entity := &DispatchControl{
+				RecordServiceFailures:     tt.incidentType,
+				ServiceFailureGracePeriod: tt.gracePeriod,
+			}
+
+			entity.NormalizeServiceFailureSettings()
+
+			if tt.wantGracePeriod == nil {
+				assert.Nil(t, entity.ServiceFailureGracePeriod)
+				return
+			}
+			require.NotNil(t, entity.ServiceFailureGracePeriod)
+			assert.Equal(t, *tt.wantGracePeriod, *entity.ServiceFailureGracePeriod)
 		})
 	}
 }
@@ -307,6 +402,10 @@ func TestDispatchControl_BeforeAppendModel(t *testing.T) {
 		assert.Zero(t, dc.CreatedAt)
 		assert.Zero(t, dc.UpdatedAt)
 	})
+}
+
+func intPtr(v int) *int {
+	return &v
 }
 
 func TestNewDefaultDispatchControl(t *testing.T) {

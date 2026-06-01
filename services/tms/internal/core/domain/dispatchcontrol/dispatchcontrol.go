@@ -17,6 +17,8 @@ var (
 	_ validationframework.TenantedEntity = (*DispatchControl)(nil)
 )
 
+const DefaultServiceFailureGracePeriod = 30
+
 type DispatchControl struct {
 	bun.BaseModel `bun:"table:dispatch_controls,alias:dc" json:"-"`
 
@@ -43,7 +45,25 @@ type DispatchControl struct {
 	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }
 
+func (dc *DispatchControl) NormalizeServiceFailureSettings() {
+	if dc == nil {
+		return
+	}
+	if !dc.RecordServiceFailures.IsValid() ||
+		dc.RecordServiceFailures == ServiceIncidentTypeNever {
+		return
+	}
+	if dc.ServiceFailureGracePeriod != nil {
+		return
+	}
+
+	defaultGracePeriod := DefaultServiceFailureGracePeriod
+	dc.ServiceFailureGracePeriod = &defaultGracePeriod
+}
+
 func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
+	dc.NormalizeServiceFailureSettings()
+
 	err := validation.ValidateStruct(dc,
 		validation.Field(&dc.AutoAssignmentStrategy,
 			validation.Required.Error("Auto assignment strategy is required"),
@@ -91,9 +111,13 @@ func (dc *DispatchControl) Validate(multiErr *errortypes.MultiError) {
 			}),
 		),
 		validation.Field(&dc.ServiceFailureGracePeriod,
-			validation.When(dc.RecordServiceFailures != ServiceIncidentTypeNever,
-				validation.Required.Error("Service failure grace period is required"),
-				validation.Min(1).Error("Service failure grace period must be greater than 0"),
+			validation.When(dc.ServiceFailureGracePeriod != nil,
+				validation.By(func(_ any) error {
+					if *dc.ServiceFailureGracePeriod <= 0 {
+						return errors.New("Service failure grace period must be greater than 0")
+					}
+					return nil
+				}),
 			),
 		),
 	)

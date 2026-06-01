@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
-} from "./helpers";
+import { optionalStringSchema, timestampSchema, versionSchema } from "./helpers";
 
 export const serviceIncidentTypeSchema = z.enum([
   "Never",
@@ -15,25 +11,13 @@ export const serviceIncidentTypeSchema = z.enum([
 
 export type ServiceIncidentType = z.infer<typeof serviceIncidentTypeSchema>;
 
-export const autoAssignmentStrategySchema = z.enum([
-  "Proximity",
-  "Availability",
-  "LoadBalancing",
-]);
+export const autoAssignmentStrategySchema = z.enum(["Proximity", "Availability", "LoadBalancing"]);
 
-export type AutoAssignmentStrategy = z.infer<
-  typeof autoAssignmentStrategySchema
->;
+export type AutoAssignmentStrategy = z.infer<typeof autoAssignmentStrategySchema>;
 
-export const complianceEnforcementLevelSchema = z.enum([
-  "Warning",
-  "Block",
-  "Audit",
-]);
+export const complianceEnforcementLevelSchema = z.enum(["Warning", "Block", "Audit"]);
 
-export type ComplianceEnforcementLevel = z.infer<
-  typeof complianceEnforcementLevelSchema
->;
+export type ComplianceEnforcementLevel = z.infer<typeof complianceEnforcementLevelSchema>;
 
 export const dispatchControlSchema = z
   .object({
@@ -65,18 +49,14 @@ export const dispatchControlSchema = z
   })
   .refine(
     (data) => {
-      if (
-        data.recordServiceFailures !== serviceIncidentTypeSchema.enum.Never &&
-        (!data.serviceFailureGracePeriod || data.serviceFailureGracePeriod <= 0)
-      ) {
+      if (data.serviceFailureGracePeriod != null && data.serviceFailureGracePeriod <= 0) {
         return false;
       }
       return true;
     },
     {
       path: ["serviceFailureGracePeriod"],
-      message:
-        "Service failure grace period must be greater than 0 when record service failures is enabled",
+      message: "Service failure grace period must be greater than 0",
     },
   );
 
