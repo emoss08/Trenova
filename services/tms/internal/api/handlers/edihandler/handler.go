@@ -91,6 +91,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
 	h.registerTransferChangeRoutes(api.Group("/transfer-changes"))
+	h.registerTenderChangeRoutes(api.Group("/tender-changes"))
 }
 
 func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
@@ -578,6 +579,29 @@ func (h *Handler) registerTransferChangeRoutes(changes *gin.RouterGroup) {
 		"/:changeID/reject/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.rejectTransferChange,
+	)
+}
+
+func (h *Handler) registerTenderChangeRoutes(changes *gin.RouterGroup) {
+	changes.GET(
+		"/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.listTenderChanges,
+	)
+	changes.GET(
+		"/:changeID/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getTenderChange,
+	)
+	changes.POST(
+		"/:changeID/apply/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.applyTenderChange,
+	)
+	changes.POST(
+		"/:changeID/reject/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.rejectTenderChange,
 	)
 }
 
@@ -2578,6 +2602,113 @@ func (h *Handler) applyTransferChange(c *gin.Context) {
 
 func (h *Handler) rejectTransferChange(c *gin.Context) {
 	h.transferChangeAction(c, h.service.RejectTransferChange)
+}
+
+func (h *Handler) listTenderChanges(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := pagination.NewQueryOptions(c, authCtx)
+	recipientID := pulid.Nil
+	if rawRecipientID := c.Query("recipientId"); rawRecipientID != "" {
+		parsed, err := pulid.MustParse(rawRecipientID)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		recipientID = parsed
+	}
+	sourceShipmentID := pulid.Nil
+	if rawShipmentID := c.Query("sourceShipmentId"); rawShipmentID != "" {
+		parsed, err := pulid.MustParse(rawShipmentID)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+		sourceShipmentID = parsed
+	}
+
+	pagination.List(c, req, h.eh, func() (*pagination.ListResult[*edi.TenderChange], error) {
+		return h.service.ListTenderChanges(
+			c.Request.Context(),
+			&repositories.ListEDITenderChangesRequest{
+				Filter:           req,
+				RecipientID:      recipientID,
+				SourceShipmentID: sourceShipmentID,
+				Status:           edi.TenderChangeStatus(helpers.QueryString(c, "status", "")),
+			},
+		)
+	})
+}
+
+func (h *Handler) getTenderChange(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	changeID, err := pulid.MustParse(c.Param("changeID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	change, err := h.service.GetTenderChange(
+		c.Request.Context(),
+		repositories.GetEDITenderChangeByIDRequest{
+			ID: changeID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, change)
+}
+
+func (h *Handler) applyTenderChange(c *gin.Context) {
+	h.tenderChangeAction(c, h.service.ApplyTenderChange)
+}
+
+func (h *Handler) rejectTenderChange(c *gin.Context) {
+	h.tenderChangeAction(c, h.service.RejectTenderChange)
+}
+
+func (h *Handler) tenderChangeAction(
+	c *gin.Context,
+	fn func(
+		context.Context,
+		*ediservice.TenderChangeActionRequest,
+		*services.RequestActor,
+	) (*edi.TenderChange, error),
+) {
+	authCtx := authctx.GetAuthContext(c)
+	changeID, err := pulid.MustParse(c.Param("changeID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(ediservice.TenderChangeActionRequest)
+	if c.Request.ContentLength > 0 {
+		if err = c.ShouldBindJSON(req); err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+	}
+	req.ChangeID = changeID
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+
+	change, err := fn(c.Request.Context(), req, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, change)
 }
 
 func (h *Handler) transferChangeAction(

@@ -60,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationruleservice"
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/iamservice"
+	"github.com/emoss08/trenova/internal/core/services/internaledistatussync"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceadjustmentservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
@@ -190,6 +191,11 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	shipmentcontrolservice.New,
 	shipmentcommentservice.New,
 	shipmenteventservice.New,
+	fx.Annotate(
+		internaledistatussync.New,
+		fx.As(new(services.ShipmentEventObserver)),
+		fx.ResultTags(`group:"shipment_event_observers"`),
+	),
 	shipmentholdservice.New,
 	fx.Annotate(
 		servicefailureservice.New,
@@ -198,13 +204,21 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.As(new(services.ServiceFailureEvaluator)),
 	),
 	shipmentmoveservice.New,
-	shipmentservice.New,
+	fx.Annotate(
+		shipmentservice.New,
+		fx.As(new(services.ShipmentService)),
+		fx.As(new(shipmentservice.MutationObserverSetter)),
+	),
 	shipmenttypeservice.New,
 	hazardousmaterialservice.New,
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	ediservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
+	fx.Annotate(
+		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },
+		fx.ResultTags(`group:"shipment_mutation_observers"`),
+	),
 	emailservice.New,
 	func(s *emailservice.Service) services.EmailService { return s },
 	commodityservice.New,
@@ -271,5 +285,14 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
 		setter.SetEDIService(service)
 	},
+	fx.Annotate(
+		func(
+			setter shipmentservice.MutationObserverSetter,
+			observers []services.ShipmentMutationObserver,
+		) {
+			setter.SetShipmentMutationObservers(observers)
+		},
+		fx.ParamTags(``, `group:"shipment_mutation_observers"`),
+	),
 	func(*controlplane.HeartbeatReporter) {},
 ))

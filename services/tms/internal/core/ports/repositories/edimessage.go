@@ -35,6 +35,17 @@ type GetServiceFailure214LifecycleMessageRequest struct {
 	Trigger          string                `json:"trigger"`
 }
 
+type UpdateEDIMessageDeliveryRequest struct {
+	ID                    pulid.ID                  `json:"id"`
+	TenantInfo            pagination.TenantInfo     `json:"tenantInfo"`
+	DeliveryStatus        edi.MessageDeliveryStatus `json:"deliveryStatus"`
+	DeliveryRemotePath    string                    `json:"deliveryRemotePath"`
+	IncrementAttempts     bool                      `json:"incrementAttempts"`
+	DeliveryLastAttemptAt *int64                    `json:"deliveryLastAttemptAt"`
+	DeliverySentAt        *int64                    `json:"deliverySentAt"`
+	DeliveryLastError     string                    `json:"deliveryLastError"`
+}
+
 type EDIMessageRepository interface {
 	ListMessages(
 		ctx context.Context,
@@ -48,5 +59,9 @@ type EDIMessageRepository interface {
 	GetServiceFailure214LifecycleMessage(
 		ctx context.Context,
 		req GetServiceFailure214LifecycleMessageRequest,
+	) (*edi.EDIMessage, error)
+	UpdateMessageDelivery(
+		ctx context.Context,
+		req *UpdateEDIMessageDeliveryRequest,
 	) (*edi.EDIMessage, error)
 }

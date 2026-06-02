@@ -448,6 +448,13 @@ type GetShipmentsByIDsRequest struct {
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
 }
 
+type UpdateShipmentStatusRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	Status     shipment.Status       `json:"status"`
+	Version    int64                 `json:"version"`
+}
+
 type ShipmentRepository interface {
 	List(
 		ctx context.Context,
@@ -477,9 +484,17 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 	) (*shipment.Shipment, error)
+	UpdateOperationalLifecycle(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
 	UpdateDerivedState(
 		ctx context.Context,
 		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
+	UpdateStatus(
+		ctx context.Context,
+		req *UpdateShipmentStatusRequest,
 	) (*shipment.Shipment, error)
 	Cancel(
 		ctx context.Context,

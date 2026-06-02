@@ -1627,3 +1627,139 @@ func (_c *MockShipmentRepository_UpdateDerivedState_Call) RunAndReturn(run func(
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateOperationalLifecycle provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) UpdateOperationalLifecycle(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateOperationalLifecycle")
+	}
+
+	var r0 *shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) (*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) *shipment.Shipment); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_UpdateOperationalLifecycle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOperationalLifecycle'
+type MockShipmentRepository_UpdateOperationalLifecycle_Call struct {
+	*mock.Call
+}
+
+// UpdateOperationalLifecycle is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *shipment.Shipment
+func (_e *MockShipmentRepository_Expecter) UpdateOperationalLifecycle(ctx interface{}, entity interface{}) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
+	return &MockShipmentRepository_UpdateOperationalLifecycle_Call{Call: _e.mock.On("UpdateOperationalLifecycle", ctx, entity)}
+}
+
+func (_c *MockShipmentRepository_UpdateOperationalLifecycle_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *shipment.Shipment
+		if args[1] != nil {
+			arg1 = args[1].(*shipment.Shipment)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_UpdateOperationalLifecycle_Call) Return(shipment1 *shipment.Shipment, err error) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
+	_c.Call.Return(shipment1, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_UpdateOperationalLifecycle_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error)) *MockShipmentRepository_UpdateOperationalLifecycle_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateStatus provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) UpdateStatus(ctx context.Context, req *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateStatus")
+	}
+
+	var r0 *shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateShipmentStatusRequest) *shipment.Shipment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UpdateShipmentStatusRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_UpdateStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStatus'
+type MockShipmentRepository_UpdateStatus_Call struct {
+	*mock.Call
+}
+
+// UpdateStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateShipmentStatusRequest
+func (_e *MockShipmentRepository_Expecter) UpdateStatus(ctx interface{}, req interface{}) *MockShipmentRepository_UpdateStatus_Call {
+	return &MockShipmentRepository_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, req)}
+}
+
+func (_c *MockShipmentRepository_UpdateStatus_Call) Run(run func(ctx context.Context, req *repositories.UpdateShipmentStatusRequest)) *MockShipmentRepository_UpdateStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateShipmentStatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateShipmentStatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_UpdateStatus_Call) Return(shipment1 *shipment.Shipment, err error) *MockShipmentRepository_UpdateStatus_Call {
+	_c.Call.Return(shipment1, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error)) *MockShipmentRepository_UpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -1,6 +1,7 @@
 import { EntityRefCell } from "@/components/data-table/_components/entity-ref-link";
-import { formatToUserTimezone } from "@/lib/date";
+import { ShipmentTenderStatusBadge } from "@/components/status-badge";
 import { shipmentStatusChoices, shipmentTenderStatusChoices } from "@/lib/choices";
+import { formatToUserTimezone } from "@/lib/date";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
 import type { Customer } from "@/types/customer";
 import type { RowAction } from "@/types/data-table";
@@ -70,7 +71,15 @@ export function getColumns(rowActions: RowAction<Shipment>[]): ColumnDef<Shipmen
       id: "tenderStatus",
       accessorKey: "tenderStatus",
       header: "Tender",
-      cell: ({ row }) => row.original.tenderStatus ?? "—",
+      cell: ({ row }) => {
+        const status = row.original.tenderStatus;
+
+        if (status === null) {
+          return "-";
+        }
+
+        return <ShipmentTenderStatusBadge status={row.original.tenderStatus} />;
+      },
       meta: {
         apiField: "tenderStatus",
         label: "Tender Status",

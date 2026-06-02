@@ -299,6 +299,7 @@ func (s *Service) CreateInternalPartnerPairViaConnection(
 			Capabilities: edi.ConnectionCapabilities{
 				LoadTenderOutbound: true,
 				LoadTenderInbound:  true,
+				ShipmentStatus:     true,
 			},
 			SourcePartnerConfig: edi.ConnectionPartnerConfig{
 				Code:               req.SourceCode,

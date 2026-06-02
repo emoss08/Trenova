@@ -73,6 +73,7 @@ func (c *EDIConnection) BeforeAppendModel(_ context.Context, query bun.Query) er
 		c.Capabilities = ConnectionCapabilities{
 			LoadTenderOutbound: true,
 			LoadTenderInbound:  true,
+			ShipmentStatus:     true,
 		}
 	}
 	if c.SourcePartnerConfig.Settings == nil {

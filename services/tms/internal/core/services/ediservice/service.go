@@ -12,11 +12,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	coreports "github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/internaledilifecycle"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -56,14 +58,18 @@ type Params struct {
 	ServiceFailureRepo  repositories.ServiceFailureRepository
 	ShipmentLinkRepo    repositories.EDIShipmentLinkRepository
 	TransferChangeRepo  repositories.EDITransferChangeRepository
+	TenderRecipientRepo repositories.EDITenderRecipientRepository
+	TenderChangeRepo    repositories.EDITenderChangeRepository
 	ShipmentCommentRepo repositories.ShipmentCommentRepository
 	UserRepo            repositories.UserRepository
+	ShipmentRepo        repositories.ShipmentRepository
 	ShipmentSvc         services.ShipmentService
 	WorkflowStarter     services.WorkflowStarter
 	AuditService        services.AuditService
 	Encryption          *encryptionservice.Service
 	Validator           *Validator
 	DB                  coreports.DBConnection
+	Coordinator         *shipmentstate.Coordinator
 }
 
 type Service struct {
@@ -86,14 +92,19 @@ type Service struct {
 	serviceFailureRepo  repositories.ServiceFailureRepository
 	shipmentLinkRepo    repositories.EDIShipmentLinkRepository
 	transferChangeRepo  repositories.EDITransferChangeRepository
+	tenderRecipientRepo repositories.EDITenderRecipientRepository
+	tenderChangeRepo    repositories.EDITenderChangeRepository
 	shipmentCommentRepo repositories.ShipmentCommentRepository
 	userRepo            repositories.UserRepository
+	shipmentRepo        repositories.ShipmentRepository
 	shipmentSvc         services.ShipmentService
 	workflowStarter     services.WorkflowStarter
 	auditService        services.AuditService
 	encryption          *encryptionservice.Service
 	validator           *Validator
 	db                  coreports.DBConnection
+	coordinator         *shipmentstate.Coordinator
+	lifecycleApplier    *internaledilifecycle.Applier
 }
 
 func New(p Params) *Service {
@@ -117,14 +128,22 @@ func New(p Params) *Service {
 		serviceFailureRepo:  p.ServiceFailureRepo,
 		shipmentLinkRepo:    p.ShipmentLinkRepo,
 		transferChangeRepo:  p.TransferChangeRepo,
+		tenderRecipientRepo: p.TenderRecipientRepo,
+		tenderChangeRepo:    p.TenderChangeRepo,
 		shipmentCommentRepo: p.ShipmentCommentRepo,
 		userRepo:            p.UserRepo,
+		shipmentRepo:        p.ShipmentRepo,
 		shipmentSvc:         p.ShipmentSvc,
 		workflowStarter:     p.WorkflowStarter,
 		auditService:        p.AuditService,
 		encryption:          p.Encryption,
 		validator:           p.Validator,
 		db:                  p.DB,
+		coordinator:         p.Coordinator,
+		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
+			ShipmentRepo: p.ShipmentRepo,
+			Coordinator:  p.Coordinator,
+		}),
 	}
 }
 
@@ -443,6 +462,14 @@ func (s *Service) SubmitLoadTender(
 		if err != nil {
 			return nil, err
 		}
+		if err = s.upsertInternalTenderRecipient(
+			ctx,
+			created,
+			nil,
+			edi.TenderRecipientBaselineStatusSent,
+		); err != nil {
+			return nil, err
+		}
 	} else {
 		err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 			lockedShipment, lockErr := s.lockShipment(txCtx, req.SourceShipmentID, req.TenantInfo)
@@ -455,6 +482,14 @@ func (s *Service) SubmitLoadTender(
 
 			created, err = s.transferRepo.CreateTransfer(txCtx, entity)
 			if err != nil {
+				return err
+			}
+			if err = s.upsertInternalTenderRecipient(
+				txCtx,
+				created,
+				nil,
+				edi.TenderRecipientBaselineStatusSent,
+			); err != nil {
 				return err
 			}
 
@@ -854,6 +889,14 @@ func (s *Service) ProcessLoadTenderApproval(
 		if err != nil {
 			return err
 		}
+		if err = s.upsertInternalTenderRecipient(
+			txCtx,
+			transfer,
+			link,
+			edi.TenderRecipientBaselineStatusAccepted,
+		); err != nil {
+			return err
+		}
 
 		sourceTenant := pagination.TenantInfo{
 			OrgID: transfer.SourceOrganizationID,
@@ -1202,25 +1245,42 @@ func (s *Service) reviewTransferChange(
 		)
 	}
 
+	var updated *edi.TransferChange
 	now := timeutils.NowUnix()
 	original := *change
-	change.Status = status
-	change.ReviewedByID = actor.UserID
-	change.ReviewedAt = &now
-	if status == edi.TransferChangeStatusApplied {
-		change.AppliedByID = actor.UserID
-		change.AppliedAt = &now
-	}
-	if strings.TrimSpace(req.Reason) != "" {
-		change.FailureReason = strings.TrimSpace(req.Reason)
-	}
+	err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if status == edi.TransferChangeStatusApplied {
+			if txErr := s.applyApprovedTransferChange(
+				txCtx,
+				req.TenantInfo,
+				change,
+				actor,
+				now,
+			); txErr != nil {
+				return txErr
+			}
+		}
 
-	updated, err := s.transferChangeRepo.UpdateTransferChange(ctx, change)
+		change.Status = status
+		change.ReviewedByID = actor.UserID
+		change.ReviewedAt = &now
+		if status == edi.TransferChangeStatusApplied {
+			change.AppliedByID = actor.UserID
+			change.AppliedAt = &now
+		}
+		if strings.TrimSpace(req.Reason) != "" {
+			change.FailureReason = strings.TrimSpace(req.Reason)
+		}
+
+		var txErr error
+		updated, txErr = s.transferChangeRepo.UpdateTransferChange(txCtx, change)
+		if txErr != nil {
+			return txErr
+		}
+
+		return s.commentTransferChangeReview(txCtx, req.TenantInfo, updated)
+	})
 	if err != nil {
-		return nil, err
-	}
-
-	if err = s.commentTransferChangeReview(ctx, req.TenantInfo, updated); err != nil {
 		return nil, err
 	}
 

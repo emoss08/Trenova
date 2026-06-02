@@ -2844,6 +2844,74 @@ func (_c *MockEDIDocumentRepository_SelectTemplateOptions_Call) RunAndReturn(run
 	return _c
 }
 
+// UpdateMessageDelivery provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) UpdateMessageDelivery(ctx context.Context, req *repositories.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMessageDelivery")
+	}
+
+	var r0 *edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEDIMessageDeliveryRequest) *edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UpdateEDIMessageDeliveryRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_UpdateMessageDelivery_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateMessageDelivery'
+type MockEDIDocumentRepository_UpdateMessageDelivery_Call struct {
+	*mock.Call
+}
+
+// UpdateMessageDelivery is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateEDIMessageDeliveryRequest
+func (_e *MockEDIDocumentRepository_Expecter) UpdateMessageDelivery(ctx interface{}, req interface{}) *MockEDIDocumentRepository_UpdateMessageDelivery_Call {
+	return &MockEDIDocumentRepository_UpdateMessageDelivery_Call{Call: _e.mock.On("UpdateMessageDelivery", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageDelivery_Call) Run(run func(ctx context.Context, req *repositories.UpdateEDIMessageDeliveryRequest)) *MockEDIDocumentRepository_UpdateMessageDelivery_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateEDIMessageDeliveryRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateEDIMessageDeliveryRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageDelivery_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIDocumentRepository_UpdateMessageDelivery_Call {
+	_c.Call.Return(eDIMessage, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageDelivery_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error)) *MockEDIDocumentRepository_UpdateMessageDelivery_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePartnerDocumentProfile provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) UpdatePartnerDocumentProfile(ctx context.Context, entity *edi.EDIPartnerDocumentProfile) (*edi.EDIPartnerDocumentProfile, error) {
 	ret := _mock.Called(ctx, entity)

@@ -51,6 +51,17 @@ const (
 	TransferChangeConflictResolved = TransferChangeConflictStatus("Resolved")
 )
 
+const (
+	TransferChangeTypeShipmentStatus214    = "ShipmentStatus214"
+	TransferChangeTypeShipmentLifecycle214 = "ShipmentLifecycle214"
+	TransferChangeTypeShipmentCancel214    = "ShipmentCancel214"
+)
+
+const (
+	InternalEDIMirroredFromEventIDKey = "ediMirroredFromEventId"
+	InternalEDIShipmentLinkIDKey      = "ediShipmentLinkId"
+)
+
 type ShipmentLink struct {
 	bun.BaseModel `json:"-" bun:"table:edi_shipment_links,alias:esl"`
 

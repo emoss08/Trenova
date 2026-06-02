@@ -110,6 +110,52 @@ func (r *repository) CreateTransferChange(
 	return entity, nil
 }
 
+func (r *repository) CreateTransferChangeIdempotent(
+	ctx context.Context,
+	entity *edi.TransferChange,
+) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
+	cols := buncolgen.TransferChangeColumns
+
+	results, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		On("CONFLICT (shipment_link_id, business_unit_id, direction, change_type, idempotency_key) DO NOTHING").
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rowsAffected, err := results.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	if rowsAffected > 0 {
+		return &repositories.CreateEDITransferChangeIdempotentResult{
+			TransferChange: entity,
+			Created:        true,
+		}, nil
+	}
+
+	existing := new(edi.TransferChange)
+	if err = r.db.DBForContext(ctx).
+		NewSelect().
+		Model(existing).
+		Where(cols.ShipmentLinkID.Eq(), entity.ShipmentLinkID).
+		Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
+		Where(cols.Direction.Eq(), entity.Direction).
+		Where(cols.ChangeType.Eq(), entity.ChangeType).
+		Where(cols.IdempotencyKey.Eq(), entity.IdempotencyKey).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
+	}
+
+	return &repositories.CreateEDITransferChangeIdempotentResult{
+		TransferChange: existing,
+		Created:        false,
+	}, nil
+}
+
 func (r *repository) UpdateTransferChange(
 	ctx context.Context,
 	entity *edi.TransferChange,

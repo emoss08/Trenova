@@ -18,6 +18,11 @@ type GetEDITransferChangeByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type CreateEDITransferChangeIdempotentResult struct {
+	TransferChange *edi.TransferChange `json:"transferChange"`
+	Created        bool                `json:"created"`
+}
+
 type EDITransferChangeRepository interface {
 	ListTransferChanges(
 		ctx context.Context,
@@ -31,6 +36,10 @@ type EDITransferChangeRepository interface {
 		ctx context.Context,
 		entity *edi.TransferChange,
 	) (*edi.TransferChange, error)
+	CreateTransferChangeIdempotent(
+		ctx context.Context,
+		entity *edi.TransferChange,
+	) (*CreateEDITransferChangeIdempotentResult, error)
 	UpdateTransferChange(
 		ctx context.Context,
 		entity *edi.TransferChange,

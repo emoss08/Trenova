@@ -494,13 +494,20 @@ func (s *Service) GenerateDocument(
 			SuggestedFix:    diagnostic.SuggestedFix,
 		})
 	}
-	return s.messageRepo.CreateMessageWithDiagnostics(
+	created, err := s.messageRepo.CreateMessageWithDiagnostics(
 		ctx,
 		repositories.CreateEDIMessageWithDiagnosticsRequest{
 			Message:     message,
 			Diagnostics: messageDiagnostics,
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
+		return nil, err
+	}
+	return created, nil
 }
 
 func (s *Service) ListMessages(

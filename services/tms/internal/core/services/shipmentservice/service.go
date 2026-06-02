@@ -35,6 +35,10 @@ type shipmentTenantResource interface {
 	GetID() pulid.ID
 }
 
+type MutationObserverSetter interface {
+	SetShipmentMutationObservers(observers []services.ShipmentMutationObserver)
+}
+
 type Params struct {
 	fx.In
 
@@ -95,9 +99,10 @@ type service struct {
 	coordinator         *shipmentstate.Coordinator
 	commercial          *shipmentcommercial.Calculator
 	distanceCalculation services.DistanceCalculationService
+	mutationObservers   []services.ShipmentMutationObserver
 }
 
-func New(p Params) services.ShipmentService { //nolint:gocritic // stable API shape
+func New(p Params) *service { //nolint:gocritic // stable API shape
 	return &service{
 		l:                   p.Logger.Named("service.shipment"),
 		repo:                p.Repo,
@@ -127,6 +132,10 @@ func New(p Params) services.ShipmentService { //nolint:gocritic // stable API sh
 		commercial:          p.Commercial,
 		distanceCalculation: p.DistanceCalculation,
 	}
+}
+
+func (s *service) SetShipmentMutationObservers(observers []services.ShipmentMutationObserver) {
+	s.mutationObservers = append([]services.ShipmentMutationObserver(nil), observers...)
 }
 
 func (s *service) createNotification(
@@ -441,7 +450,32 @@ func (s *service) Update( //nolint:cyclop // legacy workflow
 		}
 	}
 
+	s.notifyShipmentMutationObservers(ctx, original, updatedEntity, actor)
+
 	return updatedEntity, nil
+}
+
+func (s *service) notifyShipmentMutationObservers(
+	ctx context.Context,
+	original *shipment.Shipment,
+	updated *shipment.Shipment,
+	actor *services.RequestActor,
+) {
+	if len(s.mutationObservers) == 0 {
+		return
+	}
+	for _, observer := range s.mutationObservers {
+		if observer == nil {
+			continue
+		}
+		if err := observer.AfterShipmentUpdate(ctx, original, updated, actor); err != nil {
+			s.l.Warn(
+				"shipment mutation observer failed",
+				zap.String("shipmentID", updated.ID.String()),
+				zap.Error(err),
+			)
+		}
+	}
 }
 
 func (s *service) evaluateServiceFailuresAfterShipmentUpdate(

@@ -125,6 +125,15 @@ type BulkTransferToBillingResponse struct {
 	ErrorCount   int                           `json:"errorCount"`
 }
 
+type ShipmentMutationObserver interface {
+	AfterShipmentUpdate(
+		ctx context.Context,
+		original *shipment.Shipment,
+		updated *shipment.Shipment,
+		actor *RequestActor,
+	) error
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
