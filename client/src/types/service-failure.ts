@@ -13,15 +13,28 @@ const evaluationResultIdsSchema = z
   .array(z.string())
   .nullish()
   .transform((value) => value ?? []);
-const serviceFailureSkippedStopSchema = z.object({
-  shipmentId: optionalStringSchema,
-  stopId: optionalStringSchema,
-  stopSequence: nullableIntegerSchema,
-  stopType: stopTypeSchema.optional(),
-  reason: optionalStringSchema,
-});
-const skippedStopsSchema = z
-  .array(serviceFailureSkippedStopSchema)
+const serviceFailureEvaluationStopSummarySchema = z
+  .object({
+    shipmentId: optionalStringSchema,
+    shipmentMoveId: optionalStringSchema,
+    stopId: optionalStringSchema,
+    stopSequence: nullableIntegerSchema,
+    stopType: stopTypeSchema.optional(),
+    locationId: optionalStringSchema,
+    locationName: optionalStringSchema,
+    locationCode: optionalStringSchema,
+    city: optionalStringSchema,
+    stateCode: optionalStringSchema,
+    scheduledCutoff: nullableIntegerSchema,
+    actualArrival: nullableIntegerSchema,
+    gracePeriodMinutes: nullableIntegerSchema,
+    lateMinutes: nullableIntegerSchema,
+    serviceFailureId: optionalStringSchema,
+    reason: optionalStringSchema,
+  })
+  .passthrough();
+const evaluationStopsSchema = z
+  .array(serviceFailureEvaluationStopSummarySchema)
   .nullish()
   .transform((value) => value ?? []);
 
@@ -60,6 +73,14 @@ const serviceFailureStopSummarySchema = z
       .object({
         id: optionalStringSchema,
         name: optionalStringSchema,
+        code: optionalStringSchema,
+        city: optionalStringSchema,
+        state: z
+          .object({
+            abbreviation: optionalStringSchema,
+          })
+          .passthrough()
+          .nullish(),
       })
       .passthrough()
       .nullish(),
@@ -127,7 +148,9 @@ export type ServiceFailureLifecycleRequest = {
 export const serviceFailureEvaluationResultSchema = z.object({
   createdIds: evaluationResultIdsSchema,
   updatedIds: evaluationResultIdsSchema,
-  skippedStops: skippedStopsSchema,
+  createdStops: evaluationStopsSchema,
+  updatedStops: evaluationStopsSchema,
+  skippedStops: evaluationStopsSchema,
   skipped: z
     .number()
     .int()
@@ -136,6 +159,7 @@ export const serviceFailureEvaluationResultSchema = z.object({
 });
 
 export type ServiceFailureEvaluationResult = z.infer<typeof serviceFailureEvaluationResultSchema>;
+export type ServiceFailureStopSummary = z.infer<typeof serviceFailureEvaluationStopSummarySchema>;
 
 export const serviceFailureEdiPayloadResultSchema = z.object({
   payload: z.record(z.string(), z.unknown()),
@@ -143,3 +167,25 @@ export const serviceFailureEdiPayloadResultSchema = z.object({
 });
 
 export type ServiceFailureEdiPayloadResult = z.infer<typeof serviceFailureEdiPayloadResultSchema>;
+
+export const serviceFailureEdi214LifecycleActionSchema = z.enum([
+  "skipped",
+  "generated",
+  "blocked",
+  "duplicate",
+]);
+
+export const serviceFailureEdi214LifecycleResultSchema = z.object({
+  trigger: z.enum(["Reviewed", "Resolved"]),
+  action: serviceFailureEdi214LifecycleActionSchema,
+  messageId: optionalStringSchema,
+  skippedReason: optionalStringSchema,
+  ediPartnerId: optionalStringSchema,
+  partnerDocumentProfileId: optionalStringSchema,
+  mandatory: z.boolean().default(false),
+  diagnostics: z.array(z.unknown()).default([]),
+});
+
+export type ServiceFailureEdi214LifecycleResult = z.infer<
+  typeof serviceFailureEdi214LifecycleResultSchema
+>;

@@ -21,6 +21,10 @@ import { useEffect } from "react";
 import { FormProvider, type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ServiceFailureForm } from "./service-failure-form";
+import {
+  ServiceFailureStopContext,
+  serviceFailureStopSummaryFromFailure,
+} from "./service-failure-stop-context";
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save", label: "Save" },
@@ -147,6 +151,11 @@ export function ServiceFailurePanel({
             id="panel-edit-form"
             onSubmit={handleSubmit((values) => onSubmit(values, defaultAction))}
           >
+            <ServiceFailureStopContext
+              summary={serviceFailureStopSummaryFromFailure(row)}
+              variant="panel"
+              className="mb-4"
+            />
             <ServiceFailureForm disabled={terminal} stopType={row.stopType} />
           </Form>
         </FormProvider>

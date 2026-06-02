@@ -1,4 +1,5 @@
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,19 +17,26 @@ import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import { Operation, Resource } from "@/types/permission";
-import type { ServiceFailure } from "@/types/service-failure";
+import type { ServiceFailure, ServiceFailureStopSummary } from "@/types/service-failure";
 import type { Shipment } from "@/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   CheckCircle2Icon,
+  CircleAlertIcon,
   InfoIcon,
   RefreshCwIcon,
+  SendIcon,
   ShieldCheckIcon,
   XCircleIcon,
 } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
+import {
+  ServiceFailureStopContext,
+  serviceFailureStopSummaryFromEvaluation,
+  serviceFailureStopSummaryFromFailure,
+} from "../../service-failure/_components/service-failure-stop-context";
 
 type ShipmentServiceFailuresProps = {
   shipment?: Shipment | null;
@@ -38,13 +46,9 @@ type EvaluationSummary = {
   created: number;
   updated: number;
   skipped: number;
-  skippedStops: Array<{
-    shipmentId?: string;
-    stopId?: string;
-    stopSequence?: number | null;
-    stopType?: string;
-    reason?: string;
-  }>;
+  createdStops: ServiceFailureStopSummary[];
+  updatedStops: ServiceFailureStopSummary[];
+  skippedStops: ServiceFailureStopSummary[];
 };
 
 export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFailuresProps) {
@@ -68,9 +72,15 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
         created: result.createdIds.length,
         updated: result.updatedIds.length,
         skipped: result.skipped,
+        createdStops: result.createdStops.map(serviceFailureStopSummaryFromEvaluation),
+        updatedStops: result.updatedStops.map(serviceFailureStopSummaryFromEvaluation),
         skippedStops: result.skippedStops,
       };
-      if (result.skipped > 0) {
+      const hasStopRows =
+        summary.createdStops.length > 0 ||
+        summary.updatedStops.length > 0 ||
+        summary.skippedStops.length > 0;
+      if (hasStopRows || result.skipped > 0) {
         setEvaluationSummary(summary);
       } else {
         toast.success("Service failure evaluation complete", {
@@ -111,6 +121,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
     },
     onSuccess: () => {
       toast.success("Service failure updated");
+      void queryClient.invalidateQueries({ queryKey: ["serviceFailure"] });
       void queryClient.invalidateQueries(queries.serviceFailure.listByShipment(shipmentId));
       void queryClient.invalidateQueries({ queryKey: ["service-failure-list"] });
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
@@ -154,6 +165,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
           const status = findChoice(serviceFailureStatusChoices, failure.status);
           const failureType = findChoice(serviceFailureTypeChoices, failure.type);
           const terminal = failure.status === "Resolved" || failure.status === "Voided";
+          const stopSummary = serviceFailureStopSummaryFromFailure(failure);
 
           return (
             <div
@@ -239,11 +251,8 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                 </div>
               </div>
 
-              <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Stop</span>
-                  <p>{failure.stopType}</p>
-                </div>
+              <div className="mt-2 grid gap-2 text-xs sm:grid-cols-[minmax(0,1fr)_180px]">
+                <ServiceFailureStopContext summary={stopSummary} />
                 <div>
                   <span className="text-muted-foreground">Reason</span>
                   <p>{failure.reasonCode?.label ?? "Unassigned"}</p>
@@ -252,6 +261,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
               {failure.notes && (
                 <p className="mt-2 rounded bg-muted/40 px-2 py-1.5 text-xs">{failure.notes}</p>
               )}
+              <ServiceFailureEDI214Readiness failure={failure} />
             </div>
           );
         })}
@@ -261,7 +271,7 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
         open={!!evaluationSummary}
         onOpenChange={(open) => !open && setEvaluationSummary(null)}
       >
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Service Failure Evaluation</DialogTitle>
             <DialogDescription>
@@ -270,37 +280,27 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
             </DialogDescription>
           </DialogHeader>
 
-          <div className="rounded-md border bg-muted/25">
+          <div className="max-h-[28rem] overflow-y-auto rounded-md border bg-muted/20">
             <div className="flex items-center gap-2 border-b px-3 py-2 text-sm font-medium">
               <InfoIcon className="size-4 text-amber-500" />
-              Skipped Stops
+              Stop Results
             </div>
-            <div className="max-h-72 overflow-y-auto">
-              {evaluationSummary?.skippedStops.length ? (
-                <div className="divide-y">
-                  {evaluationSummary.skippedStops.map((item, index) => (
-                    <div
-                      key={`${item.stopId ?? item.shipmentId ?? "shipment"}-${index}`}
-                      className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] gap-3 px-3 py-2 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium">
-                          {item.stopSequence ? `Stop ${item.stopSequence}` : "Shipment"}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {item.stopType ?? item.stopId ?? item.shipmentId ?? "No stop context"}
-                        </p>
-                      </div>
-                      <p className="text-muted-foreground">{formatSkippedReason(item.reason)}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                  No skipped stop details were returned.
-                </p>
-              )}
-            </div>
+            <EvaluationStopGroup
+              label="Created"
+              count={evaluationSummary?.created ?? 0}
+              stops={evaluationSummary?.createdStops ?? []}
+            />
+            <EvaluationStopGroup
+              label="Updated"
+              count={evaluationSummary?.updated ?? 0}
+              stops={evaluationSummary?.updatedStops ?? []}
+            />
+            <EvaluationStopGroup
+              label="Skipped"
+              count={evaluationSummary?.skipped ?? 0}
+              stops={evaluationSummary?.skippedStops ?? []}
+              renderTrailing={(item) => formatSkippedReason(item.reason)}
+            />
           </div>
 
           <DialogFooter showCloseButton />
@@ -308,6 +308,127 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
       </Dialog>
     </div>
   );
+}
+
+function EvaluationStopGroup({
+  label,
+  count,
+  stops,
+  renderTrailing,
+}: {
+  label: string;
+  count: number;
+  stops: ServiceFailureStopSummary[];
+  renderTrailing?: (item: ServiceFailureStopSummary) => ReactNode;
+}) {
+  if (count === 0 && stops.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="border-b last:border-b-0">
+      <div className="flex items-center justify-between px-3 py-2 text-xs font-medium tracking-normal text-muted-foreground uppercase">
+        <span>{label}</span>
+        <span>{count}</span>
+      </div>
+      {stops.length ? (
+        <div className="divide-y bg-background/70">
+          {stops.map((item, index) => (
+            <ServiceFailureStopContext
+              key={`${label}-${item.serviceFailureId ?? item.stopId ?? item.shipmentId ?? index}`}
+              summary={item}
+              variant="row"
+              trailing={renderTrailing?.(item)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="bg-background/70 px-3 py-3 text-xs text-muted-foreground">
+          No stop details were returned.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure }) {
+  const trigger = ediReadinessTrigger(failure);
+  const readinessQuery = useQuery({
+    ...queries.serviceFailure.edi214Readiness(failure.id ?? "", trigger),
+    enabled: !!failure.id && !!trigger,
+    staleTime: 30_000,
+  });
+
+  if (!trigger || failure.status === "Voided") {
+    return null;
+  }
+
+  const readiness = readinessQuery.data;
+  if (readinessQuery.isLoading) {
+    return (
+      <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+        <SendIcon className="size-3.5" />
+        Checking EDI 214 readiness
+      </div>
+    );
+  }
+  if (!readiness) return null;
+
+  const blocked = readiness.action === "blocked";
+  const available = readiness.action === "generated" || readiness.action === "duplicate";
+  const ready = readiness.action === "skipped" && readiness.skippedReason === "ready";
+  const label = ediReadinessLabel(readiness.action, readiness.skippedReason);
+  const diagnostic = diagnosticMessage(readiness.diagnostics[0]);
+
+  return (
+    <div
+      className={cn(
+        "mt-2 flex flex-wrap items-center gap-2 rounded border px-2 py-1.5 text-xs",
+        blocked
+          ? "border-red-200 bg-red-50 text-red-700"
+          : available || ready
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-muted bg-muted/30 text-muted-foreground",
+      )}
+    >
+      {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
+      <span className="font-medium">EDI 214 {trigger}</span>
+      <Badge variant={blocked ? "inactive" : available || ready ? "active" : "secondary"}>
+        {label}
+      </Badge>
+      {readiness.mandatory && <Badge variant="outline">Mandatory</Badge>}
+      {readiness.messageId && (
+        <span className="font-mono text-[11px]">Message {readiness.messageId}</span>
+      )}
+      {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
+    </div>
+  );
+}
+
+function ediReadinessTrigger(failure: ServiceFailure): "Reviewed" | "Resolved" | undefined {
+  if (failure.status === "Open") return "Reviewed";
+  if (failure.status === "Reviewed" || failure.status === "Resolved") return "Resolved";
+  return undefined;
+}
+
+function ediReadinessLabel(action: string, reason?: string) {
+  if (action === "generated") return "Generated";
+  if (action === "duplicate") return "Generated";
+  if (action === "blocked") return "Blocked";
+  if (reason === "ready") return "Ready";
+  if (reason === "service failure 214 trigger disabled") return "Not configured";
+  if (reason === "no outbound EDI partner for shipment customer") return "No partner";
+  if (reason === "shipment status capability disabled") return "Capability off";
+  if (reason === "ambiguous service failure 214 partner document profile") return "Ambiguous";
+  return "Skipped";
+}
+
+function diagnosticMessage(value: unknown) {
+  if (!value || typeof value !== "object" || !("message" in value)) {
+    return undefined;
+  }
+  const message = (value as { message?: unknown }).message;
+  return typeof message === "string" ? message : undefined;
 }
 
 function ActionTooltip({

@@ -70,6 +70,8 @@ describe("service failure shared schemas", () => {
 
     expect(parsed.createdIds).toEqual([]);
     expect(parsed.updatedIds).toEqual([]);
+    expect(parsed.createdStops).toEqual([]);
+    expect(parsed.updatedStops).toEqual([]);
     expect(parsed.skippedStops).toEqual([]);
     expect(parsed.skipped).toBe(0);
   });
@@ -85,13 +87,59 @@ describe("service failure shared schemas", () => {
           stopId: "stp_123",
           stopSequence: 2,
           stopType: "Delivery",
+          locationId: "loc_123",
+          locationName: "Warehouse 12",
+          locationCode: "WH12",
+          city: "Austin",
+          stateCode: "TX",
+          scheduledCutoff: 1_700_000_000,
+          actualArrival: 1_700_000_900,
+          gracePeriodMinutes: 10,
+          lateMinutes: 5,
           reason: "missing actual arrival",
         },
       ],
     });
 
     expect(parsed.skippedStops[0]?.stopSequence).toBe(2);
+    expect(parsed.skippedStops[0]?.locationName).toBe("Warehouse 12");
+    expect(parsed.skippedStops[0]?.stateCode).toBe("TX");
+    expect(parsed.skippedStops[0]?.scheduledCutoff).toBe(1_700_000_000);
     expect(parsed.skippedStops[0]?.reason).toBe("missing actual arrival");
+  });
+
+  it("accepts service failure evaluation created and updated stop details", () => {
+    const parsed = serviceFailureEvaluationResultSchema.parse({
+      createdIds: ["sf_created"],
+      updatedIds: ["sf_updated"],
+      createdStops: [
+        {
+          shipmentId: "sp_123",
+          shipmentMoveId: "sm_123",
+          stopId: "stp_created",
+          stopSequence: 1,
+          stopType: "Pickup",
+          locationName: "Austin Yard",
+          serviceFailureId: "sf_created",
+        },
+      ],
+      updatedStops: [
+        {
+          shipmentId: "sp_123",
+          shipmentMoveId: "sm_123",
+          stopId: "stp_updated",
+          stopSequence: 2,
+          stopType: "Delivery",
+          locationName: "Dallas Yard",
+          serviceFailureId: "sf_updated",
+        },
+      ],
+      skippedStops: [],
+      skipped: 0,
+    });
+
+    expect(parsed.createdStops[0]?.serviceFailureId).toBe("sf_created");
+    expect(parsed.updatedStops[0]?.locationName).toBe("Dallas Yard");
   });
 });
 

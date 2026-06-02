@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -69,9 +71,13 @@ func TestNewServiceFailureEvaluationResultUsesEmptySlices(t *testing.T) {
 
 	require.NotNil(t, result.CreatedIDs)
 	require.NotNil(t, result.UpdatedIDs)
+	require.NotNil(t, result.CreatedStops)
+	require.NotNil(t, result.UpdatedStops)
 	require.NotNil(t, result.SkippedStops)
 	require.Empty(t, result.CreatedIDs)
 	require.Empty(t, result.UpdatedIDs)
+	require.Empty(t, result.CreatedStops)
+	require.Empty(t, result.UpdatedStops)
 	require.Empty(t, result.SkippedStops)
 }
 
@@ -259,6 +265,236 @@ func TestCreateOrUpdateDetectedCreatesWithGeneratedNumber(t *testing.T) {
 	require.NotEmpty(t, created.Number)
 }
 
+func TestEvaluateShipmentIncludesCreatedStopSummaries(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	shipmentID := pulid.MustNew("sp_")
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	userID := pulid.MustNew("usr_")
+	gracePeriod := 5
+	actualArrival := int64(1_360)
+	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, actualArrival)
+	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
+
+	repo := mocks.NewMockServiceFailureRepository(t)
+	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	audit := mocks.NewMockAuditService(t)
+	realtime := mocks.NewMockRealtimeService(t)
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           repo,
+		reasonCodeRepo: reasonRepo,
+		shipmentRepo:   shipmentRepo,
+		dispatchRepo:   dispatchRepo,
+		auditService:   audit,
+		realtime:       realtime,
+	}
+
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Return(source, nil).
+		Once()
+	dispatchRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(&dispatchcontrol.DispatchControl{
+			RecordServiceFailures:     dispatchcontrol.ServiceIncidentTypePickupDelivery,
+			ServiceFailureGracePeriod: &gracePeriod,
+		}, nil).
+		Once()
+	reasonRepo.EXPECT().
+		FindDefault(mock.Anything, pagination.TenantInfo{OrgID: orgID, BuID: buID}, servicefailure.ReasonCodeAppliesToDelivery).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	repo.EXPECT().
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*servicefailure.ServiceFailure")).
+		RunAndReturn(func(_ context.Context, created *servicefailure.ServiceFailure) (*servicefailure.ServiceFailure, error) {
+			created.Stop = stop
+			return created, nil
+		}).
+		Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	realtime.EXPECT().PublishResourceInvalidation(mock.Anything, mock.Anything).Return(nil).Once()
+
+	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		ShipmentID: shipmentID,
+	}, &serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, result.CreatedIDs, 1)
+	require.Len(t, result.CreatedStops, 1)
+	summary := result.CreatedStops[0]
+	require.Equal(t, result.CreatedIDs[0], summary.ServiceFailureID)
+	require.Equal(t, shipmentID, summary.ShipmentID)
+	require.Equal(t, moveID, summary.ShipmentMoveID)
+	require.Equal(t, stopID, summary.StopID)
+	require.Equal(t, int64(2), summary.StopSequence)
+	require.Equal(t, shipment.StopTypeDelivery, summary.StopType)
+	require.Equal(t, "Warehouse 12", summary.LocationName)
+	require.Equal(t, "WH12", summary.LocationCode)
+	require.Equal(t, "Austin", summary.City)
+	require.Equal(t, "TX", summary.StateCode)
+	require.Equal(t, int64(1_000), summary.ScheduledCutoff)
+	require.Equal(t, actualArrival, summary.ActualArrival)
+	require.Equal(t, gracePeriod, summary.GracePeriodMinutes)
+	require.Equal(t, int64(1), summary.LateMinutes)
+}
+
+func TestEvaluateShipmentIncludesUpdatedStopSummaries(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	shipmentID := pulid.MustNew("sp_")
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	gracePeriod := 5
+	actualArrival := int64(1_360)
+	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, actualArrival)
+	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
+	existing := &servicefailure.ServiceFailure{
+		ID:                 pulid.MustNew("sf_"),
+		ShipmentID:         shipmentID,
+		ShipmentMoveID:     moveID,
+		StopID:             stopID,
+		OrganizationID:     orgID,
+		BusinessUnitID:     buID,
+		Type:               servicefailure.TypeLateDelivery,
+		Source:             servicefailure.SourceDetected,
+		Status:             servicefailure.StatusOpen,
+		StopType:           shipment.StopTypeDelivery,
+		ScheduledCutoff:    900,
+		ActualArrival:      1_250,
+		GracePeriodMinutes: gracePeriod,
+		LateMinutes:        1,
+	}
+
+	repo := mocks.NewMockServiceFailureRepository(t)
+	reasonRepo := mocks.NewMockServiceFailureReasonCodeRepository(t)
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	svc := &service{
+		l:              zap.NewNop(),
+		repo:           repo,
+		reasonCodeRepo: reasonRepo,
+		shipmentRepo:   shipmentRepo,
+		dispatchRepo:   dispatchRepo,
+	}
+
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Return(source, nil).
+		Once()
+	dispatchRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(&dispatchcontrol.DispatchControl{
+			RecordServiceFailures:     dispatchcontrol.ServiceIncidentTypePickupDelivery,
+			ServiceFailureGracePeriod: &gracePeriod,
+		}, nil).
+		Once()
+	reasonRepo.EXPECT().
+		FindDefault(mock.Anything, pagination.TenantInfo{OrgID: orgID, BuID: buID}, servicefailure.ReasonCodeAppliesToDelivery).
+		Return(nil, errortypes.NewNotFoundError("not found")).
+		Once()
+	repo.EXPECT().
+		FindUnresolvedByStop(mock.Anything, mock.AnythingOfType("*repositories.ServiceFailureActiveStopRequest")).
+		Return(existing, nil).
+		Once()
+	repo.EXPECT().
+		UpdateDetectionSnapshot(mock.Anything, mock.AnythingOfType("*servicefailure.ServiceFailure")).
+		RunAndReturn(func(_ context.Context, updated *servicefailure.ServiceFailure) (*servicefailure.ServiceFailure, error) {
+			updated.Stop = stop
+			return updated, nil
+		}).
+		Once()
+
+	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		ShipmentID: shipmentID,
+	}, nil)
+
+	require.NoError(t, err)
+	require.Len(t, result.UpdatedIDs, 1)
+	require.Len(t, result.UpdatedStops, 1)
+	summary := result.UpdatedStops[0]
+	require.Equal(t, existing.ID, summary.ServiceFailureID)
+	require.Equal(t, shipmentID, summary.ShipmentID)
+	require.Equal(t, moveID, summary.ShipmentMoveID)
+	require.Equal(t, stopID, summary.StopID)
+	require.Equal(t, "Warehouse 12", summary.LocationName)
+	require.Equal(t, "TX", summary.StateCode)
+	require.Equal(t, int64(1_000), summary.ScheduledCutoff)
+	require.Equal(t, actualArrival, summary.ActualArrival)
+	require.Equal(t, int64(1), summary.LateMinutes)
+}
+
+func TestEvaluateShipmentSkippedStopsIncludeStopContext(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	shipmentID := pulid.MustNew("sp_")
+	moveID := pulid.MustNew("sm_")
+	stopID := pulid.MustNew("stp_")
+	gracePeriod := 5
+	stop := serviceFailureStopFixture(orgID, buID, moveID, stopID, shipment.StopTypeDelivery, 0)
+	stop.ActualArrival = nil
+	source := serviceFailureShipmentWithStops(orgID, buID, shipmentID, moveID, stop)
+
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	dispatchRepo := mocks.NewMockDispatchControlRepository(t)
+	svc := &service{
+		l:            zap.NewNop(),
+		shipmentRepo: shipmentRepo,
+		dispatchRepo: dispatchRepo,
+	}
+
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("*repositories.GetShipmentByIDRequest")).
+		Return(source, nil).
+		Once()
+	dispatchRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(&dispatchcontrol.DispatchControl{
+			RecordServiceFailures:     dispatchcontrol.ServiceIncidentTypePickupDelivery,
+			ServiceFailureGracePeriod: &gracePeriod,
+		}, nil).
+		Once()
+
+	result, err := svc.EvaluateShipment(t.Context(), &serviceports.EvaluateShipmentServiceFailuresRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: buID},
+		ShipmentID: shipmentID,
+	}, nil)
+
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Skipped)
+	require.Len(t, result.SkippedStops, 1)
+	summary := result.SkippedStops[0]
+	require.Equal(t, "missing actual arrival", summary.Reason)
+	require.Equal(t, shipmentID, summary.ShipmentID)
+	require.Equal(t, moveID, summary.ShipmentMoveID)
+	require.Equal(t, stopID, summary.StopID)
+	require.Equal(t, int64(2), summary.StopSequence)
+	require.Equal(t, shipment.StopTypeDelivery, summary.StopType)
+	require.Equal(t, "Warehouse 12", summary.LocationName)
+	require.Equal(t, "WH12", summary.LocationCode)
+	require.Equal(t, "Austin", summary.City)
+	require.Equal(t, "TX", summary.StateCode)
+	require.Equal(t, int64(1_000), summary.ScheduledCutoff)
+	require.Equal(t, int64(0), summary.ActualArrival)
+	require.Equal(t, gracePeriod, summary.GracePeriodMinutes)
+	require.Equal(t, int64(0), summary.LateMinutes)
+}
+
 func TestLifecycleReviewRequiresUserAndRecordsAudit(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -391,6 +627,58 @@ func serviceFailureShipmentFixture(
 						ActualArrival:        &actualArrival,
 					},
 				},
+			},
+		},
+	}
+}
+
+func serviceFailureStopFixture(
+	orgID pulid.ID,
+	buID pulid.ID,
+	moveID pulid.ID,
+	stopID pulid.ID,
+	stopType shipment.StopType,
+	actualArrival int64,
+) *shipment.Stop {
+	locationID := pulid.MustNew("loc_")
+	return &shipment.Stop{
+		ID:                   stopID,
+		OrganizationID:       orgID,
+		BusinessUnitID:       buID,
+		ShipmentMoveID:       moveID,
+		LocationID:           locationID,
+		Type:                 stopType,
+		Status:               shipment.StopStatusCompleted,
+		Sequence:             2,
+		ScheduledWindowStart: 1_000,
+		ActualArrival:        &actualArrival,
+		Location: &location.Location{
+			ID:    locationID,
+			Code:  "WH12",
+			Name:  "Warehouse 12",
+			City:  "Austin",
+			State: &usstate.UsState{Abbreviation: "TX"},
+		},
+	}
+}
+
+func serviceFailureShipmentWithStops(
+	orgID pulid.ID,
+	buID pulid.ID,
+	shipmentID pulid.ID,
+	moveID pulid.ID,
+	stop *shipment.Stop,
+) *shipment.Shipment {
+	return &shipment.Shipment{
+		ID:             shipmentID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		Status:         shipment.StatusNew,
+		Moves: []*shipment.ShipmentMove{
+			{
+				ID:     moveID,
+				Status: shipment.MoveStatusNew,
+				Stops:  []*shipment.Stop{stop},
 			},
 		},
 	}

@@ -60,6 +60,8 @@ func (r *repository) List(
 		Relation("ReasonCode").
 		Relation("Shipment").
 		Relation("Stop").
+		Relation("Stop.Location").
+		Relation("Stop.Location.State").
 		Order("sf.created_at DESC").
 		ScanAndCount(ctx)
 	if err != nil {

@@ -80,19 +80,34 @@ type BuildServiceFailureEDIPayloadRequest struct {
 }
 
 type ServiceFailureEvaluationResult struct {
-	CreatedIDs   []pulid.ID                  `json:"createdIds"`
-	UpdatedIDs   []pulid.ID                  `json:"updatedIds"`
-	SkippedStops []ServiceFailureSkippedStop `json:"skippedStops"`
-	Skipped      int                         `json:"skipped"`
+	CreatedIDs   []pulid.ID                           `json:"createdIds"`
+	UpdatedIDs   []pulid.ID                           `json:"updatedIds"`
+	CreatedStops []ServiceFailureEvaluatedStopSummary `json:"createdStops"`
+	UpdatedStops []ServiceFailureEvaluatedStopSummary `json:"updatedStops"`
+	SkippedStops []ServiceFailureSkippedStop          `json:"skippedStops"`
+	Skipped      int                                  `json:"skipped"`
 }
 
-type ServiceFailureSkippedStop struct {
-	ShipmentID   pulid.ID          `json:"shipmentId"`
-	StopID       pulid.ID          `json:"stopId,omitempty"`
-	StopSequence int64             `json:"stopSequence,omitempty"`
-	StopType     shipment.StopType `json:"stopType,omitempty"`
-	Reason       string            `json:"reason"`
+type ServiceFailureEvaluatedStopSummary struct {
+	ShipmentID         pulid.ID          `json:"shipmentId"`
+	ShipmentMoveID     pulid.ID          `json:"shipmentMoveId,omitempty"`
+	StopID             pulid.ID          `json:"stopId,omitempty"`
+	StopSequence       int64             `json:"stopSequence,omitempty"`
+	StopType           shipment.StopType `json:"stopType,omitempty"`
+	LocationID         pulid.ID          `json:"locationId,omitempty"`
+	LocationName       string            `json:"locationName,omitempty"`
+	LocationCode       string            `json:"locationCode,omitempty"`
+	City               string            `json:"city,omitempty"`
+	StateCode          string            `json:"stateCode,omitempty"`
+	ScheduledCutoff    int64             `json:"scheduledCutoff,omitempty"`
+	ActualArrival      int64             `json:"actualArrival,omitempty"`
+	GracePeriodMinutes int               `json:"gracePeriodMinutes,omitempty"`
+	LateMinutes        int64             `json:"lateMinutes,omitempty"`
+	ServiceFailureID   pulid.ID          `json:"serviceFailureId,omitempty"`
+	Reason             string            `json:"reason,omitempty"`
 }
+
+type ServiceFailureSkippedStop = ServiceFailureEvaluatedStopSummary
 
 type ServiceFailureEDIPayloadResult struct {
 	Payload     edi.DocumentPayload `json:"payload"`

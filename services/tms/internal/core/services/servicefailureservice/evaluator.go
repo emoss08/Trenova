@@ -41,6 +41,8 @@ func newServiceFailureEvaluationResult() *services.ServiceFailureEvaluationResul
 	return &services.ServiceFailureEvaluationResult{
 		CreatedIDs:   make([]pulid.ID, 0),
 		UpdatedIDs:   make([]pulid.ID, 0),
+		CreatedStops: make([]services.ServiceFailureEvaluatedStopSummary, 0),
+		UpdatedStops: make([]services.ServiceFailureEvaluatedStopSummary, 0),
 		SkippedStops: make([]services.ServiceFailureSkippedStop, 0),
 	}
 }
@@ -125,7 +127,10 @@ func (s *service) BulkEvaluate(
 	result := newServiceFailureEvaluationResult()
 	for _, shipmentID := range req.ShipmentIDs {
 		if shipmentID.IsNil() {
-			addSkippedEvaluation(result, pulid.Nil, nil, "missing shipment ID")
+			addSkippedEvaluation(addSkippedEvaluationParams{
+				result: result,
+				reason: "missing shipment ID",
+			})
 			continue
 		}
 		current, err := s.EvaluateShipment(ctx, &services.EvaluateShipmentServiceFailuresRequest{
@@ -151,7 +156,11 @@ func (s *service) evaluateShipment(
 		return result, nil
 	}
 	if params.source.Status == shipment.StatusCanceled {
-		addSkippedEvaluation(result, params.source.ID, nil, "shipment canceled")
+		addSkippedEvaluation(addSkippedEvaluationParams{
+			result:     result,
+			shipmentID: params.source.ID,
+			reason:     "shipment canceled",
+		})
 		return result, nil
 	}
 
@@ -178,7 +187,14 @@ func (s *service) evaluateShipment(
 				force:       params.force,
 			})
 			if action == nil {
-				addSkippedEvaluation(result, params.source.ID, stop, reason)
+				addSkippedEvaluation(addSkippedEvaluationParams{
+					result:             result,
+					shipmentID:         params.source.ID,
+					shipmentMoveID:     move.ID,
+					stop:               stop,
+					gracePeriodMinutes: gracePeriod,
+					reason:             reason,
+				})
 				s.l.Debug("service failure stop skipped", zap.String("stopID", stop.ID.String()), zap.String("reason", reason))
 				continue
 			}
@@ -188,9 +204,11 @@ func (s *service) evaluateShipment(
 			}
 			if action.existing {
 				result.UpdatedIDs = append(result.UpdatedIDs, failure.ID)
+				result.UpdatedStops = append(result.UpdatedStops, serviceFailureStopSummary(failure))
 				continue
 			}
 			result.CreatedIDs = append(result.CreatedIDs, failure.ID)
+			result.CreatedStops = append(result.CreatedStops, serviceFailureStopSummary(failure))
 			s.transitionShipmentToDelayed(ctx, params.source, params.actor, failure)
 		}
 	}
@@ -309,28 +327,118 @@ func mergeEvaluationResult(target, source *services.ServiceFailureEvaluationResu
 	}
 	target.CreatedIDs = append(target.CreatedIDs, source.CreatedIDs...)
 	target.UpdatedIDs = append(target.UpdatedIDs, source.UpdatedIDs...)
+	target.CreatedStops = append(target.CreatedStops, source.CreatedStops...)
+	target.UpdatedStops = append(target.UpdatedStops, source.UpdatedStops...)
 	target.SkippedStops = append(target.SkippedStops, source.SkippedStops...)
 	target.Skipped += source.Skipped
 }
 
-func addSkippedEvaluation(
-	result *services.ServiceFailureEvaluationResult,
-	shipmentID pulid.ID,
-	stop *shipment.Stop,
-	reason string,
-) {
-	if result == nil {
+type addSkippedEvaluationParams struct {
+	result             *services.ServiceFailureEvaluationResult
+	shipmentID         pulid.ID
+	shipmentMoveID     pulid.ID
+	stop               *shipment.Stop
+	gracePeriodMinutes int
+	reason             string
+}
+
+func addSkippedEvaluation(params addSkippedEvaluationParams) {
+	if params.result == nil {
 		return
 	}
-	result.Skipped++
-	detail := services.ServiceFailureSkippedStop{
-		ShipmentID: shipmentID,
-		Reason:     reason,
+	params.result.Skipped++
+	detail := stopSummaryFromStop(
+		params.shipmentID,
+		params.shipmentMoveID,
+		params.stop,
+		params.gracePeriodMinutes,
+	)
+	detail.Reason = params.reason
+	params.result.SkippedStops = append(params.result.SkippedStops, detail)
+}
+
+func serviceFailureStopSummary(
+	failure *servicefailure.ServiceFailure,
+) services.ServiceFailureEvaluatedStopSummary {
+	if failure == nil {
+		return services.ServiceFailureEvaluatedStopSummary{}
 	}
-	if stop != nil {
-		detail.StopID = stop.ID
-		detail.StopSequence = stop.Sequence
+
+	detail := services.ServiceFailureEvaluatedStopSummary{
+		ShipmentID:         failure.ShipmentID,
+		ShipmentMoveID:     failure.ShipmentMoveID,
+		StopID:             failure.StopID,
+		StopType:           failure.StopType,
+		ScheduledCutoff:    failure.ScheduledCutoff,
+		ActualArrival:      failure.ActualArrival,
+		GracePeriodMinutes: failure.GracePeriodMinutes,
+		LateMinutes:        failure.LateMinutes,
+		ServiceFailureID:   failure.ID,
+	}
+	applyStopContext(&detail, failure.Stop)
+	return detail
+}
+
+func stopSummaryFromStop(
+	shipmentID pulid.ID,
+	shipmentMoveID pulid.ID,
+	stop *shipment.Stop,
+	gracePeriodMinutes int,
+) services.ServiceFailureEvaluatedStopSummary {
+	detail := services.ServiceFailureEvaluatedStopSummary{
+		ShipmentID:         shipmentID,
+		ShipmentMoveID:     shipmentMoveID,
+		GracePeriodMinutes: gracePeriodMinutes,
+	}
+	if stop == nil {
+		return detail
+	}
+
+	detail.StopID = stop.ID
+	detail.StopSequence = stop.Sequence
+	detail.StopType = stop.Type
+	detail.ScheduledCutoff = stop.EffectiveScheduledCutoff()
+	if stop.ShipmentMoveID.IsNotNil() {
+		detail.ShipmentMoveID = stop.ShipmentMoveID
+	}
+	if stop.ActualArrival != nil {
+		detail.ActualArrival = *stop.ActualArrival
+		if detail.ScheduledCutoff > 0 {
+			detail.LateMinutes = lateMinutesAfterGrace(
+				*stop.ActualArrival,
+				detail.ScheduledCutoff,
+				gracePeriodMinutes,
+			)
+		}
+	}
+
+	applyStopContext(&detail, stop)
+	return detail
+}
+
+func applyStopContext(
+	detail *services.ServiceFailureEvaluatedStopSummary,
+	stop *shipment.Stop,
+) {
+	if detail == nil || stop == nil {
+		return
+	}
+	detail.StopSequence = stop.Sequence
+	if stop.Type != "" {
 		detail.StopType = stop.Type
 	}
-	result.SkippedStops = append(result.SkippedStops, detail)
+	if stop.LocationID.IsNotNil() {
+		detail.LocationID = stop.LocationID
+	}
+	if stop.Location == nil {
+		return
+	}
+
+	detail.LocationID = stop.Location.ID
+	detail.LocationName = stop.Location.Name
+	detail.LocationCode = stop.Location.Code
+	detail.City = stop.Location.City
+	if stop.Location.State != nil {
+		detail.StateCode = stop.Location.State.Abbreviation
+	}
 }
