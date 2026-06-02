@@ -409,6 +409,8 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 
 	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode: "SD",
+		EventDate:  1,
+		EventTime:  1,
 	})
 
 	require.Len(t, diagnostics, 1)
@@ -419,12 +421,18 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode:       "SD",
 		StatusReasonCode: "NS",
+		EventDate:        1,
+		EventTime:        1,
 	}))
 	require.Len(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode: " sd ",
+		EventDate:  1,
+		EventTime:  1,
 	}), 1)
 	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode: "A3",
+		EventDate:  1,
+		EventTime:  1,
 	}))
 }
 
@@ -440,6 +448,17 @@ func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
 	require.False(t, settings.MandatoryOnResolved)
 	require.Empty(t, settings.StatusCode)
 	require.Empty(t, settings.AcceptedReasonCodes)
+	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
+}
+
+func TestParseServiceFailure214SettingsMalformedDisabled(t *testing.T) {
+	t.Parallel()
+
+	settings := parseServiceFailure214Settings(map[string]any{
+		"serviceFailure214": "enabled",
+	})
+
+	require.False(t, settings.Enabled)
 	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
 }
 
@@ -477,12 +496,70 @@ func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.
 	require.True(t, settings.mandatory(services.ServiceFailureEDITriggerResolved))
 }
 
+func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
+	t.Parallel()
+
+	reasonCode := &servicefailure.ReasonCode{
+		DefaultStatusCode: "a3",
+		DefaultReasonCode: "ns",
+	}
+	base := &servicefailure.ServiceFailure{
+		ID:                    pulid.MustNew("sf_"),
+		ShipmentID:            pulid.MustNew("sp_"),
+		Number:                "SF-1004",
+		Type:                  servicefailure.TypeLateDelivery,
+		Status:                servicefailure.StatusReviewed,
+		ReasonCode:            reasonCode,
+		DetectedAt:            1,
+		LateMinutes:           1,
+		X12ReasonCodeOverride: " ca ",
+	}
+
+	payload := buildServiceFailure214LifecyclePayload(
+		base,
+		nil,
+		serviceFailure214Settings{StatusCode: "AF"},
+		services.ServiceFailureEDITriggerReviewed,
+	)
+	require.Equal(t, "AF", payload.ShipmentStatus.StatusCode)
+	require.Equal(t, "CA", payload.ShipmentStatus.StatusReasonCode)
+
+	base.X12StatusCodeOverride = " sd "
+	payload = buildServiceFailure214LifecyclePayload(
+		base,
+		nil,
+		serviceFailure214Settings{StatusCode: "AF"},
+		services.ServiceFailureEDITriggerReviewed,
+	)
+	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
+
+	base.X12StatusCodeOverride = ""
+	payload = buildServiceFailure214LifecyclePayload(
+		base,
+		nil,
+		serviceFailure214Settings{},
+		services.ServiceFailureEDITriggerReviewed,
+	)
+	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
+
+	base.ReasonCode.DefaultStatusCode = ""
+	payload = buildServiceFailure214LifecyclePayload(
+		base,
+		nil,
+		serviceFailure214Settings{},
+		services.ServiceFailureEDITriggerReviewed,
+	)
+	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
+}
+
 func TestServiceFailurePayloadDiagnosticsHonorsProfileRequirements(t *testing.T) {
 	t.Parallel()
 
 	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode:       "A3",
 		StatusReasonCode: "ZZ",
+		EventDate:        1,
+		EventTime:        1,
 	}, serviceFailure214Settings{
 		RequireStatusReasonCode: true,
 		RequireBOL:              true,
@@ -498,6 +575,19 @@ func TestServiceFailurePayloadDiagnosticsHonorsProfileRequirements(t *testing.T)
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.stopId")
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.locationId")
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.statusReasonCode")
+	require.Contains(t, diagnostics[4].Message, "NS")
+}
+
+func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode:       "A3",
+		StatusReasonCode: "NS",
+	})
+
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventDate")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTime")
 }
 
 func diagnosticPaths(diagnostics []edix12.Diagnostic) []string {

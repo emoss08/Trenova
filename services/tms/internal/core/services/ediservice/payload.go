@@ -394,11 +394,13 @@ func serviceFailureStatusCode(failure *servicefailure.ServiceFailure) string {
 	if failure == nil {
 		return "SD"
 	}
-	if value := strings.TrimSpace(failure.X12StatusCodeOverride); value != "" {
-		return strings.ToUpper(value)
+	if value := normalizedX12Code(failure.X12StatusCodeOverride); value != "" {
+		return value
 	}
-	if failure.ReasonCode != nil && strings.TrimSpace(failure.ReasonCode.DefaultStatusCode) != "" {
-		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultStatusCode))
+	if failure.ReasonCode != nil {
+		if value := normalizedX12Code(failure.ReasonCode.DefaultStatusCode); value != "" {
+			return value
+		}
 	}
 	return "SD"
 }
@@ -407,11 +409,11 @@ func serviceFailureReasonCode(failure *servicefailure.ServiceFailure) string {
 	if failure == nil {
 		return ""
 	}
-	if value := strings.TrimSpace(failure.X12ReasonCodeOverride); value != "" {
-		return strings.ToUpper(value)
+	if value := normalizedX12Code(failure.X12ReasonCodeOverride); value != "" {
+		return value
 	}
 	if failure.ReasonCode != nil {
-		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultReasonCode))
+		return normalizedX12Code(failure.ReasonCode.DefaultReasonCode)
 	}
 	return ""
 }
@@ -420,11 +422,11 @@ func serviceFailureExceptionCode(failure *servicefailure.ServiceFailure) string 
 	if failure == nil {
 		return ""
 	}
-	if value := strings.TrimSpace(failure.X12ExceptionCode); value != "" {
-		return strings.ToUpper(value)
+	if value := normalizedX12Code(failure.X12ExceptionCode); value != "" {
+		return value
 	}
 	if failure.ReasonCode != nil {
-		return strings.ToUpper(strings.TrimSpace(failure.ReasonCode.DefaultExceptionCode))
+		return normalizedX12Code(failure.ReasonCode.DefaultExceptionCode)
 	}
 	return ""
 }

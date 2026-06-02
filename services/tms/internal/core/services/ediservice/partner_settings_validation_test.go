@@ -131,6 +131,93 @@ func TestValidatePartnerSettingsWithIndex(t *testing.T) {
 	}
 }
 
+func TestValidateServiceFailure214PartnerSettings(t *testing.T) {
+	t.Parallel()
+
+	profile := &edi.EDIPartnerDocumentProfile{
+		Standard:       edi.EDIStandardX12,
+		TransactionSet: edi.TransactionSet214,
+		Direction:      edi.DocumentDirectionOutbound,
+	}
+
+	tests := []struct {
+		name      string
+		settings  map[string]any
+		wantPaths []string
+	}{
+		{
+			name: "valid settings",
+			settings: map[string]any{
+				"serviceFailure214": map[string]any{
+					"enabled":             true,
+					"sendOnReviewed":      true,
+					"mandatoryOnResolved": false,
+					"statusCode":          "SD",
+					"acceptedReasonCodes": []any{"NS", "CA"},
+				},
+			},
+		},
+		{
+			name: "non object",
+			settings: map[string]any{
+				"serviceFailure214": true,
+			},
+			wantPaths: []string{"partner.serviceFailure214"},
+		},
+		{
+			name: "invalid typed fields",
+			settings: map[string]any{
+				"serviceFailure214": map[string]any{
+					"enabled":             "true",
+					"statusCode":          214,
+					"acceptedReasonCodes": []any{"NS", 42},
+				},
+			},
+			wantPaths: []string{
+				"partner.serviceFailure214.enabled",
+				"partner.serviceFailure214.statusCode",
+				"partner.serviceFailure214.acceptedReasonCodes[1]",
+			},
+		},
+		{
+			name: "accepted codes not array",
+			settings: map[string]any{
+				"serviceFailure214": map[string]any{
+					"acceptedReasonCodes": "NS",
+				},
+			},
+			wantPaths: []string{"partner.serviceFailure214.acceptedReasonCodes"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diagnostics := validateServiceFailure214PartnerSettings(profile, tt.settings)
+
+			if tt.wantPaths == nil {
+				require.Empty(t, diagnostics)
+				return
+			}
+			require.Equal(t, tt.wantPaths, diagnosticPaths(diagnostics))
+		})
+	}
+}
+
+func TestValidateServiceFailure214PartnerSettingsIgnoresNonOutboundX12214(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := validateServiceFailure214PartnerSettings(
+		&edi.EDIPartnerDocumentProfile{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet204,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+		map[string]any{"serviceFailure214": true},
+	)
+
+	require.Empty(t, diagnostics)
+}
+
 func testPartnerSettingFields() []*edi.EDIPartnerSettingField {
 	paymentMethod := testPartnerSettingField(
 		"defaultPaymentMethod",

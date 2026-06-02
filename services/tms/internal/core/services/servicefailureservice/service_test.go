@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -585,10 +587,144 @@ func TestTransitionShipmentToDelayedUsesMarker(t *testing.T) {
 	require.Equal(t, shipment.StatusDelayed, source.Status)
 }
 
+func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
+	t.Parallel()
+
+	failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
+	ediSvc := mocks.NewMockEDIService(t)
+	svc := &service{l: zap.NewNop(), ediService: ediSvc}
+
+	ediSvc.EXPECT().
+		PreviewServiceFailure214ForLifecycle(mock.Anything, mock.AnythingOfType("*services.ServiceFailure214LifecycleRequest")).
+		Return(&serviceports.ServiceFailure214LifecycleResult{
+			Trigger:   serviceports.ServiceFailureEDITriggerReviewed,
+			Action:    serviceports.ServiceFailureEDIActionBlocked,
+			Mandatory: true,
+			Diagnostics: []edix12.Diagnostic{{
+				Severity: edi.ValidationSeverityError,
+				Path:     "shipmentStatus.statusReasonCode",
+				Message:  "status reason required",
+			}},
+		}, nil).
+		Once()
+
+	err := svc.preflightServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
+
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "status reason required")
+}
+
+func TestPreflightServiceFailure214AllowsNonMandatoryBlockedAndSkipped(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name   string
+		result *serviceports.ServiceFailure214LifecycleResult
+	}{
+		{
+			name: "non mandatory blocked",
+			result: &serviceports.ServiceFailure214LifecycleResult{
+				Trigger: serviceports.ServiceFailureEDITriggerReviewed,
+				Action:  serviceports.ServiceFailureEDIActionBlocked,
+			},
+		},
+		{
+			name: "skipped disabled",
+			result: &serviceports.ServiceFailure214LifecycleResult{
+				Trigger:       serviceports.ServiceFailureEDITriggerReviewed,
+				Action:        serviceports.ServiceFailureEDIActionSkipped,
+				SkippedReason: "service failure 214 trigger disabled",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
+			ediSvc := mocks.NewMockEDIService(t)
+			svc := &service{l: zap.NewNop(), ediService: ediSvc}
+			ediSvc.EXPECT().
+				PreviewServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
+				Return(tt.result, nil).
+				Once()
+
+			err := svc.preflightServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestGenerateServiceFailure214RecordsGeneratedAndDuplicateOnly(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		action      serviceports.ServiceFailureEDIAction
+		wantComment bool
+	}{
+		{name: "generated", action: serviceports.ServiceFailureEDIActionGenerated, wantComment: true},
+		{name: "duplicate", action: serviceports.ServiceFailureEDIActionDuplicate, wantComment: true},
+		{name: "skipped", action: serviceports.ServiceFailureEDIActionSkipped},
+		{name: "blocked", action: serviceports.ServiceFailureEDIActionBlocked},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			failure := serviceFailureLifecycleFixture(servicefailure.StatusReviewed)
+			ediSvc := mocks.NewMockEDIService(t)
+			audit := mocks.NewMockAuditService(t)
+			comments := mocks.NewMockShipmentCommentService(t)
+			svc := &service{
+				l:              zap.NewNop(),
+				ediService:     ediSvc,
+				auditService:   audit,
+				commentService: comments,
+			}
+			ediSvc.EXPECT().
+				GenerateServiceFailure214ForLifecycle(mock.Anything, mock.Anything).
+				Return(&serviceports.ServiceFailure214LifecycleResult{
+					Trigger:                  serviceports.ServiceFailureEDITriggerReviewed,
+					Action:                   tt.action,
+					MessageID:                pulid.MustNew("edimsg_"),
+					EDIPartnerID:             pulid.MustNew("edip_"),
+					PartnerDocumentProfileID: pulid.MustNew("edidp_"),
+				}, nil).
+				Once()
+			if tt.wantComment {
+				audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+				comments.EXPECT().
+					CreateSystem(mock.Anything, mock.AnythingOfType("*services.CreateSystemShipmentCommentRequest")).
+					Return(&shipment.ShipmentComment{}, nil).
+					Once()
+			}
+
+			svc.generateServiceFailure214(t.Context(), serviceFailure214Params{current: failure})
+		})
+	}
+}
+
 type fakeDelayedShipmentMarker struct {
 	called  bool
 	params  delayedShipmentMarkParams
 	updated *shipment.Shipment
+}
+
+func serviceFailureLifecycleFixture(status servicefailure.Status) *servicefailure.ServiceFailure {
+	reasonID := pulid.MustNew("sfrc_")
+	return &servicefailure.ServiceFailure{
+		ID:             pulid.MustNew("sf_"),
+		ShipmentID:     pulid.MustNew("sp_"),
+		ShipmentMoveID: pulid.MustNew("sm_"),
+		StopID:         pulid.MustNew("stp_"),
+		ReasonCodeID:   &reasonID,
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+		Number:         "SF-1006",
+		Type:           servicefailure.TypeLateDelivery,
+		Source:         servicefailure.SourceDetected,
+		Status:         status,
+	}
 }
 
 func (m *fakeDelayedShipmentMarker) MarkDelayedForServiceFailure(

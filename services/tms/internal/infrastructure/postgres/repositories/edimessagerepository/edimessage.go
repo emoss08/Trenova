@@ -171,6 +171,10 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 		Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
 		Where("payload_snapshot->'shipmentStatus'->>'serviceFailureId' = ?", req.ServiceFailureID.String()).
 		Where(
+			"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = ?",
+			req.ServiceFailureID.String(),
+		).
+		Where(
 			"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' = ?",
 			req.Trigger,
 		).

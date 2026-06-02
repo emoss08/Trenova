@@ -126,10 +126,11 @@ func (s *Service) validateProfilePartnerSettings(
 	tenantInfo pagination.TenantInfo,
 	settings map[string]any,
 ) ([]edix12.Diagnostic, error) {
+	diagnostics := validateServiceFailure214PartnerSettings(profile, settings)
 	schema, err := s.ResolvePartnerSettingSchema(ctx, profile, tenantInfo)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
-			return nil, nil
+			return diagnostics, nil
 		}
 		return nil, err
 	}
@@ -146,7 +147,11 @@ func (s *Service) validateProfilePartnerSettings(
 	if err != nil {
 		return nil, err
 	}
-	return validatePartnerSettingsWithIndex(settings, newPartnerSettingIndex(fields.Items)), nil
+	diagnostics = append(
+		diagnostics,
+		validatePartnerSettingsWithIndex(settings, newPartnerSettingIndex(fields.Items))...,
+	)
+	return diagnostics, nil
 }
 
 func (s *Service) partnerSettingsValidationProfile(
@@ -231,6 +236,129 @@ func validatePartnerSettingsWithIndex(
 		))
 	}
 	return diagnostics
+}
+
+func validateServiceFailure214PartnerSettings(
+	profile *edi.EDIPartnerDocumentProfile,
+	settings map[string]any,
+) []edix12.Diagnostic {
+	if !serviceFailure214SettingsApply(profile) || settings == nil {
+		return nil
+	}
+	raw, ok := settings["serviceFailure214"]
+	if !ok {
+		return nil
+	}
+	object, ok := raw.(map[string]any)
+	if !ok {
+		return []edix12.Diagnostic{serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214",
+			"serviceFailure214 must be an object",
+			"Use an object with enabled, trigger, requirement, and optional code settings.",
+		)}
+	}
+
+	diagnostics := make([]edix12.Diagnostic, 0)
+	for _, key := range serviceFailure214BooleanSettingKeys() {
+		value, present := object[key]
+		if !present {
+			continue
+		}
+		if _, ok := value.(bool); ok {
+			continue
+		}
+		diagnostics = append(diagnostics, serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214."+key,
+			fmt.Sprintf("serviceFailure214.%s must be boolean", key),
+			"Use true or false.",
+		))
+	}
+	for _, key := range []string{"statusCode"} {
+		value, present := object[key]
+		if !present || value == nil {
+			continue
+		}
+		if _, ok := value.(string); ok {
+			continue
+		}
+		diagnostics = append(diagnostics, serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214."+key,
+			fmt.Sprintf("serviceFailure214.%s must be string", key),
+			"Use an X12 status code string such as SD.",
+		))
+	}
+	if value, present := object["acceptedReasonCodes"]; present && value != nil {
+		diagnostics = append(diagnostics, validateServiceFailure214ReasonCodes(value)...)
+	}
+	return diagnostics
+}
+
+func serviceFailure214SettingsApply(profile *edi.EDIPartnerDocumentProfile) bool {
+	return profile != nil &&
+		profile.Standard == edi.EDIStandardX12 &&
+		profile.TransactionSet == edi.TransactionSet214 &&
+		profile.Direction == edi.DocumentDirectionOutbound
+}
+
+func serviceFailure214BooleanSettingKeys() []string {
+	return []string{
+		"enabled",
+		"sendOnReviewed",
+		"sendOnResolved",
+		"mandatoryOnReviewed",
+		"mandatoryOnResolved",
+		"requireStatusReasonCode",
+		"requireLocation",
+		"requireStop",
+		"requireProNumber",
+		"requireBol",
+	}
+}
+
+func validateServiceFailure214ReasonCodes(value any) []edix12.Diagnostic {
+	switch typed := value.(type) {
+	case []string:
+		return nil
+	case []any:
+		diagnostics := make([]edix12.Diagnostic, 0)
+		for index, item := range typed {
+			if _, ok := item.(string); ok {
+				continue
+			}
+			diagnostics = append(diagnostics, serviceFailure214PartnerSettingDiagnostic(
+				partnerSettingTypeInvalidCode,
+				fmt.Sprintf("serviceFailure214.acceptedReasonCodes[%d]", index),
+				"serviceFailure214.acceptedReasonCodes entries must be strings",
+				"Use X12 status reason code strings such as NS.",
+			))
+		}
+		return diagnostics
+	default:
+		return []edix12.Diagnostic{serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214.acceptedReasonCodes",
+			"serviceFailure214.acceptedReasonCodes must be an array of strings",
+			"Use X12 status reason code strings such as NS.",
+		)}
+	}
+}
+
+func serviceFailure214PartnerSettingDiagnostic(
+	code string,
+	path string,
+	message string,
+	suggestedFix string,
+) edix12.Diagnostic {
+	return partnerSettingDiagnostic(
+		edi.ValidationSeverityError,
+		code,
+		path,
+		message,
+		suggestedFix,
+	)
 }
 
 func validatePartnerSettingValue(

@@ -389,7 +389,7 @@ export function DocumentPreviewArchiveTab() {
             <AckEditor profile={profileDraft} onChange={setProfileDraft} />
             <TextareaBlock
               label="Partner Settings"
-              description={`Use serviceFailure214 for outbound 214 lifecycle automation, e.g. {"serviceFailure214":{"enabled":true,"sendOnReviewed":true,"sendOnResolved":true,"mandatoryOnReviewed":false,"mandatoryOnResolved":false,"statusCode":"SD","requireStatusReasonCode":true,"requireLocation":false,"requireStop":false,"requireProNumber":false,"requireBol":false,"acceptedReasonCodes":["NS"]}}.`}
+              description={`For outbound X12 214 service failure lifecycle generation, use serviceFailure214 with boolean trigger flags, optional statusCode, and optional acceptedReasonCodes, e.g. {"serviceFailure214":{"enabled":true,"sendOnReviewed":true,"sendOnResolved":true,"mandatoryOnReviewed":false,"mandatoryOnResolved":false,"statusCode":"SD","requireStatusReasonCode":true,"requireLocation":false,"requireStop":false,"requireProNumber":false,"requireBol":false,"acceptedReasonCodes":["NS"]}}. Status SD requires a reason code.`}
               value={rawPartnerSettings}
               onChange={setRawPartnerSettings}
             />

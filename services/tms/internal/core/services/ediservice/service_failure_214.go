@@ -3,6 +3,7 @@ package ediservice
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -109,7 +110,7 @@ func (s *Service) serviceFailure214Lifecycle(
 	}
 	if !generate {
 		result.Action = services.ServiceFailureEDIActionSkipped
-		result.SkippedReason = "ready"
+		result.SkippedReason = "ready_for_generation"
 		return result, nil
 	}
 
@@ -208,9 +209,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 			TenantInfo: req.TenantInfo,
 			Pagination: pagination.Info{Limit: pagination.MaxLimit},
 		},
-		CustomerID:         source.CustomerID,
-		EnabledForOutbound: true,
-		Status:             domaintypes.StatusActive,
+		CustomerID: source.CustomerID,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -220,11 +219,18 @@ func (s *Service) resolveServiceFailure214Candidate(
 	}
 
 	candidates := make([]serviceFailure214Candidate, 0, partners.Total)
+	activeOutboundPartners := 0
 	capabilityDisabled := false
+	inactiveProfile := false
+	triggerDisabled := false
 	for _, partner := range partners.Items {
-		if partner == nil || !partner.EnabledForOutbound {
+		if partner == nil {
 			continue
 		}
+		if partner.Status != domaintypes.StatusActive || !partner.EnabledForOutbound {
+			continue
+		}
+		activeOutboundPartners++
 		enabled, err := s.shipmentStatusCapabilityEnabled(ctx, req.TenantInfo, partner)
 		if err != nil {
 			return nil, nil, err
@@ -244,15 +250,22 @@ func (s *Service) resolveServiceFailure214Candidate(
 				TransactionSet: edi.TransactionSet214,
 				Direction:      edi.DocumentDirectionOutbound,
 				Standard:       edi.EDIStandardX12,
-				Status:         edi.DocumentStatusActive,
 			},
 		)
 		if profileErr != nil {
 			return nil, nil, profileErr
 		}
 		for _, profile := range profiles.Items {
+			if profile == nil {
+				continue
+			}
+			if profile.Status != edi.DocumentStatusActive {
+				inactiveProfile = true
+				continue
+			}
 			settings := parseServiceFailure214Settings(profile.PartnerSettings)
 			if !settings.enabledForTrigger(req.Trigger) {
+				triggerDisabled = true
 				continue
 			}
 			candidates = append(candidates, serviceFailure214Candidate{
@@ -266,8 +279,13 @@ func (s *Service) resolveServiceFailure214Candidate(
 	switch len(candidates) {
 	case 0:
 		reason := "service failure 214 trigger disabled"
-		if capabilityDisabled {
+		switch {
+		case activeOutboundPartners == 0:
+			reason = "EDI partner is inactive or outbound disabled"
+		case capabilityDisabled:
 			reason = "shipment status capability disabled"
+		case inactiveProfile && !triggerDisabled:
+			reason = "service failure 214 partner document profile inactive"
 		}
 		return nil, skippedServiceFailure214Result(req.Trigger, reason), nil
 	case 1:
@@ -437,6 +455,22 @@ func serviceFailure214Diagnostics(
 	diagnostics := make([]edix12.Diagnostic, 0, 6)
 	statusCode := normalizedX12Code(payload.StatusCode)
 	reasonCode := normalizedX12Code(payload.StatusReasonCode)
+	if payload.EventDate == 0 {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.eventDate",
+			"Service failure 214 event date is required",
+			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
+		))
+	}
+	if payload.EventTime == 0 {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.eventTime",
+			"Service failure 214 event time is required",
+			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
+		))
+	}
 	if statusCode == "SD" && reasonCode == "" {
 		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
 			"required",
@@ -490,12 +524,28 @@ func serviceFailure214Diagnostics(
 			diagnostics = append(diagnostics, serviceFailure214Diagnostic(
 				"unsupported_reason_code",
 				"shipmentStatus.statusReasonCode",
-				fmt.Sprintf("Status reason code %s is not accepted by the partner profile", reasonCode),
+				fmt.Sprintf(
+					"Status reason code %s is not accepted by the partner profile; accepted codes are %s",
+					reasonCode,
+					formatAcceptedReasonCodes(settings.AcceptedReasonCodes),
+				),
 				"Use one of the accepted partner reason codes for this service failure 214.",
 			))
 		}
 	}
 	return diagnostics
+}
+
+func formatAcceptedReasonCodes(codes map[string]struct{}) string {
+	if len(codes) == 0 {
+		return "unrestricted"
+	}
+	values := make([]string, 0, len(codes))
+	for code := range codes {
+		values = append(values, code)
+	}
+	slices.Sort(values)
+	return strings.Join(values, ", ")
 }
 
 func serviceFailure214Diagnostic(code, path, message, suggestedFix string) edix12.Diagnostic {

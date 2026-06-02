@@ -37,6 +37,7 @@ import {
   serviceFailureStopSummaryFromEvaluation,
   serviceFailureStopSummaryFromFailure,
 } from "../../service-failure/_components/service-failure-stop-context";
+import { ediReadinessLabel } from "./service-failure-edi-readiness";
 
 type ShipmentServiceFailuresProps = {
   shipment?: Shipment | null;
@@ -376,7 +377,10 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
 
   const blocked = readiness.action === "blocked";
   const available = readiness.action === "generated" || readiness.action === "duplicate";
-  const ready = readiness.action === "skipped" && readiness.skippedReason === "ready";
+  const ready =
+    readiness.action === "skipped" &&
+    (readiness.skippedReason === "ready" ||
+      readiness.skippedReason === "ready_for_generation");
   const label = ediReadinessLabel(readiness.action, readiness.skippedReason);
   const diagnostic = diagnosticMessage(readiness.diagnostics[0]);
 
@@ -392,7 +396,7 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
       )}
     >
       {blocked ? <CircleAlertIcon className="size-3.5" /> : <SendIcon className="size-3.5" />}
-      <span className="font-medium">EDI 214 {trigger}</span>
+      <span className="font-medium">Customer EDI 214 {trigger}</span>
       <Badge variant={blocked ? "inactive" : available || ready ? "active" : "secondary"}>
         {label}
       </Badge>
@@ -409,18 +413,6 @@ function ediReadinessTrigger(failure: ServiceFailure): "Reviewed" | "Resolved" |
   if (failure.status === "Open") return "Reviewed";
   if (failure.status === "Reviewed" || failure.status === "Resolved") return "Resolved";
   return undefined;
-}
-
-function ediReadinessLabel(action: string, reason?: string) {
-  if (action === "generated") return "Generated";
-  if (action === "duplicate") return "Generated";
-  if (action === "blocked") return "Blocked";
-  if (reason === "ready") return "Ready";
-  if (reason === "service failure 214 trigger disabled") return "Not configured";
-  if (reason === "no outbound EDI partner for shipment customer") return "No partner";
-  if (reason === "shipment status capability disabled") return "Capability off";
-  if (reason === "ambiguous service failure 214 partner document profile") return "Ambiguous";
-  return "Skipped";
 }
 
 function diagnosticMessage(value: unknown) {
@@ -471,7 +463,7 @@ function reviewTooltip(canReview: boolean, failure: ServiceFailure, pending: boo
   if (!failure.reasonCodeId) {
     return "Assign a reason code before reviewing.";
   }
-  return "Mark this service failure as reviewed.";
+  return "Mark this service failure as reviewed. Customer EDI 214 generation depends on the outbound 214 profile.";
 }
 
 function resolveTooltip(
@@ -492,7 +484,7 @@ function resolveTooltip(
   if (!failure.reasonCodeId) {
     return "Assign a reason code before resolving.";
   }
-  return "Mark this service failure as resolved.";
+  return "Mark this service failure as resolved. Customer EDI 214 generation depends on the outbound 214 profile.";
 }
 
 function voidTooltip(canVoid: boolean, failure: ServiceFailure, pending: boolean) {

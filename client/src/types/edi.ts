@@ -758,6 +758,27 @@ export const ediAcknowledgmentConfigSchema = z.object({
   missingAckSeverity: ediValidationSeveritySchema.default("Warning"),
 });
 
+export const serviceFailure214PartnerSettingsSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    sendOnReviewed: z.boolean().default(false),
+    sendOnResolved: z.boolean().default(false),
+    mandatoryOnReviewed: z.boolean().default(false),
+    mandatoryOnResolved: z.boolean().default(false),
+    statusCode: z.string().optional(),
+    requireStatusReasonCode: z.boolean().default(false),
+    requireLocation: z.boolean().default(false),
+    requireStop: z.boolean().default(false),
+    requireProNumber: z.boolean().default(false),
+    requireBol: z.boolean().default(false),
+    acceptedReasonCodes: z.array(z.string()).optional(),
+  })
+  .strict();
+
+export type ServiceFailure214PartnerSettings = z.infer<
+  typeof serviceFailure214PartnerSettingsSchema
+>;
+
 export const ediPartnerDocumentProfileSchema = z.object({
   id: z.string(),
   businessUnitId: z.string(),
