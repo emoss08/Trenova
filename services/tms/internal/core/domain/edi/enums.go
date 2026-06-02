@@ -141,6 +141,15 @@ const (
 	MessageStatusFailed    = MessageStatus("Failed")
 )
 
+type MessageDeliveryStatus string
+
+const (
+	MessageDeliveryStatusQueued  = MessageDeliveryStatus("Queued")
+	MessageDeliveryStatusSending = MessageDeliveryStatus("Sending")
+	MessageDeliveryStatusSent    = MessageDeliveryStatus("Sent")
+	MessageDeliveryStatusFailed  = MessageDeliveryStatus("Failed")
+)
+
 type ValidationMode string
 
 const (
@@ -172,6 +181,49 @@ const (
 	AcknowledgmentType997  = AcknowledgmentType("997")
 	AcknowledgmentType999  = AcknowledgmentType("999")
 )
+
+type LoadTenderPurposeCode string
+
+const (
+	LoadTenderPurposeOriginal = LoadTenderPurposeCode("00")
+	LoadTenderPurposeChange   = LoadTenderPurposeCode("04")
+)
+
+type TenderRecipientKind string
+
+const (
+	TenderRecipientKindInternal = TenderRecipientKind("Internal")
+	TenderRecipientKindExternal = TenderRecipientKind("External")
+)
+
+type TenderRecipientStatus string
+
+const (
+	TenderRecipientStatusActive = TenderRecipientStatus("Active")
+	TenderRecipientStatusClosed = TenderRecipientStatus("Closed")
+)
+
+type TenderRecipientBaselineStatus string
+
+const (
+	TenderRecipientBaselineStatusSent     = TenderRecipientBaselineStatus("Sent")
+	TenderRecipientBaselineStatusAccepted = TenderRecipientBaselineStatus("Accepted")
+)
+
+type TenderChangeStatus string
+
+const (
+	TenderChangeStatusPendingReview = TenderChangeStatus("PendingReview")
+	TenderChangeStatusApplied       = TenderChangeStatus("Applied")
+	TenderChangeStatusRejected      = TenderChangeStatus("Rejected")
+	TenderChangeStatusQueued        = TenderChangeStatus("Queued")
+	TenderChangeStatusSent          = TenderChangeStatus("Sent")
+	TenderChangeStatusFailed        = TenderChangeStatus("Failed")
+	TenderChangeStatusIgnored       = TenderChangeStatus("Ignored")
+	TenderChangeStatusSuperseded    = TenderChangeStatus("Superseded")
+)
+
+const TenderChangeTypeLoadTender = "LoadTenderChange"
 
 type SourceContextDataType string
 

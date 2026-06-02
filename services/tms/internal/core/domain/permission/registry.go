@@ -679,14 +679,47 @@ func (r *Registry) registerOperationsResources() {
 		Description: "Service failure reason code reference data",
 		Category:    "Operations",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View service failure reason codes"},
-			{Operation: OpCreate, DisplayName: "Create", Description: "Create service failure reason codes"},
-			{Operation: OpUpdate, DisplayName: "Update", Description: "Modify service failure reason codes"},
-			{Operation: OpApprove, DisplayName: "Approve", Description: "Approve service failure reason codes"},
-			{Operation: OpArchive, DisplayName: "Archive", Description: "Archive service failure reason codes"},
-			{Operation: OpExport, DisplayName: "Export", Description: "Export service failure reason codes"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View service failure reason codes",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Create service failure reason codes",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Modify service failure reason codes",
+			},
+			{
+				Operation:   OpApprove,
+				DisplayName: "Approve",
+				Description: "Approve service failure reason codes",
+			},
+			{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Archive service failure reason codes",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export service failure reason codes",
+			},
 		},
 		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceShipmentType.String(),
+		DisplayName:        "Shipment Type",
+		Description:        "Shipment type definitions",
+		Category:           "Operations",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityRestricted,
 	})
 
 	_ = r.Register(&ResourceDefinition{

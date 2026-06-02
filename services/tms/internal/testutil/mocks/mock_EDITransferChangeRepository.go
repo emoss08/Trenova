@@ -108,6 +108,74 @@ func (_c *MockEDITransferChangeRepository_CreateTransferChange_Call) RunAndRetur
 	return _c
 }
 
+// CreateTransferChangeIdempotent provides a mock function for the type MockEDITransferChangeRepository
+func (_mock *MockEDITransferChangeRepository) CreateTransferChangeIdempotent(ctx context.Context, entity *edi.TransferChange) (*repositories.CreateEDITransferChangeIdempotentResult, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateTransferChangeIdempotent")
+	}
+
+	var r0 *repositories.CreateEDITransferChangeIdempotentResult
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) (*repositories.CreateEDITransferChangeIdempotentResult, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.TransferChange) *repositories.CreateEDITransferChangeIdempotentResult); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.CreateEDITransferChangeIdempotentResult)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.TransferChange) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateTransferChangeIdempotent'
+type MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call struct {
+	*mock.Call
+}
+
+// CreateTransferChangeIdempotent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *edi.TransferChange
+func (_e *MockEDITransferChangeRepository_Expecter) CreateTransferChangeIdempotent(ctx interface{}, entity interface{}) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+	return &MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call{Call: _e.mock.On("CreateTransferChangeIdempotent", ctx, entity)}
+}
+
+func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) Run(run func(ctx context.Context, entity *edi.TransferChange)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *edi.TransferChange
+		if args[1] != nil {
+			arg1 = args[1].(*edi.TransferChange)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) Return(createEDITransferChangeIdempotentResult *repositories.CreateEDITransferChangeIdempotentResult, err error) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+	_c.Call.Return(createEDITransferChangeIdempotentResult, err)
+	return _c
+}
+
+func (_c *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call) RunAndReturn(run func(ctx context.Context, entity *edi.TransferChange) (*repositories.CreateEDITransferChangeIdempotentResult, error)) *MockEDITransferChangeRepository_CreateTransferChangeIdempotent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetTransferChangeByID provides a mock function for the type MockEDITransferChangeRepository
 func (_mock *MockEDITransferChangeRepository) GetTransferChangeByID(ctx context.Context, req repositories.GetEDITransferChangeByIDRequest) (*edi.TransferChange, error) {
 	ret := _mock.Called(ctx, req)

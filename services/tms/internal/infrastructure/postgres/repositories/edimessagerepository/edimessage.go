@@ -2,6 +2,7 @@ package edimessagerepository
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -184,6 +185,40 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+	}
+	return entity, nil
+}
+
+func (r *repository) UpdateMessageDelivery(
+	ctx context.Context,
+	req *repositories.UpdateEDIMessageDeliveryRequest,
+) (*edi.EDIMessage, error) {
+	if req == nil {
+		return nil, errors.New("EDI message delivery update request is required")
+	}
+	entity := new(edi.EDIMessage)
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		Set("delivery_status = ?", req.DeliveryStatus).
+		Set("delivery_remote_path = ?", req.DeliveryRemotePath).
+		Set("delivery_last_attempt_at = ?", req.DeliveryLastAttemptAt).
+		Set("delivery_sent_at = ?", req.DeliverySentAt).
+		Set("delivery_last_error = ?", req.DeliveryLastError).
+		Set("updated_at = extract(epoch from current_timestamp)::bigint").
+		Where("id = ?", req.ID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Returning("*")
+	if req.IncrementAttempts {
+		query = query.Set("delivery_attempts = delivery_attempts + 1")
+	}
+	results, err := query.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = dberror.CheckRowsAffected(results, "EDIMessage", req.ID.String()); err != nil {
+		return nil, err
 	}
 	return entity, nil
 }

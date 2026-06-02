@@ -36,3 +36,7 @@ type ShipmentEventService interface {
 		req *repositories.ListShipmentEventsRequest,
 	) ([]*shipmentevent.Event, error)
 }
+
+type ShipmentEventObserver interface {
+	OnShipmentEvent(ctx context.Context, event *shipmentevent.Event) error
+}

@@ -353,6 +353,54 @@ func (r *repository) Update(
 	return entity, nil
 }
 
+func (r *repository) UpdateOperationalLifecycle(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	sp := buncolgen.ShipmentColumns
+	err := r.db.WithTx(ctx, ports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
+		ov := entity.Version
+		entity.Version++
+
+		results, err := r.db.DBForContext(c).NewUpdate().
+			Model(entity).
+			Column(
+				sp.Status.Bare(),
+				sp.ActualShipDate.Bare(),
+				sp.ActualDeliveryDate.Bare(),
+				sp.Version.Bare(),
+				sp.UpdatedAt.Bare(),
+			).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+					OrgID: entity.OrganizationID,
+					BuID:  entity.BusinessUnitID,
+				}).
+					Where(sp.ID.Eq(), entity.ID).
+					Where(sp.Version.Eq(), ov)
+			}).
+			Returning("*").
+			Exec(c)
+		if err != nil {
+			return err
+		}
+
+		if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+			return err
+		}
+
+		return r.moveRepository.SyncForShipment(c, tx, entity)
+	})
+	if err != nil {
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Shipment is busy. Retry the request.",
+		)
+	}
+
+	return entity, nil
+}
+
 func (r *repository) UpdateDerivedState(
 	ctx context.Context,
 	entity *shipment.Shipment,
@@ -406,6 +454,35 @@ func (r *repository) UpdateDerivedState(
 			err,
 			"Shipment is busy. Retry the request.",
 		)
+	}
+
+	return entity, nil
+}
+
+func (r *repository) UpdateStatus(
+	ctx context.Context,
+	req *repositories.UpdateShipmentStatusRequest,
+) (*shipment.Shipment, error) {
+	sp := buncolgen.ShipmentColumns
+	entity := new(shipment.Shipment)
+
+	results, err := r.db.DBForContext(ctx).NewUpdate().
+		Model(entity).
+		Set(sp.Status.Set(), req.Status).
+		Set(sp.Version.Inc(1)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ShipmentScopeTenantUpdate(uq, req.TenantInfo).
+				Where(sp.ID.Eq(), req.ShipmentID).
+				Where(sp.Version.Eq(), req.Version)
+		}).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = dberror.CheckRowsAffected(results, "Shipment", req.ShipmentID.String()); err != nil {
+		return nil, err
 	}
 
 	return entity, nil

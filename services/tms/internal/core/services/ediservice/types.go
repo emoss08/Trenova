@@ -95,6 +95,12 @@ type TransferChangeActionRequest struct {
 	Reason     string                `json:"reason"`
 }
 
+type TenderChangeActionRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ChangeID   pulid.ID              `json:"-"`
+	Reason     string                `json:"reason"`
+}
+
 type PreviewEDIDocumentRequest = services.PreviewEDIDocumentRequest
 
 type GenerateEDIDocumentRequest = services.GenerateEDIDocumentRequest

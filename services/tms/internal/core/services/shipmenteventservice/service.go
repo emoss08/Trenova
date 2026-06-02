@@ -22,22 +22,25 @@ var ErrRecordParamsRequired = errors.New("shipment event record params are requi
 type Params struct {
 	fx.In
 
-	Logger   *zap.Logger
-	Repo     repositories.ShipmentEventRepository
-	Realtime services.RealtimeService
+	Logger    *zap.Logger
+	Repo      repositories.ShipmentEventRepository
+	Realtime  services.RealtimeService
+	Observers []services.ShipmentEventObserver `group:"shipment_event_observers"`
 }
 
 type service struct {
-	l        *zap.Logger
-	repo     repositories.ShipmentEventRepository
-	realtime services.RealtimeService
+	l         *zap.Logger
+	repo      repositories.ShipmentEventRepository
+	realtime  services.RealtimeService
+	observers []services.ShipmentEventObserver
 }
 
 func New(p Params) services.ShipmentEventService {
 	return &service{
-		l:        p.Logger.Named("service.shipment-event"),
-		repo:     p.Repo,
-		realtime: p.Realtime,
+		l:         p.Logger.Named("service.shipment-event"),
+		repo:      p.Repo,
+		realtime:  p.Realtime,
+		observers: p.Observers,
 	}
 }
 
@@ -57,6 +60,8 @@ func (s *service) Record(
 	if err = s.repo.Insert(ctx, entity); err != nil {
 		return err
 	}
+
+	s.notifyObservers(ctx, entity)
 
 	if pubErr := realtimeinvalidation.Publish(
 		ctx,
@@ -78,6 +83,22 @@ func (s *service) Record(
 	}
 
 	return nil
+}
+
+func (s *service) notifyObservers(ctx context.Context, event *shipmentevent.Event) {
+	for _, observer := range s.observers {
+		if observer == nil {
+			continue
+		}
+		if err := observer.OnShipmentEvent(ctx, event); err != nil {
+			s.l.Warn(
+				"shipment event observer failed",
+				zap.Error(err),
+				zap.String("eventId", event.ID.String()),
+				zap.String("eventType", string(event.Type)),
+			)
+		}
+	}
 }
 
 func (s *service) List(

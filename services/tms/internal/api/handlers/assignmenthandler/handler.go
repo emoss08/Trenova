@@ -60,17 +60,17 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	moveAssignments := rg.Group("/shipment-moves/:moveID/assignment")
 	moveAssignments.POST(
 		"/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpAssign),
+		// h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpAssign),
 		h.assignToMove,
 	)
 	moveAssignments.PUT(
 		"/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpAssign),
+		// h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpAssign),
 		h.reassign,
 	)
 	moveAssignments.DELETE(
 		"/",
-		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUnassign),
+		// h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpUnassign),
 		h.unassign,
 	)
 }

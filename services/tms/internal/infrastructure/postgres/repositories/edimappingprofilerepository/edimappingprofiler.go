@@ -208,7 +208,7 @@ func (r *repository) SaveMappingItems(
 		Set(itemCols.SourceLabel.SetExcluded()).
 		Set(itemCols.UpdatedByID.SetExcluded()).
 		Set(itemCols.UpdatedAt.SetExpr("extract(epoch FROM current_timestamp)::bigint")).
-		Set(itemCols.Version.SetExpr("edi_mapping_profile_items." + itemCols.Version.Bare() + " + 1")).
+		Set(itemCols.Version.SetExpr(itemCols.Version.Qualified() + " + 1")).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

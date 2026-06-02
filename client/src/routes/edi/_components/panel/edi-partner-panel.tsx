@@ -211,7 +211,7 @@ function toConnectionRequest(
     capabilities: {
       loadTenderOutbound: true,
       loadTenderInbound: true,
-      shipmentStatus: false,
+      shipmentStatus: true,
       invoice: false,
     },
     sourcePartnerConfig: {

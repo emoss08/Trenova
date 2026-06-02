@@ -902,6 +902,7 @@ func validTemplateVersion(tenantInfo pagination.TenantInfo) *edi.EDITemplateVers
 func testSourceContextIndex() *sourceContextIndex {
 	fields := []*edi.EDISourceContextField{
 		sourceContextField("shipment.shipmentId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipment.purposeCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.bol", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.weight", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipment.pieces", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),

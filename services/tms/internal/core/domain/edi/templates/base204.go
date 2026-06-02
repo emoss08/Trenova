@@ -186,7 +186,7 @@ func (b base204Builder) headerSegments() []*edi.EDITemplateSegment {
 			},
 		),
 		b.segment(50, "B2A", "Set Purpose", "", true, []edi.TemplateElement{
-			b.el(1, "Transaction Set Purpose Code", edi.TemplateElementSourceConstant, "00", true),
+			b.field(1, "Transaction Set Purpose Code", "purposeCode", "00", true),
 		}),
 		b.segment(60, "L11", "Reference Identification", "", false, []edi.TemplateElement{
 			b.field(1, "Reference Identification", "bol", ""),

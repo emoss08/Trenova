@@ -11,6 +11,7 @@ import (
 
 type DocumentPayload struct {
 	TransactionSet               TransactionSet                   `json:"transactionSet,omitempty"`
+	PurposeCode                  LoadTenderPurposeCode            `json:"purposeCode,omitempty"`
 	LoadTender                   *LoadTenderPayload               `json:"loadTender,omitempty"`
 	Shipment                     *LoadTenderPayload               `json:"shipment,omitempty"`
 	FreightInvoice               *FreightInvoicePayload           `json:"invoice,omitempty"`
@@ -131,8 +132,12 @@ type AcknowledgmentDiagnostic struct {
 }
 
 func NewLoadTenderDocumentPayload(payload LoadTenderPayload) DocumentPayload {
+	if payload.PurposeCode == "" {
+		payload.PurposeCode = LoadTenderPurposeOriginal
+	}
 	return DocumentPayload{
 		TransactionSet: TransactionSet204,
+		PurposeCode:    payload.PurposeCode,
 		LoadTender:     &payload,
 		Shipment:       &payload,
 	}
@@ -159,6 +164,30 @@ func (p *DocumentPayload) Normalize() {
 			p.TransactionSet = TransactionSet997
 		case p.ImplementationAcknowledgment != nil:
 			p.TransactionSet = TransactionSet999
+		}
+	}
+	if p.PurposeCode == "" {
+		if p.LoadTender != nil && p.LoadTender.PurposeCode != "" {
+			p.PurposeCode = p.LoadTender.PurposeCode
+		} else if p.Shipment != nil && p.Shipment.PurposeCode != "" {
+			p.PurposeCode = p.Shipment.PurposeCode
+		}
+	}
+	if p.PurposeCode != "" {
+		if p.LoadTender != nil && p.LoadTender.PurposeCode == "" {
+			p.LoadTender.PurposeCode = p.PurposeCode
+		}
+		if p.Shipment != nil && p.Shipment.PurposeCode == "" {
+			p.Shipment.PurposeCode = p.PurposeCode
+		}
+	}
+	if (p.LoadTender != nil || p.Shipment != nil) && p.PurposeCode == "" {
+		p.PurposeCode = LoadTenderPurposeOriginal
+		if p.LoadTender != nil {
+			p.LoadTender.PurposeCode = p.PurposeCode
+		}
+		if p.Shipment != nil {
+			p.Shipment.PurposeCode = p.PurposeCode
 		}
 	}
 }

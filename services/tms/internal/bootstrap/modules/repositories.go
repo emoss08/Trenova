@@ -53,6 +53,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edishipmentlinkrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/edisourcecontextrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editemplaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editenderchangerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editenderrecipientrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editestcaserepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferchangerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/editransferrepository"
@@ -198,6 +200,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	edicommunicationprofilerepository.New,
 	edishipmentlinkrepository.New,
 	editransferchangerepository.New,
+	editenderrecipientrepository.New,
+	editenderchangerepository.New,
 	edidocumenttyperepository.New,
 	edisourcecontextrepository.New,
 	edipartnersettingrepository.New,

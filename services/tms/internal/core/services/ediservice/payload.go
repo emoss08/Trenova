@@ -26,6 +26,7 @@ import (
 //nolint:funlen // Tender payload construction intentionally mirrors the outbound document shape.
 func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 	payload := edi.LoadTenderPayload{
+		PurposeCode:              edi.LoadTenderPurposeOriginal,
 		ShipmentID:               source.ID,
 		BusinessUnitID:           source.BusinessUnitID,
 		OrganizationID:           source.OrganizationID,
