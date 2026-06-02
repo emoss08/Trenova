@@ -63,6 +63,9 @@ func (r *repository) ListPartnerDocumentProfiles(
 	if req.Direction != "" {
 		query = query.Where(cols.Direction.Eq(), req.Direction)
 	}
+	if req.Standard != "" {
+		query = query.Where(cols.Standard.Eq(), req.Standard)
+	}
 	if req.Status != "" {
 		query = query.Where(cols.Status.Eq(), req.Status)
 	}
@@ -115,6 +118,9 @@ func (r *repository) SelectPartnerDocumentProfileOptions(
 	}
 	if req.Direction != "" {
 		query = query.Where(cols.Direction.Eq(), req.Direction)
+	}
+	if req.Standard != "" {
+		query = query.Where(cols.Standard.Eq(), req.Standard)
 	}
 	if req.Status != "" {
 		query = query.Where(cols.Status.Eq(), req.Status)

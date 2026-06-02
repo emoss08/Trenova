@@ -16,6 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -424,6 +426,86 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	require.Empty(t, serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
 		StatusCode: "A3",
 	}))
+}
+
+func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
+	t.Parallel()
+
+	settings := parseServiceFailure214Settings(nil)
+
+	require.False(t, settings.Enabled)
+	require.False(t, settings.SendOnReviewed)
+	require.False(t, settings.SendOnResolved)
+	require.False(t, settings.MandatoryOnReviewed)
+	require.False(t, settings.MandatoryOnResolved)
+	require.Empty(t, settings.StatusCode)
+	require.Empty(t, settings.AcceptedReasonCodes)
+	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
+}
+
+func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.T) {
+	t.Parallel()
+
+	settings := parseServiceFailure214Settings(map[string]any{
+		"serviceFailure214": map[string]any{
+			"enabled":                 true,
+			"sendOnReviewed":          true,
+			"mandatoryOnResolved":     true,
+			"statusCode":              " a3 ",
+			"acceptedReasonCodes":     []any{" ns ", "ca"},
+			"requireProNumber":        true,
+			"requireBol":              true,
+			"requireLocation":         true,
+			"requireStop":             true,
+			"requireStatusReasonCode": true,
+		},
+	})
+
+	require.True(t, settings.Enabled)
+	require.True(t, settings.SendOnReviewed)
+	require.True(t, settings.MandatoryOnResolved)
+	require.True(t, settings.RequireProNumber)
+	require.True(t, settings.RequireBOL)
+	require.True(t, settings.RequireLocation)
+	require.True(t, settings.RequireStop)
+	require.True(t, settings.RequireStatusReasonCode)
+	require.Equal(t, "A3", settings.StatusCode)
+	require.Contains(t, settings.AcceptedReasonCodes, "NS")
+	require.Contains(t, settings.AcceptedReasonCodes, "CA")
+	require.True(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
+	require.True(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerResolved))
+	require.True(t, settings.mandatory(services.ServiceFailureEDITriggerResolved))
+}
+
+func TestServiceFailurePayloadDiagnosticsHonorsProfileRequirements(t *testing.T) {
+	t.Parallel()
+
+	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
+		StatusCode:       "A3",
+		StatusReasonCode: "ZZ",
+	}, serviceFailure214Settings{
+		RequireStatusReasonCode: true,
+		RequireBOL:              true,
+		RequireProNumber:        true,
+		RequireStop:             true,
+		RequireLocation:         true,
+		AcceptedReasonCodes:     map[string]struct{}{"NS": {}},
+	})
+
+	require.Len(t, diagnostics, 5)
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.bol")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.proNumber")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.stopId")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.locationId")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.statusReasonCode")
+}
+
+func diagnosticPaths(diagnostics []edix12.Diagnostic) []string {
+	paths := make([]string, 0, len(diagnostics))
+	for _, diagnostic := range diagnostics {
+		paths = append(paths, diagnostic.Path)
+	}
+	return paths
 }
 
 func TestAddRequiredIDDeduplicatesAndSkipsNil(t *testing.T) {

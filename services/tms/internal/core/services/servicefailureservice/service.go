@@ -25,6 +25,10 @@ type Params struct {
 	Realtime       services.RealtimeService
 }
 
+type EDIServiceSetter interface {
+	SetEDIService(service services.EDIService)
+}
+
 type service struct {
 	l              *zap.Logger
 	repo           repositories.ServiceFailureRepository
@@ -34,6 +38,7 @@ type service struct {
 	commentService services.ShipmentCommentService
 	auditService   services.AuditService
 	realtime       services.RealtimeService
+	ediService     services.EDIService
 	delayedMarker  delayedShipmentMarker
 }
 
@@ -55,6 +60,10 @@ func New(p Params) *service {
 		realtime:     s.realtime,
 	})
 	return s
+}
+
+func (s *service) SetEDIService(service services.EDIService) {
+	s.ediService = service
 }
 
 func (s *service) List(

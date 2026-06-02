@@ -95,36 +95,9 @@ type TransferChangeActionRequest struct {
 	Reason     string                `json:"reason"`
 }
 
-type PreviewEDIDocumentRequest struct {
-	TenantInfo               pagination.TenantInfo `json:"-"`
-	PartnerDocumentProfileID pulid.ID              `json:"partnerDocumentProfileId"`
-	EDIPartnerID             pulid.ID              `json:"ediPartnerId"`
-	ShipmentID               pulid.ID              `json:"shipmentId"`
-	TransferID               pulid.ID              `json:"transferId"`
-	InvoiceID                pulid.ID              `json:"invoiceId"`
-	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
-	ServiceFailureID         pulid.ID              `json:"serviceFailureId"`
-	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
-	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
-	Direction                edi.DocumentDirection `json:"direction"`
-	Payload                  *edi.DocumentPayload  `json:"payload"`
-}
+type PreviewEDIDocumentRequest = services.PreviewEDIDocumentRequest
 
-type GenerateEDIDocumentRequest struct {
-	TenantInfo               pagination.TenantInfo `json:"-"`
-	PartnerDocumentProfileID pulid.ID              `json:"partnerDocumentProfileId"`
-	EDIPartnerID             pulid.ID              `json:"ediPartnerId"`
-	ShipmentID               pulid.ID              `json:"shipmentId"`
-	TransferID               pulid.ID              `json:"transferId"`
-	InvoiceID                pulid.ID              `json:"invoiceId"`
-	ShipmentEventID          pulid.ID              `json:"shipmentEventId"`
-	ServiceFailureID         pulid.ID              `json:"serviceFailureId"`
-	SourceMessageID          pulid.ID              `json:"sourceMessageId"`
-	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
-	Direction                edi.DocumentDirection `json:"direction"`
-	Payload                  *edi.DocumentPayload  `json:"payload"`
-	GeneratedByID            pulid.ID              `json:"-"`
-}
+type GenerateEDIDocumentRequest = services.GenerateEDIDocumentRequest
 
 type InspectX12Request struct {
 	TenantInfo     pagination.TenantInfo    `json:"-"`
@@ -246,17 +219,7 @@ type EDIActionNotesRequest struct {
 	Notes      string                `json:"notes"`
 }
 
-type EDIDocumentPreview struct {
-	RawX12                   string                         `json:"rawX12"`
-	SegmentCount             int64                          `json:"segmentCount"`
-	X12Version               string                         `json:"x12Version"`
-	InterchangeControlNumber string                         `json:"interchangeControlNumber"`
-	GroupControlNumber       string                         `json:"groupControlNumber"`
-	TransactionControlNumber string                         `json:"transactionControlNumber"`
-	Diagnostics              []edix12.Diagnostic            `json:"diagnostics"`
-	Profile                  *edi.EDIPartnerDocumentProfile `json:"profile"`
-	TemplateVersion          *edi.EDITemplateVersion        `json:"templateVersion"`
-}
+type EDIDocumentPreview = services.EDIDocumentPreview
 
 type MappingPreview struct {
 	Resolved   []edi.MappingResolution `json:"resolved"`

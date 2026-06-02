@@ -242,11 +242,13 @@ function InputBlock({
 
 function TextareaBlock({
   label,
+  description,
   value,
   onChange,
   disabled,
 }: {
   label: string;
+  description?: string;
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
@@ -254,6 +256,7 @@ function TextareaBlock({
   return (
     <div className="space-y-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
+      {description && <p className="text-xs text-muted-foreground">{description}</p>}
       <Textarea
         value={value}
         disabled={disabled}

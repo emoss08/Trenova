@@ -14,4 +14,8 @@ export const serviceFailure = createQueryKeys("serviceFailure", {
         "limit=100",
       ),
   }),
+  edi214Readiness: (id: string, trigger?: "Reviewed" | "Resolved") => ({
+    queryKey: ["edi-214-readiness", id, trigger],
+    queryFn: async () => apiService.serviceFailureService.edi214Readiness(id, trigger),
+  }),
 });

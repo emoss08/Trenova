@@ -233,6 +233,13 @@ func (s *service) lifecycle(
 	if multiErr := validateServiceFailure(&updated); multiErr != nil {
 		return nil, multiErr
 	}
+	if err = s.preflightServiceFailure214(ctx, serviceFailure214Params{
+		previous: original,
+		current:  &updated,
+		actor:    params.actor,
+	}); err != nil {
+		return nil, err
+	}
 
 	saved, err := s.repo.Update(ctx, &updated)
 	if err != nil {
@@ -264,6 +271,11 @@ func (s *service) lifecycle(
 		entity:   saved,
 		comment:  params.comment,
 		metadata: serviceFailureLifecycleMetadata(original, saved, params.actor),
+	})
+	s.generateServiceFailure214(ctx, serviceFailure214Params{
+		previous: original,
+		current:  saved,
+		actor:    params.actor,
 	})
 	return saved, nil
 }

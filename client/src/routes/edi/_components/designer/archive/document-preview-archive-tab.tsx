@@ -389,6 +389,7 @@ export function DocumentPreviewArchiveTab() {
             <AckEditor profile={profileDraft} onChange={setProfileDraft} />
             <TextareaBlock
               label="Partner Settings"
+              description={`Use serviceFailure214 for outbound 214 lifecycle automation, e.g. {"serviceFailure214":{"enabled":true,"sendOnReviewed":true,"sendOnResolved":true,"mandatoryOnReviewed":false,"mandatoryOnResolved":false,"statusCode":"SD","requireStatusReasonCode":true,"requireLocation":false,"requireStop":false,"requireProNumber":false,"requireBol":false,"acceptedReasonCodes":["NS"]}}.`}
               value={rawPartnerSettings}
               onChange={setRawPartnerSettings}
             />

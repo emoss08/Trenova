@@ -494,23 +494,15 @@ func applyServiceFailureEquipment(
 	}
 }
 
-func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edix12.Diagnostic {
-	if payload == nil ||
-		strings.ToUpper(strings.TrimSpace(payload.StatusCode)) != "SD" ||
-		strings.TrimSpace(payload.StatusReasonCode) != "" {
-		return nil
+func serviceFailurePayloadDiagnostics(
+	payload *edi.ShipmentStatusPayload,
+	settings ...serviceFailure214Settings,
+) []edix12.Diagnostic {
+	var profileSettings serviceFailure214Settings
+	if len(settings) > 0 {
+		profileSettings = settings[0]
 	}
-	return []edix12.Diagnostic{
-		{
-			Severity:        edi.ValidationSeverityError,
-			Code:            "required",
-			SegmentID:       "AT7",
-			ElementPosition: 2,
-			Path:            "shipmentStatus.statusReasonCode",
-			Message:         "X12 214 service failure status code SD requires a status reason code",
-			SuggestedFix:    "Set an override reason code or configure a default reason code on the service failure reason code.",
-		},
-	}
+	return serviceFailure214Diagnostics(payload, profileSettings)
 }
 
 func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {

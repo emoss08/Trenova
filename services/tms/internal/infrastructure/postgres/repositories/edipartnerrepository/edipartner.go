@@ -51,6 +51,16 @@ func (r *repository) filterQuery(
 		(*edi.EDIPartner)(nil),
 	)
 
+	if req.CustomerID.IsNotNil() {
+		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
+	}
+	if req.EnabledForOutbound {
+		q = q.Where(cols.EnabledForOutbound.IsTrue())
+	}
+	if req.Status != "" {
+		q = q.Where(cols.Status.Eq(), req.Status)
+	}
+
 	return q.
 		Relation(rel.InternalOrganization).
 		Relation(rel.Connection).

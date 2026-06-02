@@ -4,12 +4,16 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ListEDIPartnersRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
+	Filter             *pagination.QueryOptions `json:"filter"`
+	CustomerID         pulid.ID                 `json:"customerId"`
+	EnabledForOutbound bool                     `json:"enabledForOutbound"`
+	Status             domaintypes.Status       `json:"status"`
 }
 
 type GetEDIPartnerByIDRequest struct {

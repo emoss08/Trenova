@@ -29,6 +29,12 @@ type CreateEDIMessageWithDiagnosticsRequest struct {
 	Diagnostics []*edi.EDIMessageValidationError `json:"diagnostics"`
 }
 
+type GetServiceFailure214LifecycleMessageRequest struct {
+	TenantInfo       pagination.TenantInfo `json:"tenantInfo"`
+	ServiceFailureID pulid.ID              `json:"serviceFailureId"`
+	Trigger          string                `json:"trigger"`
+}
+
 type EDIMessageRepository interface {
 	ListMessages(
 		ctx context.Context,
@@ -38,5 +44,9 @@ type EDIMessageRepository interface {
 	CreateMessageWithDiagnostics(
 		ctx context.Context,
 		req CreateEDIMessageWithDiagnosticsRequest,
+	) (*edi.EDIMessage, error)
+	GetServiceFailure214LifecycleMessage(
+		ctx context.Context,
+		req GetServiceFailure214LifecycleMessageRequest,
 	) (*edi.EDIMessage, error)
 }

@@ -154,6 +154,36 @@ func (r *repository) CreateMessageWithDiagnostics(
 	return req.Message, nil
 }
 
+func (r *repository) GetServiceFailure214LifecycleMessage(
+	ctx context.Context,
+	req repositories.GetServiceFailure214LifecycleMessageRequest,
+) (*edi.EDIMessage, error) {
+	entity := new(edi.EDIMessage)
+	cols := buncolgen.EDIMessageColumns
+	rel := buncolgen.EDIMessageRelations
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Relation(rel.Partner).
+		Relation(rel.PartnerDocumentProfile).
+		Where(cols.TransactionSet.Eq(), edi.TransactionSet214).
+		Where(cols.Direction.Eq(), edi.DocumentDirectionOutbound).
+		Where("payload_snapshot->'shipmentStatus'->>'serviceFailureId' = ?", req.ServiceFailureID.String()).
+		Where(
+			"payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' = ?",
+			req.Trigger,
+		).
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		Order(cols.GeneratedAt.OrderDesc()).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDIMessage")
+	}
+	return entity, nil
+}
+
 func applyMessageArchiveSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
 	search = strings.TrimSpace(search)
 	if search == "" {

@@ -1,10 +1,12 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
+  serviceFailureEdi214LifecycleResultSchema,
   serviceFailureEdiPayloadResultSchema,
   serviceFailureEvaluationResultSchema,
   serviceFailureSchema,
   type ServiceFailure,
+  type ServiceFailureEdi214LifecycleResult,
   type ServiceFailureEdiPayloadResult,
   type ServiceFailureLifecycleRequest,
   type ServiceFailureUpdate,
@@ -125,6 +127,24 @@ export class ServiceFailureService {
       serviceFailureEdiPayloadResultSchema,
       response,
       "ServiceFailureEDIPayload",
+    );
+  }
+
+  async edi214Readiness(
+    id: string,
+    trigger?: "Reviewed" | "Resolved",
+  ): Promise<ServiceFailureEdi214LifecycleResult> {
+    const search = new URLSearchParams();
+    if (trigger) search.set("trigger", trigger);
+    const response = await api.get(
+      `/service-failures/${id}/edi-214-readiness/${
+        search.size ? `?${search.toString()}` : ""
+      }`,
+    );
+    return safeParse(
+      serviceFailureEdi214LifecycleResultSchema,
+      response,
+      "ServiceFailureEDI214Readiness",
     );
   }
 

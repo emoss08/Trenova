@@ -193,6 +193,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	shipmentholdservice.New,
 	fx.Annotate(
 		servicefailureservice.New,
+		fx.As(new(servicefailureservice.EDIServiceSetter)),
 		fx.As(new(services.ServiceFailureService)),
 		fx.As(new(services.ServiceFailureEvaluator)),
 	),
@@ -203,6 +204,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	ediservice.New,
+	func(s *ediservice.Service) services.EDIService { return s },
 	emailservice.New,
 	func(s *emailservice.Service) services.EmailService { return s },
 	commodityservice.New,
@@ -266,5 +268,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 		fx.As(new(services.UsageRecorder)),
 	),
 ), fx.Invoke(
+	func(setter servicefailureservice.EDIServiceSetter, service services.EDIService) {
+		setter.SetEDIService(service)
+	},
 	func(*controlplane.HeartbeatReporter) {},
 ))

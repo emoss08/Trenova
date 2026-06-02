@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -23,14 +22,14 @@ type Params struct {
 	fx.In
 
 	Service              services.ServiceFailureService
-	EDIService           *ediservice.Service
+	EDIService           services.EDIService
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
 
 type Handler struct {
 	service    services.ServiceFailureService
-	ediService *ediservice.Service
+	ediService services.EDIService
 	eh         *helpers.ErrorHandler
 	pm         *middleware.PermissionMiddleware
 }
@@ -105,6 +104,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:serviceFailureID/edi-214-payload/",
 		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpExport),
 		h.buildEDI214Payload,
+	)
+	api.GET(
+		"/:serviceFailureID/edi-214-readiness/",
+		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpRead),
+		h.edi214Readiness,
 	)
 }
 
@@ -331,4 +335,62 @@ func (h *Handler) buildEDI214Payload(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) edi214Readiness(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("serviceFailureID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	tenantInfo := pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+	current, err := h.service.GetByID(c.Request.Context(), &repositories.GetServiceFailureByIDRequest{
+		ID:         id,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	trigger, nextStatus := readinessTrigger(c.Query("trigger"), current.Status)
+	preview := *current
+	preview.Status = nextStatus
+	result, err := h.ediService.PreviewServiceFailure214ForLifecycle(
+		c.Request.Context(),
+		&services.ServiceFailure214LifecycleRequest{
+			TenantInfo:       tenantInfo,
+			ServiceFailureID: current.ID,
+			ShipmentID:       current.ShipmentID,
+			Trigger:          trigger,
+			PreviousStatus:   current.Status,
+			NewStatus:        nextStatus,
+			ServiceFailure:   &preview,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func readinessTrigger(
+	value string,
+	status servicefailure.Status,
+) (services.ServiceFailureEDITrigger, servicefailure.Status) {
+	switch value {
+	case string(services.ServiceFailureEDITriggerResolved):
+		return services.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
+	case string(services.ServiceFailureEDITriggerReviewed):
+		return services.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
+	default:
+		if status == servicefailure.StatusOpen {
+			return services.ServiceFailureEDITriggerReviewed, servicefailure.StatusReviewed
+		}
+		return services.ServiceFailureEDITriggerResolved, servicefailure.StatusResolved
+	}
 }

@@ -12,6 +12,7 @@ type ListEDIPartnerDocumentProfilesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
+	Standard       edi.EDIStandard          `json:"standard"`
 	Status         edi.DocumentStatus       `json:"status"`
 	PartnerID      pulid.ID                 `json:"partnerId"`
 }
@@ -20,6 +21,7 @@ type EDIPartnerDocumentProfileSelectOptionsRequest struct {
 	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
 	TransactionSet     edi.TransactionSet             `json:"transactionSet"`
 	Direction          edi.DocumentDirection          `json:"direction"`
+	Standard           edi.EDIStandard                `json:"standard"`
 	Status             edi.DocumentStatus             `json:"status"`
 	PartnerID          pulid.ID                       `json:"partnerId"`
 }
