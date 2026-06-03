@@ -1,0 +1,91 @@
+name: Bug report
+description: Report a reproducible problem in Trenova.
+title: "bug: "
+labels:
+  - bug
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Trenova. Do not report security vulnerabilities here; use the private process in SECURITY.md.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Choose the area that appears most closely related.
+      options:
+        - services/tms backend
+        - shared Go packages
+        - client frontend
+        - deploy or local infrastructure
+        - documentation
+        - unsure
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What went wrong?
+      placeholder: Describe the problem in one or two concise paragraphs.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect Trenova to do?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest sequence of steps that reproduces the issue.
+      placeholder: |
+        1. Start from ...
+        2. Run or open ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include versions, operating system, browser, database state, feature flags, or configuration that may matter.
+      placeholder: |
+        Branch or commit:
+        OS:
+        Browser:
+        Go version:
+        Node/pnpm version:
+        Docker version:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, or traces
+      description: Paste relevant output. Remove secrets, tokens, private customer data, and credentials.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I searched existing issues and discussions for duplicates.
+          required: true
+        - label: I removed secrets, credentials, and private customer data.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

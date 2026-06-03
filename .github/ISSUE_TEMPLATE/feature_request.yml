@@ -1,0 +1,72 @@
+name: Feature request
+description: Suggest a product, workflow, API, or documentation improvement.
+title: "feature: "
+labels:
+  - enhancement
+  - triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests are most useful when they describe the operational problem and the people affected.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Choose the area that appears most closely related.
+      options:
+        - TMS operations workflow
+        - backend API or services
+        - frontend experience
+        - integrations
+        - reporting or analytics
+        - deployment or infrastructure
+        - documentation
+        - unsure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow gap, user pain, or operational limitation should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: users
+    attributes:
+      label: Users and roles
+      description: Who is affected by this problem?
+      placeholder: Dispatchers, carrier admins, billing users, drivers, brokers, system operators, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: What result would make this successful? Avoid prescribing implementation details unless they are required.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround or alternatives
+      description: How do users handle this today, and why is that insufficient?
+    validations:
+      required: false
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints and context
+      description: Include relevant compliance, security, data model, integration, performance, or deployment constraints.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checks
+      options:
+        - label: I searched existing issues and discussions for similar requests.
+          required: true
+        - label: I described the problem and affected workflow, not only a preferred solution.
+          required: true

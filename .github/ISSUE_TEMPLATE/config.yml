@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/emoss08/trenova/security/policy
+    about: Report vulnerabilities privately instead of opening a public issue.
+  - name: GitHub Discussions
+    url: https://github.com/emoss08/trenova/discussions
+    about: Ask questions, share ideas, or discuss workflows that are not actionable issues yet.
+  - name: Discord community
+    url: https://discord.gg/XDBqyvrryq
+    about: Join the community for informal discussion and support.
