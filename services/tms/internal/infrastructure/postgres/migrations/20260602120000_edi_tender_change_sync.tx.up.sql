@@ -119,9 +119,9 @@ CREATE TABLE IF NOT EXISTS "edi_tender_changes"(
     "applied_at" bigint,
     "failure_reason" text,
     "search_vector" tsvector GENERATED ALWAYS AS (
-        setweight(to_tsvector('simple', coalesce("change_type", '')), 'A') ||
-        setweight(to_tsvector('simple', coalesce("status"::text, '')), 'B') ||
-        setweight(to_tsvector('simple', coalesce("failure_reason", '')), 'C')
+        setweight(immutable_to_tsvector('simple', COALESCE("change_type", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE(enum_to_text("status"), '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("failure_reason", '')), 'C')
     ) STORED,
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT extract(epoch FROM current_timestamp)::bigint,
