@@ -56,6 +56,7 @@ type ShipmentStatusPayload struct {
 	StatusReasonCode           string            `json:"statusReasonCode,omitempty"`
 	EventDate                  int64             `json:"eventDate,omitempty"`
 	EventTime                  int64             `json:"eventTime,omitempty"`
+	EventTimeCode              string            `json:"eventTimeCode,omitempty"`
 	StopID                     pulid.ID          `json:"stopId,omitempty"`
 	StopType                   string            `json:"stopType,omitempty"`
 	StopSequence               int64             `json:"stopSequence,omitempty"`

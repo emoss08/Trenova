@@ -110,6 +110,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpRead),
 		h.edi214Readiness,
 	)
+	api.GET(
+		"/:serviceFailureID/edi-214-status/",
+		h.pm.RequirePermission(permission.ResourceServiceFailure.String(), permission.OpRead),
+		h.edi214Status,
+	)
 }
 
 func (h *Handler) list(c *gin.Context) {
@@ -376,6 +381,30 @@ func (h *Handler) edi214Readiness(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) edi214Status(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("serviceFailureID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	status, err := h.ediService.GetServiceFailure214Status(
+		c.Request.Context(),
+		repositories.GetServiceFailure214StatusRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ServiceFailureID: id,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, status)
 }
 
 func readinessTrigger(

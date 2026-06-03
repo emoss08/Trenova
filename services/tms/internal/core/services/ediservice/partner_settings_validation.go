@@ -260,7 +260,9 @@ func validateServiceFailure214PartnerSettings(
 	}
 
 	diagnostics := make([]edix12.Diagnostic, 0)
+	allowedKeys := make(map[string]struct{}, len(serviceFailure214BooleanSettingKeys())+3)
 	for _, key := range serviceFailure214BooleanSettingKeys() {
+		allowedKeys[key] = struct{}{}
 		value, present := object[key]
 		if !present {
 			continue
@@ -275,7 +277,8 @@ func validateServiceFailure214PartnerSettings(
 			"Use true or false.",
 		))
 	}
-	for _, key := range []string{"statusCode"} {
+	for _, key := range []string{"statusCode", "timeCode"} {
+		allowedKeys[key] = struct{}{}
 		value, present := object[key]
 		if !present || value == nil {
 			continue
@@ -288,6 +291,18 @@ func validateServiceFailure214PartnerSettings(
 			"serviceFailure214."+key,
 			fmt.Sprintf("serviceFailure214.%s must be string", key),
 			"Use an X12 status code string such as SD.",
+		))
+	}
+	allowedKeys["acceptedReasonCodes"] = struct{}{}
+	for key := range object {
+		if _, ok := allowedKeys[key]; ok {
+			continue
+		}
+		diagnostics = append(diagnostics, serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214."+key,
+			fmt.Sprintf("serviceFailure214.%s is not supported", key),
+			"Remove unsupported serviceFailure214 settings before activating the profile.",
 		))
 	}
 	if value, present := object["acceptedReasonCodes"]; present && value != nil {
@@ -312,6 +327,10 @@ func serviceFailure214BooleanSettingKeys() []string {
 		"mandatoryOnResolved",
 		"requireStatusReasonCode",
 		"requireLocation",
+		"requireLocationName",
+		"requireCityState",
+		"requirePostalCode",
+		"requireTimeCode",
 		"requireStop",
 		"requireProNumber",
 		"requireBol",

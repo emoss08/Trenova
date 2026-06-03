@@ -2,6 +2,7 @@ import { DocumentSourceControls } from "@/components/edi/document-source-control
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -202,7 +203,7 @@ export function DocumentPreviewArchiveTab() {
   const documentContextLabel = [
     selectedPartnerLabel || "No partner selected",
     selectedDocumentProfile?.name ??
-    (!!partnerId && !profileId ? "New profile draft" : "No profile"),
+      (!!partnerId && !profileId ? "New profile draft" : "No profile"),
     activeTemplate?.name ?? "No template",
     activeTemplate?.activeVersion?.versionNumber
       ? `v${activeTemplate.activeVersion.versionNumber}`
@@ -387,9 +388,15 @@ export function DocumentPreviewArchiveTab() {
               onChange={(envelope) => setProfileDraft((current) => ({ ...current, envelope }))}
             />
             <AckEditor profile={profileDraft} onChange={setProfileDraft} />
+            {sourceTransactionSet === "214" && sourceDirection === "Outbound" && (
+              <ServiceFailure214SettingsEditor
+                rawSettings={rawPartnerSettings}
+                onChange={setRawPartnerSettings}
+              />
+            )}
             <TextareaBlock
               label="Partner Settings"
-              description={`For outbound X12 214 service failure lifecycle generation, use serviceFailure214 with boolean trigger flags, optional statusCode, and optional acceptedReasonCodes, e.g. {"serviceFailure214":{"enabled":true,"sendOnReviewed":true,"sendOnResolved":true,"mandatoryOnReviewed":false,"mandatoryOnResolved":false,"statusCode":"SD","requireStatusReasonCode":true,"requireLocation":false,"requireStop":false,"requireProNumber":false,"requireBol":false,"acceptedReasonCodes":["NS"]}}. Status SD requires a reason code.`}
+              description="Raw partner settings for advanced profile configuration."
               value={rawPartnerSettings}
               onChange={setRawPartnerSettings}
             />
@@ -562,6 +569,123 @@ export function DocumentPreviewArchiveTab() {
   );
 }
 
+function ServiceFailure214SettingsEditor({
+  rawSettings,
+  onChange,
+}: {
+  rawSettings: string;
+  onChange: (value: string) => void;
+}) {
+  const root = parseRawSettings(rawSettings);
+  const settings = serviceFailure214Settings(root);
+  const updateSettings = (patch: Record<string, unknown>) => {
+    onChange(
+      JSON.stringify(
+        {
+          ...root,
+          serviceFailure214: {
+            ...settings,
+            ...patch,
+          },
+        },
+        null,
+        2,
+      ),
+    );
+  };
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      <div className="text-xs font-medium text-muted-foreground">Service Failure 214</div>
+      <div className="grid grid-cols-2 gap-2">
+        {serviceFailure214BooleanFields.map((field) => (
+          <label
+            key={field.key}
+            className="flex min-h-8 items-center gap-2 rounded border px-2 text-xs"
+          >
+            <Checkbox
+              checked={Boolean(settings[field.key])}
+              onCheckedChange={(checked) => updateSettings({ [field.key]: checked === true })}
+            />
+            <span className="truncate">{field.label}</span>
+          </label>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <InputBlock
+          label="Status Code"
+          value={settingString(settings.statusCode)}
+          onChange={(statusCode) => updateSettings({ statusCode: statusCode.trim().toUpperCase() })}
+        />
+        <InputBlock
+          label="Time Code"
+          value={settingString(settings.timeCode)}
+          onChange={(timeCode) => updateSettings({ timeCode: timeCode.trim().toUpperCase() })}
+        />
+      </div>
+      <InputBlock
+        label="Accepted Reason Codes"
+        value={settingStringArray(settings.acceptedReasonCodes).join(", ")}
+        onChange={(value) =>
+          updateSettings({
+            acceptedReasonCodes: value
+              .split(",")
+              .map((item) => item.trim().toUpperCase())
+              .filter(Boolean),
+          })
+        }
+      />
+    </div>
+  );
+}
+
+const serviceFailure214BooleanFields = [
+  { key: "enabled", label: "Enabled" },
+  { key: "sendOnReviewed", label: "Send Reviewed" },
+  { key: "sendOnResolved", label: "Send Resolved" },
+  { key: "mandatoryOnReviewed", label: "Mandatory Reviewed" },
+  { key: "mandatoryOnResolved", label: "Mandatory Resolved" },
+  { key: "requireStatusReasonCode", label: "Require Reason" },
+  { key: "requireLocation", label: "Require Location" },
+  { key: "requireLocationName", label: "Require Location Name" },
+  { key: "requireCityState", label: "Require City/State" },
+  { key: "requirePostalCode", label: "Require Postal" },
+  { key: "requireTimeCode", label: "Require Time Code" },
+  { key: "requireStop", label: "Require Stop" },
+  { key: "requireProNumber", label: "Require PRO" },
+  { key: "requireBol", label: "Require BOL" },
+] as const;
+
+function parseRawSettings(value: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+  } catch {
+    return {};
+  }
+  return {};
+}
+
+function serviceFailure214Settings(root: Record<string, unknown>) {
+  const value = root.serviceFailure214;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function settingString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function settingStringArray(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
 type MessageArchiveFilters = {
   partnerId: string;
   transactionSet: string;
@@ -642,7 +766,7 @@ function MessageArchive({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-36">Generated</TableHead>
+              <TableHead className="min-w-36">Archived At</TableHead>
               <TableHead className="min-w-48">Partner</TableHead>
               <TableHead>Set</TableHead>
               <TableHead>Direction</TableHead>
@@ -665,7 +789,7 @@ function MessageArchive({
             ) : messages.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
-                  No generated messages match the current filters.
+                  No archived generated messages match the current filters.
                 </TableCell>
               </TableRow>
             ) : (
@@ -688,8 +812,16 @@ function MessageArchive({
                   <TableCell>{message.direction}</TableCell>
                   <TableCell>
                     <Badge variant={message.status === "Generated" ? "active" : "inactive"}>
-                      {message.status}
+                      {message.status === "Generated" ? "Archived" : message.status}
                     </Badge>
+                    {message.deliveryStatus && (
+                      <div className="mt-1 text-2xs text-muted-foreground">
+                        Delivery {message.deliveryStatus}
+                      </div>
+                    )}
+                    {message.ackStatus && (
+                      <div className="text-2xs text-muted-foreground">ACK {message.ackStatus}</div>
+                    )}
                   </TableCell>
                   <TableCell className="font-mono text-xs">{message.x12Version}</TableCell>
                   <TableCell className="font-mono text-xs">

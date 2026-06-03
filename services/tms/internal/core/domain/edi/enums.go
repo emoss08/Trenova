@@ -41,13 +41,14 @@ const (
 type MappingEntityType string
 
 const (
-	MappingEntityTypeCustomer          = MappingEntityType("Customer")
-	MappingEntityTypeServiceType       = MappingEntityType("ServiceType")
-	MappingEntityTypeShipmentType      = MappingEntityType("ShipmentType")
-	MappingEntityTypeFormulaTemplate   = MappingEntityType("FormulaTemplate")
-	MappingEntityTypeLocation          = MappingEntityType("Location")
-	MappingEntityTypeCommodity         = MappingEntityType("Commodity")
-	MappingEntityTypeAccessorialCharge = MappingEntityType("AccessorialCharge")
+	MappingEntityTypeCustomer                 = MappingEntityType("Customer")
+	MappingEntityTypeServiceType              = MappingEntityType("ServiceType")
+	MappingEntityTypeShipmentType             = MappingEntityType("ShipmentType")
+	MappingEntityTypeFormulaTemplate          = MappingEntityType("FormulaTemplate")
+	MappingEntityTypeLocation                 = MappingEntityType("Location")
+	MappingEntityTypeCommodity                = MappingEntityType("Commodity")
+	MappingEntityTypeAccessorialCharge        = MappingEntityType("AccessorialCharge")
+	MappingEntityTypeServiceFailureReasonCode = MappingEntityType("ServiceFailureReasonCode")
 )
 
 type TransferStatus string
@@ -148,6 +149,16 @@ const (
 	MessageDeliveryStatusSending = MessageDeliveryStatus("Sending")
 	MessageDeliveryStatusSent    = MessageDeliveryStatus("Sent")
 	MessageDeliveryStatusFailed  = MessageDeliveryStatus("Failed")
+)
+
+type MessageAcknowledgmentStatus string
+
+const (
+	MessageAcknowledgmentStatusNotExpected = MessageAcknowledgmentStatus("NotExpected")
+	MessageAcknowledgmentStatusPending     = MessageAcknowledgmentStatus("Pending")
+	MessageAcknowledgmentStatusAccepted    = MessageAcknowledgmentStatus("Accepted")
+	MessageAcknowledgmentStatusRejected    = MessageAcknowledgmentStatus("Rejected")
+	MessageAcknowledgmentStatusFailed      = MessageAcknowledgmentStatus("Failed")
 )
 
 type ValidationMode string

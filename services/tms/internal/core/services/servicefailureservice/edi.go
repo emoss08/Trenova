@@ -30,8 +30,11 @@ func (s *service) preflightServiceFailure214(
 	}
 	result, err := s.ediService.PreviewServiceFailure214ForLifecycle(ctx, req)
 	if err != nil {
-		s.l.Warn("failed to preflight service failure EDI 214", zap.Error(err))
-		return nil
+		return errortypes.NewValidationError(
+			"edi",
+			errortypes.ErrInvalidOperation,
+			"Service failure EDI 214 preflight failed: "+err.Error(),
+		)
 	}
 	if result.Action != services.ServiceFailureEDIActionBlocked || !result.Mandatory {
 		return nil

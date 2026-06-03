@@ -158,6 +158,7 @@ function messageInspection(): EDIMessageInspection {
       segmentCount: 6,
       rawX12: "ST*204*0003~SE*2*0003~",
       payloadSnapshot: { transactionSet: "204" },
+      deliveryAttempts: 0,
       generatedById: "user_1",
       generatedAt: 1779192000,
       diagnosticCount: 0,

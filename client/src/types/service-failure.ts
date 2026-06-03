@@ -189,3 +189,17 @@ export const serviceFailureEdi214LifecycleResultSchema = z.object({
 export type ServiceFailureEdi214LifecycleResult = z.infer<
   typeof serviceFailureEdi214LifecycleResultSchema
 >;
+
+export const serviceFailureEdi214StatusSchema = z.object({
+  serviceFailureId: optionalStringSchema,
+  reviewedMessageId: optionalStringSchema,
+  resolvedMessageId: optionalStringSchema,
+  lastMessageId: optionalStringSchema,
+  generatedStatus: optionalStringSchema,
+  deliveryStatus: optionalStringSchema,
+  ackStatus: optionalStringSchema,
+  lastDiagnostic: optionalStringSchema,
+  lastGeneratedAt: z.number().int().default(0),
+});
+
+export type ServiceFailureEdi214Status = z.infer<typeof serviceFailureEdi214StatusSchema>;

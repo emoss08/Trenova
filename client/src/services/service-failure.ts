@@ -2,11 +2,13 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   serviceFailureEdi214LifecycleResultSchema,
+  serviceFailureEdi214StatusSchema,
   serviceFailureEdiPayloadResultSchema,
   serviceFailureEvaluationResultSchema,
   serviceFailureSchema,
   type ServiceFailure,
   type ServiceFailureEdi214LifecycleResult,
+  type ServiceFailureEdi214Status,
   type ServiceFailureEdiPayloadResult,
   type ServiceFailureLifecycleRequest,
   type ServiceFailureUpdate,
@@ -56,9 +58,7 @@ export class ServiceFailureService {
 
   async evaluateShipment(shipmentId: string, force = false) {
     const response = await api.post(
-      `/service-failures/evaluate-shipment/${shipmentId}/${
-        force ? "?force=true" : ""
-      }`,
+      `/service-failures/evaluate-shipment/${shipmentId}/${force ? "?force=true" : ""}`,
     );
     return safeParse(
       serviceFailureEvaluationResultSchema,
@@ -102,10 +102,7 @@ export class ServiceFailureService {
   }
 
   async update(id: string, data: ServiceFailureUpdate) {
-    const response = await api.put<ServiceFailure>(
-      `/service-failures/${id}/`,
-      data,
-    );
+    const response = await api.put<ServiceFailure>(`/service-failures/${id}/`, data);
     return safeParse(serviceFailureSchema, response, "ServiceFailure");
   }
 
@@ -123,11 +120,7 @@ export class ServiceFailureService {
 
   async buildEDI214Payload(id: string): Promise<ServiceFailureEdiPayloadResult> {
     const response = await api.post(`/service-failures/${id}/edi-214-payload/`);
-    return safeParse(
-      serviceFailureEdiPayloadResultSchema,
-      response,
-      "ServiceFailureEDIPayload",
-    );
+    return safeParse(serviceFailureEdiPayloadResultSchema, response, "ServiceFailureEDIPayload");
   }
 
   async edi214Readiness(
@@ -137,9 +130,7 @@ export class ServiceFailureService {
     const search = new URLSearchParams();
     if (trigger) search.set("trigger", trigger);
     const response = await api.get(
-      `/service-failures/${id}/edi-214-readiness/${
-        search.size ? `?${search.toString()}` : ""
-      }`,
+      `/service-failures/${id}/edi-214-readiness/${search.size ? `?${search.toString()}` : ""}`,
     );
     return safeParse(
       serviceFailureEdi214LifecycleResultSchema,
@@ -148,15 +139,17 @@ export class ServiceFailureService {
     );
   }
 
+  async edi214Status(id: string): Promise<ServiceFailureEdi214Status> {
+    const response = await api.get(`/service-failures/${id}/edi-214-status/`);
+    return safeParse(serviceFailureEdi214StatusSchema, response, "ServiceFailureEDI214Status");
+  }
+
   private async lifecycle(
     id: string,
     action: "review" | "resolve" | "void",
     data: ServiceFailureLifecycleRequest,
   ) {
-    const response = await api.post<ServiceFailure>(
-      `/service-failures/${id}/${action}/`,
-      data,
-    );
+    const response = await api.post<ServiceFailure>(`/service-failures/${id}/${action}/`, data);
     return safeParse(serviceFailureSchema, response, "ServiceFailure");
   }
 }

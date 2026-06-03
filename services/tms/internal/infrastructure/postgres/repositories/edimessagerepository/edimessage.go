@@ -17,6 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	serviceFailure214ReviewedTrigger = "Reviewed"
+	serviceFailure214ResolvedTrigger = "Resolved"
+)
+
 type Params struct {
 	fx.In
 
@@ -187,6 +192,84 @@ func (r *repository) GetServiceFailure214LifecycleMessage(
 		return nil, dberror.HandleNotFoundError(err, "EDIMessage")
 	}
 	return entity, nil
+}
+
+func (r *repository) GetServiceFailure214Status(
+	ctx context.Context,
+	req repositories.GetServiceFailure214StatusRequest,
+) (*repositories.ServiceFailure214Status, error) {
+	status := &repositories.ServiceFailure214Status{ServiceFailureID: req.ServiceFailureID}
+	err := r.db.DBForContext(ctx).NewRaw(`
+		WITH lifecycle_messages AS (
+			SELECT
+				emsg.id,
+				emsg.status,
+				emsg.delivery_status,
+				emsg.ack_status,
+				emsg.generated_at,
+				emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailure214Trigger' AS trigger
+			FROM edi_messages AS emsg
+			WHERE emsg.organization_id = ?
+				AND emsg.business_unit_id = ?
+				AND emsg.transaction_set = ?
+				AND emsg.direction = ?
+				AND emsg.payload_snapshot->'shipmentStatus'->>'serviceFailureId' = ?
+				AND emsg.payload_snapshot->'shipmentStatus'->'references'->>'serviceFailureId' = ?
+		),
+		last_message AS (
+			SELECT *
+			FROM lifecycle_messages
+			ORDER BY generated_at DESC, id DESC
+			LIMIT 1
+		),
+		last_diagnostic AS (
+			SELECT emve.message
+			FROM edi_message_validation_errors AS emve
+			JOIN last_message lm ON lm.id = emve.message_id
+			WHERE emve.organization_id = ?
+				AND emve.business_unit_id = ?
+				AND emve.severity = ?
+			ORDER BY emve.created_at DESC, emve.id DESC
+			LIMIT 1
+		)
+		SELECT
+			? AS service_failure_id,
+			COALESCE((
+				SELECT id FROM lifecycle_messages
+				WHERE trigger = ?
+				ORDER BY generated_at DESC, id DESC
+				LIMIT 1
+			), '') AS reviewed_message_id,
+			COALESCE((
+				SELECT id FROM lifecycle_messages
+				WHERE trigger = ?
+				ORDER BY generated_at DESC, id DESC
+				LIMIT 1
+			), '') AS resolved_message_id,
+			COALESCE((SELECT id FROM last_message), '') AS last_message_id,
+			COALESCE((SELECT status FROM last_message), '') AS generated_status,
+			COALESCE((SELECT delivery_status FROM last_message), '') AS delivery_status,
+			COALESCE((SELECT ack_status FROM last_message), '') AS ack_status,
+			COALESCE((SELECT message FROM last_diagnostic), '') AS last_diagnostic,
+			COALESCE((SELECT generated_at FROM last_message), 0) AS last_generated_at
+	`,
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		edi.TransactionSet214,
+		edi.DocumentDirectionOutbound,
+		req.ServiceFailureID.String(),
+		req.ServiceFailureID.String(),
+		req.TenantInfo.OrgID,
+		req.TenantInfo.BuID,
+		edi.ValidationSeverityError,
+		req.ServiceFailureID,
+		serviceFailure214ReviewedTrigger,
+		serviceFailure214ResolvedTrigger,
+	).Scan(ctx, status)
+	if err != nil {
+		return nil, err
+	}
+	return status, nil
 }
 
 func (r *repository) UpdateMessageDelivery(

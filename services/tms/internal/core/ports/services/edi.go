@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -88,6 +89,8 @@ type ServiceFailure214LifecycleResult struct {
 	Diagnostics              []edix12.Diagnostic      `json:"diagnostics"`
 }
 
+type ServiceFailure214Status = repositories.ServiceFailure214Status
+
 type EDIService interface {
 	BuildShipmentStatusPayloadForServiceFailure(
 		ctx context.Context,
@@ -103,6 +106,10 @@ type EDIService interface {
 		ctx context.Context,
 		req *ServiceFailure214LifecycleRequest,
 	) (*ServiceFailure214LifecycleResult, error)
+	GetServiceFailure214Status(
+		ctx context.Context,
+		req repositories.GetServiceFailure214StatusRequest,
+	) (*ServiceFailure214Status, error)
 }
 
 type EDIDocumentPreview struct {

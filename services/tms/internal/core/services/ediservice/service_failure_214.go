@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const serviceFailure214TriggerReference = "serviceFailure214Trigger"
@@ -29,6 +30,11 @@ type serviceFailure214Settings struct {
 	StatusCode              string
 	RequireStatusReasonCode bool
 	RequireLocation         bool
+	RequireLocationName     bool
+	RequireCityState        bool
+	RequirePostalCode       bool
+	RequireTimeCode         bool
+	TimeCode                string
 	RequireStop             bool
 	RequireProNumber        bool
 	RequireBOL              bool
@@ -94,6 +100,15 @@ func (s *Service) serviceFailure214Lifecycle(
 		candidate.settings,
 		req.Trigger,
 	)
+	if err = s.applyServiceFailure214ReasonMapping(
+		ctx,
+		req.TenantInfo,
+		candidate.partner.ID,
+		failure,
+		payload.ShipmentStatus,
+	); err != nil {
+		return nil, err
+	}
 	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus, candidate.settings)
 	result = &services.ServiceFailure214LifecycleResult{
 		Trigger:                  req.Trigger,
@@ -132,6 +147,54 @@ func (s *Service) serviceFailure214Lifecycle(
 	result.SkippedReason = ""
 	result.MessageID = message.ID
 	return result, nil
+}
+
+func (s *Service) GetServiceFailure214Status(
+	ctx context.Context,
+	req repositories.GetServiceFailure214StatusRequest,
+) (*services.ServiceFailure214Status, error) {
+	return s.messageRepo.GetServiceFailure214Status(ctx, req)
+}
+
+func (s *Service) applyServiceFailure214ReasonMapping(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	partnerID pulid.ID,
+	failure *servicefailure.ServiceFailure,
+	payload *edi.ShipmentStatusPayload,
+) error {
+	if payload == nil ||
+		failure == nil ||
+		strings.TrimSpace(failure.X12ReasonCodeOverride) != "" ||
+		failure.ReasonCodeID == nil ||
+		failure.ReasonCodeID.IsNil() {
+		return nil
+	}
+	items, err := s.mappingProfileRepo.GetMappingItems(ctx, repositories.GetMappingItemsRequest{
+		PartnerID:   partnerID,
+		TenantInfo:  tenantInfo,
+		EntityTypes: []edi.MappingEntityType{edi.MappingEntityTypeServiceFailureReasonCode},
+		SourceIDs:   []pulid.ID{*failure.ReasonCodeID},
+	})
+	if err != nil {
+		return err
+	}
+	for _, item := range items {
+		if item == nil || item.SourceID != *failure.ReasonCodeID {
+			continue
+		}
+		reasonCode := normalizedX12Code(item.TargetID.String())
+		if reasonCode == "" {
+			continue
+		}
+		payload.StatusReasonCode = reasonCode
+		payload.ReasonCode = reasonCode
+		if strings.TrimSpace(item.TargetLabel) != "" {
+			payload.ReasonDescription = strings.TrimSpace(item.TargetLabel)
+		}
+		return nil
+	}
+	return nil
 }
 
 func validateServiceFailure214LifecycleRequest(req *services.ServiceFailure214LifecycleRequest) error {
@@ -263,7 +326,19 @@ func (s *Service) resolveServiceFailure214Candidate(
 				inactiveProfile = true
 				continue
 			}
-			settings := parseServiceFailure214Settings(profile.PartnerSettings)
+			settings, settingDiagnostics := parseServiceFailure214Settings(profile.PartnerSettings)
+			if hasErrorDiagnostics(settingDiagnostics) {
+				result := &services.ServiceFailure214LifecycleResult{
+					Trigger:                  req.Trigger,
+					Action:                   services.ServiceFailureEDIActionBlocked,
+					EDIPartnerID:             partner.ID,
+					PartnerDocumentProfileID: profile.ID,
+					Mandatory:                true,
+					SkippedReason:            "service failure 214 partner settings are invalid",
+					Diagnostics:              settingDiagnostics,
+				}
+				return nil, result, nil
+			}
 			if !settings.enabledForTrigger(req.Trigger) {
 				triggerDisabled = true
 				continue
@@ -338,6 +413,9 @@ func buildServiceFailure214LifecyclePayload(
 	if strings.TrimSpace(failure.X12StatusCodeOverride) == "" && settings.StatusCode != "" {
 		payload.ShipmentStatus.StatusCode = settings.StatusCode
 	}
+	if settings.TimeCode != "" {
+		payload.ShipmentStatus.EventTimeCode = settings.TimeCode
+	}
 	if payload.ShipmentStatus.References == nil {
 		payload.ShipmentStatus.References = map[string]string{}
 	}
@@ -346,10 +424,31 @@ func buildServiceFailure214LifecyclePayload(
 	return payload
 }
 
-func parseServiceFailure214Settings(settings map[string]any) serviceFailure214Settings {
-	raw, _ := settings["serviceFailure214"].(map[string]any)
+func parseServiceFailure214Settings(settings map[string]any) (serviceFailure214Settings, []edix12.Diagnostic) {
+	rawValue, ok := settings["serviceFailure214"]
+	if !ok || rawValue == nil {
+		return serviceFailure214Settings{}, nil
+	}
+	raw, ok := rawValue.(map[string]any)
+	if !ok {
+		return serviceFailure214Settings{}, []edix12.Diagnostic{serviceFailure214PartnerSettingDiagnostic(
+			partnerSettingTypeInvalidCode,
+			"serviceFailure214",
+			"serviceFailure214 must be an object",
+			"Use an object with enabled, trigger, requirement, and optional code settings.",
+		)}
+	}
+	diagnostics := validateServiceFailure214PartnerSettings(
+		&edi.EDIPartnerDocumentProfile{
+			Standard:       edi.EDIStandardX12,
+			TransactionSet: edi.TransactionSet214,
+			Direction:      edi.DocumentDirectionOutbound,
+		},
+		settings,
+	)
 	parsed := serviceFailure214Settings{
 		StatusCode:          normalizedX12Code(rawString(raw, "statusCode")),
+		TimeCode:            normalizedX12Code(rawString(raw, "timeCode")),
 		AcceptedReasonCodes: normalizedCodeSet(rawSlice(raw, "acceptedReasonCodes")),
 	}
 	parsed.Enabled = rawBool(raw, "enabled")
@@ -359,10 +458,14 @@ func parseServiceFailure214Settings(settings map[string]any) serviceFailure214Se
 	parsed.MandatoryOnResolved = rawBool(raw, "mandatoryOnResolved")
 	parsed.RequireStatusReasonCode = rawBool(raw, "requireStatusReasonCode")
 	parsed.RequireLocation = rawBool(raw, "requireLocation")
+	parsed.RequireLocationName = rawBool(raw, "requireLocationName")
+	parsed.RequireCityState = rawBool(raw, "requireCityState")
+	parsed.RequirePostalCode = rawBool(raw, "requirePostalCode")
+	parsed.RequireTimeCode = rawBool(raw, "requireTimeCode")
 	parsed.RequireStop = rawBool(raw, "requireStop")
 	parsed.RequireProNumber = rawBool(raw, "requireProNumber")
 	parsed.RequireBOL = rawBool(raw, "requireBol")
-	return parsed
+	return parsed, diagnostics
 }
 
 func rawBool(settings map[string]any, key string) bool {
@@ -471,6 +574,14 @@ func serviceFailure214Diagnostics(
 			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
 		))
 	}
+	if settings.RequireTimeCode && strings.TrimSpace(payload.EventTimeCode) == "" {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.eventTimeCode",
+			"Partner profile requires an AT7 time code for service failure 214 generation",
+			"Set serviceFailure214.timeCode on the partner document profile or include shipmentStatus.eventTimeCode.",
+		))
+	}
 	if statusCode == "SD" && reasonCode == "" {
 		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
 			"required",
@@ -514,9 +625,34 @@ func serviceFailure214Diagnostics(
 	if settings.RequireLocation && payload.LocationID.IsNil() && strings.TrimSpace(payload.LocationName) == "" {
 		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
 			"required",
-			"shipmentStatus.locationId",
-			"Partner profile requires a location for service failure 214 generation",
-			"Link the service failure stop to a location before generating the 214.",
+			"shipmentStatus.locationName",
+			"Partner profile requires a location identifier or name for service failure 214 generation",
+			"Link the service failure stop to a location or provide a location name before generating the 214.",
+		))
+	}
+	if settings.RequireLocationName && strings.TrimSpace(payload.LocationName) == "" {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.locationName",
+			"Partner profile requires a location name for service failure 214 generation",
+			"Set the service failure stop location name before generating the 214.",
+		))
+	}
+	if settings.RequireCityState &&
+		(strings.TrimSpace(payload.City) == "" || strings.TrimSpace(payload.StateCode) == "") {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.city",
+			"Partner profile requires city and state for service failure 214 generation",
+			"Set the service failure stop city and state before generating the 214.",
+		))
+	}
+	if settings.RequirePostalCode && strings.TrimSpace(payload.PostalCode) == "" {
+		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
+			"required",
+			"shipmentStatus.postalCode",
+			"Partner profile requires postal code for service failure 214 generation",
+			"Set the service failure stop postal code before generating the 214.",
 		))
 	}
 	if len(settings.AcceptedReasonCodes) > 0 && reasonCode != "" {

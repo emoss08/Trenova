@@ -425,6 +425,8 @@ func formatElementValue(
 			return formatX12Date(value)
 		case 6:
 			return formatX12Time(value)
+		case 7:
+			return strings.ToUpper(strings.TrimSpace(valueToString(value)))
 		}
 	}
 	return valueToString(value)

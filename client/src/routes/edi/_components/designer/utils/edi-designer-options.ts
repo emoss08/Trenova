@@ -33,6 +33,7 @@ const mappingEntityTypeLabels: Record<(typeof ediMappingEntityTypeSchema.options
     Location: "Location",
     Commodity: "Commodity",
     AccessorialCharge: "Accessorial Charge",
+    ServiceFailureReasonCode: "Service Failure Reason Code",
   };
 
 const validationModeLabels: Record<(typeof ediValidationModeSchema.options)[number], string> = {

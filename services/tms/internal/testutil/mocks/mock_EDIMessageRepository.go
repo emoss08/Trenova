@@ -244,6 +244,74 @@ func (_c *MockEDIMessageRepository_GetServiceFailure214LifecycleMessage_Call) Ru
 	return _c
 }
 
+// GetServiceFailure214Status provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) GetServiceFailure214Status(ctx context.Context, req repositories.GetServiceFailure214StatusRequest) (*repositories.ServiceFailure214Status, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetServiceFailure214Status")
+	}
+
+	var r0 *repositories.ServiceFailure214Status
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetServiceFailure214StatusRequest) (*repositories.ServiceFailure214Status, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetServiceFailure214StatusRequest) *repositories.ServiceFailure214Status); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repositories.ServiceFailure214Status)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetServiceFailure214StatusRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_GetServiceFailure214Status_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetServiceFailure214Status'
+type MockEDIMessageRepository_GetServiceFailure214Status_Call struct {
+	*mock.Call
+}
+
+// GetServiceFailure214Status is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetServiceFailure214StatusRequest
+func (_e *MockEDIMessageRepository_Expecter) GetServiceFailure214Status(ctx interface{}, req interface{}) *MockEDIMessageRepository_GetServiceFailure214Status_Call {
+	return &MockEDIMessageRepository_GetServiceFailure214Status_Call{Call: _e.mock.On("GetServiceFailure214Status", ctx, req)}
+}
+
+func (_c *MockEDIMessageRepository_GetServiceFailure214Status_Call) Run(run func(ctx context.Context, req repositories.GetServiceFailure214StatusRequest)) *MockEDIMessageRepository_GetServiceFailure214Status_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetServiceFailure214StatusRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetServiceFailure214StatusRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetServiceFailure214Status_Call) Return(serviceFailure214Status *repositories.ServiceFailure214Status, err error) *MockEDIMessageRepository_GetServiceFailure214Status_Call {
+	_c.Call.Return(serviceFailure214Status, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_GetServiceFailure214Status_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetServiceFailure214StatusRequest) (*repositories.ServiceFailure214Status, error)) *MockEDIMessageRepository_GetServiceFailure214Status_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListMessages provides a mock function for the type MockEDIMessageRepository
 func (_mock *MockEDIMessageRepository) ListMessages(ctx context.Context, req *repositories.ListEDIMessagesRequest) (*pagination.ListResult[*edi.EDIMessage], error) {
 	ret := _mock.Called(ctx, req)

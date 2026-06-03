@@ -480,6 +480,7 @@ func (s *Service) GenerateDocument(
 		SegmentCount:             result.SegmentCount,
 		RawX12:                   result.RawX12,
 		PayloadSnapshot:          resolved.payload,
+		AckStatus:                generatedMessageAckStatus(resolved.profile),
 		GeneratedByID:            req.GeneratedByID,
 	}
 	messageDiagnostics := make([]*edi.EDIMessageValidationError, 0, len(diagnostics))
@@ -508,6 +509,16 @@ func (s *Service) GenerateDocument(
 		return nil, err
 	}
 	return created, nil
+}
+
+func generatedMessageAckStatus(profile *edi.EDIPartnerDocumentProfile) edi.MessageAcknowledgmentStatus {
+	if profile == nil ||
+		profile.Direction != edi.DocumentDirectionOutbound ||
+		!profile.Acknowledgment.Expected ||
+		profile.Acknowledgment.Type == edi.AcknowledgmentTypeNone {
+		return edi.MessageAcknowledgmentStatusNotExpected
+	}
+	return edi.MessageAcknowledgmentStatusPending
 }
 
 func (s *Service) ListMessages(

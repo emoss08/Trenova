@@ -182,6 +182,7 @@ func Base214Segments(
 			b.field(2, "Shipment Status Reason Code", "shipmentStatus.statusReasonCode", ""),
 			b.field(5, "Date", "shipmentStatus.eventDate", ""),
 			b.field(6, "Time", "shipmentStatus.eventTime", ""),
+			b.field(7, "Time Code", "shipmentStatus.eventTimeCode", ""),
 		}),
 		b.segment(
 			80,

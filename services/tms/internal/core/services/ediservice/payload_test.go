@@ -439,9 +439,10 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
 	t.Parallel()
 
-	settings := parseServiceFailure214Settings(nil)
+	settings, diagnostics := parseServiceFailure214Settings(nil)
 
 	require.False(t, settings.Enabled)
+	require.Empty(t, diagnostics)
 	require.False(t, settings.SendOnReviewed)
 	require.False(t, settings.SendOnResolved)
 	require.False(t, settings.MandatoryOnReviewed)
@@ -454,41 +455,53 @@ func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
 func TestParseServiceFailure214SettingsMalformedDisabled(t *testing.T) {
 	t.Parallel()
 
-	settings := parseServiceFailure214Settings(map[string]any{
+	settings, diagnostics := parseServiceFailure214Settings(map[string]any{
 		"serviceFailure214": "enabled",
 	})
 
 	require.False(t, settings.Enabled)
+	require.NotEmpty(t, diagnostics)
 	require.False(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
 }
 
 func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.T) {
 	t.Parallel()
 
-	settings := parseServiceFailure214Settings(map[string]any{
+	settings, diagnostics := parseServiceFailure214Settings(map[string]any{
 		"serviceFailure214": map[string]any{
 			"enabled":                 true,
 			"sendOnReviewed":          true,
 			"mandatoryOnResolved":     true,
 			"statusCode":              " a3 ",
+			"timeCode":                " lt ",
 			"acceptedReasonCodes":     []any{" ns ", "ca"},
 			"requireProNumber":        true,
 			"requireBol":              true,
 			"requireLocation":         true,
+			"requireLocationName":     true,
+			"requireCityState":        true,
+			"requirePostalCode":       true,
+			"requireTimeCode":         true,
 			"requireStop":             true,
 			"requireStatusReasonCode": true,
 		},
 	})
 
+	require.Empty(t, diagnostics)
 	require.True(t, settings.Enabled)
 	require.True(t, settings.SendOnReviewed)
 	require.True(t, settings.MandatoryOnResolved)
 	require.True(t, settings.RequireProNumber)
 	require.True(t, settings.RequireBOL)
 	require.True(t, settings.RequireLocation)
+	require.True(t, settings.RequireLocationName)
+	require.True(t, settings.RequireCityState)
+	require.True(t, settings.RequirePostalCode)
+	require.True(t, settings.RequireTimeCode)
 	require.True(t, settings.RequireStop)
 	require.True(t, settings.RequireStatusReasonCode)
 	require.Equal(t, "A3", settings.StatusCode)
+	require.Equal(t, "LT", settings.TimeCode)
 	require.Contains(t, settings.AcceptedReasonCodes, "NS")
 	require.Contains(t, settings.AcceptedReasonCodes, "CA")
 	require.True(t, settings.enabledForTrigger(services.ServiceFailureEDITriggerReviewed))
@@ -566,16 +579,18 @@ func TestServiceFailurePayloadDiagnosticsHonorsProfileRequirements(t *testing.T)
 		RequireProNumber:        true,
 		RequireStop:             true,
 		RequireLocation:         true,
+		RequireTimeCode:         true,
 		AcceptedReasonCodes:     map[string]struct{}{"NS": {}},
 	})
 
-	require.Len(t, diagnostics, 5)
+	require.Len(t, diagnostics, 6)
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.bol")
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.proNumber")
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.stopId")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.locationId")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.locationName")
+	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTimeCode")
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.statusReasonCode")
-	require.Contains(t, diagnostics[4].Message, "NS")
+	require.Contains(t, diagnostics[5].Message, "NS")
 }
 
 func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) {

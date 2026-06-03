@@ -19,6 +19,7 @@ export const ediMappingEntityTypeSchema = z.enum([
   "Location",
   "Commodity",
   "AccessorialCharge",
+  "ServiceFailureReasonCode",
 ]);
 export type EDIMappingEntityType = z.infer<typeof ediMappingEntityTypeSchema>;
 export const ediTransferStatusSchema = z.enum([
@@ -64,6 +65,14 @@ export type EDITemplateStatus = z.infer<typeof ediTemplateStatusSchema>;
 export const ediValidationModeSchema = z.enum(["Strict", "WarnOnly", "Disabled"]);
 export const ediValidationSeveritySchema = z.enum(["Info", "Warning", "Error"]);
 export const ediMessageStatusSchema = z.enum(["Generated", "Failed"]);
+export const ediMessageDeliveryStatusSchema = z.enum(["Queued", "Sending", "Sent", "Failed"]);
+export const ediMessageAcknowledgmentStatusSchema = z.enum([
+  "NotExpected",
+  "Pending",
+  "Accepted",
+  "Rejected",
+  "Failed",
+]);
 export const ediSourceContextDataTypeSchema = z.enum([
   "string",
   "number",
@@ -385,6 +394,7 @@ const shipmentStatusPayloadSchema = z
     statusReasonCode: z.string().nullish(),
     eventDate: nullableNumberSchema,
     eventTime: nullableNumberSchema,
+    eventTimeCode: z.string().nullish(),
     stopId: z.string().nullish(),
     stopType: z.string().nullish(),
     stopSequence: nullableNumberSchema,
@@ -768,6 +778,11 @@ export const serviceFailure214PartnerSettingsSchema = z
     statusCode: z.string().optional(),
     requireStatusReasonCode: z.boolean().default(false),
     requireLocation: z.boolean().default(false),
+    requireLocationName: z.boolean().default(false),
+    requireCityState: z.boolean().default(false),
+    requirePostalCode: z.boolean().default(false),
+    requireTimeCode: z.boolean().default(false),
+    timeCode: z.string().optional(),
     requireStop: z.boolean().default(false),
     requireProNumber: z.boolean().default(false),
     requireBol: z.boolean().default(false),
@@ -864,6 +879,16 @@ export const ediMessageSchema = z.object({
   segmentCount: z.number(),
   rawX12: z.string(),
   payloadSnapshot: ediDocumentPayloadSchema.nullish(),
+  deliveryStatus: ediMessageDeliveryStatusSchema.nullish(),
+  deliveryRemotePath: z.string().nullish(),
+  deliveryAttempts: z.number().default(0),
+  deliveryLastAttemptAt: nullableNumberSchema,
+  deliverySentAt: nullableNumberSchema,
+  deliveryLastError: z.string().nullish(),
+  ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
+  ackMessageId: z.string().nullish(),
+  ackReceivedAt: nullableNumberSchema,
+  ackLastError: z.string().nullish(),
   generatedById: z.string().nullish(),
   generatedAt: z.number(),
   diagnosticCount: z.number().default(0),

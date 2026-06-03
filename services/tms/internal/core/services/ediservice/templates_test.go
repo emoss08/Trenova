@@ -916,6 +916,7 @@ func testSourceContextIndex() *sourceContextIndex {
 		sourceContextField("shipmentStatus.statusReasonCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipmentStatus.eventDate", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipmentStatus.eventTime", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
+		sourceContextField("shipmentStatus.eventTimeCode", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipmentStatus.stopId", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipmentStatus.stopType", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),
 		sourceContextField("shipmentStatus.stopSequence", "", edi.SourceContextKindShipment, edi.SourceContextFieldStatusActive),

@@ -189,7 +189,11 @@ export default function ShipmentServiceFailures({ shipment }: ShipmentServiceFai
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <ActionTooltip
-                    content={reviewTooltip(canApprove.allowed, failure, lifecycleMutation.isPending)}
+                    content={reviewTooltip(
+                      canApprove.allowed,
+                      failure,
+                      lifecycleMutation.isPending,
+                    )}
                   >
                     <Button
                       type="button"
@@ -359,6 +363,11 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
     enabled: !!failure.id && !!trigger,
     staleTime: 30_000,
   });
+  const statusQuery = useQuery({
+    ...queries.serviceFailure.edi214Status(failure.id ?? ""),
+    enabled: !!failure.id && !!trigger,
+    staleTime: 30_000,
+  });
 
   if (!trigger || failure.status === "Voided") {
     return null;
@@ -379,10 +388,10 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
   const available = readiness.action === "generated" || readiness.action === "duplicate";
   const ready =
     readiness.action === "skipped" &&
-    (readiness.skippedReason === "ready" ||
-      readiness.skippedReason === "ready_for_generation");
+    (readiness.skippedReason === "ready" || readiness.skippedReason === "ready_for_generation");
   const label = ediReadinessLabel(readiness.action, readiness.skippedReason);
   const diagnostic = diagnosticMessage(readiness.diagnostics[0]);
+  const ediStatus = statusQuery.data;
 
   return (
     <div
@@ -404,7 +413,17 @@ function ServiceFailureEDI214Readiness({ failure }: { failure: ServiceFailure })
       {readiness.messageId && (
         <span className="font-mono text-[11px]">Message {readiness.messageId}</span>
       )}
+      {ediStatus?.lastMessageId && (
+        <span className="font-mono text-[11px]">Last {ediStatus.lastMessageId}</span>
+      )}
+      {ediStatus?.deliveryStatus && (
+        <Badge variant="outline">Delivery {ediStatus.deliveryStatus}</Badge>
+      )}
+      {ediStatus?.ackStatus && <Badge variant="outline">ACK {ediStatus.ackStatus}</Badge>}
       {diagnostic && <span className="min-w-0 flex-1 truncate">{diagnostic}</span>}
+      {!diagnostic && ediStatus?.lastDiagnostic && (
+        <span className="min-w-0 flex-1 truncate">{ediStatus.lastDiagnostic}</span>
+      )}
     </div>
   );
 }
@@ -423,13 +442,7 @@ function diagnosticMessage(value: unknown) {
   return typeof message === "string" ? message : undefined;
 }
 
-function ActionTooltip({
-  content,
-  children,
-}: {
-  content: ReactNode;
-  children: ReactNode;
-}) {
+function ActionTooltip({ content, children }: { content: ReactNode; children: ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger render={<span className="inline-flex" />}>{children}</TooltipTrigger>

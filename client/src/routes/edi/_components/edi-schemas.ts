@@ -18,6 +18,7 @@ export const mappingTargetEndpoints: Record<(typeof mappingEntityTypes)[number],
   Location: "/locations/select-options/",
   Commodity: "/commodities/select-options/",
   AccessorialCharge: "/accessorial-charges/select-options/",
+  ServiceFailureReasonCode: "/service-failure-reason-codes/select-options/",
 };
 
 export const communicationProfileMethods = ediConnectionMethodSchema.options;

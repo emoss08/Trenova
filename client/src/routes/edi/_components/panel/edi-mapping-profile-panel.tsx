@@ -1,4 +1,7 @@
-import { EDIPartnerAutocompleteField } from "@/components/autocomplete-fields";
+import {
+  EDIPartnerAutocompleteField,
+  ServiceFailureReasonCodeAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,7 +21,7 @@ import type { EDIMappingProfileItem, EDIPartner } from "@/types/edi";
 import { Operation, Resource } from "@/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { mappingEntityTypes } from "../edi-schemas";
@@ -78,12 +81,12 @@ export function MappingProfilePanel({
   return (
     <Tabs defaultValue="Customer" className="gap-3">
       <TabsList
-        className="flex-wrap border-b border-border px-1 w-full justify-start!"
+        className="w-full flex-wrap justify-start! border-b border-border px-1"
         variant="underline"
       >
         {mappingEntityTypes.map((entityType) => (
           <TabsTrigger key={entityType} value={entityType} className="max-w-30">
-            {entityType}
+            {mappingEntityTabLabel(entityType)}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -97,11 +100,16 @@ export function MappingProfilePanel({
           >
             {canUpdate && (
               <div className="grid gap-2 md:grid-cols-5">
-                <Input
-                  placeholder="Source value key"
+                <MappingSourceInput
+                  entityType={entityType}
                   value={draft.entityType === entityType ? draft.sourceId : ""}
-                  onChange={(event) =>
-                    setDraft({ ...draft, entityType, sourceId: event.target.value })
+                  onChange={(source) =>
+                    setDraft({
+                      ...draft,
+                      entityType,
+                      sourceId: source.sourceId,
+                      sourceLabel: source.sourceLabel,
+                    })
                   }
                 />
                 <Input
@@ -111,18 +119,32 @@ export function MappingProfilePanel({
                     setDraft({ ...draft, entityType, sourceLabel: event.target.value })
                   }
                 />
-                <TargetLookup
-                  entityType={entityType}
-                  value={draft.entityType === entityType ? draft.targetId : ""}
-                  onChange={(target) =>
-                    setDraft({
-                      ...draft,
-                      entityType,
-                      targetId: target.targetId,
-                      targetLabel: target.targetLabel,
-                    })
-                  }
-                />
+                {entityType === "ServiceFailureReasonCode" ? (
+                  <Input
+                    placeholder="Partner X12 code"
+                    value={draft.entityType === entityType ? draft.targetId : ""}
+                    onChange={(event) =>
+                      setDraft({
+                        ...draft,
+                        entityType,
+                        targetId: event.target.value.trim().toUpperCase(),
+                      })
+                    }
+                  />
+                ) : (
+                  <TargetLookup
+                    entityType={entityType}
+                    value={draft.entityType === entityType ? draft.targetId : ""}
+                    onChange={(target) =>
+                      setDraft({
+                        ...draft,
+                        entityType,
+                        targetId: target.targetId,
+                        targetLabel: target.targetLabel,
+                      })
+                    }
+                  />
+                )}
                 <Input
                   placeholder="Target label"
                   value={draft.entityType === entityType ? (draft.targetLabel ?? "") : ""}
@@ -151,8 +173,8 @@ export function MappingProfilePanel({
                 <TableBody>
                   {entries.map((entry) => (
                     <TableRow key={entry.id ?? `${entry.entityType}-${entry.sourceId}`}>
-                      <TableCell>{entry.sourceLabel || "Unlabeled source value"}</TableCell>
-                      <TableCell>{entry.targetLabel || "Mapped local record"}</TableCell>
+                      <TableCell>{entry.sourceLabel || entry.sourceId}</TableCell>
+                      <TableCell>{entry.targetLabel || entry.targetId}</TableCell>
                       <TableCell className="text-right">
                         {canUpdate && entry.id && (
                           <Button
@@ -183,6 +205,59 @@ export function MappingProfilePanel({
   );
 }
 
+function MappingSourceInput({
+  entityType,
+  value,
+  onChange,
+}: {
+  entityType: EDIMappingProfileItem["entityType"];
+  value: string;
+  onChange: (source: { sourceId: string; sourceLabel: string }) => void;
+}) {
+  const { control, setValue } = useForm<{ sourceId: string }>({
+    defaultValues: { sourceId: value },
+  });
+
+  useEffect(() => {
+    setValue("sourceId", value);
+  }, [setValue, value]);
+
+  if (entityType === "ServiceFailureReasonCode") {
+    return (
+      <ServiceFailureReasonCodeAutocompleteField
+        control={control}
+        name="sourceId"
+        placeholder="Service failure reason"
+        clearable
+        onOptionChange={(option) =>
+          onChange({
+            sourceId: option?.id ?? "",
+            sourceLabel: option ? `${option.code} - ${option.label}` : "",
+          })
+        }
+      />
+    );
+  }
+
+  return (
+    <Input
+      placeholder="Source value key"
+      value={value}
+      onChange={(event) =>
+        onChange({
+          sourceId: event.target.value,
+          sourceLabel: "",
+        })
+      }
+    />
+  );
+}
+
+function mappingEntityTabLabel(entityType: EDIMappingProfileItem["entityType"]) {
+  if (entityType === "ServiceFailureReasonCode") return "Failure Reason";
+  return entityType;
+}
+
 export function MappingProfilesWorkspace() {
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
@@ -194,7 +269,7 @@ export function MappingProfilesWorkspace() {
   const selectedPartnerId = useWatch({ control, name: "partnerId" });
 
   return (
-    <div className="grid min-h-0 gap-4 lg:grid-cols-[18rem_1fr] p-3">
+    <div className="grid min-h-0 gap-4 p-3 lg:grid-cols-[18rem_1fr]">
       <div className="rounded-md border bg-background">
         <div className="border-b px-3 py-2">
           <div className="text-sm font-medium">Partner</div>

@@ -8,14 +8,14 @@ export const serviceFailure = createQueryKeys("serviceFailure", {
   }),
   listByShipment: (shipmentId: string) => ({
     queryKey: ["list-by-shipment", shipmentId],
-    queryFn: async () =>
-      apiService.serviceFailureService.listByShipment(
-        shipmentId,
-        "limit=100",
-      ),
+    queryFn: async () => apiService.serviceFailureService.listByShipment(shipmentId, "limit=100"),
   }),
   edi214Readiness: (id: string, trigger?: "Reviewed" | "Resolved") => ({
     queryKey: ["edi-214-readiness", id, trigger],
     queryFn: async () => apiService.serviceFailureService.edi214Readiness(id, trigger),
+  }),
+  edi214Status: (id: string) => ({
+    queryKey: ["edi-214-status", id],
+    queryFn: async () => apiService.serviceFailureService.edi214Status(id),
   }),
 });
