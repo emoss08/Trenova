@@ -83,6 +83,7 @@ func NewApp(opts ...fx.Option) *App {
 func APIOptions() fx.Option {
 	return fx.Options(
 		api.HelpersModule,
+		api.GraphQLModule,
 		api.HandlersModule,
 		api.MiddlewareModule,
 		api.ServerModule,

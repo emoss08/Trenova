@@ -86,6 +86,44 @@ func (r *repository) GetByID(
 	return org, nil
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req repositories.GetOrganizationsByIDsRequest,
+) ([]*tenant.Organization, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByIDs"),
+		zap.Any("request", req),
+	)
+
+	if len(req.OrganizationIDs) == 0 {
+		return []*tenant.Organization{}, nil
+	}
+
+	entities := make([]*tenant.Organization, 0, len(req.OrganizationIDs))
+	q := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("org.business_unit_id = ?", req.TenantInfo.BuID).
+				Where("org.id IN (?)", bun.In(req.OrganizationIDs))
+		})
+
+	if req.IncludeState {
+		q.Relation("State")
+	}
+
+	if req.IncludeBU {
+		q.Relation("BusinessUnit")
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		log.Error("failed to get organizations from database", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.SelectOrganizationOptionsRequest,

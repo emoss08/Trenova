@@ -135,6 +135,9 @@ func TestList_Success(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
+		},
 	}
 
 	deps.repo.On("List", mock.Anything, req).Return(expected, nil)
@@ -185,6 +188,9 @@ func TestGet_Success(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 
@@ -829,6 +835,9 @@ func TestList_CustomFieldsError(t *testing.T) {
 				BuID:  entity.BusinessUnitID,
 			},
 		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
+		},
 	}
 
 	deps.repo.On("List", mock.Anything, req).Return(expected, nil)
@@ -877,6 +886,9 @@ func TestGet_CustomFieldsError(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeCustomFields: true,
 		},
 	}
 

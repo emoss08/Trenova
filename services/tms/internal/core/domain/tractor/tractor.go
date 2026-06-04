@@ -46,6 +46,8 @@ type Tractor struct {
 	RegistrationNumber      string                      `json:"registrationNumber"      bun:"registration_number,type:VARCHAR(50),nullzero"`
 	RegistrationExpiry      *int64                      `json:"registrationExpiry"      bun:"registration_expiry,type:BIGINT,nullzero"`
 	Vin                     string                      `json:"vin"                     bun:"vin,type:vin_code_optional,nullzero"`
+	LastKnownLocationID     pulid.ID                    `json:"lastKnownLocationId"     bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
+	LastKnownLocationName   string                      `json:"lastKnownLocationName"   bun:"last_known_location_name,type:VARCHAR(255),scanonly"`
 	Version                 int64                       `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt               int64                       `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt               int64                       `json:"updatedAt"               bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

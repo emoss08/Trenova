@@ -1,0 +1,39 @@
+enum LocationCategoryType {
+  Terminal
+  Warehouse
+  DistributionCenter
+  TruckStop
+  RestArea
+  CustomerLocation
+  Port
+  RailYard
+  MaintenanceFacility
+}
+
+enum FacilityType {
+  CrossDock
+  StorageWarehouse
+  ColdStorage
+  HazmatFacility
+  IntermodalFacility
+}
+
+type LocationCategory {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  type: LocationCategoryType!
+  facilityType: FacilityType
+  color: String!
+  hasSecureParking: Boolean!
+  requiresAppointment: Boolean!
+  allowsOvernight: Boolean!
+  hasRestroom: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}

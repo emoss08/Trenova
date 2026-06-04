@@ -3,15 +3,20 @@ package tractorservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -20,7 +25,11 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
+	DB                        ports.DBConnection
 	Repo                      repositories.TractorRepository
+	AssignmentRepo            repositories.AssignmentRepository
+	ContinuityRepo            repositories.EquipmentContinuityRepository
+	LocationRepo              repositories.LocationRepository
 	Validator                 *Validator
 	AuditService              services.AuditService
 	Realtime                  services.RealtimeService
@@ -29,7 +38,11 @@ type Params struct {
 
 type Service struct {
 	l                         *zap.Logger
+	db                        ports.DBConnection
 	repo                      repositories.TractorRepository
+	assignmentRepo            repositories.AssignmentRepository
+	continuityRepo            repositories.EquipmentContinuityRepository
+	locationRepo              repositories.LocationRepository
 	validator                 *Validator
 	auditService              services.AuditService
 	realtime                  services.RealtimeService
@@ -39,7 +52,11 @@ type Service struct {
 func New(p Params) *Service {
 	return &Service{
 		l:                         p.Logger.Named("service.tractor"),
+		db:                        p.DB,
 		repo:                      p.Repo,
+		assignmentRepo:            p.AssignmentRepo,
+		continuityRepo:            p.ContinuityRepo,
+		locationRepo:              p.LocationRepo,
 		validator:                 p.Validator,
 		auditService:              p.AuditService,
 		realtime:                  p.Realtime,
@@ -62,27 +79,35 @@ func (s *Service) List(
 		return nil, err
 	}
 
-	if len(result.Items) > 0 {
-		resourceIDs := make([]string, 0, len(result.Items))
-		for _, t := range result.Items {
-			resourceIDs = append(resourceIDs, t.GetResourceID())
-		}
+	if shouldIncludeTractorCustomFields(req.TractorRelationIncludes) {
+		err = s.attachCustomFields(ctx, req.Filter.TenantInfo, result.Items)
+	}
+	if err != nil {
+		log.Warn("failed to load custom fields for tractors", zap.Error(err))
+	}
 
-		customFieldsMap, cfErr := s.customFieldsValuesService.GetForResources(
-			ctx,
-			req.Filter.TenantInfo,
-			"tractor",
-			resourceIDs,
-		)
-		if cfErr != nil {
-			log.Warn("failed to load custom fields for tractors", zap.Error(cfErr))
-		} else {
-			for _, t := range result.Items {
-				if fields, ok := customFieldsMap[t.GetResourceID()]; ok {
-					t.CustomFields = fields
-				}
-			}
-		}
+	return result, nil
+}
+
+func (s *Service) ListCursor(
+	ctx context.Context,
+	req *repositories.ListTractorsCursorRequest,
+) (*pagination.CursorListResult[*tractor.Tractor], error) {
+	log := s.l.With(
+		zap.String("operation", "ListCursor"),
+		zap.Any("request", req),
+	)
+
+	result, err := s.repo.ListCursor(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if shouldIncludeTractorCustomFields(req.TractorRelationIncludes) {
+		err = s.attachCustomFields(ctx, req.Filter.TenantInfo, result.Items)
+	}
+	if err != nil {
+		log.Warn("failed to load custom fields for tractors", zap.Error(err))
 	}
 
 	return result, nil
@@ -104,19 +129,73 @@ func (s *Service) Get(
 		return nil, err
 	}
 
-	customFields, cfErr := s.customFieldsValuesService.GetForResource(
-		ctx,
-		req.TenantInfo,
-		entity.GetResourceType(),
-		entity.GetResourceID(),
-	)
-	if cfErr != nil {
-		s.l.Warn("failed to load custom fields for tractor", zap.Error(cfErr))
-	} else {
-		entity.CustomFields = customFields
+	if shouldIncludeTractorCustomFields(req.TractorRelationIncludes) {
+		customFields, cfErr := s.customFieldsValuesService.GetForResource(
+			ctx,
+			req.TenantInfo,
+			entity.GetResourceType(),
+			entity.GetResourceID(),
+		)
+		if cfErr != nil {
+			s.l.Warn("failed to load custom fields for tractor", zap.Error(cfErr))
+		} else {
+			entity.CustomFields = customFields
+		}
 	}
 
 	return entity, nil
+}
+
+func (s *Service) GetByIDs(
+	ctx context.Context,
+	req repositories.GetTractorsByIDsRequest,
+) ([]*tractor.Tractor, error) {
+	entities, err := s.repo.GetByIDs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	if shouldIncludeTractorCustomFields(req.TractorRelationIncludes) {
+		err = s.attachCustomFields(ctx, req.TenantInfo, entities)
+	}
+	if err != nil {
+		s.l.Warn("failed to load custom fields for tractors", zap.Error(err))
+	}
+
+	return entities, nil
+}
+
+func (s *Service) attachCustomFields(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entities []*tractor.Tractor,
+) error {
+	if len(entities) == 0 {
+		return nil
+	}
+
+	resourceIDs := make([]string, 0, len(entities))
+	for _, t := range entities {
+		resourceIDs = append(resourceIDs, t.GetResourceID())
+	}
+
+	customFieldsMap, err := s.customFieldsValuesService.GetForResources(
+		ctx,
+		tenantInfo,
+		"tractor",
+		resourceIDs,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, t := range entities {
+		if fields, ok := customFieldsMap[t.GetResourceID()]; ok {
+			t.CustomFields = fields
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) Create(
@@ -335,4 +414,79 @@ func (s *Service) BulkUpdateStatus(
 	}
 
 	return entities, nil
+}
+
+func (s *Service) Locate(
+	ctx context.Context,
+	req *repositories.LocateTractorRequest,
+) (*equipmentcontinuity.EquipmentContinuity, error) {
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, multiErr
+	}
+
+	var result *equipmentcontinuity.EquipmentContinuity
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if _, err := s.repo.GetByID(txCtx, repositories.GetTractorByIDRequest{
+			ID:         req.TractorID,
+			TenantInfo: req.TenantInfo,
+		}); err != nil {
+			return err
+		}
+
+		if _, err := s.locationRepo.GetByID(txCtx, repositories.GetLocationByIDRequest{
+			ID:         req.NewLocationID,
+			TenantInfo: req.TenantInfo,
+		}); err != nil {
+			return err
+		}
+
+		inProgress, err := s.assignmentRepo.FindInProgressByTractorID(
+			txCtx,
+			req.TenantInfo,
+			req.TractorID,
+			pulid.Nil,
+		)
+		if err != nil {
+			return err
+		}
+		if inProgress != nil {
+			return errortypes.NewBusinessError("Tractor is currently in progress on another move").
+				WithParam("tractorId", req.TractorID.String()).
+				WithParam("shipmentMoveId", inProgress.ShipmentMoveID.String())
+		}
+
+		current, err := s.continuityRepo.GetEffectiveCurrent(
+			txCtx,
+			repositories.GetCurrentEquipmentContinuityRequest{
+				TenantInfo:    req.TenantInfo,
+				EquipmentType: equipmentcontinuity.EquipmentTypeTractor,
+				EquipmentID:   req.TractorID,
+			},
+		)
+		if err != nil {
+			return err
+		}
+		if current != nil && current.CurrentLocationID == req.NewLocationID {
+			return errortypes.NewBusinessError("Tractor is already located at the requested location").
+				WithParam("tractorId", req.TractorID.String())
+		}
+
+		result, err = s.continuityRepo.Advance(txCtx, repositories.CreateEquipmentContinuityRequest{
+			TenantInfo:        req.TenantInfo,
+			EquipmentType:     equipmentcontinuity.EquipmentTypeTractor,
+			EquipmentID:       req.TractorID,
+			CurrentLocationID: req.NewLocationID,
+			SourceType:        equipmentcontinuity.SourceTypeManualLocate,
+		})
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func shouldIncludeTractorCustomFields(includes repositories.TractorRelationIncludes) bool {
+	return includes.IncludeCustomFields || len(includes.TractorColumns) == 0
 }

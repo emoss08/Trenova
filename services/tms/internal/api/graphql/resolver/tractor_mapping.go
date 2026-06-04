@@ -1,0 +1,299 @@
+package resolver
+
+import (
+	"context"
+
+	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/projection"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+)
+
+func tractorFromInput(
+	input gqlmodel.TractorInput,
+	id pulid.ID,
+	authCtx *authctx.AuthContext,
+) (*tractor.Tractor, error) {
+	primaryWorkerID, err := pulid.MustParse(input.PrimaryWorkerID)
+	if err != nil {
+		return nil, err
+	}
+	equipmentTypeID, err := pulid.MustParse(input.EquipmentTypeID)
+	if err != nil {
+		return nil, err
+	}
+	equipmentManufacturerID, err := pulid.MustParse(input.EquipmentManufacturerID)
+	if err != nil {
+		return nil, err
+	}
+	stateID, err := optionalID(input.StateID)
+	if err != nil {
+		return nil, err
+	}
+	fleetCodeID, err := optionalID(input.FleetCodeID)
+	if err != nil {
+		return nil, err
+	}
+	secondaryWorkerID, err := optionalID(input.SecondaryWorkerID)
+	if err != nil {
+		return nil, err
+	}
+
+	status := domaintypes.EquipmentStatusAvailable
+	if input.Status != nil {
+		status = *input.Status
+	}
+
+	entity := &tractor.Tractor{
+		ID:                      id,
+		OrganizationID:          authCtx.OrganizationID,
+		BusinessUnitID:          authCtx.BusinessUnitID,
+		PrimaryWorkerID:         primaryWorkerID,
+		EquipmentTypeID:         equipmentTypeID,
+		EquipmentManufacturerID: equipmentManufacturerID,
+		StateID:                 stateID,
+		FleetCodeID:             fleetCodeID,
+		SecondaryWorkerID:       secondaryWorkerID,
+		Status:                  status,
+		Code:                    input.Code,
+		Model:                   stringValue(input.Model),
+		Make:                    stringValue(input.Make),
+		Year:                    input.Year,
+		LicensePlateNumber:      stringValue(input.LicensePlateNumber),
+		RegistrationNumber:      stringValue(input.RegistrationNumber),
+		RegistrationExpiry:      int64Ptr(input.RegistrationExpiry),
+		Vin:                     stringValue(input.Vin),
+		CustomFields:            input.CustomFields,
+	}
+	if input.Version != nil {
+		entity.Version = int64(*input.Version)
+	}
+
+	return entity, nil
+}
+
+func applyTractorPatch(entity *tractor.Tractor, input gqlmodel.TractorPatchInput) error {
+	if input.PrimaryWorkerID != nil {
+		id, err := pulid.MustParse(*input.PrimaryWorkerID)
+		if err != nil {
+			return err
+		}
+		entity.PrimaryWorkerID = id
+	}
+	if input.EquipmentTypeID != nil {
+		id, err := pulid.MustParse(*input.EquipmentTypeID)
+		if err != nil {
+			return err
+		}
+		entity.EquipmentTypeID = id
+	}
+	if input.EquipmentManufacturerID != nil {
+		id, err := pulid.MustParse(*input.EquipmentManufacturerID)
+		if err != nil {
+			return err
+		}
+		entity.EquipmentManufacturerID = id
+	}
+	if value, ok := input.StateID.ValueOK(); ok {
+		id, err := optionalID(value)
+		if err != nil {
+			return err
+		}
+		entity.StateID = id
+	}
+	if value, ok := input.FleetCodeID.ValueOK(); ok {
+		id, err := optionalID(value)
+		if err != nil {
+			return err
+		}
+		entity.FleetCodeID = id
+	}
+	if value, ok := input.SecondaryWorkerID.ValueOK(); ok {
+		id, err := optionalID(value)
+		if err != nil {
+			return err
+		}
+		entity.SecondaryWorkerID = id
+	}
+	if input.Status != nil {
+		entity.Status = *input.Status
+	}
+	if input.Code != nil {
+		entity.Code = *input.Code
+	}
+	if input.Model != nil {
+		entity.Model = *input.Model
+	}
+	if input.Make != nil {
+		entity.Make = *input.Make
+	}
+	if input.Year != nil {
+		entity.Year = input.Year
+	}
+	if input.LicensePlateNumber != nil {
+		entity.LicensePlateNumber = *input.LicensePlateNumber
+	}
+	if input.RegistrationNumber != nil {
+		entity.RegistrationNumber = *input.RegistrationNumber
+	}
+	if input.RegistrationExpiry != nil {
+		entity.RegistrationExpiry = int64Ptr(input.RegistrationExpiry)
+	}
+	if input.Vin != nil {
+		entity.Vin = *input.Vin
+	}
+	if input.Version != nil {
+		entity.Version = int64(*input.Version)
+	}
+	if input.CustomFields != nil {
+		entity.CustomFields = input.CustomFields
+	}
+
+	return nil
+}
+
+func tractorRelationIncludes(
+	ctx context.Context,
+	nodePathPrefix string,
+	includeEquipmentDetails *bool,
+	includeFleetDetails *bool,
+	includeWorkerDetails *bool,
+) repositories.TractorRelationIncludes {
+	return tractorRelationIncludesForFields(
+		func(path string) bool {
+			return graphql.FieldRequested(ctx, path)
+		},
+		nodePathPrefix,
+		includeEquipmentDetails,
+		includeFleetDetails,
+		includeWorkerDetails,
+	)
+}
+
+func tractorRelationIncludesForFields(
+	fieldRequested func(string) bool,
+	nodePathPrefix string,
+	includeEquipmentDetails *bool,
+	includeFleetDetails *bool,
+	includeWorkerDetails *bool,
+) repositories.TractorRelationIncludes {
+	equipmentDetailsAllowed := includeEquipmentDetails == nil || *includeEquipmentDetails
+	fleetDetailsAllowed := includeFleetDetails == nil || *includeFleetDetails
+	workerDetailsAllowed := includeWorkerDetails == nil || *includeWorkerDetails
+	selection := projection.Select(
+		projection.TractorSpec,
+		fieldRequested,
+		projection.SelectOptions{
+			PathPrefix: nodePathPrefix,
+			Gates: map[string]bool{
+				"equipmentDetails": equipmentDetailsAllowed,
+				"fleetDetails":     fleetDetailsAllowed,
+				"workerDetails":    workerDetailsAllowed,
+			},
+		},
+	)
+	primaryWorkerSelection, primaryWorkerSelected := selection.Relations["primaryWorker"]
+	secondaryWorkerSelection, secondaryWorkerSelected := selection.Relations["secondaryWorker"]
+
+	includes := repositories.TractorRelationIncludes{
+		IncludeBusinessUnit:           selection.HasRelation("businessUnit"),
+		IncludeOrganization:           selection.HasRelation("organization"),
+		IncludeState:                  selection.HasRelation("state"),
+		IncludeEquipmentType:          selection.HasRelation("equipmentType"),
+		IncludeEquipmentManufacturer:  selection.HasRelation("equipmentManufacturer"),
+		IncludeFleetCode:              selection.HasRelation("fleetCode"),
+		IncludePrimaryWorker:          primaryWorkerSelected,
+		IncludePrimaryWorkerState:     primaryWorkerSelection.Selection.HasRelation("state"),
+		IncludePrimaryWorkerFleet:     primaryWorkerSelection.Selection.HasRelation("fleetCode"),
+		IncludePrimaryWorkerManager:   primaryWorkerSelection.Selection.HasRelation("manager"),
+		IncludeSecondaryWorker:        secondaryWorkerSelected,
+		IncludeSecondaryWorkerState:   secondaryWorkerSelection.Selection.HasRelation("state"),
+		IncludeSecondaryWorkerFleet:   secondaryWorkerSelection.Selection.HasRelation("fleetCode"),
+		IncludeSecondaryWorkerManager: secondaryWorkerSelection.Selection.HasRelation("manager"),
+		IncludeLastKnownLocation:      selection.HasSpecial("lastKnownLocation"),
+		IncludeCustomFields:           selection.HasSpecial("customFields"),
+		TractorColumns:                selection.Columns,
+	}
+	if includes.IncludeEquipmentType {
+		includes.EquipmentTypeColumns = selection.RelationColumns("equipmentType")
+	}
+	if includes.IncludeEquipmentManufacturer {
+		includes.EquipmentManufacturerColumns = selection.RelationColumns("equipmentManufacturer")
+	}
+	if includes.IncludeFleetCode {
+		includes.FleetCodeColumns = selection.RelationColumns("fleetCode")
+	}
+	if includes.IncludePrimaryWorker {
+		includes.PrimaryWorkerColumns = selection.RelationColumns("primaryWorker")
+	}
+	if includes.IncludeSecondaryWorker {
+		includes.SecondaryWorkerColumns = selection.RelationColumns("secondaryWorker")
+	}
+
+	return includes
+}
+
+func tractorConnectionToModel(
+	result *pagination.CursorListResult[*tractor.Tractor],
+) (*gqlmodel.TractorConnection, error) {
+	return tractorConnectionFromItems(result.Items, result.HasNextPage, nil)
+}
+
+func tractorListConnectionToModel(
+	result *pagination.ListResult[*tractor.Tractor],
+	offset int,
+) (*gqlmodel.TractorConnection, error) {
+	hasNextPage := offset+len(result.Items) < result.Total
+	return tractorConnectionFromItems(result.Items, hasNextPage, &result.Total)
+}
+
+func tractorConnectionFromItems(
+	items []*tractor.Tractor,
+	hasNextPage bool,
+	totalCount *int,
+) (*gqlmodel.TractorConnection, error) {
+	edges := make([]*gqlmodel.TractorEdge, 0, len(items))
+	for _, entity := range items {
+		cursor, err := pagination.EncodeCursor(pagination.Cursor{
+			CreatedAt: entity.CreatedAt,
+			ID:        entity.ID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		edges = append(edges, &gqlmodel.TractorEdge{
+			Node:   entity,
+			Cursor: cursor,
+		})
+	}
+
+	var endCursor *string
+	if len(edges) > 0 {
+		endCursor = &edges[len(edges)-1].Cursor
+	}
+
+	return &gqlmodel.TractorConnection{
+		Edges: edges,
+		PageInfo: &gqlmodel.PageInfo{
+			HasNextPage: hasNextPage,
+			EndCursor:   endCursor,
+		},
+		TotalCount: totalCount,
+	}, nil
+}
+
+func tractorLastKnownLocationReference(entity *tractor.Tractor) *gqlmodel.LocationReference {
+	if entity.LastKnownLocationID.IsNil() {
+		return nil
+	}
+
+	return &gqlmodel.LocationReference{
+		ID:   entity.LastKnownLocationID.String(),
+		Name: entity.LastKnownLocationName,
+	}
+}

@@ -1,0 +1,46 @@
+enum LocationGeofenceType {
+  auto
+  circle
+  rectangle
+  draw
+}
+
+type GeofenceVertex {
+  latitude: Float!
+  longitude: Float!
+}
+
+type Location {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  locationCategoryId: ID!
+  stateId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  postalCode: String!
+  placeId: String!
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  geofenceType: LocationGeofenceType!
+  geofenceRadiusMeters: Float
+  geofenceVertices: [GeofenceVertex!]!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+  state: UsState
+  locationCategory: LocationCategory
+}
+
+type LocationReference {
+  id: ID!
+  name: String!
+}

@@ -250,12 +250,26 @@ func parseFilterValue(value, operator string) any {
 	}
 }
 
+func NormalizeFilterValue(value any, operator string) any {
+	return normalizeFilterValue(value, operator)
+}
+
 func normalizeFilterValue(value any, operator string) any {
 	switch v := value.(type) {
 	case float64:
 		if v == float64(int64(v)) {
 			return int64(v)
 		}
+		return v
+	case int:
+		return int64(v)
+	case int8:
+		return int64(v)
+	case int16:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
 		return v
 	case []any:
 		return normalizeSlice(v)
@@ -287,7 +301,7 @@ func normalizeSlice(slice []any) any {
 		switch elem.(type) {
 		case string:
 			allNumbers = false
-		case float64:
+		case float64, int, int8, int16, int32, int64:
 			allStrings = false
 		default:
 			allStrings = false
@@ -306,12 +320,31 @@ func normalizeSlice(slice []any) any {
 	if allNumbers {
 		result := make([]int64, len(filtered))
 		for i, elem := range filtered {
-			result[i] = int64(elem.(float64)) //nolint:errcheck // We know the type is float64
+			result[i] = normalizeInt64(elem)
 		}
 		return result
 	}
 
 	return filtered
+}
+
+func normalizeInt64(value any) int64 {
+	switch v := value.(type) {
+	case float64:
+		return int64(v)
+	case int:
+		return int64(v)
+	case int8:
+		return int64(v)
+	case int16:
+		return int64(v)
+	case int32:
+		return int64(v)
+	case int64:
+		return v
+	default:
+		return 0
+	}
 }
 
 func parseFilterGroups(c *gin.Context, opts *QueryOptions) {

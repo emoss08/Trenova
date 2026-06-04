@@ -109,11 +109,13 @@ func (h *Handler) list(c *gin.Context) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListTractorsRequest{
-					Filter:                  req,
-					IncludeEquipmentDetails: helpers.QueryBool(c, "includeEquipmentDetails", false),
-					IncludeFleetDetails:     helpers.QueryBool(c, "includeFleetDetails", false),
-					IncludeWorkerDetails:    helpers.QueryBool(c, "includeWorkerDetails", false),
-					Status:                  helpers.QueryString(c, "status", ""),
+					Filter: req,
+					TractorRelationIncludes: repositories.TractorRelationIncludes{
+						IncludeEquipmentDetails: helpers.QueryBool(c, "includeEquipmentDetails", false),
+						IncludeFleetDetails:     helpers.QueryBool(c, "includeFleetDetails", false),
+						IncludeWorkerDetails:    helpers.QueryBool(c, "includeWorkerDetails", false),
+					},
+					Status: helpers.QueryString(c, "status", ""),
 				},
 			)
 		},

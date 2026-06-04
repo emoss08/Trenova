@@ -113,10 +113,18 @@ func (h *Handler) list(c *gin.Context) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListTrailersRequest{
-					Filter:                  req,
-					IncludeEquipmentDetails: helpers.QueryBool(c, "includeEquipmentDetails", false),
-					IncludeFleetDetails:     helpers.QueryBool(c, "includeFleetDetails", false),
-					Status:                  helpers.QueryString(c, "status", ""),
+					Filter: req,
+					TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+						IncludeEquipmentDetails: helpers.QueryBool(
+							c,
+							"includeEquipmentDetails",
+							false,
+						),
+						IncludeFleetDetails:      helpers.QueryBool(c, "includeFleetDetails", false),
+						IncludeLastKnownLocation: true,
+						IncludeCustomFields:      true,
+					},
+					Status: helpers.QueryString(c, "status", ""),
 				},
 			)
 		},
@@ -147,6 +155,10 @@ func (h *Handler) getOption(c *gin.Context) {
 		TenantInfo: pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
 			BuID:  authCtx.BusinessUnitID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeLastKnownLocation: true,
+			IncludeCustomFields:      true,
 		},
 	})
 	if err != nil {
@@ -209,6 +221,10 @@ func (h *Handler) get(c *gin.Context) {
 			TenantInfo: pagination.TenantInfo{
 				OrgID: authCtx.OrganizationID,
 				BuID:  authCtx.BusinessUnitID,
+			},
+			TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+				IncludeLastKnownLocation: true,
+				IncludeCustomFields:      true,
 			},
 		},
 	)
@@ -324,6 +340,10 @@ func (h *Handler) patch(c *gin.Context) {
 			OrgID:  authCtx.OrganizationID,
 			BuID:   authCtx.BusinessUnitID,
 			UserID: authCtx.UserID,
+		},
+		TrailerRelationIncludes: repositories.TrailerRelationIncludes{
+			IncludeLastKnownLocation: true,
+			IncludeCustomFields:      true,
 		},
 	})
 	if err != nil {

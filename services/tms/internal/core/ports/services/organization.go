@@ -30,6 +30,13 @@ type DeleteLogoRequest struct {
 	OrganizationID pulid.ID
 }
 
+type GetOrganizationsByIDsRequest struct {
+	TenantInfo      pagination.TenantInfo
+	OrganizationIDs []pulid.ID
+	IncludeState    bool
+	IncludeBU       bool
+}
+
 type MicrosoftSSOConfig struct {
 	OrganizationID   string   `json:"organizationId"`
 	Enabled          bool     `json:"enabled"`
@@ -60,6 +67,10 @@ type OrganizationService interface {
 		ctx context.Context,
 		req repositories.GetOrganizationByIDRequest,
 	) (*tenant.Organization, error)
+	GetByIDs(
+		ctx context.Context,
+		req GetOrganizationsByIDsRequest,
+	) ([]*tenant.Organization, error)
 	SelectOptions(
 		ctx context.Context,
 		req *repositories.SelectOrganizationOptionsRequest,

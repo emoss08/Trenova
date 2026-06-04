@@ -1,0 +1,23 @@
+enum EquipmentClass {
+  Tractor
+  Trailer
+  Container
+  Other
+}
+
+type EquipmentType {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  status: EntityStatus!
+  code: String!
+  description: String!
+  class: EquipmentClass!
+  color: String!
+  interiorLength: Float
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+}

@@ -1,0 +1,19 @@
+type FleetCode {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  managerId: ID!
+  status: EntityStatus!
+  code: String!
+  description: String!
+  revenueGoal: Float
+  deadheadGoal: Float
+  mileageGoal: Float
+  color: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  businessUnit: BusinessUnit
+  organization: Organization
+  manager: User
+}

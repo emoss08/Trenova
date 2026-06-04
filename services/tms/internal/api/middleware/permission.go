@@ -38,7 +38,7 @@ func (m *PermissionMiddleware) RequirePermission(
 
 		result, err := m.permEngine.Check(
 			c.Request.Context(),
-			permissionCheckRequest(authCtx, resource, operation),
+			BuildPermissionCheckRequest(authCtx, resource, operation),
 		)
 		if err != nil {
 			m.errorHandler.HandleError(c, err)
@@ -68,7 +68,7 @@ func (m *PermissionMiddleware) RequireAnyPermission(checks ...struct {
 		for _, check := range checks {
 			result, err := m.permEngine.Check(
 				c.Request.Context(),
-				permissionCheckRequest(authCtx, check.Resource, check.Operation),
+				BuildPermissionCheckRequest(authCtx, check.Resource, check.Operation),
 			)
 			if err != nil {
 				continue
@@ -98,7 +98,7 @@ func (m *PermissionMiddleware) RequireAllPermissions(checks ...struct {
 		for _, check := range checks {
 			result, err := m.permEngine.Check(
 				c.Request.Context(),
-				permissionCheckRequest(authCtx, check.Resource, check.Operation),
+				BuildPermissionCheckRequest(authCtx, check.Resource, check.Operation),
 			)
 			if err != nil {
 				m.errorHandler.HandleError(c, err)
@@ -126,7 +126,7 @@ func GetPermissionResult(c *gin.Context) *services.PermissionCheckResult {
 	return nil
 }
 
-func permissionCheckRequest(
+func BuildPermissionCheckRequest(
 	authCtx *authctx.AuthContext,
 	resource string,
 	operation permission.Operation,

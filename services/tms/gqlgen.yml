@@ -1,0 +1,153 @@
+schema:
+  - internal/api/graphql/schema/*.graphqls
+
+exec:
+  filename: internal/api/graphql/generated/generated.go
+  package: generated
+
+model:
+  filename: internal/api/graphql/gqlmodel/models_gen.go
+  package: gqlmodel
+
+resolver:
+  layout: follow-schema
+  dir: internal/api/graphql/resolver
+  package: resolver
+  filename_template: "{name}.resolvers.go"
+
+autobind: []
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+      - github.com/emoss08/trenova/shared/pulid.ID
+  JSON:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+  EntityStatus:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.Status
+  EquipmentStatus:
+    model:
+      - github.com/emoss08/trenova/pkg/domaintypes.EquipmentStatus
+  EquipmentClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmenttype.Class
+  FacilityType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.FacilityType
+  LocationCategoryType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.Category
+  LocationGeofenceType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/geofence.Type
+  GeofenceVertex:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/geofence.Vertex
+  Trailer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/trailer.Trailer
+    fields:
+      registrationStateId:
+        resolver: true
+      fleetCodeId:
+        resolver: true
+      equipmentStatus:
+        resolver: true
+      lastKnownLocationId:
+        resolver: true
+      lastKnownLocation:
+        resolver: true
+  Tractor:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tractor.Tractor
+    fields:
+      stateId:
+        resolver: true
+      fleetCodeId:
+        resolver: true
+      secondaryWorkerId:
+        resolver: true
+      equipmentStatus:
+        resolver: true
+      lastKnownLocationId:
+        resolver: true
+      lastKnownLocation:
+        resolver: true
+  Worker:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Worker
+    fields:
+      fleetCodeId:
+        resolver: true
+      managerId:
+        resolver: true
+  WorkerType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerType
+  DriverType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.DriverType
+  WorkerGender:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.Gender
+  EquipmentType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
+  EquipmentManufacturer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer.EquipmentManufacturer
+  FleetCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/fleetcode.FleetCode
+  BusinessUnit:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.BusinessUnit
+  Organization:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.Organization
+    fields:
+      dotNumber:
+        fieldName: DOTNumber
+      logoUrl:
+        fieldName: LogoURL
+  User:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/tenant.User
+    fields:
+      timeFormat:
+        resolver: true
+      profilePicUrl:
+        fieldName: ProfilePicURL
+      thumbnailUrl:
+        fieldName: ThumbnailURL
+      businessUnit:
+        resolver: true
+      currentOrganization:
+        resolver: true
+  UsState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/usstate.UsState
+    fields:
+      countryIso3:
+        fieldName: CountryIso3
+  Location:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/location.Location
+  LocationCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/locationcategory.LocationCategory
+  EquipmentContinuity:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity.EquipmentContinuity
+    fields:
+      sourceShipmentId:
+        resolver: true
+      sourceShipmentMoveId:
+        resolver: true
+      currentLocationId:
+        resolver: true
+      currentLocationName:
+        resolver: true

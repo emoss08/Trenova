@@ -1,0 +1,9 @@
+type UsState {
+  id: ID!
+  name: String!
+  abbreviation: String!
+  countryName: String!
+  countryIso3: String!
+  createdAt: Int!
+  updatedAt: Int!
+}
