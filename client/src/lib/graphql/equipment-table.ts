@@ -1,4 +1,9 @@
-import type { DataTableGraphQLConfig } from "@/types/data-table";
+import {
+  DATA_TABLE_CONNECTION_ARGUMENTS,
+  DATA_TABLE_CONNECTION_VARIABLES,
+  DATA_TABLE_PAGE_INFO_FRAGMENT,
+  defineDataTableGraphQLConfig,
+} from "@/lib/graphql/data-table";
 import type { Tractor } from "@/types/tractor";
 import type { Trailer } from "@/types/trailer";
 
@@ -39,13 +44,6 @@ const WORKER_TABLE_REFERENCE_FRAGMENT = `
     firstName
     lastName
     wholeName
-  }
-`;
-
-const PAGE_INFO_FRAGMENT = `
-  fragment DataTablePageInfoFields on PageInfo {
-    hasNextPage
-    endCursor
   }
 `;
 
@@ -139,23 +137,13 @@ const TRAILER_TABLE_ROW_FRAGMENT = `
 
 export const TRACTOR_TABLE_GRAPHQL_DOCUMENT = `
   query TractorTable(
-    $first: Int!
-    $after: String
-    $query: String
-    $fieldFilters: [FieldFilterInput!]
-    $filterGroups: [FilterGroupInput!]
-    $sort: [SortFieldInput!]
+    ${DATA_TABLE_CONNECTION_VARIABLES}
     $includeEquipmentDetails: Boolean = true
     $includeFleetDetails: Boolean = true
     $includeWorkerDetails: Boolean = true
   ) {
     tractors(
-      first: $first
-      after: $after
-      query: $query
-      fieldFilters: $fieldFilters
-      filterGroups: $filterGroups
-      sort: $sort
+      ${DATA_TABLE_CONNECTION_ARGUMENTS}
       includeEquipmentDetails: $includeEquipmentDetails
       includeFleetDetails: $includeFleetDetails
       includeWorkerDetails: $includeWorkerDetails
@@ -178,27 +166,17 @@ export const TRACTOR_TABLE_GRAPHQL_DOCUMENT = `
   ${FLEET_CODE_TABLE_FRAGMENT}
   ${US_STATE_TABLE_FRAGMENT}
   ${WORKER_TABLE_REFERENCE_FRAGMENT}
-  ${PAGE_INFO_FRAGMENT}
+  ${DATA_TABLE_PAGE_INFO_FRAGMENT}
 `;
 
 export const TRAILER_TABLE_GRAPHQL_DOCUMENT = `
   query TrailerTable(
-    $first: Int!
-    $after: String
-    $query: String
-    $fieldFilters: [FieldFilterInput!]
-    $filterGroups: [FilterGroupInput!]
-    $sort: [SortFieldInput!]
+    ${DATA_TABLE_CONNECTION_VARIABLES}
     $includeEquipmentDetails: Boolean = true
     $includeFleetDetails: Boolean = true
   ) {
     trailers(
-      first: $first
-      after: $after
-      query: $query
-      fieldFilters: $fieldFilters
-      filterGroups: $filterGroups
-      sort: $sort
+      ${DATA_TABLE_CONNECTION_ARGUMENTS}
       includeEquipmentDetails: $includeEquipmentDetails
       includeFleetDetails: $includeFleetDetails
     ) {
@@ -219,11 +197,11 @@ export const TRAILER_TABLE_GRAPHQL_DOCUMENT = `
   ${EQUIPMENT_MANUFACTURER_TABLE_FRAGMENT}
   ${FLEET_CODE_TABLE_FRAGMENT}
   ${US_STATE_TABLE_FRAGMENT}
-  ${PAGE_INFO_FRAGMENT}
+  ${DATA_TABLE_PAGE_INFO_FRAGMENT}
 `;
 
 export const equipmentTableGraphQLConfigs = {
-  tractor: {
+  tractor: defineDataTableGraphQLConfig<Tractor>({
     document: TRACTOR_TABLE_GRAPHQL_DOCUMENT,
     operationName: "TractorTable",
     connectionKey: "tractors",
@@ -232,8 +210,8 @@ export const equipmentTableGraphQLConfigs = {
       includeFleetDetails: true,
       includeWorkerDetails: true,
     },
-  } satisfies DataTableGraphQLConfig<Tractor>,
-  trailer: {
+  }),
+  trailer: defineDataTableGraphQLConfig<Trailer>({
     document: TRAILER_TABLE_GRAPHQL_DOCUMENT,
     operationName: "TrailerTable",
     connectionKey: "trailers",
@@ -241,5 +219,5 @@ export const equipmentTableGraphQLConfigs = {
       includeEquipmentDetails: true,
       includeFleetDetails: true,
     },
-  } satisfies DataTableGraphQLConfig<Trailer>,
+  }),
 } as const;
