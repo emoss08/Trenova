@@ -27,8 +27,11 @@ export const DATA_TABLE_PAGE_INFO_FRAGMENT = `
   }
 `;
 
-export function defineDataTableGraphQLConfig<TData extends Record<string, unknown>>(
-  config: DataTableGraphQLConfig<TData>,
-): DataTableGraphQLConfig<TData> {
+export function defineDataTableGraphQLConfig<
+  TData extends Record<string, unknown>,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+>(
+  config: DataTableGraphQLConfig<TData, TVariables>,
+): DataTableGraphQLConfig<TData, TVariables> {
   return config;
 }

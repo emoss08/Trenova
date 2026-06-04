@@ -173,7 +173,7 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
       graphql
         ? {
             connectionKey: graphql.connectionKey,
-            document: graphql.document,
+            document: graphql.document.toString(),
             operationName: graphql.operationName,
             variables: graphql.variables,
           }

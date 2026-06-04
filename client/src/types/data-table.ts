@@ -2,6 +2,7 @@ import type { ColumnDef, Row, Table } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
 import type { SelectOption } from "./fields";
+import type { GraphQLDocument } from "./graphql";
 import type { API_ENDPOINTS } from "./server";
 
 export type TableSheetProps = {
@@ -103,11 +104,14 @@ export type DataTableProps<TData extends Record<string, any>> = {
   initialColumnVisibility?: Record<string, boolean>;
 };
 
-export type DataTableGraphQLConfig<TData extends Record<string, any>> = {
-  document: string;
+export type DataTableGraphQLConfig<
+  TData extends Record<string, any>,
+  TVariables extends Record<string, unknown> = Record<string, unknown>,
+> = {
+  document: GraphQLDocument;
   operationName: string;
   connectionKey: string;
-  variables?: Record<string, unknown>;
+  variables?: Partial<TVariables>;
   mapNode?: (node: unknown) => TData;
 };
 

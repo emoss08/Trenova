@@ -199,31 +199,35 @@ describe("data table query fetching", () => {
 
 describe("tractor and trailer GraphQL table configs", () => {
   it("opts tractors into the tractor connection with required include variables", () => {
+    const document = equipmentTableGraphQLConfigs.tractor.document.toString();
+
     expect(equipmentTableGraphQLConfigs.tractor.connectionKey).toBe("tractors");
     expect(equipmentTableGraphQLConfigs.tractor.variables).toMatchObject({
       includeEquipmentDetails: true,
       includeFleetDetails: true,
       includeWorkerDetails: true,
     });
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("primaryWorker");
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("customFields");
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("totalCount");
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("pageInfo");
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("$after: String");
-    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("$offset: Int");
+    expect(document).toContain("primaryWorker");
+    expect(document).toContain("customFields");
+    expect(document).toContain("totalCount");
+    expect(document).toContain("pageInfo");
+    expect(document).toContain("$after: String");
+    expect(document).toContain("$offset: Int");
   });
 
   it("opts trailers into the trailer connection with required include variables", () => {
+    const document = equipmentTableGraphQLConfigs.trailer.document.toString();
+
     expect(equipmentTableGraphQLConfigs.trailer.connectionKey).toBe("trailers");
     expect(equipmentTableGraphQLConfigs.trailer.variables).toMatchObject({
       includeEquipmentDetails: true,
       includeFleetDetails: true,
     });
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("lastKnownLocationName");
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("customFields");
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("totalCount");
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("pageInfo");
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("$after: String");
-    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("$offset: Int");
+    expect(document).toContain("lastKnownLocationName");
+    expect(document).toContain("customFields");
+    expect(document).toContain("totalCount");
+    expect(document).toContain("pageInfo");
+    expect(document).toContain("$after: String");
+    expect(document).toContain("$offset: Int");
   });
 });

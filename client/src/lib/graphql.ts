@@ -1,5 +1,6 @@
 import { withCsrfHeader } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
+import type { GraphQLDocument } from "@/types/graphql";
 
 type GraphQLErrorResponse = {
   message?: unknown;
@@ -11,7 +12,7 @@ type GraphQLResponse<TData> = {
 };
 
 type GraphQLRequestParams = {
-  document: string;
+  document: GraphQLDocument;
   operationName?: string;
   variables?: Record<string, unknown>;
 };
@@ -36,7 +37,7 @@ export async function requestGraphQL<TData>({
 }: GraphQLRequestParams): Promise<TData> {
   const response = await fetch(resolveGraphQLURL(), {
     body: JSON.stringify({
-      query: document,
+      query: document.toString(),
       operationName,
       variables,
     }),

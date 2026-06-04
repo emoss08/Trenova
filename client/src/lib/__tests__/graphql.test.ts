@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TractorTableDocument } from "@/graphql/generated/graphql";
 import { clearCsrfToken, setCsrfToken } from "../api";
 import { requestGraphQL, resolveGraphQLURL } from "../graphql";
 
@@ -58,6 +59,24 @@ describe("requestGraphQL", () => {
     expect(JSON.parse(init.body as string)).toEqual({
       query: "query Test { ok }",
       operationName: "Test",
+      variables: { first: 10 },
+    });
+  });
+
+  it("posts generated typed documents as GraphQL strings", async () => {
+    setCsrfToken("graphql-token");
+
+    await requestGraphQL({
+      document: TractorTableDocument,
+      operationName: "TractorTable",
+      variables: { first: 10 },
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(typeof init.body).toBe("string");
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      query: expect.stringContaining("query TractorTable"),
+      operationName: "TractorTable",
       variables: { first: 10 },
     });
   });
