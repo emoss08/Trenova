@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CircleCheckIcon, MapPinIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
 import { LocateTrailerDialog } from "./locate-trailer-dialog";
 import { getColumns } from "./trailer-columns";
 import { TrailerPanel } from "./trailer-panel";
@@ -75,6 +76,7 @@ export default function Table() {
         name="Trailer"
         link="/trailers/"
         queryKey="trailer-list"
+        graphql={equipmentTableGraphQLConfigs.trailer}
         exportModelName="trailer"
         resource={Resource.Trailer}
         columns={columns}

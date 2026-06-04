@@ -5,6 +5,12 @@ export type GenericLimitOffsetResponse<T> = {
   count: number;
   next: string | null;
   prev: string | null;
+  pageInfo?: {
+    mode: "cursor";
+    hasNextPage: boolean;
+    endCursor: string | null;
+    totalCount: number | null;
+  };
 };
 
 export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema: ItemType) {
@@ -15,6 +21,18 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
     prev: z.string().optional(),
   });
 }
+
+export const paginationInfoSchema = z.object({
+  limit: z
+    .number()
+    .min(1, "Limit must be at least 1")
+    .max(100, "Limit must be at most 100")
+    .positive("Limit must be a positive number")
+    .optional(),
+  offset: z.number().min(0, "Offset must be at least 0").optional(),
+});
+
+export type PaginationInfo = z.infer<typeof paginationInfoSchema>;
 
 export type BaseEndpoint =
   | "/formula-templates/"

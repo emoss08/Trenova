@@ -1,5 +1,11 @@
 import { API_BASE_URL } from "@/lib/constants";
-import type { FieldFilter, FilterGroup, SortField } from "@/types/data-table";
+import { requestGraphQL } from "@/lib/graphql";
+import type {
+  DataTableGraphQLConfig,
+  FieldFilter,
+  FilterGroup,
+  SortField,
+} from "@/types/data-table";
 import type { API_ENDPOINTS, GenericLimitOffsetResponse } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
@@ -9,7 +15,25 @@ export type DataTableQueryOptions = {
   fieldFilters?: FieldFilter[];
   filterGroups?: FilterGroup[];
   sort?: SortField[];
+  cursor?: string | null;
   extraSearchParams?: Record<string, unknown>;
+};
+
+type GraphQLConnection<TNode> = {
+  edges?: Array<{ node: TNode }>;
+  pageInfo?: {
+    hasNextPage?: boolean;
+    endCursor?: string | null;
+  };
+  totalCount?: number | null;
+};
+
+type FetchDataTablePageParams<TData extends Record<string, unknown>> = {
+  link: API_ENDPOINTS;
+  pageIndex: number;
+  pageSize: number;
+  options?: DataTableQueryOptions;
+  graphql?: DataTableGraphQLConfig<TData>;
 };
 
 export async function fetchData<TData extends Record<string, unknown>>(
@@ -68,21 +92,97 @@ export async function fetchData<TData extends Record<string, unknown>>(
   return response.json();
 }
 
+export async function fetchGraphQLData<TData extends Record<string, unknown>>(
+  pageSize: number,
+  config: DataTableGraphQLConfig<TData>,
+  options?: DataTableQueryOptions,
+): Promise<GenericLimitOffsetResponse<TData>> {
+  const variables = {
+    ...config.variables,
+    first: pageSize,
+    after: options?.cursor || undefined,
+    query: options?.query || undefined,
+    fieldFilters: options?.fieldFilters ?? [],
+    filterGroups: options?.filterGroups ?? [],
+    sort: options?.sort ?? [],
+  };
+  const data = await requestGraphQL<Record<string, GraphQLConnection<unknown>>>({
+    document: config.document,
+    operationName: config.operationName,
+    variables,
+  });
+  const connection = data[config.connectionKey];
+
+  if (!connection) {
+    throw new Error(`GraphQL response missing ${config.connectionKey} connection`);
+  }
+
+  const edges = connection.edges ?? [];
+  const results = edges.map((edge) =>
+    config.mapNode ? config.mapNode(edge.node) : (edge.node as TData),
+  );
+  const totalCount = connection.totalCount ?? null;
+
+  return {
+    results,
+    count: totalCount ?? results.length,
+    next: null,
+    prev: null,
+    pageInfo: {
+      mode: "cursor",
+      hasNextPage: connection.pageInfo?.hasNextPage ?? false,
+      endCursor: connection.pageInfo?.endCursor ?? null,
+      totalCount,
+    },
+  };
+}
+
+export async function fetchDataTablePage<TData extends Record<string, unknown>>({
+  link,
+  pageIndex,
+  pageSize,
+  options,
+  graphql,
+}: FetchDataTablePageParams<TData>): Promise<GenericLimitOffsetResponse<TData>> {
+  if (graphql) {
+    return fetchGraphQLData(pageSize, graphql, options);
+  }
+
+  return fetchData<TData>(link, pageIndex, pageSize, options);
+}
+
 export function useDataTableQuery<TData extends Record<string, unknown>>(
   queryKey: string,
   link: API_ENDPOINTS,
   pagination: PaginationState,
   options?: DataTableQueryOptions,
+  graphql?: DataTableGraphQLConfig<TData>,
+  enabled = true,
 ) {
   return useQuery<GenericLimitOffsetResponse<TData>, Error>({
-    queryKey: [queryKey, link, pagination, options],
+    queryKey: [
+      queryKey,
+      link,
+      pagination,
+      options,
+      graphql
+        ? {
+            connectionKey: graphql.connectionKey,
+            document: graphql.document,
+            operationName: graphql.operationName,
+            variables: graphql.variables,
+          }
+        : null,
+    ],
     queryFn: async () =>
-      fetchData<TData>(
+      fetchDataTablePage<TData>({
         link,
-        pagination.pageIndex,
-        pagination.pageSize,
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
         options,
-      ),
+        graphql,
+      }),
+    enabled,
     // structuralSharing: false,
   });
 }

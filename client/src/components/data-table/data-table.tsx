@@ -62,6 +62,7 @@ export function DataTable<TData extends Record<string, any>>({
   enableCreateAction = true,
   enableReadOnlyPanel = false,
   initialColumnVisibility,
+  graphql,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -72,6 +73,10 @@ export function DataTable<TData extends Record<string, any>>({
   const { pageIndex, pageSize, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [cursorState, setCursorState] = useState<{
+    scopeKey: string;
+    cursors: Record<number, string | null>;
+  }>({ scopeKey: "", cursors: { 0: null } });
   const defaultConfigAppliedRef = useRef(false);
 
   const { data: defaultConfig } = useQuery({
@@ -186,18 +191,30 @@ export function DataTable<TData extends Record<string, any>>({
 
   const handleSortChange = useCallback(
     (field: string, direction: SortDirection | null) => {
-      void setSearchParams({
+      const nextParams: { sort: SortField[]; pageIndex?: number } = {
         sort: updateSortField(sort, field, direction),
-      });
+      };
+      if (graphql) {
+        nextParams.pageIndex = 1;
+      }
+
+      void setSearchParams(nextParams);
     },
-    [sort, setSearchParams],
+    [graphql, sort, setSearchParams],
   );
 
   const handleSortArrayChange = useCallback(
     (newSort: SortField[]) => {
-      void setSearchParams({ sort: newSort });
+      const nextParams: { sort: SortField[]; pageIndex?: number } = {
+        sort: newSort,
+      };
+      if (graphql) {
+        nextParams.pageIndex = 1;
+      }
+
+      void setSearchParams(nextParams);
     },
-    [setSearchParams],
+    [graphql, setSearchParams],
   );
 
   const handlePageChange = useCallback(
@@ -214,12 +231,75 @@ export function DataTable<TData extends Record<string, any>>({
     [setSearchParams],
   );
 
+  const zeroBasedPageIndex = pageIndex - 1;
+  const cursorScopeKey = useMemo(
+    () =>
+      JSON.stringify({
+        pageSize,
+        query,
+        fieldFilters,
+        filterGroups,
+        sort,
+        variables: graphql?.variables ?? null,
+    }),
+    [fieldFilters, filterGroups, graphql?.variables, pageSize, query, sort],
+  );
+  const pageCursors =
+    graphql && cursorState.scopeKey === cursorScopeKey ? cursorState.cursors : { 0: null };
+  const currentCursor = graphql ? pageCursors[zeroBasedPageIndex] : null;
+  const canFetchPage = !graphql || zeroBasedPageIndex === 0 || currentCursor !== undefined;
+
   const dataQuery = useDataTableQuery<TData>(
     queryKey,
     link,
-    { pageIndex: pageIndex - 1, pageSize },
-    { query, fieldFilters, filterGroups, sort, extraSearchParams },
+    { pageIndex: zeroBasedPageIndex, pageSize },
+    { query, fieldFilters, filterGroups, sort, cursor: currentCursor, extraSearchParams },
+    graphql,
+    canFetchPage,
   );
+
+  useEffect(() => {
+    const pageInfo = dataQuery.data?.pageInfo;
+    if (!graphql || pageInfo?.mode !== "cursor" || !pageInfo.hasNextPage || !pageInfo.endCursor) {
+      return;
+    }
+
+    const nextPageIndex = zeroBasedPageIndex + 1;
+    setCursorState((current) => {
+      const cursors = current.scopeKey === cursorScopeKey ? current.cursors : { 0: null };
+      if (cursors[nextPageIndex] === pageInfo.endCursor) {
+        return current;
+      }
+
+      return {
+        scopeKey: cursorScopeKey,
+        cursors: {
+          ...cursors,
+          [nextPageIndex]: pageInfo.endCursor,
+        },
+      };
+    });
+  }, [cursorScopeKey, dataQuery.data?.pageInfo, graphql, zeroBasedPageIndex]);
+
+  useEffect(() => {
+    if (!graphql || canFetchPage || pageIndex === 1) {
+      return;
+    }
+
+    void setSearchParams({ pageIndex: 1 });
+  }, [canFetchPage, graphql, pageIndex, setSearchParams]);
+
+  const cursorPageInfo =
+    graphql && dataQuery.data?.pageInfo?.mode === "cursor" ? dataQuery.data.pageInfo : null;
+  const currentPageRowCount = dataQuery.data?.results.length ?? 0;
+  const rowCount = cursorPageInfo
+    ? zeroBasedPageIndex * pageSize +
+      currentPageRowCount +
+      (cursorPageInfo.hasNextPage ? pageSize : 0)
+    : (dataQuery.data?.count ?? 0);
+  const pageCount = cursorPageInfo
+    ? zeroBasedPageIndex + 1 + (cursorPageInfo.hasNextPage ? 1 : 0)
+    : Math.ceil((dataQuery.data?.count ?? 0) / pageSize);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -229,8 +309,8 @@ export function DataTable<TData extends Record<string, any>>({
     getSortedRowModel: getSortedRowModel(),
     data: dataQuery.data?.results || [],
     columns: tableColumns,
-    pageCount: Math.ceil((dataQuery.data?.count ?? 0) / pageSize),
-    rowCount: dataQuery.data?.count ?? 0,
+    pageCount,
+    rowCount,
     manualPagination: true,
     manualFiltering: true,
     columnResizeMode: "onChange",
@@ -244,14 +324,14 @@ export function DataTable<TData extends Record<string, any>>({
       : undefined,
     state: {
       pagination: {
-        pageIndex: pageIndex - 1,
+        pageIndex: zeroBasedPageIndex,
         pageSize,
       },
       rowSelection,
     },
     onPaginationChange: (updater) => {
       const newState =
-        typeof updater === "function" ? updater({ pageIndex: pageIndex - 1, pageSize }) : updater;
+        typeof updater === "function" ? updater({ pageIndex: zeroBasedPageIndex, pageSize }) : updater;
       handlePageChange(newState.pageIndex);
       if (newState.pageSize !== pageSize) {
         handlePageSizeChange(newState.pageSize);
@@ -449,6 +529,9 @@ export function DataTable<TData extends Record<string, any>>({
               table={table}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
+              mode={cursorPageInfo ? "cursor" : "offset"}
+              hasNextPage={cursorPageInfo?.hasNextPage}
+              currentPageRowCount={currentPageRowCount}
             />
           </div>
         </DataTablePanelContent>

@@ -133,6 +133,44 @@ describe("Cloudflare SPA worker", () => {
     );
   });
 
+  it("passes GraphQL paths through to the local backend in development", async () => {
+    const env = createAssetEnv();
+    vi.stubEnv("VITE_API_URL", "http://localhost:8080/api/v1");
+
+    const fetchMock = vi.fn(async (_request: Request) => {
+      return new Response(JSON.stringify({ data: { ok: true } }), {
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await worker.fetch(
+      new Request("http://127.0.0.1:5174/graphql", {
+        body: JSON.stringify({ query: "query Test { ok }" }),
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": "dev-csrf-token",
+        },
+        method: "POST",
+      }),
+      env,
+    );
+
+    expect(response.status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const forwardedRequest = fetchMock.mock.calls[0]?.[0];
+    expect(forwardedRequest).toBeDefined();
+    if (!forwardedRequest) {
+      throw new Error("expected forwarded GraphQL request");
+    }
+
+    expect(forwardedRequest.url).toBe("http://localhost:8080/graphql");
+    expect(forwardedRequest.method).toBe("POST");
+    expect(forwardedRequest.headers.get("X-CSRF-Token")).toBe("dev-csrf-token");
+    expect(await forwardedRequest.text()).toBe(JSON.stringify({ query: "query Test { ok }" }));
+  });
+
   it("returns 404 for local API paths when VITE_API_URL is not absolute", async () => {
     const env = createAssetEnv();
     vi.stubEnv("VITE_API_URL", "/api/v1");

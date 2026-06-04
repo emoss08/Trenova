@@ -80,6 +80,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   link: API_ENDPOINTS;
   detailLink?: API_ENDPOINTS;
   queryKey: string;
+  graphql?: DataTableGraphQLConfig<TData>;
   resource?: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TablePanel?: React.ComponentType<DataTablePanelProps<TData>>;
@@ -100,6 +101,14 @@ export type DataTableProps<TData extends Record<string, any>> = {
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+};
+
+export type DataTableGraphQLConfig<TData extends Record<string, any>> = {
+  document: string;
+  operationName: string;
+  connectionKey: string;
+  variables?: Record<string, unknown>;
+  mapNode?: (node: unknown) => TData;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

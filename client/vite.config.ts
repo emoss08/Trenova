@@ -52,6 +52,15 @@ export default defineConfig({
           });
         },
       },
+      "/graphql": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        configure(proxy) {
+          proxy.on("proxyReq", (proxyReq) => {
+            proxyReq.setHeader("accept-encoding", "identity");
+          });
+        },
+      },
     },
     hmr: {
       timeout: 30000,

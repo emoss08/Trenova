@@ -73,6 +73,7 @@ const baseSecurityHeaders = {
 
 const sensitivePathPrefixes = [
   "/api/",
+  "/graphql/",
   "/auth/",
   "/debug/",
   "/swagger/",
@@ -82,7 +83,7 @@ const sensitivePathPrefixes = [
   "/openapi",
 ] as const;
 
-const sensitiveExactPaths = ["/api", "/auth", "/metrics", "/debug", "/swagger"] as const;
+const sensitiveExactPaths = ["/api", "/graphql", "/auth", "/metrics", "/debug", "/swagger"] as const;
 
 type StaticAssetBinding = {
   fetch(request: Request): Promise<Response>;
@@ -159,7 +160,12 @@ function isBlockedPath(pathname: string): boolean {
 
 function isLocalDevelopmentAPIPath(pathname: string): boolean {
   const normalizedPathname = pathname.toLowerCase();
-  return normalizedPathname === "/api" || normalizedPathname.startsWith("/api/");
+  return (
+    normalizedPathname === "/api" ||
+    normalizedPathname.startsWith("/api/") ||
+    normalizedPathname === "/graphql" ||
+    normalizedPathname.startsWith("/graphql/")
+  );
 }
 
 async function fetchLocalDevelopmentAPI(request: Request): Promise<Response> {
