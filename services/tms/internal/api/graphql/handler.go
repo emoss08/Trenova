@@ -28,6 +28,7 @@ type Params struct {
 	Logger        *zap.Logger
 	ErrorHandler  *helpers.ErrorHandler
 	LoaderFactory *loaders.Factory
+	PersistedOps  *PersistedOperationManifest
 	Server        *gqlhandler.Server
 }
 
@@ -36,6 +37,7 @@ type Handler struct {
 	l             *zap.Logger
 	eh            *helpers.ErrorHandler
 	loaderFactory *loaders.Factory
+	persistedOps  *PersistedOperationManifest
 	server        *gqlhandler.Server
 }
 
@@ -45,6 +47,7 @@ func New(p Params) *Handler {
 		l:             p.Logger.Named("api.graphql"),
 		eh:            p.ErrorHandler,
 		loaderFactory: p.LoaderFactory,
+		persistedOps:  p.PersistedOps,
 		server:        p.Server,
 	}
 }
@@ -61,6 +64,15 @@ func (h *Handler) handle(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	if authCtx.IsAPIKey() {
 		h.eh.HandleError(c, errortypes.NewAuthorizationError("API keys cannot access GraphQL"))
+		return
+	}
+
+	if err := rewritePersistedOperationRequest(
+		c.Request,
+		h.persistedOps,
+		enforcePersistedOperations(h.cfg),
+	); err != nil {
+		h.eh.HandleError(c, err)
 		return
 	}
 

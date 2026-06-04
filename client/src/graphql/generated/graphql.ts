@@ -356,7 +356,7 @@ fragment TractorTableRowFields on Tractor {
   secondaryWorker {
     ...WorkerTableReferenceFields
   }
-}`) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
+}`, {"hash":"sha256:5fac6658d775d4262c0850bdb2938194466f9631cb91203f6f60f73c7e3a3376"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
 export const TrailerTableDocument = new TypedDocumentString(`
     query TrailerTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
   trailers(
@@ -441,4 +441,4 @@ fragment TrailerTableRowFields on Trailer {
   registrationState {
     ...UsStateTableFields
   }
-}`) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+}`, {"hash":"sha256:7d14e89dd8650263df64b20cc350016579d0015061ecd9c1517bcf7089569334"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;

@@ -1,6 +1,7 @@
 import { withCsrfHeader } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/constants";
-import type { GraphQLDocument } from "@/types/graphql";
+import type { GraphQLExecutableDocument, TypedGraphQLDocument } from "@/types/graphql";
+import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 
 type GraphQLErrorResponse = {
   message?: unknown;
@@ -11,10 +12,28 @@ type GraphQLResponse<TData> = {
   errors?: GraphQLErrorResponse[];
 };
 
-type GraphQLRequestParams = {
-  document: GraphQLDocument;
+type GraphQLRequestBody<TVariables> = {
+  extensions?: {
+    persistedQuery: {
+      sha256Hash: string;
+      version: 1;
+    };
+  };
   operationName?: string;
-  variables?: Record<string, unknown>;
+  query: string;
+  variables?: TVariables;
+};
+
+type GraphQLRequestParams<TVariables = Record<string, unknown>> = {
+  document: GraphQLExecutableDocument;
+  operationName?: string;
+  variables?: TVariables;
+};
+
+type TypedGraphQLRequestParams<TDocument extends TypedGraphQLDocument<unknown, never>> = {
+  document: TDocument;
+  operationName?: string;
+  variables?: VariablesOf<TDocument>;
 };
 
 export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
@@ -30,17 +49,40 @@ export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
   return url.toString();
 }
 
-export async function requestGraphQL<TData>({
+export async function requestGraphQL<
+  TDocument extends TypedGraphQLDocument<unknown, never>,
+>(
+  params: TypedGraphQLRequestParams<TDocument>,
+): Promise<ResultOf<TDocument>>;
+export async function requestGraphQL<
+  TData,
+  TVariables = Record<string, unknown>,
+>(params: GraphQLRequestParams<TVariables>): Promise<TData>;
+export async function requestGraphQL<
+  TData,
+  TVariables = Record<string, unknown>,
+>({
   document,
   operationName,
   variables,
-}: GraphQLRequestParams): Promise<TData> {
+}: GraphQLRequestParams<TVariables>): Promise<TData> {
+  const body: GraphQLRequestBody<TVariables> = {
+    query: document.toString(),
+    operationName,
+    variables,
+  };
+  const persistedHash = typeof document === "string" ? undefined : document.__meta__?.hash;
+  if (persistedHash) {
+    body.extensions = {
+      persistedQuery: {
+        version: 1,
+        sha256Hash: persistedHash,
+      },
+    };
+  }
+
   const response = await fetch(resolveGraphQLURL(), {
-    body: JSON.stringify({
-      query: document.toString(),
-      operationName,
-      variables,
-    }),
+    body: JSON.stringify(body),
     credentials: "include",
     headers: await withCsrfHeader("POST", { "Content-Type": "application/json" }, "/graphql"),
     method: "POST",

@@ -9,6 +9,8 @@ on:
       - "claude/**"
     paths:
       - "client/**"
+      - "services/tms/internal/api/graphql/schema/**"
+      - "services/tms/internal/api/graphql/persisted-documents.json"
       - ".github/workflows/test-client.yml"
   pull_request:
     branches:
@@ -17,6 +19,8 @@ on:
       - develop
     paths:
       - "client/**"
+      - "services/tms/internal/api/graphql/schema/**"
+      - "services/tms/internal/api/graphql/persisted-documents.json"
       - ".github/workflows/test-client.yml"
   workflow_dispatch:
 
@@ -52,6 +56,10 @@ jobs:
         working-directory: ./client
         run: pnpm install --frozen-lockfile
 
+      - name: Check GraphQL generated artifacts
+        working-directory: ./client
+        run: pnpm graphql:codegen:check
+
       - name: Run tests
         working-directory: ./client
         run: pnpm test
@@ -79,6 +87,10 @@ jobs:
       - name: Install dependencies
         working-directory: ./client
         run: pnpm install --frozen-lockfile
+
+      - name: Check GraphQL generated artifacts
+        working-directory: ./client
+        run: pnpm graphql:codegen:check
 
       - name: Build
         working-directory: ./client
@@ -143,6 +155,10 @@ jobs:
       - name: Install dependencies
         working-directory: ./client
         run: pnpm install --frozen-lockfile
+
+      - name: Check GraphQL generated artifacts
+        working-directory: ./client
+        run: pnpm graphql:codegen:check
 
       - name: Run lint
         working-directory: ./client

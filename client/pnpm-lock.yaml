@@ -201,6 +201,9 @@ importers:
         specifier: ^5.0.13
         version: 5.0.13(@types/react@19.2.15)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))
     devDependencies:
+      '@0no-co/graphqlsp':
+        specifier: ^1.15.4
+        version: 1.15.4(graphql@16.14.1)(typescript@6.0.3)
       '@babel/core':
         specifier: ^7.29.0
         version: 7.29.0
@@ -216,6 +219,12 @@ importers:
       '@graphql-codegen/client-preset':
         specifier: ^6.0.1
         version: 6.0.1(graphql@16.14.1)
+      '@graphql-codegen/schema-ast':
+        specifier: ^6.0.1
+        version: 6.0.1(graphql@16.14.1)
+      '@parcel/watcher':
+        specifier: ^2.5.6
+        version: 2.5.6
       '@rolldown/plugin-babel':
         specifier: ^0.2.3
         version: 0.2.3(@babel/core@7.29.0)(@babel/runtime@7.29.2)(rolldown@1.0.2)(vite@8.0.14(@types/node@25.9.1)(esbuild@0.27.3)(jiti@2.7.0)(sass-embedded@1.100.0)(sass@1.100.0)(yaml@2.9.0))
@@ -380,6 +389,20 @@ importers:
         version: 4.94.0
 
 packages:
+
+  '@0no-co/graphql.web@1.2.0':
+    resolution: {integrity: sha512-/1iHy9TTr63gE1YcR5idjx8UREz1s0kFhydf3bBLCXyqjhkIc6igAzTOx3zPifCwFR87tsh/4Pa9cNts6d2otw==}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+    peerDependenciesMeta:
+      graphql:
+        optional: true
+
+  '@0no-co/graphqlsp@1.15.4':
+    resolution: {integrity: sha512-Nt1DVHcZ08lKRKwhiU0amXH77fSdrO6DzyjLE0DkCxfbM/N1SAs32d76y1xtCzM5H9eT0iDS7SdksgRXWJu05g==}
+    peerDependencies:
+      graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
+      typescript: ^5.0.0 || ^6.0.0
 
   '@ably/msgpack-js@0.4.1':
     resolution: {integrity: sha512-Sjxj6SOr17hExAVrsycN7u6oV4PhZcK7Z2S8dM71CH/butgO47cSo/TL6FJPCXUyDAzKkOWjMUpJGyZkEpyu4Q==}
@@ -1005,6 +1028,12 @@ packages:
 
   '@googlemaps/js-api-loader@2.0.2':
     resolution: {integrity: sha512-bKVuTqatS8Jven5aFqVB7rCHF1VFEzpzyi0ruzO0GUR+A7m9oMqMgtnmpANj7kMYEvvhty8Fk7TnJ1MKjWHu+Q==}
+
+  '@gql.tada/internal@1.0.9':
+    resolution: {integrity: sha512-Bp8yi+kLrzIJ3l5Dfxhz48H4OCH2LCX+pShaPcJgh+oiBt6clrjUKDYNDD3Z78aDQ3+Tyrxe4dd0MfLgpSLPPg==}
+    peerDependencies:
+      graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
+      typescript: ^5.0.0 || ^6.0.0
 
   '@graphql-codegen/add@7.0.1':
     resolution: {integrity: sha512-kWw6RMu9ysBw1wcgcgf9mOnswc5M3ekOApDTiaJC/UZNTEYins01srZHYTP7z3P/WlGGC844BRtjwh3U2kNd/A==}
@@ -7828,6 +7857,16 @@ packages:
 
 snapshots:
 
+  '@0no-co/graphql.web@1.2.0(graphql@16.14.1)':
+    optionalDependencies:
+      graphql: 16.14.1
+
+  '@0no-co/graphqlsp@1.15.4(graphql@16.14.1)(typescript@6.0.3)':
+    dependencies:
+      '@gql.tada/internal': 1.0.9(graphql@16.14.1)(typescript@6.0.3)
+      graphql: 16.14.1
+      typescript: 6.0.3
+
   '@ably/msgpack-js@0.4.1':
     dependencies:
       bops: 1.0.1
@@ -8510,6 +8549,12 @@ snapshots:
   '@googlemaps/js-api-loader@2.0.2':
     dependencies:
       '@types/google.maps': 3.64.1
+
+  '@gql.tada/internal@1.0.9(graphql@16.14.1)(typescript@6.0.3)':
+    dependencies:
+      '@0no-co/graphql.web': 1.2.0(graphql@16.14.1)
+      graphql: 16.14.1
+      typescript: 6.0.3
 
   '@graphql-codegen/add@7.0.1(graphql@16.14.1)':
     dependencies:
@@ -9952,7 +9997,6 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.6
       '@parcel/watcher-win32-ia32': 2.5.6
       '@parcel/watcher-win32-x64': 2.5.6
-    optional: true
 
   '@pdf-lib/standard-fonts@1.0.0':
     dependencies:
@@ -13379,8 +13423,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  node-addon-api@7.1.1:
-    optional: true
+  node-addon-api@7.1.1: {}
 
   node-domexception@1.0.0: {}
 

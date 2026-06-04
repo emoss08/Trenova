@@ -1,0 +1,540 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+scalar Any
+
+input BulkUpdateTractorStatusInput {
+  status: EquipmentStatus!
+  tractorIds: [ID!]!
+}
+
+input BulkUpdateTrailerStatusInput {
+  status: EquipmentStatus!
+  trailerIds: [ID!]!
+}
+
+type BusinessUnit {
+  code: String!
+  createdAt: Int!
+  id: ID!
+  name: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum DriverType {
+  Local
+  OTR
+  Regional
+  Team
+}
+
+enum EntityStatus {
+  Active
+  Inactive
+}
+
+enum EquipmentClass {
+  Container
+  Other
+  Tractor
+  Trailer
+}
+
+type EquipmentContinuity {
+  businessUnitId: ID!
+  createdAt: Int!
+  currentLocationId: ID
+  currentLocationName: String!
+  equipmentId: ID!
+  equipmentType: String!
+  id: ID!
+  isCurrent: Boolean!
+  organizationId: ID!
+  sourceShipmentId: ID
+  sourceShipmentMoveId: ID
+  updatedAt: Int!
+  version: Int!
+}
+
+type EquipmentManufacturer {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum EquipmentStatus {
+  AtMaintenance
+  Available
+  OutOfService
+  Sold
+}
+
+type EquipmentType {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  class: EquipmentClass!
+  code: String!
+  color: String!
+  createdAt: Int!
+  description: String!
+  id: ID!
+  interiorLength: Float
+  organization: Organization
+  organizationId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum FacilityType {
+  ColdStorage
+  CrossDock
+  HazmatFacility
+  IntermodalFacility
+  StorageWarehouse
+}
+
+input FieldFilterInput {
+  field: String!
+  operator: String!
+  value: Any
+}
+
+input FilterGroupInput {
+  filters: [FieldFilterInput!]!
+}
+
+type FleetCode {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  color: String!
+  createdAt: Int!
+  deadheadGoal: Float
+  description: String!
+  id: ID!
+  manager: User
+  managerId: ID!
+  mileageGoal: Float
+  organization: Organization
+  organizationId: ID!
+  revenueGoal: Float
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type GeofenceVertex {
+  latitude: Float!
+  longitude: Float!
+}
+
+scalar JSON
+
+input LocateTractorInput {
+  newLocationId: ID!
+  tractorId: ID!
+}
+
+input LocateTrailerInput {
+  newLocationId: ID!
+  trailerId: ID!
+}
+
+type Location {
+  addressLine1: String!
+  addressLine2: String!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  city: String!
+  code: String!
+  createdAt: Int!
+  description: String!
+  geofenceRadiusMeters: Float
+  geofenceType: LocationGeofenceType!
+  geofenceVertices: [GeofenceVertex!]!
+  id: ID!
+  isGeocoded: Boolean!
+  latitude: Float
+  locationCategory: LocationCategory
+  locationCategoryId: ID!
+  longitude: Float
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  placeId: String!
+  postalCode: String!
+  state: UsState
+  stateId: ID!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type LocationCategory {
+  allowsOvernight: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  color: String!
+  createdAt: Int!
+  description: String!
+  facilityType: FacilityType
+  hasRestroom: Boolean!
+  hasSecureParking: Boolean!
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID!
+  requiresAppointment: Boolean!
+  type: LocationCategoryType!
+  updatedAt: Int!
+  version: Int!
+}
+
+enum LocationCategoryType {
+  CustomerLocation
+  DistributionCenter
+  MaintenanceFacility
+  Port
+  RailYard
+  RestArea
+  Terminal
+  TruckStop
+  Warehouse
+}
+
+enum LocationGeofenceType {
+  auto
+  circle
+  draw
+  rectangle
+}
+
+type LocationReference {
+  id: ID!
+  name: String!
+}
+
+type Mutation {
+  bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
+  bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
+  createTractor(input: TractorInput!): Tractor!
+  createTrailer(input: TrailerInput!): Trailer!
+  locateTractor(input: LocateTractorInput!): EquipmentContinuity!
+  locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
+  patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
+  updateTractor(id: ID!, input: TractorInput!): Tractor!
+  updateTrailer(id: ID!, input: TrailerInput!): Trailer!
+}
+
+type Organization {
+  addressLine1: String!
+  addressLine2: String!
+  bucketName: String!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  city: String!
+  createdAt: Int!
+  dotNumber: String!
+  id: ID!
+  loginSlug: String!
+  logoUrl: String!
+  name: String!
+  postalCode: String!
+  scacCode: String!
+  state: UsState
+  stateId: ID!
+  taxId: String!
+  timezone: String!
+  updatedAt: Int!
+  version: Int!
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
+type Query {
+  tractor(id: ID!): Tractor
+  tractors(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, offset: Int, query: String, sort: [SortFieldInput!], status: EquipmentStatus): TractorConnection!
+  trailer(id: ID!): Trailer
+  trailers(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, offset: Int, query: String, sort: [SortFieldInput!], status: EquipmentStatus): TrailerConnection!
+}
+
+input SortFieldInput {
+  direction: String!
+  field: String!
+}
+
+enum TimeFormat {
+  TwelveHour
+  TwentyFourHour
+}
+
+type Tractor {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  customFields: JSON
+  equipmentManufacturer: EquipmentManufacturer
+  equipmentManufacturerId: ID!
+  equipmentStatus: EquipmentStatus!
+  equipmentType: EquipmentType
+  equipmentTypeId: ID!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  id: ID!
+  lastKnownLocation: LocationReference
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  licensePlateNumber: String!
+  make: String!
+  model: String!
+  organization: Organization
+  organizationId: ID!
+  primaryWorker: Worker
+  primaryWorkerId: ID!
+  registrationExpiry: Int
+  registrationNumber: String!
+  secondaryWorker: Worker
+  secondaryWorkerId: ID
+  state: UsState
+  stateId: ID
+  status: EquipmentStatus!
+  updatedAt: Int!
+  version: Int!
+  vin: String!
+  year: Int
+}
+
+type TractorConnection {
+  edges: [TractorEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TractorEdge {
+  cursor: String!
+  node: Tractor!
+}
+
+input TractorInput {
+  code: String!
+  customFields: JSON
+  equipmentManufacturerId: ID!
+  equipmentTypeId: ID!
+  fleetCodeId: ID
+  licensePlateNumber: String
+  make: String
+  model: String
+  primaryWorkerId: ID!
+  registrationExpiry: Int
+  registrationNumber: String
+  secondaryWorkerId: ID
+  stateId: ID
+  status: EquipmentStatus = Available
+  version: Int
+  vin: String
+  year: Int
+}
+
+input TractorPatchInput {
+  code: String
+  customFields: JSON
+  equipmentManufacturerId: ID
+  equipmentTypeId: ID
+  fleetCodeId: ID @goField(omittable: true)
+  licensePlateNumber: String
+  make: String
+  model: String
+  primaryWorkerId: ID
+  registrationExpiry: Int
+  registrationNumber: String
+  secondaryWorkerId: ID @goField(omittable: true)
+  stateId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  version: Int
+  vin: String
+  year: Int
+}
+
+type Trailer {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  code: String!
+  createdAt: Int!
+  customFields: JSON
+  equipmentManufacturer: EquipmentManufacturer
+  equipmentManufacturerId: ID!
+  equipmentStatus: EquipmentStatus!
+  equipmentType: EquipmentType
+  equipmentTypeId: ID!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  id: ID!
+  lastInspectionDate: Int
+  lastKnownLocation: LocationReference
+  lastKnownLocationId: ID
+  lastKnownLocationName: String!
+  licensePlateNumber: String!
+  make: String!
+  maxLoadWeight: Int
+  model: String!
+  organization: Organization
+  organizationId: ID!
+  registrationExpiry: Int
+  registrationNumber: String!
+  registrationState: UsState
+  registrationStateId: ID
+  status: EquipmentStatus!
+  updatedAt: Int!
+  version: Int!
+  vin: String!
+  year: Int
+}
+
+type TrailerConnection {
+  edges: [TrailerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type TrailerEdge {
+  cursor: String!
+  node: Trailer!
+}
+
+input TrailerInput {
+  code: String!
+  customFields: JSON
+  equipmentManufacturerId: ID!
+  equipmentTypeId: ID!
+  fleetCodeId: ID
+  lastInspectionDate: Int
+  licensePlateNumber: String
+  make: String
+  maxLoadWeight: Int
+  model: String
+  registrationExpiry: Int
+  registrationNumber: String
+  registrationStateId: ID
+  status: EquipmentStatus = Available
+  version: Int
+  vin: String
+  year: Int
+}
+
+input TrailerPatchInput {
+  code: String
+  customFields: JSON
+  equipmentManufacturerId: ID
+  equipmentTypeId: ID
+  fleetCodeId: ID @goField(omittable: true)
+  lastInspectionDate: Int
+  licensePlateNumber: String
+  make: String
+  maxLoadWeight: Int
+  model: String
+  registrationExpiry: Int
+  registrationNumber: String
+  registrationStateId: ID @goField(omittable: true)
+  status: EquipmentStatus
+  version: Int
+  vin: String
+  year: Int
+}
+
+type UsState {
+  abbreviation: String!
+  countryIso3: String!
+  countryName: String!
+  createdAt: Int!
+  id: ID!
+  name: String!
+  updatedAt: Int!
+}
+
+type User {
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  createdAt: Int!
+  currentOrganization: Organization
+  currentOrganizationId: ID!
+  emailAddress: String!
+  id: ID!
+  isLocked: Boolean!
+  lastLoginAt: Int
+  mustChangePassword: Boolean!
+  name: String!
+  profilePicUrl: String!
+  status: EntityStatus!
+  thumbnailUrl: String!
+  timeFormat: TimeFormat!
+  timezone: String!
+  updatedAt: Int!
+  username: String!
+  version: Int!
+}
+
+type Worker {
+  addressLine1: String!
+  addressLine2: String!
+  assignmentBlocked: String!
+  availableForDispatch: Boolean!
+  businessUnit: BusinessUnit
+  businessUnitId: ID!
+  canBeAssigned: Boolean!
+  city: String!
+  createdAt: Int!
+  driverType: DriverType!
+  email: String!
+  emergencyContactName: String!
+  emergencyContactPhone: String!
+  externalId: String!
+  firstName: String!
+  fleetCode: FleetCode
+  fleetCodeId: ID
+  gender: WorkerGender!
+  id: ID!
+  lastName: String!
+  manager: User
+  managerId: ID
+  organization: Organization
+  organizationId: ID!
+  phoneNumber: String!
+  postalCode: String!
+  profilePicUrl: String!
+  state: UsState
+  stateId: ID!
+  status: EntityStatus!
+  type: WorkerType!
+  updatedAt: Int!
+  version: Int!
+  wholeName: String!
+}
+
+enum WorkerGender {
+  Female
+  Male
+}
+
+enum WorkerType {
+  Contractor
+  Employee
+}

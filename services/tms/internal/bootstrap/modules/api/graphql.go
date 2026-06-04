@@ -20,6 +20,7 @@ var graphQLResolverModule = fx.Module("api-graphql-resolvers", fx.Provide(
 ))
 
 var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(
+	graphqlapi.NewPersistedOperationManifest,
 	graphqlapi.NewServer,
 ))
 

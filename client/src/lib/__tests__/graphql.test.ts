@@ -66,16 +66,24 @@ describe("requestGraphQL", () => {
   it("posts generated typed documents as GraphQL strings", async () => {
     setCsrfToken("graphql-token");
 
-    await requestGraphQL({
+    const data = await requestGraphQL({
       document: TractorTableDocument,
       operationName: "TractorTable",
       variables: { first: 10 },
     });
 
+    expect(data).toEqual({ ok: true });
+
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(typeof init.body).toBe("string");
     expect(JSON.parse(init.body as string)).toMatchObject({
       query: expect.stringContaining("query TractorTable"),
+      extensions: {
+        persistedQuery: {
+          version: 1,
+          sha256Hash: expect.stringMatching(/^sha256:[a-f0-9]{64}$/),
+        },
+      },
       operationName: "TractorTable",
       variables: { first: 10 },
     });
@@ -95,5 +103,34 @@ describe("requestGraphQL", () => {
         operationName: "Test",
       }),
     ).rejects.toThrow("No tractor access");
+  });
+
+  it("throws HTTP errors when no GraphQL error is present", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({}), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(
+      requestGraphQL({
+        document: "query Test { ok }",
+        operationName: "Test",
+      }),
+    ).rejects.toThrow("GraphQL request failed with HTTP 500");
+  });
+
+  it("throws when the response omits data", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(createGraphQLResponse({}));
+
+    await expect(
+      requestGraphQL({
+        document: "query Test { ok }",
+        operationName: "Test",
+      }),
+    ).rejects.toThrow("GraphQL response did not include data");
   });
 });
