@@ -40,12 +40,12 @@ describe("data table query fetching", () => {
     vi.unstubAllGlobals();
   });
 
-  it("builds GraphQL variables from table state and normalizes connection results", async () => {
+  it("builds GraphQL cursor variables from table state and normalizes connection results", async () => {
     setCsrfToken("table-token");
 
     const result = await fetchDataTablePage({
       link: "/tractors/",
-      pageIndex: 2,
+      pageIndex: 0,
       pageSize: 25,
       graphql: equipmentTableGraphQLConfigs.tractor,
       options: {
@@ -56,7 +56,7 @@ describe("data table query fetching", () => {
             filters: [{ field: "fleetCode.code", operator: "contains", value: "MID" }],
           },
         ],
-        sort: [{ field: "createdAt", direction: "desc" }],
+        sort: [],
       },
     });
 
@@ -90,10 +90,42 @@ describe("data table query fetching", () => {
             filters: [{ field: "fleetCode.code", operator: "contains", value: "MID" }],
           },
         ],
-        sort: [{ field: "createdAt", direction: "desc" }],
+        sort: [],
       },
     });
     expect(body.variables).not.toHaveProperty("offset");
+  });
+
+  it("uses GraphQL offset pagination while sorting so backend sort is applied", async () => {
+    setCsrfToken("table-token");
+
+    const result = await fetchDataTablePage({
+      link: "/tractors/",
+      pageIndex: 2,
+      pageSize: 25,
+      graphql: equipmentTableGraphQLConfigs.tractor,
+      options: {
+        sort: [{ field: "code", direction: "asc" }],
+      },
+    });
+
+    expect(result).toEqual({
+      results: [{ id: "tr_1", code: "T-100" }],
+      count: 12,
+      next: null,
+      prev: null,
+      pageInfo: undefined,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(typeof init.body).toBe("string");
+    const body = JSON.parse(init.body as string);
+    expect(body.variables).toMatchObject({
+      first: 25,
+      offset: 50,
+      sort: [{ field: "code", direction: "asc" }],
+    });
+    expect(body.variables).not.toHaveProperty("after");
   });
 
   it("uses REST fetching when no GraphQL config is provided", async () => {
@@ -178,7 +210,7 @@ describe("tractor and trailer GraphQL table configs", () => {
     expect(equipmentTableGraphQLConfigs.tractor.document).toContain("totalCount");
     expect(equipmentTableGraphQLConfigs.tractor.document).toContain("pageInfo");
     expect(equipmentTableGraphQLConfigs.tractor.document).toContain("$after: String");
-    expect(equipmentTableGraphQLConfigs.tractor.document).not.toContain("$offset");
+    expect(equipmentTableGraphQLConfigs.tractor.document).toContain("$offset: Int");
   });
 
   it("opts trailers into the trailer connection with required include variables", () => {
@@ -192,6 +224,6 @@ describe("tractor and trailer GraphQL table configs", () => {
     expect(equipmentTableGraphQLConfigs.trailer.document).toContain("totalCount");
     expect(equipmentTableGraphQLConfigs.trailer.document).toContain("pageInfo");
     expect(equipmentTableGraphQLConfigs.trailer.document).toContain("$after: String");
-    expect(equipmentTableGraphQLConfigs.trailer.document).not.toContain("$offset");
+    expect(equipmentTableGraphQLConfigs.trailer.document).toContain("$offset: Int");
   });
 });

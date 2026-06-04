@@ -2,6 +2,7 @@ import type { DataTableGraphQLConfig } from "@/types/data-table";
 
 export const DATA_TABLE_CONNECTION_VARIABLES = `
   $first: Int!
+  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -11,6 +12,7 @@ export const DATA_TABLE_CONNECTION_VARIABLES = `
 
 export const DATA_TABLE_CONNECTION_ARGUMENTS = `
   first: $first
+  offset: $offset
   after: $after
   query: $query
   fieldFilters: $fieldFilters

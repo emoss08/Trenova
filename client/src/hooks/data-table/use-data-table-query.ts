@@ -96,11 +96,14 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
   pageSize: number,
   config: DataTableGraphQLConfig<TData>,
   options?: DataTableQueryOptions,
+  pageIndex = 0,
 ): Promise<GenericLimitOffsetResponse<TData>> {
+  const useOffsetPagination = (options?.sort?.length ?? 0) > 0;
   const variables = {
     ...config.variables,
     first: pageSize,
-    after: options?.cursor || undefined,
+    offset: useOffsetPagination ? pageIndex * pageSize : undefined,
+    after: useOffsetPagination ? undefined : options?.cursor || undefined,
     query: options?.query || undefined,
     fieldFilters: options?.fieldFilters ?? [],
     filterGroups: options?.filterGroups ?? [],
@@ -128,12 +131,14 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
     count: totalCount ?? results.length,
     next: null,
     prev: null,
-    pageInfo: {
-      mode: "cursor",
-      hasNextPage: connection.pageInfo?.hasNextPage ?? false,
-      endCursor: connection.pageInfo?.endCursor ?? null,
-      totalCount,
-    },
+    pageInfo: useOffsetPagination
+      ? undefined
+      : {
+          mode: "cursor",
+          hasNextPage: connection.pageInfo?.hasNextPage ?? false,
+          endCursor: connection.pageInfo?.endCursor ?? null,
+          totalCount,
+        },
   };
 }
 
@@ -145,7 +150,7 @@ export async function fetchDataTablePage<TData extends Record<string, unknown>>(
   graphql,
 }: FetchDataTablePageParams<TData>): Promise<GenericLimitOffsetResponse<TData>> {
   if (graphql) {
-    return fetchGraphQLData(pageSize, graphql, options);
+    return fetchGraphQLData(pageSize, graphql, options, pageIndex);
   }
 
   return fetchData<TData>(link, pageIndex, pageSize, options);

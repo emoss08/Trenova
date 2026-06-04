@@ -244,10 +244,18 @@ export function DataTable<TData extends Record<string, any>>({
     }),
     [fieldFilters, filterGroups, graphql?.variables, pageSize, query, sort],
   );
+  const useGraphQLOffsetPagination = Boolean(graphql && sort.length > 0);
   const pageCursors =
-    graphql && cursorState.scopeKey === cursorScopeKey ? cursorState.cursors : { 0: null };
-  const currentCursor = graphql ? pageCursors[zeroBasedPageIndex] : null;
-  const canFetchPage = !graphql || zeroBasedPageIndex === 0 || currentCursor !== undefined;
+    graphql && !useGraphQLOffsetPagination && cursorState.scopeKey === cursorScopeKey
+      ? cursorState.cursors
+      : { 0: null };
+  const currentCursor =
+    graphql && !useGraphQLOffsetPagination ? pageCursors[zeroBasedPageIndex] : null;
+  const canFetchPage =
+    !graphql ||
+    useGraphQLOffsetPagination ||
+    zeroBasedPageIndex === 0 ||
+    currentCursor !== undefined;
 
   const dataQuery = useDataTableQuery<TData>(
     queryKey,
