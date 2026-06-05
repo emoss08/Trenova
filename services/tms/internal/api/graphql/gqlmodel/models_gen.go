@@ -9,8 +9,11 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/core/domain/location"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
 
@@ -58,6 +61,658 @@ type PageInfo struct {
 }
 
 type Query struct {
+}
+
+type Shipment struct {
+	ID                     string                      `json:"id"`
+	BusinessUnitID         string                      `json:"businessUnitId"`
+	OrganizationID         string                      `json:"organizationId"`
+	SourceDocumentID       *string                     `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID          string                      `json:"serviceTypeId"`
+	ShipmentTypeID         string                      `json:"shipmentTypeId"`
+	CustomerID             string                      `json:"customerId"`
+	TractorTypeID          *string                     `json:"tractorTypeId,omitempty"`
+	TrailerTypeID          *string                     `json:"trailerTypeId,omitempty"`
+	OwnerID                *string                     `json:"ownerId,omitempty"`
+	EnteredByID            *string                     `json:"enteredById,omitempty"`
+	CanceledByID           *string                     `json:"canceledById,omitempty"`
+	FormulaTemplateID      string                      `json:"formulaTemplateId"`
+	ConsolidationGroupID   *string                     `json:"consolidationGroupId,omitempty"`
+	Status                 ShipmentStatus              `json:"status"`
+	TenderStatus           *ShipmentTenderStatus       `json:"tenderStatus,omitempty"`
+	EntryMethod            *ShipmentEntryMethod        `json:"entryMethod,omitempty"`
+	ProNumber              string                      `json:"proNumber"`
+	Bol                    *string                     `json:"bol,omitempty"`
+	CancelReason           string                      `json:"cancelReason"`
+	OtherChargeAmount      string                      `json:"otherChargeAmount"`
+	FreightChargeAmount    string                      `json:"freightChargeAmount"`
+	BaseRate               string                      `json:"baseRate"`
+	TotalChargeAmount      string                      `json:"totalChargeAmount"`
+	Pieces                 *int                        `json:"pieces,omitempty"`
+	Weight                 *int                        `json:"weight,omitempty"`
+	TemperatureMin         *int                        `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                        `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                        `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                        `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                        `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string                     `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                        `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                        `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                        `json:"billedAt,omitempty"`
+	RatingUnit             int                         `json:"ratingUnit"`
+	RatingDetail           *ShipmentRatingDetail       `json:"ratingDetail,omitempty"`
+	Version                int                         `json:"version"`
+	CreatedAt              int                         `json:"createdAt"`
+	UpdatedAt              int                         `json:"updatedAt"`
+	Moves                  []*ShipmentMove             `json:"moves"`
+	AdditionalCharges      []*ShipmentAdditionalCharge `json:"additionalCharges"`
+	Commodities            []*ShipmentCommodity        `json:"commodities"`
+	Customer               map[string]any              `json:"customer,omitempty"`
+	Owner                  *tenant.User                `json:"owner,omitempty"`
+	FormulaTemplate        map[string]any              `json:"formulaTemplate,omitempty"`
+}
+
+type ShipmentAdditionalCharge struct {
+	ID                  *string        `json:"id,omitempty"`
+	BusinessUnitID      string         `json:"businessUnitId"`
+	OrganizationID      string         `json:"organizationId"`
+	ShipmentID          string         `json:"shipmentId"`
+	AccessorialChargeID string         `json:"accessorialChargeId"`
+	IsSystemGenerated   bool           `json:"isSystemGenerated"`
+	Method              string         `json:"method"`
+	Amount              string         `json:"amount"`
+	Unit                int            `json:"unit"`
+	Version             int            `json:"version"`
+	CreatedAt           int            `json:"createdAt"`
+	UpdatedAt           int            `json:"updatedAt"`
+	AccessorialCharge   map[string]any `json:"accessorialCharge,omitempty"`
+}
+
+type ShipmentAdditionalChargeInput struct {
+	ID                  *string `json:"id,omitempty"`
+	ShipmentID          *string `json:"shipmentId,omitempty"`
+	AccessorialChargeID string  `json:"accessorialChargeId"`
+	IsSystemGenerated   *bool   `json:"isSystemGenerated,omitempty"`
+	Method              *string `json:"method,omitempty"`
+	Amount              *string `json:"amount,omitempty"`
+	Unit                *int    `json:"unit,omitempty"`
+	Version             *int    `json:"version,omitempty"`
+}
+
+type ShipmentAnalytics struct {
+	Page            string                   `json:"page"`
+	SavedViewCounts *ShipmentSavedViewCounts `json:"savedViewCounts,omitempty"`
+	Data            map[string]any           `json:"data"`
+}
+
+type ShipmentAssignment struct {
+	ID                *string          `json:"id,omitempty"`
+	BusinessUnitID    string           `json:"businessUnitId"`
+	OrganizationID    string           `json:"organizationId"`
+	ShipmentMoveID    *string          `json:"shipmentMoveId,omitempty"`
+	PrimaryWorkerID   *string          `json:"primaryWorkerId,omitempty"`
+	TractorID         *string          `json:"tractorId,omitempty"`
+	TrailerID         *string          `json:"trailerId,omitempty"`
+	SecondaryWorkerID *string          `json:"secondaryWorkerId,omitempty"`
+	Status            AssignmentStatus `json:"status"`
+	ArchivedAt        *int             `json:"archivedAt,omitempty"`
+	Version           int              `json:"version"`
+	CreatedAt         int              `json:"createdAt"`
+	UpdatedAt         int              `json:"updatedAt"`
+	Tractor           *tractor.Tractor `json:"tractor,omitempty"`
+	Trailer           *trailer.Trailer `json:"trailer,omitempty"`
+	PrimaryWorker     *worker.Worker   `json:"primaryWorker,omitempty"`
+	SecondaryWorker   *worker.Worker   `json:"secondaryWorker,omitempty"`
+}
+
+type ShipmentAxleWeight struct {
+	Axle       string  `json:"axle"`
+	Weight     int     `json:"weight"`
+	Limit      int     `json:"limit"`
+	Percentage float64 `json:"percentage"`
+	Compliant  bool    `json:"compliant"`
+}
+
+type ShipmentBillingReadiness struct {
+	ShipmentID                   string                                `json:"shipmentId"`
+	ShipmentStatus               ShipmentStatus                        `json:"shipmentStatus"`
+	Policy                       *ShipmentBillingReadinessPolicy       `json:"policy"`
+	Requirements                 []*ShipmentBillingRequirement         `json:"requirements"`
+	MissingRequirements          []*ShipmentBillingRequirement         `json:"missingRequirements"`
+	ValidationFailures           []*ShipmentBillingValidation          `json:"validationFailures"`
+	Warnings                     []*ShipmentBillingWarning             `json:"warnings"`
+	ServiceFailureContext        *ShipmentServiceFailureBillingContext `json:"serviceFailureContext"`
+	CanMarkReadyToInvoice        bool                                  `json:"canMarkReadyToInvoice"`
+	ShouldAutoMarkReadyToInvoice bool                                  `json:"shouldAutoMarkReadyToInvoice"`
+	ShouldAutoTransferToBilling  bool                                  `json:"shouldAutoTransferToBilling"`
+}
+
+type ShipmentBillingReadinessPolicy struct {
+	ShipmentBillingRequirementEnforcement string `json:"shipmentBillingRequirementEnforcement"`
+	RateValidationEnforcement             string `json:"rateValidationEnforcement"`
+	BillingExceptionDisposition           string `json:"billingExceptionDisposition"`
+	NotifyOnBillingExceptions             bool   `json:"notifyOnBillingExceptions"`
+	ReadyToBillAssignmentMode             string `json:"readyToBillAssignmentMode"`
+	BillingQueueTransferMode              string `json:"billingQueueTransferMode"`
+}
+
+type ShipmentBillingRequirement struct {
+	DocumentTypeID   string   `json:"documentTypeId"`
+	DocumentTypeCode string   `json:"documentTypeCode"`
+	DocumentTypeName string   `json:"documentTypeName"`
+	Satisfied        bool     `json:"satisfied"`
+	DocumentCount    int      `json:"documentCount"`
+	DocumentIds      []string `json:"documentIds"`
+}
+
+type ShipmentBillingValidation struct {
+	Field   string `json:"field"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+type ShipmentBillingWarning struct {
+	Code    string         `json:"code"`
+	Message string         `json:"message"`
+	Context map[string]any `json:"context,omitempty"`
+}
+
+type ShipmentBulkTransferToBillingInput struct {
+	ShipmentIds []string `json:"shipmentIds"`
+	BillType    *string  `json:"billType,omitempty"`
+}
+
+type ShipmentBulkTransferToBillingResponse struct {
+	Results      []*ShipmentBulkTransferToBillingResult `json:"results"`
+	TotalCount   int                                    `json:"totalCount"`
+	SuccessCount int                                    `json:"successCount"`
+	ErrorCount   int                                    `json:"errorCount"`
+}
+
+type ShipmentBulkTransferToBillingResult struct {
+	ShipmentID string  `json:"shipmentId"`
+	Success    bool    `json:"success"`
+	Error      *string `json:"error,omitempty"`
+}
+
+type ShipmentCancelInput struct {
+	CancelReason *string `json:"cancelReason,omitempty"`
+}
+
+type ShipmentComment struct {
+	ID               string                    `json:"id"`
+	BusinessUnitID   *string                   `json:"businessUnitId,omitempty"`
+	OrganizationID   *string                   `json:"organizationId,omitempty"`
+	ShipmentID       string                    `json:"shipmentId"`
+	UserID           *string                   `json:"userId,omitempty"`
+	Comment          string                    `json:"comment"`
+	Type             ShipmentCommentType       `json:"type"`
+	Visibility       ShipmentCommentVisibility `json:"visibility"`
+	Priority         ShipmentCommentPriority   `json:"priority"`
+	Source           ShipmentCommentSource     `json:"source"`
+	Metadata         map[string]any            `json:"metadata,omitempty"`
+	EditedAt         *int                      `json:"editedAt,omitempty"`
+	Version          int                       `json:"version"`
+	CreatedAt        int                       `json:"createdAt"`
+	UpdatedAt        int                       `json:"updatedAt"`
+	MentionedUserIds []string                  `json:"mentionedUserIds"`
+	User             *tenant.User              `json:"user,omitempty"`
+	MentionedUsers   []*ShipmentCommentMention `json:"mentionedUsers,omitempty"`
+}
+
+type ShipmentCommentConnection struct {
+	Edges      []*ShipmentCommentEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+}
+
+type ShipmentCommentCountResponse struct {
+	Count int `json:"count"`
+}
+
+type ShipmentCommentEdge struct {
+	Node   *ShipmentComment `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type ShipmentCommentInput struct {
+	Comment          string                     `json:"comment"`
+	MentionedUserIds []string                   `json:"mentionedUserIds,omitempty"`
+	Type             *ShipmentCommentType       `json:"type,omitempty"`
+	Visibility       *ShipmentCommentVisibility `json:"visibility,omitempty"`
+	Priority         *ShipmentCommentPriority   `json:"priority,omitempty"`
+}
+
+type ShipmentCommentMention struct {
+	ID              string       `json:"id"`
+	CommentID       string       `json:"commentId"`
+	MentionedUserID string       `json:"mentionedUserId"`
+	OrganizationID  *string      `json:"organizationId,omitempty"`
+	BusinessUnitID  *string      `json:"businessUnitId,omitempty"`
+	ShipmentID      *string      `json:"shipmentId,omitempty"`
+	CreatedAt       int          `json:"createdAt"`
+	MentionedUser   *tenant.User `json:"mentionedUser,omitempty"`
+}
+
+type ShipmentCommentUpdateInput struct {
+	ID               string                     `json:"id"`
+	Comment          string                     `json:"comment"`
+	MentionedUserIds []string                   `json:"mentionedUserIds,omitempty"`
+	Type             *ShipmentCommentType       `json:"type,omitempty"`
+	Visibility       *ShipmentCommentVisibility `json:"visibility,omitempty"`
+	Priority         *ShipmentCommentPriority   `json:"priority,omitempty"`
+	Version          int                        `json:"version"`
+}
+
+type ShipmentCommodity struct {
+	ID             *string        `json:"id,omitempty"`
+	BusinessUnitID string         `json:"businessUnitId"`
+	OrganizationID string         `json:"organizationId"`
+	ShipmentID     string         `json:"shipmentId"`
+	CommodityID    string         `json:"commodityId"`
+	Pieces         int            `json:"pieces"`
+	Weight         int            `json:"weight"`
+	Version        int            `json:"version"`
+	CreatedAt      int            `json:"createdAt"`
+	UpdatedAt      int            `json:"updatedAt"`
+	Commodity      map[string]any `json:"commodity,omitempty"`
+}
+
+type ShipmentCommodityInput struct {
+	ID          *string `json:"id,omitempty"`
+	ShipmentID  *string `json:"shipmentId,omitempty"`
+	CommodityID string  `json:"commodityId"`
+	Pieces      *int    `json:"pieces,omitempty"`
+	Weight      *int    `json:"weight,omitempty"`
+	Version     *int    `json:"version,omitempty"`
+}
+
+type ShipmentConnection struct {
+	Edges      []*ShipmentEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type ShipmentDistanceMoveResult struct {
+	MoveID              *string  `json:"moveId,omitempty"`
+	MoveIndex           int      `json:"moveIndex"`
+	Distance            float64  `json:"distance"`
+	Source              string   `json:"source"`
+	Provider            *string  `json:"provider,omitempty"`
+	RoutingType         *string  `json:"routingType,omitempty"`
+	DataVersion         *string  `json:"dataVersion,omitempty"`
+	DistanceUnits       *string  `json:"distanceUnits,omitempty"`
+	DistanceProfileID   *string  `json:"distanceProfileId,omitempty"`
+	DistanceProfileName *string  `json:"distanceProfileName,omitempty"`
+	Warnings            []string `json:"warnings,omitempty"`
+	CalculatedAt        int      `json:"calculatedAt"`
+}
+
+type ShipmentDistanceResponse struct {
+	ShipmentID    *string                       `json:"shipmentId,omitempty"`
+	TotalDistance float64                       `json:"totalDistance"`
+	Moves         []*ShipmentDistanceMoveResult `json:"moves"`
+}
+
+type ShipmentDuplicateBolInput struct {
+	Bol        string  `json:"bol"`
+	ShipmentID *string `json:"shipmentId,omitempty"`
+}
+
+type ShipmentDuplicateInput struct {
+	ShipmentID    string `json:"shipmentId"`
+	Count         *int   `json:"count,omitempty"`
+	OverrideDates *bool  `json:"overrideDates,omitempty"`
+}
+
+type ShipmentDuplicateResponse struct {
+	WorkflowID  string `json:"workflowId"`
+	RunID       string `json:"runId"`
+	TaskQueue   string `json:"taskQueue"`
+	Status      string `json:"status"`
+	SubmittedAt int    `json:"submittedAt"`
+}
+
+type ShipmentEdge struct {
+	Node   *Shipment `json:"node"`
+	Cursor string    `json:"cursor"`
+}
+
+type ShipmentEvent struct {
+	ID             string                          `json:"id"`
+	OrganizationID string                          `json:"organizationId"`
+	BusinessUnitID string                          `json:"businessUnitId"`
+	ShipmentID     string                          `json:"shipmentId"`
+	MoveID         *string                         `json:"moveId,omitempty"`
+	StopID         *string                         `json:"stopId,omitempty"`
+	AssignmentID   *string                         `json:"assignmentId,omitempty"`
+	CommentID      *string                         `json:"commentId,omitempty"`
+	HoldID         *string                         `json:"holdId,omitempty"`
+	Type           ShipmentEventType               `json:"type"`
+	Severity       ShipmentEventSeverity           `json:"severity"`
+	ActorType      ShipmentEventActorType          `json:"actorType"`
+	ActorID        *string                         `json:"actorId,omitempty"`
+	ActorLabel     string                          `json:"actorLabel"`
+	Summary        string                          `json:"summary"`
+	Metadata       map[string]any                  `json:"metadata"`
+	OccurredAt     int                             `json:"occurredAt"`
+	CorrelationID  *string                         `json:"correlationId,omitempty"`
+	Actor          *tenant.User                    `json:"actor,omitempty"`
+	Shipment       *ShipmentEventShipmentReference `json:"shipment,omitempty"`
+}
+
+type ShipmentEventShipmentReference struct {
+	ID        *string `json:"id,omitempty"`
+	ProNumber *string `json:"proNumber,omitempty"`
+}
+
+type ShipmentHazmatInput struct {
+	CommodityIds []string `json:"commodityIds"`
+}
+
+type ShipmentHazmatZone struct {
+	CommodityAId         string   `json:"commodityAId"`
+	CommodityBId         string   `json:"commodityBId"`
+	CommodityAName       string   `json:"commodityAName"`
+	CommodityBName       string   `json:"commodityBName"`
+	RuleName             string   `json:"ruleName"`
+	SegregationType      string   `json:"segregationType"`
+	RequiredDistanceFeet *float64 `json:"requiredDistanceFeet,omitempty"`
+	ActualDistanceFeet   float64  `json:"actualDistanceFeet"`
+	Satisfied            bool     `json:"satisfied"`
+}
+
+type ShipmentInput struct {
+	SourceDocumentID       *string                          `json:"sourceDocumentId,omitempty"`
+	ServiceTypeID          string                           `json:"serviceTypeId"`
+	ShipmentTypeID         string                           `json:"shipmentTypeId"`
+	CustomerID             string                           `json:"customerId"`
+	TractorTypeID          *string                          `json:"tractorTypeId,omitempty"`
+	TrailerTypeID          *string                          `json:"trailerTypeId,omitempty"`
+	OwnerID                *string                          `json:"ownerId,omitempty"`
+	EnteredByID            *string                          `json:"enteredById,omitempty"`
+	CanceledByID           *string                          `json:"canceledById,omitempty"`
+	FormulaTemplateID      string                           `json:"formulaTemplateId"`
+	ConsolidationGroupID   *string                          `json:"consolidationGroupId,omitempty"`
+	Status                 *ShipmentStatus                  `json:"status,omitempty"`
+	TenderStatus           *ShipmentTenderStatus            `json:"tenderStatus,omitempty"`
+	EntryMethod            *ShipmentEntryMethod             `json:"entryMethod,omitempty"`
+	ProNumber              *string                          `json:"proNumber,omitempty"`
+	Bol                    *string                          `json:"bol,omitempty"`
+	CancelReason           *string                          `json:"cancelReason,omitempty"`
+	OtherChargeAmount      *string                          `json:"otherChargeAmount,omitempty"`
+	FreightChargeAmount    *string                          `json:"freightChargeAmount,omitempty"`
+	BaseRate               *string                          `json:"baseRate,omitempty"`
+	TotalChargeAmount      *string                          `json:"totalChargeAmount,omitempty"`
+	Pieces                 *int                             `json:"pieces,omitempty"`
+	Weight                 *int                             `json:"weight,omitempty"`
+	TemperatureMin         *int                             `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                             `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                             `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                             `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                             `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string                          `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                             `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                             `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                             `json:"billedAt,omitempty"`
+	RatingUnit             *int                             `json:"ratingUnit,omitempty"`
+	RatingDetail           *ShipmentRatingDetailInput       `json:"ratingDetail,omitempty"`
+	Version                *int                             `json:"version,omitempty"`
+	Moves                  []*ShipmentMoveInput             `json:"moves,omitempty"`
+	AdditionalCharges      []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
+	Commodities            []*ShipmentCommodityInput        `json:"commodities,omitempty"`
+}
+
+type ShipmentLoadingCommodity struct {
+	CommodityID         string  `json:"commodityId"`
+	CommodityName       string  `json:"commodityName"`
+	PositionFeet        float64 `json:"positionFeet"`
+	LengthFeet          float64 `json:"lengthFeet"`
+	Weight              int     `json:"weight"`
+	Pieces              int     `json:"pieces"`
+	Stackable           bool    `json:"stackable"`
+	Fragile             bool    `json:"fragile"`
+	IsHazmat            bool    `json:"isHazmat"`
+	HazmatClass         *string `json:"hazmatClass,omitempty"`
+	MinTemp             *int    `json:"minTemp,omitempty"`
+	MaxTemp             *int    `json:"maxTemp,omitempty"`
+	LoadingInstructions *string `json:"loadingInstructions,omitempty"`
+	EstimatedLength     bool    `json:"estimatedLength"`
+	StopNumber          *int    `json:"stopNumber,omitempty"`
+}
+
+type ShipmentLoadingCommodityInput struct {
+	CommodityID string `json:"commodityId"`
+	Pieces      int    `json:"pieces"`
+	Weight      int    `json:"weight"`
+}
+
+type ShipmentLoadingOptimizationInput struct {
+	Commodities     []*ShipmentLoadingCommodityInput `json:"commodities"`
+	EquipmentTypeID *string                          `json:"equipmentTypeId,omitempty"`
+	Stops           []*ShipmentLoadingStopInput      `json:"stops,omitempty"`
+}
+
+type ShipmentLoadingOptimizationResponse struct {
+	TrailerLengthFeet float64                          `json:"trailerLengthFeet"`
+	TotalLinearFeet   float64                          `json:"totalLinearFeet"`
+	TotalWeight       int                              `json:"totalWeight"`
+	MaxWeight         int                              `json:"maxWeight"`
+	LinearFeetUtil    float64                          `json:"linearFeetUtil"`
+	WeightUtil        float64                          `json:"weightUtil"`
+	UtilizationScore  int                              `json:"utilizationScore"`
+	UtilizationGrade  string                           `json:"utilizationGrade"`
+	Placements        []*ShipmentLoadingCommodity      `json:"placements"`
+	HazmatZones       []*ShipmentHazmatZone            `json:"hazmatZones"`
+	Warnings          []*ShipmentLoadingWarning        `json:"warnings"`
+	AxleWeights       []*ShipmentAxleWeight            `json:"axleWeights"`
+	Recommendations   []*ShipmentLoadingRecommendation `json:"recommendations"`
+	StopDividers      []*ShipmentStopDivider           `json:"stopDividers,omitempty"`
+	AiAnalysis        *string                          `json:"aiAnalysis,omitempty"`
+}
+
+type ShipmentLoadingRecommendation struct {
+	Type         string   `json:"type"`
+	Priority     string   `json:"priority"`
+	Title        string   `json:"title"`
+	Description  string   `json:"description"`
+	Impact       *string  `json:"impact,omitempty"`
+	CommodityIds []string `json:"commodityIds,omitempty"`
+}
+
+type ShipmentLoadingStopInput struct {
+	Sequence     int    `json:"sequence"`
+	LocationName string `json:"locationName"`
+	LocationCity string `json:"locationCity"`
+}
+
+type ShipmentLoadingWarning struct {
+	Type         string   `json:"type"`
+	Message      string   `json:"message"`
+	Severity     string   `json:"severity"`
+	CommodityIds []string `json:"commodityIds,omitempty"`
+}
+
+type ShipmentMove struct {
+	ID                     *string             `json:"id,omitempty"`
+	BusinessUnitID         string              `json:"businessUnitId"`
+	OrganizationID         string              `json:"organizationId"`
+	ShipmentID             *string             `json:"shipmentId,omitempty"`
+	Status                 MoveStatus          `json:"status"`
+	Loaded                 bool                `json:"loaded"`
+	Sequence               int                 `json:"sequence"`
+	Distance               *float64            `json:"distance,omitempty"`
+	DistanceSource         *string             `json:"distanceSource,omitempty"`
+	DistanceProvider       *string             `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int                `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string             `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string             `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string             `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string             `json:"distanceUnits,omitempty"`
+	DistanceMetadata       map[string]any      `json:"distanceMetadata,omitempty"`
+	Version                int                 `json:"version"`
+	CreatedAt              int                 `json:"createdAt"`
+	UpdatedAt              int                 `json:"updatedAt"`
+	Stops                  []*ShipmentStop     `json:"stops"`
+	Assignment             *ShipmentAssignment `json:"assignment,omitempty"`
+}
+
+type ShipmentMoveInput struct {
+	ID                     *string              `json:"id,omitempty"`
+	ShipmentID             *string              `json:"shipmentId,omitempty"`
+	Status                 *MoveStatus          `json:"status,omitempty"`
+	Loaded                 *bool                `json:"loaded,omitempty"`
+	Sequence               *int                 `json:"sequence,omitempty"`
+	Distance               *float64             `json:"distance,omitempty"`
+	DistanceSource         *string              `json:"distanceSource,omitempty"`
+	DistanceProvider       *string              `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int                 `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string              `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string              `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string              `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string              `json:"distanceUnits,omitempty"`
+	DistanceMetadata       map[string]any       `json:"distanceMetadata,omitempty"`
+	Version                *int                 `json:"version,omitempty"`
+	Stops                  []*ShipmentStopInput `json:"stops,omitempty"`
+}
+
+type ShipmentPreviousRateSummary struct {
+	ShipmentID          string `json:"shipmentId"`
+	ProNumber           string `json:"proNumber"`
+	CustomerID          string `json:"customerId"`
+	ServiceTypeID       string `json:"serviceTypeId"`
+	ShipmentTypeID      string `json:"shipmentTypeId"`
+	FormulaTemplateID   string `json:"formulaTemplateId"`
+	FreightChargeAmount string `json:"freightChargeAmount"`
+	OtherChargeAmount   string `json:"otherChargeAmount"`
+	TotalChargeAmount   string `json:"totalChargeAmount"`
+	RatingUnit          int    `json:"ratingUnit"`
+	Pieces              *int   `json:"pieces,omitempty"`
+	Weight              *int   `json:"weight,omitempty"`
+	CreatedAt           int    `json:"createdAt"`
+}
+
+type ShipmentPreviousRatesInput struct {
+	OriginLocationID      string  `json:"originLocationId"`
+	DestinationLocationID string  `json:"destinationLocationId"`
+	ShipmentTypeID        string  `json:"shipmentTypeId"`
+	ServiceTypeID         string  `json:"serviceTypeId"`
+	CustomerID            *string `json:"customerId,omitempty"`
+	ExcludeShipmentID     *string `json:"excludeShipmentId,omitempty"`
+}
+
+type ShipmentPreviousRatesResponse struct {
+	Items []*ShipmentPreviousRateSummary `json:"items"`
+	Total int                            `json:"total"`
+}
+
+type ShipmentRatingDetail struct {
+	FormulaTemplateID   string         `json:"formulaTemplateId"`
+	FormulaTemplateName string         `json:"formulaTemplateName"`
+	Expression          string         `json:"expression"`
+	ResolvedVariables   map[string]any `json:"resolvedVariables"`
+	Result              float64        `json:"result"`
+	RatedAt             int            `json:"ratedAt"`
+}
+
+type ShipmentRatingDetailInput struct {
+	FormulaTemplateID   string         `json:"formulaTemplateId"`
+	FormulaTemplateName string         `json:"formulaTemplateName"`
+	Expression          string         `json:"expression"`
+	ResolvedVariables   map[string]any `json:"resolvedVariables"`
+	Result              float64        `json:"result"`
+	RatedAt             int            `json:"ratedAt"`
+}
+
+type ShipmentSavedViewCounts struct {
+	All             *int `json:"all,omitempty"`
+	Transit         *int `json:"transit,omitempty"`
+	AtRisk          *int `json:"atRisk,omitempty"`
+	Unassigned      *int `json:"unassigned,omitempty"`
+	DeliveringToday *int `json:"deliveringToday,omitempty"`
+}
+
+type ShipmentServiceFailureBillingContext struct {
+	HasUnresolved     bool     `json:"hasUnresolved"`
+	UnresolvedCount   int      `json:"unresolvedCount"`
+	ServiceFailureIds []string `json:"serviceFailureIds"`
+}
+
+type ShipmentStop struct {
+	ID                     *string            `json:"id,omitempty"`
+	BusinessUnitID         string             `json:"businessUnitId"`
+	OrganizationID         string             `json:"organizationId"`
+	ShipmentMoveID         *string            `json:"shipmentMoveId,omitempty"`
+	LocationID             string             `json:"locationId"`
+	Status                 StopStatus         `json:"status"`
+	Type                   StopType           `json:"type"`
+	ScheduleType           StopScheduleType   `json:"scheduleType"`
+	Sequence               int                `json:"sequence"`
+	Pieces                 *int               `json:"pieces,omitempty"`
+	Weight                 *int               `json:"weight,omitempty"`
+	ScheduledWindowStart   int                `json:"scheduledWindowStart"`
+	ScheduledWindowEnd     *int               `json:"scheduledWindowEnd,omitempty"`
+	ActualArrival          *int               `json:"actualArrival,omitempty"`
+	ActualDeparture        *int               `json:"actualDeparture,omitempty"`
+	CountLateOverride      *bool              `json:"countLateOverride,omitempty"`
+	CountDetentionOverride *bool              `json:"countDetentionOverride,omitempty"`
+	AddressLine            string             `json:"addressLine"`
+	Version                int                `json:"version"`
+	CreatedAt              int                `json:"createdAt"`
+	UpdatedAt              int                `json:"updatedAt"`
+	Location               *location.Location `json:"location,omitempty"`
+}
+
+type ShipmentStopDivider struct {
+	PositionFeet float64 `json:"positionFeet"`
+	StopNumber   int     `json:"stopNumber"`
+	Label        string  `json:"label"`
+}
+
+type ShipmentStopInput struct {
+	ID                     *string           `json:"id,omitempty"`
+	ShipmentMoveID         *string           `json:"shipmentMoveId,omitempty"`
+	LocationID             string            `json:"locationId"`
+	Status                 *StopStatus       `json:"status,omitempty"`
+	Type                   *StopType         `json:"type,omitempty"`
+	ScheduleType           *StopScheduleType `json:"scheduleType,omitempty"`
+	Sequence               *int              `json:"sequence,omitempty"`
+	Pieces                 *int              `json:"pieces,omitempty"`
+	Weight                 *int              `json:"weight,omitempty"`
+	ScheduledWindowStart   *int              `json:"scheduledWindowStart,omitempty"`
+	ScheduledWindowEnd     *int              `json:"scheduledWindowEnd,omitempty"`
+	ActualArrival          *int              `json:"actualArrival,omitempty"`
+	ActualDeparture        *int              `json:"actualDeparture,omitempty"`
+	CountLateOverride      *bool             `json:"countLateOverride,omitempty"`
+	CountDetentionOverride *bool             `json:"countDetentionOverride,omitempty"`
+	AddressLine            *string           `json:"addressLine,omitempty"`
+	Version                *int              `json:"version,omitempty"`
+}
+
+type ShipmentTotalsResponse struct {
+	FreightChargeAmount string `json:"freightChargeAmount"`
+	OtherChargeAmount   string `json:"otherChargeAmount"`
+	TotalChargeAmount   string `json:"totalChargeAmount"`
+}
+
+type ShipmentTransferOwnershipInput struct {
+	OwnerID string `json:"ownerId"`
+}
+
+type ShipmentTransferToBillingInput struct {
+	ShipmentID string  `json:"shipmentId"`
+	BillType   *string `json:"billType,omitempty"`
+}
+
+type ShipmentUIPolicy struct {
+	AllowMoveRemovals      bool `json:"allowMoveRemovals"`
+	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
+	CheckHazmatSegregation bool `json:"checkHazmatSegregation"`
+	MaxShipmentWeightLimit int  `json:"maxShipmentWeightLimit"`
+}
+
+type ShipmentValidationResponse struct {
+	Valid bool `json:"valid"`
 }
 
 type SortFieldInput struct {
@@ -165,6 +820,973 @@ type TrailerPatchInput struct {
 	RegistrationExpiry      *int                         `json:"registrationExpiry,omitempty"`
 	Version                 *int                         `json:"version,omitempty"`
 	CustomFields            map[string]any               `json:"customFields,omitempty"`
+}
+
+type WorkerConnection struct {
+	Edges      []*WorkerEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	TotalCount *int          `json:"totalCount,omitempty"`
+}
+
+type WorkerEdge struct {
+	Node   *worker.Worker `json:"node"`
+	Cursor string         `json:"cursor"`
+}
+
+type WorkerPTOConnection struct {
+	Edges      []*WorkerPTOEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount *int             `json:"totalCount,omitempty"`
+}
+
+type WorkerPTOEdge struct {
+	Node   *worker.WorkerPTO `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
+type WorkerPatchInput struct {
+	Status     *domaintypes.Status `json:"status,omitempty"`
+	Type       *worker.WorkerType  `json:"type,omitempty"`
+	DriverType *worker.DriverType  `json:"driverType,omitempty"`
+}
+
+type AssignmentStatus string
+
+const (
+	AssignmentStatusNew        AssignmentStatus = "New"
+	AssignmentStatusInProgress AssignmentStatus = "InProgress"
+	AssignmentStatusCompleted  AssignmentStatus = "Completed"
+	AssignmentStatusCanceled   AssignmentStatus = "Canceled"
+)
+
+var AllAssignmentStatus = []AssignmentStatus{
+	AssignmentStatusNew,
+	AssignmentStatusInProgress,
+	AssignmentStatusCompleted,
+	AssignmentStatusCanceled,
+}
+
+func (e AssignmentStatus) IsValid() bool {
+	switch e {
+	case AssignmentStatusNew, AssignmentStatusInProgress, AssignmentStatusCompleted, AssignmentStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e AssignmentStatus) String() string {
+	return string(e)
+}
+
+func (e *AssignmentStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AssignmentStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AssignmentStatus", str)
+	}
+	return nil
+}
+
+func (e AssignmentStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AssignmentStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type MoveStatus string
+
+const (
+	MoveStatusNew       MoveStatus = "New"
+	MoveStatusAssigned  MoveStatus = "Assigned"
+	MoveStatusInTransit MoveStatus = "InTransit"
+	MoveStatusCompleted MoveStatus = "Completed"
+	MoveStatusCanceled  MoveStatus = "Canceled"
+)
+
+var AllMoveStatus = []MoveStatus{
+	MoveStatusNew,
+	MoveStatusAssigned,
+	MoveStatusInTransit,
+	MoveStatusCompleted,
+	MoveStatusCanceled,
+}
+
+func (e MoveStatus) IsValid() bool {
+	switch e {
+	case MoveStatusNew, MoveStatusAssigned, MoveStatusInTransit, MoveStatusCompleted, MoveStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e MoveStatus) String() string {
+	return string(e)
+}
+
+func (e *MoveStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MoveStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MoveStatus", str)
+	}
+	return nil
+}
+
+func (e MoveStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *MoveStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MoveStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentCommentPriority string
+
+const (
+	ShipmentCommentPriorityLow    ShipmentCommentPriority = "Low"
+	ShipmentCommentPriorityNormal ShipmentCommentPriority = "Normal"
+	ShipmentCommentPriorityHigh   ShipmentCommentPriority = "High"
+	ShipmentCommentPriorityUrgent ShipmentCommentPriority = "Urgent"
+)
+
+var AllShipmentCommentPriority = []ShipmentCommentPriority{
+	ShipmentCommentPriorityLow,
+	ShipmentCommentPriorityNormal,
+	ShipmentCommentPriorityHigh,
+	ShipmentCommentPriorityUrgent,
+}
+
+func (e ShipmentCommentPriority) IsValid() bool {
+	switch e {
+	case ShipmentCommentPriorityLow, ShipmentCommentPriorityNormal, ShipmentCommentPriorityHigh, ShipmentCommentPriorityUrgent:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentCommentPriority) String() string {
+	return string(e)
+}
+
+func (e *ShipmentCommentPriority) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentCommentPriority(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentCommentPriority", str)
+	}
+	return nil
+}
+
+func (e ShipmentCommentPriority) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentCommentPriority) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentCommentPriority) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentCommentSource string
+
+const (
+	ShipmentCommentSourceUser        ShipmentCommentSource = "User"
+	ShipmentCommentSourceSystem      ShipmentCommentSource = "System"
+	ShipmentCommentSourceIntegration ShipmentCommentSource = "Integration"
+	ShipmentCommentSourceAi          ShipmentCommentSource = "AI"
+)
+
+var AllShipmentCommentSource = []ShipmentCommentSource{
+	ShipmentCommentSourceUser,
+	ShipmentCommentSourceSystem,
+	ShipmentCommentSourceIntegration,
+	ShipmentCommentSourceAi,
+}
+
+func (e ShipmentCommentSource) IsValid() bool {
+	switch e {
+	case ShipmentCommentSourceUser, ShipmentCommentSourceSystem, ShipmentCommentSourceIntegration, ShipmentCommentSourceAi:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentCommentSource) String() string {
+	return string(e)
+}
+
+func (e *ShipmentCommentSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentCommentSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentCommentSource", str)
+	}
+	return nil
+}
+
+func (e ShipmentCommentSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentCommentSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentCommentSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentCommentType string
+
+const (
+	ShipmentCommentTypeInternal            ShipmentCommentType = "Internal"
+	ShipmentCommentTypeDispatch            ShipmentCommentType = "Dispatch"
+	ShipmentCommentTypeDriverUpdate        ShipmentCommentType = "DriverUpdate"
+	ShipmentCommentTypePickupInstruction   ShipmentCommentType = "PickupInstruction"
+	ShipmentCommentTypeDeliveryInstruction ShipmentCommentType = "DeliveryInstruction"
+	ShipmentCommentTypeStatusUpdate        ShipmentCommentType = "StatusUpdate"
+	ShipmentCommentTypeException           ShipmentCommentType = "Exception"
+	ShipmentCommentTypeCustomerUpdate      ShipmentCommentType = "CustomerUpdate"
+	ShipmentCommentTypeAppointment         ShipmentCommentType = "Appointment"
+	ShipmentCommentTypeDocument            ShipmentCommentType = "Document"
+	ShipmentCommentTypeBilling             ShipmentCommentType = "Billing"
+	ShipmentCommentTypeCompliance          ShipmentCommentType = "Compliance"
+)
+
+var AllShipmentCommentType = []ShipmentCommentType{
+	ShipmentCommentTypeInternal,
+	ShipmentCommentTypeDispatch,
+	ShipmentCommentTypeDriverUpdate,
+	ShipmentCommentTypePickupInstruction,
+	ShipmentCommentTypeDeliveryInstruction,
+	ShipmentCommentTypeStatusUpdate,
+	ShipmentCommentTypeException,
+	ShipmentCommentTypeCustomerUpdate,
+	ShipmentCommentTypeAppointment,
+	ShipmentCommentTypeDocument,
+	ShipmentCommentTypeBilling,
+	ShipmentCommentTypeCompliance,
+}
+
+func (e ShipmentCommentType) IsValid() bool {
+	switch e {
+	case ShipmentCommentTypeInternal, ShipmentCommentTypeDispatch, ShipmentCommentTypeDriverUpdate, ShipmentCommentTypePickupInstruction, ShipmentCommentTypeDeliveryInstruction, ShipmentCommentTypeStatusUpdate, ShipmentCommentTypeException, ShipmentCommentTypeCustomerUpdate, ShipmentCommentTypeAppointment, ShipmentCommentTypeDocument, ShipmentCommentTypeBilling, ShipmentCommentTypeCompliance:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentCommentType) String() string {
+	return string(e)
+}
+
+func (e *ShipmentCommentType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentCommentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentCommentType", str)
+	}
+	return nil
+}
+
+func (e ShipmentCommentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentCommentType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentCommentType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentCommentVisibility string
+
+const (
+	ShipmentCommentVisibilityInternal   ShipmentCommentVisibility = "Internal"
+	ShipmentCommentVisibilityOperations ShipmentCommentVisibility = "Operations"
+	ShipmentCommentVisibilityCustomer   ShipmentCommentVisibility = "Customer"
+	ShipmentCommentVisibilityDriver     ShipmentCommentVisibility = "Driver"
+	ShipmentCommentVisibilityAccounting ShipmentCommentVisibility = "Accounting"
+)
+
+var AllShipmentCommentVisibility = []ShipmentCommentVisibility{
+	ShipmentCommentVisibilityInternal,
+	ShipmentCommentVisibilityOperations,
+	ShipmentCommentVisibilityCustomer,
+	ShipmentCommentVisibilityDriver,
+	ShipmentCommentVisibilityAccounting,
+}
+
+func (e ShipmentCommentVisibility) IsValid() bool {
+	switch e {
+	case ShipmentCommentVisibilityInternal, ShipmentCommentVisibilityOperations, ShipmentCommentVisibilityCustomer, ShipmentCommentVisibilityDriver, ShipmentCommentVisibilityAccounting:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentCommentVisibility) String() string {
+	return string(e)
+}
+
+func (e *ShipmentCommentVisibility) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentCommentVisibility(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentCommentVisibility", str)
+	}
+	return nil
+}
+
+func (e ShipmentCommentVisibility) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentCommentVisibility) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentCommentVisibility) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentEntryMethod string
+
+const (
+	ShipmentEntryMethodManual ShipmentEntryMethod = "Manual"
+	ShipmentEntryMethodEdi    ShipmentEntryMethod = "EDI"
+)
+
+var AllShipmentEntryMethod = []ShipmentEntryMethod{
+	ShipmentEntryMethodManual,
+	ShipmentEntryMethodEdi,
+}
+
+func (e ShipmentEntryMethod) IsValid() bool {
+	switch e {
+	case ShipmentEntryMethodManual, ShipmentEntryMethodEdi:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentEntryMethod) String() string {
+	return string(e)
+}
+
+func (e *ShipmentEntryMethod) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentEntryMethod(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentEntryMethod", str)
+	}
+	return nil
+}
+
+func (e ShipmentEntryMethod) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentEntryMethod) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentEntryMethod) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentEventActorType string
+
+const (
+	ShipmentEventActorTypeUser   ShipmentEventActorType = "user"
+	ShipmentEventActorTypeApikey ShipmentEventActorType = "apikey"
+	ShipmentEventActorTypeSystem ShipmentEventActorType = "system"
+	ShipmentEventActorTypeEdi    ShipmentEventActorType = "edi"
+)
+
+var AllShipmentEventActorType = []ShipmentEventActorType{
+	ShipmentEventActorTypeUser,
+	ShipmentEventActorTypeApikey,
+	ShipmentEventActorTypeSystem,
+	ShipmentEventActorTypeEdi,
+}
+
+func (e ShipmentEventActorType) IsValid() bool {
+	switch e {
+	case ShipmentEventActorTypeUser, ShipmentEventActorTypeApikey, ShipmentEventActorTypeSystem, ShipmentEventActorTypeEdi:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentEventActorType) String() string {
+	return string(e)
+}
+
+func (e *ShipmentEventActorType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentEventActorType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentEventActorType", str)
+	}
+	return nil
+}
+
+func (e ShipmentEventActorType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentEventActorType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentEventActorType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentEventSeverity string
+
+const (
+	ShipmentEventSeverityDanger  ShipmentEventSeverity = "danger"
+	ShipmentEventSeveritySuccess ShipmentEventSeverity = "success"
+	ShipmentEventSeverityBrand   ShipmentEventSeverity = "brand"
+	ShipmentEventSeverityInfo    ShipmentEventSeverity = "info"
+	ShipmentEventSeverityMuted   ShipmentEventSeverity = "muted"
+)
+
+var AllShipmentEventSeverity = []ShipmentEventSeverity{
+	ShipmentEventSeverityDanger,
+	ShipmentEventSeveritySuccess,
+	ShipmentEventSeverityBrand,
+	ShipmentEventSeverityInfo,
+	ShipmentEventSeverityMuted,
+}
+
+func (e ShipmentEventSeverity) IsValid() bool {
+	switch e {
+	case ShipmentEventSeverityDanger, ShipmentEventSeveritySuccess, ShipmentEventSeverityBrand, ShipmentEventSeverityInfo, ShipmentEventSeverityMuted:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentEventSeverity) String() string {
+	return string(e)
+}
+
+func (e *ShipmentEventSeverity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentEventSeverity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentEventSeverity", str)
+	}
+	return nil
+}
+
+func (e ShipmentEventSeverity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentEventSeverity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentEventSeverity) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentEventType string
+
+const (
+	ShipmentEventTypeShipmentCreated      ShipmentEventType = "ShipmentCreated"
+	ShipmentEventTypeShipmentUpdated      ShipmentEventType = "ShipmentUpdated"
+	ShipmentEventTypeStatusChanged        ShipmentEventType = "StatusChanged"
+	ShipmentEventTypeShipmentCanceled     ShipmentEventType = "ShipmentCanceled"
+	ShipmentEventTypeShipmentUncanceled   ShipmentEventType = "ShipmentUncanceled"
+	ShipmentEventTypeOwnershipTransferred ShipmentEventType = "OwnershipTransferred"
+	ShipmentEventTypeMoveStatusChanged    ShipmentEventType = "MoveStatusChanged"
+	ShipmentEventTypeMoveDeparted         ShipmentEventType = "MoveDeparted"
+	ShipmentEventTypeMoveArrived          ShipmentEventType = "MoveArrived"
+	ShipmentEventTypeStopCompleted        ShipmentEventType = "StopCompleted"
+	ShipmentEventTypeDriverAssigned       ShipmentEventType = "DriverAssigned"
+	ShipmentEventTypeDriverReassigned     ShipmentEventType = "DriverReassigned"
+	ShipmentEventTypeDriverUnassigned     ShipmentEventType = "DriverUnassigned"
+	ShipmentEventTypeHoldPlaced           ShipmentEventType = "HoldPlaced"
+	ShipmentEventTypeHoldUpdated          ShipmentEventType = "HoldUpdated"
+	ShipmentEventTypeHoldReleased         ShipmentEventType = "HoldReleased"
+	ShipmentEventTypeCommentPosted        ShipmentEventType = "CommentPosted"
+)
+
+var AllShipmentEventType = []ShipmentEventType{
+	ShipmentEventTypeShipmentCreated,
+	ShipmentEventTypeShipmentUpdated,
+	ShipmentEventTypeStatusChanged,
+	ShipmentEventTypeShipmentCanceled,
+	ShipmentEventTypeShipmentUncanceled,
+	ShipmentEventTypeOwnershipTransferred,
+	ShipmentEventTypeMoveStatusChanged,
+	ShipmentEventTypeMoveDeparted,
+	ShipmentEventTypeMoveArrived,
+	ShipmentEventTypeStopCompleted,
+	ShipmentEventTypeDriverAssigned,
+	ShipmentEventTypeDriverReassigned,
+	ShipmentEventTypeDriverUnassigned,
+	ShipmentEventTypeHoldPlaced,
+	ShipmentEventTypeHoldUpdated,
+	ShipmentEventTypeHoldReleased,
+	ShipmentEventTypeCommentPosted,
+}
+
+func (e ShipmentEventType) IsValid() bool {
+	switch e {
+	case ShipmentEventTypeShipmentCreated, ShipmentEventTypeShipmentUpdated, ShipmentEventTypeStatusChanged, ShipmentEventTypeShipmentCanceled, ShipmentEventTypeShipmentUncanceled, ShipmentEventTypeOwnershipTransferred, ShipmentEventTypeMoveStatusChanged, ShipmentEventTypeMoveDeparted, ShipmentEventTypeMoveArrived, ShipmentEventTypeStopCompleted, ShipmentEventTypeDriverAssigned, ShipmentEventTypeDriverReassigned, ShipmentEventTypeDriverUnassigned, ShipmentEventTypeHoldPlaced, ShipmentEventTypeHoldUpdated, ShipmentEventTypeHoldReleased, ShipmentEventTypeCommentPosted:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentEventType) String() string {
+	return string(e)
+}
+
+func (e *ShipmentEventType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentEventType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentEventType", str)
+	}
+	return nil
+}
+
+func (e ShipmentEventType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentEventType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentEventType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentStatus string
+
+const (
+	ShipmentStatusNew                ShipmentStatus = "New"
+	ShipmentStatusPartiallyAssigned  ShipmentStatus = "PartiallyAssigned"
+	ShipmentStatusAssigned           ShipmentStatus = "Assigned"
+	ShipmentStatusInTransit          ShipmentStatus = "InTransit"
+	ShipmentStatusDelayed            ShipmentStatus = "Delayed"
+	ShipmentStatusPartiallyCompleted ShipmentStatus = "PartiallyCompleted"
+	ShipmentStatusCompleted          ShipmentStatus = "Completed"
+	ShipmentStatusReadyToInvoice     ShipmentStatus = "ReadyToInvoice"
+	ShipmentStatusInvoiced           ShipmentStatus = "Invoiced"
+	ShipmentStatusCanceled           ShipmentStatus = "Canceled"
+)
+
+var AllShipmentStatus = []ShipmentStatus{
+	ShipmentStatusNew,
+	ShipmentStatusPartiallyAssigned,
+	ShipmentStatusAssigned,
+	ShipmentStatusInTransit,
+	ShipmentStatusDelayed,
+	ShipmentStatusPartiallyCompleted,
+	ShipmentStatusCompleted,
+	ShipmentStatusReadyToInvoice,
+	ShipmentStatusInvoiced,
+	ShipmentStatusCanceled,
+}
+
+func (e ShipmentStatus) IsValid() bool {
+	switch e {
+	case ShipmentStatusNew, ShipmentStatusPartiallyAssigned, ShipmentStatusAssigned, ShipmentStatusInTransit, ShipmentStatusDelayed, ShipmentStatusPartiallyCompleted, ShipmentStatusCompleted, ShipmentStatusReadyToInvoice, ShipmentStatusInvoiced, ShipmentStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentStatus) String() string {
+	return string(e)
+}
+
+func (e *ShipmentStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentStatus", str)
+	}
+	return nil
+}
+
+func (e ShipmentStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ShipmentTenderStatus string
+
+const (
+	ShipmentTenderStatusTendered ShipmentTenderStatus = "Tendered"
+	ShipmentTenderStatusAccepted ShipmentTenderStatus = "Accepted"
+	ShipmentTenderStatusRejected ShipmentTenderStatus = "Rejected"
+	ShipmentTenderStatusExpired  ShipmentTenderStatus = "Expired"
+	ShipmentTenderStatusCanceled ShipmentTenderStatus = "Canceled"
+)
+
+var AllShipmentTenderStatus = []ShipmentTenderStatus{
+	ShipmentTenderStatusTendered,
+	ShipmentTenderStatusAccepted,
+	ShipmentTenderStatusRejected,
+	ShipmentTenderStatusExpired,
+	ShipmentTenderStatusCanceled,
+}
+
+func (e ShipmentTenderStatus) IsValid() bool {
+	switch e {
+	case ShipmentTenderStatusTendered, ShipmentTenderStatusAccepted, ShipmentTenderStatusRejected, ShipmentTenderStatusExpired, ShipmentTenderStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e ShipmentTenderStatus) String() string {
+	return string(e)
+}
+
+func (e *ShipmentTenderStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ShipmentTenderStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ShipmentTenderStatus", str)
+	}
+	return nil
+}
+
+func (e ShipmentTenderStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ShipmentTenderStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ShipmentTenderStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StopScheduleType string
+
+const (
+	StopScheduleTypeOpen        StopScheduleType = "Open"
+	StopScheduleTypeAppointment StopScheduleType = "Appointment"
+)
+
+var AllStopScheduleType = []StopScheduleType{
+	StopScheduleTypeOpen,
+	StopScheduleTypeAppointment,
+}
+
+func (e StopScheduleType) IsValid() bool {
+	switch e {
+	case StopScheduleTypeOpen, StopScheduleTypeAppointment:
+		return true
+	}
+	return false
+}
+
+func (e StopScheduleType) String() string {
+	return string(e)
+}
+
+func (e *StopScheduleType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StopScheduleType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StopScheduleType", str)
+	}
+	return nil
+}
+
+func (e StopScheduleType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StopScheduleType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StopScheduleType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StopStatus string
+
+const (
+	StopStatusNew       StopStatus = "New"
+	StopStatusInTransit StopStatus = "InTransit"
+	StopStatusCompleted StopStatus = "Completed"
+	StopStatusCanceled  StopStatus = "Canceled"
+)
+
+var AllStopStatus = []StopStatus{
+	StopStatusNew,
+	StopStatusInTransit,
+	StopStatusCompleted,
+	StopStatusCanceled,
+}
+
+func (e StopStatus) IsValid() bool {
+	switch e {
+	case StopStatusNew, StopStatusInTransit, StopStatusCompleted, StopStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e StopStatus) String() string {
+	return string(e)
+}
+
+func (e *StopStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StopStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StopStatus", str)
+	}
+	return nil
+}
+
+func (e StopStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StopStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StopStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type StopType string
+
+const (
+	StopTypePickup        StopType = "Pickup"
+	StopTypeDelivery      StopType = "Delivery"
+	StopTypeSplitDelivery StopType = "SplitDelivery"
+	StopTypeSplitPickup   StopType = "SplitPickup"
+)
+
+var AllStopType = []StopType{
+	StopTypePickup,
+	StopTypeDelivery,
+	StopTypeSplitDelivery,
+	StopTypeSplitPickup,
+}
+
+func (e StopType) IsValid() bool {
+	switch e {
+	case StopTypePickup, StopTypeDelivery, StopTypeSplitDelivery, StopTypeSplitPickup:
+		return true
+	}
+	return false
+}
+
+func (e StopType) String() string {
+	return string(e)
+}
+
+func (e *StopType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = StopType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid StopType", str)
+	}
+	return nil
+}
+
+func (e StopType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *StopType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e StopType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type TimeFormat string

@@ -9,6 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
+	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,25 +21,46 @@ import (
 type Params struct {
 	fx.In
 
-	Logger           *zap.Logger
-	TractorService   *tractorservice.Service
-	TrailerService   *trailerservice.Service
-	PermissionEngine services.PermissionEngine
+	Logger                  *zap.Logger
+	AnalyticsService        services.AnalyticsService
+	ShipmentService         services.ShipmentService
+	ShipmentCommentService  services.ShipmentCommentService
+	ShipmentEventService    services.ShipmentEventService
+	ShipmentImportAssistant services.ShipmentImportAssistantService `optional:"true"`
+	TractorService          *tractorservice.Service
+	TrailerService          *trailerservice.Service
+	WorkerService           *workerservice.Service
+	WorkerPTOService        *workerptoservice.Service
+	PermissionEngine        services.PermissionEngine
 }
 
 type Resolver struct {
-	l                *zap.Logger
-	tractorService   *tractorservice.Service
-	trailerService   *trailerservice.Service
-	permissionEngine services.PermissionEngine
+	l                       *zap.Logger
+	analyticsService        services.AnalyticsService
+	shipmentService         services.ShipmentService
+	shipmentCommentService  services.ShipmentCommentService
+	shipmentEventService    services.ShipmentEventService
+	shipmentImportAssistant services.ShipmentImportAssistantService
+	tractorService          *tractorservice.Service
+	trailerService          *trailerservice.Service
+	workerService           *workerservice.Service
+	workerPTOService        *workerptoservice.Service
+	permissionEngine        services.PermissionEngine
 }
 
 func New(p Params) *Resolver {
 	return &Resolver{
-		l:                p.Logger.Named("api.graphql.resolver"),
-		tractorService:   p.TractorService,
-		trailerService:   p.TrailerService,
-		permissionEngine: p.PermissionEngine,
+		l:                       p.Logger.Named("api.graphql.resolver"),
+		analyticsService:        p.AnalyticsService,
+		shipmentService:         p.ShipmentService,
+		shipmentCommentService:  p.ShipmentCommentService,
+		shipmentEventService:    p.ShipmentEventService,
+		shipmentImportAssistant: p.ShipmentImportAssistant,
+		tractorService:          p.TractorService,
+		trailerService:          p.TrailerService,
+		workerService:           p.WorkerService,
+		workerPTOService:        p.WorkerPTOService,
+		permissionEngine:        p.PermissionEngine,
 	}
 }
 

@@ -84,6 +84,30 @@ models:
         resolver: true
       managerId:
         resolver: true
+  WorkerProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerProfile
+    fields:
+      licenseStateId:
+        resolver: true
+      medicalExaminerNpi:
+        fieldName: MedicalExaminerNPI
+      twicCardNumber:
+        fieldName: TWICCardNumber
+      twicExpiry:
+        fieldName: TWICExpiry
+      lastMvrCheck:
+        fieldName: LastMVRCheck
+      eldExempt:
+        fieldName: ELDExempt
+  WorkerPTO:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.WorkerPTO
+    fields:
+      approverId:
+        resolver: true
+      rejectorId:
+        resolver: true
   WorkerType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.WorkerType
@@ -93,6 +117,24 @@ models:
   WorkerGender:
     model:
       - github.com/emoss08/trenova/internal/core/domain/worker.Gender
+  CDLClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.CDLClass
+  EndorsementType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.EndorsementType
+  ComplianceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.ComplianceStatus
+  PTOStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOStatus
+  PTOType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/worker.PTOType
+  PTOChartDataPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.PTOChartDataPoint
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType

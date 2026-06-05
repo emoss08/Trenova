@@ -55,18 +55,24 @@ func NewPersistedOperationManifest() (*PersistedOperationManifest, error) {
 }
 
 func LoadPersistedOperationManifest(data []byte) (*PersistedOperationManifest, error) {
-	queries := map[string]string{}
-	if err := sonic.Unmarshal(data, &queries); err != nil {
+	rawQueries := map[string]string{}
+	if err := sonic.Unmarshal(data, &rawQueries); err != nil {
 		return nil, fmt.Errorf("parsing persisted operations: %w", err)
 	}
 
-	for hash, query := range queries {
+	queries := make(map[string]string, len(rawQueries))
+	for hash, query := range rawQueries {
 		if strings.TrimSpace(hash) == "" {
 			return nil, errors.New("persisted operation hash cannot be empty")
 		}
 		if strings.TrimSpace(query) == "" {
 			return nil, fmt.Errorf("persisted operation %q has an empty query", hash)
 		}
+		normalizedHash := normalizePersistedHash(hash)
+		if existingQuery, ok := queries[normalizedHash]; ok && existingQuery != query {
+			return nil, fmt.Errorf("persisted operation hash %q is duplicated after normalization", normalizedHash)
+		}
+		queries[normalizedHash] = query
 	}
 
 	return &PersistedOperationManifest{

@@ -1,0 +1,242 @@
+enum WorkerType {
+  Employee
+  Contractor
+}
+
+enum DriverType {
+  Local
+  Regional
+  OTR
+  Team
+}
+
+enum WorkerGender {
+  Male
+  Female
+}
+
+enum CDLClass {
+  A
+  B
+  C
+}
+
+enum EndorsementType {
+  O
+  N
+  H
+  X
+  P
+  T
+}
+
+enum ComplianceStatus {
+  Compliant
+  NonCompliant
+  Pending
+}
+
+enum PTOStatus {
+  Requested
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum PTOType {
+  Personal
+  Vacation
+  Sick
+  Holiday
+  Bereavement
+  Maternity
+  Paternity
+}
+
+type WorkerProfile {
+  id: ID!
+  workerId: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  licenseStateId: ID
+  dob: Int!
+  licenseNumber: String!
+  cdlClass: CDLClass!
+  cdlRestrictions: String!
+  endorsement: EndorsementType!
+  hazmatExpiry: Int
+  licenseExpiry: Int!
+  medicalCardExpiry: Int
+  medicalExaminerName: String!
+  medicalExaminerNpi: String!
+  twicCardNumber: String!
+  twicExpiry: Int
+  hireDate: Int!
+  terminationDate: Int
+  physicalDueDate: Int
+  mvrDueDate: Int
+  complianceStatus: ComplianceStatus!
+  isQualified: Boolean!
+  disqualificationReason: String!
+  lastComplianceCheck: Int!
+  lastMvrCheck: Int!
+  lastDrugTest: Int!
+  eldExempt: Boolean!
+  shortHaulExempt: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  licenseState: UsState
+}
+
+type Worker {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+  fleetCodeId: ID
+  managerId: ID
+  status: EntityStatus!
+  type: WorkerType!
+  driverType: DriverType!
+  profilePicUrl: String!
+  firstName: String!
+  lastName: String!
+  wholeName: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  postalCode: String!
+  email: String!
+  phoneNumber: String!
+  emergencyContactName: String!
+  emergencyContactPhone: String!
+  externalId: String!
+  assignmentBlocked: String!
+  gender: WorkerGender!
+  canBeAssigned: Boolean!
+  availableForDispatch: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  customFields: JSON
+  businessUnit: BusinessUnit
+  organization: Organization
+  state: UsState
+  fleetCode: FleetCode
+  manager: User
+  profile: WorkerProfile
+  pto: [WorkerPTO!]
+}
+
+type WorkerEdge {
+  node: Worker!
+  cursor: String!
+}
+
+type WorkerConnection {
+  edges: [WorkerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type WorkerPTO {
+  id: ID!
+  workerId: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  approverId: ID
+  rejectorId: ID
+  status: PTOStatus!
+  type: PTOType!
+  startDate: Int!
+  endDate: Int!
+  reason: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  worker: Worker
+  approver: User
+  rejector: User
+}
+
+type WorkerPTOEdge {
+  node: WorkerPTO!
+  cursor: String!
+}
+
+type WorkerPTOConnection {
+  edges: [WorkerPTOEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type PTOChartDataPoint {
+  date: String!
+  vacation: Int!
+  sick: Int!
+  holiday: Int!
+  bereavement: Int!
+  maternity: Int!
+  paternity: Int!
+  personal: Int!
+  workers: JSON!
+}
+
+input WorkerPatchInput {
+  status: EntityStatus
+  type: WorkerType
+  driverType: DriverType
+}
+
+extend type Query {
+  workers(
+    first: Int = 20
+    offset: Int
+    after: String
+    query: String
+    fieldFilters: [FieldFilterInput!]
+    filterGroups: [FilterGroupInput!]
+    sort: [SortFieldInput!]
+  ): WorkerConnection!
+  workerPTOEntries(
+    first: Int = 20
+    offset: Int
+    after: String
+    query: String
+    fieldFilters: [FieldFilterInput!]
+    filterGroups: [FilterGroupInput!]
+    sort: [SortFieldInput!]
+    status: PTOStatus
+    type: PTOType
+    startDateFrom: Int
+    startDateTo: Int
+    workerId: ID
+    includeWorker: Boolean = false
+  ): WorkerPTOConnection!
+  upcomingWorkerPTO(
+    first: Int = 20
+    offset: Int
+    after: String
+    status: PTOStatus
+    type: PTOType
+    startDate: Int
+    endDate: Int
+    workerId: ID
+    fleetCodeId: ID
+    timezone: String
+  ): WorkerPTOConnection!
+  workerPTOChartData(
+    startDateFrom: Int!
+    startDateTo: Int!
+    type: PTOType
+    workerId: ID
+    timezone: String
+  ): [PTOChartDataPoint!]!
+}
+
+extend type Mutation {
+  patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  approveWorkerPTO(id: ID!): WorkerPTO!
+  rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+}

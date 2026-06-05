@@ -95,6 +95,7 @@ func (r *repository) List(
 	total, err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Relation(buncolgen.WorkerRelations.FleetCode).
 		Relation(buncolgen.WorkerRelations.State).
 		Relation(buncolgen.WorkerRelations.Profile).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {

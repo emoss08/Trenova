@@ -23,6 +23,88 @@ func TestLoadPersistedOperationManifest(t *testing.T) {
 	assert.ElementsMatch(t, []string{"sha256:abc"}, manifest.KnownHashes())
 }
 
+func TestLoadPersistedOperationManifest_NormalizesBareSHA256Hashes(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := LoadPersistedOperationManifest(
+		[]byte(`{"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"query Test { ok }"}`),
+	)
+	require.NoError(t, err)
+
+	query, ok := manifest.Query("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+	require.True(t, ok)
+	assert.Equal(t, "query Test { ok }", query)
+	assert.ElementsMatch(
+		t,
+		[]string{"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+		manifest.KnownHashes(),
+	)
+}
+
+func TestNewPersistedOperationManifest_IncludesShipmentOperations(t *testing.T) {
+	t.Parallel()
+
+	manifest, err := NewPersistedOperationManifest()
+	require.NoError(t, err)
+
+	for _, operation := range []string{
+		"ShipmentCommandCenterTable",
+		"ShipmentDetail",
+		"ShipmentSavedViewCounts",
+		"ShipmentPageAnalytics",
+		"ShipmentTomorrowsPickups",
+		"UnassignedShipments",
+		"ExceptionShipments",
+		"MapShipments",
+		"ShipmentComments",
+		"ShipmentCommentCount",
+		"ShipmentEvents",
+		"ShipmentBillingReadiness",
+		"ShipmentUIPolicy",
+		"ShipmentPreviousRates",
+		"CreateShipment",
+		"UpdateShipment",
+		"CancelShipment",
+		"UncancelShipment",
+		"DuplicateShipment",
+		"TransferShipmentOwnership",
+		"TransferShipmentToBilling",
+		"BulkTransferShipmentsToBilling",
+		"CalculateShipmentTotals",
+		"CalculateShipmentDistance",
+		"RecalculateShipmentDistance",
+		"CheckShipmentDuplicateBol",
+		"CheckShipmentHazmatSegregation",
+		"CalculateShipmentLoadingOptimization",
+		"CreateShipmentComment",
+		"UpdateShipmentComment",
+		"DeleteShipmentComment",
+	} {
+		require.True(
+			t,
+			manifestIncludesGraphQLOperation(manifest, operation),
+			"missing persisted shipment operation %s",
+			operation,
+		)
+	}
+}
+
+func manifestIncludesGraphQLOperation(manifest *PersistedOperationManifest, operation string) bool {
+	for _, query := range manifest.queries {
+		if graphQLOperationNameMatches(query, "query", operation) ||
+			graphQLOperationNameMatches(query, "mutation", operation) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func graphQLOperationNameMatches(query, operationType, operation string) bool {
+	return strings.Contains(query, operationType+" "+operation+"(") ||
+		strings.Contains(query, operationType+" "+operation+" {")
+}
+
 func TestLoadPersistedOperationManifest_RejectsMalformedJSON(t *testing.T) {
 	t.Parallel()
 

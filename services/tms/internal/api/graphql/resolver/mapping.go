@@ -1,9 +1,13 @@
 package resolver
 
 import (
+	"strconv"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -50,12 +54,40 @@ func int64Ptr(value *int) *int64 {
 	return &converted
 }
 
+func int64Value(value *int) int64 {
+	if value == nil {
+		return 0
+	}
+	return int64(*value)
+}
+
+func intValue(value *int) int {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
 func intPtr(value *int64) *int {
 	if value == nil {
 		return nil
 	}
 	converted := int(*value)
 	return &converted
+}
+
+func ptoStatusString(value *worker.PTOStatus) string {
+	if value == nil {
+		return ""
+	}
+	return value.String()
+}
+
+func ptoTypeString(value *worker.PTOType) string {
+	if value == nil {
+		return ""
+	}
+	return value.String()
 }
 
 type gqlListOptions struct {
@@ -80,6 +112,53 @@ func queryOptionsFromGraphQL(opts gqlListOptions) *pagination.QueryOptions {
 		FilterGroups: filterGroupsFromGraphQL(opts.FilterGroups),
 		Sort:         sortFieldsFromGraphQL(opts.Sort),
 	}
+}
+
+type gqlOffsetPageInput struct {
+	First  *int
+	Offset *int
+	After  *string
+}
+
+type gqlOffsetPage struct {
+	Limit  int
+	Offset int
+}
+
+func offsetPageFromGraphQL(input gqlOffsetPageInput) (gqlOffsetPage, error) {
+	limit := pagination.DefaultLimit
+	if input.First != nil {
+		limit = pagination.ClampLimit(*input.First)
+	}
+
+	if input.Offset != nil {
+		return gqlOffsetPage{
+			Limit:  limit,
+			Offset: pagination.ClampOffset(*input.Offset),
+		}, nil
+	}
+
+	if input.After == nil || *input.After == "" {
+		return gqlOffsetPage{Limit: limit}, nil
+	}
+
+	parsedOffset, err := strconv.Atoi(*input.After)
+	if err != nil {
+		return gqlOffsetPage{}, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalidFormat,
+			"Cursor is invalid",
+		)
+	}
+
+	return gqlOffsetPage{
+		Limit:  limit,
+		Offset: pagination.ClampOffset(parsedOffset),
+	}, nil
+}
+
+func offsetCursor(offset int) string {
+	return strconv.Itoa(offset)
 }
 
 func fieldFiltersFromGraphQL(inputs []*gqlmodel.FieldFilterInput) []domaintypes.FieldFilter {

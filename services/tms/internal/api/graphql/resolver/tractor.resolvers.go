@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -304,21 +303,7 @@ func (r *tractorResolver) LastKnownLocation(ctx context.Context, obj *tractor.Tr
 	return tractorLastKnownLocationReference(obj), nil
 }
 
-// FleetCodeID is the resolver for the fleetCodeId field.
-func (r *workerResolver) FleetCodeID(ctx context.Context, obj *worker.Worker) (*string, error) {
-	return idPtr(obj.FleetCodeID), nil
-}
-
-// ManagerID is the resolver for the managerId field.
-func (r *workerResolver) ManagerID(ctx context.Context, obj *worker.Worker) (*string, error) {
-	return idPtr(obj.ManagerID), nil
-}
-
 // Tractor returns generated.TractorResolver implementation.
 func (r *Resolver) Tractor() generated.TractorResolver { return &tractorResolver{r} }
 
-// Worker returns generated.WorkerResolver implementation.
-func (r *Resolver) Worker() generated.WorkerResolver { return &workerResolver{r} }
-
 type tractorResolver struct{ *Resolver }
-type workerResolver struct{ *Resolver }
