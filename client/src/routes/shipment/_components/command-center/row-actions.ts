@@ -1,3 +1,4 @@
+import { isEligibleTenderStatus } from "@/lib/shipment-utils";
 import type { RowAction } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
 import type { Row } from "@tanstack/react-table";
@@ -38,21 +39,6 @@ export function buildShipmentRowActions(
       onClick: handlers.onDuplicate,
     },
     {
-      id: "cancel",
-      label: "Cancel",
-      icon: BanIcon,
-      variant: "destructive",
-      onClick: handlers.onCancel,
-      hidden: (row) => row.original.status === "Canceled",
-    },
-    {
-      id: "uncancel",
-      label: "Uncancel",
-      icon: UndoIcon,
-      onClick: handlers.onUncancel,
-      hidden: (row) => row.original.status !== "Canceled",
-    },
-    {
       id: "transfer-ownership",
       label: "Transfer Ownership",
       icon: ArrowRightLeftIcon,
@@ -67,10 +53,9 @@ export function buildShipmentRowActions(
       hidden: (row) => {
         const shipment = row.original;
         const tenderStatus = shipment.tenderStatus;
-        const eligibleTenderStatus =
-          !tenderStatus || tenderStatus === "Rejected" || tenderStatus === "Expired" ||
-          tenderStatus === "Canceled";
-        return !handlers.canSendEDI || shipment.status !== "New" || !eligibleTenderStatus;
+        const isEligible = isEligibleTenderStatus(tenderStatus);
+
+        return !handlers.canSendEDI || shipment.status !== "New" || !isEligible;
       },
     },
     {
@@ -84,6 +69,21 @@ export function buildShipmentRowActions(
         const bts = s.billingTransferStatus;
         return !!bts && bts !== "SentBackToOps";
       },
+    },
+    {
+      id: "cancel",
+      label: "Cancel",
+      icon: BanIcon,
+      variant: "destructive",
+      onClick: handlers.onCancel,
+      hidden: (row) => row.original.status === "Canceled",
+    },
+    {
+      id: "uncancel",
+      label: "Uncancel",
+      icon: UndoIcon,
+      onClick: handlers.onUncancel,
+      hidden: (row) => row.original.status !== "Canceled",
     },
   ];
 }

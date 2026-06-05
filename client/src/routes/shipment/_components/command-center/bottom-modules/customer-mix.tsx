@@ -2,8 +2,8 @@ import { Badge, type BadgeVariant } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { TextShimmer } from "@/components/ui/text-shimmer";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
+import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
 import { cn } from "@/lib/utils";
-import { apiService } from "@/services/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import type React from "react";
@@ -134,13 +134,16 @@ function PickupsList({
       Intl.DateTimeFormat().resolvedOptions().timeZone,
     ],
     queryFn: async ({ pageParam }) =>
-      apiService.analyticService.get({
-        page: "shipment-management",
+      getShipmentPageAnalyticsGraphQL({
         include: "tomorrowsPickups",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         limit: PICKUPS_PAGE_SIZE,
         offset: pageParam,
-      }),
+      }).then((response) => ({
+        page: response.page,
+        tomorrowsPickups: (response.data as { tomorrowsPickups?: TomorrowsPickupsCard })
+          .tomorrowsPickups,
+      })),
     initialPageParam: 0,
     initialData: {
       pageParams: [0],

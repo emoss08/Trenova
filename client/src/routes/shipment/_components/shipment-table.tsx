@@ -2,7 +2,7 @@ import { formatFileSize, type RejectedFile } from "@/components/documents/docume
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { api } from "@/lib/api";
+import { getShipmentGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@/stores/permission-store";
@@ -28,8 +28,6 @@ import { ShipmentDuplicateDialog } from "./shipment-duplicate-dialog";
 import { ShipmentSendEDIDialog } from "./shipment-send-edi-dialog";
 import { ShipmentPanel } from "./shipment-panel";
 import { ShipmentTransferOwnershipDialog } from "./shipment-transfer-ownership-dialog";
-
-const SHIPMENT_DETAIL_PARAMS = "?expandShipmentDetails=true";
 
 type ShipmentTableProps = {
   onSummaryChange?: (summary: CommandCenterTableSummary) => void;
@@ -73,7 +71,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
 
   const { data: panelRow } = useQuery({
     queryKey: ["shipment-list", "detail", panelEntityId],
-    queryFn: () => api.get<Shipment>(`/shipments/${panelEntityId}/${SHIPMENT_DETAIL_PARAMS}`),
+    queryFn: () => getShipmentGraphQL(panelEntityId ?? ""),
     enabled: !!panelEntityId && panelType === "edit",
     staleTime: 0,
   });
@@ -276,6 +274,7 @@ export default function ShipmentTable({ onSummaryChange }: ShipmentTableProps) {
     <>
       <CommandCenterTable
         columns={columns}
+        rowActions={rowActions}
         mandatoryFieldFilters={mandatoryFieldFilters}
         onUploadDocument={handleUploadDocument}
         onSummaryChange={onSummaryChange}

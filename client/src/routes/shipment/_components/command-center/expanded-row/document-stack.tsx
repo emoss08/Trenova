@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import type { Document } from "@/types/document";
 import type { Shipment, ShipmentBillingRequirement } from "@/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { PanelSkeleton } from "./panel-skeletons";
 
 type DocumentRow = {
   id: string;
@@ -87,12 +87,7 @@ export function DocumentsBlock({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-1 text-[11px]">
         {isLoading ? (
-          Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="flex items-center justify-between gap-3">
-              <Skeleton className="h-3 w-38" />
-              <Skeleton className="h-3 w-24" />
-            </div>
-          ))
+          <PanelSkeleton />
         ) : isError ? (
           <span className="text-muted-foreground">Documents unavailable</span>
         ) : docRows.length === 0 ? (
@@ -129,3 +124,5 @@ export function DocumentsBlock({
     </div>
   );
 }
+
+export default DocumentsBlock;

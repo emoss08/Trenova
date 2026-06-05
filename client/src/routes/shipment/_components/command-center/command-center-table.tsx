@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fetchData } from "@/hooks/data-table/use-data-table-query";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
   convertFilterItemsToFieldFilters,
@@ -26,9 +25,10 @@ import {
   initializeFilterItemsFromFieldFilters,
   initializeFilterItemsFromFilterGroups,
 } from "@/lib/data-table";
+import { listShipmentsGraphQL } from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import type { FieldFilter, FilterItem, SortField } from "@/types/data-table";
+import type { FieldFilter, FilterItem, RowAction, SortField } from "@/types/data-table";
 import type { Shipment } from "@/types/shipment";
 import type { TableConfig } from "@/types/table-configuration";
 import { useQuery } from "@tanstack/react-query";
@@ -44,8 +44,8 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeftIcon, ChevronRightIcon, LayoutGridIcon, TableIcon } from "lucide-react";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { ExpandedRow } from "./expanded-row";
 import type { ShipmentDocumentUploadContext } from "./expanded-row/document-stack";
+import { PanelSkeleton } from "./expanded-row/panel-skeletons";
 import { FilterChipRow } from "./filter-chip-row";
 import { SavedViewsBar } from "./saved-views-bar";
 import { useCommandCenterStore } from "./store";
@@ -71,6 +71,7 @@ const DataTableSaveConfigDialog = lazy(() =>
     default: m.DataTableSaveConfigDialog,
   })),
 );
+const ExpandedRow = lazy(() => import("./expanded-row").then((m) => ({ default: m.ExpandedRow })));
 
 function ToolbarButtonSkeleton() {
   return <Skeleton className="h-7 w-20" />;
@@ -80,12 +81,22 @@ function SearchSkeleton() {
   return <Skeleton className="h-7 w-48" />;
 }
 
-const SHIPMENTS_LINK = "/shipments/";
+function ExpandedRowLoadingFallback() {
+  return (
+    <div className="grid grid-cols-1 gap-5 px-4 py-3 md:grid-cols-[2fr_1.4fr_1fr_1fr]">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <PanelSkeleton key={index} />
+      ))}
+    </div>
+  );
+}
+
 const QUERY_KEY = "shipment-list";
 const RESOURCE_NAME = "Shipment";
 
 type CommandCenterTableProps = {
   columns: ColumnDef<Shipment>[];
+  rowActions: RowAction<Shipment>[];
   mandatoryFieldFilters: FieldFilter[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
   onSummaryChange?: (summary: CommandCenterTableSummary) => void;
@@ -99,6 +110,7 @@ export type CommandCenterTableSummary = {
 
 export function CommandCenterTable({
   columns,
+  rowActions,
   mandatoryFieldFilters,
   onUploadDocument,
   onSummaryChange,
@@ -156,12 +168,13 @@ export function CommandCenterTable({
       query,
     ],
     queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(SHIPMENTS_LINK, pageIndex, pageSize, {
+      listShipmentsGraphQL({
+        limit: pageSize,
+        offset: pageIndex * pageSize,
         query,
         fieldFilters: mergedFieldFilters,
         filterGroups: userFilterGroups,
         sort,
-        extraSearchParams: { expandShipmentDetails: true },
       }),
     placeholderData: (prev) => prev,
   });
@@ -292,7 +305,6 @@ export function CommandCenterTable({
   return (
     <section className="flex flex-col overflow-hidden rounded-md border border-border bg-card">
       <SavedViewsBar rightSlot={rightSlot} countsEnabled={backgroundQueriesEnabled} />
-
       <div className="flex items-center gap-2 border-b border-border px-3 py-1.5">
         <Suspense fallback={<SearchSkeleton />}>
           <DataTableSearch value={query} onChange={setQuery} placeholder="Search shipments..." />
@@ -366,6 +378,7 @@ export function CommandCenterTable({
                     onClick={() => handleRowClick(row)}
                     onMouseEnter={() => row.original.id && setHighlightId(row.original.id)}
                     onMouseLeave={() => setHighlightId(null)}
+                    rowActions={rowActions}
                     onUploadDocument={onUploadDocument}
                   />
                 );
@@ -456,6 +469,7 @@ function RowFragment({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  rowActions,
   onUploadDocument,
 }: {
   row: Row<Shipment>;
@@ -464,6 +478,7 @@ function RowFragment({
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  rowActions: RowAction<Shipment>[];
   onUploadDocument: (shipment: Shipment, context?: ShipmentDocumentUploadContext) => void;
 }) {
   return (
@@ -485,10 +500,17 @@ function RowFragment({
         ))}
       </tr>
       {isExpanded && (
-        <tr className="border-b border-border bg-muted">
+        <tr className="border-b border-border bg-background">
           <td colSpan={row.getVisibleCells().length} className="p-0">
             <div className="cc-fade-in">
-              <ExpandedRow shipment={row.original} onUploadDocument={onUploadDocument} />
+              <Suspense fallback={<ExpandedRowLoadingFallback />}>
+                <ExpandedRow
+                  row={row}
+                  shipment={row.original}
+                  rowActions={rowActions}
+                  onUploadDocument={onUploadDocument}
+                />
+              </Suspense>
             </div>
           </td>
         </tr>
@@ -528,7 +550,7 @@ function CommandCenterFooter({
             value={String(pageSize)}
             onValueChange={(value) => onPageSizeChange(Number(value) as CommandCenterPageSize)}
           >
-            <SelectTrigger className="h-6 w-[58px] py-0 text-[11px]">
+            <SelectTrigger className="h-6 w-14.5 py-0 text-[11px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

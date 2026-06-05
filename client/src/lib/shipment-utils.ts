@@ -87,3 +87,12 @@ const SHIPMENT_STATUS_PROGRESS: Record<
 export function getShipmentProgress(status: ShipmentStatus) {
   return SHIPMENT_STATUS_PROGRESS[status];
 }
+
+export function isEligibleTenderStatus(tenderStatus: Shipment["tenderStatus"]) {
+  return (
+    !tenderStatus ||
+    tenderStatus === "Rejected" ||
+    tenderStatus === "Expired" ||
+    tenderStatus === "Canceled"
+  );
+}

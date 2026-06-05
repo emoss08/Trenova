@@ -60,6 +60,7 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
   tabs?: TabConfig[];
   size?: PanelSize;
   useDock?: boolean;
+  mutationFn?: (values: T, row: TData) => Promise<T>;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -91,6 +92,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   tabs = [],
   size = "md",
   useDock = false,
+  mutationFn,
 }: TabbedFormEditPanelProps<T, TData>) {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
@@ -125,6 +127,10 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   const { mutateAsync } = useApiMutation<T, T, unknown, T>({
     mutationFn: async (values: T) => {
+      if (mutationFn && row) {
+        return mutationFn(values, row);
+      }
+
       return api.put<T>(`${url}${row?.id as string}/`, values);
     },
     onMutate: async (newValues) => {

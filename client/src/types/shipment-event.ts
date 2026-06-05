@@ -34,32 +34,44 @@ export type ShipmentEventSeverity = z.infer<typeof shipmentEventSeveritySchema>;
 export const shipmentEventActorTypeSchema = z.enum(["user", "apikey", "system", "edi"]);
 export type ShipmentEventActorType = z.infer<typeof shipmentEventActorTypeSchema>;
 
+const optionalGraphQLStringSchema = z
+  .string()
+  .nullable()
+  .transform((value) => value ?? undefined)
+  .optional();
+
 export const shipmentEventSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   businessUnitId: z.string(),
   shipmentId: z.string(),
-  moveId: z.string().optional(),
-  stopId: z.string().optional(),
-  assignmentId: z.string().optional(),
-  commentId: z.string().optional(),
-  holdId: z.string().optional(),
+  moveId: optionalGraphQLStringSchema,
+  stopId: optionalGraphQLStringSchema,
+  assignmentId: optionalGraphQLStringSchema,
+  commentId: optionalGraphQLStringSchema,
+  holdId: optionalGraphQLStringSchema,
   type: shipmentEventTypeSchema,
   severity: shipmentEventSeveritySchema,
   actorType: shipmentEventActorTypeSchema,
-  actorId: z.string().optional(),
+  actorId: optionalGraphQLStringSchema,
   actorLabel: z.string().default(""),
   summary: z.string(),
   metadata: z.record(z.string(), z.unknown()).default({}),
   occurredAt: z.number(),
-  correlationId: z.string().optional(),
-  actor: userSchema.partial().optional(),
+  correlationId: optionalGraphQLStringSchema,
+  actor: userSchema
+    .partial()
+    .nullable()
+    .transform((value) => value ?? undefined)
+    .optional(),
   shipment: z
     .object({
-      id: z.string(),
-      proNumber: z.string(),
+      id: optionalGraphQLStringSchema,
+      proNumber: optionalGraphQLStringSchema,
     })
     .partial()
+    .nullable()
+    .transform((value) => value ?? undefined)
     .optional(),
 });
 

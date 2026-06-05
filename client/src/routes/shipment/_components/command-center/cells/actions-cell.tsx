@@ -25,16 +25,12 @@ export function ActionsCell({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              aria-label="Row actions"
-            >
+            <Button variant="ghost" size="icon-xs" aria-label="Row actions">
               <MoreHorizontalIcon className="size-4" />
             </Button>
           }
         />
-        <DropdownMenuContent align="end" sideOffset={4}>
+        <DropdownMenuContent align="end" sideOffset={4} className="min-w-48">
           {visibleActions.map((action) => {
             const Icon = action.icon;
             const disabled = action.disabled?.(row) ?? false;

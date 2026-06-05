@@ -1,4 +1,5 @@
 import { apiService } from "@/services/api";
+import type { PaginationInfo } from "@/types/server";
 import type { Shipment } from "@/types/shipment";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -18,5 +19,9 @@ export const shipment = createQueryKeys("shipment", {
   listUnassigned: (req: { limit: number; offset: number }) => ({
     queryKey: ["list-unassigned", req],
     queryFn: async () => apiService.shipmentService.listUnassigned(req),
+  }),
+  listComments: (req: PaginationInfo & { shipmentId: Shipment["id"] }) => ({
+    queryKey: ["comments", req.shipmentId, req],
+    queryFn: async () => apiService.shipmentService.getComments(req),
   }),
 });

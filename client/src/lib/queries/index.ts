@@ -8,7 +8,6 @@ import { bankReceiptWorkItem } from "./bank-receipt-work-item";
 import { journalEntry } from "./journal-entry";
 import { journalReversal } from "./journal-reversal";
 import { manualJournal } from "./manual-journal";
-import { analytics } from "./analytics";
 import { audit } from "./audit";
 import { billingControl } from "./billing-control";
 import { billingQueue } from "./billing-queue";
@@ -83,7 +82,6 @@ export const queries = mergeQueryKeys(
   serviceFailureReasonCode,
   shipmentControl,
   sequenceConfig,
-  analytics,
   audit,
   notification,
   tableChangeAlert,

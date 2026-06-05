@@ -1,11 +1,11 @@
-import { fetchData } from "@/hooks/data-table/use-data-table-query";
+import {
+  listExceptionShipmentsGraphQL,
+  listUnassignedShipmentsGraphQL,
+} from "@/lib/graphql/shipment";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
 import type { FieldFilter } from "@/types/data-table";
-import type { Shipment } from "@/types/shipment";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
-const SHIPMENTS_LINK = "/shipments/";
 const DEFAULT_LIMIT = 20;
 
 export type ExceptionCategory = "all" | "eta-slip" | "detention" | "doc-issues";
@@ -41,7 +41,7 @@ export function useUnassignedShipments(pageSize = DEFAULT_LIMIT, enabled = true)
   return useInfiniteQuery({
     queryKey: [...queries.shipment.listUnassigned._def, { pageSize }],
     queryFn: ({ pageParam }) =>
-      apiService.shipmentService.listUnassigned({ limit: pageSize, offset: pageParam }),
+      listUnassignedShipmentsGraphQL({ limit: pageSize, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _pages, lastPageParam) => {
       if (lastPage.next || lastPage.results.length === pageSize) {
@@ -64,15 +64,11 @@ export function useExceptionShipments(
   return useQuery({
     queryKey: ["shipment-list", "right-stack", "exceptions", category, { limit }],
     queryFn: () =>
-      fetchData<Shipment & Record<string, unknown>>(
-        SHIPMENTS_LINK,
-        0,
+      listExceptionShipmentsGraphQL({
         limit,
-        {
-          fieldFilters: exceptionFilters(category),
-          extraSearchParams: { expandShipmentDetails: true },
-        },
-    ),
+        offset: 0,
+        fieldFilters: exceptionFilters(category),
+      }),
     staleTime: 30_000,
     retry: false,
     refetchOnWindowFocus: false,
