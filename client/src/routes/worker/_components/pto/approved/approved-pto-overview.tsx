@@ -18,6 +18,7 @@ export function ApprovedPTOOverview() {
     endDate: filters.endDate,
     type: filters.type ?? undefined,
     workerId: filters.workerId ?? undefined,
+    fleetCodeId: filters.fleetCodeId ?? undefined,
   });
 
   return (

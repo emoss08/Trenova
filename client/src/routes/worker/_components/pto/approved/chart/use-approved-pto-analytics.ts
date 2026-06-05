@@ -13,6 +13,7 @@ type Params = {
   endDate: number;
   type?: string;
   workerId?: Worker["id"];
+  fleetCodeId?: string;
 };
 
 export type ApprovedPTOAnalyticsState = {
@@ -31,6 +32,7 @@ export function useApprovedPTOAnalytics({
   endDate,
   type,
   workerId,
+  fleetCodeId,
 }: Params): ApprovedPTOAnalyticsState {
   const user = useAuthStore((state) => state.user);
 
@@ -57,6 +59,7 @@ export function useApprovedPTOAnalytics({
       startDate,
       endDate,
       workerId,
+      fleetCodeId,
       timezone: user?.timezone,
     }),
     staleTime: 5 * 60 * 1000,

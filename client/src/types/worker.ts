@@ -277,6 +277,7 @@ export type ListUpcomingPTORequest = {
   startDate?: number;
   endDate?: number;
   workerId?: string;
+  fleetCodeId?: string;
   timezone?: string;
 };
 

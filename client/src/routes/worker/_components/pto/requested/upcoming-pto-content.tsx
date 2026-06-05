@@ -10,9 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ApiRequestError } from "@/lib/api";
+import { approveWorkerPTO } from "@/lib/graphql/worker-mutations";
 import { formatRange } from "@/lib/date";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
 import type { WorkerPTO } from "@/types/worker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarRange, EllipsisIcon } from "lucide-react";
@@ -34,7 +34,7 @@ export function UpcomingPTOContent({ pto }: { pto: WorkerPTO }) {
   const [rejectPTODialogOpen, setRejectPTODialogOpen] = useState(false);
 
   const { mutateAsync: approvePTO } = useMutation({
-    mutationFn: () => apiService.workerService.approvePTO(pto.id),
+    mutationFn: () => approveWorkerPTO(pto.id),
     onSuccess: () => {
       toast.success("PTO approved");
       void queryClient.invalidateQueries({

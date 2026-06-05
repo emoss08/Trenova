@@ -1,7 +1,8 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TextShimmer } from "@/components/ui/text-shimmer";
+import { fetchUpcomingWorkerPTO } from "@/lib/queries/worker";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
+import { useAuthStore } from "@/stores/auth-store";
 import type { PTOFilter, PTOType } from "@/types/worker";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -19,6 +20,7 @@ import { UpcomingPTOCard } from "./upcoming-pto-card";
 
 export function RequestedPTOOverview() {
   const [searchParams] = useQueryStates(requestPTOFiltersSearchParamsParser);
+  const user = useAuthStore((state) => state.user);
 
   const query = useInfiniteQuery({
     queryKey: [
@@ -29,16 +31,20 @@ export function RequestedPTOOverview() {
         startDate: searchParams?.requestPTOFilters?.startDate,
         endDate: searchParams?.requestPTOFilters?.endDate,
         workerId: searchParams?.requestPTOFilters?.workerId,
+        fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
+        timezone: user?.timezone,
       },
     ],
     queryFn: async ({ pageParam }) => {
-      return await apiService.workerService.listUpcomingPTO({
+      return await fetchUpcomingWorkerPTO({
         filter: { limit: 20, offset: pageParam },
         type: searchParams?.requestPTOFilters?.type as PTOType | undefined,
         status: "Requested",
         startDate: searchParams?.requestPTOFilters?.startDate,
         endDate: searchParams?.requestPTOFilters?.endDate,
         workerId: searchParams?.requestPTOFilters?.workerId,
+        fleetCodeId: searchParams?.requestPTOFilters?.fleetCodeId,
+        timezone: user?.timezone,
       });
     },
     initialPageParam: 0,
