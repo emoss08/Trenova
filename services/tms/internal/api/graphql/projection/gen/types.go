@@ -1,28 +1,74 @@
 package main
 
+import "github.com/vektah/gqlparser/v2/ast"
+
 type manifest struct {
-	Types map[string]typeManifest `yaml:"types"`
-	Skip  []string                `yaml:"skip"`
+	Aliases        map[string]map[string]string   `yaml:"aliases"`
+	Virtuals       map[string][]string            `yaml:"virtuals"`
+	Specials       map[string]map[string][]string `yaml:"specials"`
+	Gates          map[string]map[string]string   `yaml:"gates"`
+	Always         map[string][]string            `yaml:"always"`
+	ModelOverrides map[string]string              `yaml:"modelOverrides"`
 }
 
-type typeManifest struct {
-	Always    []string                    `yaml:"always"`
-	Aliases   map[string]string           `yaml:"aliases"`
-	Virtuals  map[string]string           `yaml:"virtuals"`
-	Relations map[string]relationManifest `yaml:"relations"`
+type gqlgenConfig struct {
+	Models map[string]gqlgenModel `yaml:"models"`
 }
 
-type relationManifest struct {
-	Target    string `yaml:"target"`
-	Gate      string `yaml:"gate"`
-	ColumnKey string `yaml:"columnKey"`
+type gqlgenModel struct {
+	Model []string `yaml:"model"`
 }
 
 type generatorOptions struct {
 	ManifestPath string
 	SchemaDir    string
 	OutputPath   string
-	FieldMaps    map[string]map[string]string
+	GqlgenPath   string
+	DomainDir    string
+	BuncolgenDir string
+	GoModPath    string
+}
+
+type fieldMapRegistration struct {
+	Values       map[string]string
+	GoExpression string
+	Relations    map[string]string
+	EntityName   string
+}
+
+type goStruct struct {
+	PackagePath string
+	PackageName string
+	Name        string
+	FullName    string
+	Fields      map[string]goField
+}
+
+type goField struct {
+	JSONName      string
+	GoName        string
+	TypeName      string
+	ColumnName    string
+	IsColumn      bool
+	IsRelation    bool
+	RelationKind  string
+	RelationLocal string
+}
+
+type discovery struct {
+	Schema     *ast.Schema
+	Manifest   manifest
+	Gqlgen     gqlgenConfig
+	Structs    map[string]goStruct
+	FieldMaps  map[string]fieldMapRegistration
+	Selections map[string]typeSelection
+	Skipped    map[string]string
+}
+
+type typeSelection struct {
+	TypeName string
+	Struct   goStruct
+	FieldMap fieldMapRegistration
 }
 
 type generatedSpec struct {

@@ -7,7 +7,12 @@ package projection
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
 {{ range . -}}
-var {{ .Name }}Spec = TypeSpec{
+var {{ .Name }}Spec TypeSpec
+
+{{ end -}}
+func init() {
+{{ range . -}}
+	{{ .Name }}Spec = TypeSpec{
 	TypeName: {{ quote .Name }},
 	FieldMap: {{ .FieldMap }},
 	AlwaysColumns: []string{
@@ -39,4 +44,5 @@ var {{ .Name }}Spec = TypeSpec{
 }
 
 {{ end -}}
+}
 `

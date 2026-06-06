@@ -1,162 +1,57 @@
-types:
-  Trailer:
-    always:
-      - id
-      - createdAt
-    aliases:
-      equipmentStatus: status
-    virtuals:
-      customFields: customFields
-      lastKnownLocation: lastKnownLocation
-      lastKnownLocationId: lastKnownLocation
-      lastKnownLocationName: lastKnownLocation
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-      equipmentType:
-        target: EquipmentType
-        gate: equipmentDetails
-      equipmentManufacturer:
-        target: EquipmentManufacturer
-        gate: equipmentDetails
-      fleetCode:
-        target: FleetCode
-        gate: fleetDetails
-      registrationState:
-        target: UsState
-  Tractor:
-    always:
-      - id
-      - createdAt
-    aliases:
-      equipmentStatus: status
-    virtuals:
-      customFields: customFields
-      lastKnownLocation: lastKnownLocation
-      lastKnownLocationId: lastKnownLocation
-      lastKnownLocationName: lastKnownLocation
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-      equipmentType:
-        target: EquipmentType
-        gate: equipmentDetails
-      equipmentManufacturer:
-        target: EquipmentManufacturer
-        gate: equipmentDetails
-      fleetCode:
-        target: FleetCode
-        gate: fleetDetails
-      state:
-        target: UsState
-      primaryWorker:
-        target: Worker
-        gate: workerDetails
-      secondaryWorker:
-        target: Worker
-        gate: workerDetails
-  Worker:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-      state:
-        target: UsState
-      fleetCode:
-        target: FleetCode
-      manager:
-        target: User
-        columnKey: managerId
-  EquipmentType:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-  EquipmentManufacturer:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-  FleetCode:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-      manager:
-        target: User
-        columnKey: managerId
-  BusinessUnit:
-    always:
-      - id
-  Organization:
-    always:
-      - id
-    relations:
-      state:
-        target: UsState
-      businessUnit:
-        target: BusinessUnit
-  User:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      currentOrganization:
-        target: Organization
-  UsState:
-    always:
-      - id
-  Location:
-    always:
-      - id
-    virtuals:
-      geofenceVertices: geofenceVertices
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
-      state:
-        target: UsState
-      locationCategory:
-        target: LocationCategory
-  LocationCategory:
-    always:
-      - id
-    relations:
-      businessUnit:
-        target: BusinessUnit
-      organization:
-        target: Organization
+aliases:
   EquipmentContinuity:
-    always:
-      - id
-    aliases:
-      currentLocationName: currentLocationId
-skip:
-  - PageInfo
-  - TrailerEdge
-  - TrailerConnection
-  - TractorEdge
-  - TractorConnection
-  - LocationReference
-  - GeofenceVertex
-  - Query
-  - Mutation
+    currentLocationName: currentLocationId
+  Tractor:
+    equipmentStatus: status
+  Trailer:
+    equipmentStatus: status
+
+virtuals:
+  Location:
+    - geofenceVertices
+  Shipment:
+    - customer
+    - formulaTemplate
+    - sourceDocumentId
+  ShipmentAdditionalCharge:
+    - accessorialCharge
+  ShipmentCommodity:
+    - commodity
+  ShipmentComment:
+    - mentionedUserIds
+  ShipmentEvent:
+    - shipment
+  Tractor:
+    - customFields
+  Trailer:
+    - customFields
+  Worker:
+    - customFields
+
+specials:
+  Tractor:
+    lastKnownLocation:
+      - lastKnownLocation
+      - lastKnownLocationId
+      - lastKnownLocationName
+  Trailer:
+    lastKnownLocation:
+      - lastKnownLocation
+      - lastKnownLocationId
+      - lastKnownLocationName
+
+gates:
+  Tractor:
+    equipmentManufacturer: equipmentDetails
+    equipmentType: equipmentDetails
+    fleetCode: fleetDetails
+    primaryWorker: workerDetails
+    secondaryWorker: workerDetails
+  Trailer:
+    equipmentManufacturer: equipmentDetails
+    equipmentType: equipmentDetails
+    fleetCode: fleetDetails
+
+always:
+  ShipmentEvent:
+    - occurredAt

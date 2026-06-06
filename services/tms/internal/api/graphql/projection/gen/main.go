@@ -4,14 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
 var (
-	manifestPath = flag.String("manifest", "", "Path to projection manifest")
+	manifestPath = flag.String("manifest", "", "Path to projection override manifest")
 	schemaDir    = flag.String("schema", "", "Path to GraphQL schema directory")
 	outputPath   = flag.String("output", "", "Path to generated Go file")
+	gqlgenPath   = flag.String("gqlgen", "", "Path to gqlgen.yml")
+	domainDir    = flag.String("domain", "", "Path to internal/core/domain")
+	buncolgenDir = flag.String("buncolgen", "", "Path to pkg/buncolgen")
+	goModPath    = flag.String("gomod", "", "Path to go.mod")
 )
 
 func main() {
@@ -20,7 +22,7 @@ func main() {
 	if *manifestPath == "" || *schemaDir == "" || *outputPath == "" {
 		fmt.Fprintln(
 			os.Stderr,
-			"Usage: projectiongen -manifest=<file> -schema=<dir> -output=<file>",
+			"Usage: projectiongen -manifest=<file> -schema=<dir> -output=<file> [-gqlgen=<file>] [-domain=<dir>] [-buncolgen=<dir>] [-gomod=<file>]",
 		)
 		os.Exit(1)
 	}
@@ -29,27 +31,12 @@ func main() {
 		ManifestPath: *manifestPath,
 		SchemaDir:    *schemaDir,
 		OutputPath:   *outputPath,
-		FieldMaps:    realFieldMaps(),
+		GqlgenPath:   *gqlgenPath,
+		DomainDir:    *domainDir,
+		BuncolgenDir: *buncolgenDir,
+		GoModPath:    *goModPath,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating GraphQL projections: %v\n", err)
 		os.Exit(1)
-	}
-}
-
-func realFieldMaps() map[string]map[string]string {
-	return map[string]map[string]string{
-		"BusinessUnit":          buncolgen.BusinessUnitFieldMap,
-		"EquipmentContinuity":   buncolgen.EquipmentContinuityFieldMap,
-		"EquipmentManufacturer": buncolgen.EquipmentManufacturerFieldMap,
-		"EquipmentType":         buncolgen.EquipmentTypeFieldMap,
-		"FleetCode":             buncolgen.FleetCodeFieldMap,
-		"Location":              buncolgen.LocationFieldMap,
-		"LocationCategory":      buncolgen.LocationCategoryFieldMap,
-		"Organization":          buncolgen.OrganizationFieldMap,
-		"Tractor":               buncolgen.TractorFieldMap,
-		"Trailer":               buncolgen.TrailerFieldMap,
-		"User":                  buncolgen.UserFieldMap,
-		"UsState":               buncolgen.UsStateFieldMap,
-		"Worker":                buncolgen.WorkerFieldMap,
 	}
 }

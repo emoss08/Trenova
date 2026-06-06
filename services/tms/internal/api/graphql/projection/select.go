@@ -86,13 +86,13 @@ func (s selector) selectSpec(spec *TypeSpec, pathPrefix string, selection *Selec
 			continue
 		}
 
-		if field.FieldMapKey != "" {
-			appendColumn(selection, seenColumns, spec.FieldMap[field.FieldMapKey])
-		}
-		if field.Special != "" {
-			selection.Specials[field.Special] = true
-		}
-		if field.Relation != nil && s.gateAllowed(field.Relation.Gate) {
+		if field.Relation != nil {
+			if !s.gateAllowed(field.Relation.Gate) {
+				continue
+			}
+			if field.FieldMapKey != "" {
+				appendColumn(selection, seenColumns, spec.FieldMap[field.FieldMapKey])
+			}
 			child := newSelection(
 				len(field.Relation.Target.AlwaysColumns),
 				len(field.Relation.Target.Fields),
@@ -101,6 +101,13 @@ func (s selector) selectSpec(spec *TypeSpec, pathPrefix string, selection *Selec
 			selection.Relations[field.Name] = RelationSelection{
 				Selection: child,
 			}
+			continue
+		}
+		if field.FieldMapKey != "" {
+			appendColumn(selection, seenColumns, spec.FieldMap[field.FieldMapKey])
+		}
+		if field.Special != "" {
+			selection.Specials[field.Special] = true
 		}
 	}
 }
