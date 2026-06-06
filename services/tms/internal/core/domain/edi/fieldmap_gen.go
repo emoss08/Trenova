@@ -186,6 +186,20 @@ func (e *ShipmentLink) GetStaticFieldMap() map[string]string {
 	return buncolgen.ShipmentLinkFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderChange].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TenderChangeFieldMap] instead of parsing struct tags via reflection.
+func (e *TenderChange) GetStaticFieldMap() map[string]string {
+	return buncolgen.TenderChangeFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TenderRecipient].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.TenderRecipientFieldMap] instead of parsing struct tags via reflection.
+func (e *TenderRecipient) GetStaticFieldMap() map[string]string {
+	return buncolgen.TenderRecipientFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [TransferChange].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.TransferChangeFieldMap] instead of parsing struct tags via reflection.
