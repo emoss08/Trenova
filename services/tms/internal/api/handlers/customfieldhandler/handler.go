@@ -94,10 +94,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET("/resource-types/", h.getResourceTypes)
 	api.GET(
 		"/resources/:resourceType/",
-		h.pm.RequirePermission(
-			permission.ResourceCustomFieldDefinition.String(),
-			permission.OpRead,
-		),
 		h.getByResourceType,
 	)
 }
