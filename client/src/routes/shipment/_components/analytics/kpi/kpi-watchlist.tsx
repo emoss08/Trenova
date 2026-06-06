@@ -37,21 +37,22 @@ export function KpiWatchlist({ label, items, icon, info, span = 3 }: KpiWatchlis
         className="-mr-1 min-h-0 flex-1"
         viewportClassName="pr-1"
         type="hover"
+        maskVariant="card"
         maskHeight={16}
       >
-        <div className="flex flex-col gap-[3px]">
+        <div className="flex flex-col gap-0.75">
           {items.map((item, index) => (
             <div
               key={item.id}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-sm px-1.5 py-[3px]",
-                index === 0 && "bg-foreground/[0.04]",
+                "flex items-center justify-between gap-2 rounded-sm px-1.5 py-0.75",
+                index === 0 && "bg-foreground/4",
               )}
             >
               <span className="flex min-w-0 items-center gap-1.5 overflow-hidden">
                 <span
                   aria-hidden
-                  className="size-[5px] shrink-0 rounded-full"
+                  className="size-1.25 shrink-0 rounded-full"
                   style={{ background: toneVar(item.tone) }}
                 />
                 <span className="truncate font-mono text-[11px] text-foreground">{item.who}</span>

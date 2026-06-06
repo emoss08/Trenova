@@ -11,7 +11,7 @@ export function HosWatchPlaceholder() {
           <ClockIcon className="size-4" />
         </span>
         <p className="text-[11.5px] font-medium">Driver HOS visibility coming soon</p>
-        <p className="max-w-[220px] text-[10.5px] leading-snug text-muted-foreground">
+        <p className="max-w-55 text-[10.5px] leading-snug text-muted-foreground">
           Hours-of-service tracking lands when the worker-HOS service ships. Until then, view
           current driver status from the Workers area.
         </p>

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DataTablePanelProps } from "@/types/data-table";
 import {
   formulaTemplateSchema,
@@ -48,53 +48,51 @@ function FormulaTemplateHeaderActions({
   onViewLineageClick,
 }: FormulaTemplateHeaderActionsProps) {
   return (
-    <TooltipProvider>
-      <div className="flex items-center gap-1">
-        {template.currentVersionNumber && (
-          <Badge variant="outline" className="mr-1 font-mono text-xs">
-            v{template.currentVersionNumber}
-          </Badge>
-        )}
+    <div className="flex items-center gap-1">
+      {template.currentVersionNumber && (
+        <Badge variant="outline" className="mr-1 font-mono text-xs">
+          v{template.currentVersionNumber}
+        </Badge>
+      )}
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button variant="ghost" size="icon-sm" onClick={onVersionHistoryClick}>
+              <ClockIcon className="size-4" />
+            </Button>
+          }
+        />
+        <TooltipContent>Version History</TooltipContent>
+      </Tooltip>
+      <DropdownMenu>
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="ghost" size="icon-sm" onClick={onVersionHistoryClick}>
-                <ClockIcon className="size-4" />
-              </Button>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="icon-sm">
+                    <GitBranchIcon className="size-4" />
+                  </Button>
+                }
+              />
             }
           />
-          <TooltipContent>Version History</TooltipContent>
+          <TooltipContent>Fork Options</TooltipContent>
         </Tooltip>
-        <DropdownMenu>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <DropdownMenuTrigger
-                  render={
-                    <Button variant="ghost" size="icon-sm">
-                      <GitBranchIcon className="size-4" />
-                    </Button>
-                  }
-                />
-              }
-            />
-            <TooltipContent>Fork Options</TooltipContent>
-          </Tooltip>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              title="Fork Template"
-              startContent={<GitForkIcon className="size-4" />}
-              onClick={onForkClick}
-            />
-            <DropdownMenuItem
-              title="View Lineage"
-              startContent={<NetworkIcon className="size-4" />}
-              onClick={onViewLineageClick}
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </TooltipProvider>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            title="Fork Template"
+            startContent={<GitForkIcon className="size-4" />}
+            onClick={onForkClick}
+          />
+          <DropdownMenuItem
+            title="View Lineage"
+            startContent={<NetworkIcon className="size-4" />}
+            onClick={onViewLineageClick}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 

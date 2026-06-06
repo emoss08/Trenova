@@ -23,7 +23,7 @@ import { Link, useLocation, useNavigation } from "react-router";
 import { toast } from "sonner";
 import { SystemInformation } from "./system-information";
 import { Button } from "./ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function Header() {
   const navigation = useNavigation();
@@ -86,44 +86,42 @@ function HistoryNavigation() {
   const { canGoBack, canGoForward, goBack, goForward } = useHistoryNavigation();
 
   return (
-    <TooltipProvider>
-      <div className="flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={goBack}
-                disabled={!canGoBack}
-                aria-label="Go back"
-              >
-                <ChevronLeft className="size-3.5" />
-              </Button>
-            }
-          />
-          <TooltipContent>Go back</TooltipContent>
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={goForward}
-                disabled={!canGoForward}
-                aria-label="Go forward"
-              >
-                <ChevronRight className="size-3.5" />
-              </Button>
-            }
-          />
-          <TooltipContent>Go forward</TooltipContent>
-        </Tooltip>
-      </div>
-    </TooltipProvider>
+    <div className="flex items-center gap-1">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={goBack}
+              disabled={!canGoBack}
+              aria-label="Go back"
+            >
+              <ChevronLeft className="size-3.5" />
+            </Button>
+          }
+        />
+        <TooltipContent>Go back</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={goForward}
+              disabled={!canGoForward}
+              aria-label="Go forward"
+            >
+              <ChevronRight className="size-3.5" />
+            </Button>
+          }
+        />
+        <TooltipContent>Go forward</TooltipContent>
+      </Tooltip>
+    </div>
   );
 }
 
@@ -159,33 +157,31 @@ function NavActions() {
     <div className="ml-auto flex items-center gap-1 px-3 text-center">
       <SystemInformation />
       <NotificationPopover />
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                className="cursor-pointer"
-                size="xs"
-                onClick={handleToggle}
-                disabled={isLoading || isPending}
-                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-              >
-                <Star
-                  className={cn(
-                    "size-3 transition-colors",
-                    isFavorited && "fill-amber-400 text-amber-400",
-                  )}
-                />
-              </Button>
-            }
-          />
-          <TooltipContent>
-            {isFavorited ? "Remove from favorites" : "Add to favorites"}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              type="button"
+              variant="ghost"
+              className="cursor-pointer"
+              size="xs"
+              onClick={handleToggle}
+              disabled={isLoading || isPending}
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Star
+                className={cn(
+                  "size-3 transition-colors",
+                  isFavorited && "fill-amber-400 text-amber-400",
+                )}
+              />
+            </Button>
+          }
+        />
+        <TooltipContent>
+          {isFavorited ? "Remove from favorites" : "Add to favorites"}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 }

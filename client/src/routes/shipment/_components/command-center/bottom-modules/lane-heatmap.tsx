@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import type { Region, ShipmentAnalyticsData } from "../../analytics/mock-data";
@@ -13,7 +14,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
   const { grid, total, max, top } = useMemo(() => buildGrid(data), [data]);
 
   return (
-    <section className="cc-module-card flex min-h-[260px] flex-col">
+    <section className="cc-module-card flex min-h-65 flex-col">
       <header className="flex items-center justify-between border-b border-border px-3 py-2">
         <div className="flex min-w-0 items-center gap-2">
           <h3 className="cc-label text-foreground">Lane heatmap</h3>
@@ -21,9 +22,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
             origin → destination · {total} loads
           </span>
         </div>
-        <span className="font-mono text-[10px] text-muted-foreground">
-          {data.windowDays}d
-        </span>
+        <span className="font-mono text-[10px] text-muted-foreground">{data.windowDays}d</span>
       </header>
 
       <div className="flex flex-1 flex-col gap-1 px-3 py-3">
@@ -39,10 +38,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
           ))}
         </div>
         {REGIONS.map((origin, rowIdx) => (
-          <div
-            key={origin}
-            className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1"
-          >
+          <div key={origin} className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
             <span className="flex items-center font-mono text-[9.5px] tracking-wider text-muted-foreground uppercase">
               {origin}
             </span>
@@ -62,9 +58,7 @@ export function LaneHeatmap({ data }: LaneHeatmapProps) {
 
       <footer className="flex items-center justify-between border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
         <span className="font-mono">
-          {top
-            ? `Top: ${top.origin} → ${top.destination} (${top.count})`
-            : "No lane activity"}
+          {top ? `Top: ${top.origin} → ${top.destination} (${top.count})` : "No lane activity"}
         </span>
         <ScaleLegend max={max} />
       </footer>
@@ -96,28 +90,34 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
   const opacity = Math.round(t * 100);
   const isHighIntensity = t > HIGH_INTENSITY_THRESHOLD;
   const percent = total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
-  const tooltip = value
+  const tooltipContent = value
     ? `${origin} → ${destination}: ${value} loads · ${percent}% of total`
     : `${origin} → ${destination}: 0 loads`;
 
   return (
-    <div
-      title={tooltip}
-      className={cn(
-        "border-border-2 flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-[11px] tabular-nums",
-        value === 0 && "text-muted-foreground",
-        value > 0 && !isHighIntensity && "text-foreground",
-        isHighIntensity && "text-white",
-      )}
-      style={{
-        background:
-          value > 0
-            ? `color-mix(in oklch, var(--color-brand) ${opacity}%, transparent)`
-            : "transparent",
-      }}
-    >
-      {value || "·"}
-    </div>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <div
+            className={cn(
+              "border-border-2 flex h-6.5 items-center justify-center rounded-[3px] border font-mono text-[11px] tabular-nums",
+              value === 0 && "text-muted-foreground",
+              value > 0 && !isHighIntensity && "text-foreground",
+              isHighIntensity && "text-white",
+            )}
+            style={{
+              background:
+                value > 0
+                  ? `color-mix(in oklch, var(--color-brand) ${opacity}%, transparent)`
+                  : "transparent",
+            }}
+          >
+            {value || "·"}
+          </div>
+        }
+      />
+      <TooltipContent>{tooltipContent}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -154,8 +154,9 @@ function buildGrid(data: ShipmentAnalyticsData["laneHeatmap"]): {
   }
 
   const grid = REGIONS.map((origin) =>
-    REGIONS.map<number | null>((destination) =>
-      byOriginDest.get(`${origin}|${destination}`) ?? (origin === destination ? 0 : null),
+    REGIONS.map<number | null>(
+      (destination) =>
+        byOriginDest.get(`${origin}|${destination}`) ?? (origin === destination ? 0 : null),
     ),
   );
 

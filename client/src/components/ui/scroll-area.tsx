@@ -15,6 +15,8 @@ type Mask = {
   right: boolean;
 };
 
+export type ScrollAreaMaskVariant = "background" | "card" | "muted" | "sidebar";
+
 export type ScrollAreaContextProps = {
   isTouch: boolean;
   type: "auto" | "always" | "scroll" | "hover";
@@ -24,6 +26,13 @@ const ScrollAreaContext = React.createContext<ScrollAreaContextProps>({
   isTouch: false,
   type: "hover",
 });
+
+const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
+  background: "before:from-background after:from-background",
+  card: "before:from-card after:from-card",
+  muted: "before:from-muted after:from-muted",
+  sidebar: "before:from-sidebar after:from-sidebar",
+};
 
 const ScrollArea = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
@@ -37,6 +46,11 @@ const ScrollArea = React.forwardRef<
      */
     maskHeight?: number;
     maskClassName?: string;
+    /**
+     * Background token used by the scroll mask fade.
+     * @default "background"
+     */
+    maskVariant?: ScrollAreaMaskVariant;
   }
 >(
   (
@@ -46,6 +60,7 @@ const ScrollArea = React.forwardRef<
       type = "hover",
       maskHeight = 30,
       maskClassName,
+      maskVariant = "background",
       viewportClassName,
       style,
       ...props
@@ -128,7 +143,12 @@ const ScrollArea = React.forwardRef<
               {children}
             </div>
             {maskHeight > 0 && (
-              <ScrollMask showMask={showMask} className={maskClassName} maskHeight={maskHeight} />
+              <ScrollMask
+                showMask={showMask}
+                className={maskClassName}
+                maskHeight={maskHeight}
+                variant={maskVariant}
+              />
             )}
           </div>
         ) : (
@@ -148,7 +168,12 @@ const ScrollArea = React.forwardRef<
             <ScrollBar />
             <ScrollAreaPrimitive.Corner />
             {maskHeight > 0 && (
-              <ScrollMask showMask={showMask} className={maskClassName} maskHeight={maskHeight} />
+              <ScrollMask
+                showMask={showMask}
+                className={maskClassName}
+                maskHeight={maskHeight}
+                variant={maskVariant}
+              />
             )}
           </ScrollAreaPrimitive.Root>
         )}
@@ -199,12 +224,16 @@ ScrollBar.displayName = ScrollAreaPrimitive.Scrollbar.displayName;
 const ScrollMask = ({
   showMask,
   maskHeight,
+  variant,
   className,
   ...props
 }: React.ComponentProps<"div"> & {
   showMask: Mask;
   maskHeight: number;
+  variant: ScrollAreaMaskVariant;
 }) => {
+  const variantClassName = scrollMaskVariantClassNames[variant];
+
   return (
     <>
       <div
@@ -223,8 +252,9 @@ const ScrollMask = ({
           "before:h-(--top-fade-height) after:h-(--bottom-fade-height)",
           showMask.top ? "before:opacity-100" : "before:opacity-0",
           showMask.bottom ? "after:opacity-100" : "after:opacity-0",
-          "before:bg-gradient-to-b before:from-background before:to-transparent",
-          "after:bg-gradient-to-t after:from-background after:to-transparent",
+          "before:bg-gradient-to-b before:to-transparent",
+          "after:bg-gradient-to-t after:to-transparent",
+          variantClassName,
           className,
         )}
       />
@@ -244,8 +274,9 @@ const ScrollMask = ({
           "before:w-(--left-fade-width) after:w-(--right-fade-width)",
           showMask.left ? "before:opacity-100" : "before:opacity-0",
           showMask.right ? "after:opacity-100" : "after:opacity-0",
-          "before:bg-gradient-to-r before:from-background before:to-transparent",
-          "after:bg-gradient-to-l after:from-background after:to-transparent",
+          "before:bg-gradient-to-r before:to-transparent",
+          "after:bg-gradient-to-l after:to-transparent",
+          variantClassName,
           className,
         )}
       />

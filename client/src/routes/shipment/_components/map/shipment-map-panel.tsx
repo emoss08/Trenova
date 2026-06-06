@@ -138,7 +138,7 @@ export default function ShipmentMapPanel({
             : "h-[clamp(420px,calc(100vh-380px),540px)]",
         )}
       >
-        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-background/95 px-2.5">
+        <div className="flex h-9 shrink-0 items-center justify-between border-b border-border bg-card px-2.5">
           <div className="flex min-w-0 items-center gap-2">
             <span className="text-xs font-semibold text-foreground">Live Map</span>
             <span className="shrink truncate rounded-md border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
