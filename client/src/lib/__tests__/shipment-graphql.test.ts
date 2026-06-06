@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  ShipmentCommentsDocument,
   ShipmentCommandCenterTableDocument,
   ShipmentEventsDocument,
   ShipmentSavedViewCountsDocument,
 } from "@/graphql/generated/graphql";
 import {
   getShipmentSavedViewCountsGraphQL,
+  listShipmentCommentsGraphQL,
   listShipmentEventsGraphQL,
   listShipmentsGraphQL,
 } from "../graphql/shipment";
@@ -138,5 +140,60 @@ describe("shipment GraphQL helpers", () => {
       },
     });
     expect(response).toBe(events);
+  });
+
+  it("normalizes shipment comments with null cursors at list edges", async () => {
+    requestGraphQLMock.mockResolvedValueOnce({
+      shipmentComments: {
+        edges: [
+          {
+            node: {
+              id: "comment_1",
+              shipmentId: "shp_1",
+              comment: "Follow up with dispatch.",
+            },
+          },
+        ],
+        pageInfo: {
+          hasNextPage: false,
+          endCursor: null,
+        },
+        totalCount: 1,
+      },
+    });
+
+    const response = await listShipmentCommentsGraphQL({
+      shipmentId: "shp_1",
+      limit: 20,
+      offset: 0,
+    });
+
+    expect(requestGraphQLMock).toHaveBeenCalledWith({
+      document: ShipmentCommentsDocument,
+      operationName: "ShipmentComments",
+      variables: {
+        shipmentId: "shp_1",
+        first: 20,
+        offset: 0,
+      },
+    });
+    expect(response).toEqual({
+      results: [
+        {
+          id: "comment_1",
+          shipmentId: "shp_1",
+          comment: "Follow up with dispatch.",
+        },
+      ],
+      count: 1,
+      next: null,
+      prev: null,
+      pageInfo: {
+        mode: "cursor",
+        hasNextPage: false,
+        endCursor: null,
+        totalCount: 1,
+      },
+    });
   });
 });

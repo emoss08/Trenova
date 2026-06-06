@@ -5,7 +5,8 @@ import type { AnalyticsPage } from "@/types/analytics";
 async function getAnalyticsPage(page: AnalyticsPage) {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   if (page === "shipment-management") {
-    return getShipmentPageAnalyticsGraphQL({ timezone });
+    const response = await getShipmentPageAnalyticsGraphQL({ timezone });
+    return response.data;
   }
   return apiService.analyticService.get({ page, timezone });
 }

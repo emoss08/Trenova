@@ -6,7 +6,7 @@ export type GenericLimitOffsetResponse<T> = {
   next: string | null;
   prev: string | null;
   pageInfo?: {
-    mode: "cursor";
+    mode: "cursor" | "offset";
     hasNextPage: boolean;
     endCursor: string | null;
     totalCount: number | null;
@@ -17,8 +17,16 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
   return z.object({
     results: z.array(itemSchema),
     count: z.number(),
-    next: z.string().optional(),
-    prev: z.string().optional(),
+    next: z.string().nullable().default(null),
+    prev: z.string().nullable().default(null),
+    pageInfo: z
+      .object({
+        mode: z.enum(["cursor", "offset"]),
+        hasNextPage: z.boolean(),
+        endCursor: z.string().nullable(),
+        totalCount: z.number().nullable(),
+      })
+      .optional(),
   });
 }
 

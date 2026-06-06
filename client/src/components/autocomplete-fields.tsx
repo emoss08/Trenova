@@ -1,16 +1,17 @@
+import type {
+  SelectOption as GraphQLSelectOption,
+  GraphQLSelectOptionsConfig,
+} from "@/lib/graphql/select-options";
 import type { OperationDefinition, ResourceDefinition } from "@/lib/role-api";
 import { formatLocation } from "@/lib/utils";
 import type { AccessorialCharge } from "@/types/accessorial-charge";
-import type { BatchSourceOption } from "@/types/bank-receipt-batch";
-import type { FiscalPeriod } from "@/types/fiscal-period";
-import type { FiscalYear } from "@/types/fiscal-year";
 import type { AccountType } from "@/types/account-type";
+import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Commodity } from "@/types/commodity";
 import type { Customer } from "@/types/customer";
 import type { DistanceProfile } from "@/types/distance-profile";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
-import type { EmailProfile } from "@/types/email";
 import type {
   EDICommunicationProfile,
   EDIDocumentType,
@@ -19,8 +20,10 @@ import type {
   EDIPartnerDocumentProfile,
   EDITemplate,
 } from "@/types/edi";
-import type { EquipmentManufacturer } from "@/types/equipment-manufacturer";
-import type { EquipmentType } from "@/types/equipment-type";
+import type { EmailProfile } from "@/types/email";
+import type { SelectOption as StaticSelectOption } from "@/types/fields";
+import type { FiscalPeriod } from "@/types/fiscal-period";
+import type { FiscalYear } from "@/types/fiscal-year";
 import type { FleetCode } from "@/types/fleet-code";
 import type { FormulaTemplate } from "@/types/formula-template";
 import type { GLAccount } from "@/types/gl-account";
@@ -33,20 +36,15 @@ import type { API_ENDPOINTS, SELECT_OPTIONS_ENDPOINTS } from "@/types/server";
 import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import type { ServiceType } from "@/types/service-type";
 import type { ShipmentType } from "@/types/shipment-type";
-import type { Tractor } from "@/types/tractor";
-import type { Trailer } from "@/types/trailer";
-import type { UsState } from "@/types/us-state";
 import type { User } from "@/types/user";
-import type { Worker } from "@/types/worker";
 import type { ReactNode } from "react";
 import type { Control, FieldPath, FieldValues, Path, RegisterOptions } from "react-hook-form";
-import type { SelectOption } from "@/types/fields";
 import { Autocomplete, AutocompleteField } from "./fields/autocomplete/autocomplete";
 import { FieldWrapper } from "./fields/field-components";
 import { MultiSelectAutocompleteField } from "./fields/multi-select-field";
 import { ColorOptionValue } from "./fields/select-components";
 import { SelectField } from "./fields/select-field";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;
@@ -126,13 +124,42 @@ function toPermissionSelectOptions(
     label: string;
     description?: string;
   }>,
-): SelectOption[] {
+): StaticSelectOption[] {
   return definitions.map((definition) => ({
     value: definition.value,
     label: definition.label,
     description: definition.description,
   }));
 }
+
+function selectOptionMetaString(option: GraphQLSelectOption, key: string) {
+  const value = option.meta?.[key];
+  return typeof value === "string" ? value : "";
+}
+
+const usStateSelectOptionsGraphQL = {
+  resource: "US_STATE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const equipmentTypeSelectOptionsGraphQL = {
+  resource: "EQUIPMENT_TYPE",
+} satisfies GraphQLSelectOptionsConfig;
+
+const equipmentManufacturerSelectOptionsGraphQL = {
+  resource: "EQUIPMENT_MANUFACTURER",
+} satisfies GraphQLSelectOptionsConfig;
+
+const tractorSelectOptionsGraphQL = {
+  resource: "TRACTOR",
+} satisfies GraphQLSelectOptionsConfig;
+
+const trailerSelectOptionsGraphQL = {
+  resource: "TRAILER",
+} satisfies GraphQLSelectOptionsConfig;
+
+const workerSelectOptionsGraphQL = {
+  resource: "WORKER",
+} satisfies GraphQLSelectOptionsConfig;
 
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
@@ -307,14 +334,15 @@ export function UserMultiSelectAutocompleteField<T extends FieldValues>({
 
 export function UsStateAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<UsState, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<UsState, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/us-states/select-options/"
+      graphql={usStateSelectOptionsGraphQL}
       initialLimit={100}
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name || ""}
-      renderOption={(option) => option.name || ""}
+      getDisplayValue={(option) => option.label || ""}
+      renderOption={(option) => option.label || ""}
       {...props}
     />
   );
@@ -322,16 +350,19 @@ export function UsStateAutocompleteField<T extends FieldValues>({
 
 export function EquipmentTypeAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EquipmentType, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EquipmentType, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/equipment-types/select-options/"
+      graphql={equipmentTypeSelectOptionsGraphQL}
       popoutLink="/equipment/configuration-files/equipment-types"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => <ColorOptionValue color={option.color} value={option.code} />}
+      getDisplayValue={(option) => (
+        <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
+      )}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <ColorOptionValue color={option.color} value={option.code} />
+          <ColorOptionValue color={selectOptionMetaString(option, "color")} value={option.label} />
           {option?.description && (
             <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
@@ -346,14 +377,24 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
 
 export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<EquipmentManufacturer, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<EquipmentManufacturer, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/equipment-manufacturers/select-options/"
+      graphql={equipmentManufacturerSelectOptionsGraphQL}
       popoutLink="/equipment/configuration-files/equipment-manufacturers"
-      getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
-      renderOption={(option) => option.name}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="w-full truncate">{option.label}</span>
+          {option.description && (
+            <span className="w-full truncate text-2xs text-muted-foreground">
+              {option.description}
+            </span>
+          )}
+        </div>
+      )}
       {...props}
     />
   );
@@ -361,14 +402,15 @@ export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
 
 export function TractorAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Tractor, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Tractor, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/tractors/select-options/"
+      graphql={tractorSelectOptionsGraphQL}
       popoutLink="/equipment/tractors/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code}
-      renderOption={(option) => option.code}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => option.label}
       {...props}
     />
   );
@@ -376,14 +418,15 @@ export function TractorAutocompleteField<T extends FieldValues>({
 
 export function TrailerAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Trailer, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Trailer, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/trailers/select-options/"
+      graphql={trailerSelectOptionsGraphQL}
       popoutLink="/equipment/trailers/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.code}
-      renderOption={(option) => option.code}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => option.label}
       {...props}
     />
   );
@@ -463,19 +506,20 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
 
 export function WorkerAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<Worker, T>) {
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
   return (
-    <AutocompleteField<Worker, T>
+    <AutocompleteField<GraphQLSelectOption, T>
       link="/workers/select-options/"
+      graphql={workerSelectOptionsGraphQL}
       popoutLink="/workers"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.wholeName || `${option.firstName} ${option.lastName}`}
+      getDisplayValue={(option) => option.label}
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
-          <span>{option.wholeName || `${option.firstName} ${option.lastName}`}</span>
-          {option?.fleetCode?.code && (
+          <span>{option.label}</span>
+          {selectOptionMetaString(option, "fleetCode") && (
             <span className="w-full truncate text-2xs text-muted-foreground">
-              Fleet: {option.fleetCode.code}
+              Fleet: {selectOptionMetaString(option, "fleetCode")}
             </span>
           )}
         </div>
@@ -914,30 +958,28 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.name}
       renderOption={(option) => (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <div className="flex size-full flex-col items-start">
-                  <span>{option.name}</span>
-                  {option?.description && (
-                    <span className="w-full truncate text-2xs text-muted-foreground">
-                      {option?.description}
-                    </span>
-                  )}
-                </div>
-              }
-            />
-            <TooltipContent align="center" sideOffset={20} side="left" className="size-full">
-              <div className="flex size-full flex-col gap-0.5">
-                <h3 className="font-semibold">Expression:</h3>
-                <div className="flex w-full rounded-md border border-muted/20 bg-muted/10 p-1">
-                  {option?.expression}
-                </div>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <div className="flex size-full flex-col items-start">
+                <span>{option.name}</span>
+                {option?.description && (
+                  <span className="w-full truncate text-2xs text-muted-foreground">
+                    {option?.description}
+                  </span>
+                )}
               </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            }
+          />
+          <TooltipContent align="center" sideOffset={20} side="left" className="size-full">
+            <div className="flex size-full flex-col gap-0.5">
+              <h3 className="font-semibold">Expression:</h3>
+              <div className="flex w-full rounded-md border border-muted/20 bg-muted/10 p-1">
+                {option?.expression}
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
       )}
       {...props}
     />
@@ -1073,9 +1115,7 @@ export function ServiceFailureReasonCodeAutocompleteField<T extends FieldValues>
       renderOption={(option) => (
         <div className="flex size-full flex-col items-start">
           <span className="w-full truncate font-medium">{option.code}</span>
-          <span className="w-full truncate text-2xs text-muted-foreground">
-            {option.label}
-          </span>
+          <span className="w-full truncate text-2xs text-muted-foreground">{option.label}</span>
         </div>
       )}
       {...props}

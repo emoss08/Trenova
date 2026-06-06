@@ -16,11 +16,11 @@ import {
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { ApiRequestError } from "@/lib/api";
+import type { SelectOption } from "@/lib/graphql/select-options";
 import { LocateTrailerDialog } from "@/routes/trailer/_components/locate-trailer-dialog";
 import { apiService } from "@/services/api";
 import type { Assignment, AssignmentPayload } from "@/types/shipment";
 import { assignmentPayloadSchema } from "@/types/shipment";
-import type { Tractor } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
@@ -158,16 +158,18 @@ export function AssignmentDialog({
   );
 
   const handleTractorChange = useCallback(
-    (tractor: Tractor | null) => {
-      if (tractor) {
+    (tractor: SelectOption | null) => {
+      if (tractor?.meta) {
         const currentPrimary = getValues("primaryWorkerId");
         const currentSecondary = getValues("secondaryWorkerId");
+        const primaryWorkerId = tractor.meta.primaryWorkerId;
+        const secondaryWorkerId = tractor.meta.secondaryWorkerId;
 
-        if (!currentPrimary && tractor.primaryWorkerId) {
-          setValue("primaryWorkerId", tractor.primaryWorkerId);
+        if (!currentPrimary && typeof primaryWorkerId === "string") {
+          setValue("primaryWorkerId", primaryWorkerId);
         }
-        if (!currentSecondary && tractor.secondaryWorkerId) {
-          setValue("secondaryWorkerId", tractor.secondaryWorkerId);
+        if (!currentSecondary && typeof secondaryWorkerId === "string") {
+          setValue("secondaryWorkerId", secondaryWorkerId);
         }
       }
     },

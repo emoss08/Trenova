@@ -22,13 +22,29 @@ describe("analytics query keys", () => {
   });
 
   it("uses GraphQL for shipment-management analytics with the existing query key", async () => {
-    getShipmentPageAnalyticsGraphQLMock.mockResolvedValueOnce({ page: "shipment-management" });
+    getShipmentPageAnalyticsGraphQLMock.mockResolvedValueOnce({
+      page: "shipment-management",
+      savedViewCounts: null,
+      data: {
+        laneHeatmap: {
+          cells: [{ count: 18, destination: "South", origin: "Midwest" }],
+          total: 18,
+          windowDays: 7,
+        },
+      },
+    });
 
     const query = analytics.get("shipment-management");
     const response = await query.queryFn();
 
     expect(query.queryKey).toEqual(["analytics", "shipment-management"]);
-    expect(response).toEqual({ page: "shipment-management" });
+    expect(response).toEqual({
+      laneHeatmap: {
+        cells: [{ count: 18, destination: "South", origin: "Midwest" }],
+        total: 18,
+        windowDays: 7,
+      },
+    });
     expect(getShipmentPageAnalyticsGraphQLMock).toHaveBeenCalledWith({
       timezone: expect.any(String),
     });

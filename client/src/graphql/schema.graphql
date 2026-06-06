@@ -291,6 +291,7 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): JSON!
   uncancelShipment(id: ID!): Shipment!
+  updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
   updateTractor(id: ID!, input: TractorInput!): Tractor!
@@ -317,6 +318,23 @@ type Organization {
   taxId: String!
   timezone: String!
   updatedAt: Int!
+  version: Int!
+}
+
+input OrganizationInput {
+  addressLine1: String!
+  addressLine2: String
+  bucketName: String
+  city: String!
+  dotNumber: String!
+  loginSlug: String
+  logoUrl: String
+  name: String!
+  postalCode: String!
+  scacCode: String!
+  stateId: ID!
+  taxId: String
+  timezone: String!
   version: Int!
 }
 
@@ -355,6 +373,8 @@ type PageInfo {
 }
 
 type Query {
+  organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
+  selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment
   shipmentAnalytics(endDate: Int, include: String, limit: Int, offset: Int, startDate: Int, timezone: String, windowDays: Int): ShipmentAnalytics!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -373,6 +393,42 @@ type Query {
   workerPTOChartData(startDateFrom: Int!, startDateTo: Int!, timezone: String, type: PTOType, workerId: ID): [PTOChartDataPoint!]!
   workerPTOEntries(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeWorker: Boolean = false, offset: Int, query: String, sort: [SortFieldInput!], startDateFrom: Int, startDateTo: Int, status: PTOStatus, type: PTOType, workerId: ID): WorkerPTOConnection!
   workers(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, offset: Int, query: String, sort: [SortFieldInput!]): WorkerConnection!
+}
+
+type SelectOption {
+  description: String
+  id: ID!
+  label: String!
+  meta: JSON
+}
+
+type SelectOptionConnection {
+  edges: [SelectOptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type SelectOptionEdge {
+  cursor: String!
+  node: SelectOption!
+}
+
+enum SelectOptionResource {
+  EQUIPMENT_MANUFACTURER
+  EQUIPMENT_TYPE
+  TRACTOR
+  TRAILER
+  US_STATE
+  WORKER
+}
+
+input SelectOptionsInput {
+  filters: JSON
+  first: Int = 20
+  ids: [ID!]
+  offset: Int = 0
+  query: String
+  resource: SelectOptionResource!
 }
 
 type Shipment {

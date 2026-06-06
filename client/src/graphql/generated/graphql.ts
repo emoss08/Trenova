@@ -61,6 +61,23 @@ export type MoveStatus =
   | 'InTransit'
   | 'New';
 
+export type OrganizationInput = {
+  addressLine1: string;
+  addressLine2?: string | null | undefined;
+  bucketName?: string | null | undefined;
+  city: string;
+  dotNumber: string;
+  loginSlug?: string | null | undefined;
+  logoUrl?: string | null | undefined;
+  name: string;
+  postalCode: string;
+  scacCode: string;
+  stateId: string | number;
+  taxId?: string | null | undefined;
+  timezone: string;
+  version: number;
+};
+
 export type PtoStatus =
   | 'Approved'
   | 'Cancelled'
@@ -75,6 +92,23 @@ export type PtoType =
   | 'Personal'
   | 'Sick'
   | 'Vacation';
+
+export type SelectOptionResource =
+  | 'EQUIPMENT_MANUFACTURER'
+  | 'EQUIPMENT_TYPE'
+  | 'TRACTOR'
+  | 'TRAILER'
+  | 'US_STATE'
+  | 'WORKER';
+
+export type SelectOptionsInput = {
+  filters?: unknown;
+  first?: number | null | undefined;
+  ids?: Array<string | number> | null | undefined;
+  offset?: number | null | undefined;
+  query?: string | null | undefined;
+  resource: SelectOptionResource;
+};
 
 export type ShipmentAdditionalChargeInput = {
   accessorialChargeId: string | number;
@@ -432,6 +466,34 @@ export type TrailerTableQueryVariables = Exact<{
 
 
 export type TrailerTableQuery = { trailers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TrailerTableRowFieldsFragment': TrailerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
+
+export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
+
+export type OrganizationSettingsQueryVariables = Exact<{
+  id: string | number;
+  includeState?: boolean | null | undefined;
+  includeBu?: boolean | null | undefined;
+}>;
+
+
+export type OrganizationSettingsQuery = { organization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
+
+export type UpdateOrganizationSettingsMutationVariables = Exact<{
+  id: string | number;
+  input: OrganizationInput;
+}>;
+
+
+export type UpdateOrganizationSettingsMutation = { updateOrganization: { ' $fragmentRefs'?: { 'OrganizationSettingsFieldsFragment': OrganizationSettingsFieldsFragment } } };
+
+export type SelectOptionsQueryVariables = Exact<{
+  input: SelectOptionsInput;
+}>;
+
+
+export type SelectOptionsQuery = { selectOptions: { totalCount: number | null, edges: Array<{ cursor: string, node: { id: string, label: string, description: string | null, meta: unknown } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type ShipmentUserFieldsFragment = { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'ShipmentUserFieldsFragment' };
 
@@ -993,6 +1055,42 @@ fragment UsStateTableFields on UsState {
   name
   abbreviation
 }`, {"fragmentName":"TrailerTableRowFields"}) as unknown as TypedDocumentString<TrailerTableRowFieldsFragment, unknown>;
+export const OrganizationSettingsStateFieldsFragmentDoc = new TypedDocumentString(`
+    fragment OrganizationSettingsStateFields on UsState {
+  id
+  name
+  abbreviation
+}
+    `, {"fragmentName":"OrganizationSettingsStateFields"}) as unknown as TypedDocumentString<OrganizationSettingsStateFieldsFragment, unknown>;
+export const OrganizationSettingsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment OrganizationSettingsFields on Organization {
+  id
+  version
+  createdAt
+  updatedAt
+  bucketName
+  businessUnitId
+  loginSlug
+  name
+  scacCode
+  dotNumber
+  logoUrl
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  timezone
+  taxId
+  state {
+    ...OrganizationSettingsStateFields
+  }
+}
+    fragment OrganizationSettingsStateFields on UsState {
+  id
+  name
+  abbreviation
+}`, {"fragmentName":"OrganizationSettingsFields"}) as unknown as TypedDocumentString<OrganizationSettingsFieldsFragment, unknown>;
 export const ShipmentRatingDetailFieldsFragmentDoc = new TypedDocumentString(`
     fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -1948,6 +2046,94 @@ fragment TrailerTableRowFields on Trailer {
     ...UsStateTableFields
   }
 }`, {"hash":"sha256:7d14e89dd8650263df64b20cc350016579d0015061ecd9c1517bcf7089569334"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+export const OrganizationSettingsDocument = new TypedDocumentString(`
+    query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
+  organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
+    ...OrganizationSettingsFields
+  }
+}
+    fragment OrganizationSettingsStateFields on UsState {
+  id
+  name
+  abbreviation
+}
+fragment OrganizationSettingsFields on Organization {
+  id
+  version
+  createdAt
+  updatedAt
+  bucketName
+  businessUnitId
+  loginSlug
+  name
+  scacCode
+  dotNumber
+  logoUrl
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  timezone
+  taxId
+  state {
+    ...OrganizationSettingsStateFields
+  }
+}`, {"hash":"sha256:f0607e7e7bb70dae8caafba84295b7a0c947b86d75e5502a1756f46bb3be4304"}) as unknown as TypedDocumentString<OrganizationSettingsQuery, OrganizationSettingsQueryVariables>;
+export const UpdateOrganizationSettingsDocument = new TypedDocumentString(`
+    mutation UpdateOrganizationSettings($id: ID!, $input: OrganizationInput!) {
+  updateOrganization(id: $id, input: $input) {
+    ...OrganizationSettingsFields
+  }
+}
+    fragment OrganizationSettingsStateFields on UsState {
+  id
+  name
+  abbreviation
+}
+fragment OrganizationSettingsFields on Organization {
+  id
+  version
+  createdAt
+  updatedAt
+  bucketName
+  businessUnitId
+  loginSlug
+  name
+  scacCode
+  dotNumber
+  logoUrl
+  addressLine1
+  addressLine2
+  city
+  stateId
+  postalCode
+  timezone
+  taxId
+  state {
+    ...OrganizationSettingsStateFields
+  }
+}`, {"hash":"sha256:9c93ea23726c32ce8a2683f6ff0e4f38d5a63a9ef0ddd9a86b9b98899aeaefe8"}) as unknown as TypedDocumentString<UpdateOrganizationSettingsMutation, UpdateOrganizationSettingsMutationVariables>;
+export const SelectOptionsDocument = new TypedDocumentString(`
+    query SelectOptions($input: SelectOptionsInput!) {
+  selectOptions(input: $input) {
+    edges {
+      node {
+        id
+        label
+        description
+        meta
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+    `, {"hash":"sha256:61baa26c739e995aee3b16a4b9f4b584b628598c5e46d1f3886624091f1c12f2"}) as unknown as TypedDocumentString<SelectOptionsQuery, SelectOptionsQueryVariables>;
 export const ShipmentCommandCenterTableDocument = new TypedDocumentString(`
     query ShipmentCommandCenterTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $expandShipmentDetails: Boolean = true) {
   shipments(
