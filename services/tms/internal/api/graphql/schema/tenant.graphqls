@@ -35,6 +35,23 @@ type Organization {
   businessUnit: BusinessUnit
 }
 
+input OrganizationInput {
+  version: Int!
+  name: String!
+  loginSlug: String
+  scacCode: String!
+  dotNumber: String!
+  logoUrl: String
+  bucketName: String
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  timezone: String!
+  taxId: String
+}
+
 type User {
   id: ID!
   businessUnitId: ID!
@@ -55,4 +72,12 @@ type User {
   lastLoginAt: Int
   businessUnit: BusinessUnit
   currentOrganization: Organization
+}
+
+extend type Query {
+  organization(id: ID!, includeState: Boolean = true, includeBu: Boolean = false): Organization!
+}
+
+extend type Mutation {
+  updateOrganization(id: ID!, input: OrganizationInput!): Organization!
 }

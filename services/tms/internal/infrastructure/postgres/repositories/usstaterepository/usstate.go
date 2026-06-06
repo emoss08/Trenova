@@ -69,7 +69,7 @@ func (r *repository) SelectOptions(
 	q := r.db.DB().
 		NewSelect().
 		Model(&entities).
-		Column("id", "name", "abbreviation").
+		Column("id", "created_at", "name", "abbreviation", "country_iso3").
 		Limit(req.Pagination.Limit).
 		Offset(req.Pagination.Offset)
 

@@ -268,6 +268,7 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
 				cols.ID,
+				cols.CreatedAt,
 				cols.Status,
 				cols.Code,
 			},

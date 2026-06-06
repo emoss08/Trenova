@@ -223,6 +223,7 @@ type ComplexityRoot struct {
 		TransferShipmentOwnership            func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
 		TransferShipmentToBilling            func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
 		UncancelShipment                     func(childComplexity int, id string) int
+		UpdateOrganization                   func(childComplexity int, id string, input gqlmodel.OrganizationInput) int
 		UpdateShipment                       func(childComplexity int, id string, input gqlmodel.ShipmentInput) int
 		UpdateShipmentComment                func(childComplexity int, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) int
 		UpdateTractor                        func(childComplexity int, id string, input gqlmodel.TractorInput) int
@@ -270,6 +271,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Organization             func(childComplexity int, id string, includeState *bool, includeBu *bool) int
+		SelectOptions            func(childComplexity int, input gqlmodel.SelectOptionsInput) int
 		Shipment                 func(childComplexity int, id string, expandShipmentDetails *bool, status *string) int
 		ShipmentAnalytics        func(childComplexity int, startDate *int, endDate *int, limit *int, offset *int, timezone *string, windowDays *int, include *string) int
 		ShipmentBillingReadiness func(childComplexity int, shipmentID string) int
@@ -288,6 +291,24 @@ type ComplexityRoot struct {
 		WorkerPTOChartData       func(childComplexity int, startDateFrom int, startDateTo int, typeArg *worker.PTOType, workerID *string, timezone *string) int
 		WorkerPTOEntries         func(childComplexity int, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) int
 		Workers                  func(childComplexity int, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) int
+	}
+
+	SelectOption struct {
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Label       func(childComplexity int) int
+		Meta        func(childComplexity int) int
+	}
+
+	SelectOptionConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	SelectOptionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Shipment struct {
@@ -1031,6 +1052,7 @@ type MutationResolver interface {
 	CreateShipmentComment(ctx context.Context, shipmentID string, input gqlmodel.ShipmentCommentInput) (*gqlmodel.ShipmentComment, error)
 	UpdateShipmentComment(ctx context.Context, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) (*gqlmodel.ShipmentComment, error)
 	DeleteShipmentComment(ctx context.Context, shipmentID string, commentID string) (bool, error)
+	UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error)
 	CreateTractor(ctx context.Context, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	UpdateTractor(ctx context.Context, id string, input gqlmodel.TractorInput) (*tractor.Tractor, error)
 	PatchTractor(ctx context.Context, id string, input gqlmodel.TractorPatchInput) (*tractor.Tractor, error)
@@ -1046,6 +1068,7 @@ type PTOChartDataPointResolver interface {
 type QueryResolver interface {
 	Trailers(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
 	Trailer(ctx context.Context, id string) (*trailer.Trailer, error)
+	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
 	Shipments(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, expandShipmentDetails *bool, status *string) (*gqlmodel.ShipmentConnection, error)
 	Shipment(ctx context.Context, id string, expandShipmentDetails *bool, status *string) (*gqlmodel.Shipment, error)
 	UnassignedShipments(ctx context.Context, first *int, offset *int, after *string) (*gqlmodel.ShipmentConnection, error)
@@ -1056,6 +1079,7 @@ type QueryResolver interface {
 	ShipmentEvents(ctx context.Context, shipmentID *string, types []gqlmodel.ShipmentEventType, limit *int, before *int) ([]*gqlmodel.ShipmentEvent, error)
 	ShipmentAnalytics(ctx context.Context, startDate *int, endDate *int, limit *int, offset *int, timezone *string, windowDays *int, include *string) (*gqlmodel.ShipmentAnalytics, error)
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
+	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
 	Tractors(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
 	Workers(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) (*gqlmodel.WorkerConnection, error)
@@ -2065,6 +2089,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UncancelShipment(childComplexity, args["id"].(string)), true
+	case "Mutation.updateOrganization":
+		if e.ComplexityRoot.Mutation.UpdateOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrganization_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateOrganization(childComplexity, args["id"].(string), args["input"].(gqlmodel.OrganizationInput)), true
 	case "Mutation.updateShipment":
 		if e.ComplexityRoot.Mutation.UpdateShipment == nil {
 			break
@@ -2299,6 +2334,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 
+	case "Query.organization":
+		if e.ComplexityRoot.Query.Organization == nil {
+			break
+		}
+
+		args, err := ec.field_Query_organization_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Organization(childComplexity, args["id"].(string), args["includeState"].(*bool), args["includeBu"].(*bool)), true
+	case "Query.selectOptions":
+		if e.ComplexityRoot.Query.SelectOptions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_selectOptions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SelectOptions(childComplexity, args["input"].(gqlmodel.SelectOptionsInput)), true
 	case "Query.shipment":
 		if e.ComplexityRoot.Query.Shipment == nil {
 			break
@@ -2492,6 +2549,63 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Workers(childComplexity, args["first"].(*int), args["offset"].(*int), args["after"].(*string), args["query"].(*string), args["fieldFilters"].([]*gqlmodel.FieldFilterInput), args["filterGroups"].([]*gqlmodel.FilterGroupInput), args["sort"].([]*gqlmodel.SortFieldInput)), true
+
+	case "SelectOption.description":
+		if e.ComplexityRoot.SelectOption.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOption.Description(childComplexity), true
+	case "SelectOption.id":
+		if e.ComplexityRoot.SelectOption.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOption.ID(childComplexity), true
+	case "SelectOption.label":
+		if e.ComplexityRoot.SelectOption.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOption.Label(childComplexity), true
+	case "SelectOption.meta":
+		if e.ComplexityRoot.SelectOption.Meta == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOption.Meta(childComplexity), true
+
+	case "SelectOptionConnection.edges":
+		if e.ComplexityRoot.SelectOptionConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOptionConnection.Edges(childComplexity), true
+	case "SelectOptionConnection.pageInfo":
+		if e.ComplexityRoot.SelectOptionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOptionConnection.PageInfo(childComplexity), true
+	case "SelectOptionConnection.totalCount":
+		if e.ComplexityRoot.SelectOptionConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOptionConnection.TotalCount(childComplexity), true
+
+	case "SelectOptionEdge.cursor":
+		if e.ComplexityRoot.SelectOptionEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOptionEdge.Cursor(childComplexity), true
+	case "SelectOptionEdge.node":
+		if e.ComplexityRoot.SelectOptionEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SelectOptionEdge.Node(childComplexity), true
 
 	case "Shipment.actualDeliveryDate":
 		if e.ComplexityRoot.Shipment.ActualDeliveryDate == nil {
@@ -5809,6 +5923,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFilterGroupInput,
 		ec.unmarshalInputLocateTractorInput,
 		ec.unmarshalInputLocateTrailerInput,
+		ec.unmarshalInputOrganizationInput,
+		ec.unmarshalInputSelectOptionsInput,
 		ec.unmarshalInputShipmentAdditionalChargeInput,
 		ec.unmarshalInputShipmentBulkTransferToBillingInput,
 		ec.unmarshalInputShipmentCancelInput,
@@ -6068,6 +6184,46 @@ type LocationCategory {
   updatedAt: Int!
   businessUnit: BusinessUnit
   organization: Organization
+}
+`, BuiltIn: false},
+	{Name: "../schema/select_options.graphqls", Input: `enum SelectOptionResource {
+  EQUIPMENT_TYPE
+  EQUIPMENT_MANUFACTURER
+  TRAILER
+  TRACTOR
+  WORKER
+  US_STATE
+}
+
+input SelectOptionsInput {
+  resource: SelectOptionResource!
+  query: String
+  first: Int = 20
+  offset: Int = 0
+  ids: [ID!]
+  filters: JSON
+}
+
+type SelectOption {
+  id: ID!
+  label: String!
+  description: String
+  meta: JSON
+}
+
+type SelectOptionEdge {
+  node: SelectOption!
+  cursor: String!
+}
+
+type SelectOptionConnection {
+  edges: [SelectOptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
 }
 `, BuiltIn: false},
 	{Name: "../schema/shared.graphqls", Input: `scalar JSON
@@ -6985,6 +7141,23 @@ type Organization {
   businessUnit: BusinessUnit
 }
 
+input OrganizationInput {
+  version: Int!
+  name: String!
+  loginSlug: String
+  scacCode: String!
+  dotNumber: String!
+  logoUrl: String
+  bucketName: String
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  stateId: ID!
+  postalCode: String!
+  timezone: String!
+  taxId: String
+}
+
 type User {
   id: ID!
   businessUnitId: ID!
@@ -7005,6 +7178,14 @@ type User {
   lastLoginAt: Int
   businessUnit: BusinessUnit
   currentOrganization: Organization
+}
+
+extend type Query {
+  organization(id: ID!, includeState: Boolean = true, includeBu: Boolean = false): Organization!
+}
+
+extend type Mutation {
+  updateOrganization(id: ID!, input: OrganizationInput!): Organization!
 }
 `, BuiltIn: false},
 	{Name: "../schema/tractor.graphqls", Input: `type TractorEdge {
@@ -7867,6 +8048,42 @@ func (ec *executionContext) childFields_PageInfo(ctx context.Context, field grap
 		return ec.fieldContext_PageInfo_endCursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+}
+
+func (ec *executionContext) childFields_SelectOption(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_SelectOption_id(ctx, field)
+	case "label":
+		return ec.fieldContext_SelectOption_label(ctx, field)
+	case "description":
+		return ec.fieldContext_SelectOption_description(ctx, field)
+	case "meta":
+		return ec.fieldContext_SelectOption_meta(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SelectOption", field.Name)
+}
+
+func (ec *executionContext) childFields_SelectOptionConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_SelectOptionConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_SelectOptionConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_SelectOptionConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SelectOptionConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_SelectOptionEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_SelectOptionEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_SelectOptionEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SelectOptionEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_Shipment(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -9831,6 +10048,28 @@ func (ec *executionContext) field_Mutation_uncancelShipment_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.OrganizationInput, error) {
+			return ec.unmarshalNOrganizationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOrganizationInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateShipmentComment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -9938,6 +10177,50 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_organization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "includeState",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeState"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "includeBu",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeBu"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_selectOptions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SelectOptionsInput, error) {
+			return ec.unmarshalNSelectOptionsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionsInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -14436,6 +14719,50 @@ func (ec *executionContext) fieldContext_Mutation_deleteShipmentComment(ctx cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateOrganization(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateOrganization(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.OrganizationInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+			return ec.marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Organization(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createTractor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -15607,6 +15934,50 @@ func (ec *executionContext) fieldContext_Query_trailer(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_selectOptions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_selectOptions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SelectOptions(ctx, fc.Args["input"].(gqlmodel.SelectOptionsInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.SelectOptionConnection) graphql.Marshaler {
+			return ec.marshalNSelectOptionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_selectOptions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SelectOptionConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_selectOptions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_shipments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16035,6 +16406,50 @@ func (ec *executionContext) fieldContext_Query_shipmentPreviousRates(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_organization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_organization(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Organization(ctx, fc.Args["id"].(string), fc.Args["includeState"].(*bool), fc.Args["includeBu"].(*bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+			return ec.marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_organization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Organization(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_organization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_tractors(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16373,6 +16788,240 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _SelectOption_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOption_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOption_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOption", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _SelectOption_label(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOption_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOption_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SelectOption_description(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOption_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOption_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOption", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SelectOption_meta(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOption) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOption_meta(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Meta, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOption_meta(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOption", field, false, false, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _SelectOptionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOptionConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOptionConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.SelectOptionEdge) graphql.Marshaler {
+			return ec.marshalNSelectOptionEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOptionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SelectOptionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SelectOptionEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SelectOptionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOptionConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOptionConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOptionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SelectOptionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SelectOptionConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOptionConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOptionConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOptionConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOptionConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SelectOptionEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOptionEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOptionEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.SelectOption) graphql.Marshaler {
+			return ec.marshalNSelectOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOption(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOptionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SelectOptionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SelectOption(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SelectOptionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.SelectOptionEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SelectOptionEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SelectOptionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SelectOptionEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Shipment_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.Shipment) (ret graphql.Marshaler) {
@@ -30819,6 +31468,199 @@ func (ec *executionContext) unmarshalInputLocateTrailerInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOrganizationInput(ctx context.Context, obj any) (gqlmodel.OrganizationInput, error) {
+	var it gqlmodel.OrganizationInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"version", "name", "loginSlug", "scacCode", "dotNumber", "logoUrl", "bucketName", "addressLine1", "addressLine2", "city", "stateId", "postalCode", "timezone", "taxId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "loginSlug":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("loginSlug"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LoginSlug = data
+		case "scacCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scacCode"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ScacCode = data
+		case "dotNumber":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dotNumber"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DotNumber = data
+		case "logoUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logoUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LogoURL = data
+		case "bucketName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bucketName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BucketName = data
+		case "addressLine1":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine1"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine1 = data
+		case "addressLine2":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("addressLine2"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AddressLine2 = data
+		case "city":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("city"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.City = data
+		case "stateId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StateID = data
+		case "postalCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postalCode"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PostalCode = data
+		case "timezone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timezone"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Timezone = data
+		case "taxId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taxId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TaxID = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSelectOptionsInput(ctx context.Context, obj any) (gqlmodel.SelectOptionsInput, error) {
+	var it gqlmodel.SelectOptionsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["first"]; !present {
+		asMap["first"] = 20
+	}
+	if _, present := asMap["offset"]; !present {
+		asMap["offset"] = 0
+	}
+
+	fieldsInOrder := [...]string{"resource", "query", "first", "offset", "ids", "filters"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resource":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resource"))
+			data, err := ec.unmarshalNSelectOptionResource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionResource(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Resource = data
+		case "query":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		case "first":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.First = data
+		case "offset":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Offset = data
+		case "ids":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Ids = data
+		case "filters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filters"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Filters = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputShipmentAdditionalChargeInput(ctx context.Context, obj any) (gqlmodel.ShipmentAdditionalChargeInput, error) {
 	var it gqlmodel.ShipmentAdditionalChargeInput
 	if obj == nil {
@@ -34059,6 +34901,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createTractor":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createTractor(ctx, field)
@@ -34477,6 +35326,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "selectOptions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_selectOptions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "shipments":
 			field := field
 
@@ -34694,6 +35565,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_organization(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "tractors":
 			field := field
 
@@ -34831,6 +35724,144 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var selectOptionImplementors = []string{"SelectOption"}
+
+func (ec *executionContext) _SelectOption(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.SelectOption) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SelectOption")
+		case "id":
+			out.Values[i] = ec._SelectOption_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._SelectOption_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._SelectOption_description(ctx, field, obj)
+		case "meta":
+			out.Values[i] = ec._SelectOption_meta(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var selectOptionConnectionImplementors = []string{"SelectOptionConnection"}
+
+func (ec *executionContext) _SelectOptionConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.SelectOptionConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SelectOptionConnection")
+		case "edges":
+			out.Values[i] = ec._SelectOptionConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SelectOptionConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._SelectOptionConnection_totalCount(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var selectOptionEdgeImplementors = []string{"SelectOptionEdge"}
+
+func (ec *executionContext) _SelectOptionEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.SelectOptionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SelectOptionEdge")
+		case "node":
+			out.Values[i] = ec._SelectOptionEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._SelectOptionEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -40257,6 +41288,25 @@ func (ec *executionContext) marshalNMoveStatus2githubᚗcomᚋemoss08ᚋtrenova�
 	return v
 }
 
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, sel ast.SelectionSet, v tenant.Organization) graphql.Marshaler {
+	return ec._Organization(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Organization(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNOrganizationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐOrganizationInput(ctx context.Context, v any) (gqlmodel.OrganizationInput, error) {
+	res, err := ec.unmarshalInputOrganizationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNPTOChartDataPoint2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋrepositoriesᚐPTOChartDataPointᚄ(ctx context.Context, sel ast.SelectionSet, v []*repositories.PTOChartDataPoint) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -40325,6 +41375,71 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSelectOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOption(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.SelectOption) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SelectOption(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSelectOptionConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.SelectOptionConnection) graphql.Marshaler {
+	return ec._SelectOptionConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSelectOptionConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.SelectOptionConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SelectOptionConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSelectOptionEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.SelectOptionEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSelectOptionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSelectOptionEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.SelectOptionEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SelectOptionEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSelectOptionResource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionResource(ctx context.Context, v any) (gqlmodel.SelectOptionResource, error) {
+	var res gqlmodel.SelectOptionResource
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSelectOptionResource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionResource(ctx context.Context, sel ast.SelectionSet, v gqlmodel.SelectOptionResource) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSelectOptionsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSelectOptionsInput(ctx context.Context, v any) (gqlmodel.SelectOptionsInput, error) {
+	res, err := ec.unmarshalInputSelectOptionsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNShipment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment(ctx context.Context, sel ast.SelectionSet, v gqlmodel.Shipment) graphql.Marshaler {

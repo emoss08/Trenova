@@ -176,6 +176,7 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			Columns: []string{
 				"id",
+				"created_at",
 				"code",
 				"description",
 				"class",

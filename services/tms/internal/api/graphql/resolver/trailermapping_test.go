@@ -86,11 +86,15 @@ func TestTrailerRelationIncludesForFields_UsesSelectedFields(t *testing.T) {
 		[]string{
 			"id",
 			"created_at",
+			"business_unit_id",
+			"equipment_type_id",
+			"fleet_code_id",
+			"registration_state_id",
 		},
 		includes.TrailerColumns,
 	)
-	assert.Equal(t, []string{"id"}, includes.EquipmentTypeColumns)
-	assert.Equal(t, []string{"id", "manager_id"}, includes.FleetCodeColumns)
+	assert.Equal(t, []string{"id", "created_at"}, includes.EquipmentTypeColumns)
+	assert.Equal(t, []string{"id", "created_at", "manager_id"}, includes.FleetCodeColumns)
 	assert.Nil(t, includes.EquipmentManufacturerColumns)
 }
 
@@ -168,6 +172,9 @@ func TestTrailerRelationIncludesForFields_ProjectsTrailerListColumns(t *testing.
 			"max_load_weight",
 			"last_inspection_date",
 			"registration_expiry",
+			"equipment_type_id",
+			"equipment_manufacturer_id",
+			"fleet_code_id",
 		},
 		includes.TrailerColumns,
 	)
@@ -175,11 +182,11 @@ func TestTrailerRelationIncludesForFields_ProjectsTrailerListColumns(t *testing.
 		t,
 		[]string{
 			"id",
+			"created_at",
 			"status",
 			"name",
 			"description",
 			"version",
-			"created_at",
 			"updated_at",
 		},
 		includes.EquipmentManufacturerColumns,
@@ -188,12 +195,12 @@ func TestTrailerRelationIncludesForFields_ProjectsTrailerListColumns(t *testing.
 		t,
 		[]string{
 			"id",
+			"created_at",
 			"code",
 			"description",
 			"class",
 			"color",
 			"interior_length",
-			"created_at",
 			"updated_at",
 		},
 		includes.EquipmentTypeColumns,
@@ -202,6 +209,7 @@ func TestTrailerRelationIncludesForFields_ProjectsTrailerListColumns(t *testing.
 		t,
 		[]string{
 			"id",
+			"created_at",
 			"status",
 			"code",
 			"description",
@@ -210,7 +218,6 @@ func TestTrailerRelationIncludesForFields_ProjectsTrailerListColumns(t *testing.
 			"mileage_goal",
 			"color",
 			"version",
-			"created_at",
 			"updated_at",
 		},
 		includes.FleetCodeColumns,

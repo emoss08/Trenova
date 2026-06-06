@@ -10,9 +10,94 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
+
+// UpdateOrganization is the resolver for the updateOrganization field.
+func (r *mutationResolver) UpdateOrganization(ctx context.Context, id string, input gqlmodel.OrganizationInput) (*tenant.Organization, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrganization, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	orgID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	stateID, err := pulid.MustParse(input.StateID)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := &tenant.Organization{
+		ID:             orgID,
+		StateID:        stateID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		Version:        int64(input.Version),
+		Name:           input.Name,
+		ScacCode:       input.ScacCode,
+		DOTNumber:      input.DotNumber,
+		AddressLine1:   input.AddressLine1,
+		City:           input.City,
+		PostalCode:     input.PostalCode,
+		Timezone:       input.Timezone,
+	}
+	if input.LoginSlug != nil {
+		entity.LoginSlug = *input.LoginSlug
+	}
+	if input.LogoURL != nil {
+		entity.LogoURL = *input.LogoURL
+	}
+	if input.BucketName != nil {
+		entity.BucketName = *input.BucketName
+	}
+	if input.AddressLine2 != nil {
+		entity.AddressLine2 = *input.AddressLine2
+	}
+	if input.TaxID != nil {
+		entity.TaxID = *input.TaxID
+	}
+
+	return r.organizationService.Update(ctx, entity)
+}
+
+// Organization is the resolver for the organization field.
+func (r *queryResolver) Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceOrganization, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	orgID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	stateIncluded := true
+	if includeState != nil {
+		stateIncluded = *includeState
+	}
+	buIncluded := false
+	if includeBu != nil {
+		buIncluded = *includeBu
+	}
+
+	return r.organizationService.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  orgID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		IncludeState: stateIncluded,
+		IncludeBU:    buIncluded,
+	})
+}
 
 // TimeFormat is the resolver for the timeFormat field.
 func (r *userResolver) TimeFormat(ctx context.Context, obj *tenant.User) (gqlmodel.TimeFormat, error) {

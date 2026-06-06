@@ -1,0 +1,39 @@
+enum SelectOptionResource {
+  EQUIPMENT_TYPE
+  EQUIPMENT_MANUFACTURER
+  TRAILER
+  TRACTOR
+  WORKER
+  US_STATE
+}
+
+input SelectOptionsInput {
+  resource: SelectOptionResource!
+  query: String
+  first: Int = 20
+  offset: Int = 0
+  ids: [ID!]
+  filters: JSON
+}
+
+type SelectOption {
+  id: ID!
+  label: String!
+  description: String
+  meta: JSON
+}
+
+type SelectOptionEdge {
+  node: SelectOption!
+  cursor: String!
+}
+
+type SelectOptionConnection {
+  edges: [SelectOptionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
+}

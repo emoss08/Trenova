@@ -55,12 +55,56 @@ type LocationReference struct {
 type Mutation struct {
 }
 
+type OrganizationInput struct {
+	Version      int     `json:"version"`
+	Name         string  `json:"name"`
+	LoginSlug    *string `json:"loginSlug,omitempty"`
+	ScacCode     string  `json:"scacCode"`
+	DotNumber    string  `json:"dotNumber"`
+	LogoURL      *string `json:"logoUrl,omitempty"`
+	BucketName   *string `json:"bucketName,omitempty"`
+	AddressLine1 string  `json:"addressLine1"`
+	AddressLine2 *string `json:"addressLine2,omitempty"`
+	City         string  `json:"city"`
+	StateID      string  `json:"stateId"`
+	PostalCode   string  `json:"postalCode"`
+	Timezone     string  `json:"timezone"`
+	TaxID        *string `json:"taxId,omitempty"`
+}
+
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
 }
 
 type Query struct {
+}
+
+type SelectOption struct {
+	ID          string         `json:"id"`
+	Label       string         `json:"label"`
+	Description *string        `json:"description,omitempty"`
+	Meta        map[string]any `json:"meta,omitempty"`
+}
+
+type SelectOptionConnection struct {
+	Edges      []*SelectOptionEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type SelectOptionEdge struct {
+	Node   *SelectOption `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
+type SelectOptionsInput struct {
+	Resource SelectOptionResource `json:"resource"`
+	Query    *string              `json:"query,omitempty"`
+	First    *int                 `json:"first,omitempty"`
+	Offset   *int                 `json:"offset,omitempty"`
+	Ids      []string             `json:"ids,omitempty"`
+	Filters  map[string]any       `json:"filters,omitempty"`
 }
 
 type Shipment struct {
@@ -965,6 +1009,69 @@ func (e *MoveStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e MoveStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SelectOptionResource string
+
+const (
+	SelectOptionResourceEquipmentType         SelectOptionResource = "EQUIPMENT_TYPE"
+	SelectOptionResourceEquipmentManufacturer SelectOptionResource = "EQUIPMENT_MANUFACTURER"
+	SelectOptionResourceTrailer               SelectOptionResource = "TRAILER"
+	SelectOptionResourceTractor               SelectOptionResource = "TRACTOR"
+	SelectOptionResourceWorker                SelectOptionResource = "WORKER"
+	SelectOptionResourceUsState               SelectOptionResource = "US_STATE"
+)
+
+var AllSelectOptionResource = []SelectOptionResource{
+	SelectOptionResourceEquipmentType,
+	SelectOptionResourceEquipmentManufacturer,
+	SelectOptionResourceTrailer,
+	SelectOptionResourceTractor,
+	SelectOptionResourceWorker,
+	SelectOptionResourceUsState,
+}
+
+func (e SelectOptionResource) IsValid() bool {
+	switch e {
+	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState:
+		return true
+	}
+	return false
+}
+
+func (e SelectOptionResource) String() string {
+	return string(e)
+}
+
+func (e *SelectOptionResource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SelectOptionResource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SelectOptionResource", str)
+	}
+	return nil
+}
+
+func (e SelectOptionResource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SelectOptionResource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SelectOptionResource) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -7,8 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
+	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
+	"github.com/emoss08/trenova/internal/core/services/usstateservice"
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -21,46 +24,58 @@ import (
 type Params struct {
 	fx.In
 
-	Logger                  *zap.Logger
-	AnalyticsService        services.AnalyticsService
-	ShipmentService         services.ShipmentService
-	ShipmentCommentService  services.ShipmentCommentService
-	ShipmentEventService    services.ShipmentEventService
-	ShipmentImportAssistant services.ShipmentImportAssistantService `optional:"true"`
-	TractorService          *tractorservice.Service
-	TrailerService          *trailerservice.Service
-	WorkerService           *workerservice.Service
-	WorkerPTOService        *workerptoservice.Service
-	PermissionEngine        services.PermissionEngine
+	Logger                       *zap.Logger
+	AnalyticsService             services.AnalyticsService
+	OrganizationService          services.OrganizationService
+	ShipmentService              services.ShipmentService
+	ShipmentCommentService       services.ShipmentCommentService
+	ShipmentEventService         services.ShipmentEventService
+	ShipmentImportAssistant      services.ShipmentImportAssistantService `optional:"true"`
+	EquipmentManufacturerService *equipmentmanufacturerservice.Service
+	EquipmentTypeService         *equipmenttypeservice.Service
+	TractorService               *tractorservice.Service
+	TrailerService               *trailerservice.Service
+	USStateService               *usstateservice.Service
+	WorkerService                *workerservice.Service
+	WorkerPTOService             *workerptoservice.Service
+	PermissionEngine             services.PermissionEngine
 }
 
 type Resolver struct {
-	l                       *zap.Logger
-	analyticsService        services.AnalyticsService
-	shipmentService         services.ShipmentService
-	shipmentCommentService  services.ShipmentCommentService
-	shipmentEventService    services.ShipmentEventService
-	shipmentImportAssistant services.ShipmentImportAssistantService
-	tractorService          *tractorservice.Service
-	trailerService          *trailerservice.Service
-	workerService           *workerservice.Service
-	workerPTOService        *workerptoservice.Service
-	permissionEngine        services.PermissionEngine
+	l                            *zap.Logger
+	analyticsService             services.AnalyticsService
+	organizationService          services.OrganizationService
+	shipmentService              services.ShipmentService
+	shipmentCommentService       services.ShipmentCommentService
+	shipmentEventService         services.ShipmentEventService
+	shipmentImportAssistant      services.ShipmentImportAssistantService
+	equipmentTypeService         *equipmenttypeservice.Service
+	equipmentManufacturerService *equipmentmanufacturerservice.Service
+	tractorService               *tractorservice.Service
+	trailerService               *trailerservice.Service
+	usStateService               *usstateservice.Service
+	workerService                *workerservice.Service
+	workerPTOService             *workerptoservice.Service
+	permissionEngine             services.PermissionEngine
 }
 
 func New(p Params) *Resolver {
 	return &Resolver{
-		l:                       p.Logger.Named("api.graphql.resolver"),
-		analyticsService:        p.AnalyticsService,
-		shipmentService:         p.ShipmentService,
-		shipmentCommentService:  p.ShipmentCommentService,
-		shipmentEventService:    p.ShipmentEventService,
-		shipmentImportAssistant: p.ShipmentImportAssistant,
-		tractorService:          p.TractorService,
-		trailerService:          p.TrailerService,
-		workerService:           p.WorkerService,
-		workerPTOService:        p.WorkerPTOService,
-		permissionEngine:        p.PermissionEngine,
+		l:                            p.Logger.Named("api.graphql.resolver"),
+		analyticsService:             p.AnalyticsService,
+		organizationService:          p.OrganizationService,
+		shipmentService:              p.ShipmentService,
+		shipmentCommentService:       p.ShipmentCommentService,
+		shipmentEventService:         p.ShipmentEventService,
+		shipmentImportAssistant:      p.ShipmentImportAssistant,
+		equipmentTypeService:         p.EquipmentTypeService,
+		equipmentManufacturerService: p.EquipmentManufacturerService,
+		tractorService:               p.TractorService,
+		trailerService:               p.TrailerService,
+		usStateService:               p.USStateService,
+		workerService:                p.WorkerService,
+		workerPTOService:             p.WorkerPTOService,
+		permissionEngine:             p.PermissionEngine,
 	}
 }
 

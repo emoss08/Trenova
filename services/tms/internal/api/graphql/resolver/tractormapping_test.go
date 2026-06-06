@@ -96,11 +96,28 @@ func TestTractorRelationIncludesForFields_UsesSelectedFields(t *testing.T) {
 	assert.True(t, includes.IncludeSecondaryWorkerState)
 	assert.True(t, includes.IncludeLastKnownLocation)
 	assert.True(t, includes.IncludeCustomFields)
-	assert.Equal(t, []string{"id", "created_at"}, includes.TractorColumns)
-	assert.Equal(t, []string{"id"}, includes.EquipmentTypeColumns)
-	assert.Equal(t, []string{"id"}, includes.FleetCodeColumns)
-	assert.Equal(t, []string{"id", "first_name", "manager_id"}, includes.PrimaryWorkerColumns)
-	assert.Equal(t, []string{"id"}, includes.SecondaryWorkerColumns)
+	assert.Equal(
+		t,
+		[]string{
+			"id",
+			"created_at",
+			"business_unit_id",
+			"equipment_type_id",
+			"fleet_code_id",
+			"state_id",
+			"primary_worker_id",
+			"secondary_worker_id",
+		},
+		includes.TractorColumns,
+	)
+	assert.Equal(t, []string{"id", "created_at"}, includes.EquipmentTypeColumns)
+	assert.Equal(t, []string{"id", "created_at"}, includes.FleetCodeColumns)
+	assert.Equal(
+		t,
+		[]string{"id", "created_at", "first_name", "manager_id"},
+		includes.PrimaryWorkerColumns,
+	)
+	assert.Equal(t, []string{"id", "created_at", "state_id"}, includes.SecondaryWorkerColumns)
 }
 
 func TestTractorRelationIncludesForFields_ListFlagsGateDetails(t *testing.T) {
@@ -194,13 +211,21 @@ func TestTractorRelationIncludesForFields_ProjectsTractorListColumns(t *testing.
 			"registration_number",
 			"registration_expiry",
 			"vin",
+			"equipment_type_id",
+			"equipment_manufacturer_id",
+			"fleet_code_id",
+			"primary_worker_id",
 		},
 		includes.TractorColumns,
 	)
-	assert.Equal(t, []string{"id", "name"}, includes.EquipmentManufacturerColumns)
-	assert.Equal(t, []string{"id", "code"}, includes.EquipmentTypeColumns)
-	assert.Equal(t, []string{"id", "code"}, includes.FleetCodeColumns)
-	assert.Equal(t, []string{"id", "first_name", "last_name"}, includes.PrimaryWorkerColumns)
+	assert.Equal(t, []string{"id", "created_at", "name"}, includes.EquipmentManufacturerColumns)
+	assert.Equal(t, []string{"id", "created_at", "code"}, includes.EquipmentTypeColumns)
+	assert.Equal(t, []string{"id", "created_at", "code"}, includes.FleetCodeColumns)
+	assert.Equal(
+		t,
+		[]string{"id", "created_at", "first_name", "last_name"},
+		includes.PrimaryWorkerColumns,
+	)
 }
 
 func TestTractorLastKnownLocationReference(t *testing.T) {

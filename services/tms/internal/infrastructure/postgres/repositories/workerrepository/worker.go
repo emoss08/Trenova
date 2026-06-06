@@ -64,8 +64,10 @@ func (r *repository) SelectOptions(
 		&dbhelper.SelectOptionsConfig{
 			ColumnRefs: []buncolgen.Column{
 				buncolgen.WorkerColumns.ID,
+				buncolgen.WorkerColumns.CreatedAt,
 				buncolgen.WorkerColumns.FirstName,
 				buncolgen.WorkerColumns.LastName,
+				buncolgen.WorkerColumns.FleetCodeID,
 				buncolgen.WorkerColumns.Status,
 			},
 			OrgColumnRef: &buncolgen.WorkerColumns.OrganizationID,
@@ -76,7 +78,9 @@ func (r *repository) SelectOptions(
 			},
 			EntityName: "Worker",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive)
+				return q.
+					Where(buncolgen.WorkerColumns.Status.Eq(), domaintypes.StatusActive).
+					Relation(buncolgen.WorkerRelations.FleetCode)
 			},
 		},
 	)
