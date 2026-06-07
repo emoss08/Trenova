@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
@@ -39,40 +41,81 @@ func New(p Params) repositories.ShipmentCommentRepository {
 func (r *repository) ListByShipmentID(
 	ctx context.Context,
 	req *repositories.ListShipmentCommentsRequest,
-) (*pagination.ListResult[*shipment.ShipmentComment], error) {
-	if req.Filter.Pagination.Limit <= 0 {
-		req.Filter.Pagination.Limit = 50
-	}
-
+) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	sc := buncolgen.ShipmentCommentColumns
 	scm := buncolgen.ShipmentCommentMentionColumns
+	cursorSort := []pagination.CursorSortField{
+		{Field: "createdAt", Direction: "desc"},
+		{Field: "id", Direction: "desc"},
+	}
+	cursorColumns := []pagination.CursorValueColumn{
+		{SQLExpression: sc.CreatedAt.Qualified(), Alias: "__cursor_value_0"},
+		{SQLExpression: sc.ID.Qualified(), Alias: "__cursor_value_1"},
+	}
 	db := r.db.DBForContext(ctx)
-	comments := make([]*shipment.ShipmentComment, 0, req.Filter.Pagination.SafeLimit())
+
+	if req.Cursor.After != "" {
+		if err := pagination.ValidateCursorSort(req.Cursor.Cursor, cursorSort); err != nil {
+			return nil, errortypes.NewValidationError(
+				"after",
+				errortypes.ErrInvalid,
+				"Cursor sort does not match request sort",
+			)
+		}
+	}
 
 	total, err := db.NewSelect().
-		Model(&comments).
+		Model((*shipment.ShipmentComment)(nil)).
 		Where(sc.ShipmentID.Eq(), req.ShipmentID).
 		Apply(buncolgen.ShipmentCommentApplyTenant(req.Filter.TenantInfo)).
-		Relation(buncolgen.ShipmentCommentRelations.User).
-		Relation(buncolgen.ShipmentCommentRelations.MentionedUsers, func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Order(scm.CreatedAt.OrderDesc())
-		}).
-		Relation(buncolgen.Rel(
-			buncolgen.ShipmentCommentRelations.MentionedUsers,
-			buncolgen.ShipmentCommentMentionRelations.MentionedUser,
-		)).
-		Order(sc.CreatedAt.OrderDesc()).
-		Limit(req.Filter.Pagination.Limit).
-		Offset(req.Filter.Pagination.Offset).
-		ScanAndCount(ctx)
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*shipment.ShipmentComment]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*shipment.ShipmentComment) *bun.SelectQuery {
+			return db.NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.ShipmentCommentTable.All()).
+				Where(sc.ShipmentID.Eq(), req.ShipmentID).
+				Apply(buncolgen.ShipmentCommentApplyTenant(req.Filter.TenantInfo)).
+				Relation(buncolgen.ShipmentCommentRelations.User).
+				Relation(buncolgen.ShipmentCommentRelations.MentionedUsers, func(q *bun.SelectQuery) *bun.SelectQuery {
+					return q.Order(scm.CreatedAt.OrderDesc())
+				}).
+				Relation(buncolgen.Rel(
+					buncolgen.ShipmentCommentRelations.MentionedUsers,
+					buncolgen.ShipmentCommentMentionRelations.MentionedUser,
+				))
+		},
+		Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
+			if req.Cursor.After != "" {
+				q = q.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
+					return cq.
+						Where(sc.CreatedAt.Lt(), req.Cursor.Cursor.CreatedAt).
+						WhereOr(
+							sc.CreatedAt.Eq()+" AND "+sc.ID.Lt(),
+							req.Cursor.Cursor.CreatedAt,
+							req.Cursor.Cursor.ID,
+						)
+				})
+			}
+			req.Filter.CursorSort = cursorSort
+			req.Filter.CursorColumns = cursorColumns
+			return q.
+				Order(sc.CreatedAt.OrderDesc()).
+				Order(sc.ID.OrderDesc()), nil
+		},
+	})
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Shipment comment")
 	}
 
-	return &pagination.ListResult[*shipment.ShipmentComment]{
-		Items: comments,
-		Total: total,
-	}, nil
+	return result, nil
 }
 
 func (r *repository) GetCountByShipmentID(

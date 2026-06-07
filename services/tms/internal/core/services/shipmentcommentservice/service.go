@@ -59,7 +59,7 @@ func New(p Params) services.ShipmentCommentService {
 func (s *service) ListByShipmentID(
 	ctx context.Context,
 	req *repositories.ListShipmentCommentsRequest,
-) (*pagination.ListResult[*shipment.ShipmentComment], error) {
+) (*pagination.CursorListResult[*shipment.ShipmentComment], error) {
 	if req == nil || req.Filter == nil {
 		return nil, errortypes.NewValidationError(
 			"request",

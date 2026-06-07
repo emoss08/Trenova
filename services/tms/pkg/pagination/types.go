@@ -9,8 +9,10 @@ type TenantInfo struct {
 }
 
 type ListResult[T any] struct {
-	Items []T `json:"items"`
-	Total int `json:"total"`
+	Items       []T               `json:"items"`
+	Total       int               `json:"total"`
+	HasNextPage bool              `json:"hasNextPage,omitempty"`
+	CursorSort  []CursorSortField `json:"-"`
 }
 
 type SelectQueryRequest struct {
@@ -44,6 +46,10 @@ func ClampOffset(offset int) int {
 }
 
 func (i Info) SafeLimit() int {
+	if i.Limit == MaxLimit+1 {
+		return i.Limit
+	}
+
 	return ClampLimit(i.Limit)
 }
 
@@ -56,4 +62,14 @@ type Response[T any] struct {
 	Count   int    `json:"count"`
 	Next    string `json:"next"`
 	Prev    string `json:"previous"`
+}
+
+type CursorResponse[T any] struct {
+	Results     T      `json:"results"`
+	Count       int    `json:"count"`
+	TotalCount  *int   `json:"totalCount"`
+	Next        string `json:"next"`
+	Previous    string `json:"previous"`
+	HasNextPage bool   `json:"hasNextPage"`
+	EndCursor   string `json:"endCursor"`
 }

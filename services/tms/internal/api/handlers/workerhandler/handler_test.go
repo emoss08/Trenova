@@ -109,7 +109,8 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 
 	wkrID := pulid.MustNew("wrk_")
 	repo := mocks.NewMockWorkerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*worker.Worker]{
+	total := 42
+	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.CursorListResult[*worker.Worker]{
 		Items: []*worker.Worker{
 			{
 				ID:             wkrID,
@@ -120,7 +121,7 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 				Status:         domaintypes.StatusActive,
 			},
 		},
-		Total: 1,
+		TotalCount: &total,
 	}, nil)
 
 	deps := setupWorkerHandler(t, repo)
@@ -137,9 +138,11 @@ func TestWorkerHandler_List_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 1, resp.Count)
+	assert.Equal(t, total, resp.Count)
+	require.NotNil(t, resp.TotalCount)
+	assert.Equal(t, total, *resp.TotalCount)
 	assert.Len(t, resp.Results, 1)
 }
 

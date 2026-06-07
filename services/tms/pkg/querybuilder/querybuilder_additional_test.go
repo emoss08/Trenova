@@ -14,12 +14,13 @@ import (
 )
 
 type additionalSearchEntity struct {
-	ID     string `json:"id"     bun:"id,pk"`
-	Name   string `json:"name"   bun:"name"`
-	Status string `json:"status" bun:"status"`
-	Code   string `json:"code"   bun:"code"`
-	Count  int    `json:"count"  bun:"count"`
-	Active bool   `json:"active" bun:"active"`
+	ID        string `json:"id"        bun:"id,pk"`
+	Name      string `json:"name"      bun:"name"`
+	Status    string `json:"status"    bun:"status"`
+	Code      string `json:"code"      bun:"code"`
+	Count     int    `json:"count"     bun:"count"`
+	Active    bool   `json:"active"    bun:"active"`
+	CreatedAt int64  `json:"createdAt" bun:"created_at"`
 }
 
 func (s *additionalSearchEntity) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

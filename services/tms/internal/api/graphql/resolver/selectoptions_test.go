@@ -1,7 +1,6 @@
 package resolver
 
 import (
-	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
@@ -9,12 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -124,38 +123,53 @@ func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing
 	assert.Nil(t, permissionEngine.request)
 }
 
-func TestSelectOptionsRegistry_PermissionEntryRequiresReadPermission(t *testing.T) {
+func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 	t.Parallel()
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	userID := pulid.MustNew("usr_")
-	resource := permission.ResourceWorker
+	manufacturerID := pulid.MustNew("em_")
+	repo := mocks.NewMockEquipmentManufacturerRepository(t)
+	repo.EXPECT().
+		SelectOptions(mock.Anything, mock.MatchedBy(func(req *pagination.SelectQueryRequest) bool {
+			return req.TenantInfo.OrgID == orgID &&
+				req.TenantInfo.BuID == buID &&
+				req.TenantInfo.UserID == userID
+		})).
+		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
+			Items: []*equipmentmanufacturer.EquipmentManufacturer{
+				{
+					ID:        manufacturerID,
+					CreatedAt: 1780415883,
+					Name:      "Great Dane",
+				},
+			},
+			Total: 1,
+		}, nil).
+		Once()
+
 	permissionEngine := &recordingPermissionEngine{}
-	resolver := &queryResolver{&Resolver{permissionEngine: permissionEngine}}
+	resolver := &queryResolver{&Resolver{
+		equipmentManufacturerService: equipmentmanufacturerservice.New(equipmentmanufacturerservice.Params{
+			Logger: zap.NewNop(),
+			Repo:   repo,
+		}),
+		permissionEngine: permissionEngine,
+	}}
 	ctx := gqlctx.WithAuthContext(
 		t.Context(),
 		testGraphQLAuthContext(orgID, buID, userID),
 	)
 
-	_, err := resolver.resolveSelectOptions(
-		ctx,
-		gqlmodel.SelectOptionsInput{Resource: gqlmodel.SelectOptionResourceWorker},
-		map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry{
-			gqlmodel.SelectOptionResourceWorker: {
-				permissionResource: &resource,
-				resolve: func(_ context.Context, req selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error) {
-					assert.Equal(t, orgID, req.tenantInfo.OrgID)
-					return selectOptionConnection(nil, 0, 0)
-				},
-			},
-		},
-	)
+	result, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
+		Resource: gqlmodel.SelectOptionResourceEquipmentManufacturer,
+	})
 	require.NoError(t, err)
 
-	require.NotNil(t, permissionEngine.request)
-	assert.Equal(t, permission.ResourceWorker.String(), permissionEngine.request.Resource)
-	assert.Equal(t, permission.OpRead, permissionEngine.request.Operation)
+	require.Len(t, result.Edges, 1)
+	assert.Equal(t, "Great Dane", result.Edges[0].Node.Label)
+	assert.Nil(t, permissionEngine.request)
 }
 
 func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {

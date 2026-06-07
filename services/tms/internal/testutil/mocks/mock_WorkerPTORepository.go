@@ -245,23 +245,23 @@ func (_c *MockWorkerPTORepository_GetChartData_Call) RunAndReturn(run func(ctx c
 }
 
 // List provides a mock function for the type MockWorkerPTORepository
-func (_mock *MockWorkerPTORepository) List(ctx context.Context, req *repositories.ListPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error) {
+func (_mock *MockWorkerPTORepository) List(ctx context.Context, req *repositories.ListPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*worker.WorkerPTO]
+	var r0 *pagination.CursorListResult[*worker.WorkerPTO]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPTORequest) *pagination.ListResult[*worker.WorkerPTO]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListPTORequest) *pagination.CursorListResult[*worker.WorkerPTO]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*worker.WorkerPTO])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*worker.WorkerPTO])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListPTORequest) error); ok {
@@ -302,34 +302,34 @@ func (_c *MockWorkerPTORepository_List_Call) Run(run func(ctx context.Context, r
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_List_Call) Return(listResult *pagination.ListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_List_Call {
+func (_c *MockWorkerPTORepository_List_Call) Return(listResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error)) *MockWorkerPTORepository_List_Call {
+func (_c *MockWorkerPTORepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error)) *MockWorkerPTORepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListUpcoming provides a mock function for the type MockWorkerPTORepository
-func (_mock *MockWorkerPTORepository) ListUpcoming(ctx context.Context, req *repositories.ListUpcomingPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error) {
+func (_mock *MockWorkerPTORepository) ListUpcoming(ctx context.Context, req *repositories.ListUpcomingPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUpcoming")
 	}
 
-	var r0 *pagination.ListResult[*worker.WorkerPTO]
+	var r0 *pagination.CursorListResult[*worker.WorkerPTO]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUpcomingPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUpcomingPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUpcomingPTORequest) *pagination.ListResult[*worker.WorkerPTO]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListUpcomingPTORequest) *pagination.CursorListResult[*worker.WorkerPTO]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*worker.WorkerPTO])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*worker.WorkerPTO])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListUpcomingPTORequest) error); ok {
@@ -370,12 +370,12 @@ func (_c *MockWorkerPTORepository_ListUpcoming_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_ListUpcoming_Call) Return(listResult *pagination.ListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_ListUpcoming_Call {
+func (_c *MockWorkerPTORepository_ListUpcoming_Call) Return(listResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_ListUpcoming_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_ListUpcoming_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUpcomingPTORequest) (*pagination.ListResult[*worker.WorkerPTO], error)) *MockWorkerPTORepository_ListUpcoming_Call {
+func (_c *MockWorkerPTORepository_ListUpcoming_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListUpcomingPTORequest) (*pagination.CursorListResult[*worker.WorkerPTO], error)) *MockWorkerPTORepository_ListUpcoming_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -69,7 +69,7 @@ func (s *Service) SelectOptions(
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListWorkersRequest,
-) (*pagination.ListResult[*worker.Worker], error) {
+) (*pagination.CursorListResult[*worker.Worker], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
@@ -81,29 +81,46 @@ func (s *Service) List(
 	}
 
 	if len(result.Items) > 0 {
-		resourceIDs := make([]string, 0, len(result.Items))
-		for _, w := range result.Items {
-			resourceIDs = append(resourceIDs, w.GetResourceID())
-		}
-
-		customFieldsMap, cfErr := s.customFieldsValuesService.GetForResources(
-			ctx,
-			req.Filter.TenantInfo,
-			"worker",
-			resourceIDs,
-		)
-		if cfErr != nil {
-			log.Warn("failed to load custom fields for workers", zap.Error(cfErr))
-		} else {
-			for _, w := range result.Items {
-				if fields, ok := customFieldsMap[w.GetResourceID()]; ok {
-					w.CustomFields = fields
-				}
-			}
-		}
+		err = s.attachCustomFields(ctx, req.Filter.TenantInfo, result.Items)
+	}
+	if err != nil {
+		log.Warn("failed to load custom fields for workers", zap.Error(err))
 	}
 
 	return result, nil
+}
+
+func (s *Service) attachCustomFields(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workers []*worker.Worker,
+) error {
+	if len(workers) == 0 {
+		return nil
+	}
+
+	resourceIDs := make([]string, 0, len(workers))
+	for _, w := range workers {
+		resourceIDs = append(resourceIDs, w.GetResourceID())
+	}
+
+	customFieldsMap, err := s.customFieldsValuesService.GetForResources(
+		ctx,
+		tenantInfo,
+		"worker",
+		resourceIDs,
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range workers {
+		if fields, ok := customFieldsMap[w.GetResourceID()]; ok {
+			w.CustomFields = fields
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) Get(

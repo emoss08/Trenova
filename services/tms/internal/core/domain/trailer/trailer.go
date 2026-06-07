@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,11 +25,13 @@ var (
 	_ bun.BeforeAppendModelHook          = (*Trailer)(nil)
 	_ domaintypes.PostgresSearchable     = (*Trailer)(nil)
 	_ customfield.CustomFieldsSupporter  = (*Trailer)(nil)
+	_ pagination.CursorEntity            = (*Trailer)(nil)
 	_ validationframework.TenantedEntity = (*Trailer)(nil)
 )
 
 type Trailer struct {
-	bun.BaseModel `bun:"table:trailers,alias:tr" json:"-"`
+	bun.BaseModel             `bun:"table:trailers,alias:tr" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                      pulid.ID                    `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID          pulid.ID                    `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -125,6 +128,10 @@ func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 func (t *Trailer) GetID() pulid.ID {
 	return t.ID
+}
+
+func (t *Trailer) GetCreatedAt() int64 {
+	return t.CreatedAt
 }
 
 func (t *Trailer) GetOrganizationID() pulid.ID {

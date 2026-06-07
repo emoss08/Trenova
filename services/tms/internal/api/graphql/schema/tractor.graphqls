@@ -99,7 +99,6 @@ input LocateTractorInput {
 extend type Query {
   tractors(
     first: Int = 20
-    offset: Int
     after: String
     query: String
     fieldFilters: [FieldFilterInput!]

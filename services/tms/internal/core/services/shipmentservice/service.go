@@ -154,7 +154,7 @@ func (s *service) createNotification(
 func (s *service) List(
 	ctx context.Context,
 	req *repositories.ListShipmentsRequest,
-) (*pagination.ListResult[*shipment.Shipment], error) {
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return s.repo.List(ctx, req)
 }
 
@@ -180,7 +180,7 @@ func (s *service) Get(
 func (s *service) GetUnassigned(
 	ctx context.Context,
 	req *repositories.GetUnassignedShipmentsRequest,
-) (*pagination.ListResult[*shipment.Shipment], error) {
+) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	return s.repo.GetUnassigned(ctx, req)
 }
 

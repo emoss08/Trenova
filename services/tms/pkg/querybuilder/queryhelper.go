@@ -37,7 +37,21 @@ func ApplyFilters[T domaintypes.PostgresSearchable](
 
 	if filter.Query != "" {
 		searchFields := ExtractSearchFields(fieldConfig)
-		qb.ApplyTextSearch(filter.Query, searchFields)
+		if filter.UseCursor {
+			qb.ApplyTextSearchFilter(filter.Query, searchFields)
+		} else {
+			qb.ApplyTextSearch(filter.Query, searchFields)
+		}
+	}
+
+	if filter.UseCursor {
+		plan, err := qb.applyCursorSort(filter, filter.Cursor)
+		if err != nil {
+			filter.CursorError = err
+			return qb.GetQuery()
+		}
+		filter.CursorSort = plan.Shape()
+		return qb.GetQuery()
 	}
 
 	if len(filter.Sort) > 0 {
@@ -76,7 +90,21 @@ func ApplyFiltersWithConfig[T domaintypes.PostgresSearchable](
 
 	if filter.Query != "" {
 		searchFields := ExtractSearchFields(fieldConfig)
-		qb.ApplyTextSearch(filter.Query, searchFields)
+		if filter.UseCursor {
+			qb.ApplyTextSearchFilter(filter.Query, searchFields)
+		} else {
+			qb.ApplyTextSearch(filter.Query, searchFields)
+		}
+	}
+
+	if filter.UseCursor {
+		plan, err := qb.applyCursorSort(filter, filter.Cursor)
+		if err != nil {
+			filter.CursorError = err
+			return qb.GetQuery()
+		}
+		filter.CursorSort = plan.Shape()
+		return qb.GetQuery()
 	}
 
 	if len(filter.Sort) > 0 {

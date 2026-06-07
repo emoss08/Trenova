@@ -79,8 +79,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Produce json
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]worker.Worker]
+// @Param after query string false "Opaque cursor"
+// @Success 200 {object} pagination.CursorResponse[[]worker.Worker]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -91,15 +91,16 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*worker.Worker], error) {
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.Worker], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListWorkersRequest{
 					Filter: req,
+					Cursor: cursor,
 				},
 			)
 		},

@@ -214,48 +214,44 @@ func trailerFieldPath(prefix, field string) string {
 func trailerConnectionToModel(
 	result *pagination.CursorListResult[*trailer.Trailer],
 ) (*gqlmodel.TrailerConnection, error) {
-	return trailerConnectionFromItems(result.Items, result.HasNextPage, nil)
-}
-
-func trailerListConnectionToModel(
-	result *pagination.ListResult[*trailer.Trailer],
-	offset int,
-) (*gqlmodel.TrailerConnection, error) {
-	hasNextPage := offset+len(result.Items) < result.Total
-	return trailerConnectionFromItems(result.Items, hasNextPage, &result.Total)
+	return trailerConnectionFromItems(
+		result.Items,
+		result.HasNextPage,
+		result.TotalCount,
+		result.CursorSort,
+		result,
+	)
 }
 
 func trailerConnectionFromItems(
 	items []*trailer.Trailer,
 	hasNextPage bool,
 	totalCount *int,
+	sort []pagination.CursorSortField,
+	cursorValues pagination.CursorValueProvider,
 ) (*gqlmodel.TrailerConnection, error) {
-	edges := make([]*gqlmodel.TrailerEdge, 0, len(items))
-	for _, entity := range items {
-		cursor, err := pagination.EncodeCursor(pagination.Cursor{
-			CreatedAt: entity.CreatedAt,
-			ID:        entity.ID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		edges = append(edges, &gqlmodel.TrailerEdge{
-			Node:   entity,
-			Cursor: cursor,
-		})
+	edges, err := entityCursorEdges(
+		items,
+		sort,
+		cursorValues,
+		func(node *trailer.Trailer, cursor string) *gqlmodel.TrailerEdge {
+			return &gqlmodel.TrailerEdge{
+				Node:   node,
+				Cursor: cursor,
+			}
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
-
-	var endCursor *string
-	if len(edges) > 0 {
-		endCursor = &edges[len(edges)-1].Cursor
-	}
+	endCursor := lastEdgeCursor(edges, func(edge *gqlmodel.TrailerEdge) string { return edge.Cursor })
 
 	return &gqlmodel.TrailerConnection{
 		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   endCursor,
-		},
+		PageInfo: pageInfo(
+			hasNextPage,
+			endCursor,
+		),
 		TotalCount: totalCount,
 	}, nil
 }

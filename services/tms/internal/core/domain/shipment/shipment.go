@@ -14,12 +14,15 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
+
+var _ pagination.CursorEntity = (*Shipment)(nil)
 
 type RatingDetail struct {
 	FormulaTemplateID   string         `json:"formulaTemplateId"`
@@ -31,7 +34,8 @@ type RatingDetail struct {
 }
 
 type Shipment struct {
-	bun.BaseModel `json:"-" bun:"table:shipments,alias:sp"`
+	bun.BaseModel             `json:"-" bun:"table:shipments,alias:sp"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                     pulid.ID              `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID         pulid.ID              `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -198,6 +202,10 @@ func FirstShipperStop(moves []*ShipmentMove) *Stop {
 
 func (s *Shipment) GetID() pulid.ID {
 	return s.ID
+}
+
+func (s *Shipment) GetCreatedAt() int64 {
+	return s.CreatedAt
 }
 
 func (s *Shipment) GetTableName() string {

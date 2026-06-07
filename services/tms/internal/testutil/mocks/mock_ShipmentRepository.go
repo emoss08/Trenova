@@ -875,23 +875,23 @@ func (_c *MockShipmentRepository_GetPreviousRates_Call) RunAndReturn(run func(ct
 }
 
 // GetUnassigned provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) GetUnassigned(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
+func (_mock *MockShipmentRepository) GetUnassigned(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUnassigned")
 	}
 
-	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r0 *pagination.CursorListResult[*shipment.Shipment]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) *pagination.ListResult[*shipment.Shipment]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) *pagination.CursorListResult[*shipment.Shipment]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*shipment.Shipment])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetUnassignedShipmentsRequest) error); ok {
@@ -932,34 +932,34 @@ func (_c *MockShipmentRepository_GetUnassigned_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockShipmentRepository_GetUnassigned_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentRepository_GetUnassigned_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockShipmentRepository_GetUnassigned_Call) Return(cursorListResult *pagination.CursorListResult[*shipment.Shipment], err error) *MockShipmentRepository_GetUnassigned_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockShipmentRepository_GetUnassigned_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentRepository_GetUnassigned_Call {
+func (_c *MockShipmentRepository_GetUnassigned_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetUnassignedShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error)) *MockShipmentRepository_GetUnassigned_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function for the type MockShipmentRepository
-func (_mock *MockShipmentRepository) List(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
+func (_mock *MockShipmentRepository) List(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r0 *pagination.CursorListResult[*shipment.Shipment]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentsRequest) *pagination.ListResult[*shipment.Shipment]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListShipmentsRequest) *pagination.CursorListResult[*shipment.Shipment]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*shipment.Shipment])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListShipmentsRequest) error); ok {
@@ -1000,12 +1000,12 @@ func (_c *MockShipmentRepository_List_Call) Run(run func(ctx context.Context, re
 	return _c
 }
 
-func (_c *MockShipmentRepository_List_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockShipmentRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*shipment.Shipment], err error) *MockShipmentRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockShipmentRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentRepository_List_Call {
+func (_c *MockShipmentRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListShipmentsRequest) (*pagination.CursorListResult[*shipment.Shipment], error)) *MockShipmentRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

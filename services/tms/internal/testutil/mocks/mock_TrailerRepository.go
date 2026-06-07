@@ -313,23 +313,23 @@ func (_c *MockTrailerRepository_GetByIDs_Call) RunAndReturn(run func(ctx context
 }
 
 // List provides a mock function for the type MockTrailerRepository
-func (_mock *MockTrailerRepository) List(ctx context.Context, req *repositories.ListTrailersRequest) (*pagination.ListResult[*trailer.Trailer], error) {
+func (_mock *MockTrailerRepository) List(ctx context.Context, req *repositories.ListTrailersRequest) (*pagination.CursorListResult[*trailer.Trailer], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*trailer.Trailer]
+	var r0 *pagination.CursorListResult[*trailer.Trailer]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersRequest) (*pagination.ListResult[*trailer.Trailer], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersRequest) (*pagination.CursorListResult[*trailer.Trailer], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersRequest) *pagination.ListResult[*trailer.Trailer]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersRequest) *pagination.CursorListResult[*trailer.Trailer]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*trailer.Trailer])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*trailer.Trailer])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListTrailersRequest) error); ok {
@@ -370,80 +370,12 @@ func (_c *MockTrailerRepository_List_Call) Run(run func(ctx context.Context, req
 	return _c
 }
 
-func (_c *MockTrailerRepository_List_Call) Return(listResult *pagination.ListResult[*trailer.Trailer], err error) *MockTrailerRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockTrailerRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*trailer.Trailer], err error) *MockTrailerRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
-func (_c *MockTrailerRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTrailersRequest) (*pagination.ListResult[*trailer.Trailer], error)) *MockTrailerRepository_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListCursor provides a mock function for the type MockTrailerRepository
-func (_mock *MockTrailerRepository) ListCursor(ctx context.Context, req *repositories.ListTrailersCursorRequest) (*pagination.CursorListResult[*trailer.Trailer], error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListCursor")
-	}
-
-	var r0 *pagination.CursorListResult[*trailer.Trailer]
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersCursorRequest) (*pagination.CursorListResult[*trailer.Trailer], error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListTrailersCursorRequest) *pagination.CursorListResult[*trailer.Trailer]); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.CursorListResult[*trailer.Trailer])
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListTrailersCursorRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockTrailerRepository_ListCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListCursor'
-type MockTrailerRepository_ListCursor_Call struct {
-	*mock.Call
-}
-
-// ListCursor is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.ListTrailersCursorRequest
-func (_e *MockTrailerRepository_Expecter) ListCursor(ctx interface{}, req interface{}) *MockTrailerRepository_ListCursor_Call {
-	return &MockTrailerRepository_ListCursor_Call{Call: _e.mock.On("ListCursor", ctx, req)}
-}
-
-func (_c *MockTrailerRepository_ListCursor_Call) Run(run func(ctx context.Context, req *repositories.ListTrailersCursorRequest)) *MockTrailerRepository_ListCursor_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *repositories.ListTrailersCursorRequest
-		if args[1] != nil {
-			arg1 = args[1].(*repositories.ListTrailersCursorRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockTrailerRepository_ListCursor_Call) Return(listResult *pagination.CursorListResult[*trailer.Trailer], err error) *MockTrailerRepository_ListCursor_Call {
-	_c.Call.Return(listResult, err)
-	return _c
-}
-
-func (_c *MockTrailerRepository_ListCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTrailersCursorRequest) (*pagination.CursorListResult[*trailer.Trailer], error)) *MockTrailerRepository_ListCursor_Call {
+func (_c *MockTrailerRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListTrailersRequest) (*pagination.CursorListResult[*trailer.Trailer], error)) *MockTrailerRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

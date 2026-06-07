@@ -104,7 +104,6 @@ input LocateTrailerInput {
 type Query {
   trailers(
     first: Int = 20
-    offset: Int
     after: String
     query: String
     fieldFilters: [FieldFilterInput!]

@@ -6,6 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -286,4 +287,25 @@ func TestTrailerFieldPath(t *testing.T) {
 
 	assert.Equal(t, "customFields", trailerFieldPath("", "customFields"))
 	assert.Equal(t, "edges.node.customFields", trailerFieldPath("edges.node", "customFields"))
+}
+
+func TestTrailerConnectionToModel_PropagatesTotalCount(t *testing.T) {
+	t.Parallel()
+
+	total := 41
+	connection, err := trailerConnectionToModel(&pagination.CursorListResult[*trailer.Trailer]{
+		Items: []*trailer.Trailer{
+			{
+				ID:        pulid.MustNew("trl_"),
+				CreatedAt: 1710000000000,
+				Code:      "TRL-100",
+			},
+		},
+		TotalCount: &total,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, connection.TotalCount)
+	assert.Equal(t, total, *connection.TotalCount)
+	assert.Len(t, connection.Edges, 1)
 }

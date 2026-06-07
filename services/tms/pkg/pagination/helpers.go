@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -58,11 +59,87 @@ func List[T any](
 	eh *helpers.ErrorHandler,
 	fn func() (*ListResult[T], error),
 ) {
-	if err := c.ShouldBindQuery(opts); err != nil {
+	cursorInfo, ok := prepareCursorListRequest(c, opts, eh)
+	if !ok {
+		return
+	}
+	opts.Cursor = cursorInfo
+	opts.UseCursor = true
+	opts.Pagination.Offset = DefaultOffset
+	requestedLimit := cursorInfo.Limit
+	opts.Pagination.Limit = requestedLimit + 1
+
+	result, err := fn()
+	if err != nil {
 		eh.HandleError(c, err)
 		return
 	}
+	if opts.CursorError != nil {
+		eh.HandleError(c, opts.CursorError)
+		return
+	}
+
+	cursorSort := result.CursorSort
+	if len(cursorSort) == 0 {
+		cursorSort = opts.CursorSort
+	}
+	total := result.Total
+	writeCursorResponse(c, eh, cursorInfo, &CursorListResult[T]{
+		Items:       result.Items,
+		HasNextPage: result.HasNextPage,
+		TotalCount:  &total,
+		CursorSort:  cursorSort,
+	})
+}
+
+func CursorList[T any](
+	c *gin.Context,
+	opts *QueryOptions,
+	eh *helpers.ErrorHandler,
+	fn func(CursorInfo) (*CursorListResult[T], error),
+) {
+	cursorInfo, ok := prepareCursorListRequest(c, opts, eh)
+	if !ok {
+		return
+	}
+
+	result, err := fn(cursorInfo)
+	if err != nil {
+		eh.HandleError(c, err)
+		return
+	}
+	writeCursorResponse(c, eh, cursorInfo, result)
+}
+
+func prepareCursorListRequest(
+	c *gin.Context,
+	opts *QueryOptions,
+	eh *helpers.ErrorHandler,
+) (CursorInfo, bool) {
+	if err := c.ShouldBindQuery(opts); err != nil {
+		eh.HandleError(c, err)
+		return CursorInfo{}, false
+	}
 	normalizePagination(&opts.Pagination)
+
+	if c.Query("offset") != "" {
+		eh.HandleError(c, errortypes.NewValidationError(
+			"offset",
+			errortypes.ErrInvalid,
+			"Offset is not supported for cursor pagination",
+		))
+		return CursorInfo{}, false
+	}
+
+	cursorInfo, err := NewCursorInfo(opts.Pagination.SafeLimit(), c.Query("after"))
+	if err != nil {
+		eh.HandleError(c, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalidFormat,
+			"Cursor is invalid",
+		))
+		return CursorInfo{}, false
+	}
 
 	parseFilters(c, opts)
 	parseFilterGroups(c, opts)
@@ -70,22 +147,62 @@ func List[T any](
 	parseAggregateFilters(c, opts)
 	parseSort(c, opts)
 
-	result, err := fn()
-	if err != nil {
-		eh.HandleError(c, err)
-		return
+	return cursorInfo, true
+}
+
+func writeCursorResponse[T any](
+	c *gin.Context,
+	eh *helpers.ErrorHandler,
+	cursorInfo CursorInfo,
+	result *CursorListResult[T],
+) {
+	requestedLimit := cursorInfo.Limit
+	items := result.Items
+	hasNextPage := result.HasNextPage || len(items) > requestedLimit
+	if len(items) > requestedLimit {
+		items = items[:requestedLimit]
 	}
 
-	c.JSON(http.StatusOK, Response[[]T]{
-		Count:   result.Total,
-		Results: result.Items,
-		Next: GetNextPageURL(
-			c,
-			opts.Pagination.SafeLimit(),
-			opts.Pagination.SafeOffset(),
-			result.Total,
-		),
-		Prev: GetPreviousPageURL(c, opts.Pagination.SafeLimit(), opts.Pagination.SafeOffset()),
+	endCursor := ""
+	shouldEncodeCursor := hasNextPage ||
+		cursorInfo.After != "" ||
+		len(result.CursorSort) > 0 ||
+		len(result.CursorValues) > 0
+	if shouldEncodeCursor && len(items) > 0 {
+		lastIndex := len(items) - 1
+		last := items[lastIndex]
+		encoded, encodeErr := EncodeCursorFromEntity(last)
+		if len(result.CursorSort) > 0 {
+			if values, ok := result.CursorValuesAt(lastIndex); ok {
+				encoded, encodeErr = EncodeCursorFromEntityWithValues(
+					last,
+					result.CursorSort,
+					values,
+				)
+			} else {
+				encoded, encodeErr = EncodeCursorFromEntityWithSort(last, result.CursorSort)
+			}
+		}
+		if encodeErr != nil {
+			eh.HandleError(c, encodeErr)
+			return
+		}
+		endCursor = encoded
+	}
+
+	count := len(items)
+	if result.TotalCount != nil {
+		count = *result.TotalCount
+	}
+
+	c.JSON(http.StatusOK, CursorResponse[[]T]{
+		Count:       count,
+		TotalCount:  result.TotalCount,
+		Results:     items,
+		Next:        GetNextCursorPageURL(c, endCursor, requestedLimit, hasNextPage),
+		Previous:    "",
+		HasNextPage: hasNextPage,
+		EndCursor:   endCursor,
 	})
 }
 

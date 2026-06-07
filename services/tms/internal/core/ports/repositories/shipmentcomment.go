@@ -13,6 +13,7 @@ import (
 
 type ListShipmentCommentsRequest struct {
 	Filter     *pagination.QueryOptions `json:"filter"`
+	Cursor     pagination.CursorInfo    `json:"cursor"`
 	ShipmentID pulid.ID                 `json:"shipmentId"`
 }
 
@@ -37,7 +38,7 @@ type ShipmentCommentRepository interface {
 	ListByShipmentID(
 		ctx context.Context,
 		req *ListShipmentCommentsRequest,
-	) (*pagination.ListResult[*shipment.ShipmentComment], error)
+	) (*pagination.CursorListResult[*shipment.ShipmentComment], error)
 	GetCountByShipmentID(
 		ctx context.Context,
 		req *GetShipmentCommentCountRequest,

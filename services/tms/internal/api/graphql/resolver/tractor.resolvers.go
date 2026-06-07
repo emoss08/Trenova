@@ -16,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -157,27 +155,18 @@ func (r *mutationResolver) LocateTractor(ctx context.Context, input gqlmodel.Loc
 }
 
 // Tractors is the resolver for the tractors field.
-func (r *queryResolver) Tractors(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error) {
+func (r *queryResolver) Tractors(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceTractor, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := pagination.DefaultLimit
-	if first != nil {
-		limit = *first
-	}
-	afterValue := ""
-	if after != nil {
-		afterValue = *after
-	}
-	cursorInfo, err := pagination.NewCursorInfo(limit, afterValue)
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
+	})
 	if err != nil {
-		return nil, errortypes.NewValidationError(
-			"after",
-			errortypes.ErrInvalidFormat,
-			"Cursor is invalid",
-		)
+		return nil, err
 	}
 
 	queryValue := ""
@@ -201,15 +190,9 @@ func (r *queryResolver) Tractors(ctx context.Context, first *int, offset *int, a
 		includeWorker = *includeWorkerDetails
 	}
 
-	offsetValue := 0
-	useOffset := offset != nil
-	if useOffset {
-		offsetValue = pagination.ClampOffset(*offset)
-	}
 	filter := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo:   tenantInfo(authCtx),
-		Limit:        cursorInfo.Limit,
-		Offset:       offsetValue,
+		Limit:        page.Cursor.Limit,
 		Query:        queryValue,
 		FieldFilters: fieldFilters,
 		FilterGroups: filterGroups,
@@ -222,22 +205,9 @@ func (r *queryResolver) Tractors(ctx context.Context, first *int, offset *int, a
 		&includeFleet,
 		&includeWorker,
 	)
-	if useOffset {
-		result, err := r.tractorService.List(ctx, &repositories.ListTractorsRequest{
-			Filter:                  filter,
-			TractorRelationIncludes: includes,
-			Status:                  statusValue,
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return tractorListConnectionToModel(result, filter.Pagination.SafeOffset())
-	}
-
-	result, err := r.tractorService.ListCursor(ctx, &repositories.ListTractorsCursorRequest{
+	result, err := r.tractorService.List(ctx, &repositories.ListTractorsRequest{
 		Filter:                  filter,
-		Cursor:                  cursorInfo,
+		Cursor:                  page.Cursor,
 		TractorRelationIncludes: includes,
 		Status:                  statusValue,
 	})

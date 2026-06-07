@@ -84,14 +84,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Produce json
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
+// @Param after query string false "Opaque cursor"
 // @Param status query string false "Filter by PTO status"
 // @Param type query string false "Filter by PTO type"
 // @Param startDateFrom query int false "Start date from"
 // @Param startDateTo query int false "Start date to"
 // @Param workerId query string false "Worker ID"
 // @Param includeWorker query bool false "Include worker details"
-// @Success 200 {object} pagination.Response[[]worker.WorkerPTO]
+// @Success 200 {object} pagination.CursorResponse[[]worker.WorkerPTO]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -102,15 +102,16 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*worker.WorkerPTO], error) {
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListPTORequest{
 					Filter:        req,
+					Cursor:        cursor,
 					Status:        helpers.QueryString(c, "status", ""),
 					Type:          helpers.QueryString(c, "type", ""),
 					StartDateFrom: helpers.QueryInt64(c, "startDateFrom", 0),
@@ -130,7 +131,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Produce json
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
+// @Param after query string false "Opaque cursor"
 // @Param status query string false "Filter by PTO status"
 // @Param type query string false "Filter by PTO type"
 // @Param startDate query int false "Start date"
@@ -138,7 +139,7 @@ func (h *Handler) list(c *gin.Context) {
 // @Param workerId query string false "Worker ID"
 // @Param fleetCodeId query string false "Fleet code ID"
 // @Param timezone query string false "Timezone"
-// @Success 200 {object} pagination.Response[[]worker.WorkerPTO]
+// @Success 200 {object} pagination.CursorResponse[[]worker.WorkerPTO]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -149,15 +150,16 @@ func (h *Handler) listUpcoming(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*worker.WorkerPTO], error) {
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 			return h.service.ListUpcoming(
 				c.Request.Context(),
 				&repositories.ListUpcomingPTORequest{
 					Filter: req,
+					Cursor: cursor,
 					ListWorkerPTOFilterOptions: repositories.ListWorkerPTOFilterOptions{
 						Status:      helpers.QueryString(c, "status", ""),
 						Type:        helpers.QueryString(c, "type", ""),

@@ -245,23 +245,23 @@ func (_c *MockWorkerRepository_GetWorkerSyncReadinessCounts_Call) RunAndReturn(r
 }
 
 // List provides a mock function for the type MockWorkerRepository
-func (_mock *MockWorkerRepository) List(ctx context.Context, req *repositories.ListWorkersRequest) (*pagination.ListResult[*worker.Worker], error) {
+func (_mock *MockWorkerRepository) List(ctx context.Context, req *repositories.ListWorkersRequest) (*pagination.CursorListResult[*worker.Worker], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*worker.Worker]
+	var r0 *pagination.CursorListResult[*worker.Worker]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListWorkersRequest) (*pagination.ListResult[*worker.Worker], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListWorkersRequest) (*pagination.CursorListResult[*worker.Worker], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListWorkersRequest) *pagination.ListResult[*worker.Worker]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListWorkersRequest) *pagination.CursorListResult[*worker.Worker]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*worker.Worker])
+			r0 = ret.Get(0).(*pagination.CursorListResult[*worker.Worker])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListWorkersRequest) error); ok {
@@ -302,12 +302,12 @@ func (_c *MockWorkerRepository_List_Call) Run(run func(ctx context.Context, req 
 	return _c
 }
 
-func (_c *MockWorkerRepository_List_Call) Return(listResult *pagination.ListResult[*worker.Worker], err error) *MockWorkerRepository_List_Call {
+func (_c *MockWorkerRepository_List_Call) Return(listResult *pagination.CursorListResult[*worker.Worker], err error) *MockWorkerRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockWorkerRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListWorkersRequest) (*pagination.ListResult[*worker.Worker], error)) *MockWorkerRepository_List_Call {
+func (_c *MockWorkerRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListWorkersRequest) (*pagination.CursorListResult[*worker.Worker], error)) *MockWorkerRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }

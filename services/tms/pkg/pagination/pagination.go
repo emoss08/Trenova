@@ -46,3 +46,26 @@ func GetPreviousPageURL(c *gin.Context, limit, offset int) string {
 
 	return buildPageURL(c.Request, max(offset-limit, 0), limit)
 }
+
+func buildCursorPageURL(req *http.Request, after string, limit int) string {
+	query := req.URL.Query()
+
+	query.Set("after", after)
+	query.Set("limit", strconv.Itoa(limit))
+	query.Del("offset")
+
+	scheme := "http"
+	if req.TLS != nil || req.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+
+	return fmt.Sprintf("%s://%s%s?%s", scheme, req.Host, req.URL.Path, query.Encode())
+}
+
+func GetNextCursorPageURL(c *gin.Context, after string, limit int, hasNextPage bool) string {
+	if !hasNextPage || after == "" {
+		return ""
+	}
+
+	return buildCursorPageURL(c.Request, after, limit)
+}

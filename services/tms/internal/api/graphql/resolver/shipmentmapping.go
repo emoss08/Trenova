@@ -6,9 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -409,15 +407,6 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 	if err != nil {
 		return nil, err
 	}
-	customer, err := optionalJSON(entity.Customer)
-	if err != nil {
-		return nil, err
-	}
-	formulaTemplate, err := optionalJSON(entity.FormulaTemplate)
-	if err != nil {
-		return nil, err
-	}
-
 	model := &gqlmodel.Shipment{
 		ID:                     entity.ID.String(),
 		BusinessUnitID:         entity.BusinessUnitID.String(),
@@ -462,9 +451,9 @@ func shipmentToModel(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error
 		Moves:                  moves,
 		AdditionalCharges:      additionalCharges,
 		Commodities:            commodities,
-		Customer:               customer,
+		Customer:               shipmentCustomerToModel(entity.Customer),
 		Owner:                  entity.Owner,
-		FormulaTemplate:        formulaTemplate,
+		FormulaTemplate:        shipmentFormulaTemplateToModel(entity.FormulaTemplate),
 	}
 	return model, nil
 }
@@ -581,10 +570,6 @@ func shipmentAdditionalChargesToModel(
 		if entity == nil {
 			continue
 		}
-		accessorial, err := optionalJSON(entity.AccessorialCharge)
-		if err != nil {
-			return nil, err
-		}
 		charges = append(charges, &gqlmodel.ShipmentAdditionalCharge{
 			ID:                  idPtr(entity.ID),
 			BusinessUnitID:      entity.BusinessUnitID.String(),
@@ -598,7 +583,7 @@ func shipmentAdditionalChargesToModel(
 			Version:             int(entity.Version),
 			CreatedAt:           int(entity.CreatedAt),
 			UpdatedAt:           int(entity.UpdatedAt),
-			AccessorialCharge:   accessorial,
+			AccessorialCharge:   shipmentAccessorialChargeToModel(entity.AccessorialCharge),
 		})
 	}
 	return charges, nil
@@ -612,10 +597,6 @@ func shipmentCommoditiesToModel(
 		if entity == nil {
 			continue
 		}
-		commodity, err := optionalJSON(entity.Commodity)
-		if err != nil {
-			return nil, err
-		}
 		commodities = append(commodities, &gqlmodel.ShipmentCommodity{
 			ID:             idPtr(entity.ID),
 			BusinessUnitID: entity.BusinessUnitID.String(),
@@ -627,7 +608,7 @@ func shipmentCommoditiesToModel(
 			Version:        int(entity.Version),
 			CreatedAt:      int(entity.CreatedAt),
 			UpdatedAt:      int(entity.UpdatedAt),
-			Commodity:      commodity,
+			Commodity:      shipmentCommodityDetailToModel(entity.Commodity),
 		})
 	}
 	return commodities, nil
@@ -679,124 +660,6 @@ func shipmentCommentToModel(
 		User:             entity.User,
 		MentionedUsers:   mentions,
 	}, nil
-}
-
-func shipmentConnectionToModel(
-	result *pagination.ListResult[*shipmentdomain.Shipment],
-	offset int,
-) (*gqlmodel.ShipmentConnection, error) {
-	hasNextPage := offset+len(result.Items) < result.Total
-	edges := make([]*gqlmodel.ShipmentEdge, 0, len(result.Items))
-	for i, entity := range result.Items {
-		node, err := shipmentToModel(entity)
-		if err != nil {
-			return nil, err
-		}
-		edges = append(edges, &gqlmodel.ShipmentEdge{
-			Node:   node,
-			Cursor: offsetCursor(offset + i + 1),
-		})
-	}
-	return &gqlmodel.ShipmentConnection{
-		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   offsetEndCursor(offset, len(result.Items)),
-		},
-		TotalCount: &result.Total,
-	}, nil
-}
-
-func shipmentCommentConnectionToModel(
-	result *pagination.ListResult[*shipmentdomain.ShipmentComment],
-	offset int,
-) (*gqlmodel.ShipmentCommentConnection, error) {
-	hasNextPage := offset+len(result.Items) < result.Total
-	edges := make([]*gqlmodel.ShipmentCommentEdge, 0, len(result.Items))
-	for i, entity := range result.Items {
-		node, err := shipmentCommentToModel(entity)
-		if err != nil {
-			return nil, err
-		}
-		edges = append(edges, &gqlmodel.ShipmentCommentEdge{
-			Node:   node,
-			Cursor: offsetCursor(offset + i + 1),
-		})
-	}
-	return &gqlmodel.ShipmentCommentConnection{
-		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   offsetEndCursor(offset, len(result.Items)),
-		},
-		TotalCount: &result.Total,
-	}, nil
-}
-
-func shipmentBillingReadinessToModel(
-	readiness *services.ShipmentBillingReadiness,
-) *gqlmodel.ShipmentBillingReadiness {
-	requirements := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(readiness.Requirements))
-	for _, item := range readiness.Requirements {
-		requirements = append(requirements, shipmentBillingRequirementToModel(item))
-	}
-	missing := make([]*gqlmodel.ShipmentBillingRequirement, 0, len(readiness.MissingRequirements))
-	for _, item := range readiness.MissingRequirements {
-		missing = append(missing, shipmentBillingRequirementToModel(item))
-	}
-	validations := make([]*gqlmodel.ShipmentBillingValidation, 0, len(readiness.ValidationFailures))
-	for _, item := range readiness.ValidationFailures {
-		validations = append(validations, &gqlmodel.ShipmentBillingValidation{
-			Field:   item.Field,
-			Code:    item.Code,
-			Message: item.Message,
-		})
-	}
-	warnings := make([]*gqlmodel.ShipmentBillingWarning, 0, len(readiness.Warnings))
-	for _, item := range readiness.Warnings {
-		warnings = append(warnings, &gqlmodel.ShipmentBillingWarning{
-			Code:    item.Code,
-			Message: item.Message,
-			Context: item.Context,
-		})
-	}
-	return &gqlmodel.ShipmentBillingReadiness{
-		ShipmentID:     readiness.ShipmentID,
-		ShipmentStatus: gqlmodel.ShipmentStatus(readiness.ShipmentStatus),
-		Policy: &gqlmodel.ShipmentBillingReadinessPolicy{
-			ShipmentBillingRequirementEnforcement: string(readiness.Policy.ShipmentBillingRequirementEnforcement),
-			RateValidationEnforcement:             string(readiness.Policy.RateValidationEnforcement),
-			BillingExceptionDisposition:           string(readiness.Policy.BillingExceptionDisposition),
-			NotifyOnBillingExceptions:             readiness.Policy.NotifyOnBillingExceptions,
-			ReadyToBillAssignmentMode:             string(readiness.Policy.ReadyToBillAssignmentMode),
-			BillingQueueTransferMode:              string(readiness.Policy.BillingQueueTransferMode),
-		},
-		Requirements:        requirements,
-		MissingRequirements: missing,
-		ValidationFailures:  validations,
-		Warnings:            warnings,
-		ServiceFailureContext: &gqlmodel.ShipmentServiceFailureBillingContext{
-			HasUnresolved:     readiness.ServiceFailureContext.HasUnresolved,
-			UnresolvedCount:   readiness.ServiceFailureContext.UnresolvedCount,
-			ServiceFailureIds: readiness.ServiceFailureContext.ServiceFailureIDs,
-		},
-		CanMarkReadyToInvoice:        readiness.CanMarkReadyToInvoice,
-		ShouldAutoMarkReadyToInvoice: readiness.ShouldAutoMarkReadyToInvoice,
-		ShouldAutoTransferToBilling:  readiness.ShouldAutoTransferToBilling,
-	}
-}
-
-func shipmentBillingRequirementToModel(
-	item services.ShipmentBillingRequirement,
-) *gqlmodel.ShipmentBillingRequirement {
-	return &gqlmodel.ShipmentBillingRequirement{
-		DocumentTypeID:   item.DocumentTypeID,
-		DocumentTypeCode: item.DocumentTypeCode,
-		DocumentTypeName: item.DocumentTypeName,
-		Satisfied:        item.Satisfied,
-		DocumentCount:    item.DocumentCount,
-		DocumentIds:      item.DocumentIDs,
-	}
 }
 
 func shipmentDistanceToModel(
@@ -1003,144 +866,6 @@ func loadingOptimizationToModel(
 	}
 }
 
-func shipmentAnalyticsToModel(data services.AnalyticsData) (*gqlmodel.ShipmentAnalytics, error) {
-	page := services.ShipmentAnalyticsPage
-	if value, ok := data["page"].(string); ok && value != "" {
-		page = services.AnalyticsPage(value)
-	}
-	counts, err := savedViewCountsFromAnalytics(data["savedViewCounts"])
-	if err != nil {
-		return nil, err
-	}
-	jsonData, err := optionalJSON(map[string]any(data))
-	if err != nil {
-		return nil, err
-	}
-	if jsonData == nil {
-		jsonData = map[string]any{}
-	}
-	return &gqlmodel.ShipmentAnalytics{
-		Page:            string(page),
-		SavedViewCounts: counts,
-		Data:            jsonData,
-	}, nil
-}
-
-func analyticsDateRange(startDate, endDate *int) *services.DateRange {
-	if startDate == nil && endDate == nil {
-		return nil
-	}
-	return &services.DateRange{
-		StartDate: int64Value(startDate),
-		EndDate:   int64Value(endDate),
-	}
-}
-
-func shipmentEventsToModel(events []*shipmentevent.Event) ([]*gqlmodel.ShipmentEvent, error) {
-	items := make([]*gqlmodel.ShipmentEvent, 0, len(events))
-	for _, event := range events {
-		item, err := shipmentEventToModel(event)
-		if err != nil {
-			return nil, err
-		}
-		items = append(items, item)
-	}
-	return items, nil
-}
-
-func shipmentEventTypesFromGraphQL(
-	values []gqlmodel.ShipmentEventType,
-) []shipmentevent.Type {
-	if len(values) == 0 {
-		return nil
-	}
-	types := make([]shipmentevent.Type, 0, len(values))
-	for _, value := range values {
-		types = append(types, shipmentevent.Type(value))
-	}
-	return types
-}
-
-func shipmentEventToModel(event *shipmentevent.Event) (*gqlmodel.ShipmentEvent, error) {
-	metadata, err := optionalJSON(event.Metadata)
-	if err != nil {
-		return nil, err
-	}
-	if metadata == nil {
-		metadata = map[string]any{}
-	}
-	return &gqlmodel.ShipmentEvent{
-		ID:             event.ID.String(),
-		OrganizationID: event.OrganizationID.String(),
-		BusinessUnitID: event.BusinessUnitID.String(),
-		ShipmentID:     event.ShipmentID.String(),
-		MoveID:         idPtr(event.MoveID),
-		StopID:         idPtr(event.StopID),
-		AssignmentID:   idPtr(event.AssignmentID),
-		CommentID:      idPtr(event.CommentID),
-		HoldID:         idPtr(event.HoldID),
-		Type:           gqlmodel.ShipmentEventType(event.Type),
-		Severity:       gqlmodel.ShipmentEventSeverity(event.Severity),
-		ActorType:      gqlmodel.ShipmentEventActorType(event.ActorType),
-		ActorID:        idPtr(event.ActorID),
-		ActorLabel:     event.ActorLabel,
-		Summary:        event.Summary,
-		Metadata:       metadata,
-		OccurredAt:     int(event.OccurredAt),
-		CorrelationID:  stringPtrFromValue(event.CorrelationID),
-		Actor:          event.Actor,
-		Shipment:       shipmentEventShipmentReferenceToModel(event),
-	}, nil
-}
-
-func shipmentEventShipmentReferenceToModel(
-	event *shipmentevent.Event,
-) *gqlmodel.ShipmentEventShipmentReference {
-	if event.Shipment == nil {
-		return nil
-	}
-	return &gqlmodel.ShipmentEventShipmentReference{
-		ID:        idPtr(event.Shipment.ID),
-		ProNumber: stringPtrFromValue(event.Shipment.ProNumber),
-	}
-}
-
-func savedViewCountsFromAnalytics(value any) (*gqlmodel.ShipmentSavedViewCounts, error) {
-	if value == nil {
-		return nil, nil
-	}
-	countsMap, err := optionalJSON(value)
-	if err != nil {
-		return nil, err
-	}
-	return &gqlmodel.ShipmentSavedViewCounts{
-		All:             intPtrFromAny(countsMap["all"]),
-		Transit:         intPtrFromAny(countsMap["transit"]),
-		AtRisk:          intPtrFromAny(countsMap["at-risk"]),
-		Unassigned:      intPtrFromAny(countsMap["unassigned"]),
-		DeliveringToday: intPtrFromAny(countsMap["delivering-today"]),
-	}, nil
-}
-
-func bulkTransferToBillingToModel(
-	response *services.BulkTransferToBillingResponse,
-) *gqlmodel.ShipmentBulkTransferToBillingResponse {
-	results := make([]*gqlmodel.ShipmentBulkTransferToBillingResult, 0, len(response.Results))
-	for _, item := range response.Results {
-		results = append(results, &gqlmodel.ShipmentBulkTransferToBillingResult{
-			ShipmentID: item.ShipmentID.String(),
-			Success:    item.Success,
-			Error:      stringPtrFromValue(item.Error),
-		})
-	}
-	return &gqlmodel.ShipmentBulkTransferToBillingResponse{
-		Results:      results,
-		TotalCount:   response.TotalCount,
-		SuccessCount: response.SuccessCount,
-		ErrorCount:   response.ErrorCount,
-	}
-}
-
 func nullDecimalFromInput(value *string) (decimal.NullDecimal, error) {
 	parsed, err := decimalFromInput(value)
 	if err != nil {
@@ -1260,24 +985,6 @@ func idPtrFromPulidPtr(value *pulid.ID) *string {
 	return &converted
 }
 
-func intPtrFromAny(value any) *int {
-	switch typed := value.(type) {
-	case int:
-		return &typed
-	case int64:
-		converted := int(typed)
-		return &converted
-	case float64:
-		converted := int(typed)
-		return &converted
-	case float32:
-		converted := int(typed)
-		return &converted
-	default:
-		return nil
-	}
-}
-
 func pulidPtrFromOptionalString(value *string) (*pulid.ID, error) {
 	if value == nil || *value == "" {
 		return nil, nil
@@ -1287,11 +994,4 @@ func pulidPtrFromOptionalString(value *string) (*pulid.ID, error) {
 		return nil, err
 	}
 	return &parsed, nil
-}
-
-func parseBillType(value *string) billingqueue.BillType {
-	if value == nil || *value == "" {
-		return billingqueue.BillTypeInvoice
-	}
-	return billingqueue.BillType(*value)
 }

@@ -135,6 +135,15 @@ models:
   PTOChartDataPoint:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.PTOChartDataPoint
+  BillingQueueStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.Status
+  BillType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.BillType
+  BillingQueueExceptionReasonCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/billingqueue.ExceptionReasonCode
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType

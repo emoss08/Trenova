@@ -19,11 +19,13 @@ type ShipmentOptions struct {
 
 type ListShipmentsRequest struct {
 	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
 	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
 }
 
 type GetUnassignedShipmentsRequest struct {
 	Filter          *pagination.QueryOptions `json:"filter"`
+	Cursor          pagination.CursorInfo    `json:"cursor"`
 	ShipmentOptions ShipmentOptions          `json:"shipmentOptions"`
 }
 
@@ -459,7 +461,7 @@ type ShipmentRepository interface {
 	List(
 		ctx context.Context,
 		req *ListShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	GetByID(
 		ctx context.Context,
 		req *GetShipmentByIDRequest,
@@ -479,7 +481,7 @@ type ShipmentRepository interface {
 	GetUnassigned(
 		ctx context.Context,
 		req *GetUnassignedShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,

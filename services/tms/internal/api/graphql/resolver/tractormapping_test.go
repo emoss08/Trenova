@@ -6,6 +6,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -241,4 +242,25 @@ func TestTractorLastKnownLocationReference(t *testing.T) {
 	assert.Equal(t, locationID.String(), ref.ID)
 	assert.Equal(t, "North Yard", ref.Name)
 	assert.Nil(t, tractorLastKnownLocationReference(&tractor.Tractor{}))
+}
+
+func TestTractorConnectionToModel_PropagatesTotalCount(t *testing.T) {
+	t.Parallel()
+
+	total := 37
+	connection, err := tractorConnectionToModel(&pagination.CursorListResult[*tractor.Tractor]{
+		Items: []*tractor.Tractor{
+			{
+				ID:        pulid.MustNew("trac_"),
+				CreatedAt: 1710000000000,
+				Code:      "TRC-100",
+			},
+		},
+		TotalCount: &total,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, connection.TotalCount)
+	assert.Equal(t, total, *connection.TotalCount)
+	assert.Len(t, connection.Edges, 1)
 }

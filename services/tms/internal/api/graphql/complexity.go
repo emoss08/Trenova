@@ -12,7 +12,6 @@ func complexityRoot() generated.ComplexityRoot {
 	root.Query.Trailers = func(
 		childComplexity int,
 		first *int,
-		_ *int,
 		_ *string,
 		_ *string,
 		_ []*gqlmodel.FieldFilterInput,
@@ -27,7 +26,6 @@ func complexityRoot() generated.ComplexityRoot {
 	root.Query.Tractors = func(
 		childComplexity int,
 		first *int,
-		_ *int,
 		_ *string,
 		_ *string,
 		_ []*gqlmodel.FieldFilterInput,

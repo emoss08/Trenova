@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
@@ -16,6 +17,41 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 )
+
+type BillingQueueItem struct {
+	ID                        string                            `json:"id"`
+	OrganizationID            string                            `json:"organizationId"`
+	BusinessUnitID            string                            `json:"businessUnitId"`
+	ShipmentID                string                            `json:"shipmentId"`
+	AssignedBillerID          *string                           `json:"assignedBillerId,omitempty"`
+	Number                    string                            `json:"number"`
+	Status                    billingqueue.Status               `json:"status"`
+	BillType                  billingqueue.BillType             `json:"billType"`
+	ExceptionReasonCode       *billingqueue.ExceptionReasonCode `json:"exceptionReasonCode,omitempty"`
+	ReviewNotes               string                            `json:"reviewNotes"`
+	ExceptionNotes            string                            `json:"exceptionNotes"`
+	ReviewStartedAt           *int                              `json:"reviewStartedAt,omitempty"`
+	ReviewCompletedAt         *int                              `json:"reviewCompletedAt,omitempty"`
+	CanceledByID              *string                           `json:"canceledById,omitempty"`
+	CanceledAt                *int                              `json:"canceledAt,omitempty"`
+	CancelReason              string                            `json:"cancelReason"`
+	IsAdjustmentOrigin        bool                              `json:"isAdjustmentOrigin"`
+	SourceInvoiceID           *string                           `json:"sourceInvoiceId,omitempty"`
+	SourceInvoiceAdjustmentID *string                           `json:"sourceInvoiceAdjustmentId,omitempty"`
+	SourceCreditMemoInvoiceID *string                           `json:"sourceCreditMemoInvoiceId,omitempty"`
+	CorrectionGroupID         *string                           `json:"correctionGroupId,omitempty"`
+	RebillStrategy            *string                           `json:"rebillStrategy,omitempty"`
+	RequiresReplacementReview bool                              `json:"requiresReplacementReview"`
+	RerateVariancePercent     string                            `json:"rerateVariancePercent"`
+	// Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended.
+	AdjustmentContext map[string]any `json:"adjustmentContext"`
+	Version           int            `json:"version"`
+	CreatedAt         int            `json:"createdAt"`
+	UpdatedAt         int            `json:"updatedAt"`
+	Shipment          *Shipment      `json:"shipment,omitempty"`
+	AssignedBiller    *tenant.User   `json:"assignedBiller,omitempty"`
+	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
+}
 
 type BulkUpdateTractorStatusInput struct {
 	TractorIds []string                    `json:"tractorIds"`
@@ -151,25 +187,54 @@ type Shipment struct {
 	Moves                  []*ShipmentMove             `json:"moves"`
 	AdditionalCharges      []*ShipmentAdditionalCharge `json:"additionalCharges"`
 	Commodities            []*ShipmentCommodity        `json:"commodities"`
-	Customer               map[string]any              `json:"customer,omitempty"`
+	Customer               *ShipmentCustomer           `json:"customer,omitempty"`
 	Owner                  *tenant.User                `json:"owner,omitempty"`
-	FormulaTemplate        map[string]any              `json:"formulaTemplate,omitempty"`
+	FormulaTemplate        *ShipmentFormulaTemplate    `json:"formulaTemplate,omitempty"`
+}
+
+type ShipmentAccessorialCharge struct {
+	ID             string             `json:"id"`
+	BusinessUnitID string             `json:"businessUnitId"`
+	OrganizationID string             `json:"organizationId"`
+	Code           string             `json:"code"`
+	Description    string             `json:"description"`
+	Status         domaintypes.Status `json:"status"`
+	Method         string             `json:"method"`
+	RateUnit       string             `json:"rateUnit"`
+	Amount         string             `json:"amount"`
+	Version        int                `json:"version"`
+	CreatedAt      int                `json:"createdAt"`
+	UpdatedAt      int                `json:"updatedAt"`
+}
+
+type ShipmentActiveShipments struct {
+	Count               int                               `json:"count"`
+	ChangeFromYesterday int                               `json:"changeFromYesterday"`
+	Sparkline           []*ShipmentSparklinePoint         `json:"sparkline"`
+	Breakdown           *ShipmentActiveShipmentsBreakdown `json:"breakdown"`
+}
+
+type ShipmentActiveShipmentsBreakdown struct {
+	InTransit int `json:"inTransit"`
+	AtRisk    int `json:"atRisk"`
+	Loading   int `json:"loading"`
+	Done      int `json:"done"`
 }
 
 type ShipmentAdditionalCharge struct {
-	ID                  *string        `json:"id,omitempty"`
-	BusinessUnitID      string         `json:"businessUnitId"`
-	OrganizationID      string         `json:"organizationId"`
-	ShipmentID          string         `json:"shipmentId"`
-	AccessorialChargeID string         `json:"accessorialChargeId"`
-	IsSystemGenerated   bool           `json:"isSystemGenerated"`
-	Method              string         `json:"method"`
-	Amount              string         `json:"amount"`
-	Unit                int            `json:"unit"`
-	Version             int            `json:"version"`
-	CreatedAt           int            `json:"createdAt"`
-	UpdatedAt           int            `json:"updatedAt"`
-	AccessorialCharge   map[string]any `json:"accessorialCharge,omitempty"`
+	ID                  *string                    `json:"id,omitempty"`
+	BusinessUnitID      string                     `json:"businessUnitId"`
+	OrganizationID      string                     `json:"organizationId"`
+	ShipmentID          string                     `json:"shipmentId"`
+	AccessorialChargeID string                     `json:"accessorialChargeId"`
+	IsSystemGenerated   bool                       `json:"isSystemGenerated"`
+	Method              string                     `json:"method"`
+	Amount              string                     `json:"amount"`
+	Unit                int                        `json:"unit"`
+	Version             int                        `json:"version"`
+	CreatedAt           int                        `json:"createdAt"`
+	UpdatedAt           int                        `json:"updatedAt"`
+	AccessorialCharge   *ShipmentAccessorialCharge `json:"accessorialCharge,omitempty"`
 }
 
 type ShipmentAdditionalChargeInput struct {
@@ -184,9 +249,19 @@ type ShipmentAdditionalChargeInput struct {
 }
 
 type ShipmentAnalytics struct {
-	Page            string                   `json:"page"`
-	SavedViewCounts *ShipmentSavedViewCounts `json:"savedViewCounts,omitempty"`
-	Data            map[string]any           `json:"data"`
+	Page               string                       `json:"page"`
+	SavedViewCounts    *ShipmentSavedViewCounts     `json:"savedViewCounts,omitempty"`
+	ActiveShipments    *ShipmentActiveShipments     `json:"activeShipments,omitempty"`
+	OnTimePercent      *ShipmentOnTime              `json:"onTimePercent,omitempty"`
+	RevenueToday       *ShipmentRevenueToday        `json:"revenueToday,omitempty"`
+	EmptyMilePercent   *ShipmentEmptyMile           `json:"emptyMilePercent,omitempty"`
+	AtRisk             *ShipmentAtRisk              `json:"atRisk,omitempty"`
+	Unassigned         *ShipmentUnassignedAnalytics `json:"unassigned,omitempty"`
+	ReadyToDispatch    *ShipmentReadyToDispatch     `json:"readyToDispatch,omitempty"`
+	DetentionWatchlist *ShipmentDetentionWatchlist  `json:"detentionWatchlist,omitempty"`
+	CustomerMix        *ShipmentCustomerMix         `json:"customerMix,omitempty"`
+	TomorrowsPickups   *ShipmentTomorrowsPickups    `json:"tomorrowsPickups,omitempty"`
+	LaneHeatmap        *ShipmentLaneHeatmap         `json:"laneHeatmap,omitempty"`
 }
 
 type ShipmentAssignment struct {
@@ -207,6 +282,14 @@ type ShipmentAssignment struct {
 	Trailer           *trailer.Trailer `json:"trailer,omitempty"`
 	PrimaryWorker     *worker.Worker   `json:"primaryWorker,omitempty"`
 	SecondaryWorker   *worker.Worker   `json:"secondaryWorker,omitempty"`
+}
+
+type ShipmentAtRisk struct {
+	Count   int `json:"count"`
+	Delta   int `json:"delta"`
+	EtaSlip int `json:"etaSlip"`
+	Weather int `json:"weather"`
+	Reefer  int `json:"reefer"`
 }
 
 type ShipmentAxleWeight struct {
@@ -256,14 +339,25 @@ type ShipmentBillingValidation struct {
 }
 
 type ShipmentBillingWarning struct {
-	Code    string         `json:"code"`
-	Message string         `json:"message"`
-	Context map[string]any `json:"context,omitempty"`
+	Code    string                         `json:"code"`
+	Message string                         `json:"message"`
+	Context *ShipmentBillingWarningContext `json:"context,omitempty"`
+}
+
+type ShipmentBillingWarningContext struct {
+	DocumentTypeID          *string  `json:"documentTypeId,omitempty"`
+	DocumentTypeCode        *string  `json:"documentTypeCode,omitempty"`
+	DocumentTypeName        *string  `json:"documentTypeName,omitempty"`
+	DocumentCount           *int     `json:"documentCount,omitempty"`
+	RequirementCount        *int     `json:"requirementCount,omitempty"`
+	MissingRequirementCount *int     `json:"missingRequirementCount,omitempty"`
+	ServiceFailureIds       []string `json:"serviceFailureIds,omitempty"`
+	UnresolvedCount         *int     `json:"unresolvedCount,omitempty"`
 }
 
 type ShipmentBulkTransferToBillingInput struct {
-	ShipmentIds []string `json:"shipmentIds"`
-	BillType    *string  `json:"billType,omitempty"`
+	ShipmentIds []string               `json:"shipmentIds"`
+	BillType    *billingqueue.BillType `json:"billType,omitempty"`
 }
 
 type ShipmentBulkTransferToBillingResponse struct {
@@ -284,16 +378,17 @@ type ShipmentCancelInput struct {
 }
 
 type ShipmentComment struct {
-	ID               string                    `json:"id"`
-	BusinessUnitID   *string                   `json:"businessUnitId,omitempty"`
-	OrganizationID   *string                   `json:"organizationId,omitempty"`
-	ShipmentID       string                    `json:"shipmentId"`
-	UserID           *string                   `json:"userId,omitempty"`
-	Comment          string                    `json:"comment"`
-	Type             ShipmentCommentType       `json:"type"`
-	Visibility       ShipmentCommentVisibility `json:"visibility"`
-	Priority         ShipmentCommentPriority   `json:"priority"`
-	Source           ShipmentCommentSource     `json:"source"`
+	ID             string                    `json:"id"`
+	BusinessUnitID *string                   `json:"businessUnitId,omitempty"`
+	OrganizationID *string                   `json:"organizationId,omitempty"`
+	ShipmentID     string                    `json:"shipmentId"`
+	UserID         *string                   `json:"userId,omitempty"`
+	Comment        string                    `json:"comment"`
+	Type           ShipmentCommentType       `json:"type"`
+	Visibility     ShipmentCommentVisibility `json:"visibility"`
+	Priority       ShipmentCommentPriority   `json:"priority"`
+	Source         ShipmentCommentSource     `json:"source"`
+	// Comment metadata is written by users, integrations, and system workflows, so keys vary by source.
 	Metadata         map[string]any            `json:"metadata,omitempty"`
 	EditedAt         *int                      `json:"editedAt,omitempty"`
 	Version          int                       `json:"version"`
@@ -349,17 +444,39 @@ type ShipmentCommentUpdateInput struct {
 }
 
 type ShipmentCommodity struct {
-	ID             *string        `json:"id,omitempty"`
-	BusinessUnitID string         `json:"businessUnitId"`
-	OrganizationID string         `json:"organizationId"`
-	ShipmentID     string         `json:"shipmentId"`
-	CommodityID    string         `json:"commodityId"`
-	Pieces         int            `json:"pieces"`
-	Weight         int            `json:"weight"`
-	Version        int            `json:"version"`
-	CreatedAt      int            `json:"createdAt"`
-	UpdatedAt      int            `json:"updatedAt"`
-	Commodity      map[string]any `json:"commodity,omitempty"`
+	ID             *string                  `json:"id,omitempty"`
+	BusinessUnitID string                   `json:"businessUnitId"`
+	OrganizationID string                   `json:"organizationId"`
+	ShipmentID     string                   `json:"shipmentId"`
+	CommodityID    string                   `json:"commodityId"`
+	Pieces         int                      `json:"pieces"`
+	Weight         int                      `json:"weight"`
+	Version        int                      `json:"version"`
+	CreatedAt      int                      `json:"createdAt"`
+	UpdatedAt      int                      `json:"updatedAt"`
+	Commodity      *ShipmentCommodityDetail `json:"commodity,omitempty"`
+}
+
+type ShipmentCommodityDetail struct {
+	ID                     string             `json:"id"`
+	BusinessUnitID         string             `json:"businessUnitId"`
+	OrganizationID         string             `json:"organizationId"`
+	HazardousMaterialID    *string            `json:"hazardousMaterialId,omitempty"`
+	Status                 domaintypes.Status `json:"status"`
+	Name                   string             `json:"name"`
+	Description            string             `json:"description"`
+	MinTemperature         *int               `json:"minTemperature,omitempty"`
+	MaxTemperature         *int               `json:"maxTemperature,omitempty"`
+	WeightPerUnit          *float64           `json:"weightPerUnit,omitempty"`
+	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit,omitempty"`
+	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment,omitempty"`
+	FreightClass           string             `json:"freightClass"`
+	LoadingInstructions    string             `json:"loadingInstructions"`
+	Stackable              bool               `json:"stackable"`
+	Fragile                bool               `json:"fragile"`
+	Version                int                `json:"version"`
+	CreatedAt              int                `json:"createdAt"`
+	UpdatedAt              int                `json:"updatedAt"`
 }
 
 type ShipmentCommodityInput struct {
@@ -375,6 +492,56 @@ type ShipmentConnection struct {
 	Edges      []*ShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+}
+
+type ShipmentCustomer struct {
+	ID                     string             `json:"id"`
+	BusinessUnitID         string             `json:"businessUnitId"`
+	OrganizationID         string             `json:"organizationId"`
+	StateID                string             `json:"stateId"`
+	Status                 domaintypes.Status `json:"status"`
+	Code                   string             `json:"code"`
+	Name                   string             `json:"name"`
+	AddressLine1           string             `json:"addressLine1"`
+	AddressLine2           string             `json:"addressLine2"`
+	City                   string             `json:"city"`
+	PostalCode             string             `json:"postalCode"`
+	IsGeocoded             bool               `json:"isGeocoded"`
+	Longitude              *float64           `json:"longitude,omitempty"`
+	Latitude               *float64           `json:"latitude,omitempty"`
+	PlaceID                string             `json:"placeId"`
+	ExternalID             string             `json:"externalId"`
+	AllowConsolidation     bool               `json:"allowConsolidation"`
+	ExclusiveConsolidation bool               `json:"exclusiveConsolidation"`
+	ConsolidationPriority  int                `json:"consolidationPriority"`
+	Version                int                `json:"version"`
+	CreatedAt              int                `json:"createdAt"`
+	UpdatedAt              int                `json:"updatedAt"`
+}
+
+type ShipmentCustomerMix struct {
+	WindowDays int                         `json:"windowDays"`
+	Entries    []*ShipmentCustomerMixEntry `json:"entries"`
+}
+
+type ShipmentCustomerMixEntry struct {
+	CustomerID string  `json:"customerId"`
+	Name       string  `json:"name"`
+	Revenue    float64 `json:"revenue"`
+	Share      float64 `json:"share"`
+	Loads      int     `json:"loads"`
+	Trend      float64 `json:"trend"`
+}
+
+type ShipmentDetentionWatchlist struct {
+	Items []*ShipmentDetentionWatchlistItem `json:"items"`
+}
+
+type ShipmentDetentionWatchlistItem struct {
+	ShipmentID string `json:"shipmentId"`
+	Customer   string `json:"customer"`
+	DwellLabel string `json:"dwellLabel"`
+	Tone       string `json:"tone"`
 }
 
 type ShipmentDistanceMoveResult struct {
@@ -422,32 +589,90 @@ type ShipmentEdge struct {
 	Cursor string    `json:"cursor"`
 }
 
+type ShipmentEmptyMile struct {
+	Percent    float64 `json:"percent"`
+	EmptyMiles float64 `json:"emptyMiles"`
+	TotalMiles float64 `json:"totalMiles"`
+	DeltaPp    float64 `json:"deltaPp"`
+}
+
 type ShipmentEvent struct {
-	ID             string                          `json:"id"`
-	OrganizationID string                          `json:"organizationId"`
-	BusinessUnitID string                          `json:"businessUnitId"`
-	ShipmentID     string                          `json:"shipmentId"`
-	MoveID         *string                         `json:"moveId,omitempty"`
-	StopID         *string                         `json:"stopId,omitempty"`
-	AssignmentID   *string                         `json:"assignmentId,omitempty"`
-	CommentID      *string                         `json:"commentId,omitempty"`
-	HoldID         *string                         `json:"holdId,omitempty"`
-	Type           ShipmentEventType               `json:"type"`
-	Severity       ShipmentEventSeverity           `json:"severity"`
-	ActorType      ShipmentEventActorType          `json:"actorType"`
-	ActorID        *string                         `json:"actorId,omitempty"`
-	ActorLabel     string                          `json:"actorLabel"`
-	Summary        string                          `json:"summary"`
-	Metadata       map[string]any                  `json:"metadata"`
-	OccurredAt     int                             `json:"occurredAt"`
-	CorrelationID  *string                         `json:"correlationId,omitempty"`
-	Actor          *tenant.User                    `json:"actor,omitempty"`
-	Shipment       *ShipmentEventShipmentReference `json:"shipment,omitempty"`
+	ID                string                 `json:"id"`
+	OrganizationID    string                 `json:"organizationId"`
+	BusinessUnitID    string                 `json:"businessUnitId"`
+	ShipmentID        string                 `json:"shipmentId"`
+	MoveID            *string                `json:"moveId,omitempty"`
+	StopID            *string                `json:"stopId,omitempty"`
+	AssignmentID      *string                `json:"assignmentId,omitempty"`
+	CommentID         *string                `json:"commentId,omitempty"`
+	HoldID            *string                `json:"holdId,omitempty"`
+	Type              ShipmentEventType      `json:"type"`
+	Severity          ShipmentEventSeverity  `json:"severity"`
+	ActorType         ShipmentEventActorType `json:"actorType"`
+	ActorID           *string                `json:"actorId,omitempty"`
+	ActorLabel        string                 `json:"actorLabel"`
+	Summary           string                 `json:"summary"`
+	ProNumber         *string                `json:"proNumber,omitempty"`
+	PreviousStatus    *string                `json:"previousStatus,omitempty"`
+	NewStatus         *string                `json:"newStatus,omitempty"`
+	Reason            *string                `json:"reason,omitempty"`
+	PreviousOwnerID   *string                `json:"previousOwnerId,omitempty"`
+	NewOwnerID        *string                `json:"newOwnerId,omitempty"`
+	PrimaryWorkerID   *string                `json:"primaryWorkerId,omitempty"`
+	SecondaryWorkerID *string                `json:"secondaryWorkerId,omitempty"`
+	TractorID         *string                `json:"tractorId,omitempty"`
+	TrailerID         *string                `json:"trailerId,omitempty"`
+	DriverName        *string                `json:"driverName,omitempty"`
+	HoldType          *string                `json:"holdType,omitempty"`
+	HoldSeverity      *string                `json:"holdSeverity,omitempty"`
+	HoldSource        *string                `json:"holdSource,omitempty"`
+	CommentBody       *string                `json:"commentBody,omitempty"`
+	CommentType       *string                `json:"commentType,omitempty"`
+	CommentVisibility *string                `json:"commentVisibility,omitempty"`
+	CommentPriority   *string                `json:"commentPriority,omitempty"`
+	MentionedUserIds  []string               `json:"mentionedUserIds"`
+	// Shipment events can also be recorded by integrations and observers with variant-specific metadata.
+	Metadata      map[string]any                  `json:"metadata"`
+	OccurredAt    int                             `json:"occurredAt"`
+	CorrelationID *string                         `json:"correlationId,omitempty"`
+	Actor         *tenant.User                    `json:"actor,omitempty"`
+	Shipment      *ShipmentEventShipmentReference `json:"shipment,omitempty"`
 }
 
 type ShipmentEventShipmentReference struct {
 	ID        *string `json:"id,omitempty"`
 	ProNumber *string `json:"proNumber,omitempty"`
+}
+
+type ShipmentFormulaTemplate struct {
+	ID                  string                               `json:"id"`
+	OrganizationID      string                               `json:"organizationId"`
+	BusinessUnitID      string                               `json:"businessUnitId"`
+	Name                string                               `json:"name"`
+	Description         string                               `json:"description"`
+	Type                string                               `json:"type"`
+	Expression          string                               `json:"expression"`
+	Status              string                               `json:"status"`
+	SchemaID            string                               `json:"schemaId"`
+	VariableDefinitions []*ShipmentFormulaVariableDefinition `json:"variableDefinitions"`
+	// Formula template metadata is admin-defined and intentionally open-ended.
+	Metadata             map[string]any `json:"metadata,omitempty"`
+	Version              int            `json:"version"`
+	SourceTemplateID     *string        `json:"sourceTemplateId,omitempty"`
+	SourceVersionNumber  *int           `json:"sourceVersionNumber,omitempty"`
+	CurrentVersionNumber int            `json:"currentVersionNumber"`
+	CreatedAt            int            `json:"createdAt"`
+	UpdatedAt            int            `json:"updatedAt"`
+}
+
+type ShipmentFormulaVariableDefinition struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Description string `json:"description"`
+	Required    bool   `json:"required"`
+	// Formula variable defaults can be scalar, array, object, or null by template design.
+	DefaultValue any     `json:"defaultValue,omitempty"`
+	Source       *string `json:"source,omitempty"`
 }
 
 type ShipmentHazmatInput struct {
@@ -505,6 +730,18 @@ type ShipmentInput struct {
 	Moves                  []*ShipmentMoveInput             `json:"moves,omitempty"`
 	AdditionalCharges      []*ShipmentAdditionalChargeInput `json:"additionalCharges,omitempty"`
 	Commodities            []*ShipmentCommodityInput        `json:"commodities,omitempty"`
+}
+
+type ShipmentLaneHeatmap struct {
+	WindowDays int                        `json:"windowDays"`
+	Cells      []*ShipmentLaneHeatmapCell `json:"cells"`
+	Total      int                        `json:"total"`
+}
+
+type ShipmentLaneHeatmapCell struct {
+	Origin      string `json:"origin"`
+	Destination string `json:"destination"`
+	Count       int    `json:"count"`
 }
 
 type ShipmentLoadingCommodity struct {
@@ -578,27 +815,28 @@ type ShipmentLoadingWarning struct {
 }
 
 type ShipmentMove struct {
-	ID                     *string             `json:"id,omitempty"`
-	BusinessUnitID         string              `json:"businessUnitId"`
-	OrganizationID         string              `json:"organizationId"`
-	ShipmentID             *string             `json:"shipmentId,omitempty"`
-	Status                 MoveStatus          `json:"status"`
-	Loaded                 bool                `json:"loaded"`
-	Sequence               int                 `json:"sequence"`
-	Distance               *float64            `json:"distance,omitempty"`
-	DistanceSource         *string             `json:"distanceSource,omitempty"`
-	DistanceProvider       *string             `json:"distanceProvider,omitempty"`
-	DistanceCalculatedAt   *int                `json:"distanceCalculatedAt,omitempty"`
-	DistanceRouteSignature *string             `json:"distanceRouteSignature,omitempty"`
-	DistanceDataVersion    *string             `json:"distanceDataVersion,omitempty"`
-	DistanceRoutingType    *string             `json:"distanceRoutingType,omitempty"`
-	DistanceUnits          *string             `json:"distanceUnits,omitempty"`
-	DistanceMetadata       map[string]any      `json:"distanceMetadata,omitempty"`
-	Version                int                 `json:"version"`
-	CreatedAt              int                 `json:"createdAt"`
-	UpdatedAt              int                 `json:"updatedAt"`
-	Stops                  []*ShipmentStop     `json:"stops"`
-	Assignment             *ShipmentAssignment `json:"assignment,omitempty"`
+	ID                     *string    `json:"id,omitempty"`
+	BusinessUnitID         string     `json:"businessUnitId"`
+	OrganizationID         string     `json:"organizationId"`
+	ShipmentID             *string    `json:"shipmentId,omitempty"`
+	Status                 MoveStatus `json:"status"`
+	Loaded                 bool       `json:"loaded"`
+	Sequence               int        `json:"sequence"`
+	Distance               *float64   `json:"distance,omitempty"`
+	DistanceSource         *string    `json:"distanceSource,omitempty"`
+	DistanceProvider       *string    `json:"distanceProvider,omitempty"`
+	DistanceCalculatedAt   *int       `json:"distanceCalculatedAt,omitempty"`
+	DistanceRouteSignature *string    `json:"distanceRouteSignature,omitempty"`
+	DistanceDataVersion    *string    `json:"distanceDataVersion,omitempty"`
+	DistanceRoutingType    *string    `json:"distanceRoutingType,omitempty"`
+	DistanceUnits          *string    `json:"distanceUnits,omitempty"`
+	// Distance providers may return provider-specific route details, so this remains intentionally open-ended.
+	DistanceMetadata map[string]any      `json:"distanceMetadata,omitempty"`
+	Version          int                 `json:"version"`
+	CreatedAt        int                 `json:"createdAt"`
+	UpdatedAt        int                 `json:"updatedAt"`
+	Stops            []*ShipmentStop     `json:"stops"`
+	Assignment       *ShipmentAssignment `json:"assignment,omitempty"`
 }
 
 type ShipmentMoveInput struct {
@@ -618,6 +856,15 @@ type ShipmentMoveInput struct {
 	DistanceMetadata       map[string]any       `json:"distanceMetadata,omitempty"`
 	Version                *int                 `json:"version,omitempty"`
 	Stops                  []*ShipmentStopInput `json:"stops,omitempty"`
+}
+
+type ShipmentOnTime struct {
+	Percent         float64  `json:"percent"`
+	OnTimeCount     int      `json:"onTimeCount"`
+	TotalCount      int      `json:"totalCount"`
+	Target          *float64 `json:"target,omitempty"`
+	DeltaPp         float64  `json:"deltaPp"`
+	SevenDayPercent float64  `json:"sevenDayPercent"`
 }
 
 type ShipmentPreviousRateSummary struct {
@@ -651,12 +898,13 @@ type ShipmentPreviousRatesResponse struct {
 }
 
 type ShipmentRatingDetail struct {
-	FormulaTemplateID   string         `json:"formulaTemplateId"`
-	FormulaTemplateName string         `json:"formulaTemplateName"`
-	Expression          string         `json:"expression"`
-	ResolvedVariables   map[string]any `json:"resolvedVariables"`
-	Result              float64        `json:"result"`
-	RatedAt             int            `json:"ratedAt"`
+	FormulaTemplateID   string `json:"formulaTemplateId"`
+	FormulaTemplateName string `json:"formulaTemplateName"`
+	Expression          string `json:"expression"`
+	// Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended.
+	ResolvedVariables map[string]any `json:"resolvedVariables"`
+	Result            float64        `json:"result"`
+	RatedAt           int            `json:"ratedAt"`
 }
 
 type ShipmentRatingDetailInput struct {
@@ -666,6 +914,20 @@ type ShipmentRatingDetailInput struct {
 	ResolvedVariables   map[string]any `json:"resolvedVariables"`
 	Result              float64        `json:"result"`
 	RatedAt             int            `json:"ratedAt"`
+}
+
+type ShipmentReadyToDispatch struct {
+	Count       int `json:"count"`
+	Delta       int `json:"delta"`
+	Unassigned  int `json:"unassigned"`
+	DriverReady int `json:"driverReady"`
+}
+
+type ShipmentRevenueToday struct {
+	Total     float64                   `json:"total"`
+	Sparkline []*ShipmentSparklinePoint `json:"sparkline"`
+	DeltaPct  float64                   `json:"deltaPct"`
+	Rpm       float64                   `json:"rpm"`
 }
 
 type ShipmentSavedViewCounts struct {
@@ -680,6 +942,11 @@ type ShipmentServiceFailureBillingContext struct {
 	HasUnresolved     bool     `json:"hasUnresolved"`
 	UnresolvedCount   int      `json:"unresolvedCount"`
 	ServiceFailureIds []string `json:"serviceFailureIds"`
+}
+
+type ShipmentSparklinePoint struct {
+	Hour  string  `json:"hour"`
+	Value float64 `json:"value"`
 }
 
 type ShipmentStop struct {
@@ -733,6 +1000,22 @@ type ShipmentStopInput struct {
 	Version                *int              `json:"version,omitempty"`
 }
 
+type ShipmentTomorrowPickup struct {
+	ShipmentID        string `json:"shipmentId"`
+	ProNumber         string `json:"proNumber"`
+	PickupWindowStart int    `json:"pickupWindowStart"`
+	Customer          string `json:"customer"`
+	Origin            string `json:"origin"`
+	Destination       string `json:"destination"`
+	Driver            string `json:"driver"`
+	Status            string `json:"status"`
+}
+
+type ShipmentTomorrowsPickups struct {
+	Date    string                    `json:"date"`
+	Pickups []*ShipmentTomorrowPickup `json:"pickups"`
+}
+
 type ShipmentTotalsResponse struct {
 	FreightChargeAmount string `json:"freightChargeAmount"`
 	OtherChargeAmount   string `json:"otherChargeAmount"`
@@ -744,8 +1027,8 @@ type ShipmentTransferOwnershipInput struct {
 }
 
 type ShipmentTransferToBillingInput struct {
-	ShipmentID string  `json:"shipmentId"`
-	BillType   *string `json:"billType,omitempty"`
+	ShipmentID string                 `json:"shipmentId"`
+	BillType   *billingqueue.BillType `json:"billType,omitempty"`
 }
 
 type ShipmentUIPolicy struct {
@@ -753,6 +1036,12 @@ type ShipmentUIPolicy struct {
 	CheckForDuplicateBols  bool `json:"checkForDuplicateBols"`
 	CheckHazmatSegregation bool `json:"checkHazmatSegregation"`
 	MaxShipmentWeightLimit int  `json:"maxShipmentWeightLimit"`
+}
+
+type ShipmentUnassignedAnalytics struct {
+	Count          int     `json:"count"`
+	Delta          int     `json:"delta"`
+	RevenueWaiting float64 `json:"revenueWaiting"`
 }
 
 type ShipmentValidationResponse struct {

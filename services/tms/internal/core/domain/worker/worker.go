@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -27,10 +28,12 @@ var (
 	_ domaintypes.PostgresSearchable     = (*Worker)(nil)
 	_ validationframework.TenantedEntity = (*Worker)(nil)
 	_ customfield.CustomFieldsSupporter  = (*Worker)(nil)
+	_ pagination.CursorEntity            = (*Worker)(nil)
 )
 
 type Worker struct {
-	bun.BaseModel `bun:"table:workers,alias:wrk" json:"-"`
+	bun.BaseModel             `bun:"table:workers,alias:wrk" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID                    pulid.ID           `json:"id"                          bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID        pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -181,6 +184,10 @@ func (w *Worker) GetTableName() string {
 
 func (w *Worker) GetID() pulid.ID {
 	return w.ID
+}
+
+func (w *Worker) GetCreatedAt() int64 {
+	return w.CreatedAt
 }
 
 func (w *Worker) GetOrganizationID() pulid.ID {

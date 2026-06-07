@@ -39,131 +39,100 @@ func New(p Params) repositories.TractorRepository {
 func (r *repository) applyListFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListTractorsRequest,
-) *bun.SelectQuery {
-	log := r.l.With(
-		zap.String("operation", "applyListFilters"),
-		zap.Any("request", req),
-	)
-
+) (*bun.SelectQuery, error) {
 	q = applyTractorRelations(q, req.TractorRelationIncludes)
 
-	q = querybuilder.ApplyFilters(
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.TractorTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*tractor.Tractor)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+
+	q = r.applyStatusFilter(q, req.Status)
+
+	return q, nil
+}
+
+func (r *repository) applyListCountFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListTractorsRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.TractorTable.Alias,
 		req.Filter,
 		(*tractor.Tractor)(nil),
 	)
 
-	if req.Status != "" {
-		status, err := domaintypes.EquipmentStatusFromString(req.Status)
-		if err != nil {
-			log.Error("failed to parse equipment status", zap.Error(err))
-			return q
-		}
+	return r.applyStatusFilter(q, req.Status)
+}
 
-		q = q.Where(buncolgen.TractorColumns.Status.Eq(), status)
+func (r *repository) applyStatusFilter(q *bun.SelectQuery, value string) *bun.SelectQuery {
+	if value == "" {
+		return q
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	status, err := domaintypes.EquipmentStatusFromString(value)
+	if err != nil {
+		r.l.Error("failed to parse equipment status", zap.Error(err))
+		return q
+	}
+
+	return q.Where(buncolgen.TractorColumns.Status.Eq(), status)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListTractorsRequest,
-) (*pagination.ListResult[*tractor.Tractor], error) {
+) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	log := r.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*tractor.Tractor, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
 		NewSelect().
-		Model(&entities).
+		Model((*tractor.Tractor)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorColumns(sq, req.TractorRelationIncludes)
+			return r.applyListCountFilters(sq, req)
 		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
-		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.applyListFilters(sq, req).
-				Limit(req.Filter.Pagination.SafeLimit()).
-				Offset(req.Filter.Pagination.SafeOffset())
-		}).
-		ScanAndCount(ctx)
+		Count(ctx)
 	if err != nil {
-		log.Error("failed to scan and count tractors", zap.Error(err))
+		log.Error("failed to count tractors", zap.Error(err))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*tractor.Tractor]{
-		Items: entities,
-		Total: total,
-	}, nil
-}
-
-func (r *repository) ListCursor(
-	ctx context.Context,
-	req *repositories.ListTractorsCursorRequest,
-) (*pagination.CursorListResult[*tractor.Tractor], error) {
-	log := r.l.With(
-		zap.String("operation", "ListCursor"),
-		zap.Any("request", req),
-	)
-
-	filter := *req.Filter
-	filter.Sort = nil
-	offsetReq := &repositories.ListTractorsRequest{
-		Filter:                  &filter,
-		TractorRelationIncludes: req.TractorRelationIncludes,
-		Status:                  req.Status,
-	}
-	limit := req.Cursor.Limit
-	entities := make([]*tractor.Tractor, 0, limit+1)
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorColumns(sq, req.TractorRelationIncludes)
-		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
-		}).
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			q := r.applyListFilters(sq, offsetReq)
-			if req.Cursor.After != "" {
-				q = q.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
-					return cq.
-						Where(buncolgen.TractorColumns.CreatedAt.Lt(), req.Cursor.Cursor.CreatedAt).
-						WhereOr(
-							buncolgen.TractorColumns.CreatedAt.Eq()+
-								" AND "+buncolgen.TractorColumns.ID.Lt(),
-							req.Cursor.Cursor.CreatedAt,
-							req.Cursor.Cursor.ID,
-						)
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*tractor.Tractor]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*tractor.Tractor) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(items).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTractorColumns(sq, req.TractorRelationIncludes)
+				}).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyTractorLastKnownLocationJoin(sq, req.TractorRelationIncludes)
 				})
-			}
-			return q.
-				Order(buncolgen.TractorColumns.CreatedAt.OrderDesc()).
-				Order(buncolgen.TractorColumns.ID.OrderDesc()).
-				Limit(limit + 1)
-		}).
-		Scan(ctx)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.applyListFilters(sq, req)
+		},
+	})
 	if err != nil {
-		log.Error("failed to scan cursor tractors", zap.Error(err))
+		log.Error("failed to scan tractors", zap.Error(err))
 		return nil, err
 	}
 
-	hasNextPage := len(entities) > limit
-	if hasNextPage {
-		entities = entities[:limit]
-	}
-
-	return &pagination.CursorListResult[*tractor.Tractor]{
-		Items:       entities,
-		HasNextPage: hasNextPage,
-	}, nil
+	return result, nil
 }
 
 func (r *repository) Create(
@@ -460,7 +429,7 @@ func applyTractorColumns(
 	includes repositories.TractorRelationIncludes,
 ) *bun.SelectQuery {
 	if len(includes.TractorColumns) == 0 {
-		return q
+		return q.ColumnExpr(buncolgen.TractorTable.All())
 	}
 
 	return q.Column(includes.TractorColumns...)

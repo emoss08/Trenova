@@ -90,3 +90,45 @@ func TestEncodeCursor_OutputShape(t *testing.T) {
 		string(bytes),
 	)
 }
+
+func TestEncodeCursorFromEntityWithValues_UsesExplicitValues(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("item_")
+	item := cursorTestItem{
+		ID:        id,
+		CreatedAt: 1710000000,
+		Name:      "hydrated-name",
+	}
+
+	encoded, err := EncodeCursorFromEntityWithValues(
+		item,
+		[]CursorSortField{
+			{Field: "name", Direction: "asc"},
+			{Field: "id", Direction: "asc"},
+		},
+		[]any{"sql-name", id.String()},
+	)
+	require.NoError(t, err)
+
+	cursor, err := DecodeCursor(encoded)
+	require.NoError(t, err)
+	assert.Equal(t, id, cursor.ID)
+	assert.Equal(t, []any{"sql-name", id.String()}, cursor.Values)
+}
+
+func TestEncodeCursorFromEntityWithValues_RejectsValueCountMismatch(t *testing.T) {
+	t.Parallel()
+
+	_, err := EncodeCursorFromEntityWithValues(
+		cursorTestItem{ID: pulid.MustNew("item_"), CreatedAt: 1710000000},
+		[]CursorSortField{
+			{Field: "name", Direction: "asc"},
+			{Field: "id", Direction: "asc"},
+		},
+		[]any{"sql-name"},
+	)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cursor sort values do not match cursor sort shape")
+}

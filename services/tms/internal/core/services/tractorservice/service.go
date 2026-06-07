@@ -67,38 +67,13 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListTractorsRequest,
-) (*pagination.ListResult[*tractor.Tractor], error) {
+) (*pagination.CursorListResult[*tractor.Tractor], error) {
 	log := s.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	log.Info("listing tractors")
 	result, err := s.repo.List(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	if shouldIncludeTractorCustomFields(req.TractorRelationIncludes) {
-		err = s.attachCustomFields(ctx, req.Filter.TenantInfo, result.Items)
-	}
-	if err != nil {
-		log.Warn("failed to load custom fields for tractors", zap.Error(err))
-	}
-
-	return result, nil
-}
-
-func (s *Service) ListCursor(
-	ctx context.Context,
-	req *repositories.ListTractorsCursorRequest,
-) (*pagination.CursorListResult[*tractor.Tractor], error) {
-	log := s.l.With(
-		zap.String("operation", "ListCursor"),
-		zap.Any("request", req),
-	)
-
-	result, err := s.repo.ListCursor(ctx, req)
 	if err != nil {
 		return nil, err
 	}

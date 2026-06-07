@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/trailerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -93,8 +94,8 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 
 	trID := pulid.MustNew("tr_")
 	repo := mocks.NewMockTrailerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{
+	repo.On("List", mock.Anything, mock.Anything).Return(
+		pagination.NewCursorListResult([]*trailer.Trailer{
 			{
 				ID:             trID,
 				OrganizationID: testutil.TestOrgID,
@@ -102,9 +103,9 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 				Code:           "TR001",
 				Status:         domaintypes.EquipmentStatusAvailable,
 			},
-		},
-		Total: 1,
-	}, nil)
+		}, pagination.DefaultLimit),
+		nil,
+	)
 
 	handler := setupTrailerHandler(t, repo)
 
@@ -118,7 +119,7 @@ func TestTrailerHandler_List_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, 1, resp.Count)
 	assert.Len(t, resp.Results, 1)
@@ -128,17 +129,16 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{},
-		Total: 50,
-	}, nil)
+	repo.On("List", mock.Anything, mock.MatchedBy(func(req *repositories.ListTrailersRequest) bool {
+		return req.Cursor.Limit == 10 && req.Cursor.After == ""
+	})).Return(pagination.NewCursorListResult([]*trailer.Trailer{}, 10), nil)
 
 	handler := setupTrailerHandler(t, repo)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodGet).
 		WithPath("/api/v1/trailers/").
-		WithQuery(map[string]string{"limit": "10", "offset": "20"}).
+		WithQuery(map[string]string{"limit": "10"}).
 		WithDefaultAuthContext()
 
 	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
@@ -146,9 +146,9 @@ func TestTrailerHandler_List_WithPagination(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
-	assert.Equal(t, 50, resp.Count)
+	assert.Equal(t, 0, resp.Count)
 }
 
 func TestTrailerHandler_List_Error(t *testing.T) {
@@ -174,10 +174,10 @@ func TestTrailerHandler_List_WithQueryParams(t *testing.T) {
 	t.Parallel()
 
 	repo := mocks.NewMockTrailerRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*trailer.Trailer]{
-		Items: []*trailer.Trailer{},
-		Total: 0,
-	}, nil)
+	repo.On("List", mock.Anything, mock.Anything).Return(
+		pagination.NewCursorListResult([]*trailer.Trailer{}, pagination.DefaultLimit),
+		nil,
+	)
 
 	handler := setupTrailerHandler(t, repo)
 

@@ -11,6 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -40,22 +43,31 @@ func New(p Params) repositories.WorkerPTORepository {
 	}
 }
 
-func (r *repository) filterQuery(
+func (r *repository) applyListFiltersWithoutSort(
 	q *bun.SelectQuery,
 	req *repositories.ListPTORequest,
 ) *bun.SelectQuery {
 	log := r.l.With(
-		zap.String("operation", "filterQuery"),
+		zap.String("operation", "applyListFiltersWithoutSort"),
 		zap.Any("request", req),
 	)
 
-	q = querybuilder.ApplyFilters(
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.WorkerPTOTable.Alias,
 		req.Filter,
 		(*worker.WorkerPTO)(nil),
 	)
 
+	return r.applyListPTOFilters(q, req, log, true)
+}
+
+func (r *repository) applyListPTOFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListPTORequest,
+	log *zap.Logger,
+	includeWorkerRelation bool,
+) *bun.SelectQuery {
 	cols := buncolgen.WorkerPTOColumns
 
 	if req.Status != "" {
@@ -90,40 +102,78 @@ func (r *repository) filterQuery(
 		q = q.Where(cols.StartDate.Lte(), req.StartDateTo)
 	}
 
-	if req.IncludeWorker {
+	if includeWorkerRelation && req.IncludeWorker {
 		q = q.Relation(buncolgen.WorkerPTORelations.Worker)
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return q
+}
+
+func (r *repository) cursorFilterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListPTORequest,
+) (*bun.SelectQuery, error) {
+	log := r.l.With(
+		zap.String("operation", "cursorFilterQuery"),
+		zap.Any("request", req),
+	)
+
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.WorkerPTOTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*worker.WorkerPTO)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+	q = r.applyListPTOFilters(q, req, log, true)
+
+	return q, nil
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListPTORequest,
-) (*pagination.ListResult[*worker.WorkerPTO], error) {
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	log := r.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.SafeLimit())
-
 	total, err := r.db.DB().
 		NewSelect().
-		Model(&entities).
+		Model((*worker.WorkerPTO)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
+			return r.applyListFiltersWithoutSort(sq, req)
 		}).
-		ScanAndCount(ctx)
+		Count(ctx)
 	if err != nil {
-		log.Error("failed to scan and count PTO records", zap.Error(err))
+		log.Error("failed to count PTO records", zap.Error(err))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*worker.WorkerPTO]{
-		Items: entities,
-		Total: total,
-	}, nil
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
+			return r.db.DB().
+				NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.WorkerPTOTable.All())
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.cursorFilterQuery(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan PTO records", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (r *repository) GetByID(
@@ -366,42 +416,89 @@ func (r *repository) filterUpcomingPTOQuery(
 	}
 
 	q = r.applyUpcomingPTOWhereGroup(q, req, startFloor, endCeiling, parsed)
-	q = q.Order(
-		buncolgen.WorkerPTOColumns.StartDate.OrderAsc(),
-		buncolgen.WorkerPTOColumns.EndDate.OrderAsc(),
-	)
-	q = q.RelationWithOpts(buncolgen.WorkerPTORelations.Worker, bun.RelationOpts{
+	return q.RelationWithOpts(buncolgen.WorkerPTORelations.Worker, bun.RelationOpts{
 		Apply: r.workerRelationApplyForUpcoming(req, log),
 	})
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+}
+
+func upcomingPTOCursorFilter(req *repositories.ListUpcomingPTORequest) *pagination.QueryOptions {
+	filter := *req.Filter
+	filter.Sort = []domaintypes.SortField{
+		{
+			Field:     "startDate",
+			Direction: dbtype.SortDirectionAsc,
+		},
+		{
+			Field:     "endDate",
+			Direction: dbtype.SortDirectionAsc,
+		},
+	}
+	return &filter
+}
+
+func (r *repository) cursorUpcomingPTOQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListUpcomingPTORequest,
+) (*bun.SelectQuery, error) {
+	q = r.filterUpcomingPTOQuery(q, req)
+	filter := upcomingPTOCursorFilter(req)
+	err := querybuilder.ApplyCursorSort(
+		q,
+		buncolgen.WorkerPTOTable.Alias,
+		filter,
+		req.Cursor,
+		(*worker.WorkerPTO)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+	req.Filter.CursorSort = filter.CursorSort
+	req.Filter.CursorColumns = filter.CursorColumns
+
+	return q, nil
 }
 
 func (r *repository) ListUpcoming(
 	ctx context.Context,
 	req *repositories.ListUpcomingPTORequest,
-) (*pagination.ListResult[*worker.WorkerPTO], error) {
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	log := r.l.With(
 		zap.String("operation", "ListUpcoming"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*worker.WorkerPTO, 0, req.Filter.Pagination.SafeLimit())
 	total, err := r.db.DB().
 		NewSelect().
-		Model(&entities).
+		Model((*worker.WorkerPTO)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return r.filterUpcomingPTOQuery(sq, req)
 		}).
-		ScanAndCount(ctx)
+		Count(ctx)
+	if err != nil {
+		log.Error("failed to count upcoming PTOs", zap.Error(err), zap.Any("request", req))
+		return nil, err
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
+			return r.db.DB().
+				NewSelect().
+				Model(items).
+				ColumnExpr(buncolgen.WorkerPTOTable.All())
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.cursorUpcomingPTOQuery(sq, req)
+		},
+	})
 	if err != nil {
 		log.Error("failed to scan and count upcoming PTOs", zap.Error(err), zap.Any("request", req))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*worker.WorkerPTO]{
-		Items: entities,
-		Total: total,
-	}, nil
+	return result, nil
 }
 
 type ptoAggregateRow struct {

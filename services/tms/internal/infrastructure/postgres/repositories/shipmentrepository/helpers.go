@@ -45,11 +45,46 @@ func standardShipmentFilter(
 	return q
 }
 
-func filterQuery(
+func cursorFilterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListShipmentsRequest,
+) (*bun.SelectQuery, error) {
+	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return standardShipmentFilter(sq, req.ShipmentOptions)
+	})
+
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.ShipmentTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*shipment.Shipment)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+	if req.ShipmentOptions.Status != "" {
+		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(req.ShipmentOptions.Status))
+	}
+
+	return q, nil
+}
+
+func countShipmentListQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListShipmentsRequest,
 ) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
+	countReq := *req
+	countReq.ShipmentOptions.ExpandShipmentDetails = false
+
+	return baseShipmentListQuery(q, &countReq)
+}
+
+func baseShipmentListQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListShipmentsRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
 		buncolgen.ShipmentTable.Alias,
 		req.Filter,
@@ -60,7 +95,45 @@ func filterQuery(
 		return standardShipmentFilter(sq, req.ShipmentOptions)
 	})
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	if req.ShipmentOptions.Status != "" {
+		q = q.Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.Status(req.ShipmentOptions.Status))
+	}
+
+	return q
+}
+
+func unassignedShipmentListQuery(
+	q *bun.SelectQuery,
+	dba bun.IDB,
+	req *repositories.GetUnassignedShipmentsRequest,
+) (*bun.SelectQuery, error) {
+	q = q.Relation(buncolgen.ShipmentRelations.Customer).
+		Where(buncolgen.ShipmentColumns.Status.Eq(), shipment.StatusNew).
+		Where("NOT EXISTS (?)", unassignedShipmentPredicate(dba))
+
+	return querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.ShipmentTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*shipment.Shipment)(nil),
+	)
+}
+
+func unassignedShipmentPredicate(dba bun.IDB) *bun.SelectQuery {
+	return dba.NewSelect().
+		TableExpr(`"shipment_moves" AS "sm"`).
+		ColumnExpr("1").
+		Join(`JOIN "assignments" AS "a"`).
+		JoinOn("a.shipment_move_id = sm.id").
+		JoinOn("a.organization_id = sm.organization_id").
+		JoinOn("a.business_unit_id = sm.business_unit_id").
+		JoinOn("a.archived_at IS NULL").
+		JoinOn("a.status != ?", shipment.AssignmentStatusCanceled).
+		Where("sm.shipment_id = sp.id").
+		Where("sm.organization_id = sp.organization_id").
+		Where("sm.business_unit_id = sp.business_unit_id").
+		Where("sm.status != ?", shipment.MoveStatusCanceled)
 }
 
 func (r *repository) hydrateMoves(

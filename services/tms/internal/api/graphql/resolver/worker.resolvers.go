@@ -99,16 +99,15 @@ func (r *pTOChartDataPointResolver) Workers(ctx context.Context, obj *repositori
 }
 
 // Workers is the resolver for the workers field.
-func (r *queryResolver) Workers(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) (*gqlmodel.WorkerConnection, error) {
+func (r *queryResolver) Workers(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) (*gqlmodel.WorkerConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorker, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
@@ -120,8 +119,7 @@ func (r *queryResolver) Workers(ctx context.Context, first *int, offset *int, af
 	}
 	filter := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Limit,
-		Offset:       page.Offset,
+		Limit:        page.Cursor.Limit,
 		Query:        queryValue,
 		FieldFilters: fieldFilters,
 		FilterGroups: filterGroups,
@@ -129,25 +127,25 @@ func (r *queryResolver) Workers(ctx context.Context, first *int, offset *int, af
 	})
 	result, err := r.workerService.List(ctx, &repositories.ListWorkersRequest{
 		Filter: filter,
+		Cursor: page.Cursor,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return workerListConnectionToModel(result, page.Offset), nil
+	return workerCursorConnectionToModel(result)
 }
 
 // WorkerPTOEntries is the resolver for the workerPTOEntries field.
-func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error) {
+func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
@@ -159,8 +157,7 @@ func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, offset
 	}
 	filter := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Limit,
-		Offset:       page.Offset,
+		Limit:        page.Cursor.Limit,
 		Query:        queryValue,
 		FieldFilters: fieldFilters,
 		FilterGroups: filterGroups,
@@ -177,6 +174,7 @@ func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, offset
 	}
 	result, err := r.workerPTOService.List(ctx, &repositories.ListPTORequest{
 		Filter:        filter,
+		Cursor:        page.Cursor,
 		Status:        ptoStatusString(status),
 		Type:          ptoTypeString(typeArg),
 		StartDateFrom: int64Value(startDateFrom),
@@ -188,20 +186,19 @@ func (r *queryResolver) WorkerPTOEntries(ctx context.Context, first *int, offset
 		return nil, err
 	}
 
-	return workerPTOListConnectionToModel(result, page.Offset), nil
+	return workerPTOCursorConnectionToModel(result)
 }
 
 // UpcomingWorkerPto is the resolver for the upcomingWorkerPTO field.
-func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, offset *int, after *string, status *worker.PTOStatus, typeArg *worker.PTOType, startDate *int, endDate *int, workerID *string, fleetCodeID *string, timezone *string) (*gqlmodel.WorkerPTOConnection, error) {
+func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, after *string, status *worker.PTOStatus, typeArg *worker.PTOType, startDate *int, endDate *int, workerID *string, fleetCodeID *string, timezone *string) (*gqlmodel.WorkerPTOConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceWorkerPTO, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
@@ -209,11 +206,11 @@ func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, offse
 
 	filter := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo: tenantInfo(authCtx),
-		Limit:      page.Limit,
-		Offset:     page.Offset,
+		Limit:      page.Cursor.Limit,
 	})
 	result, err := r.workerPTOService.ListUpcoming(ctx, &repositories.ListUpcomingPTORequest{
 		Filter: filter,
+		Cursor: page.Cursor,
 		ListWorkerPTOFilterOptions: repositories.ListWorkerPTOFilterOptions{
 			Status:      ptoStatusString(status),
 			Type:        ptoTypeString(typeArg),
@@ -228,7 +225,7 @@ func (r *queryResolver) UpcomingWorkerPto(ctx context.Context, first *int, offse
 		return nil, err
 	}
 
-	return workerPTOListConnectionToModel(result, page.Offset), nil
+	return workerPTOCursorConnectionToModel(result)
 }
 
 // WorkerPTOChartData is the resolver for the workerPTOChartData field.

@@ -59,7 +59,7 @@ func New(p Params) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListPTORequest,
-) (*pagination.ListResult[*worker.WorkerPTO], error) {
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return s.repo.List(ctx, req)
 }
 
@@ -328,6 +328,6 @@ func (s *Service) validateChartRequest(req *repositories.PTOChartRequest) error 
 func (s *Service) ListUpcoming(
 	ctx context.Context,
 	req *repositories.ListUpcomingPTORequest,
-) (*pagination.ListResult[*worker.WorkerPTO], error) {
+) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
 	return s.repo.ListUpcoming(ctx, req)
 }

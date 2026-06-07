@@ -50,12 +50,6 @@ func FullTrailerRelationIncludes() TrailerRelationIncludes {
 
 type ListTrailersRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-	TrailerRelationIncludes
-	Status string `json:"status"`
-}
-
-type ListTrailersCursorRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"cursor"`
 	TrailerRelationIncludes
 	Status string `json:"status"`
@@ -116,10 +110,6 @@ type TrailerRepository interface {
 	List(
 		ctx context.Context,
 		req *ListTrailersRequest,
-	) (*pagination.ListResult[*trailer.Trailer], error)
-	ListCursor(
-		ctx context.Context,
-		req *ListTrailersCursorRequest,
 	) (*pagination.CursorListResult[*trailer.Trailer], error)
 	GetByID(
 		ctx context.Context,

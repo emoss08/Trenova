@@ -192,7 +192,6 @@ input WorkerPatchInput {
 extend type Query {
   workers(
     first: Int = 20
-    offset: Int
     after: String
     query: String
     fieldFilters: [FieldFilterInput!]
@@ -201,7 +200,6 @@ extend type Query {
   ): WorkerConnection!
   workerPTOEntries(
     first: Int = 20
-    offset: Int
     after: String
     query: String
     fieldFilters: [FieldFilterInput!]
@@ -216,7 +214,6 @@ extend type Query {
   ): WorkerPTOConnection!
   upcomingWorkerPTO(
     first: Int = 20
-    offset: Int
     after: String
     status: PTOStatus
     type: PTOType

@@ -351,9 +351,9 @@ func TestShipmentHandler_List_Success(t *testing.T) {
 				req.ShipmentOptions.ExpandShipmentDetails &&
 				req.ShipmentOptions.Status == string(shipment.StatusAssigned)
 		})).
-		Return(&pagination.ListResult[*shipment.Shipment]{
-			Items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
-			Total: 1,
+		Return(&pagination.CursorListResult[*shipment.Shipment]{
+			Items:       []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
+			HasNextPage: false,
 		}, nil).
 		Once()
 
@@ -385,13 +385,14 @@ func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 				return req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
 					req.Filter.TenantInfo.BuID == testutil.TestBuID &&
 					req.Filter.Pagination.SafeLimit() == 10 &&
-					req.Filter.Pagination.SafeOffset() == 5 &&
+					req.Cursor.Limit == 10 &&
+					req.Cursor.After == "" &&
 					req.ShipmentOptions.ExpandShipmentDetails
 			}),
 		).
-		Return(&pagination.ListResult[*shipment.Shipment]{
-			Items: []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
-			Total: 1,
+		Return(&pagination.CursorListResult[*shipment.Shipment]{
+			Items:       []*shipment.Shipment{{ID: pulid.MustNew("shp_")}},
+			HasNextPage: false,
 		}, nil).
 		Once()
 
@@ -402,7 +403,6 @@ func TestShipmentHandler_GetUnassigned_Success(t *testing.T) {
 		WithPath("/api/v1/shipments/unassigned/").
 		WithQuery(map[string]string{
 			"limit":                 "10",
-			"offset":                "5",
 			"expandShipmentDetails": "true",
 		}).
 		WithDefaultAuthContext()
@@ -588,6 +588,61 @@ func TestShipmentHandler_GetCommentCount_Success(t *testing.T) {
 	var resp map[string]int
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, 3, resp["count"])
+}
+
+func TestShipmentHandler_ListComments_CursorSortValidationError(t *testing.T) {
+	t.Parallel()
+
+	service := mocks.NewMockShipmentService(t)
+	commentService := mocks.NewMockShipmentCommentService(t)
+	shipmentID := pulid.MustNew("shp_")
+	commentID := pulid.MustNew("shc_")
+	encodedCursor, err := pagination.EncodeCursor(pagination.Cursor{
+		ID: commentID,
+		Sort: []pagination.CursorSortField{
+			{Field: "createdAt", Direction: "asc"},
+			{Field: "id", Direction: "desc"},
+		},
+		Values: []any{int64(1), commentID.String()},
+	})
+	require.NoError(t, err)
+
+	commentService.EXPECT().
+		ListByShipmentID(mock.Anything, mock.MatchedBy(func(req *repositories.ListShipmentCommentsRequest) bool {
+			return req.ShipmentID == shipmentID &&
+				req.Filter.TenantInfo.OrgID == testutil.TestOrgID &&
+				req.Filter.TenantInfo.BuID == testutil.TestBuID &&
+				req.Cursor.After == encodedCursor &&
+				req.Cursor.Cursor.ID == commentID
+		})).
+		Return(nil, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalid,
+			"Cursor sort does not match request sort",
+		)).
+		Once()
+
+	handler := setupShipmentHandlerWithComments(t, service, commentService)
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodGet).
+		WithPath("/api/v1/shipments/" + shipmentID.String() + "/comments/").
+		WithQuery(map[string]string{"after": encodedCursor}).
+		WithDefaultAuthContext()
+
+	handler.RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	assert.Equal(t, http.StatusBadRequest, ginCtx.ResponseCode())
+
+	var problem helpers.ProblemDetail
+	require.NoError(t, ginCtx.ResponseJSON(&problem))
+	assert.Equal(t, "https://api.trenova.app/problems/validation-error", problem.Type)
+	assert.Equal(t, "Validation Failed", problem.Title)
+	assert.Equal(t, http.StatusBadRequest, problem.Status)
+	require.Len(t, problem.Errors, 1)
+	assert.Equal(t, "after", problem.Errors[0].Field)
+	assert.Equal(t, string(errortypes.ErrInvalid), problem.Errors[0].Code)
+	assert.Equal(t, "Cursor sort does not match request sort", problem.Errors[0].Message)
 }
 
 func TestShipmentHandler_CreateComment_Success(t *testing.T) {

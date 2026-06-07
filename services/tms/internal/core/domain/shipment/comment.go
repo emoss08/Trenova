@@ -6,11 +6,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
+
+var _ pagination.CursorEntity = (*ShipmentComment)(nil)
 
 const (
 	MaxCommentLength   = 5000
@@ -18,7 +21,8 @@ const (
 )
 
 type ShipmentComment struct {
-	bun.BaseModel `bun:"table:shipment_comments,alias:sc" json:"-"`
+	bun.BaseModel             `bun:"table:shipment_comments,alias:sc" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID               pulid.ID          `json:"id"                         bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID   pulid.ID          `json:"businessUnitId"             bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -145,6 +149,10 @@ func (m *ShipmentCommentMention) BeforeAppendModel(_ context.Context, query bun.
 
 func (c *ShipmentComment) GetID() pulid.ID {
 	return c.ID
+}
+
+func (c *ShipmentComment) GetCreatedAt() int64 {
+	return c.CreatedAt
 }
 
 func (c *ShipmentComment) GetOrganizationID() pulid.ID {

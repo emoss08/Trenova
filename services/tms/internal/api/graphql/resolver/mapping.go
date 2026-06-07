@@ -1,8 +1,6 @@
 package resolver
 
 import (
-	"strconv"
-
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -114,51 +112,35 @@ func queryOptionsFromGraphQL(opts gqlListOptions) *pagination.QueryOptions {
 	}
 }
 
-type gqlOffsetPageInput struct {
-	First  *int
-	Offset *int
-	After  *string
+type gqlCursorPageInput struct {
+	First *int
+	After *string
 }
 
-type gqlOffsetPage struct {
-	Limit  int
-	Offset int
+type gqlEntityCursorPage struct {
+	Cursor pagination.CursorInfo
 }
 
-func offsetPageFromGraphQL(input gqlOffsetPageInput) (gqlOffsetPage, error) {
+func entityCursorPageFromGraphQL(input gqlCursorPageInput) (gqlEntityCursorPage, error) {
 	limit := pagination.DefaultLimit
 	if input.First != nil {
 		limit = pagination.ClampLimit(*input.First)
 	}
 
-	if input.Offset != nil {
-		return gqlOffsetPage{
-			Limit:  limit,
-			Offset: pagination.ClampOffset(*input.Offset),
-		}, nil
+	afterValue := ""
+	if input.After != nil {
+		afterValue = *input.After
 	}
-
-	if input.After == nil || *input.After == "" {
-		return gqlOffsetPage{Limit: limit}, nil
-	}
-
-	parsedOffset, err := strconv.Atoi(*input.After)
+	cursor, err := pagination.NewCursorInfo(limit, afterValue)
 	if err != nil {
-		return gqlOffsetPage{}, errortypes.NewValidationError(
+		return gqlEntityCursorPage{}, errortypes.NewValidationError(
 			"after",
 			errortypes.ErrInvalidFormat,
 			"Cursor is invalid",
 		)
 	}
 
-	return gqlOffsetPage{
-		Limit:  limit,
-		Offset: pagination.ClampOffset(parsedOffset),
-	}, nil
-}
-
-func offsetCursor(offset int) string {
-	return strconv.Itoa(offset)
+	return gqlEntityCursorPage{Cursor: cursor}, nil
 }
 
 func fieldFiltersFromGraphQL(inputs []*gqlmodel.FieldFilterInput) []domaintypes.FieldFilter {

@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -20,8 +19,7 @@ import (
 )
 
 type selectOptionRegistryEntry struct {
-	permissionResource *permission.Resource
-	resolve            func(context.Context, selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
+	resolve func(context.Context, selectOptionsRequest) (*gqlmodel.SelectOptionConnection, error)
 }
 
 type selectOptionsRequest struct {
@@ -59,15 +57,7 @@ func (r *queryResolver) resolveSelectOptions(
 		)
 	}
 
-	var (
-		authCtx *authctx.AuthContext
-		err     error
-	)
-	if entry.permissionResource != nil {
-		authCtx, err = r.requirePermission(ctx, *entry.permissionResource, permission.OpRead)
-	} else {
-		authCtx, err = r.requireAuthContext(ctx)
-	}
+	authCtx, err := r.requireAuthContext(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -81,15 +71,12 @@ func (r *queryResolver) resolveSelectOptions(
 }
 
 func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry {
-	equipmentManufacturerResource := permission.ResourceEquipmentManufacturer
-
 	return map[gqlmodel.SelectOptionResource]selectOptionRegistryEntry{
 		gqlmodel.SelectOptionResourceEquipmentType: {
 			resolve: r.resolveEquipmentTypeSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEquipmentManufacturer: {
-			permissionResource: &equipmentManufacturerResource,
-			resolve:            r.resolveEquipmentManufacturerSelectOptions,
+			resolve: r.resolveEquipmentManufacturerSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceTrailer: {
 			resolve: r.resolveTrailerSelectOptions,
@@ -418,31 +405,28 @@ func selectOptionConnection(
 	offset int,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	hasNextPage := offset+len(items) < total
-	edges := make([]*gqlmodel.SelectOptionEdge, 0, len(items))
-	for _, item := range items {
+
+	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
+	for i, item := range items {
 		cursor, err := pagination.EncodeCursor(item.cursor)
 		if err != nil {
 			return nil, err
 		}
-
-		edges = append(edges, &gqlmodel.SelectOptionEdge{
+		edges[i] = &gqlmodel.SelectOptionEdge{
 			Node:   item.option,
 			Cursor: cursor,
-		})
-	}
-
-	var endCursor *string
-	if len(edges) > 0 {
-		endCursor = &edges[len(edges)-1].Cursor
+		}
 	}
 
 	return &gqlmodel.SelectOptionConnection{
 		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   endCursor,
-		},
-		TotalCount: &total,
+		PageInfo: pageInfo(
+			hasNextPage,
+			lastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
+				return edge.Cursor
+			}),
+		),
+		TotalCount: totalCountPtr(total),
 	}, nil
 }
 

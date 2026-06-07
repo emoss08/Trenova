@@ -66,12 +66,6 @@ func FullTractorRelationIncludes() TractorRelationIncludes {
 
 type ListTractorsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
-	TractorRelationIncludes
-	Status string `json:"status"`
-}
-
-type ListTractorsCursorRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"cursor"`
 	TractorRelationIncludes
 	Status string `json:"status"`
@@ -136,10 +130,6 @@ type TractorRepository interface {
 	List(
 		ctx context.Context,
 		req *ListTractorsRequest,
-	) (*pagination.ListResult[*tractor.Tractor], error)
-	ListCursor(
-		ctx context.Context,
-		req *ListTractorsCursorRequest,
 	) (*pagination.CursorListResult[*tractor.Tractor], error)
 	GetByID(
 		ctx context.Context,

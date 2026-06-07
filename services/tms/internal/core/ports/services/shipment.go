@@ -138,7 +138,7 @@ type ShipmentService interface {
 	List(
 		ctx context.Context,
 		req *repositories.ListShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Get(
 		ctx context.Context,
 		req *repositories.GetShipmentByIDRequest,
@@ -164,7 +164,7 @@ type ShipmentService interface {
 	GetUnassigned(
 		ctx context.Context,
 		req *repositories.GetUnassignedShipmentsRequest,
-	) (*pagination.ListResult[*shipment.Shipment], error)
+	) (*pagination.CursorListResult[*shipment.Shipment], error)
 	Update(
 		ctx context.Context,
 		entity *shipment.Shipment,

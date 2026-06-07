@@ -202,7 +202,7 @@ func (r *mutationResolver) TransferShipmentOwnership(ctx context.Context, id str
 }
 
 // TransferShipmentToBilling is the resolver for the transferShipmentToBilling field.
-func (r *mutationResolver) TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (map[string]any, error) {
+func (r *mutationResolver) TransferShipmentToBilling(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.BillingQueueItem, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (r *mutationResolver) TransferShipmentToBilling(ctx context.Context, input 
 		return nil, err
 	}
 
-	return optionalJSON(item)
+	return requiredBillingQueueItemToModel(item)
 }
 
 // BulkTransferShipmentsToBilling is the resolver for the bulkTransferShipmentsToBilling field.
@@ -492,24 +492,22 @@ func (r *mutationResolver) DeleteShipmentComment(ctx context.Context, shipmentID
 }
 
 // Shipments is the resolver for the shipments field.
-func (r *queryResolver) Shipments(ctx context.Context, first *int, offset *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, expandShipmentDetails *bool, status *string) (*gqlmodel.ShipmentConnection, error) {
+func (r *queryResolver) Shipments(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, expandShipmentDetails *bool, status *string) (*gqlmodel.ShipmentConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
 	}
 	filter := queryOptionsFromGraphQL(gqlListOptions{
 		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Limit,
-		Offset:       page.Offset,
+		Limit:        page.Cursor.Limit,
 		Query:        stringValue(query),
 		FieldFilters: fieldFilters,
 		FilterGroups: filterGroups,
@@ -521,6 +519,7 @@ func (r *queryResolver) Shipments(ctx context.Context, first *int, offset *int, 
 	}
 	result, err := r.shipmentService.List(ctx, &repositories.ListShipmentsRequest{
 		Filter: filter,
+		Cursor: page.Cursor,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: expand,
 			Status:                stringValue(status),
@@ -530,7 +529,7 @@ func (r *queryResolver) Shipments(ctx context.Context, first *int, offset *int, 
 		return nil, err
 	}
 
-	return shipmentConnectionToModel(result, page.Offset)
+	return shipmentConnectionToModel(result)
 }
 
 // Shipment is the resolver for the shipment field.
@@ -564,26 +563,26 @@ func (r *queryResolver) Shipment(ctx context.Context, id string, expandShipmentD
 }
 
 // UnassignedShipments is the resolver for the unassignedShipments field.
-func (r *queryResolver) UnassignedShipments(ctx context.Context, first *int, offset *int, after *string) (*gqlmodel.ShipmentConnection, error) {
+func (r *queryResolver) UnassignedShipments(ctx context.Context, first *int, after *string) (*gqlmodel.ShipmentConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
 	}
+	filter := queryOptionsFromGraphQL(gqlListOptions{
+		TenantInfo: tenantInfo(authCtx),
+		Limit:      page.Cursor.Limit,
+	})
 	result, err := r.shipmentService.GetUnassigned(ctx, &repositories.GetUnassignedShipmentsRequest{
-		Filter: queryOptionsFromGraphQL(gqlListOptions{
-			TenantInfo: tenantInfo(authCtx),
-			Limit:      page.Limit,
-			Offset:     page.Offset,
-		}),
+		Filter: filter,
+		Cursor: page.Cursor,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
@@ -592,11 +591,11 @@ func (r *queryResolver) UnassignedShipments(ctx context.Context, first *int, off
 		return nil, err
 	}
 
-	return shipmentConnectionToModel(result, page.Offset)
+	return shipmentConnectionToModel(result)
 }
 
 // ShipmentComments is the resolver for the shipmentComments field.
-func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string, first *int, offset *int, after *string) (*gqlmodel.ShipmentCommentConnection, error) {
+func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string, first *int, after *string) (*gqlmodel.ShipmentCommentConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceShipment, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -606,27 +605,27 @@ func (r *queryResolver) ShipmentComments(ctx context.Context, shipmentID string,
 	if err != nil {
 		return nil, err
 	}
-	page, err := offsetPageFromGraphQL(gqlOffsetPageInput{
-		First:  first,
-		Offset: offset,
-		After:  after,
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: first,
+		After: after,
 	})
 	if err != nil {
 		return nil, err
 	}
+	filter := queryOptionsFromGraphQL(gqlListOptions{
+		TenantInfo: tenantInfo(authCtx),
+		Limit:      page.Cursor.Limit,
+	})
 	result, err := r.shipmentCommentService.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
 		ShipmentID: parsedShipmentID,
-		Filter: queryOptionsFromGraphQL(gqlListOptions{
-			TenantInfo: tenantInfo(authCtx),
-			Limit:      page.Limit,
-			Offset:     page.Offset,
-		}),
+		Filter:     filter,
+		Cursor:     page.Cursor,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return shipmentCommentConnectionToModel(result, page.Offset)
+	return shipmentCommentConnectionToModel(result)
 }
 
 // ShipmentCommentCount is the resolver for the shipmentCommentCount field.

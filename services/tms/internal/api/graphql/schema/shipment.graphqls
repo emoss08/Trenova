@@ -95,6 +95,36 @@ enum ShipmentCommentSource {
   AI
 }
 
+enum BillingQueueStatus {
+  ReadyForReview
+  InReview
+  Approved
+  Posted
+  OnHold
+  SentBackToOps
+  Exception
+  Canceled
+}
+
+enum BillType {
+  Invoice
+  CreditMemo
+  DebitMemo
+}
+
+enum BillingQueueExceptionReasonCode {
+  MissingDocumentation
+  IncorrectRates
+  WeightDiscrepancy
+  AccessorialDispute
+  DuplicateCharge
+  MissingReferenceNumber
+  CustomerInformationError
+  ServiceFailure
+  RateNotOnFile
+  Other
+}
+
 type ShipmentEdge {
   node: Shipment!
   cursor: String!
@@ -150,18 +180,75 @@ type Shipment {
   moves: [ShipmentMove!]!
   additionalCharges: [ShipmentAdditionalCharge!]!
   commodities: [ShipmentCommodity!]!
-  customer: JSON
+  customer: ShipmentCustomer
   owner: User
-  formulaTemplate: JSON
+  formulaTemplate: ShipmentFormulaTemplate
 }
 
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
   expression: String!
+  "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
   resolvedVariables: JSON!
   result: Float!
   ratedAt: Int!
+}
+
+type ShipmentCustomer {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  stateId: ID!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  postalCode: String!
+  isGeocoded: Boolean!
+  longitude: Float
+  latitude: Float
+  placeId: String!
+  externalId: String!
+  allowConsolidation: Boolean!
+  exclusiveConsolidation: Boolean!
+  consolidationPriority: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentFormulaTemplate {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  name: String!
+  description: String!
+  type: String!
+  expression: String!
+  status: String!
+  schemaId: String!
+  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  "Formula template metadata is admin-defined and intentionally open-ended."
+  metadata: JSON
+  version: Int!
+  sourceTemplateId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type ShipmentFormulaVariableDefinition {
+  name: String!
+  type: String!
+  description: String!
+  required: Boolean!
+  "Formula variable defaults can be scalar, array, object, or null by template design."
+  defaultValue: Any
+  source: String
 }
 
 type ShipmentMove {
@@ -180,6 +267,7 @@ type ShipmentMove {
   distanceDataVersion: String
   distanceRoutingType: String
   distanceUnits: String
+  "Distance providers may return provider-specific route details, so this remains intentionally open-ended."
   distanceMetadata: JSON
   version: Int!
   createdAt: Int!
@@ -246,7 +334,22 @@ type ShipmentAdditionalCharge {
   version: Int!
   createdAt: Int!
   updatedAt: Int!
-  accessorialCharge: JSON
+  accessorialCharge: ShipmentAccessorialCharge
+}
+
+type ShipmentAccessorialCharge {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  code: String!
+  description: String!
+  status: EntityStatus!
+  method: String!
+  rateUnit: String!
+  amount: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
 }
 
 type ShipmentCommodity {
@@ -260,7 +363,29 @@ type ShipmentCommodity {
   version: Int!
   createdAt: Int!
   updatedAt: Int!
-  commodity: JSON
+  commodity: ShipmentCommodityDetail
+}
+
+type ShipmentCommodityDetail {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  hazardousMaterialId: ID
+  status: EntityStatus!
+  name: String!
+  description: String!
+  minTemperature: Int
+  maxTemperature: Int
+  weightPerUnit: Float
+  linearFeetPerUnit: Float
+  maxQuantityPerShipment: Float
+  freightClass: String!
+  loadingInstructions: String!
+  stackable: Boolean!
+  fragile: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
 }
 
 type ShipmentUIPolicy {
@@ -288,7 +413,18 @@ type ShipmentBillingValidation {
 type ShipmentBillingWarning {
   code: String!
   message: String!
-  context: JSON
+  context: ShipmentBillingWarningContext
+}
+
+type ShipmentBillingWarningContext {
+  documentTypeId: String
+  documentTypeCode: String
+  documentTypeName: String
+  documentCount: Int
+  requirementCount: Int
+  missingRequirementCount: Int
+  serviceFailureIds: [String!]
+  unresolvedCount: Int
 }
 
 type ShipmentServiceFailureBillingContext {
@@ -393,6 +529,41 @@ type ShipmentBulkTransferToBillingResponse {
   errorCount: Int!
 }
 
+type BillingQueueItem {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  shipmentId: ID!
+  assignedBillerId: ID
+  number: String!
+  status: BillingQueueStatus!
+  billType: BillType!
+  exceptionReasonCode: BillingQueueExceptionReasonCode
+  reviewNotes: String!
+  exceptionNotes: String!
+  reviewStartedAt: Int
+  reviewCompletedAt: Int
+  canceledById: ID
+  canceledAt: Int
+  cancelReason: String!
+  isAdjustmentOrigin: Boolean!
+  sourceInvoiceId: ID
+  sourceInvoiceAdjustmentId: ID
+  sourceCreditMemoInvoiceId: ID
+  correctionGroupId: ID
+  rebillStrategy: String
+  requiresReplacementReview: Boolean!
+  rerateVariancePercent: String!
+  "Adjustment context contains invoice-adjustment workflow payloads and serialized provider/domain snapshots, so it remains intentionally open-ended."
+  adjustmentContext: JSON!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  shipment: Shipment
+  assignedBiller: User
+  canceledBy: User
+}
+
 type ShipmentCommentEdge {
   node: ShipmentComment!
   cursor: String!
@@ -430,6 +601,7 @@ type ShipmentComment {
   visibility: ShipmentCommentVisibility!
   priority: ShipmentCommentPriority!
   source: ShipmentCommentSource!
+  "Comment metadata is written by users, integrations, and system workflows, so keys vary by source."
   metadata: JSON
   editedAt: Int
   version: Int!
@@ -451,7 +623,133 @@ type ShipmentSavedViewCounts {
 type ShipmentAnalytics {
   page: String!
   savedViewCounts: ShipmentSavedViewCounts
-  data: JSON!
+  activeShipments: ShipmentActiveShipments
+  onTimePercent: ShipmentOnTime
+  revenueToday: ShipmentRevenueToday
+  emptyMilePercent: ShipmentEmptyMile
+  atRisk: ShipmentAtRisk
+  unassigned: ShipmentUnassignedAnalytics
+  readyToDispatch: ShipmentReadyToDispatch
+  detentionWatchlist: ShipmentDetentionWatchlist
+  customerMix: ShipmentCustomerMix
+  tomorrowsPickups: ShipmentTomorrowsPickups
+  laneHeatmap: ShipmentLaneHeatmap
+}
+
+type ShipmentActiveShipments {
+  count: Int!
+  changeFromYesterday: Int!
+  sparkline: [ShipmentSparklinePoint!]!
+  breakdown: ShipmentActiveShipmentsBreakdown!
+}
+
+type ShipmentActiveShipmentsBreakdown {
+  inTransit: Int!
+  atRisk: Int!
+  loading: Int!
+  done: Int!
+}
+
+type ShipmentOnTime {
+  percent: Float!
+  onTimeCount: Int!
+  totalCount: Int!
+  target: Float
+  deltaPp: Float!
+  sevenDayPercent: Float!
+}
+
+type ShipmentSparklinePoint {
+  hour: String!
+  value: Float!
+}
+
+type ShipmentRevenueToday {
+  total: Float!
+  sparkline: [ShipmentSparklinePoint!]!
+  deltaPct: Float!
+  rpm: Float!
+}
+
+type ShipmentEmptyMile {
+  percent: Float!
+  emptyMiles: Float!
+  totalMiles: Float!
+  deltaPp: Float!
+}
+
+type ShipmentAtRisk {
+  count: Int!
+  delta: Int!
+  etaSlip: Int!
+  weather: Int!
+  reefer: Int!
+}
+
+type ShipmentUnassignedAnalytics {
+  count: Int!
+  delta: Int!
+  revenueWaiting: Float!
+}
+
+type ShipmentReadyToDispatch {
+  count: Int!
+  delta: Int!
+  unassigned: Int!
+  driverReady: Int!
+}
+
+type ShipmentDetentionWatchlist {
+  items: [ShipmentDetentionWatchlistItem!]!
+}
+
+type ShipmentDetentionWatchlistItem {
+  shipmentId: String!
+  customer: String!
+  dwellLabel: String!
+  tone: String!
+}
+
+type ShipmentCustomerMix {
+  windowDays: Int!
+  entries: [ShipmentCustomerMixEntry!]!
+}
+
+type ShipmentCustomerMixEntry {
+  customerId: String!
+  name: String!
+  revenue: Float!
+  share: Float!
+  loads: Int!
+  trend: Float!
+}
+
+type ShipmentTomorrowsPickups {
+  date: String!
+  pickups: [ShipmentTomorrowPickup!]!
+}
+
+type ShipmentTomorrowPickup {
+  shipmentId: String!
+  proNumber: String!
+  pickupWindowStart: Int!
+  customer: String!
+  origin: String!
+  destination: String!
+  driver: String!
+  status: String!
+}
+
+type ShipmentLaneHeatmap {
+  windowDays: Int!
+  cells: [ShipmentLaneHeatmapCell!]!
+  total: Int!
+}
+
+type ShipmentLaneHeatmapCell {
+  origin: String!
+  destination: String!
+  count: Int!
 }
 
 enum ShipmentEventType {
@@ -510,6 +808,26 @@ type ShipmentEvent {
   actorId: ID
   actorLabel: String!
   summary: String!
+  proNumber: String
+  previousStatus: String
+  newStatus: String
+  reason: String
+  previousOwnerId: ID
+  newOwnerId: ID
+  primaryWorkerId: ID
+  secondaryWorkerId: ID
+  tractorId: ID
+  trailerId: ID
+  driverName: String
+  holdType: String
+  holdSeverity: String
+  holdSource: String
+  commentBody: String
+  commentType: String
+  commentVisibility: String
+  commentPriority: String
+  mentionedUserIds: [ID!]!
+  "Shipment events can also be recorded by integrations and observers with variant-specific metadata."
   metadata: JSON!
   occurredAt: Int!
   correlationId: String
@@ -756,12 +1074,12 @@ input ShipmentLoadingOptimizationInput {
 
 input ShipmentTransferToBillingInput {
   shipmentId: ID!
-  billType: String = "Invoice"
+  billType: BillType = Invoice
 }
 
 input ShipmentBulkTransferToBillingInput {
   shipmentIds: [ID!]!
-  billType: String = "Invoice"
+  billType: BillType = Invoice
 }
 
 input ShipmentCommentInput {
@@ -785,7 +1103,6 @@ input ShipmentCommentUpdateInput {
 extend type Query {
   shipments(
     first: Int = 20
-    offset: Int
     after: String
     query: String
     fieldFilters: [FieldFilterInput!]
@@ -795,8 +1112,8 @@ extend type Query {
     status: String
   ): ShipmentConnection!
   shipment(id: ID!, expandShipmentDetails: Boolean = false, status: String): Shipment
-  unassignedShipments(first: Int = 20, offset: Int, after: String): ShipmentConnection!
-  shipmentComments(shipmentId: ID!, first: Int = 20, offset: Int, after: String): ShipmentCommentConnection!
+  unassignedShipments(first: Int = 20, after: String): ShipmentConnection!
+  shipmentComments(shipmentId: ID!, first: Int = 20, after: String): ShipmentCommentConnection!
   shipmentCommentCount(shipmentId: ID!): ShipmentCommentCountResponse!
   shipmentUIPolicy: ShipmentUIPolicy!
   shipmentBillingReadiness(shipmentId: ID!): ShipmentBillingReadiness!
@@ -825,7 +1142,7 @@ extend type Mutation {
   uncancelShipment(id: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
-  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): JSON!
+  transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
   calculateShipmentTotals(input: ShipmentInput!): ShipmentTotalsResponse!
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!

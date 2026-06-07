@@ -18,57 +18,52 @@ func applyWorkerPatch(entity *worker.Worker, input gqlmodel.WorkerPatchInput) {
 	}
 }
 
-func workerListConnectionToModel(
-	result *pagination.ListResult[*worker.Worker],
-	offset int,
-) *gqlmodel.WorkerConnection {
-	hasNextPage := offset+len(result.Items) < result.Total
-	edges := make([]*gqlmodel.WorkerEdge, 0, len(result.Items))
-	for i, entity := range result.Items {
-		edges = append(edges, &gqlmodel.WorkerEdge{
-			Node:   entity,
-			Cursor: offsetCursor(offset + i + 1),
-		})
+func workerCursorConnectionToModel(
+	result *pagination.CursorListResult[*worker.Worker],
+) (*gqlmodel.WorkerConnection, error) {
+	edges, err := entityCursorEdges(
+		result.Items,
+		result.CursorSort,
+		result,
+		func(node *worker.Worker, cursor string) *gqlmodel.WorkerEdge {
+			return &gqlmodel.WorkerEdge{
+				Node:   node,
+				Cursor: cursor,
+			}
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &gqlmodel.WorkerConnection{
-		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   offsetEndCursor(offset, len(result.Items)),
-		},
-		TotalCount: &result.Total,
-	}
+		Edges:      edges,
+		PageInfo:   pageInfo(result.HasNextPage, lastEdgeCursor(edges, func(edge *gqlmodel.WorkerEdge) string { return edge.Cursor })),
+		TotalCount: result.TotalCount,
+	}, nil
 }
 
-func workerPTOListConnectionToModel(
-	result *pagination.ListResult[*worker.WorkerPTO],
-	offset int,
-) *gqlmodel.WorkerPTOConnection {
-	hasNextPage := offset+len(result.Items) < result.Total
-	edges := make([]*gqlmodel.WorkerPTOEdge, 0, len(result.Items))
-	for i, entity := range result.Items {
-		edges = append(edges, &gqlmodel.WorkerPTOEdge{
-			Node:   entity,
-			Cursor: offsetCursor(offset + i + 1),
-		})
+func workerPTOCursorConnectionToModel(
+	result *pagination.CursorListResult[*worker.WorkerPTO],
+) (*gqlmodel.WorkerPTOConnection, error) {
+	edges, err := entityCursorEdges(
+		result.Items,
+		result.CursorSort,
+		result,
+		func(node *worker.WorkerPTO, cursor string) *gqlmodel.WorkerPTOEdge {
+			return &gqlmodel.WorkerPTOEdge{
+				Node:   node,
+				Cursor: cursor,
+			}
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	return &gqlmodel.WorkerPTOConnection{
-		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   offsetEndCursor(offset, len(result.Items)),
-		},
-		TotalCount: &result.Total,
-	}
-}
-
-func offsetEndCursor(offset, count int) *string {
-	if count == 0 {
-		return nil
-	}
-
-	cursor := offsetCursor(offset + count)
-	return &cursor
+		Edges:      edges,
+		PageInfo:   pageInfo(result.HasNextPage, lastEdgeCursor(edges, func(edge *gqlmodel.WorkerPTOEdge) string { return edge.Cursor })),
+		TotalCount: result.TotalCount,
+	}, nil
 }

@@ -1,12 +1,14 @@
 package shipmentcommentrepository
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -41,19 +43,19 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 	commentID := pulid.MustNew("shc_")
 	userID := pulid.MustNew("usr_")
 
-	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipment_comments" AS "sc".*shipment_id = .*organization_id = .*business_unit_id = .*`).
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipment_comments" AS "sc".*sc\.shipment_id = .*sc\.organization_id = .*sc\.business_unit_id = .*`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(`SELECT .* FROM "shipment_comments" AS "sc".*ORDER BY "sc"\."created_at" DESC.*LIMIT 20`).
+	mock.ExpectQuery(`SELECT .* FROM "shipment_comments" AS "sc".*ORDER BY "sc"\."created_at" DESC, "sc"\."id" DESC LIMIT 21`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_id", "user_id", "comment", "version", "created_at", "updated_at",
+			"__cursor_value_0", "__cursor_value_1",
 			"user__id", "user__business_unit_id", "user__current_organization_id", "user__status", "user__name", "user__username", "user__time_format", "user__password", "user__email_address", "user__profile_pic_url", "user__thumbnail_url", "user__timezone", "user__is_locked", "user__must_change_password", "user__version", "user__created_at", "user__updated_at", "user__last_login_at",
-		}).AddRow(commentID, buID, orgID, shipmentID, userID, "hello", 0, 1, 1, userID, buID, orgID, "Active", "Alice", "alice", "12-hour", "secret", "a@example.com", "", "", "UTC", false, false, 0, 1, 1, nil))
+		}).AddRow(commentID, buID, orgID, shipmentID, userID, "hello", 0, 1, 1, 1, commentID, userID, buID, orgID, "Active", "Alice", "alice", "12-hour", "secret", "a@example.com", "", "", "UTC", false, false, 0, 1, 1, nil))
 	mock.ExpectQuery(`SELECT .* FROM "shipment_comment_mentions" AS "scm".*LEFT JOIN "users" AS "mentioned_user".*WHERE .*"scm"\."comment_id" IN`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "comment_id", "mentioned_user_id", "organization_id", "business_unit_id", "shipment_id", "created_at",
 			"mentioned_user__id", "mentioned_user__business_unit_id", "mentioned_user__current_organization_id", "mentioned_user__status", "mentioned_user__name", "mentioned_user__username", "mentioned_user__time_format", "mentioned_user__password", "mentioned_user__email_address", "mentioned_user__profile_pic_url", "mentioned_user__thumbnail_url", "mentioned_user__timezone", "mentioned_user__is_locked", "mentioned_user__must_change_password", "mentioned_user__version", "mentioned_user__created_at", "mentioned_user__updated_at", "mentioned_user__last_login_at",
 		}))
-
 	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
 		ShipmentID: shipmentID,
 		Filter: &pagination.QueryOptions{
@@ -64,8 +66,52 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, result.Items, 1)
-	assert.Equal(t, 1, result.Total)
+	assert.False(t, result.HasNextPage)
+	require.NotNil(t, result.TotalCount)
+	assert.Equal(t, 1, *result.TotalCount)
 	assert.Equal(t, commentID, result.Items[0].ID)
+	values, ok := result.CursorValuesAt(0)
+	require.True(t, ok)
+	assert.Equal(t, []any{int64(1), commentID.String()}, values)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestListByShipmentID_RejectsMismatchedCursorSortBeforeScan(t *testing.T) {
+	t.Parallel()
+
+	repo, mock := newTestRepository(t)
+	commentID := pulid.MustNew("shc_")
+	result, err := repo.ListByShipmentID(t.Context(), &repositories.ListShipmentCommentsRequest{
+		ShipmentID: pulid.MustNew("shp_"),
+		Filter: &pagination.QueryOptions{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: pulid.MustNew("org_"),
+				BuID:  pulid.MustNew("bu_"),
+			},
+			Pagination: pagination.Info{Limit: 20},
+		},
+		Cursor: pagination.CursorInfo{
+			Limit: 20,
+			After: "cursor",
+			Cursor: pagination.Cursor{
+				ID: commentID,
+				Sort: []pagination.CursorSortField{
+					{Field: "createdAt", Direction: "asc"},
+					{Field: "id", Direction: "desc"},
+				},
+				Values: []any{int64(1), commentID.String()},
+			},
+		},
+	})
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+
+	var validationErr *errortypes.Error
+	require.True(t, errors.As(err, &validationErr))
+	assert.Equal(t, "after", validationErr.Field)
+	assert.Equal(t, errortypes.ErrInvalid, validationErr.Code)
+	assert.Equal(t, "Cursor sort does not match request sort", validationErr.Message)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 

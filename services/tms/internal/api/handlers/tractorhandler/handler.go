@@ -89,8 +89,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Param includeWorkerDetails query bool false "Include worker details"
 // @Param status query string false "Filter by status"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]tractor.Tractor]
+// @Param after query string false "Opaque cursor"
+// @Success 200 {object} pagination.CursorResponse[[]tractor.Tractor]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -101,15 +101,16 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*tractor.Tractor], error) {
+		func(cursor pagination.CursorInfo) (*pagination.CursorListResult[*tractor.Tractor], error) {
 			return h.service.List(
 				c.Request.Context(),
 				&repositories.ListTractorsRequest{
 					Filter: req,
+					Cursor: cursor,
 					TractorRelationIncludes: repositories.TractorRelationIncludes{
 						IncludeEquipmentDetails: helpers.QueryBool(c, "includeEquipmentDetails", false),
 						IncludeFleetDetails:     helpers.QueryBool(c, "includeFleetDetails", false),

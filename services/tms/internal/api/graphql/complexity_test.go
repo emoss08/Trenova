@@ -63,7 +63,6 @@ func TestComplexityRoot_Trailers(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				nil,
 				&status,
 				nil,
 				nil,

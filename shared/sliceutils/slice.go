@@ -30,3 +30,11 @@ func StringValue(v any) string {
 	s, _ := v.(string)
 	return strings.TrimSpace(s)
 }
+
+func StringPtrValue(v any) *string {
+	value := StringValue(v)
+	if value == "" {
+		return nil
+	}
+	return &value
+}

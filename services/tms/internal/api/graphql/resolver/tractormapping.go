@@ -241,48 +241,44 @@ func tractorRelationIncludesForFields(
 func tractorConnectionToModel(
 	result *pagination.CursorListResult[*tractor.Tractor],
 ) (*gqlmodel.TractorConnection, error) {
-	return tractorConnectionFromItems(result.Items, result.HasNextPage, nil)
-}
-
-func tractorListConnectionToModel(
-	result *pagination.ListResult[*tractor.Tractor],
-	offset int,
-) (*gqlmodel.TractorConnection, error) {
-	hasNextPage := offset+len(result.Items) < result.Total
-	return tractorConnectionFromItems(result.Items, hasNextPage, &result.Total)
+	return tractorConnectionFromItems(
+		result.Items,
+		result.HasNextPage,
+		result.TotalCount,
+		result.CursorSort,
+		result,
+	)
 }
 
 func tractorConnectionFromItems(
 	items []*tractor.Tractor,
 	hasNextPage bool,
 	totalCount *int,
+	sort []pagination.CursorSortField,
+	cursorValues pagination.CursorValueProvider,
 ) (*gqlmodel.TractorConnection, error) {
-	edges := make([]*gqlmodel.TractorEdge, 0, len(items))
-	for _, entity := range items {
-		cursor, err := pagination.EncodeCursor(pagination.Cursor{
-			CreatedAt: entity.CreatedAt,
-			ID:        entity.ID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		edges = append(edges, &gqlmodel.TractorEdge{
-			Node:   entity,
-			Cursor: cursor,
-		})
+	edges, err := entityCursorEdges(
+		items,
+		sort,
+		cursorValues,
+		func(node *tractor.Tractor, cursor string) *gqlmodel.TractorEdge {
+			return &gqlmodel.TractorEdge{
+				Node:   node,
+				Cursor: cursor,
+			}
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
-
-	var endCursor *string
-	if len(edges) > 0 {
-		endCursor = &edges[len(edges)-1].Cursor
-	}
+	endCursor := lastEdgeCursor(edges, func(edge *gqlmodel.TractorEdge) string { return edge.Cursor })
 
 	return &gqlmodel.TractorConnection{
 		Edges: edges,
-		PageInfo: &gqlmodel.PageInfo{
-			HasNextPage: hasNextPage,
-			EndCursor:   endCursor,
-		},
+		PageInfo: pageInfo(
+			hasNextPage,
+			endCursor,
+		),
 		TotalCount: totalCount,
 	}, nil
 }
