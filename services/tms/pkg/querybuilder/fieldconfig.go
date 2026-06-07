@@ -19,6 +19,8 @@ func NewFieldConfigBuilder[T domaintypes.PostgresSearchable](entity T) *FieldCon
 			FilterableFields:    make(map[string]bool),
 			SortableFields:      make(map[string]bool),
 			GeoFilterableFields: make(map[string]bool),
+			NonNullableFields:   make(map[string]bool),
+			IntegerFields:       make(map[string]bool),
 			FieldMap:            make(map[string]string),
 			EnumMap:             make(map[string]bool),
 			NestedFields:        make(map[string]domaintypes.NestedFieldDefintion),
@@ -30,6 +32,8 @@ func NewFieldConfigBuilder[T domaintypes.PostgresSearchable](entity T) *FieldCon
 func (b *FieldConfigBuilder[T]) WithAutoMapping() *FieldConfigBuilder[T] {
 	fieldMap := ExtractFieldsFromStruct(b.entity)
 	maps.Copy(b.config.FieldMap, fieldMap)
+	maps.Copy(b.config.NonNullableFields, ExtractNonNullableFieldsFromStruct(b.entity))
+	maps.Copy(b.config.IntegerFields, ExtractIntegerFieldsFromStruct(b.entity))
 	return b
 }
 

@@ -2,6 +2,7 @@ package querybuilder
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/dbtype"
@@ -11,11 +12,18 @@ import (
 	"github.com/uptrace/bun"
 )
 
+const (
+	maxExactJSONInteger = 9007199254740991.0
+	minExactJSONInteger = -9007199254740991.0
+)
+
 type CursorSortTerm struct {
-	Field     string
-	Direction dbtype.SortDirection
-	SQLField  string
-	Alias     string
+	Field       string
+	Direction   dbtype.SortDirection
+	SQLField    string
+	Alias       string
+	NonNullable bool
+	Integer     bool
 }
 
 type CursorSortPlan struct {
@@ -224,10 +232,12 @@ func (qb *QueryBuilder) buildCursorSortPlan(
 		}
 
 		terms = append(terms, CursorSortTerm{
-			Field:     sort.Field,
-			Direction: sort.Direction,
-			SQLField:  sqlField,
-			Alias:     fmt.Sprintf("__cursor_value_%d", i),
+			Field:       sort.Field,
+			Direction:   sort.Direction,
+			SQLField:    sqlField,
+			Alias:       fmt.Sprintf("__cursor_value_%d", i),
+			NonNullable: qb.cursorSortFieldNonNullable(sort.Field),
+			Integer:     qb.cursorSortFieldInteger(sort.Field),
 		})
 	}
 
@@ -254,11 +264,29 @@ func (qb *QueryBuilder) cursorSortSQLField(field string) string {
 	return qb.getFieldReference(qb.getDBField(field))
 }
 
+func (qb *QueryBuilder) cursorSortFieldNonNullable(field string) bool {
+	if strings.Contains(field, ".") || qb.fieldConfig == nil {
+		return false
+	}
+
+	return qb.fieldConfig.NonNullableFields[field]
+}
+
+func (qb *QueryBuilder) cursorSortFieldInteger(field string) bool {
+	if strings.Contains(field, ".") || qb.fieldConfig == nil {
+		return false
+	}
+
+	return qb.fieldConfig.IntegerFields[field]
+}
+
 func (qb *QueryBuilder) applyCursorOrder(plan *CursorSortPlan) {
 	for _, term := range plan.Terms {
-		qb.query = qb.query.Order(
-			fmt.Sprintf("%s %s NULLS LAST", term.SQLField, strings.ToUpper(string(term.Direction))),
-		)
+		order := fmt.Sprintf("%s %s", term.SQLField, strings.ToUpper(string(term.Direction)))
+		if !term.NonNullable {
+			order += " NULLS LAST"
+		}
+		qb.query = qb.query.Order(order)
 	}
 }
 
@@ -267,13 +295,88 @@ func (qb *QueryBuilder) applyCursorPredicate(plan *CursorSortPlan, values []any)
 		return
 	}
 
+	normalizedValues := normalizeCursorPredicateValues(plan.Terms, values)
+	if sql, args, ok := cursorTuplePredicate(plan.Terms, normalizedValues); ok {
+		qb.query = qb.query.Where(sql, args...)
+		return
+	}
+
 	qb.query = qb.query.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
 		for i := range plan.Terms {
-			sql, args := cursorPredicateBranch(plan.Terms, values, i)
+			sql, args := cursorPredicateBranch(plan.Terms, normalizedValues, i)
 			cq = cq.WhereOr(sql, args...)
 		}
 		return cq
 	})
+}
+
+func normalizeCursorPredicateValues(terms []CursorSortTerm, values []any) []any {
+	normalized := make([]any, len(values))
+	for i, value := range values {
+		normalized[i] = normalizeCursorPredicateValue(terms[i], value)
+	}
+
+	return normalized
+}
+
+func normalizeCursorPredicateValue(term CursorSortTerm, value any) any {
+	if !term.Integer {
+		return value
+	}
+
+	switch typed := value.(type) {
+	case float64:
+		if math.Trunc(typed) == typed && typed >= minExactJSONInteger && typed <= maxExactJSONInteger {
+			return int64(typed)
+		}
+	case float32:
+		value64 := float64(typed)
+		if math.Trunc(value64) == value64 &&
+			value64 >= minExactJSONInteger &&
+			value64 <= maxExactJSONInteger {
+			return int64(value64)
+		}
+	}
+
+	return value
+}
+
+func cursorTuplePredicate(
+	terms []CursorSortTerm,
+	values []any,
+) (string, []any, bool) {
+	if len(terms) == 0 || len(terms) != len(values) {
+		return "", nil, false
+	}
+
+	direction := terms[0].Direction
+	if direction != dbtype.SortDirectionAsc && direction != dbtype.SortDirectionDesc {
+		return "", nil, false
+	}
+
+	fields := make([]string, 0, len(terms))
+	placeholders := make([]string, 0, len(values))
+	args := make([]any, 0, len(values))
+	for i, term := range terms {
+		if !term.NonNullable || term.Direction != direction || values[i] == nil {
+			return "", nil, false
+		}
+		fields = append(fields, term.SQLField)
+		placeholders = append(placeholders, "?")
+		args = append(args, values[i])
+	}
+
+	operator := ">"
+	if direction == dbtype.SortDirectionDesc {
+		operator = "<"
+	}
+
+	return fmt.Sprintf(
+		"(%s) %s (%s)",
+		strings.Join(fields, ", "),
+		operator,
+		strings.Join(placeholders, ", "),
+	), args, true
 }
 
 func cursorPredicateBranch(

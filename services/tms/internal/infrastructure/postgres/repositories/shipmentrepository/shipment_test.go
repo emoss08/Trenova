@@ -46,7 +46,7 @@ func TestGetUnassigned_ExcludesShipmentsWithActiveAssignments(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipments" AS "sp".*sp\.organization_id = .*sp\.business_unit_id = .*` + unassignedPredicate).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(`SELECT .*FROM "shipments" AS "sp".*` + unassignedPredicate + `.*sp\.organization_id = .*sp\.business_unit_id = .*ORDER BY "sp"\."created_at" DESC NULLS LAST, "sp"\."id" DESC NULLS LAST LIMIT 11`).
+	mock.ExpectQuery(`SELECT .*FROM "shipments" AS "sp".*` + unassignedPredicate + `.*sp\.organization_id = .*sp\.business_unit_id = .*ORDER BY "sp"\."created_at" DESC, "sp"\."id" DESC LIMIT 11`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id",
 			"business_unit_id",

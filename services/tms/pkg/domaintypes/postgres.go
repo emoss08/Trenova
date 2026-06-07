@@ -98,6 +98,8 @@ type FieldConfiguration struct {
 	FilterableFields    map[string]bool                 `json:"filterableFields"`
 	SortableFields      map[string]bool                 `json:"sortableFields"`
 	GeoFilterableFields map[string]bool                 `json:"geoFilterableFields"`
+	NonNullableFields   map[string]bool                 `json:"nonNullableFields"`
+	IntegerFields       map[string]bool                 `json:"integerFields"`
 	FieldMap            map[string]string               `json:"fieldMap"`
 	EnumMap             map[string]bool                 `json:"enumMap"`
 	NestedFields        map[string]NestedFieldDefintion `json:"nestedFields"`

@@ -28,6 +28,164 @@ func TestNormalizeCursorSort_AlwaysKeepsIDTieBreaker(t *testing.T) {
 	assert.Equal(t, dbtype.SortDirectionAsc, normalized[len(normalized)-1].Direction)
 }
 
+func TestCursorTuplePredicate_UsesSameDirectionNotNullTerms(t *testing.T) {
+	terms := []CursorSortTerm{
+		{
+			Field:       "createdAt",
+			Direction:   dbtype.SortDirectionAsc,
+			SQLField:    `"sp"."created_at"`,
+			NonNullable: true,
+			Integer:     true,
+		},
+		{
+			Field:       "id",
+			Direction:   dbtype.SortDirectionAsc,
+			SQLField:    `"sp"."id"`,
+			NonNullable: true,
+		},
+	}
+	values := normalizeCursorPredicateValues(terms, []any{float64(1710000000000), "sp_1"})
+
+	sql, args, ok := cursorTuplePredicate(terms, values)
+
+	require.True(t, ok)
+	assert.Equal(t, `("sp"."created_at", "sp"."id") > (?, ?)`, sql)
+	require.Len(t, args, 2)
+	assert.IsType(t, int64(0), args[0])
+	assert.Equal(t, int64(1710000000000), args[0])
+	assert.Equal(t, "sp_1", args[1])
+}
+
+func TestCursorTuplePredicate_UsesDescendingComparison(t *testing.T) {
+	terms := []CursorSortTerm{
+		{
+			Field:       "createdAt",
+			Direction:   dbtype.SortDirectionDesc,
+			SQLField:    `"sp"."created_at"`,
+			NonNullable: true,
+			Integer:     true,
+		},
+		{
+			Field:       "id",
+			Direction:   dbtype.SortDirectionDesc,
+			SQLField:    `"sp"."id"`,
+			NonNullable: true,
+		},
+	}
+	values := normalizeCursorPredicateValues(terms, []any{float64(1710000000000), "sp_1"})
+
+	sql, _, ok := cursorTuplePredicate(terms, values)
+
+	require.True(t, ok)
+	assert.Equal(t, `("sp"."created_at", "sp"."id") < (?, ?)`, sql)
+}
+
+func TestCursorTuplePredicate_FallsBackForNullableTerm(t *testing.T) {
+	terms := []CursorSortTerm{
+		{
+			Field:       "model",
+			Direction:   dbtype.SortDirectionAsc,
+			SQLField:    `"trac"."model"`,
+			NonNullable: false,
+		},
+		{
+			Field:       "id",
+			Direction:   dbtype.SortDirectionAsc,
+			SQLField:    `"trac"."id"`,
+			NonNullable: true,
+		},
+	}
+
+	_, _, ok := cursorTuplePredicate(terms, []any{"579", "trac_1"})
+
+	assert.False(t, ok)
+}
+
+func TestCursorTuplePredicate_FallsBackForMixedDirections(t *testing.T) {
+	terms := []CursorSortTerm{
+		{
+			Field:       "startDate",
+			Direction:   dbtype.SortDirectionAsc,
+			SQLField:    `"wpto"."start_date"`,
+			NonNullable: true,
+			Integer:     true,
+		},
+		{
+			Field:       "id",
+			Direction:   dbtype.SortDirectionDesc,
+			SQLField:    `"wpto"."id"`,
+			NonNullable: true,
+		},
+	}
+
+	_, _, ok := cursorTuplePredicate(terms, []any{int64(1710000000000), "wpto_1"})
+
+	assert.False(t, ok)
+}
+
+type cursorNotNullEntity struct {
+	ID        string `json:"id"        bun:"id,pk"`
+	CreatedAt int64  `json:"createdAt" bun:"created_at,notnull"`
+	Name      string `json:"name"      bun:"name,nullzero"`
+}
+
+func (e *cursorNotNullEntity) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias: "cne",
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText},
+		},
+	}
+}
+
+func (e *cursorNotNullEntity) GetTableName() string {
+	return "cursor_not_null_entities"
+}
+
+func TestApplyCursorFilters_DirectNotNullSortUsesTuplePredicate(t *testing.T) {
+	ClearCaches()
+
+	db := newTestDB()
+	entity := &cursorNotNullEntity{}
+	cursorID := pulid.MustNew("cne_")
+	query := db.NewSelect().
+		Model((*cursorNotNullEntity)(nil)).
+		ModelTableExpr("cursor_not_null_entities AS cne")
+	filter := &pagination.QueryOptions{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: pulid.MustNew("org_"),
+			BuID:  pulid.MustNew("bu_"),
+		},
+		Sort: []domaintypes.SortField{
+			{Field: "createdAt", Direction: dbtype.SortDirectionAsc},
+		},
+	}
+
+	result, err := ApplyCursorFilters(
+		query,
+		"cne",
+		filter,
+		pagination.CursorInfo{
+			After: "cursor",
+			Cursor: pagination.Cursor{
+				ID: cursorID,
+				Sort: []pagination.CursorSortField{
+					{Field: "createdAt", Direction: "asc"},
+					{Field: "id", Direction: "asc"},
+				},
+				Values: []any{float64(1710000000000), cursorID.String()},
+			},
+			Limit: 20,
+		},
+		entity,
+	)
+
+	require.NoError(t, err)
+	sql := result.String()
+	assert.Contains(t, sql, `(cne.created_at, cne.id) >`)
+	assert.NotContains(t, sql, "IS NOT DISTINCT FROM")
+}
+
 func TestApplyCursorFilters_SearchDoesNotOrderByRank(t *testing.T) {
 	ClearCaches()
 
@@ -57,7 +215,7 @@ func TestApplyCursorFilters_SearchDoesNotOrderByRank(t *testing.T) {
 	sql := result.String()
 	assert.Contains(t, sql, "ts_rank")
 	assert.NotContains(t, sql, "ORDER BY rank DESC NULLS LAST")
-	assert.Contains(t, sql, "ORDER BY \"sve\".\"created_at\" DESC NULLS LAST, \"sve\".\"id\" DESC NULLS LAST")
+	assert.Contains(t, sql, "ORDER BY \"sve\".\"created_at\" DESC NULLS LAST, \"sve\".\"id\" DESC")
 }
 
 func TestApplyFiltersWithoutSort_DisablesCursorPredicate(t *testing.T) {

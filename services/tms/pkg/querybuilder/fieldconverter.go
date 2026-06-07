@@ -47,6 +47,49 @@ func ExtractFieldsFromStruct(v any) map[string]string {
 	})
 }
 
+func ExtractNonNullableFieldsFromStruct(v any) map[string]bool {
+	return extractFieldMetadataFromStruct(v, fieldIsNonNullable)
+}
+
+func ExtractIntegerFieldsFromStruct(v any) map[string]bool {
+	return extractFieldMetadataFromStruct(v, fieldIsInteger)
+}
+
+func extractFieldMetadataFromStruct(
+	v any,
+	include func(reflect.StructField) bool,
+) map[string]bool {
+	result := make(map[string]bool)
+	if v == nil {
+		return result
+	}
+
+	t := reflect.TypeOf(v)
+	if t == nil {
+		return result
+	}
+	if t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	if t.Kind() != reflect.Struct {
+		return result
+	}
+
+	for field := range t.Fields() {
+		if !field.IsExported() || !include(field) {
+			continue
+		}
+
+		jsonName := jsonFieldName(field.Tag.Get("json"))
+		if jsonName == "" {
+			continue
+		}
+		result[jsonName] = true
+	}
+
+	return result
+}
+
 func extractFieldsFromType(t reflect.Type) map[string]string {
 	fieldMap := make(map[string]string)
 
@@ -55,12 +98,7 @@ func extractFieldsFromType(t reflect.Type) map[string]string {
 			continue
 		}
 
-		jsonTag := field.Tag.Get("json")
-		if jsonTag == "" || jsonTag == "-" {
-			continue
-		}
-
-		jsonName := strings.Split(jsonTag, ",")[0]
+		jsonName := jsonFieldName(field.Tag.Get("json"))
 		if jsonName == "" {
 			continue
 		}
@@ -70,6 +108,14 @@ func extractFieldsFromType(t reflect.Type) map[string]string {
 	}
 
 	return fieldMap
+}
+
+func jsonFieldName(jsonTag string) string {
+	if jsonTag == "" || jsonTag == "-" {
+		return ""
+	}
+
+	return strings.Split(jsonTag, ",")[0]
 }
 
 func extractDBFieldName(bunTag, jsonName string) string {
@@ -94,6 +140,44 @@ func extractDBFieldName(bunTag, jsonName string) string {
 	}
 
 	return stringutils.ConvertCamelToSnake(jsonName)
+}
+
+func fieldIsNonNullable(field reflect.StructField) bool {
+	if field.Type.Kind() == reflect.Pointer {
+		return false
+	}
+
+	bunTag := field.Tag.Get("bun")
+	if bunTag == "" || bunTag == "-" || strings.Contains(bunTag, "nullzero") {
+		return false
+	}
+
+	return bunTagHasOption(bunTag, "notnull") || bunTagHasOption(bunTag, "pk")
+}
+
+func fieldIsInteger(field reflect.StructField) bool {
+	fieldType := field.Type
+	for fieldType.Kind() == reflect.Pointer {
+		fieldType = fieldType.Elem()
+	}
+
+	switch fieldType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return true
+	default:
+		return false
+	}
+}
+
+func bunTagHasOption(bunTag, option string) bool {
+	for _, part := range strings.Split(bunTag, ",") {
+		if strings.TrimSpace(part) == option {
+			return true
+		}
+	}
+
+	return false
 }
 
 func WarmFieldCache(entities ...any) {
