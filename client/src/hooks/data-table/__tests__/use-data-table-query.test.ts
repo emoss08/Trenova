@@ -96,10 +96,10 @@ describe("data table query fetching", () => {
     expect(body.variables).not.toHaveProperty("offset");
   });
 
-  it("uses GraphQL offset pagination while sorting so backend sort is applied", async () => {
-    setCsrfToken("table-token");
+	it("keeps GraphQL tables on cursor pagination while sorting", async () => {
+		setCsrfToken("table-token");
 
-    const result = await fetchDataTablePage({
+		const result = await fetchDataTablePage({
       link: "/tractors/",
       pageIndex: 2,
       pageSize: 25,
@@ -110,31 +110,39 @@ describe("data table query fetching", () => {
     });
 
     expect(result).toEqual({
-      results: [{ id: "tr_1", code: "T-100" }],
-      count: 12,
-      next: null,
-      prev: null,
-      pageInfo: undefined,
-    });
+			results: [{ id: "tr_1", code: "T-100" }],
+			count: 12,
+			next: null,
+			prev: null,
+			pageInfo: {
+				mode: "cursor",
+				hasNextPage: true,
+				endCursor: "cursor-tr-1",
+				totalCount: 12,
+			},
+		});
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(typeof init.body).toBe("string");
     const body = JSON.parse(init.body as string);
-    expect(body.variables).toMatchObject({
-      first: 25,
-      offset: 50,
-      sort: [{ field: "code", direction: "asc" }],
-    });
-    expect(body.variables).not.toHaveProperty("after");
+	expect(body.variables).toMatchObject({
+		first: 25,
+		sort: [{ field: "code", direction: "asc" }],
+	});
+	expect(body.variables).not.toHaveProperty("offset");
+	expect(body.variables).not.toHaveProperty("after");
   });
 
   it("uses REST fetching when no GraphQL config is provided", async () => {
     fetchMock.mockResolvedValueOnce(
       createJSONResponse({
         results: [{ id: "trl_1", code: "TRL-1" }],
-        count: 1,
+        count: 12,
+        totalCount: 12,
         next: null,
-        prev: null,
+        previous: null,
+        hasNextPage: true,
+        endCursor: "cursor-trl-1",
       }),
     );
 
@@ -147,17 +155,26 @@ describe("data table query fetching", () => {
         fieldFilters: [{ field: "status", operator: "eq", value: "Available" }],
         filterGroups: [],
         sort: [{ field: "code", direction: "asc" }],
+        cursor: "cursor-page-2",
         extraSearchParams: { includeFleetDetails: true },
       },
     });
 
     expect(result.results).toEqual([{ id: "trl_1", code: "TRL-1" }]);
+    expect(result.count).toBe(12);
+    expect(result.pageInfo).toEqual({
+      mode: "cursor",
+      hasNextPage: true,
+      endCursor: "cursor-trl-1",
+      totalCount: 12,
+    });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const requestURL = new URL(url);
     expect(requestURL.pathname).toBe("/api/v1/trailers/");
     expect(requestURL.searchParams.get("limit")).toBe("50");
-    expect(requestURL.searchParams.get("offset")).toBe("50");
+    expect(requestURL.searchParams.get("offset")).toBeNull();
+    expect(requestURL.searchParams.get("after")).toBe("cursor-page-2");
     expect(requestURL.searchParams.get("query")).toBe("TRL");
     expect(requestURL.searchParams.get("includeFleetDetails")).toBe("true");
     expect(init.credentials).toBe("include");
@@ -209,11 +226,11 @@ describe("tractor and trailer GraphQL table configs", () => {
     });
     expect(document).toContain("primaryWorker");
     expect(document).toContain("customFields");
-    expect(document).toContain("totalCount");
-    expect(document).toContain("pageInfo");
-    expect(document).toContain("$after: String");
-    expect(document).toContain("$offset: Int");
-  });
+		expect(document).toContain("totalCount");
+		expect(document).toContain("pageInfo");
+		expect(document).toContain("$after: String");
+		expect(document).not.toContain("$offset: Int");
+	});
 
   it("opts trailers into the trailer connection with required include variables", () => {
     const document = equipmentTableGraphQLConfigs.trailer.document.toString();
@@ -225,9 +242,9 @@ describe("tractor and trailer GraphQL table configs", () => {
     });
     expect(document).toContain("lastKnownLocationName");
     expect(document).toContain("customFields");
-    expect(document).toContain("totalCount");
-    expect(document).toContain("pageInfo");
-    expect(document).toContain("$after: String");
-    expect(document).toContain("$offset: Int");
-  });
+		expect(document).toContain("totalCount");
+		expect(document).toContain("pageInfo");
+		expect(document).toContain("$after: String");
+		expect(document).not.toContain("$offset: Int");
+	});
 });

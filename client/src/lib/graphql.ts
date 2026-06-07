@@ -5,6 +5,9 @@ import type { ResultOf, VariablesOf } from "@graphql-typed-document-node/core";
 
 type GraphQLErrorResponse = {
   message?: unknown;
+  extensions?: unknown;
+  locations?: unknown;
+  path?: unknown;
 };
 
 type GraphQLResponse<TData> = {
@@ -36,6 +39,60 @@ type TypedGraphQLRequestParams<TDocument extends TypedGraphQLDocument<unknown, n
   variables?: VariablesOf<TDocument>;
 };
 
+export type GraphQLErrorExtensions = Record<string, unknown> & {
+  code?: string;
+  errors?: unknown;
+  params?: unknown;
+  traceId?: string;
+  type?: string;
+};
+
+export type NormalizedGraphQLError = {
+  code?: string;
+  errors?: unknown;
+  extensions: GraphQLErrorExtensions;
+  locations?: unknown;
+  message: string;
+  params?: unknown;
+  path?: unknown;
+  traceId?: string;
+  type?: string;
+};
+
+type GraphQLRequestErrorOptions = {
+  graphQLErrors?: NormalizedGraphQLError[];
+  message: string;
+  status?: number;
+};
+
+export class GraphQLRequestError extends Error {
+  public readonly code?: string;
+  public readonly errors?: unknown;
+  public readonly extensions?: GraphQLErrorExtensions;
+  public readonly graphQLErrors: NormalizedGraphQLError[];
+  public readonly params?: unknown;
+  public readonly status?: number;
+  public readonly traceId?: string;
+  public readonly type?: string;
+
+  public constructor({ graphQLErrors = [], message, status }: GraphQLRequestErrorOptions) {
+    super(message);
+    this.name = "GraphQLRequestError";
+    this.status = status;
+    this.graphQLErrors = graphQLErrors;
+
+    const firstError = graphQLErrors[0];
+    if (firstError) {
+      this.extensions = firstError.extensions;
+      this.code = firstError.code;
+      this.type = firstError.type;
+      this.traceId = firstError.traceId;
+      this.params = firstError.params;
+      this.errors = firstError.errors;
+    }
+  }
+}
+
 export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
   if (!apiBaseURL.startsWith("http")) {
     return "/graphql";
@@ -47,6 +104,32 @@ export function resolveGraphQLURL(apiBaseURL = API_BASE_URL): string {
   url.hash = "";
 
   return url.toString();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringExtension(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function normalizeGraphQLError(error: GraphQLErrorResponse): NormalizedGraphQLError {
+  const extensions: GraphQLErrorExtensions = isRecord(error.extensions)
+    ? { ...error.extensions }
+    : {};
+
+  return {
+    code: stringExtension(extensions.code),
+    errors: extensions.errors,
+    extensions,
+    locations: error.locations,
+    message: typeof error.message === "string" ? error.message : "GraphQL request failed",
+    params: extensions.params,
+    path: error.path,
+    traceId: stringExtension(extensions.traceId),
+    type: stringExtension(extensions.type),
+  };
 }
 
 export async function requestGraphQL<
@@ -89,15 +172,21 @@ export async function requestGraphQL<
   });
 
   const payload = (await response.json().catch(() => ({}))) as GraphQLResponse<TData>;
-  const firstError = payload.errors?.[0];
+  const graphQLErrors = payload.errors?.map(normalizeGraphQLError) ?? [];
+  const firstError = graphQLErrors[0];
   if (firstError) {
-    throw new Error(
-      typeof firstError.message === "string" ? firstError.message : "GraphQL request failed",
-    );
+    throw new GraphQLRequestError({
+      graphQLErrors,
+      message: firstError.message,
+      status: response.status,
+    });
   }
 
   if (!response.ok) {
-    throw new Error(`GraphQL request failed with HTTP ${response.status}`);
+    throw new GraphQLRequestError({
+      message: `GraphQL request failed with HTTP ${response.status}`,
+      status: response.status,
+    });
   }
 
   if (!payload.data) {

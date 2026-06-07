@@ -101,7 +101,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
       meta: {
         apiField: "primaryWorker.wholeName",
         filterable: true,
-        sortable: true,
+        sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
         label: "Primary Worker",
@@ -136,7 +136,7 @@ export function getColumns(): ColumnDef<Tractor>[] {
       meta: {
         apiField: "equipmentType.code",
         filterable: true,
-        sortable: true,
+        sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
         label: "Equip. Type",

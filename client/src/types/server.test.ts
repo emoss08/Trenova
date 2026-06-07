@@ -67,6 +67,26 @@ describe("createLimitOffsetResponse", () => {
     });
   });
 
+  it("preserves REST cursor totalCount when present", () => {
+    const schema = createLimitOffsetResponse(z.object({ id: z.string() }));
+
+    expect(
+      schema.parse({
+        results: [{ id: "row_1" }],
+        count: 25,
+        totalCount: 25,
+        next: null,
+        prev: null,
+      }),
+    ).toEqual({
+      results: [{ id: "row_1" }],
+      count: 25,
+      totalCount: 25,
+      next: null,
+      prev: null,
+    });
+  });
+
   it("preserves offset-backed GraphQL pageInfo when present", () => {
     const schema = createLimitOffsetResponse(z.object({ id: z.string() }));
 

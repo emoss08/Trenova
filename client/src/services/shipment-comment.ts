@@ -21,11 +21,11 @@ export class ShipmentCommentService {
     return safeParse(shipmentCommentCountResponseSchema, response, "Shipment Comment Count");
   }
 
-  public async list(shipmentId: Shipment["id"], params?: { limit?: number; offset?: number }) {
+  public async list(shipmentId: Shipment["id"], params?: { limit?: number; after?: string | null }) {
     const response = await listShipmentCommentsGraphQL({
       shipmentId,
       limit: params?.limit ?? 20,
-      offset: params?.offset ?? 0,
+      after: params?.after ?? null,
     });
     return safeParse(shipmentCommentListResponseSchema, response, "Shipment Comments");
   }

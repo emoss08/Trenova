@@ -132,7 +132,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 
 fragment ShipmentCommodityFields on ShipmentCommodity {
@@ -146,7 +159,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
@@ -210,11 +243,59 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
 }
 
 fragment ShipmentPageInfoFields on PageInfo {
@@ -276,6 +357,25 @@ fragment ShipmentEventFields on ShipmentEvent {
   actorId
   actorLabel
   summary
+  proNumber
+  previousStatus
+  newStatus
+  reason
+  previousOwnerId
+  newOwnerId
+  primaryWorkerId
+  secondaryWorkerId
+  tractorId
+  trailerId
+  driverName
+  holdType
+  holdSeverity
+  holdSource
+  commentBody
+  commentType
+  commentVisibility
+  commentPriority
+  mentionedUserIds
   metadata
   occurredAt
   correlationId
@@ -294,7 +394,6 @@ fragment ShipmentEventFields on ShipmentEvent {
 
 query ShipmentCommandCenterTable(
   $first: Int!
-  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -304,7 +403,6 @@ query ShipmentCommandCenterTable(
 ) {
   shipments(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -369,19 +467,126 @@ query ShipmentPageAnalytics(
       unassigned
       deliveringToday
     }
-    data
+    activeShipments {
+      count
+      changeFromYesterday
+      sparkline {
+        hour
+        value
+      }
+      breakdown {
+        inTransit
+        atRisk
+        loading
+        done
+      }
+    }
+    onTimePercent {
+      percent
+      onTimeCount
+      totalCount
+      target
+      deltaPp
+      sevenDayPercent
+    }
+    revenueToday {
+      total
+      sparkline {
+        hour
+        value
+      }
+      deltaPct
+      rpm
+    }
+    emptyMilePercent {
+      percent
+      emptyMiles
+      totalMiles
+      deltaPp
+    }
+    atRisk {
+      count
+      delta
+      etaSlip
+      weather
+      reefer
+    }
+    unassigned {
+      count
+      delta
+      revenueWaiting
+    }
+    readyToDispatch {
+      count
+      delta
+      unassigned
+      driverReady
+    }
+    detentionWatchlist {
+      items {
+        shipmentId
+        customer
+        dwellLabel
+        tone
+      }
+    }
+    customerMix {
+      windowDays
+      entries {
+        customerId
+        name
+        revenue
+        share
+        loads
+        trend
+      }
+    }
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
+    laneHeatmap {
+      windowDays
+      cells {
+        origin
+        destination
+        count
+      }
+      total
+    }
   }
 }
 
 query ShipmentTomorrowsPickups($limit: Int, $offset: Int, $timezone: String) {
   shipmentAnalytics(include: "tomorrowsPickups", limit: $limit, offset: $offset, timezone: $timezone) {
     page
-    data
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
   }
 }
 
-query UnassignedShipments($first: Int!, $offset: Int, $after: String) {
-  unassignedShipments(first: $first, offset: $offset, after: $after) {
+query UnassignedShipments($first: Int!, $after: String) {
+  unassignedShipments(first: $first, after: $after) {
     edges {
       node {
         ...ShipmentFields
@@ -396,12 +601,12 @@ query UnassignedShipments($first: Int!, $offset: Int, $after: String) {
 
 query ExceptionShipments(
   $first: Int!
-  $offset: Int
+  $after: String
   $fieldFilters: [FieldFilterInput!]
 ) {
   shipments(
     first: $first
-    offset: $offset
+    after: $after
     fieldFilters: $fieldFilters
     expandShipmentDetails: true
   ) {
@@ -419,12 +624,12 @@ query ExceptionShipments(
 
 query MapShipments(
   $first: Int!
-  $offset: Int
+  $after: String
   $fieldFilters: [FieldFilterInput!]
 ) {
   shipments(
     first: $first
-    offset: $offset
+    after: $after
     fieldFilters: $fieldFilters
     expandShipmentDetails: true
   ) {
@@ -440,8 +645,8 @@ query MapShipments(
   }
 }
 
-query ShipmentComments($shipmentId: ID!, $first: Int!, $offset: Int, $after: String) {
-  shipmentComments(shipmentId: $shipmentId, first: $first, offset: $offset, after: $after) {
+query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
+  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
     edges {
       node {
         ...ShipmentCommentFields
@@ -507,7 +712,16 @@ query ShipmentBillingReadiness($shipmentId: ID!) {
     warnings {
       code
       message
-      context
+      context {
+        documentTypeId
+        documentTypeCode
+        documentTypeName
+        documentCount
+        requirementCount
+        missingRequirementCount
+        serviceFailureIds
+        unresolvedCount
+      }
     }
     serviceFailureContext {
       hasUnresolved
@@ -591,7 +805,36 @@ mutation TransferShipmentOwnership($id: ID!, $input: ShipmentTransferOwnershipIn
 }
 
 mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
-  transferShipmentToBilling(input: $input)
+  transferShipmentToBilling(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    shipmentId
+    assignedBillerId
+    number
+    status
+    billType
+    exceptionReasonCode
+    reviewNotes
+    exceptionNotes
+    reviewStartedAt
+    reviewCompletedAt
+    canceledById
+    canceledAt
+    cancelReason
+    isAdjustmentOrigin
+    sourceInvoiceId
+    sourceInvoiceAdjustmentId
+    sourceCreditMemoInvoiceId
+    correctionGroupId
+    rebillStrategy
+    requiresReplacementReview
+    rerateVariancePercent
+    adjustmentContext
+    version
+    createdAt
+    updatedAt
+  }
 }
 
 mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {

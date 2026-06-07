@@ -3,6 +3,7 @@ import z from "zod";
 export type GenericLimitOffsetResponse<T> = {
   results: T[];
   count: number;
+  totalCount?: number | null;
   next: string | null;
   prev: string | null;
   pageInfo?: {
@@ -17,6 +18,7 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
   return z.object({
     results: z.array(itemSchema),
     count: z.number(),
+    totalCount: z.number().nullable().optional(),
     next: z.string().nullable().default(null),
     prev: z.string().nullable().default(null),
     pageInfo: z

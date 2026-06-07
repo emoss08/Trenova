@@ -119,7 +119,6 @@ fragment TrailerTableRowFields on Trailer {
 
 query TractorTable(
   $first: Int!
-  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -131,7 +130,6 @@ query TractorTable(
 ) {
   tractors(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -155,7 +153,6 @@ query TractorTable(
 
 query TrailerTable(
   $first: Int!
-  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -166,7 +163,6 @@ query TrailerTable(
 ) {
   trailers(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters

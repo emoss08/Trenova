@@ -41,14 +41,10 @@ export function useUnassignedShipments(pageSize = DEFAULT_LIMIT, enabled = true)
   return useInfiniteQuery({
     queryKey: [...queries.shipment.listUnassigned._def, { pageSize }],
     queryFn: ({ pageParam }) =>
-      listUnassignedShipmentsGraphQL({ limit: pageSize, offset: pageParam }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _pages, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === pageSize) {
-        return lastPageParam + pageSize;
-      }
-      return undefined;
-    },
+      listUnassignedShipmentsGraphQL({ limit: pageSize, after: pageParam }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo?.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
     staleTime: 30_000,
     retry: false,
     refetchOnWindowFocus: false,
@@ -66,7 +62,6 @@ export function useExceptionShipments(
     queryFn: () =>
       listExceptionShipmentsGraphQL({
         limit,
-        offset: 0,
         fieldFilters: exceptionFilters(category),
       }),
     staleTime: 30_000,

@@ -51,13 +51,13 @@ describe("ShipmentCommentService", () => {
 
     const response = await new ShipmentCommentService().list("shp_1", {
       limit: 20,
-      offset: 0,
+      after: "cursor-1",
     });
 
     expect(listShipmentCommentsGraphQLMock).toHaveBeenCalledWith({
       shipmentId: "shp_1",
       limit: 20,
-      offset: 0,
+      after: "cursor-1",
     });
     expect(response).toEqual({
       results: [comment],

@@ -37,7 +37,7 @@ export function RequestedPTOOverview() {
     ],
     queryFn: async ({ pageParam }) => {
       return await fetchUpcomingWorkerPTO({
-        filter: { limit: 20, offset: pageParam },
+        filter: { limit: 20, after: pageParam },
         type: searchParams?.requestPTOFilters?.type as PTOType | undefined,
         status: "Requested",
         startDate: searchParams?.requestPTOFilters?.startDate,
@@ -47,13 +47,8 @@ export function RequestedPTOOverview() {
         timezone: user?.timezone,
       });
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === 20) {
-        return lastPageParam + 20;
-      }
-      return undefined;
-    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.next ?? undefined,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

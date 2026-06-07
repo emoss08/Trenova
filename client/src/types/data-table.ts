@@ -113,6 +113,7 @@ export type DataTableGraphQLConfig<
   connectionKey: string;
   variables?: Partial<TVariables>;
   mapNode?: (node: unknown) => TData;
+  supportsSort?: boolean;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

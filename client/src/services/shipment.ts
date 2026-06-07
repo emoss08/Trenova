@@ -28,6 +28,7 @@ import {
   type LoadingOptimizationRequest,
 } from "@/types/loading-optimization";
 import { createLimitOffsetResponse, type PaginationInfo } from "@/types/server";
+import type { BillType } from "@/types/bill-type";
 import {
   bulkTransferToBillingResponseSchema,
   duplicateShipmentResponseSchema,
@@ -54,12 +55,11 @@ export class ShipmentService {
   public async list(_include?: string) {
     const response = await listShipmentsGraphQL({
       limit: 20,
-      offset: 0,
     });
     return safeParse(shipmentListSchema, response, "Shipment");
   }
 
-  public async listUnassigned(req: { limit: number; offset: number }) {
+  public async listUnassigned(req: { limit: number; after?: string | null }) {
     const response = await listUnassignedShipmentsGraphQL(req);
 
     return safeParse(shipmentListSchema, response, "Unassigned Shipments");
@@ -90,7 +90,7 @@ export class ShipmentService {
     const response = await listShipmentCommentsGraphQL({
       shipmentId: req.shipmentId,
       limit: req.limit ?? 20,
-      offset: req.offset ?? 0,
+      after: null,
     });
 
     return response as ShipmentCommentListResponse;
@@ -159,7 +159,7 @@ export class ShipmentService {
     return safeParse(loadingOptimizationResultSchema, response, "Loading Optimization");
   }
 
-  public async transferToBilling(shipmentId: string, billType?: string) {
+  public async transferToBilling(shipmentId: string, billType?: BillType) {
     return transferShipmentToBillingGraphQL(shipmentId, billType);
   }
 

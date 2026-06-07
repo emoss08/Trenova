@@ -125,7 +125,6 @@ fragment WorkerDataTablePageInfoFields on PageInfo {
 
 query WorkerTable(
   $first: Int!
-  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -134,7 +133,6 @@ query WorkerTable(
 ) {
   workers(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -155,7 +153,6 @@ query WorkerTable(
 
 query WorkerPtoTable(
   $first: Int!
-  $offset: Int
   $after: String
   $query: String
   $fieldFilters: [FieldFilterInput!]
@@ -165,7 +162,6 @@ query WorkerPtoTable(
 ) {
   workerPTOEntries(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -187,7 +183,6 @@ query WorkerPtoTable(
 
 query UpcomingWorkerPto(
   $first: Int!
-  $offset: Int
   $after: String
   $status: PTOStatus
   $type: PTOType
@@ -199,7 +194,6 @@ query UpcomingWorkerPto(
 ) {
   upcomingWorkerPTO(
     first: $first
-    offset: $offset
     after: $after
     status: $status
     type: $type

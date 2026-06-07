@@ -1,6 +1,10 @@
 import {
   UpcomingWorkerPtoDocument,
   WorkerPtoChartDataDocument,
+  type UpcomingWorkerPtoQuery,
+  type UpcomingWorkerPtoQueryVariables,
+  type WorkerPtoChartDataQuery,
+  type WorkerPtoChartDataQueryVariables,
 } from "@/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import type { GenericLimitOffsetResponse } from "@/types/server";
@@ -41,12 +45,15 @@ function workerPTOConnectionToLimitOffset(
 export async function fetchUpcomingWorkerPTO(
   req: ListUpcomingPTORequest,
 ): Promise<GenericLimitOffsetResponse<WorkerPTO>> {
-  const data = await requestGraphQL({
+  const data = await requestGraphQL<
+    UpcomingWorkerPtoQuery,
+    UpcomingWorkerPtoQueryVariables
+  >({
     document: UpcomingWorkerPtoDocument,
     operationName: "UpcomingWorkerPto",
     variables: {
       first: req.filter.limit,
-      offset: req.filter.offset,
+      after: req.filter.after,
       status: req.status,
       type: req.type,
       startDate: req.startDate,
@@ -70,7 +77,10 @@ export const worker = createQueryKeys("worker", {
   ptoChartData: (req: PTOChartDataRequest) => ({
     queryKey: ["pto-chart-data", req],
     queryFn: async () => {
-      const data = await requestGraphQL({
+      const data = await requestGraphQL<
+        WorkerPtoChartDataQuery,
+        WorkerPtoChartDataQueryVariables
+      >({
         document: WorkerPtoChartDataDocument,
         operationName: "WorkerPtoChartData",
         variables: req,

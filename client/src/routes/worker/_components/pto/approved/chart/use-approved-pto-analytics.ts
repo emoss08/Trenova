@@ -52,7 +52,7 @@ export function useApprovedPTOAnalytics({
     ...queries.worker.listUpcomingPTO({
       filter: {
         limit: 1,
-        offset: 0,
+        after: null,
       },
       type: type as PTOType,
       status: "Requested",

@@ -25,12 +25,10 @@ describe("analytics query keys", () => {
     getShipmentPageAnalyticsGraphQLMock.mockResolvedValueOnce({
       page: "shipment-management",
       savedViewCounts: null,
-      data: {
-        laneHeatmap: {
-          cells: [{ count: 18, destination: "South", origin: "Midwest" }],
-          total: 18,
-          windowDays: 7,
-        },
+      laneHeatmap: {
+        cells: [{ count: 18, destination: "South", origin: "Midwest" }],
+        total: 18,
+        windowDays: 7,
       },
     });
 
@@ -39,6 +37,8 @@ describe("analytics query keys", () => {
 
     expect(query.queryKey).toEqual(["analytics", "shipment-management"]);
     expect(response).toEqual({
+      page: "shipment-management",
+      savedViewCounts: null,
       laneHeatmap: {
         cells: [{ count: 18, destination: "South", origin: "Midwest" }],
         total: 18,

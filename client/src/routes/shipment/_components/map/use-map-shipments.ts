@@ -14,7 +14,6 @@ export function useMapShipments(enabled = true) {
     queryFn: () =>
       listMapShipmentsGraphQL({
         limit: MAX_MAP_SHIPMENTS,
-        offset: 0,
         fieldFilters: [
           {
             field: "status",

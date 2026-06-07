@@ -16,7 +16,7 @@ export const shipment = createQueryKeys("shipment", {
     queryKey: ["billing-readiness", shipmentId],
     queryFn: async () => apiService.shipmentService.getBillingReadiness(shipmentId),
   }),
-  listUnassigned: (req: { limit: number; offset: number }) => ({
+  listUnassigned: (req: { limit: number; after?: string | null }) => ({
     queryKey: ["list-unassigned", req],
     queryFn: async () => apiService.shipmentService.listUnassigned(req),
   }),

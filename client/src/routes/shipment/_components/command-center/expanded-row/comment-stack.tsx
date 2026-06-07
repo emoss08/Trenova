@@ -117,16 +117,12 @@ export function CommentBlock({ shipmentId }: { shipmentId: Shipment["id"] }) {
 
       return await apiService.shipmentCommentService.list(shipmentId, {
         limit: PAGE_SIZE,
-        offset: pageParam,
+        after: pageParam,
       });
     },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === PAGE_SIZE) {
-        return lastPageParam + PAGE_SIZE;
-      }
-      return undefined;
-    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.pageInfo?.hasNextPage ? lastPage.pageInfo.endCursor : undefined,
     enabled: hasShipmentId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

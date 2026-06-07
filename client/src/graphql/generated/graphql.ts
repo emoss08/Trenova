@@ -10,6 +10,33 @@ export type AssignmentStatus =
   | 'InProgress'
   | 'New';
 
+export type BillType =
+  | 'CreditMemo'
+  | 'DebitMemo'
+  | 'Invoice';
+
+export type BillingQueueExceptionReasonCode =
+  | 'AccessorialDispute'
+  | 'CustomerInformationError'
+  | 'DuplicateCharge'
+  | 'IncorrectRates'
+  | 'MissingDocumentation'
+  | 'MissingReferenceNumber'
+  | 'Other'
+  | 'RateNotOnFile'
+  | 'ServiceFailure'
+  | 'WeightDiscrepancy';
+
+export type BillingQueueStatus =
+  | 'Approved'
+  | 'Canceled'
+  | 'Exception'
+  | 'InReview'
+  | 'OnHold'
+  | 'Posted'
+  | 'ReadyForReview'
+  | 'SentBackToOps';
+
 export type CdlClass =
   | 'A'
   | 'B'
@@ -122,7 +149,7 @@ export type ShipmentAdditionalChargeInput = {
 };
 
 export type ShipmentBulkTransferToBillingInput = {
-  billType?: string | null | undefined;
+  billType?: BillType | null | undefined;
   shipmentIds: Array<string | number>;
 };
 
@@ -381,7 +408,7 @@ export type ShipmentTransferOwnershipInput = {
 };
 
 export type ShipmentTransferToBillingInput = {
-  billType?: string | null | undefined;
+  billType?: BillType | null | undefined;
   shipmentId: string | number;
 };
 
@@ -438,7 +465,6 @@ export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string
 
 export type TractorTableQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   query?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
@@ -454,7 +480,6 @@ export type TractorTableQuery = { tractors: { totalCount: number | null, edges: 
 
 export type TrailerTableQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   query?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
@@ -511,13 +536,13 @@ export type ShipmentStopFieldsFragment = { id: string | null, businessUnitId: st
 
 export type ShipmentMoveFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string | null, status: MoveStatus, loaded: boolean, sequence: number, distance: number | null, distanceSource: string | null, distanceProvider: string | null, distanceCalculatedAt: number | null, distanceRouteSignature: string | null, distanceDataVersion: string | null, distanceRoutingType: string | null, distanceUnits: string | null, distanceMetadata: unknown, version: number, createdAt: number, updatedAt: number, stops: Array<{ ' $fragmentRefs'?: { 'ShipmentStopFieldsFragment': ShipmentStopFieldsFragment } }>, assignment: { ' $fragmentRefs'?: { 'ShipmentAssignmentFieldsFragment': ShipmentAssignmentFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentMoveFieldsFragment' };
 
-export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, version: number, createdAt: number, updatedAt: number, accessorialCharge: unknown } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
+export type ShipmentAdditionalChargeFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, accessorialChargeId: string, isSystemGenerated: boolean, method: string, amount: string, unit: number, version: number, createdAt: number, updatedAt: number, accessorialCharge: { id: string, businessUnitId: string, organizationId: string, code: string, description: string, status: EntityStatus, method: string, rateUnit: string, amount: string, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentAdditionalChargeFieldsFragment' };
 
-export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, version: number, createdAt: number, updatedAt: number, commodity: unknown } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
+export type ShipmentCommodityFieldsFragment = { id: string | null, businessUnitId: string, organizationId: string, shipmentId: string, commodityId: string, pieces: number, weight: number, version: number, createdAt: number, updatedAt: number, commodity: { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: string, loadingInstructions: string, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } | null } & { ' $fragmentName'?: 'ShipmentCommodityFieldsFragment' };
 
 export type ShipmentRatingDetailFieldsFragment = { formulaTemplateId: string, formulaTemplateName: string, expression: string, resolvedVariables: unknown, result: number, ratedAt: number } & { ' $fragmentName'?: 'ShipmentRatingDetailFieldsFragment' };
 
-export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, version: number, createdAt: number, updatedAt: number, customer: unknown, formulaTemplate: unknown, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
+export type ShipmentFieldsFragment = { id: string, businessUnitId: string, organizationId: string, sourceDocumentId: string | null, serviceTypeId: string, shipmentTypeId: string, customerId: string, tractorTypeId: string | null, trailerTypeId: string | null, ownerId: string | null, enteredById: string | null, canceledById: string | null, formulaTemplateId: string, consolidationGroupId: string | null, status: ShipmentStatus, tenderStatus: ShipmentTenderStatus | null, entryMethod: ShipmentEntryMethod | null, proNumber: string, bol: string | null, cancelReason: string, otherChargeAmount: string, freightChargeAmount: string, baseRate: string, totalChargeAmount: string, pieces: number | null, weight: number | null, temperatureMin: number | null, temperatureMax: number | null, actualDeliveryDate: number | null, actualShipDate: number | null, canceledAt: number | null, billingTransferStatus: string | null, transferredToBillingAt: number | null, markedReadyToBillAt: number | null, billedAt: number | null, ratingUnit: number, version: number, createdAt: number, updatedAt: number, ratingDetail: { ' $fragmentRefs'?: { 'ShipmentRatingDetailFieldsFragment': ShipmentRatingDetailFieldsFragment } } | null, moves: Array<{ ' $fragmentRefs'?: { 'ShipmentMoveFieldsFragment': ShipmentMoveFieldsFragment } }>, additionalCharges: Array<{ ' $fragmentRefs'?: { 'ShipmentAdditionalChargeFieldsFragment': ShipmentAdditionalChargeFieldsFragment } }>, commodities: Array<{ ' $fragmentRefs'?: { 'ShipmentCommodityFieldsFragment': ShipmentCommodityFieldsFragment } }>, customer: { id: string, businessUnitId: string, organizationId: string, stateId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, isGeocoded: boolean, longitude: number | null, latitude: number | null, placeId: string, externalId: string, allowConsolidation: boolean, exclusiveConsolidation: boolean, consolidationPriority: number, version: number, createdAt: number, updatedAt: number } | null, owner: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, formulaTemplate: { id: string, organizationId: string, businessUnitId: string, name: string, description: string, type: string, expression: string, status: string, schemaId: string, metadata: unknown, version: number, sourceTemplateId: string | null, sourceVersionNumber: number | null, currentVersionNumber: number, createdAt: number, updatedAt: number, variableDefinitions: Array<{ name: string, type: string, description: string, required: boolean, defaultValue: unknown, source: string | null }> } | null } & { ' $fragmentName'?: 'ShipmentFieldsFragment' };
 
 export type ShipmentPageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'ShipmentPageInfoFieldsFragment' };
 
@@ -525,11 +550,10 @@ export type ShipmentCommentMentionFieldsFragment = { id: string, commentId: stri
 
 export type ShipmentCommentFieldsFragment = { id: string, businessUnitId: string | null, organizationId: string | null, shipmentId: string, userId: string | null, comment: string, type: ShipmentCommentType, visibility: ShipmentCommentVisibility, priority: ShipmentCommentPriority, source: ShipmentCommentSource, metadata: unknown, editedAt: number | null, version: number, createdAt: number, updatedAt: number, mentionedUserIds: Array<string>, user: { ' $fragmentRefs'?: { 'ShipmentUserFieldsFragment': ShipmentUserFieldsFragment } } | null, mentionedUsers: Array<{ ' $fragmentRefs'?: { 'ShipmentCommentMentionFieldsFragment': ShipmentCommentMentionFieldsFragment } }> | null } & { ' $fragmentName'?: 'ShipmentCommentFieldsFragment' };
 
-export type ShipmentEventFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string, moveId: string | null, stopId: string | null, assignmentId: string | null, commentId: string | null, holdId: string | null, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFieldsFragment' };
+export type ShipmentEventFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shipmentId: string, moveId: string | null, stopId: string | null, assignmentId: string | null, commentId: string | null, holdId: string | null, type: ShipmentEventType, severity: ShipmentEventSeverity, actorType: ShipmentEventActorType, actorId: string | null, actorLabel: string, summary: string, proNumber: string | null, previousStatus: string | null, newStatus: string | null, reason: string | null, previousOwnerId: string | null, newOwnerId: string | null, primaryWorkerId: string | null, secondaryWorkerId: string | null, tractorId: string | null, trailerId: string | null, driverName: string | null, holdType: string | null, holdSeverity: string | null, holdSource: string | null, commentBody: string | null, commentType: string | null, commentVisibility: string | null, commentPriority: string | null, mentionedUserIds: Array<string>, metadata: unknown, occurredAt: number, correlationId: string | null, actor: { id: string, name: string, emailAddress: string, profilePicUrl: string, thumbnailUrl: string } | null, shipment: { id: string | null, proNumber: string | null } | null } & { ' $fragmentName'?: 'ShipmentEventFieldsFragment' };
 
 export type ShipmentCommandCenterTableQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   query?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
@@ -567,7 +591,7 @@ export type ShipmentPageAnalyticsQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, data: unknown, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null } };
+export type ShipmentPageAnalyticsQuery = { shipmentAnalytics: { page: string, savedViewCounts: { all: number | null, transit: number | null, atRisk: number | null, unassigned: number | null, deliveringToday: number | null } | null, activeShipments: { count: number, changeFromYesterday: number, sparkline: Array<{ hour: string, value: number }>, breakdown: { inTransit: number, atRisk: number, loading: number, done: number } } | null, onTimePercent: { percent: number, onTimeCount: number, totalCount: number, target: number | null, deltaPp: number, sevenDayPercent: number } | null, revenueToday: { total: number, deltaPct: number, rpm: number, sparkline: Array<{ hour: string, value: number }> } | null, emptyMilePercent: { percent: number, emptyMiles: number, totalMiles: number, deltaPp: number } | null, atRisk: { count: number, delta: number, etaSlip: number, weather: number, reefer: number } | null, unassigned: { count: number, delta: number, revenueWaiting: number } | null, readyToDispatch: { count: number, delta: number, unassigned: number, driverReady: number } | null, detentionWatchlist: { items: Array<{ shipmentId: string, customer: string, dwellLabel: string, tone: string }> } | null, customerMix: { windowDays: number, entries: Array<{ customerId: string, name: string, revenue: number, share: number, loads: number, trend: number }> } | null, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null, laneHeatmap: { windowDays: number, total: number, cells: Array<{ origin: string, destination: string, count: number }> } | null } };
 
 export type ShipmentTomorrowsPickupsQueryVariables = Exact<{
   limit?: number | null | undefined;
@@ -576,11 +600,10 @@ export type ShipmentTomorrowsPickupsQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentTomorrowsPickupsQuery = { shipmentAnalytics: { page: string, data: unknown } };
+export type ShipmentTomorrowsPickupsQuery = { shipmentAnalytics: { page: string, tomorrowsPickups: { date: string, pickups: Array<{ shipmentId: string, proNumber: string, pickupWindowStart: number, customer: string, origin: string, destination: string, driver: string, status: string }> } | null } };
 
 export type UnassignedShipmentsQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
@@ -589,7 +612,7 @@ export type UnassignedShipmentsQuery = { unassignedShipments: { totalCount: numb
 
 export type ExceptionShipmentsQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
+  after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
 }>;
 
@@ -598,7 +621,7 @@ export type ExceptionShipmentsQuery = { shipments: { totalCount: number | null, 
 
 export type MapShipmentsQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
+  after?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
 }>;
 
@@ -608,7 +631,6 @@ export type MapShipmentsQuery = { shipments: { totalCount: number | null, edges:
 export type ShipmentCommentsQueryVariables = Exact<{
   shipmentId: string | number;
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
 }>;
 
@@ -637,7 +659,7 @@ export type ShipmentBillingReadinessQueryVariables = Exact<{
 }>;
 
 
-export type ShipmentBillingReadinessQuery = { shipmentBillingReadiness: { shipmentId: string, shipmentStatus: ShipmentStatus, canMarkReadyToInvoice: boolean, shouldAutoMarkReadyToInvoice: boolean, shouldAutoTransferToBilling: boolean, policy: { shipmentBillingRequirementEnforcement: string, rateValidationEnforcement: string, billingExceptionDisposition: string, notifyOnBillingExceptions: boolean, readyToBillAssignmentMode: string, billingQueueTransferMode: string }, requirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string, satisfied: boolean, documentCount: number, documentIds: Array<string> }>, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string, satisfied: boolean, documentCount: number, documentIds: Array<string> }>, validationFailures: Array<{ field: string, code: string, message: string }>, warnings: Array<{ code: string, message: string, context: unknown }>, serviceFailureContext: { hasUnresolved: boolean, unresolvedCount: number, serviceFailureIds: Array<string> } } };
+export type ShipmentBillingReadinessQuery = { shipmentBillingReadiness: { shipmentId: string, shipmentStatus: ShipmentStatus, canMarkReadyToInvoice: boolean, shouldAutoMarkReadyToInvoice: boolean, shouldAutoTransferToBilling: boolean, policy: { shipmentBillingRequirementEnforcement: string, rateValidationEnforcement: string, billingExceptionDisposition: string, notifyOnBillingExceptions: boolean, readyToBillAssignmentMode: string, billingQueueTransferMode: string }, requirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string, satisfied: boolean, documentCount: number, documentIds: Array<string> }>, missingRequirements: Array<{ documentTypeId: string, documentTypeCode: string, documentTypeName: string, satisfied: boolean, documentCount: number, documentIds: Array<string> }>, validationFailures: Array<{ field: string, code: string, message: string }>, warnings: Array<{ code: string, message: string, context: { documentTypeId: string | null, documentTypeCode: string | null, documentTypeName: string | null, documentCount: number | null, requirementCount: number | null, missingRequirementCount: number | null, serviceFailureIds: Array<string> | null, unresolvedCount: number | null } | null }>, serviceFailureContext: { hasUnresolved: boolean, unresolvedCount: number, serviceFailureIds: Array<string> } } };
 
 export type ShipmentUiPolicyQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -701,7 +723,7 @@ export type TransferShipmentToBillingMutationVariables = Exact<{
 }>;
 
 
-export type TransferShipmentToBillingMutation = { transferShipmentToBilling: unknown };
+export type TransferShipmentToBillingMutation = { transferShipmentToBilling: { id: string, organizationId: string, businessUnitId: string, shipmentId: string, assignedBillerId: string | null, number: string, status: BillingQueueStatus, billType: BillType, exceptionReasonCode: BillingQueueExceptionReasonCode | null, reviewNotes: string, exceptionNotes: string, reviewStartedAt: number | null, reviewCompletedAt: number | null, canceledById: string | null, canceledAt: number | null, cancelReason: string, isAdjustmentOrigin: boolean, sourceInvoiceId: string | null, sourceInvoiceAdjustmentId: string | null, sourceCreditMemoInvoiceId: string | null, correctionGroupId: string | null, rebillStrategy: string | null, requiresReplacementReview: boolean, rerateVariancePercent: string, adjustmentContext: unknown, version: number, createdAt: number, updatedAt: number } };
 
 export type BulkTransferShipmentsToBillingMutationVariables = Exact<{
   input: ShipmentBulkTransferToBillingInput;
@@ -793,7 +815,6 @@ export type WorkerDataTablePageInfoFieldsFragment = { hasNextPage: boolean, endC
 
 export type WorkerTableQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   query?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
@@ -806,7 +827,6 @@ export type WorkerTableQuery = { workers: { totalCount: number | null, edges: Ar
 
 export type WorkerPtoTableQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   query?: string | null | undefined;
   fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
@@ -820,7 +840,6 @@ export type WorkerPtoTableQuery = { workerPTOEntries: { totalCount: number | nul
 
 export type UpcomingWorkerPtoQueryVariables = Exact<{
   first: number;
-  offset?: number | null | undefined;
   after?: string | null | undefined;
   status?: PtoStatus | null | undefined;
   type?: PtoType | null | undefined;
@@ -1337,7 +1356,20 @@ export const ShipmentAdditionalChargeFieldsFragmentDoc = new TypedDocumentString
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
     `, {"fragmentName":"ShipmentAdditionalChargeFields"}) as unknown as TypedDocumentString<ShipmentAdditionalChargeFieldsFragment, unknown>;
 export const ShipmentCommodityFieldsFragmentDoc = new TypedDocumentString(`
@@ -1352,7 +1384,27 @@ export const ShipmentCommodityFieldsFragmentDoc = new TypedDocumentString(`
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
     `, {"fragmentName":"ShipmentCommodityFields"}) as unknown as TypedDocumentString<ShipmentCommodityFieldsFragment, unknown>;
 export const ShipmentUserFieldsFragmentDoc = new TypedDocumentString(`
@@ -1417,11 +1469,59 @@ export const ShipmentFieldsFragmentDoc = new TypedDocumentString(`
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
 }
     fragment ShipmentUserFields on User {
   id
@@ -1549,7 +1649,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -1562,7 +1675,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -1659,6 +1792,25 @@ export const ShipmentEventFieldsFragmentDoc = new TypedDocumentString(`
   actorId
   actorLabel
   summary
+  proNumber
+  previousStatus
+  newStatus
+  reason
+  previousOwnerId
+  newOwnerId
+  primaryWorkerId
+  secondaryWorkerId
+  tractorId
+  trailerId
+  driverName
+  holdType
+  holdSeverity
+  holdSource
+  commentBody
+  commentType
+  commentVisibility
+  commentPriority
+  mentionedUserIds
   metadata
   occurredAt
   correlationId
@@ -1864,10 +2016,9 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
 }
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const TractorTableDocument = new TypedDocumentString(`
-    query TractorTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
+    query TractorTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
   tractors(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -1960,12 +2111,11 @@ fragment TractorTableRowFields on Tractor {
   secondaryWorker {
     ...WorkerTableReferenceFields
   }
-}`, {"hash":"sha256:5fac6658d775d4262c0850bdb2938194466f9631cb91203f6f60f73c7e3a3376"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
+}`, {"hash":"sha256:48e33e2d022f9b3fd926131b7eb932b0fb4d388627326e375d96d23a10648baf"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
 export const TrailerTableDocument = new TypedDocumentString(`
-    query TrailerTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
+    query TrailerTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
   trailers(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -2045,7 +2195,7 @@ fragment TrailerTableRowFields on Trailer {
   registrationState {
     ...UsStateTableFields
   }
-}`, {"hash":"sha256:7d14e89dd8650263df64b20cc350016579d0015061ecd9c1517bcf7089569334"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+}`, {"hash":"sha256:9df2ee9fc4bfd5411a8dca95d3f610a7040e7de8656657a6ccd049afa65b4238"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {
@@ -2135,10 +2285,9 @@ export const SelectOptionsDocument = new TypedDocumentString(`
 }
     `, {"hash":"sha256:61baa26c739e995aee3b16a4b9f4b584b628598c5e46d1f3886624091f1c12f2"}) as unknown as TypedDocumentString<SelectOptionsQuery, SelectOptionsQueryVariables>;
 export const ShipmentCommandCenterTableDocument = new TypedDocumentString(`
-    query ShipmentCommandCenterTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $expandShipmentDetails: Boolean = true) {
+    query ShipmentCommandCenterTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $expandShipmentDetails: Boolean = true) {
   shipments(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -2283,7 +2432,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -2296,7 +2458,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -2358,16 +2540,64 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:63cf1f9e2a9a35a65b495e1b19c50d5fb039e90d4a08d64ed3838bd79b1dd224"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
+}`, {"hash":"sha256:d0265141369328ad1c053b96d81f39e5ebc60acf60b7c5a768f7370378d3daa1"}) as unknown as TypedDocumentString<ShipmentCommandCenterTableQuery, ShipmentCommandCenterTableQueryVariables>;
 export const ShipmentDetailDocument = new TypedDocumentString(`
     query ShipmentDetail($id: ID!, $expandShipmentDetails: Boolean = true) {
   shipment(id: $id, expandShipmentDetails: $expandShipmentDetails) {
@@ -2500,7 +2730,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -2513,7 +2756,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -2575,12 +2838,60 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:d7c9bae124fd88c2ecf2ebdb17d51660062b6749ae33f489b5831cdaa9200034"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:967bfafc6c98ab8ce91b7a396c99b153495d95aae31655e8e495fbfcafeccb2b"}) as unknown as TypedDocumentString<ShipmentDetailQuery, ShipmentDetailQueryVariables>;
 export const ShipmentSavedViewCountsDocument = new TypedDocumentString(`
     query ShipmentSavedViewCounts($timezone: String!) {
   shipmentAnalytics(include: "savedViewCounts", timezone: $timezone) {
@@ -2614,10 +2925,105 @@ export const ShipmentPageAnalyticsDocument = new TypedDocumentString(`
       unassigned
       deliveringToday
     }
-    data
+    activeShipments {
+      count
+      changeFromYesterday
+      sparkline {
+        hour
+        value
+      }
+      breakdown {
+        inTransit
+        atRisk
+        loading
+        done
+      }
+    }
+    onTimePercent {
+      percent
+      onTimeCount
+      totalCount
+      target
+      deltaPp
+      sevenDayPercent
+    }
+    revenueToday {
+      total
+      sparkline {
+        hour
+        value
+      }
+      deltaPct
+      rpm
+    }
+    emptyMilePercent {
+      percent
+      emptyMiles
+      totalMiles
+      deltaPp
+    }
+    atRisk {
+      count
+      delta
+      etaSlip
+      weather
+      reefer
+    }
+    unassigned {
+      count
+      delta
+      revenueWaiting
+    }
+    readyToDispatch {
+      count
+      delta
+      unassigned
+      driverReady
+    }
+    detentionWatchlist {
+      items {
+        shipmentId
+        customer
+        dwellLabel
+        tone
+      }
+    }
+    customerMix {
+      windowDays
+      entries {
+        customerId
+        name
+        revenue
+        share
+        loads
+        trend
+      }
+    }
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
+    laneHeatmap {
+      windowDays
+      cells {
+        origin
+        destination
+        count
+      }
+      total
+    }
   }
 }
-    `, {"hash":"sha256:cb8d6e76ebd21b445fc71d284709c96adcf6fd9a0318ab2911b91c519d0de78c"}) as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
+    `, {"hash":"sha256:9fff5e0a3c9a2cddee9b3ac55cbd809c2be6b60e466b78b7adced0ea3a54e438"}) as unknown as TypedDocumentString<ShipmentPageAnalyticsQuery, ShipmentPageAnalyticsQueryVariables>;
 export const ShipmentTomorrowsPickupsDocument = new TypedDocumentString(`
     query ShipmentTomorrowsPickups($limit: Int, $offset: Int, $timezone: String) {
   shipmentAnalytics(
@@ -2627,13 +3033,25 @@ export const ShipmentTomorrowsPickupsDocument = new TypedDocumentString(`
     timezone: $timezone
   ) {
     page
-    data
+    tomorrowsPickups {
+      date
+      pickups {
+        shipmentId
+        proNumber
+        pickupWindowStart
+        customer
+        origin
+        destination
+        driver
+        status
+      }
+    }
   }
 }
-    `, {"hash":"sha256:26df058421fc11ace262d2f7f7c9c0bc241613babbb153f5bfd32b2482a9fdef"}) as unknown as TypedDocumentString<ShipmentTomorrowsPickupsQuery, ShipmentTomorrowsPickupsQueryVariables>;
+    `, {"hash":"sha256:4fde33920fe475d227451a6b115f2ea2f290ace0cc78634485da30b88bc74a87"}) as unknown as TypedDocumentString<ShipmentTomorrowsPickupsQuery, ShipmentTomorrowsPickupsQueryVariables>;
 export const UnassignedShipmentsDocument = new TypedDocumentString(`
-    query UnassignedShipments($first: Int!, $offset: Int, $after: String) {
-  unassignedShipments(first: $first, offset: $offset, after: $after) {
+    query UnassignedShipments($first: Int!, $after: String) {
+  unassignedShipments(first: $first, after: $after) {
     edges {
       node {
         ...ShipmentFields
@@ -2771,7 +3189,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -2784,7 +3215,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -2846,484 +3297,689 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentPageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:0af54fa1e710a003173eae2558e3aea08276e24455a7984d94de3ebffd682b8e"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
+}`, {"hash":"sha256:784d5b6dedb41311934ed104212acfa1044f6df45c670ab9504e5bc2e411c868"}) as unknown as TypedDocumentString<UnassignedShipmentsQuery, UnassignedShipmentsQueryVariables>;
 export const ExceptionShipmentsDocument = new TypedDocumentString(`
-    query ExceptionShipments($first: Int!, $offset: Int, $fieldFilters: [FieldFilterInput!]) {
+    query ExceptionShipments($first: Int!, $after: String, $fieldFilters: [FieldFilterInput!]) {
   shipments(
     first: $first
-    offset: $offset
-    fieldFilters: $fieldFilters
-    expandShipmentDetails: true
-  ) {
-    edges {
-      node {
-        ...ShipmentFields
-      }
-    }
-    totalCount
-    pageInfo {
-      ...ShipmentPageInfoFields
-    }
-  }
-}
-    fragment ShipmentUserFields on User {
-  id
-  name
-  emailAddress
-  profilePicUrl
-  thumbnailUrl
-}
-fragment ShipmentLocationFields on Location {
-  id
-  name
-  code
-  addressLine1
-  addressLine2
-  city
-  postalCode
-  longitude
-  latitude
-}
-fragment ShipmentWorkerFields on Worker {
-  id
-  firstName
-  lastName
-  wholeName
-  profilePicUrl
-}
-fragment ShipmentTractorFields on Tractor {
-  id
-  code
-}
-fragment ShipmentTrailerFields on Trailer {
-  id
-  code
-}
-fragment ShipmentAssignmentFields on ShipmentAssignment {
-  id
-  businessUnitId
-  organizationId
-  shipmentMoveId
-  primaryWorkerId
-  tractorId
-  trailerId
-  secondaryWorkerId
-  status
-  archivedAt
-  version
-  createdAt
-  updatedAt
-  tractor {
-    ...ShipmentTractorFields
-  }
-  trailer {
-    ...ShipmentTrailerFields
-  }
-  primaryWorker {
-    ...ShipmentWorkerFields
-  }
-  secondaryWorker {
-    ...ShipmentWorkerFields
-  }
-}
-fragment ShipmentStopFields on ShipmentStop {
-  id
-  businessUnitId
-  organizationId
-  shipmentMoveId
-  locationId
-  status
-  type
-  scheduleType
-  sequence
-  pieces
-  weight
-  scheduledWindowStart
-  scheduledWindowEnd
-  actualArrival
-  actualDeparture
-  countLateOverride
-  countDetentionOverride
-  addressLine
-  version
-  createdAt
-  updatedAt
-  location {
-    ...ShipmentLocationFields
-  }
-}
-fragment ShipmentMoveFields on ShipmentMove {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  status
-  loaded
-  sequence
-  distance
-  distanceSource
-  distanceProvider
-  distanceCalculatedAt
-  distanceRouteSignature
-  distanceDataVersion
-  distanceRoutingType
-  distanceUnits
-  distanceMetadata
-  version
-  createdAt
-  updatedAt
-  stops {
-    ...ShipmentStopFields
-  }
-  assignment {
-    ...ShipmentAssignmentFields
-  }
-}
-fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  accessorialChargeId
-  isSystemGenerated
-  method
-  amount
-  unit
-  version
-  createdAt
-  updatedAt
-  accessorialCharge
-}
-fragment ShipmentCommodityFields on ShipmentCommodity {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  commodityId
-  pieces
-  weight
-  version
-  createdAt
-  updatedAt
-  commodity
-}
-fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
-  formulaTemplateId
-  formulaTemplateName
-  expression
-  resolvedVariables
-  result
-  ratedAt
-}
-fragment ShipmentFields on Shipment {
-  id
-  businessUnitId
-  organizationId
-  sourceDocumentId
-  serviceTypeId
-  shipmentTypeId
-  customerId
-  tractorTypeId
-  trailerTypeId
-  ownerId
-  enteredById
-  canceledById
-  formulaTemplateId
-  consolidationGroupId
-  status
-  tenderStatus
-  entryMethod
-  proNumber
-  bol
-  cancelReason
-  otherChargeAmount
-  freightChargeAmount
-  baseRate
-  totalChargeAmount
-  pieces
-  weight
-  temperatureMin
-  temperatureMax
-  actualDeliveryDate
-  actualShipDate
-  canceledAt
-  billingTransferStatus
-  transferredToBillingAt
-  markedReadyToBillAt
-  billedAt
-  ratingUnit
-  ratingDetail {
-    ...ShipmentRatingDetailFields
-  }
-  version
-  createdAt
-  updatedAt
-  moves {
-    ...ShipmentMoveFields
-  }
-  additionalCharges {
-    ...ShipmentAdditionalChargeFields
-  }
-  commodities {
-    ...ShipmentCommodityFields
-  }
-  customer
-  owner {
-    ...ShipmentUserFields
-  }
-  formulaTemplate
-}
-fragment ShipmentPageInfoFields on PageInfo {
-  hasNextPage
-  endCursor
-}`, {"hash":"sha256:fc3b29cc7b29a22dfa86848640f2bb2e078c69561fb33c87a05954ba4753838a"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
-export const MapShipmentsDocument = new TypedDocumentString(`
-    query MapShipments($first: Int!, $offset: Int, $fieldFilters: [FieldFilterInput!]) {
-  shipments(
-    first: $first
-    offset: $offset
-    fieldFilters: $fieldFilters
-    expandShipmentDetails: true
-  ) {
-    edges {
-      node {
-        ...ShipmentFields
-      }
-    }
-    totalCount
-    pageInfo {
-      ...ShipmentPageInfoFields
-    }
-  }
-}
-    fragment ShipmentUserFields on User {
-  id
-  name
-  emailAddress
-  profilePicUrl
-  thumbnailUrl
-}
-fragment ShipmentLocationFields on Location {
-  id
-  name
-  code
-  addressLine1
-  addressLine2
-  city
-  postalCode
-  longitude
-  latitude
-}
-fragment ShipmentWorkerFields on Worker {
-  id
-  firstName
-  lastName
-  wholeName
-  profilePicUrl
-}
-fragment ShipmentTractorFields on Tractor {
-  id
-  code
-}
-fragment ShipmentTrailerFields on Trailer {
-  id
-  code
-}
-fragment ShipmentAssignmentFields on ShipmentAssignment {
-  id
-  businessUnitId
-  organizationId
-  shipmentMoveId
-  primaryWorkerId
-  tractorId
-  trailerId
-  secondaryWorkerId
-  status
-  archivedAt
-  version
-  createdAt
-  updatedAt
-  tractor {
-    ...ShipmentTractorFields
-  }
-  trailer {
-    ...ShipmentTrailerFields
-  }
-  primaryWorker {
-    ...ShipmentWorkerFields
-  }
-  secondaryWorker {
-    ...ShipmentWorkerFields
-  }
-}
-fragment ShipmentStopFields on ShipmentStop {
-  id
-  businessUnitId
-  organizationId
-  shipmentMoveId
-  locationId
-  status
-  type
-  scheduleType
-  sequence
-  pieces
-  weight
-  scheduledWindowStart
-  scheduledWindowEnd
-  actualArrival
-  actualDeparture
-  countLateOverride
-  countDetentionOverride
-  addressLine
-  version
-  createdAt
-  updatedAt
-  location {
-    ...ShipmentLocationFields
-  }
-}
-fragment ShipmentMoveFields on ShipmentMove {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  status
-  loaded
-  sequence
-  distance
-  distanceSource
-  distanceProvider
-  distanceCalculatedAt
-  distanceRouteSignature
-  distanceDataVersion
-  distanceRoutingType
-  distanceUnits
-  distanceMetadata
-  version
-  createdAt
-  updatedAt
-  stops {
-    ...ShipmentStopFields
-  }
-  assignment {
-    ...ShipmentAssignmentFields
-  }
-}
-fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  accessorialChargeId
-  isSystemGenerated
-  method
-  amount
-  unit
-  version
-  createdAt
-  updatedAt
-  accessorialCharge
-}
-fragment ShipmentCommodityFields on ShipmentCommodity {
-  id
-  businessUnitId
-  organizationId
-  shipmentId
-  commodityId
-  pieces
-  weight
-  version
-  createdAt
-  updatedAt
-  commodity
-}
-fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
-  formulaTemplateId
-  formulaTemplateName
-  expression
-  resolvedVariables
-  result
-  ratedAt
-}
-fragment ShipmentFields on Shipment {
-  id
-  businessUnitId
-  organizationId
-  sourceDocumentId
-  serviceTypeId
-  shipmentTypeId
-  customerId
-  tractorTypeId
-  trailerTypeId
-  ownerId
-  enteredById
-  canceledById
-  formulaTemplateId
-  consolidationGroupId
-  status
-  tenderStatus
-  entryMethod
-  proNumber
-  bol
-  cancelReason
-  otherChargeAmount
-  freightChargeAmount
-  baseRate
-  totalChargeAmount
-  pieces
-  weight
-  temperatureMin
-  temperatureMax
-  actualDeliveryDate
-  actualShipDate
-  canceledAt
-  billingTransferStatus
-  transferredToBillingAt
-  markedReadyToBillAt
-  billedAt
-  ratingUnit
-  ratingDetail {
-    ...ShipmentRatingDetailFields
-  }
-  version
-  createdAt
-  updatedAt
-  moves {
-    ...ShipmentMoveFields
-  }
-  additionalCharges {
-    ...ShipmentAdditionalChargeFields
-  }
-  commodities {
-    ...ShipmentCommodityFields
-  }
-  customer
-  owner {
-    ...ShipmentUserFields
-  }
-  formulaTemplate
-}
-fragment ShipmentPageInfoFields on PageInfo {
-  hasNextPage
-  endCursor
-}`, {"hash":"sha256:33fdb4a0c4d8fe6c50a9a6a7ae64fd04188d01378732a51cef7c09e2e46a0e57"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
-export const ShipmentCommentsDocument = new TypedDocumentString(`
-    query ShipmentComments($shipmentId: ID!, $first: Int!, $offset: Int, $after: String) {
-  shipmentComments(
-    shipmentId: $shipmentId
-    first: $first
-    offset: $offset
     after: $after
+    fieldFilters: $fieldFilters
+    expandShipmentDetails: true
   ) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentLocationFields on Location {
+  id
+  name
+  code
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  longitude
+  latitude
+}
+fragment ShipmentWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+fragment ShipmentTractorFields on Tractor {
+  id
+  code
+}
+fragment ShipmentTrailerFields on Trailer {
+  id
+  code
+}
+fragment ShipmentAssignmentFields on ShipmentAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  primaryWorkerId
+  tractorId
+  trailerId
+  secondaryWorkerId
+  status
+  archivedAt
+  version
+  createdAt
+  updatedAt
+  tractor {
+    ...ShipmentTractorFields
+  }
+  trailer {
+    ...ShipmentTrailerFields
+  }
+  primaryWorker {
+    ...ShipmentWorkerFields
+  }
+  secondaryWorker {
+    ...ShipmentWorkerFields
+  }
+}
+fragment ShipmentStopFields on ShipmentStop {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  locationId
+  status
+  type
+  scheduleType
+  sequence
+  pieces
+  weight
+  scheduledWindowStart
+  scheduledWindowEnd
+  actualArrival
+  actualDeparture
+  countLateOverride
+  countDetentionOverride
+  addressLine
+  version
+  createdAt
+  updatedAt
+  location {
+    ...ShipmentLocationFields
+  }
+}
+fragment ShipmentMoveFields on ShipmentMove {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  status
+  loaded
+  sequence
+  distance
+  distanceSource
+  distanceProvider
+  distanceCalculatedAt
+  distanceRouteSignature
+  distanceDataVersion
+  distanceRoutingType
+  distanceUnits
+  distanceMetadata
+  version
+  createdAt
+  updatedAt
+  stops {
+    ...ShipmentStopFields
+  }
+  assignment {
+    ...ShipmentAssignmentFields
+  }
+}
+fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  accessorialChargeId
+  isSystemGenerated
+  method
+  amount
+  unit
+  version
+  createdAt
+  updatedAt
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentCommodityFields on ShipmentCommodity {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  commodityId
+  pieces
+  weight
+  version
+  createdAt
+  updatedAt
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
+  formulaTemplateId
+  formulaTemplateName
+  expression
+  resolvedVariables
+  result
+  ratedAt
+}
+fragment ShipmentFields on Shipment {
+  id
+  businessUnitId
+  organizationId
+  sourceDocumentId
+  serviceTypeId
+  shipmentTypeId
+  customerId
+  tractorTypeId
+  trailerTypeId
+  ownerId
+  enteredById
+  canceledById
+  formulaTemplateId
+  consolidationGroupId
+  status
+  tenderStatus
+  entryMethod
+  proNumber
+  bol
+  cancelReason
+  otherChargeAmount
+  freightChargeAmount
+  baseRate
+  totalChargeAmount
+  pieces
+  weight
+  temperatureMin
+  temperatureMax
+  actualDeliveryDate
+  actualShipDate
+  canceledAt
+  billingTransferStatus
+  transferredToBillingAt
+  markedReadyToBillAt
+  billedAt
+  ratingUnit
+  ratingDetail {
+    ...ShipmentRatingDetailFields
+  }
+  version
+  createdAt
+  updatedAt
+  moves {
+    ...ShipmentMoveFields
+  }
+  additionalCharges {
+    ...ShipmentAdditionalChargeFields
+  }
+  commodities {
+    ...ShipmentCommodityFields
+  }
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
+  owner {
+    ...ShipmentUserFields
+  }
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentPageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:d32d5850adf3e1f22111924782501028c87dad764459d7b2730aee98ff9b6480"}) as unknown as TypedDocumentString<ExceptionShipmentsQuery, ExceptionShipmentsQueryVariables>;
+export const MapShipmentsDocument = new TypedDocumentString(`
+    query MapShipments($first: Int!, $after: String, $fieldFilters: [FieldFilterInput!]) {
+  shipments(
+    first: $first
+    after: $after
+    fieldFilters: $fieldFilters
+    expandShipmentDetails: true
+  ) {
+    edges {
+      node {
+        ...ShipmentFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...ShipmentPageInfoFields
+    }
+  }
+}
+    fragment ShipmentUserFields on User {
+  id
+  name
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+fragment ShipmentLocationFields on Location {
+  id
+  name
+  code
+  addressLine1
+  addressLine2
+  city
+  postalCode
+  longitude
+  latitude
+}
+fragment ShipmentWorkerFields on Worker {
+  id
+  firstName
+  lastName
+  wholeName
+  profilePicUrl
+}
+fragment ShipmentTractorFields on Tractor {
+  id
+  code
+}
+fragment ShipmentTrailerFields on Trailer {
+  id
+  code
+}
+fragment ShipmentAssignmentFields on ShipmentAssignment {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  primaryWorkerId
+  tractorId
+  trailerId
+  secondaryWorkerId
+  status
+  archivedAt
+  version
+  createdAt
+  updatedAt
+  tractor {
+    ...ShipmentTractorFields
+  }
+  trailer {
+    ...ShipmentTrailerFields
+  }
+  primaryWorker {
+    ...ShipmentWorkerFields
+  }
+  secondaryWorker {
+    ...ShipmentWorkerFields
+  }
+}
+fragment ShipmentStopFields on ShipmentStop {
+  id
+  businessUnitId
+  organizationId
+  shipmentMoveId
+  locationId
+  status
+  type
+  scheduleType
+  sequence
+  pieces
+  weight
+  scheduledWindowStart
+  scheduledWindowEnd
+  actualArrival
+  actualDeparture
+  countLateOverride
+  countDetentionOverride
+  addressLine
+  version
+  createdAt
+  updatedAt
+  location {
+    ...ShipmentLocationFields
+  }
+}
+fragment ShipmentMoveFields on ShipmentMove {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  status
+  loaded
+  sequence
+  distance
+  distanceSource
+  distanceProvider
+  distanceCalculatedAt
+  distanceRouteSignature
+  distanceDataVersion
+  distanceRoutingType
+  distanceUnits
+  distanceMetadata
+  version
+  createdAt
+  updatedAt
+  stops {
+    ...ShipmentStopFields
+  }
+  assignment {
+    ...ShipmentAssignmentFields
+  }
+}
+fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  accessorialChargeId
+  isSystemGenerated
+  method
+  amount
+  unit
+  version
+  createdAt
+  updatedAt
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentCommodityFields on ShipmentCommodity {
+  id
+  businessUnitId
+  organizationId
+  shipmentId
+  commodityId
+  pieces
+  weight
+  version
+  createdAt
+  updatedAt
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
+  formulaTemplateId
+  formulaTemplateName
+  expression
+  resolvedVariables
+  result
+  ratedAt
+}
+fragment ShipmentFields on Shipment {
+  id
+  businessUnitId
+  organizationId
+  sourceDocumentId
+  serviceTypeId
+  shipmentTypeId
+  customerId
+  tractorTypeId
+  trailerTypeId
+  ownerId
+  enteredById
+  canceledById
+  formulaTemplateId
+  consolidationGroupId
+  status
+  tenderStatus
+  entryMethod
+  proNumber
+  bol
+  cancelReason
+  otherChargeAmount
+  freightChargeAmount
+  baseRate
+  totalChargeAmount
+  pieces
+  weight
+  temperatureMin
+  temperatureMax
+  actualDeliveryDate
+  actualShipDate
+  canceledAt
+  billingTransferStatus
+  transferredToBillingAt
+  markedReadyToBillAt
+  billedAt
+  ratingUnit
+  ratingDetail {
+    ...ShipmentRatingDetailFields
+  }
+  version
+  createdAt
+  updatedAt
+  moves {
+    ...ShipmentMoveFields
+  }
+  additionalCharges {
+    ...ShipmentAdditionalChargeFields
+  }
+  commodities {
+    ...ShipmentCommodityFields
+  }
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
+  owner {
+    ...ShipmentUserFields
+  }
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}
+fragment ShipmentPageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:dc641d1d07391e1a3d2f6a31f6840c4fb26bd3f2fc6e3b094a2a3f31668df78a"}) as unknown as TypedDocumentString<MapShipmentsQuery, MapShipmentsQueryVariables>;
+export const ShipmentCommentsDocument = new TypedDocumentString(`
+    query ShipmentComments($shipmentId: ID!, $first: Int!, $after: String) {
+  shipmentComments(shipmentId: $shipmentId, first: $first, after: $after) {
     edges {
       node {
         ...ShipmentCommentFields
@@ -3381,7 +4037,7 @@ fragment ShipmentCommentFields on ShipmentComment {
   mentionedUsers {
     ...ShipmentCommentMentionFields
   }
-}`, {"hash":"sha256:f74be292ceb64bccbb17eb30560b2faa8bc27959faa0ea3b6ea18e998c47ea50"}) as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
+}`, {"hash":"sha256:e37d1d8ecef666ea4927be5e4f5db33df6d1bef011ce747c8ba4a3231374ad65"}) as unknown as TypedDocumentString<ShipmentCommentsQuery, ShipmentCommentsQueryVariables>;
 export const ShipmentCommentCountDocument = new TypedDocumentString(`
     query ShipmentCommentCount($shipmentId: ID!) {
   shipmentCommentCount(shipmentId: $shipmentId) {
@@ -3416,6 +4072,25 @@ export const ShipmentEventsDocument = new TypedDocumentString(`
   actorId
   actorLabel
   summary
+  proNumber
+  previousStatus
+  newStatus
+  reason
+  previousOwnerId
+  newOwnerId
+  primaryWorkerId
+  secondaryWorkerId
+  tractorId
+  trailerId
+  driverName
+  holdType
+  holdSeverity
+  holdSource
+  commentBody
+  commentType
+  commentVisibility
+  commentPriority
+  mentionedUserIds
   metadata
   occurredAt
   correlationId
@@ -3430,7 +4105,7 @@ export const ShipmentEventsDocument = new TypedDocumentString(`
     id
     proNumber
   }
-}`, {"hash":"sha256:de7c96c5f00c76964677f774c6361e588c613c8634704d9053abc7f806ef9f37"}) as unknown as TypedDocumentString<ShipmentEventsQuery, ShipmentEventsQueryVariables>;
+}`, {"hash":"sha256:550f52772125723808100c16a4ea99a13764c84ce076c293063ea3b26a3cdce2"}) as unknown as TypedDocumentString<ShipmentEventsQuery, ShipmentEventsQueryVariables>;
 export const ShipmentBillingReadinessDocument = new TypedDocumentString(`
     query ShipmentBillingReadiness($shipmentId: ID!) {
   shipmentBillingReadiness(shipmentId: $shipmentId) {
@@ -3468,7 +4143,16 @@ export const ShipmentBillingReadinessDocument = new TypedDocumentString(`
     warnings {
       code
       message
-      context
+      context {
+        documentTypeId
+        documentTypeCode
+        documentTypeName
+        documentCount
+        requirementCount
+        missingRequirementCount
+        serviceFailureIds
+        unresolvedCount
+      }
     }
     serviceFailureContext {
       hasUnresolved
@@ -3480,7 +4164,7 @@ export const ShipmentBillingReadinessDocument = new TypedDocumentString(`
     shouldAutoTransferToBilling
   }
 }
-    `, {"hash":"sha256:132a2ccc559b08c566a391ca90ffc133e35ac2e40869194909f4cdff9e389e38"}) as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
+    `, {"hash":"sha256:e75cb6d00ed67d58a2fe75606c9449dd1e55a2f61b902db0aedf9941ee01a383"}) as unknown as TypedDocumentString<ShipmentBillingReadinessQuery, ShipmentBillingReadinessQueryVariables>;
 export const ShipmentUiPolicyDocument = new TypedDocumentString(`
     query ShipmentUIPolicy {
   shipmentUIPolicy {
@@ -3645,7 +4329,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -3658,7 +4355,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -3720,12 +4437,60 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:9840935b4d1c5259fbeb14a962dfd19a327e2363f80a509bf0173204c21e8c3f"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:763b8342509da702c233892455443986299faa3a317aaa35a72f3e027e500415"}) as unknown as TypedDocumentString<CreateShipmentMutation, CreateShipmentMutationVariables>;
 export const UpdateShipmentDocument = new TypedDocumentString(`
     mutation UpdateShipment($id: ID!, $input: ShipmentInput!) {
   updateShipment(id: $id, input: $input) {
@@ -3858,7 +4623,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -3871,7 +4649,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -3933,12 +4731,60 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:769f9f21b8f2116a4c9e7f34e5e32aa4c0127cab274fc7bfa6208ba8cd9dfc8c"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:c60996aced20e0b644a9c5bd979a1fc2001129b0cd3ad020ee2b10ce9af8829d"}) as unknown as TypedDocumentString<UpdateShipmentMutation, UpdateShipmentMutationVariables>;
 export const CancelShipmentDocument = new TypedDocumentString(`
     mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
   cancelShipment(id: $id, input: $input) {
@@ -4071,7 +4917,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -4084,7 +4943,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -4146,12 +5025,60 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:7cd82dd5f6f8dc3c97c859cdc4047a754f8293c36251ce6421ab6e78b6ce2620"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:740eb9a91490a75551c0f650bf6dfe31954516e463ce936af89553dbe059c83d"}) as unknown as TypedDocumentString<CancelShipmentMutation, CancelShipmentMutationVariables>;
 export const UncancelShipmentDocument = new TypedDocumentString(`
     mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
@@ -4284,7 +5211,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -4297,7 +5237,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -4359,12 +5319,60 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:08cc9a0ed77bbee3fac10d80047808d2e9d274be7018f12b9c7b91ab59efe097"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:062057ae26309d7368a77f7f18f8de9fdd81441d2a0cbdc1caa47eaf8bb31604"}) as unknown as TypedDocumentString<UncancelShipmentMutation, UncancelShipmentMutationVariables>;
 export const DuplicateShipmentDocument = new TypedDocumentString(`
     mutation DuplicateShipment($input: ShipmentDuplicateInput!) {
   duplicateShipment(input: $input) {
@@ -4508,7 +5516,20 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   version
   createdAt
   updatedAt
-  accessorialCharge
+  accessorialCharge {
+    id
+    businessUnitId
+    organizationId
+    code
+    description
+    status
+    method
+    rateUnit
+    amount
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentCommodityFields on ShipmentCommodity {
   id
@@ -4521,7 +5542,27 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
   version
   createdAt
   updatedAt
-  commodity
+  commodity {
+    id
+    businessUnitId
+    organizationId
+    hazardousMaterialId
+    status
+    name
+    description
+    minTemperature
+    maxTemperature
+    weightPerUnit
+    linearFeetPerUnit
+    maxQuantityPerShipment
+    freightClass
+    loadingInstructions
+    stackable
+    fragile
+    version
+    createdAt
+    updatedAt
+  }
 }
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
@@ -4583,17 +5624,94 @@ fragment ShipmentFields on Shipment {
   commodities {
     ...ShipmentCommodityFields
   }
-  customer
+  customer {
+    id
+    businessUnitId
+    organizationId
+    stateId
+    status
+    code
+    name
+    addressLine1
+    addressLine2
+    city
+    postalCode
+    isGeocoded
+    longitude
+    latitude
+    placeId
+    externalId
+    allowConsolidation
+    exclusiveConsolidation
+    consolidationPriority
+    version
+    createdAt
+    updatedAt
+  }
   owner {
     ...ShipmentUserFields
   }
-  formulaTemplate
-}`, {"hash":"sha256:a55871596d7c3031d62dd7f06878b35282f186831e9081faa6f9e551e4b22551"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
+  formulaTemplate {
+    id
+    organizationId
+    businessUnitId
+    name
+    description
+    type
+    expression
+    status
+    schemaId
+    variableDefinitions {
+      name
+      type
+      description
+      required
+      defaultValue
+      source
+    }
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}`, {"hash":"sha256:f1e9c5337e92f6819e31bc44c26c1b5c56b2c84381d41bf4a95f15a2cc546b61"}) as unknown as TypedDocumentString<TransferShipmentOwnershipMutation, TransferShipmentOwnershipMutationVariables>;
 export const TransferShipmentToBillingDocument = new TypedDocumentString(`
     mutation TransferShipmentToBilling($input: ShipmentTransferToBillingInput!) {
-  transferShipmentToBilling(input: $input)
+  transferShipmentToBilling(input: $input) {
+    id
+    organizationId
+    businessUnitId
+    shipmentId
+    assignedBillerId
+    number
+    status
+    billType
+    exceptionReasonCode
+    reviewNotes
+    exceptionNotes
+    reviewStartedAt
+    reviewCompletedAt
+    canceledById
+    canceledAt
+    cancelReason
+    isAdjustmentOrigin
+    sourceInvoiceId
+    sourceInvoiceAdjustmentId
+    sourceCreditMemoInvoiceId
+    correctionGroupId
+    rebillStrategy
+    requiresReplacementReview
+    rerateVariancePercent
+    adjustmentContext
+    version
+    createdAt
+    updatedAt
+  }
 }
-    `, {"hash":"sha256:e726f80859067651bbaed7eca87ca2afb78ca7bcd311783df247ad952be452b8"}) as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
+    `, {"hash":"sha256:7849b77f08e7c2e7cb6af2c2abbc53185d0811092df155557be1c6803b335473"}) as unknown as TypedDocumentString<TransferShipmentToBillingMutation, TransferShipmentToBillingMutationVariables>;
 export const BulkTransferShipmentsToBillingDocument = new TypedDocumentString(`
     mutation BulkTransferShipmentsToBilling($input: ShipmentBulkTransferToBillingInput!) {
   bulkTransferShipmentsToBilling(input: $input) {
@@ -4852,10 +5970,9 @@ export const DeleteShipmentCommentDocument = new TypedDocumentString(`
 }
     `, {"hash":"sha256:a20dcdea6225911dd4742c1e415a5f1e2b04d0111fbaf5ecbda1e8136b3dfa14"}) as unknown as TypedDocumentString<DeleteShipmentCommentMutation, DeleteShipmentCommentMutationVariables>;
 export const WorkerTableDocument = new TypedDocumentString(`
-    query WorkerTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!]) {
+    query WorkerTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!]) {
   workers(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -4964,12 +6081,11 @@ fragment WorkerTableRowFields on Worker {
 fragment WorkerDataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:09bb823a143ec298b06e9be9f9c2a6fd6b7c9d57498ce141f5c09800016240ba"}) as unknown as TypedDocumentString<WorkerTableQuery, WorkerTableQueryVariables>;
+}`, {"hash":"sha256:04a18f51566b8eb924e96a832da2f36b971c41f41526d79634a73582499b3430"}) as unknown as TypedDocumentString<WorkerTableQuery, WorkerTableQueryVariables>;
 export const WorkerPtoTableDocument = new TypedDocumentString(`
-    query WorkerPtoTable($first: Int!, $offset: Int, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeWorker: Boolean = true) {
+    query WorkerPtoTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeWorker: Boolean = true) {
   workerPTOEntries(
     first: $first
-    offset: $offset
     after: $after
     query: $query
     fieldFilters: $fieldFilters
@@ -5017,12 +6133,11 @@ fragment WorkerPtoRowFields on WorkerPTO {
 fragment WorkerDataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:8d16694e8b5040d33e2e2b9bbf6f8ce7d1a7db190d466f45043413364d0cfbfb"}) as unknown as TypedDocumentString<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>;
+}`, {"hash":"sha256:881fc2e33707f67149bfe0e449e4f465fb7ac35e9f3d78dfbdc13da242cf8dcf"}) as unknown as TypedDocumentString<WorkerPtoTableQuery, WorkerPtoTableQueryVariables>;
 export const UpcomingWorkerPtoDocument = new TypedDocumentString(`
-    query UpcomingWorkerPto($first: Int!, $offset: Int, $after: String, $status: PTOStatus, $type: PTOType, $startDate: Int, $endDate: Int, $workerId: ID, $fleetCodeId: ID, $timezone: String) {
+    query UpcomingWorkerPto($first: Int!, $after: String, $status: PTOStatus, $type: PTOType, $startDate: Int, $endDate: Int, $workerId: ID, $fleetCodeId: ID, $timezone: String) {
   upcomingWorkerPTO(
     first: $first
-    offset: $offset
     after: $after
     status: $status
     type: $type
@@ -5072,7 +6187,7 @@ fragment WorkerPtoRowFields on WorkerPTO {
 fragment WorkerDataTablePageInfoFields on PageInfo {
   hasNextPage
   endCursor
-}`, {"hash":"sha256:a830be2ed4c113fb473cb7697487650c9e618a7e93d31efdac97f85e85a0527b"}) as unknown as TypedDocumentString<UpcomingWorkerPtoQuery, UpcomingWorkerPtoQueryVariables>;
+}`, {"hash":"sha256:a7e36af4743fb4d0fac8940110a84285c629f224b50673ef477f2eb6caa52ff5"}) as unknown as TypedDocumentString<UpcomingWorkerPtoQuery, UpcomingWorkerPtoQueryVariables>;
 export const WorkerPtoChartDataDocument = new TypedDocumentString(`
     query WorkerPtoChartData($startDateFrom: Int!, $startDateTo: Int!, $type: PTOType, $workerId: ID, $timezone: String) {
   workerPTOChartData(

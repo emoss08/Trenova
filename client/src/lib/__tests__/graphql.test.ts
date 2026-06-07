@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TractorTableDocument } from "@/graphql/generated/graphql";
 import { clearCsrfToken, setCsrfToken } from "../api";
-import { requestGraphQL, resolveGraphQLURL } from "../graphql";
+import { GraphQLRequestError, requestGraphQL, resolveGraphQLURL } from "../graphql";
 import { fetchGraphQLSelectOptions } from "../graphql/select-options";
 
 const selectOptionCursor =
@@ -109,6 +109,53 @@ describe("requestGraphQL", () => {
     ).rejects.toThrow("No tractor access");
   });
 
+  it("preserves structured GraphQL error extensions", async () => {
+    setCsrfToken("graphql-token");
+    fetchMock.mockResolvedValueOnce(
+      createGraphQLResponse({
+        errors: [
+          {
+            message: "Validation failed",
+            extensions: {
+              code: "VALIDATION_ERROR",
+              type: "validation",
+              traceId: "trace-123",
+              params: { shipmentId: "shp_123" },
+              errors: { proNumber: ["Pro number is required"] },
+              retryable: false,
+            },
+          },
+        ],
+      }),
+    );
+
+    try {
+      await requestGraphQL({
+        document: "mutation Test { updateShipment { id } }",
+        operationName: "Test",
+      });
+      expect.fail("Expected requestGraphQL to reject");
+    } catch (error: unknown) {
+      expect(error).toBeInstanceOf(GraphQLRequestError);
+      expect(error).toMatchObject({
+        message: "Validation failed",
+        status: 200,
+        code: "VALIDATION_ERROR",
+        type: "validation",
+        traceId: "trace-123",
+        params: { shipmentId: "shp_123" },
+        errors: { proNumber: ["Pro number is required"] },
+        extensions: {
+          retryable: false,
+        },
+      });
+
+      const gqlError = error as GraphQLRequestError;
+      expect(gqlError.graphQLErrors).toHaveLength(1);
+      expect(gqlError.graphQLErrors[0].extensions.retryable).toBe(false);
+    }
+  });
+
   it("throws HTTP errors when no GraphQL error is present", async () => {
     setCsrfToken("graphql-token");
     fetchMock.mockResolvedValueOnce(
@@ -123,7 +170,11 @@ describe("requestGraphQL", () => {
         document: "query Test { ok }",
         operationName: "Test",
       }),
-    ).rejects.toThrow("GraphQL request failed with HTTP 500");
+    ).rejects.toMatchObject({
+      message: "GraphQL request failed with HTTP 500",
+      status: 500,
+      graphQLErrors: [],
+    });
   });
 
   it("throws when the response omits data", async () => {

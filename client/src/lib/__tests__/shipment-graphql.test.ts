@@ -33,39 +33,37 @@ describe("shipment GraphQL helpers", () => {
 
     const response = await listShipmentsGraphQL({
       limit: 20,
-      offset: 10,
+      after: "cursor-0",
       query: "SHP",
       fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
-      filterGroups: [
-        {
-          filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-        },
-      ],
-      sort: [{ field: "proNumber", direction: "asc" }],
-    });
+			filterGroups: [
+				{
+					filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
+				},
+			],
+		});
 
     expect(requestGraphQLMock).toHaveBeenCalledWith({
       document: ShipmentCommandCenterTableDocument,
       operationName: "ShipmentCommandCenterTable",
       variables: {
         first: 20,
-        offset: 10,
+        after: "cursor-0",
         query: "SHP",
         fieldFilters: [{ field: "status", operator: "eq", value: "InTransit" }],
         filterGroups: [
           {
-            filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
-          },
-        ],
-        sort: [{ field: "proNumber", direction: "asc" }],
-        expandShipmentDetails: true,
-      },
-    });
+					filters: [{ field: "customerId", operator: "eq", value: "cus_1" }],
+				},
+			],
+			expandShipmentDetails: true,
+		},
+	});
     expect(response).toEqual({
       results: [{ id: "shp_1", proNumber: "SHP-1" }],
       count: 25,
-      next: "30",
-      prev: "0",
+      next: "cursor-1",
+      prev: null,
       pageInfo: {
         mode: "cursor",
         hasNextPage: true,
@@ -165,7 +163,6 @@ describe("shipment GraphQL helpers", () => {
     const response = await listShipmentCommentsGraphQL({
       shipmentId: "shp_1",
       limit: 20,
-      offset: 0,
     });
 
     expect(requestGraphQLMock).toHaveBeenCalledWith({
@@ -174,7 +171,7 @@ describe("shipment GraphQL helpers", () => {
       variables: {
         shipmentId: "shp_1",
         first: 20,
-        offset: 0,
+        after: undefined,
       },
     });
     expect(response).toEqual({

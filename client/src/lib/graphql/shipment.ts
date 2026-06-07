@@ -29,6 +29,7 @@ import {
   UncancelShipmentDocument,
   UpdateShipmentCommentDocument,
   UpdateShipmentDocument,
+  type BillType,
   type FieldFilterInput,
   type FilterGroupInput,
   type ShipmentAdditionalChargeInput,
@@ -38,11 +39,10 @@ import {
   type ShipmentCommandCenterTableQueryVariables,
   type ShipmentCommodityInput,
   type ShipmentDuplicateInput,
-  type ShipmentInput,
-  type ShipmentLoadingOptimizationInput,
-  type ShipmentMoveInput,
-  type ShipmentPreviousRatesInput,
-  type SortFieldInput,
+	type ShipmentInput,
+	type ShipmentLoadingOptimizationInput,
+	type ShipmentMoveInput,
+	type ShipmentPreviousRatesInput,
 } from "@/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@/lib/graphql/data-table";
@@ -71,11 +71,10 @@ type ShipmentConnection = {
 
 type ShipmentPageRequest = {
   limit: number;
-  offset: number;
+  after?: string | null;
   query?: string;
   fieldFilters?: FieldFilterInput[];
   filterGroups?: FilterGroupInput[];
-  sort?: SortFieldInput[];
 };
 
 type ShipmentGraphQLParams<TVariables> = {
@@ -111,39 +110,34 @@ export async function listShipmentsGraphQL(
     operationName: "ShipmentCommandCenterTable",
     variables: {
       first: req.limit,
-      offset: req.offset,
+      after: req.after ?? undefined,
       query: req.query,
       fieldFilters: req.fieldFilters ?? [],
       filterGroups: req.filterGroups ?? [],
-      sort: req.sort ?? [],
       expandShipmentDetails: true,
     },
   });
-  return connectionToLimitOffset(data.shipments as ShipmentConnection, req.limit, req.offset);
+  return connectionToLimitOffset(data.shipments as ShipmentConnection);
 }
 
 export async function listUnassignedShipmentsGraphQL(req: {
   limit: number;
-  offset: number;
+  after?: string | null;
 }): Promise<GenericLimitOffsetResponse<Shipment>> {
   const data = await requestShipmentGraphQL({
     document: UnassignedShipmentsDocument,
     operationName: "UnassignedShipments",
     variables: {
       first: req.limit,
-      offset: req.offset,
+      after: req.after ?? undefined,
     },
   });
-  return connectionToLimitOffset(
-    data.unassignedShipments as ShipmentConnection,
-    req.limit,
-    req.offset,
-  );
+  return connectionToLimitOffset(data.unassignedShipments as ShipmentConnection);
 }
 
 export async function listExceptionShipmentsGraphQL(req: {
   limit: number;
-  offset: number;
+  after?: string | null;
   fieldFilters: FieldFilterInput[];
 }): Promise<GenericLimitOffsetResponse<Shipment>> {
   const data = await requestShipmentGraphQL({
@@ -151,16 +145,16 @@ export async function listExceptionShipmentsGraphQL(req: {
     operationName: "ExceptionShipments",
     variables: {
       first: req.limit,
-      offset: req.offset,
+      after: req.after ?? undefined,
       fieldFilters: req.fieldFilters,
     },
   });
-  return connectionToLimitOffset(data.shipments as ShipmentConnection, req.limit, req.offset);
+  return connectionToLimitOffset(data.shipments as ShipmentConnection);
 }
 
 export async function listMapShipmentsGraphQL(req: {
   limit: number;
-  offset: number;
+  after?: string | null;
   fieldFilters: FieldFilterInput[];
 }): Promise<GenericLimitOffsetResponse<Shipment>> {
   const data = await requestShipmentGraphQL({
@@ -168,11 +162,11 @@ export async function listMapShipmentsGraphQL(req: {
     operationName: "MapShipments",
     variables: {
       first: req.limit,
-      offset: req.offset,
+      after: req.after ?? undefined,
       fieldFilters: req.fieldFilters,
     },
   });
-  return connectionToLimitOffset(data.shipments as ShipmentConnection, req.limit, req.offset);
+  return connectionToLimitOffset(data.shipments as ShipmentConnection);
 }
 
 export async function getShipmentGraphQL(id: Shipment["id"]): Promise<Shipment> {
@@ -332,7 +326,7 @@ export async function transferShipmentOwnershipGraphQL(
   return data.transferShipmentOwnership as Shipment;
 }
 
-export async function transferShipmentToBillingGraphQL(shipmentId: string, billType?: string) {
+export async function transferShipmentToBillingGraphQL(shipmentId: string, billType?: BillType) {
   const data = await requestShipmentGraphQL({
     document: TransferShipmentToBillingDocument,
     operationName: "TransferShipmentToBilling",
@@ -445,7 +439,7 @@ export async function calculateShipmentLoadingOptimizationGraphQL(
 export async function listShipmentCommentsGraphQL(req: {
   shipmentId: Shipment["id"];
   limit: number;
-  offset: number;
+  after?: string | null;
 }): Promise<GenericLimitOffsetResponse<ShipmentComment>> {
   const data = await requestShipmentGraphQL({
     document: ShipmentCommentsDocument,
@@ -453,10 +447,10 @@ export async function listShipmentCommentsGraphQL(req: {
     variables: {
       shipmentId: req.shipmentId,
       first: req.limit,
-      offset: req.offset,
+      after: req.after ?? undefined,
     },
   });
-  return connectionToLimitOffset(data.shipmentComments, req.limit, req.offset);
+  return connectionToLimitOffset(data.shipmentComments);
 }
 
 export async function getShipmentCommentCountGraphQL(shipmentId: Shipment["id"]) {
@@ -505,24 +499,21 @@ export async function deleteShipmentCommentGraphQL(
   return data.deleteShipmentComment;
 }
 
-function connectionToLimitOffset<T>(
-  connection: ShipmentConnection,
-  limit: number,
-  offset: number,
-): GenericLimitOffsetResponse<T> {
+function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimitOffsetResponse<T> {
   const results = (connection.edges ?? []).map((edge) => edge.node as T);
   const totalCount = connection.totalCount ?? results.length;
-  const hasNextPage = connection.pageInfo?.hasNextPage ?? offset + results.length < totalCount;
+  const hasNextPage = connection.pageInfo?.hasNextPage ?? false;
+  const endCursor = connection.pageInfo?.endCursor ?? null;
 
   return {
     results,
     count: totalCount,
-    next: hasNextPage ? String(offset + limit) : null,
-    prev: offset > 0 ? String(Math.max(0, offset - limit)) : null,
+    next: hasNextPage ? endCursor : null,
+    prev: null,
     pageInfo: {
       mode: "cursor",
       hasNextPage,
-      endCursor: connection.pageInfo?.endCursor ?? null,
+      endCursor,
       totalCount,
     },
   };

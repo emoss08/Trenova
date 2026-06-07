@@ -191,12 +191,13 @@ export function DataTable<TData extends Record<string, any>>({
 
   const handleSortChange = useCallback(
     (field: string, direction: SortDirection | null) => {
+      if (graphql?.supportsSort === false) {
+        return;
+      }
       const nextParams: { sort: SortField[]; pageIndex?: number } = {
         sort: updateSortField(sort, field, direction),
+        pageIndex: 1,
       };
-      if (graphql) {
-        nextParams.pageIndex = 1;
-      }
 
       void setSearchParams(nextParams);
     },
@@ -205,12 +206,13 @@ export function DataTable<TData extends Record<string, any>>({
 
   const handleSortArrayChange = useCallback(
     (newSort: SortField[]) => {
+      if (graphql?.supportsSort === false) {
+        return;
+      }
       const nextParams: { sort: SortField[]; pageIndex?: number } = {
         sort: newSort,
+        pageIndex: 1,
       };
-      if (graphql) {
-        nextParams.pageIndex = 1;
-      }
 
       void setSearchParams(nextParams);
     },
@@ -232,28 +234,39 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const zeroBasedPageIndex = pageIndex - 1;
+  const effectiveSort = useMemo(
+    () => (graphql?.supportsSort === false ? [] : sort),
+    [graphql?.supportsSort, sort],
+  );
   const cursorScopeKey = useMemo(
     () =>
       JSON.stringify({
+        link,
         pageSize,
         query,
         fieldFilters,
         filterGroups,
-        sort,
+        sort: effectiveSort,
+        extraSearchParams: extraSearchParams ?? null,
         variables: graphql?.variables ?? null,
-    }),
-    [fieldFilters, filterGroups, graphql?.variables, pageSize, query, sort],
+      }),
+    [
+      effectiveSort,
+      extraSearchParams,
+      fieldFilters,
+      filterGroups,
+      graphql?.variables,
+      link,
+      pageSize,
+      query,
+    ],
   );
-  const useGraphQLOffsetPagination = Boolean(graphql && sort.length > 0);
   const pageCursors =
-    graphql && !useGraphQLOffsetPagination && cursorState.scopeKey === cursorScopeKey
+    cursorState.scopeKey === cursorScopeKey
       ? cursorState.cursors
       : { 0: null };
-  const currentCursor =
-    graphql && !useGraphQLOffsetPagination ? pageCursors[zeroBasedPageIndex] : null;
+  const currentCursor = pageCursors[zeroBasedPageIndex];
   const canFetchPage =
-    !graphql ||
-    useGraphQLOffsetPagination ||
     zeroBasedPageIndex === 0 ||
     currentCursor !== undefined;
 
@@ -261,14 +274,21 @@ export function DataTable<TData extends Record<string, any>>({
     queryKey,
     link,
     { pageIndex: zeroBasedPageIndex, pageSize },
-    { query, fieldFilters, filterGroups, sort, cursor: currentCursor, extraSearchParams },
+    {
+      query,
+      fieldFilters,
+      filterGroups,
+      sort: effectiveSort,
+      cursor: currentCursor,
+      extraSearchParams,
+    },
     graphql,
     canFetchPage,
   );
 
   useEffect(() => {
     const pageInfo = dataQuery.data?.pageInfo;
-    if (!graphql || pageInfo?.mode !== "cursor" || !pageInfo.hasNextPage || !pageInfo.endCursor) {
+    if (pageInfo?.mode !== "cursor" || !pageInfo.hasNextPage || !pageInfo.endCursor) {
       return;
     }
 
@@ -287,18 +307,17 @@ export function DataTable<TData extends Record<string, any>>({
         },
       };
     });
-  }, [cursorScopeKey, dataQuery.data?.pageInfo, graphql, zeroBasedPageIndex]);
+  }, [cursorScopeKey, dataQuery.data?.pageInfo, zeroBasedPageIndex]);
 
   useEffect(() => {
-    if (!graphql || canFetchPage || pageIndex === 1) {
+    if (canFetchPage || pageIndex === 1) {
       return;
     }
 
     void setSearchParams({ pageIndex: 1 });
-  }, [canFetchPage, graphql, pageIndex, setSearchParams]);
+  }, [canFetchPage, pageIndex, setSearchParams]);
 
-  const cursorPageInfo =
-    graphql && dataQuery.data?.pageInfo?.mode === "cursor" ? dataQuery.data.pageInfo : null;
+  const cursorPageInfo = dataQuery.data?.pageInfo?.mode === "cursor" ? dataQuery.data.pageInfo : null;
   const currentPageRowCount = dataQuery.data?.results.length ?? 0;
   const rowCount = cursorPageInfo
     ? zeroBasedPageIndex * pageSize +
@@ -358,7 +377,7 @@ export function DataTable<TData extends Record<string, any>>({
       void setSearchParams({
         fieldFilters: newFieldFilters,
         filterGroups: newFilterGroups,
-        sort: config.sort,
+        sort: graphql?.supportsSort === false ? [] : config.sort,
         pageSize: config.pageSize,
         pageIndex: 1,
       });
@@ -372,7 +391,7 @@ export function DataTable<TData extends Record<string, any>>({
         table.setColumnOrder(config.columnOrder);
       }
     },
-    [setSearchParams, columns, table],
+    [graphql?.supportsSort, setSearchParams, columns, table],
   );
 
   useEffect(() => {
@@ -406,12 +425,12 @@ export function DataTable<TData extends Record<string, any>>({
       fieldFilters: fieldFilters,
       filterGroups: filterGroups,
       joinOperator: "and",
-      sort,
+      sort: effectiveSort,
       pageSize,
       columnVisibility,
       columnOrder: table.getState().columnOrder,
     };
-  }, [fieldFilters, filterGroups, sort, pageSize, table]);
+  }, [fieldFilters, filterGroups, effectiveSort, pageSize, table]);
 
   const listRow = useMemo(() => {
     if (!panelEntityId || panelMode !== "edit") return null;

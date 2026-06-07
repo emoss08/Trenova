@@ -141,8 +141,7 @@ function PickupsList({
         offset: pageParam,
       }).then((response) => ({
         page: response.page,
-        tomorrowsPickups: (response.data as { tomorrowsPickups?: TomorrowsPickupsCard })
-          .tomorrowsPickups,
+        tomorrowsPickups: response.tomorrowsPickups as TomorrowsPickupsCard | undefined,
       })),
     initialPageParam: 0,
     initialData: {
