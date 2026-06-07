@@ -25,9 +25,9 @@ export function MapZoomControls() {
           <TooltipTrigger
             render={
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon-sm"
-                className="rounded-lg border bg-background/95 shadow-sm backdrop-blur-sm"
+                className="rounded-lg border bg-background shadow-sm backdrop-blur-sm"
                 onClick={zoomIn}
               />
             }
@@ -40,9 +40,9 @@ export function MapZoomControls() {
           <TooltipTrigger
             render={
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon-sm"
-                className="rounded-lg border bg-background/95 shadow-sm backdrop-blur-sm"
+                className="rounded-lg border bg-background shadow-sm backdrop-blur-sm"
                 onClick={zoomOut}
               />
             }

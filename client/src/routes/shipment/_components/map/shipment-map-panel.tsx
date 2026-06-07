@@ -14,7 +14,6 @@ import { MapControls } from "./map-controls";
 import { MapZoomControls } from "./map-zoom-controls";
 import { collectGeofencesFromLocations } from "./normalize-geofence";
 import { OWMTileLayer, type OWMLayerId } from "./owm-tile-layer";
-import { ShipmentMapLegend } from "./shipment-map-legend";
 import { ShipmentRouteOverlay } from "./shipment-route-overlay";
 import { TrafficLayer } from "./traffic-layer";
 import { HighlightAutoPan } from "./use-highlight-pan";
@@ -205,7 +204,6 @@ export default function ShipmentMapPanel({
             unitCount={mapShipments.length}
             dataUpdatedAt={mapShipmentsQuery.dataUpdatedAt}
           />
-          <ShipmentMapLegend />
         </div>
       </div>
     </APIProvider>
@@ -233,7 +231,7 @@ function LiveMapSyncOverlay({
 
   return (
     <div className="pointer-events-none absolute top-3 left-3 z-10 flex items-center gap-1.5">
-      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-card/80 px-2 py-1 font-mono text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
+      <span className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm">
         <span
           aria-hidden
           className={cn(
@@ -243,7 +241,7 @@ function LiveMapSyncOverlay({
         />
         {live ? "LIVE" : "OFFLINE"} · {unitCount} units
       </span>
-      <span className="rounded-md border border-border bg-card/80 px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
+      <span className="rounded-md border border-border bg-background px-2 py-1 font-mono text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur-sm">
         synced {formatElapsedTime(syncedAt, now)}
       </span>
     </div>
