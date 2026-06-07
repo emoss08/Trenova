@@ -52,6 +52,10 @@ func createTransferAutomationRule() validationframework.TenantedRule[*tenant.Bil
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
+			if entity.BillingQueueTransferMode != tenant.BillingQueueTransferModeAutomaticWhenReady {
+				return nil
+			}
+
 			if entity.BillingQueueTransferSchedule == "" {
 				multiErr.Add(
 					"billingQueueTransferSchedule",
