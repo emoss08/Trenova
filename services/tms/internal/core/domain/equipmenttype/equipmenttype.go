@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -18,10 +19,12 @@ var (
 	_ bun.BeforeAppendModelHook          = (*EquipmentType)(nil)
 	_ validationframework.TenantedEntity = (*EquipmentType)(nil)
 	_ domaintypes.PostgresSearchable     = (*EquipmentType)(nil)
+	_ pagination.CursorEntity            = (*EquipmentType)(nil)
 )
 
 type EquipmentType struct {
-	bun.BaseModel `bun:"table:equipment_types,alias:et" json:"-"`
+	bun.BaseModel             `bun:"table:equipment_types,alias:et" json:"-"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID           `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID pulid.ID           `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
@@ -86,6 +89,10 @@ func (et *EquipmentType) BeforeAppendModel(_ context.Context, query bun.Query) e
 
 func (et *EquipmentType) GetID() pulid.ID {
 	return et.ID
+}
+
+func (et *EquipmentType) GetCreatedAt() int64 {
+	return et.CreatedAt
 }
 
 func (et *EquipmentType) GetOrganizationID() pulid.ID {

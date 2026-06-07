@@ -31,6 +31,15 @@ input SortFieldInput {
   direction: String!
 }
 
+input DataTableConnectionInput {
+  first: Int = 20
+  after: String
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+}
+
 type PageInfo {
   hasNextPage: Boolean!
   endCursor: String

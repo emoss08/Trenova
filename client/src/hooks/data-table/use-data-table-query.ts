@@ -1,23 +1,11 @@
 import { API_BASE_URL } from "@/lib/constants";
 import { requestGraphQL } from "@/lib/graphql";
-import type {
-  DataTableGraphQLConfig,
-  FieldFilter,
-  FilterGroup,
-  SortField,
-} from "@/types/data-table";
+import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
 import type { API_ENDPOINTS, GenericLimitOffsetResponse } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
 
-export type DataTableQueryOptions = {
-  query?: string;
-  fieldFilters?: FieldFilter[];
-  filterGroups?: FilterGroup[];
-  sort?: SortField[];
-  cursor?: string | null;
-  extraSearchParams?: Record<string, unknown>;
-};
+export type { DataTableQueryOptions } from "@/types/data-table";
 
 type GraphQLConnection<TNode> = {
   edges?: Array<{ node: TNode }>;
@@ -50,8 +38,7 @@ function restCursorTotalCount<TData>(
     payload.pageInfo?.mode === "cursor" ||
     typeof payload.hasNextPage === "boolean" ||
     payload.endCursor !== undefined;
-  const hasNextPage =
-    payload.pageInfo?.hasNextPage ?? payload.hasNextPage ?? Boolean(payload.next);
+  const hasNextPage = payload.pageInfo?.hasNextPage ?? payload.hasNextPage ?? Boolean(payload.next);
 
   if (hasCursorMetadata && !hasNextPage && !currentCursor) {
     return payload.count;
@@ -86,17 +73,11 @@ export async function fetchData<TData extends Record<string, unknown>>(
   }
 
   if (options?.fieldFilters && options.fieldFilters.length > 0) {
-    fetchURL.searchParams.set(
-      "fieldFilters",
-      JSON.stringify(options.fieldFilters),
-    );
+    fetchURL.searchParams.set("fieldFilters", JSON.stringify(options.fieldFilters));
   }
 
   if (options?.filterGroups && options.filterGroups.length > 0) {
-    fetchURL.searchParams.set(
-      "filterGroups",
-      JSON.stringify(options.filterGroups),
-    );
+    fetchURL.searchParams.set("filterGroups", JSON.stringify(options.filterGroups));
   }
 
   if (options?.sort && options.sort.length > 0) {
@@ -150,20 +131,28 @@ export async function fetchData<TData extends Record<string, unknown>>(
 }
 
 export async function fetchGraphQLData<TData extends Record<string, unknown>>(
-	pageSize: number,
-	config: DataTableGraphQLConfig<TData>,
-	options?: DataTableQueryOptions,
-	_pageIndex = 0,
+  pageSize: number,
+  config: DataTableGraphQLConfig<TData>,
+  options?: DataTableQueryOptions,
+  _pageIndex = 0,
 ): Promise<GenericLimitOffsetResponse<TData>> {
-	const variables = {
-		...config.variables,
-		first: pageSize,
-		after: options?.cursor || undefined,
-		query: options?.query || undefined,
-		fieldFilters: options?.fieldFilters ?? [],
-		filterGroups: options?.filterGroups ?? [],
-		sort: config.supportsSort === false ? undefined : (options?.sort ?? []),
+  const defaultVariables = {
+    first: pageSize,
+    after: options?.cursor || undefined,
+    query: options?.query || undefined,
+    fieldFilters: options?.fieldFilters ?? [],
+    filterGroups: options?.filterGroups ?? [],
+    sort: config.supportsSort === false ? undefined : (options?.sort ?? []),
   };
+  const variables = config.buildVariables
+    ? {
+        ...config.variables,
+        ...config.buildVariables({ pageSize, options }),
+      }
+    : {
+        ...defaultVariables,
+        ...config.variables,
+      };
   const data = await requestGraphQL<Record<string, GraphQLConnection<unknown>>>({
     document: config.document,
     operationName: config.operationName,
@@ -182,17 +171,17 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
   const totalCount = connection.totalCount ?? null;
 
   return {
-		results,
-		count: totalCount ?? results.length,
-		next: null,
-		prev: null,
-		pageInfo: {
-			mode: "cursor",
-			hasNextPage: connection.pageInfo?.hasNextPage ?? false,
-			endCursor: connection.pageInfo?.endCursor ?? null,
-			totalCount,
-		},
-	};
+    results,
+    count: totalCount ?? results.length,
+    next: null,
+    prev: null,
+    pageInfo: {
+      mode: "cursor",
+      hasNextPage: connection.pageInfo?.hasNextPage ?? false,
+      endCursor: connection.pageInfo?.endCursor ?? null,
+      totalCount,
+    },
+  };
 }
 
 export async function fetchDataTablePage<TData extends Record<string, unknown>>({

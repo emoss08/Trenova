@@ -37,6 +37,11 @@ export type BillingQueueStatus =
   | 'ReadyForReview'
   | 'SentBackToOps';
 
+export type BulkUpdateEquipmentTypeStatusInput = {
+  equipmentTypeIds: Array<string | number>;
+  status: EntityStatus;
+};
+
 export type CdlClass =
   | 'A'
   | 'B'
@@ -46,6 +51,15 @@ export type ComplianceStatus =
   | 'Compliant'
   | 'NonCompliant'
   | 'Pending';
+
+export type DataTableConnectionInput = {
+  after?: string | null | undefined;
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  first?: number | null | undefined;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+};
 
 export type DriverType =
   | 'Local'
@@ -65,11 +79,37 @@ export type EntityStatus =
   | 'Active'
   | 'Inactive';
 
+export type EquipmentClass =
+  | 'Container'
+  | 'Other'
+  | 'Tractor'
+  | 'Trailer';
+
 export type EquipmentStatus =
   | 'AtMaintenance'
   | 'Available'
   | 'OutOfService'
   | 'Sold';
+
+export type EquipmentTypeInput = {
+  class: EquipmentClass;
+  code: string;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  interiorLength?: number | null | undefined;
+  status?: EntityStatus | null | undefined;
+  version?: number | null | undefined;
+};
+
+export type EquipmentTypePatchInput = {
+  class?: EquipmentClass | null | undefined;
+  code?: string | null | undefined;
+  color?: string | null | undefined;
+  description?: string | null | undefined;
+  interiorLength?: number | null | undefined;
+  status?: EntityStatus | null | undefined;
+  version?: number | null | undefined;
+};
 
 export type FieldFilterInput = {
   field: string;
@@ -449,6 +489,8 @@ export type WorkerType =
 
 export type EquipmentTypeTableFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'EquipmentTypeTableFieldsFragment' };
 
+export type EquipmentTypeConfigurationRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, description: string, class: EquipmentClass, color: string, interiorLength: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EquipmentTypeConfigurationRowFieldsFragment' };
+
 export type EquipmentManufacturerTableFieldsFragment = { id: string, name: string } & { ' $fragmentName'?: 'EquipmentManufacturerTableFieldsFragment' };
 
 export type FleetCodeTableFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'FleetCodeTableFieldsFragment' };
@@ -491,6 +533,51 @@ export type TrailerTableQueryVariables = Exact<{
 
 
 export type TrailerTableQuery = { trailers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TrailerTableRowFieldsFragment': TrailerTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type EquipmentTypeTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  classes?: Array<EquipmentClass> | EquipmentClass | null | undefined;
+}>;
+
+
+export type EquipmentTypeTableQuery = { equipmentTypes: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type EquipmentTypeQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type EquipmentTypeQuery = { equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } | null };
+
+export type CreateEquipmentTypeMutationVariables = Exact<{
+  input: EquipmentTypeInput;
+}>;
+
+
+export type CreateEquipmentTypeMutation = { createEquipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } };
+
+export type UpdateEquipmentTypeMutationVariables = Exact<{
+  id: string | number;
+  input: EquipmentTypeInput;
+}>;
+
+
+export type UpdateEquipmentTypeMutation = { updateEquipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } };
+
+export type PatchEquipmentTypeMutationVariables = Exact<{
+  id: string | number;
+  input: EquipmentTypePatchInput;
+}>;
+
+
+export type PatchEquipmentTypeMutation = { patchEquipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } } };
+
+export type BulkUpdateEquipmentTypeStatusMutationVariables = Exact<{
+  input: BulkUpdateEquipmentTypeStatusInput;
+}>;
+
+
+export type BulkUpdateEquipmentTypeStatusMutation = { bulkUpdateEquipmentTypeStatus: Array<{ ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } }> };
 
 export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
@@ -905,6 +992,22 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const EquipmentTypeConfigurationRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"EquipmentTypeConfigurationRowFields"}) as unknown as TypedDocumentString<EquipmentTypeConfigurationRowFieldsFragment, unknown>;
 export const DataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(`
     fragment DataTablePageInfoFields on PageInfo {
   hasNextPage
@@ -2196,6 +2299,138 @@ fragment TrailerTableRowFields on Trailer {
     ...UsStateTableFields
   }
 }`, {"hash":"sha256:9df2ee9fc4bfd5411a8dca95d3f610a7040e7de8656657a6ccd049afa65b4238"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+export const EquipmentTypeTableDocument = new TypedDocumentString(`
+    query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
+  equipmentTypes(input: $input, classes: $classes) {
+    edges {
+      node {
+        ...EquipmentTypeConfigurationRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}
+fragment DataTablePageInfoFields on PageInfo {
+  hasNextPage
+  endCursor
+}`, {"hash":"sha256:eb3d22a152d723f6080cf09beda77d7de525d386bafd988d2fc5432d4244dbee"}) as unknown as TypedDocumentString<EquipmentTypeTableQuery, EquipmentTypeTableQueryVariables>;
+export const EquipmentTypeDocument = new TypedDocumentString(`
+    query EquipmentType($id: ID!) {
+  equipmentType(id: $id) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:77492fa4f96133c985d9c81eff2aea6ca53852b002fa122718aeae37e4fd5b06"}) as unknown as TypedDocumentString<EquipmentTypeQuery, EquipmentTypeQueryVariables>;
+export const CreateEquipmentTypeDocument = new TypedDocumentString(`
+    mutation CreateEquipmentType($input: EquipmentTypeInput!) {
+  createEquipmentType(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:804bf1016e1197c35723926d418334090e7ae5a6d68fe1e8a31517d60b87796f"}) as unknown as TypedDocumentString<CreateEquipmentTypeMutation, CreateEquipmentTypeMutationVariables>;
+export const UpdateEquipmentTypeDocument = new TypedDocumentString(`
+    mutation UpdateEquipmentType($id: ID!, $input: EquipmentTypeInput!) {
+  updateEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:05012e23f44106760ea0b9c4574517ce5095c9de4eddae711e8582b983f1d849"}) as unknown as TypedDocumentString<UpdateEquipmentTypeMutation, UpdateEquipmentTypeMutationVariables>;
+export const PatchEquipmentTypeDocument = new TypedDocumentString(`
+    mutation PatchEquipmentType($id: ID!, $input: EquipmentTypePatchInput!) {
+  patchEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:c5c81ee0f81421708ff81f3e3e2c42c61d42b40f5a5cee5993a778df6b36ca1d"}) as unknown as TypedDocumentString<PatchEquipmentTypeMutation, PatchEquipmentTypeMutationVariables>;
+export const BulkUpdateEquipmentTypeStatusDocument = new TypedDocumentString(`
+    mutation BulkUpdateEquipmentTypeStatus($input: BulkUpdateEquipmentTypeStatusInput!) {
+  bulkUpdateEquipmentTypeStatus(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+    fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}`, {"hash":"sha256:a7e10803dec124d60c6f74fbce991a84c22d9e6dd45781e8bdc63de2ac10b9b3"}) as unknown as TypedDocumentString<BulkUpdateEquipmentTypeStatusMutation, BulkUpdateEquipmentTypeStatusMutationVariables>;
 export const OrganizationSettingsDocument = new TypedDocumentString(`
     query OrganizationSettings($id: ID!, $includeState: Boolean = true, $includeBu: Boolean = false) {
   organization(id: $id, includeState: $includeState, includeBu: $includeBu) {

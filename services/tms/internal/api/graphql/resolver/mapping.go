@@ -121,6 +121,47 @@ type gqlEntityCursorPage struct {
 	Cursor pagination.CursorInfo
 }
 
+type gqlDataTableConnection struct {
+	Filter *pagination.QueryOptions
+	Cursor pagination.CursorInfo
+}
+
+func dataTableConnectionFromGraphQL(
+	input *gqlmodel.DataTableConnectionInput,
+	tenantInfo pagination.TenantInfo,
+) (gqlDataTableConnection, error) {
+	if input == nil {
+		input = &gqlmodel.DataTableConnectionInput{}
+	}
+
+	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
+		First: input.First,
+		After: input.After,
+	})
+	if err != nil {
+		return gqlDataTableConnection{}, err
+	}
+
+	queryValue := ""
+	if input.Query != nil {
+		queryValue = *input.Query
+	}
+
+	filter := queryOptionsFromGraphQL(gqlListOptions{
+		TenantInfo:   tenantInfo,
+		Limit:        page.Cursor.Limit,
+		Query:        queryValue,
+		FieldFilters: input.FieldFilters,
+		FilterGroups: input.FilterGroups,
+		Sort:         input.Sort,
+	})
+
+	return gqlDataTableConnection{
+		Filter: filter,
+		Cursor: page.Cursor,
+	}, nil
+}
+
 func entityCursorPageFromGraphQL(input gqlCursorPageInput) (gqlEntityCursorPage, error) {
 	limit := pagination.DefaultLimit
 	if input.First != nil {

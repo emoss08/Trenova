@@ -154,6 +154,24 @@ tasks:
         # GOMAXPROCS caps generator runtime CPU use; GOFLAGS caps nested go run builds.
         GOMAXPROCS="$GO_GENERATE_CONCURRENCY" GOFLAGS="${GOFLAGS:-} -p=$GO_GENERATE_CONCURRENCY" go generate ./...
 
+  gqlgen:
+    desc: Generate GraphQL server code
+    cmds:
+      - go run github.com/99designs/gqlgen generate
+
+  gqlgen-check:
+    desc: Check GraphQL server generated code is up to date
+    cmds:
+      - |
+        go run github.com/99designs/gqlgen generate
+        if git diff --quiet -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver; then
+          echo "GraphQL server generated code is up to date"
+        else
+          echo "GraphQL server generated code is out of date"
+          git diff --stat -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver
+          exit 1
+        fi
+
   docs-generate:
     desc: Generate Swagger docs for the TMS API
     cmds:

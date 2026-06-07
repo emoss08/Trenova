@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
@@ -53,6 +54,11 @@ type BillingQueueItem struct {
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
 }
 
+type BulkUpdateEquipmentTypeStatusInput struct {
+	EquipmentTypeIds []string           `json:"equipmentTypeIds"`
+	Status           domaintypes.Status `json:"status"`
+}
+
 type BulkUpdateTractorStatusInput struct {
 	TractorIds []string                    `json:"tractorIds"`
 	Status     domaintypes.EquipmentStatus `json:"status"`
@@ -61,6 +67,46 @@ type BulkUpdateTractorStatusInput struct {
 type BulkUpdateTrailerStatusInput struct {
 	TrailerIds []string                    `json:"trailerIds"`
 	Status     domaintypes.EquipmentStatus `json:"status"`
+}
+
+type DataTableConnectionInput struct {
+	First        *int                `json:"first,omitempty"`
+	After        *string             `json:"after,omitempty"`
+	Query        *string             `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
+	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
+type EquipmentTypeConnection struct {
+	Edges      []*EquipmentTypeEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type EquipmentTypeEdge struct {
+	Node   *equipmenttype.EquipmentType `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
+type EquipmentTypeInput struct {
+	Status         *domaintypes.Status `json:"status,omitempty"`
+	Code           string              `json:"code"`
+	Description    *string             `json:"description,omitempty"`
+	Class          equipmenttype.Class `json:"class"`
+	Color          *string             `json:"color,omitempty"`
+	InteriorLength *float64            `json:"interiorLength,omitempty"`
+	Version        *int                `json:"version,omitempty"`
+}
+
+type EquipmentTypePatchInput struct {
+	Status         *domaintypes.Status         `json:"status,omitempty"`
+	Code           *string                     `json:"code,omitempty"`
+	Description    graphql.Omittable[*string]  `json:"description,omitempty"`
+	Class          *equipmenttype.Class        `json:"class,omitempty"`
+	Color          graphql.Omittable[*string]  `json:"color,omitempty"`
+	InteriorLength graphql.Omittable[*float64] `json:"interiorLength,omitempty"`
+	Version        *int                        `json:"version,omitempty"`
 }
 
 type FieldFilterInput struct {

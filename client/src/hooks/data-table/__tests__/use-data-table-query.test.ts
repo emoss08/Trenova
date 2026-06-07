@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearCsrfToken, setCsrfToken } from "@/lib/api";
-import {
-  fetchDataTablePage,
-  fetchGraphQLData,
-} from "../use-data-table-query";
+import { fetchDataTablePage, fetchGraphQLData } from "../use-data-table-query";
 import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
 
 function createJSONResponse(data: unknown): Response {
@@ -96,10 +93,10 @@ describe("data table query fetching", () => {
     expect(body.variables).not.toHaveProperty("offset");
   });
 
-	it("keeps GraphQL tables on cursor pagination while sorting", async () => {
-		setCsrfToken("table-token");
+  it("keeps GraphQL tables on cursor pagination while sorting", async () => {
+    setCsrfToken("table-token");
 
-		const result = await fetchDataTablePage({
+    const result = await fetchDataTablePage({
       link: "/tractors/",
       pageIndex: 2,
       pageSize: 25,
@@ -110,27 +107,27 @@ describe("data table query fetching", () => {
     });
 
     expect(result).toEqual({
-			results: [{ id: "tr_1", code: "T-100" }],
-			count: 12,
-			next: null,
-			prev: null,
-			pageInfo: {
-				mode: "cursor",
-				hasNextPage: true,
-				endCursor: "cursor-tr-1",
-				totalCount: 12,
-			},
-		});
+      results: [{ id: "tr_1", code: "T-100" }],
+      count: 12,
+      next: null,
+      prev: null,
+      pageInfo: {
+        mode: "cursor",
+        hasNextPage: true,
+        endCursor: "cursor-tr-1",
+        totalCount: 12,
+      },
+    });
 
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(typeof init.body).toBe("string");
     const body = JSON.parse(init.body as string);
-	expect(body.variables).toMatchObject({
-		first: 25,
-		sort: [{ field: "code", direction: "asc" }],
-	});
-	expect(body.variables).not.toHaveProperty("offset");
-	expect(body.variables).not.toHaveProperty("after");
+    expect(body.variables).toMatchObject({
+      first: 25,
+      sort: [{ field: "code", direction: "asc" }],
+    });
+    expect(body.variables).not.toHaveProperty("offset");
+    expect(body.variables).not.toHaveProperty("after");
   });
 
   it("uses REST fetching when no GraphQL config is provided", async () => {
@@ -180,6 +177,72 @@ describe("data table query fetching", () => {
     expect(init.credentials).toBe("include");
   });
 
+  it("builds Equipment Type GraphQL variables with DataTableConnectionInput", async () => {
+    setCsrfToken("table-token");
+    fetchMock.mockResolvedValueOnce(
+      createJSONResponse({
+        data: {
+          equipmentTypes: {
+            edges: [{ node: { id: "et_1", code: "VAN", class: "Trailer" } }],
+            pageInfo: {
+              hasNextPage: false,
+              endCursor: "cursor-et-1",
+            },
+            totalCount: 1,
+          },
+        },
+      }),
+    );
+
+    const result = await fetchDataTablePage({
+      link: "/equipment-types/",
+      pageIndex: 0,
+      pageSize: 15,
+      graphql: equipmentTableGraphQLConfigs.equipmentType,
+      options: {
+        cursor: "cursor-page-2",
+        query: "VAN",
+        fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
+        filterGroups: [
+          {
+            filters: [{ field: "class", operator: "in", value: ["Trailer"] }],
+          },
+        ],
+        sort: [{ field: "code", direction: "asc" }],
+      },
+    });
+
+    expect(result.results).toEqual([{ id: "et_1", code: "VAN", class: "Trailer" }]);
+    expect(result.pageInfo).toMatchObject({
+      mode: "cursor",
+      hasNextPage: false,
+      endCursor: "cursor-et-1",
+      totalCount: 1,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(init.body as string);
+    expect(body).toMatchObject({
+      operationName: "EquipmentTypeTable",
+      variables: {
+        input: {
+          first: 15,
+          after: "cursor-page-2",
+          query: "VAN",
+          fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
+          filterGroups: [
+            {
+              filters: [{ field: "class", operator: "in", value: ["Trailer"] }],
+            },
+          ],
+          sort: [{ field: "code", direction: "asc" }],
+        },
+      },
+    });
+    expect(body.variables).not.toHaveProperty("first");
+    expect(body.variables).not.toHaveProperty("offset");
+  });
+
   it("applies mapNode before returning normalized GraphQL results", async () => {
     setCsrfToken("table-token");
 
@@ -226,11 +289,11 @@ describe("tractor and trailer GraphQL table configs", () => {
     });
     expect(document).toContain("primaryWorker");
     expect(document).toContain("customFields");
-		expect(document).toContain("totalCount");
-		expect(document).toContain("pageInfo");
-		expect(document).toContain("$after: String");
-		expect(document).not.toContain("$offset: Int");
-	});
+    expect(document).toContain("totalCount");
+    expect(document).toContain("pageInfo");
+    expect(document).toContain("$after: String");
+    expect(document).not.toContain("$offset: Int");
+  });
 
   it("opts trailers into the trailer connection with required include variables", () => {
     const document = equipmentTableGraphQLConfigs.trailer.document.toString();
@@ -242,9 +305,21 @@ describe("tractor and trailer GraphQL table configs", () => {
     });
     expect(document).toContain("lastKnownLocationName");
     expect(document).toContain("customFields");
-		expect(document).toContain("totalCount");
-		expect(document).toContain("pageInfo");
-		expect(document).toContain("$after: String");
-		expect(document).not.toContain("$offset: Int");
-	});
+    expect(document).toContain("totalCount");
+    expect(document).toContain("pageInfo");
+    expect(document).toContain("$after: String");
+    expect(document).not.toContain("$offset: Int");
+  });
+
+  it("opts equipment types into DataTableConnectionInput", () => {
+    const document = equipmentTableGraphQLConfigs.equipmentType.document.toString();
+
+    expect(equipmentTableGraphQLConfigs.equipmentType.connectionKey).toBe("equipmentTypes");
+    expect(document).toContain("query EquipmentTypeTable");
+    expect(document).toContain("$input: DataTableConnectionInput!");
+    expect(document).toContain("equipmentTypes(input: $input");
+    expect(document).toContain("totalCount");
+    expect(document).toContain("pageInfo");
+    expect(document).not.toContain("$offset: Int");
+  });
 });

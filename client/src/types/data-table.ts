@@ -112,8 +112,23 @@ export type DataTableGraphQLConfig<
   operationName: string;
   connectionKey: string;
   variables?: Partial<TVariables>;
+  buildVariables?: (params: DataTableGraphQLVariableParams) => Partial<TVariables>;
   mapNode?: (node: unknown) => TData;
   supportsSort?: boolean;
+};
+
+export type DataTableQueryOptions = {
+  query?: string;
+  fieldFilters?: FieldFilter[];
+  filterGroups?: FilterGroup[];
+  sort?: SortField[];
+  cursor?: string | null;
+  extraSearchParams?: Record<string, unknown>;
+};
+
+export type DataTableGraphQLVariableParams = {
+  pageSize: number;
+  options?: DataTableQueryOptions;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

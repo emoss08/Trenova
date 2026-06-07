@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -35,58 +36,114 @@ func New(p Params) repositories.EquipmentTypeRepository {
 	}
 }
 
-func (r *repository) filterQuery(
+func (r *repository) applyCursorPageFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEquipmentTypesRequest,
+) (*bun.SelectQuery, error) {
+	q, err := querybuilder.ApplyCursorFilters(
+		q,
+		buncolgen.EquipmentTypeTable.Alias,
+		req.Filter,
+		req.Cursor,
+		(*equipmenttype.EquipmentType)(nil),
+	)
+	if err != nil {
+		return q, err
+	}
+
+	return applyClassFilter(q, req.Classes), nil
+}
+
+func (r *repository) applyTotalCountFilters(
 	q *bun.SelectQuery,
 	req *repositories.ListEquipmentTypesRequest,
 ) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
+	q = querybuilder.ApplyFiltersWithoutSort(
 		q,
-		"et",
+		buncolgen.EquipmentTypeTable.Alias,
 		req.Filter,
 		(*equipmenttype.EquipmentType)(nil),
 	)
 
-	if len(req.Classes) > 0 {
-		var validClasses []equipmenttype.Class
-		for _, class := range req.Classes {
-			if class != "" {
-				validClasses = append(validClasses, equipmenttype.Class(class))
-			}
-		}
+	return applyClassFilter(q, req.Classes)
+}
 
-		if len(validClasses) > 0 {
-			q = q.Where("et.class IN (?)", bun.List(validClasses))
+func applyClassFilter(q *bun.SelectQuery, classes []string) *bun.SelectQuery {
+	validClasses := validEquipmentClasses(classes)
+	if len(validClasses) == 0 {
+		return q
+	}
+
+	return q.Where(buncolgen.EquipmentTypeColumns.Class.In(), bun.List(validClasses))
+}
+
+func validEquipmentClasses(classes []string) []equipmenttype.Class {
+	if len(classes) == 0 {
+		return nil
+	}
+
+	validClasses := make([]equipmenttype.Class, 0, len(classes))
+	for _, class := range classes {
+		if class != "" {
+			validClasses = append(validClasses, equipmenttype.Class(class))
 		}
 	}
 
-	return q.Limit(req.Filter.Pagination.SafeLimit()).Offset(req.Filter.Pagination.SafeOffset())
+	return validClasses
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListEquipmentTypesRequest,
-) (*pagination.ListResult[*equipmenttype.EquipmentType], error) {
+) (*pagination.CursorListResult[*equipmenttype.EquipmentType], error) {
 	log := r.l.With(
 		zap.String("operation", "List"),
 		zap.Any("request", req),
 	)
 
-	entities := make([]*equipmenttype.EquipmentType, 0, req.Filter.Pagination.SafeLimit())
-	total, err := r.db.DB().
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
 		NewSelect().
-		Model(&entities).
+		Model((*equipmenttype.EquipmentType)(nil)).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
+			return r.applyTotalCountFilters(sq, req)
+		}).
+		Count(ctx)
 	if err != nil {
-		log.Error("failed to scan and count equipment types", zap.Error(err))
+		log.Error("failed to count equipment types", zap.Error(err))
 		return nil, err
 	}
 
-	return &pagination.ListResult[*equipmenttype.EquipmentType]{
-		Items: entities,
-		Total: total,
-	}, nil
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*equipmenttype.EquipmentType]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*equipmenttype.EquipmentType) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(entities).
+				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return applyEquipmentTypeColumns(sq, req.EquipmentTypeColumns)
+				})
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return r.applyCursorPageFilters(sq, req)
+		},
+	})
+	if err != nil {
+		log.Error("failed to scan equipment types", zap.Error(err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func applyEquipmentTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
+	if len(columns) == 0 {
+		return q.ColumnExpr(buncolgen.EquipmentTypeTable.All())
+	}
+
+	return q.Column(columns...)
 }
 
 func (r *repository) Create(
@@ -186,20 +243,8 @@ func (r *repository) SelectOptions(
 			OrgColumn: "et.organization_id",
 			BuColumn:  "et.business_unit_id",
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				if len(req.Classes) > 0 {
-					var validClasses []equipmenttype.Class
-					for _, class := range req.Classes {
-						if class != "" {
-							validClasses = append(validClasses, equipmenttype.Class(class))
-						}
-					}
-
-					if len(validClasses) > 0 {
-						q = q.Where("et.class IN (?)", bun.List(validClasses))
-					}
-				}
-
-				return q.Where("et.status = ?", domaintypes.StatusActive)
+				return applyClassFilter(q, req.Classes).
+					Where("et.status = ?", domaintypes.StatusActive)
 			},
 			EntityName: "EquipmentType",
 			SearchColumns: []string{

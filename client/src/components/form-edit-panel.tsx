@@ -20,21 +20,23 @@ import { ComponentLoader } from "./component-loader";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import { FormSaveDock } from "./form-save-dock";
 
-type FormEditPanelProps<T extends FieldValues, TData extends Record<string, unknown>> = Pick<
-  DataTablePanelProps<TData>,
-  "open" | "onOpenChange" | "row"
-> & {
+type FormEditPanelProps<
+  TFieldValues extends FieldValues,
+  TData extends Record<string, unknown>,
+  TSubmitValues = TFieldValues,
+  TMutationData = TSubmitValues,
+> = Pick<DataTablePanelProps<TData>, "open" | "onOpenChange" | "row"> & {
   url?: API_ENDPOINTS;
   title: string;
   queryKey: string;
   formComponent: React.ReactNode;
-  form: UseFormReturn<T>;
+  form: UseFormReturn<TFieldValues, any, TSubmitValues>;
   fieldKey?: keyof TData;
   size?: PanelSize;
   titleComponent?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
   useDock?: boolean;
-  mutationFn?: (values: T, row: TData) => Promise<T>;
+  mutationFn?: (values: TSubmitValues, row: TData) => Promise<TMutationData>;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -42,7 +44,12 @@ const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
   { id: "save-close", label: "Save & Close" },
 ];
 
-export function FormEditPanel<T extends FieldValues, TData extends Record<string, unknown>>({
+export function FormEditPanel<
+  TFieldValues extends FieldValues,
+  TData extends Record<string, unknown>,
+  TSubmitValues = TFieldValues,
+  TMutationData = TSubmitValues,
+>({
   open,
   onOpenChange,
   row,
@@ -57,7 +64,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   headerActions,
   useDock = false,
   mutationFn,
-}: FormEditPanelProps<T, TData>) {
+}: FormEditPanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const { isPopout, closePopout } = usePopoutWindow();
@@ -65,7 +72,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
 
   type EditSubmitPayload = {
     action: EditPanelSaveAction;
-    values: T;
+    values: TSubmitValues;
   };
 
   const {
@@ -82,12 +89,12 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
 
   useEffect(() => {
     if (open && row) {
-      reset(row as unknown as T);
+      reset(row as unknown as TFieldValues);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, reset]);
 
-  const { mutateAsync } = useApiMutation<T, EditSubmitPayload, unknown, T>({
+  const { mutateAsync } = useApiMutation<TMutationData, EditSubmitPayload, unknown, TFieldValues>({
     mutationFn: async ({ values }) => {
       if (mutationFn) {
         if (!row) {
@@ -100,7 +107,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
         throw new Error(`No URL configured for ${title}`);
       }
 
-      return api.put<T>(`${url}${row?.id as string}/`, values);
+      return api.put<TMutationData>(`${url}${row?.id as string}/`, values);
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({ queryKey: [queryKey] });
@@ -129,7 +136,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
     resourceName: title,
   });
 
-  const onSubmit = async (values: T, action: EditPanelSaveAction) => {
+  const onSubmit = async (values: TSubmitValues, action: EditPanelSaveAction) => {
     await mutateAsync({ values, action });
   };
 
@@ -138,7 +145,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
     void handleSubmit((values) => onSubmit(values, action))();
   };
 
-  const handleFormSubmit = (values: T) => {
+  const handleFormSubmit = (values: TSubmitValues) => {
     return onSubmit(values, defaultAction);
   };
 

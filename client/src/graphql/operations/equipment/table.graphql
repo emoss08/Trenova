@@ -4,6 +4,21 @@ fragment EquipmentTypeTableFields on EquipmentType {
   color
 }
 
+fragment EquipmentTypeConfigurationRowFields on EquipmentType {
+  id
+  businessUnitId
+  organizationId
+  status
+  code
+  description
+  class
+  color
+  interiorLength
+  version
+  createdAt
+  updatedAt
+}
+
 fragment EquipmentManufacturerTableFields on EquipmentManufacturer {
   id
   name
@@ -180,5 +195,52 @@ query TrailerTable(
     pageInfo {
       ...DataTablePageInfoFields
     }
+  }
+}
+
+query EquipmentTypeTable(
+  $input: DataTableConnectionInput!
+  $classes: [EquipmentClass!]
+) {
+  equipmentTypes(input: $input, classes: $classes) {
+    edges {
+      node {
+        ...EquipmentTypeConfigurationRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query EquipmentType($id: ID!) {
+  equipmentType(id: $id) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation CreateEquipmentType($input: EquipmentTypeInput!) {
+  createEquipmentType(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation UpdateEquipmentType($id: ID!, $input: EquipmentTypeInput!) {
+  updateEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation PatchEquipmentType($id: ID!, $input: EquipmentTypePatchInput!) {
+  patchEquipmentType(id: $id, input: $input) {
+    ...EquipmentTypeConfigurationRowFields
+  }
+}
+
+mutation BulkUpdateEquipmentTypeStatus($input: BulkUpdateEquipmentTypeStatusInput!) {
+  bulkUpdateEquipmentTypeStatus(input: $input) {
+    ...EquipmentTypeConfigurationRowFields
   }
 }

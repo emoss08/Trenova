@@ -17,20 +17,22 @@ import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import { FormSaveDock } from "./form-save-dock";
 
-type FormCreatePanelProps<T extends FieldValues, TData> = Pick<
-  DataTablePanelProps<TData>,
-  "open" | "onOpenChange"
-> & {
+type FormCreatePanelProps<
+  TFieldValues extends FieldValues,
+  TData,
+  TSubmitValues = TFieldValues,
+  TMutationData = TSubmitValues,
+> = Pick<DataTablePanelProps<TData>, "open" | "onOpenChange"> & {
   url?: API_ENDPOINTS;
   title: string;
   queryKey: string;
   formComponent: React.ReactNode;
   description?: string;
-  form: UseFormReturn<T>;
+  form: UseFormReturn<TFieldValues, any, TSubmitValues>;
   size?: PanelSize;
   notice?: React.ReactNode;
   useDock?: boolean;
-  mutationFn?: (values: T) => Promise<T>;
+  mutationFn?: (values: TSubmitValues) => Promise<TMutationData>;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
@@ -39,7 +41,12 @@ const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
   { id: "save-add-another", label: "Save & Add Another" },
 ];
 
-export function FormCreatePanel<T extends FieldValues, TData>({
+export function FormCreatePanel<
+  TFieldValues extends FieldValues,
+  TData,
+  TSubmitValues = TFieldValues,
+  TMutationData = TSubmitValues,
+>({
   open,
   onOpenChange,
   description,
@@ -52,14 +59,14 @@ export function FormCreatePanel<T extends FieldValues, TData>({
   notice,
   useDock = false,
   mutationFn,
-}: FormCreatePanelProps<T, TData>) {
+}: FormCreatePanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
   const { isPopout, closePopout } = usePopoutWindow();
 
   type CreateSubmitPayload = {
     action: CreatePanelSaveAction;
-    values: T;
+    values: TSubmitValues;
   };
 
   const {
@@ -80,42 +87,44 @@ export function FormCreatePanel<T extends FieldValues, TData>({
     reset();
   };
 
-  const { mutateAsync } = useApiMutation<T, CreateSubmitPayload, unknown, T>({
-    mutationFn: async ({ values }) => {
-      if (mutationFn) {
-        return mutationFn(values);
-      }
+  const { mutateAsync } = useApiMutation<TMutationData, CreateSubmitPayload, unknown, TFieldValues>(
+    {
+      mutationFn: async ({ values }) => {
+        if (mutationFn) {
+          return mutationFn(values);
+        }
 
-      if (!url) {
-        throw new Error(`No URL configured for ${title}`);
-      }
+        if (!url) {
+          throw new Error(`No URL configured for ${title}`);
+        }
 
-      return api.post<T>(url, values);
+        return api.post<TMutationData>(url, values);
+      },
+      onSuccess: (_data, variables) => {
+        toast.success("Changes have been saved.", {
+          description: `${title} created successfully`,
+        });
+        void queryClient.invalidateQueries({ queryKey: [queryKey] });
+
+        if (isPopout) {
+          closePopout();
+          return;
+        }
+
+        const action = variables.action;
+        if (action === "save-close") {
+          onOpenChange(false);
+          reset();
+        } else if (action === "save-add-another") {
+          reset();
+        }
+      },
+      setFormError: setError,
+      resourceName: title,
     },
-    onSuccess: (_data, variables) => {
-      toast.success("Changes have been saved.", {
-        description: `${title} created successfully`,
-      });
-      void queryClient.invalidateQueries({ queryKey: [queryKey] });
+  );
 
-      if (isPopout) {
-        closePopout();
-        return;
-      }
-
-      const action = variables.action;
-      if (action === "save-close") {
-        onOpenChange(false);
-        reset();
-      } else if (action === "save-add-another") {
-        reset();
-      }
-    },
-    setFormError: setError,
-    resourceName: title,
-  });
-
-  const onSubmit = async (values: T, action: CreatePanelSaveAction) => {
+  const onSubmit = async (values: TSubmitValues, action: CreatePanelSaveAction) => {
     await mutateAsync({ values, action });
   };
 
@@ -124,7 +133,7 @@ export function FormCreatePanel<T extends FieldValues, TData>({
     void handleSubmit((values) => onSubmit(values, action))();
   };
 
-  const handleFormSubmit = (values: T) => {
+  const handleFormSubmit = (values: TSubmitValues) => {
     return onSubmit(values, defaultAction);
   };
 

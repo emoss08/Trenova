@@ -81,6 +81,11 @@ enum BillingQueueStatus {
   SentBackToOps
 }
 
+input BulkUpdateEquipmentTypeStatusInput {
+  equipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
 input BulkUpdateTractorStatusInput {
   status: EquipmentStatus!
   tractorIds: [ID!]!
@@ -110,6 +115,15 @@ enum ComplianceStatus {
   Compliant
   NonCompliant
   Pending
+}
+
+input DataTableConnectionInput {
+  after: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  first: Int = 20
+  query: String
+  sort: [SortFieldInput!]
 }
 
 enum DriverType {
@@ -192,6 +206,37 @@ type EquipmentType {
   status: EntityStatus!
   updatedAt: Int!
   version: Int!
+}
+
+type EquipmentTypeConnection {
+  edges: [EquipmentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentTypeEdge {
+  cursor: String!
+  node: EquipmentType!
+}
+
+input EquipmentTypeInput {
+  class: EquipmentClass!
+  code: String!
+  color: String
+  description: String
+  interiorLength: Float
+  status: EntityStatus = Active
+  version: Int
+}
+
+input EquipmentTypePatchInput {
+  class: EquipmentClass
+  code: String
+  color: String @goField(omittable: true)
+  description: String @goField(omittable: true)
+  interiorLength: Float @goField(omittable: true)
+  status: EntityStatus
+  version: Int
 }
 
 enum FacilityType {
@@ -334,6 +379,7 @@ enum MoveStatus {
 type Mutation {
   approveWorkerPTO(id: ID!): WorkerPTO!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
+  bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
   bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
   calculateShipmentDistance(input: ShipmentInput!): ShipmentDistanceResponse!
@@ -342,6 +388,7 @@ type Mutation {
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
   createTractor(input: TractorInput!): Tractor!
@@ -350,6 +397,7 @@ type Mutation {
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
@@ -358,6 +406,7 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
+  updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   updateShipmentComment(commentId: ID!, input: ShipmentCommentUpdateInput!, shipmentId: ID!): ShipmentComment!
@@ -440,6 +489,8 @@ type PageInfo {
 }
 
 type Query {
+  equipmentType(id: ID!): EquipmentType
+  equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
   selectOptions(input: SelectOptionsInput!): SelectOptionConnection!
   shipment(expandShipmentDetails: Boolean = false, id: ID!, status: String): Shipment

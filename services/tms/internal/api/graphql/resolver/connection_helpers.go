@@ -1,6 +1,8 @@
 package resolver
 
 import (
+	"errors"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -14,6 +16,38 @@ func pageInfo(hasNextPage bool, endCursor *string) *gqlmodel.PageInfo {
 
 func totalCountPtr(total int) *int {
 	return &total
+}
+
+type entityCursorConnectionPage[TEdge any] struct {
+	Edges      []TEdge
+	PageInfo   *gqlmodel.PageInfo
+	TotalCount *int
+}
+
+func entityCursorConnection[TNode pagination.CursorEntity, TEdge any](
+	result *pagination.CursorListResult[TNode],
+	build func(TNode, string) TEdge,
+	edgeCursor func(TEdge) string,
+) (*entityCursorConnectionPage[TEdge], error) {
+	if result == nil {
+		return nil, errors.New("cursor list result is required")
+	}
+
+	edges, err := entityCursorEdges(
+		result.Items,
+		result.CursorSort,
+		result,
+		build,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entityCursorConnectionPage[TEdge]{
+		Edges:      edges,
+		PageInfo:   pageInfo(result.HasNextPage, lastEdgeCursor(edges, edgeCursor)),
+		TotalCount: result.TotalCount,
+	}, nil
 }
 
 func entityCursorEdges[TNode pagination.CursorEntity, TEdge any](

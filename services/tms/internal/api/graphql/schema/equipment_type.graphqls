@@ -21,3 +21,54 @@ type EquipmentType {
   businessUnit: BusinessUnit
   organization: Organization
 }
+
+type EquipmentTypeEdge {
+  node: EquipmentType!
+  cursor: String!
+}
+
+type EquipmentTypeConnection {
+  edges: [EquipmentTypeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input EquipmentTypeInput {
+  status: EntityStatus = Active
+  code: String!
+  description: String
+  class: EquipmentClass!
+  color: String
+  interiorLength: Float
+  version: Int
+}
+
+input EquipmentTypePatchInput {
+  status: EntityStatus
+  code: String
+  description: String @goField(omittable: true)
+  class: EquipmentClass
+  color: String @goField(omittable: true)
+  interiorLength: Float @goField(omittable: true)
+  version: Int
+}
+
+input BulkUpdateEquipmentTypeStatusInput {
+  equipmentTypeIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Query {
+  equipmentTypes(
+    input: DataTableConnectionInput!
+    classes: [EquipmentClass!]
+  ): EquipmentTypeConnection!
+  equipmentType(id: ID!): EquipmentType
+}
+
+extend type Mutation {
+  createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
+  updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
+  patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
+  bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
+}
