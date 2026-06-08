@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -54,6 +55,11 @@ type BillingQueueItem struct {
 	CanceledBy        *tenant.User   `json:"canceledBy,omitempty"`
 }
 
+type BulkUpdateEquipmentManufacturerStatusInput struct {
+	EquipmentManufacturerIds []string           `json:"equipmentManufacturerIds"`
+	Status                   domaintypes.Status `json:"status"`
+}
+
 type BulkUpdateEquipmentTypeStatusInput struct {
 	EquipmentTypeIds []string           `json:"equipmentTypeIds"`
 	Status           domaintypes.Status `json:"status"`
@@ -76,6 +82,33 @@ type DataTableConnectionInput struct {
 	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
+type EquipmentManufacturerConnection struct {
+	Edges      []*EquipmentManufacturerEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount *int                         `json:"totalCount,omitempty"`
+}
+
+type EquipmentManufacturerEdge struct {
+	Node   *equipmentmanufacturer.EquipmentManufacturer `json:"node"`
+	Cursor string                                       `json:"cursor"`
+}
+
+type EquipmentManufacturerInput struct {
+	Status      domaintypes.Status `json:"status"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Version     int                `json:"version"`
+	CreatedAt   int                `json:"createdAt"`
+	UpdatedAt   int                `json:"updatedAt"`
+}
+
+type EquipmentManufacturerPatchInput struct {
+	Status      *domaintypes.Status `json:"status,omitempty"`
+	Name        *string             `json:"name,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Version     *int                `json:"version,omitempty"`
 }
 
 type EquipmentTypeConnection struct {

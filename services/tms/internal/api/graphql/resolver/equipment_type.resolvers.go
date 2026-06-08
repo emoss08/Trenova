@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -23,7 +24,11 @@ func (r *mutationResolver) CreateEquipmentType(ctx context.Context, input gqlmod
 		return nil, err
 	}
 
-	entity := equipmentTypeFromInput(input, pulid.Nil, authCtx)
+	entity, err := mappers.EquipmentTypeFromInput(input, pulid.Nil, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	created, err := r.equipmentTypeService.Create(ctx, entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -44,7 +49,11 @@ func (r *mutationResolver) UpdateEquipmentType(ctx context.Context, id string, i
 		return nil, err
 	}
 
-	entity := equipmentTypeFromInput(input, equipmentTypeID, authCtx)
+	entity, err := mappers.EquipmentTypeFromInput(input, equipmentTypeID, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	updated, err := r.equipmentTypeService.Update(ctx, entity, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -73,7 +82,10 @@ func (r *mutationResolver) PatchEquipmentType(ctx context.Context, id string, in
 		return nil, err
 	}
 
-	applyEquipmentTypePatch(existing, input)
+	if err = mappers.ApplyEquipmentTypePatch(existing, input); err != nil {
+		return nil, err
+	}
+
 	updated, err := r.equipmentTypeService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err

@@ -78,15 +78,11 @@ export type AddRecordAction = {
 export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
-  link: API_ENDPOINTS;
-  detailLink?: API_ENDPOINTS;
   queryKey: string;
-  graphql?: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLConfig<TData>;
   resource?: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TablePanel?: React.ComponentType<DataTablePanelProps<TData>>;
-  exportModelName: string;
-  extraSearchParams?: Record<string, any>;
   initialPageSize?: number;
   includeHeader?: boolean;
   includeOptions?: boolean;
@@ -98,10 +94,14 @@ export type DataTableProps<TData extends Record<string, any>> = {
   addRecordActions?: AddRecordAction[];
   contextMenuActions?: RowAction<TData>[];
   onRowClick?: (row: Row<TData>) => void;
-  preferDetailRowForEdit?: boolean;
   enableCreateAction?: boolean;
   enableReadOnlyPanel?: boolean;
   initialColumnVisibility?: Record<string, boolean>;
+};
+
+export type DataTableGraphQLExtraVariableParams = {
+  pageSize: number;
+  options?: DataTableQueryOptions;
 };
 
 export type DataTableGraphQLConfig<
@@ -111,10 +111,10 @@ export type DataTableGraphQLConfig<
   document: GraphQLExecutableDocument;
   operationName: string;
   connectionKey: string;
-  variables?: Partial<TVariables>;
-  buildVariables?: (params: DataTableGraphQLVariableParams) => Partial<TVariables>;
+  extraVariables?:
+    | Partial<Omit<TVariables, "input">>
+    | ((params: DataTableGraphQLExtraVariableParams) => Partial<Omit<TVariables, "input">>);
   mapNode?: (node: unknown) => TData;
-  supportsSort?: boolean;
 };
 
 export type DataTableQueryOptions = {
@@ -123,12 +123,6 @@ export type DataTableQueryOptions = {
   filterGroups?: FilterGroup[];
   sort?: SortField[];
   cursor?: string | null;
-  extraSearchParams?: Record<string, unknown>;
-};
-
-export type DataTableGraphQLVariableParams = {
-  pageSize: number;
-  options?: DataTableQueryOptions;
 };
 
 export type DataTableBodyProps<TData extends Record<string, any>> = {

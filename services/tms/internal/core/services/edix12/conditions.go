@@ -120,8 +120,8 @@ func ValidateConditionSyntax(condition string) *Diagnostic {
 		},
 		Segment: &edi.EDITemplateSegment{},
 	}
-	if strings.HasPrefix(condition, starlarkConditionPrefix) {
-		script := strings.TrimSpace(strings.TrimPrefix(condition, starlarkConditionPrefix))
+	if after, ok := strings.CutPrefix(condition, starlarkConditionPrefix); ok {
+		script := strings.TrimSpace(after)
 		if script == "" {
 			diagnostic := conditionErrorDiagnostic(
 				params,

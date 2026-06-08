@@ -607,8 +607,9 @@ func (testDBConnection) WithTx(
 	return fn(ctx, bun.Tx{})
 }
 
+//go:fix inline
 func ptrInt16Trailer(v int16) *int16 {
-	return &v
+	return new(v)
 }
 
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {
@@ -1217,6 +1218,7 @@ func TestBulkUpdateStatus_AuditLogError(t *testing.T) {
 	deps.audit.AssertExpectations(t)
 }
 
+//go:fix inline
 func int64PtrTrailer(v int64) *int64 {
-	return &v
+	return new(v)
 }

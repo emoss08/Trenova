@@ -2,6 +2,7 @@ package ediservice
 
 import (
 	"context"
+	"maps"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -255,9 +256,7 @@ func (s *Service) resolveProfileSecrets(
 ) (map[string]string, error) {
 	secrets := map[string]string{}
 	if existing != nil {
-		for key, value := range existing.EncryptedSecrets {
-			secrets[key] = value
-		}
+		maps.Copy(secrets, existing.EncryptedSecrets)
 	}
 
 	for key, value := range req.Secrets {

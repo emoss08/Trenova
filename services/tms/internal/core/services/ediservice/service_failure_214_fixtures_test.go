@@ -126,7 +126,7 @@ func serviceFailure214CertificationFixtures() []serviceFailure214CertificationFi
 				StatusReasonCode:           "CA",
 				ReasonCode:                 "CA",
 				ReasonDescription:          "Carrier delay",
-				ServiceFailureReasonCodeID: pulidPtr(pulid.MustNew("sfrc_")),
+				ServiceFailureReasonCodeID: new(pulid.MustNew("sfrc_")),
 				ServiceFailureReasonCode:   "LATE_PICKUP",
 				LocationName:               "Dallas Terminal",
 			},
@@ -170,7 +170,7 @@ func serviceFailure214Fixture(params serviceFailure214FixtureParams) serviceFail
 
 func applyServiceFailure214FixtureDefaults(status *edi.ShipmentStatusPayload) {
 	status.ShipmentID = pulid.MustNew("sp_")
-	status.ServiceFailureID = pulidPtr(pulid.MustNew("sf_"))
+	status.ServiceFailureID = new(pulid.MustNew("sf_"))
 	status.BOL = "BOL-SF-214"
 	status.ProNumber = "PRO-SF-214"
 	status.EventDate = 1779192000
@@ -189,6 +189,7 @@ func applyServiceFailure214FixtureDefaults(status *edi.ShipmentStatusPayload) {
 	}
 }
 
+//go:fix inline
 func pulidPtr(id pulid.ID) *pulid.ID {
-	return &id
+	return new(id)
 }

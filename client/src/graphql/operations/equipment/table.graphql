@@ -133,23 +133,13 @@ fragment TrailerTableRowFields on Trailer {
 }
 
 query TractorTable(
-  $first: Int!
-  $after: String
-  $query: String
-  $fieldFilters: [FieldFilterInput!]
-  $filterGroups: [FilterGroupInput!]
-  $sort: [SortFieldInput!]
+  $input: DataTableConnectionInput!
   $includeEquipmentDetails: Boolean = true
   $includeFleetDetails: Boolean = true
   $includeWorkerDetails: Boolean = true
 ) {
   tractors(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
+    input: $input
     includeEquipmentDetails: $includeEquipmentDetails
     includeFleetDetails: $includeFleetDetails
     includeWorkerDetails: $includeWorkerDetails
@@ -167,22 +157,12 @@ query TractorTable(
 }
 
 query TrailerTable(
-  $first: Int!
-  $after: String
-  $query: String
-  $fieldFilters: [FieldFilterInput!]
-  $filterGroups: [FilterGroupInput!]
-  $sort: [SortFieldInput!]
+  $input: DataTableConnectionInput!
   $includeEquipmentDetails: Boolean = true
   $includeFleetDetails: Boolean = true
 ) {
   trailers(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
+    input: $input
     includeEquipmentDetails: $includeEquipmentDetails
     includeFleetDetails: $includeFleetDetails
   ) {
@@ -198,10 +178,7 @@ query TrailerTable(
   }
 }
 
-query EquipmentTypeTable(
-  $input: DataTableConnectionInput!
-  $classes: [EquipmentClass!]
-) {
+query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
   equipmentTypes(input: $input, classes: $classes) {
     edges {
       node {

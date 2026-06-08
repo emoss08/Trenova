@@ -4,6 +4,7 @@ package edix12
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -596,9 +597,7 @@ func renderEnvironment(
 		partner = map[string]any{}
 	}
 	env := make(map[string]any, len(payload)+11)
-	for key, value := range payload {
-		env[key] = value
-	}
+	maps.Copy(env, payload)
 	ensureDocumentRootMaps(env)
 	env["partner"] = partner
 	env["mapping"] = map[string]any{}
@@ -652,9 +651,7 @@ func resolveStarlarkElementValue(params elementResolveParams) (string, []Diagnos
 
 func starlarkContext(env map[string]any) map[string]any {
 	ctx := make(map[string]any, len(env))
-	for key, value := range env {
-		ctx[key] = value
-	}
+	maps.Copy(ctx, env)
 	ensureDocumentRootMaps(ctx)
 	if _, ok := ctx["partner"].(map[string]any); !ok {
 		ctx["partner"] = map[string]any{}

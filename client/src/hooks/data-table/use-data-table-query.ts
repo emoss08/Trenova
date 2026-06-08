@@ -1,7 +1,6 @@
-import { API_BASE_URL } from "@/lib/constants";
 import { requestGraphQL } from "@/lib/graphql";
 import type { DataTableGraphQLConfig, DataTableQueryOptions } from "@/types/data-table";
-import type { API_ENDPOINTS, GenericLimitOffsetResponse } from "@/types/server";
+import type { GenericLimitOffsetResponse } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
 import type { PaginationState } from "@tanstack/react-table";
 
@@ -16,117 +15,54 @@ type GraphQLConnection<TNode> = {
   totalCount?: number | null;
 };
 
-type RestCursorResponse<TData> = GenericLimitOffsetResponse<TData> & {
-  previous?: string | null;
-  hasNextPage?: boolean;
-  endCursor?: string | null;
+type DataTableGraphQLVariables = Record<string, unknown> & {
+  input: {
+    first: number;
+    after?: string;
+    query?: string;
+    fieldFilters: DataTableQueryOptions["fieldFilters"];
+    filterGroups: DataTableQueryOptions["filterGroups"];
+    sort: DataTableQueryOptions["sort"];
+  };
 };
-
-function restCursorTotalCount<TData>(
-  payload: RestCursorResponse<TData>,
-  currentCursor?: string | null,
-): number | null {
-  if (typeof payload.totalCount === "number") {
-    return payload.totalCount;
-  }
-
-  if (typeof payload.pageInfo?.totalCount === "number") {
-    return payload.pageInfo.totalCount;
-  }
-
-  const hasCursorMetadata =
-    payload.pageInfo?.mode === "cursor" ||
-    typeof payload.hasNextPage === "boolean" ||
-    payload.endCursor !== undefined;
-  const hasNextPage = payload.pageInfo?.hasNextPage ?? payload.hasNextPage ?? Boolean(payload.next);
-
-  if (hasCursorMetadata && !hasNextPage && !currentCursor) {
-    return payload.count;
-  }
-
-  return null;
-}
 
 type FetchDataTablePageParams<TData extends Record<string, unknown>> = {
-  link: API_ENDPOINTS;
-  pageIndex: number;
   pageSize: number;
   options?: DataTableQueryOptions;
-  graphql?: DataTableGraphQLConfig<TData>;
+  graphql: DataTableGraphQLConfig<TData>;
 };
 
-export async function fetchData<TData extends Record<string, unknown>>(
-  link: string,
-  _pageIndex: number,
+function resolveExtraVariables<TData extends Record<string, unknown>>(
+  config: DataTableGraphQLConfig<TData>,
   pageSize: number,
   options?: DataTableQueryOptions,
-): Promise<GenericLimitOffsetResponse<TData>> {
-  const fetchURL = new URL(`${API_BASE_URL}${link}`, window.location.origin);
-  fetchURL.searchParams.set("limit", pageSize.toString());
-
-  if (options?.cursor) {
-    fetchURL.searchParams.set("after", options.cursor);
+): Record<string, unknown> {
+  if (!config.extraVariables) {
+    return {};
   }
 
-  if (options?.query) {
-    fetchURL.searchParams.set("query", options.query);
+  if (typeof config.extraVariables === "function") {
+    return config.extraVariables({ pageSize, options }) as Record<string, unknown>;
   }
 
-  if (options?.fieldFilters && options.fieldFilters.length > 0) {
-    fetchURL.searchParams.set("fieldFilters", JSON.stringify(options.fieldFilters));
-  }
+  return config.extraVariables as Record<string, unknown>;
+}
 
-  if (options?.filterGroups && options.filterGroups.length > 0) {
-    fetchURL.searchParams.set("filterGroups", JSON.stringify(options.filterGroups));
-  }
-
-  if (options?.sort && options.sort.length > 0) {
-    fetchURL.searchParams.set("sort", JSON.stringify(options.sort));
-  }
-
-  if (options?.extraSearchParams) {
-    Object.entries(options.extraSearchParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (typeof value === "string") {
-          fetchURL.searchParams.set(key, value);
-        } else if (typeof value === "boolean" || typeof value === "number") {
-          fetchURL.searchParams.set(key, String(value));
-        } else if (Array.isArray(value) || typeof value === "object") {
-          fetchURL.searchParams.set(key, JSON.stringify(value));
-        }
-      }
-    });
-  }
-
-  const response = await fetch(fetchURL.href, {
-    credentials: "include",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to fetch data from server");
-  }
-
-  const payload = (await response.json()) as RestCursorResponse<TData>;
-  const hasCursorMetadata =
-    typeof payload.hasNextPage === "boolean" || payload.endCursor !== undefined;
-  const totalCount = restCursorTotalCount(payload, options?.cursor);
-
+function buildGraphQLVariables<TData extends Record<string, unknown>>(
+  pageSize: number,
+  config: DataTableGraphQLConfig<TData>,
+  options?: DataTableQueryOptions,
+): DataTableGraphQLVariables {
   return {
-    ...payload,
-    next: payload.next ?? null,
-    prev: payload.prev ?? payload.previous ?? null,
-    pageInfo: payload.pageInfo
-      ? {
-          ...payload.pageInfo,
-          totalCount,
-        }
-      : hasCursorMetadata
-        ? {
-            mode: "cursor",
-            hasNextPage: payload.hasNextPage ?? Boolean(payload.next),
-            endCursor: payload.endCursor ?? null,
-            totalCount,
-          }
-        : undefined,
+    input: {
+      first: pageSize,
+      after: options?.cursor || undefined,
+      query: options?.query || undefined,
+      fieldFilters: options?.fieldFilters ?? [],
+      filterGroups: options?.filterGroups ?? [],
+      sort: options?.sort ?? [],
+    },
+    ...resolveExtraVariables(config, pageSize, options),
   };
 }
 
@@ -134,29 +70,14 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
   pageSize: number,
   config: DataTableGraphQLConfig<TData>,
   options?: DataTableQueryOptions,
-  _pageIndex = 0,
 ): Promise<GenericLimitOffsetResponse<TData>> {
-  const defaultVariables = {
-    first: pageSize,
-    after: options?.cursor || undefined,
-    query: options?.query || undefined,
-    fieldFilters: options?.fieldFilters ?? [],
-    filterGroups: options?.filterGroups ?? [],
-    sort: config.supportsSort === false ? undefined : (options?.sort ?? []),
-  };
-  const variables = config.buildVariables
-    ? {
-        ...config.variables,
-        ...config.buildVariables({ pageSize, options }),
-      }
-    : {
-        ...defaultVariables,
-        ...config.variables,
-      };
-  const data = await requestGraphQL<Record<string, GraphQLConnection<unknown>>>({
+  const data = await requestGraphQL<
+    Record<string, GraphQLConnection<unknown>>,
+    DataTableGraphQLVariables
+  >({
     document: config.document,
     operationName: config.operationName,
-    variables,
+    variables: buildGraphQLVariables(pageSize, config, options),
   });
   const connection = data[config.connectionKey];
 
@@ -185,51 +106,41 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
 }
 
 export async function fetchDataTablePage<TData extends Record<string, unknown>>({
-  link,
-  pageIndex,
   pageSize,
   options,
   graphql,
 }: FetchDataTablePageParams<TData>): Promise<GenericLimitOffsetResponse<TData>> {
-  if (graphql) {
-    return fetchGraphQLData(pageSize, graphql, options, pageIndex);
-  }
-
-  return fetchData<TData>(link, pageIndex, pageSize, options);
+  return fetchGraphQLData(pageSize, graphql, options);
 }
 
 export function useDataTableQuery<TData extends Record<string, unknown>>(
   queryKey: string,
-  link: API_ENDPOINTS,
+  graphql: DataTableGraphQLConfig<TData>,
   pagination: PaginationState,
   options?: DataTableQueryOptions,
-  graphql?: DataTableGraphQLConfig<TData>,
   enabled = true,
 ) {
+  const extraVariables = resolveExtraVariables(graphql, pagination.pageSize, options);
+
   return useQuery<GenericLimitOffsetResponse<TData>, Error>({
     queryKey: [
       queryKey,
-      link,
       pagination,
       options,
-      graphql
-        ? {
-            connectionKey: graphql.connectionKey,
-            document: graphql.document.toString(),
-            operationName: graphql.operationName,
-            variables: graphql.variables,
-          }
-        : null,
+      {
+        connectionKey: graphql.connectionKey,
+        document: graphql.document.toString(),
+        graphql,
+        operationName: graphql.operationName,
+        extraVariables,
+      },
     ],
     queryFn: async () =>
       fetchDataTablePage<TData>({
-        link,
-        pageIndex: pagination.pageIndex,
         pageSize: pagination.pageSize,
         options,
         graphql,
       }),
     enabled,
-    // structuralSharing: false,
   });
 }

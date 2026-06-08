@@ -8,154 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 )
-
-func tractorFromInput(
-	input gqlmodel.TractorInput,
-	id pulid.ID,
-	authCtx *authctx.AuthContext,
-) (*tractor.Tractor, error) {
-	primaryWorkerID, err := pulid.MustParse(input.PrimaryWorkerID)
-	if err != nil {
-		return nil, err
-	}
-	equipmentTypeID, err := pulid.MustParse(input.EquipmentTypeID)
-	if err != nil {
-		return nil, err
-	}
-	equipmentManufacturerID, err := pulid.MustParse(input.EquipmentManufacturerID)
-	if err != nil {
-		return nil, err
-	}
-	stateID, err := optionalID(input.StateID)
-	if err != nil {
-		return nil, err
-	}
-	fleetCodeID, err := optionalID(input.FleetCodeID)
-	if err != nil {
-		return nil, err
-	}
-	secondaryWorkerID, err := optionalID(input.SecondaryWorkerID)
-	if err != nil {
-		return nil, err
-	}
-
-	status := domaintypes.EquipmentStatusAvailable
-	if input.Status != nil {
-		status = *input.Status
-	}
-
-	entity := &tractor.Tractor{
-		ID:                      id,
-		OrganizationID:          authCtx.OrganizationID,
-		BusinessUnitID:          authCtx.BusinessUnitID,
-		PrimaryWorkerID:         primaryWorkerID,
-		EquipmentTypeID:         equipmentTypeID,
-		EquipmentManufacturerID: equipmentManufacturerID,
-		StateID:                 stateID,
-		FleetCodeID:             fleetCodeID,
-		SecondaryWorkerID:       secondaryWorkerID,
-		Status:                  status,
-		Code:                    input.Code,
-		Model:                   stringValue(input.Model),
-		Make:                    stringValue(input.Make),
-		Year:                    input.Year,
-		LicensePlateNumber:      stringValue(input.LicensePlateNumber),
-		RegistrationNumber:      stringValue(input.RegistrationNumber),
-		RegistrationExpiry:      int64Ptr(input.RegistrationExpiry),
-		Vin:                     stringValue(input.Vin),
-		CustomFields:            input.CustomFields,
-	}
-	if input.Version != nil {
-		entity.Version = int64(*input.Version)
-	}
-
-	return entity, nil
-}
-
-func applyTractorPatch(entity *tractor.Tractor, input gqlmodel.TractorPatchInput) error {
-	if input.PrimaryWorkerID != nil {
-		id, err := pulid.MustParse(*input.PrimaryWorkerID)
-		if err != nil {
-			return err
-		}
-		entity.PrimaryWorkerID = id
-	}
-	if input.EquipmentTypeID != nil {
-		id, err := pulid.MustParse(*input.EquipmentTypeID)
-		if err != nil {
-			return err
-		}
-		entity.EquipmentTypeID = id
-	}
-	if input.EquipmentManufacturerID != nil {
-		id, err := pulid.MustParse(*input.EquipmentManufacturerID)
-		if err != nil {
-			return err
-		}
-		entity.EquipmentManufacturerID = id
-	}
-	if value, ok := input.StateID.ValueOK(); ok {
-		id, err := optionalID(value)
-		if err != nil {
-			return err
-		}
-		entity.StateID = id
-	}
-	if value, ok := input.FleetCodeID.ValueOK(); ok {
-		id, err := optionalID(value)
-		if err != nil {
-			return err
-		}
-		entity.FleetCodeID = id
-	}
-	if value, ok := input.SecondaryWorkerID.ValueOK(); ok {
-		id, err := optionalID(value)
-		if err != nil {
-			return err
-		}
-		entity.SecondaryWorkerID = id
-	}
-	if input.Status != nil {
-		entity.Status = *input.Status
-	}
-	if input.Code != nil {
-		entity.Code = *input.Code
-	}
-	if input.Model != nil {
-		entity.Model = *input.Model
-	}
-	if input.Make != nil {
-		entity.Make = *input.Make
-	}
-	if input.Year != nil {
-		entity.Year = input.Year
-	}
-	if input.LicensePlateNumber != nil {
-		entity.LicensePlateNumber = *input.LicensePlateNumber
-	}
-	if input.RegistrationNumber != nil {
-		entity.RegistrationNumber = *input.RegistrationNumber
-	}
-	if input.RegistrationExpiry != nil {
-		entity.RegistrationExpiry = int64Ptr(input.RegistrationExpiry)
-	}
-	if input.Vin != nil {
-		entity.Vin = *input.Vin
-	}
-	if input.Version != nil {
-		entity.Version = int64(*input.Version)
-	}
-	if input.CustomFields != nil {
-		entity.CustomFields = input.CustomFields
-	}
-
-	return nil
-}
 
 func tractorRelationIncludes(
 	ctx context.Context,
@@ -271,7 +125,10 @@ func tractorConnectionFromItems(
 	if err != nil {
 		return nil, err
 	}
-	endCursor := lastEdgeCursor(edges, func(edge *gqlmodel.TractorEdge) string { return edge.Cursor })
+	endCursor := lastEdgeCursor(
+		edges,
+		func(edge *gqlmodel.TractorEdge) string { return edge.Cursor },
+	)
 
 	return &gqlmodel.TractorConnection{
 		Edges: edges,

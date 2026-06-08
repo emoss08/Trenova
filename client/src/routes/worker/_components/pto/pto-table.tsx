@@ -12,8 +12,6 @@ export default function PTODataTable() {
     <DataTable<WorkerPTO>
       queryKey="worker-pto-list"
       name="Worker PTO"
-      link="/worker-pto/"
-      exportModelName="worker-pto"
       resource={Resource.WorkerPTO}
       columns={columns}
       graphql={workerTableGraphQLConfigs.pto}

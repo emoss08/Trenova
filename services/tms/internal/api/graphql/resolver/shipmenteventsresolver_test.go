@@ -59,7 +59,7 @@ func TestQueryResolver_ShipmentEvents_MapsRequest(t *testing.T) {
 		gqlmodel.ShipmentEventTypeCommentPosted,
 	}
 
-	events, err := resolver.ShipmentEvents(ctx, testStringPtr(shipmentID.String()), types, &limit, &before)
+	events, err := resolver.ShipmentEvents(ctx, new(shipmentID.String()), types, &limit, &before)
 	require.NoError(t, err)
 
 	require.Len(t, events, 1)

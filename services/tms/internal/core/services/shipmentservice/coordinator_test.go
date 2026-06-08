@@ -1162,6 +1162,7 @@ func completedStopForCoordinator(
 }
 
 //go:fix inline
+//go:fix inline
 func ptrInt64(value int64) *int64 {
-	return &value
+	return new(value)
 }

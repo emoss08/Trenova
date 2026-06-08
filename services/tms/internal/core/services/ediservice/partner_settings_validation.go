@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
@@ -600,12 +601,7 @@ func partnerSettingDiagnostic(
 }
 
 func stringInSlice(value string, allowed []string) bool {
-	for _, item := range allowed {
-		if value == item {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(allowed, value)
 }
 
 func defaultEDIStandard(value edi.EDIStandard) edi.EDIStandard {

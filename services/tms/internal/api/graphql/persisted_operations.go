@@ -24,14 +24,14 @@ type PersistedOperationManifest struct {
 }
 
 type persistedGraphQLRequest struct {
-	Extensions    persistedGraphQLRequestExtensions `json:"extensions,omitempty"`
+	Extensions    persistedGraphQLRequestExtensions `json:"extensions"`
 	OperationName string                            `json:"operationName,omitempty"`
 	Query         string                            `json:"query,omitempty"`
 	Variables     any                               `json:"variables,omitempty"`
 }
 
 type persistedGraphQLRequestExtensions struct {
-	PersistedQuery persistedGraphQLPersistedQuery `json:"persistedQuery,omitempty"`
+	PersistedQuery persistedGraphQLPersistedQuery `json:"persistedQuery"`
 }
 
 type persistedGraphQLPersistedQuery struct {

@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -904,10 +905,8 @@ func validateReturnToURL(returnTo string, allowedOrigins []string) error {
 	}
 
 	origin := parsed.Scheme + "://" + parsed.Host
-	for _, allowedOrigin := range allowedOrigins {
-		if allowedOrigin == origin {
-			return nil
-		}
+	if slices.Contains(allowedOrigins, origin) {
+		return nil
 	}
 
 	return errortypes.NewValidationError(

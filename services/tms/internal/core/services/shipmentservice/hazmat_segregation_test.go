@@ -458,6 +458,7 @@ func hazardousCommodity(
 }
 
 //go:fix inline
+//go:fix inline
 func float64Ptr(v float64) *float64 {
-	return &v
+	return new(v)
 }

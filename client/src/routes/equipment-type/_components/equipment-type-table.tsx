@@ -59,9 +59,7 @@ export default function EquipmentTypeTable() {
   return (
     <DataTable<EquipmentType>
       name="Equipment Type"
-      link="/equipment-types/"
       queryKey="equipment-type-list"
-      exportModelName="equipment-type"
       resource={Resource.EquipmentType}
       columns={columns}
       graphql={equipmentTableGraphQLConfigs.equipmentType}

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -39,7 +40,9 @@ func (r *mutationResolver) PatchWorker(ctx context.Context, id string, input gql
 		return nil, err
 	}
 
-	applyWorkerPatch(existing, input)
+	if err = mappers.ApplyWorkerPatch(existing, input); err != nil {
+		return nil, err
+	}
 
 	updated, err := r.workerService.Update(ctx, existing, actorutil.FromAuthContext(authCtx))
 	if err != nil {

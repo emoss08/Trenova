@@ -59,8 +59,8 @@ func translateMap(input map[string]any, targetType reflect.Type) map[string]any 
 func fieldMappings(targetType reflect.Type) map[string]string {
 	fields := make(map[string]string)
 
-	for idx := range targetType.NumField() {
-		field := targetType.Field(idx)
+	for field := range targetType.Fields() {
+		field := field
 		if field.PkgPath != "" && !field.Anonymous {
 			continue
 		}

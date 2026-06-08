@@ -100,7 +100,7 @@ func TestPageInfo_EmptyEndCursorStaysNil(t *testing.T) {
 func TestTotalCountPtr_ReturnsStablePointer(t *testing.T) {
 	t.Parallel()
 
-	count := totalCountPtr(42)
+	count := new(42)
 
 	require.NotNil(t, count)
 	assert.Equal(t, 42, *count)

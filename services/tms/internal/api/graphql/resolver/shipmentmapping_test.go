@@ -59,25 +59,25 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 		CustomerID:            customerID.String(),
 		FormulaTemplateID:     formulaTemplateID.String(),
 		Status:                &status,
-		ProNumber:             testStringPtr("SHP-100"),
-		OtherChargeAmount:     testStringPtr("1.25"),
-		FreightChargeAmount:   testStringPtr("2.50"),
-		BaseRate:              testStringPtr("3.75"),
-		TotalChargeAmount:     testStringPtr("5.00"),
-		TemperatureMin:        testIntPtr(-10),
-		TemperatureMax:        testIntPtr(42),
+		ProNumber:             new("SHP-100"),
+		OtherChargeAmount:     new("1.25"),
+		FreightChargeAmount:   new("2.50"),
+		BaseRate:              new("3.75"),
+		TotalChargeAmount:     new("5.00"),
+		TemperatureMin:        new(-10),
+		TemperatureMax:        new(42),
 		RatingUnit:            &ratingUnit,
-		SourceDocumentID:      testStringPtr("doc_123"),
-		BillingTransferStatus: testStringPtr("Pending"),
+		SourceDocumentID:      new("doc_123"),
+		BillingTransferStatus: new("Pending"),
 		Moves: []*gqlmodel.ShipmentMoveInput{
 			{
-				ID:       testStringPtr(moveID.String()),
+				ID:       new(moveID.String()),
 				Status:   &moveStatus,
 				Loaded:   &loaded,
 				Sequence: &sequence,
 				Stops: []*gqlmodel.ShipmentStopInput{
 					{
-						ID:                   testStringPtr(stopID.String()),
+						ID:                   new(stopID.String()),
 						LocationID:           locationID.String(),
 						Status:               &stopStatus,
 						Type:                 &stopType,
@@ -90,7 +90,7 @@ func TestShipmentFromInput_MapsNestedPayloads(t *testing.T) {
 		},
 		AdditionalCharges: []*gqlmodel.ShipmentAdditionalChargeInput{
 			{
-				ID:                  testStringPtr(chargeID.String()),
+				ID:                  new(chargeID.String()),
 				AccessorialChargeID: accessorialChargeID.String(),
 				Amount:              &amount,
 				Unit:                &unit,
@@ -157,7 +157,7 @@ func TestShipmentFromInput_RejectsOutOfRangeTemperature(t *testing.T) {
 		ShipmentTypeID:    pulid.MustNew("sht_").String(),
 		CustomerID:        pulid.MustNew("cus_").String(),
 		FormulaTemplateID: pulid.MustNew("ft_").String(),
-		TemperatureMin:    testIntPtr(40_000),
+		TemperatureMin:    new(40_000),
 	}, pulid.Nil, &authctx.AuthContext{
 		BusinessUnitID: pulid.MustNew("bu_"),
 		OrganizationID: pulid.MustNew("org_"),
@@ -461,10 +461,12 @@ func TestShipmentAnalyticsToModel_MapsTypedCards(t *testing.T) {
 	assert.Equal(t, "TX", model.LaneHeatmap.Cells[0].Destination)
 }
 
+//go:fix inline
 func testIntPtr(value int) *int {
-	return &value
+	return new(value)
 }
 
+//go:fix inline
 func testStringPtr(value string) *string {
-	return &value
+	return new(value)
 }

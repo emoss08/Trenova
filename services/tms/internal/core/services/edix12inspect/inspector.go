@@ -159,10 +159,7 @@ func parseSegments(
 	chunks := strings.Split(rawX12, separators.Segment)
 	transactionIndex := 0
 	for chunkIndex, chunk := range chunks {
-		start := strings.Index(rawX12[searchFrom:], chunk)
-		if start < 0 {
-			start = 0
-		}
+		start := max(strings.Index(rawX12[searchFrom:], chunk), 0)
 		startOffset := searchFrom + start
 		searchFrom = startOffset + len(chunk)
 

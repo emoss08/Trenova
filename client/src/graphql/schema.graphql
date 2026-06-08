@@ -503,9 +503,9 @@ type Query {
   shipmentUIPolicy: ShipmentUIPolicy!
   shipments(after: String, expandShipmentDetails: Boolean = false, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, query: String, sort: [SortFieldInput!], status: String): ShipmentConnection!
   tractor(id: ID!): Tractor
-  tractors(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, query: String, sort: [SortFieldInput!], status: EquipmentStatus): TractorConnection!
+  tractors(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, includeWorkerDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TractorConnection!
   trailer(id: ID!): Trailer
-  trailers(after: String, fieldFilters: [FieldFilterInput!], filterGroups: [FilterGroupInput!], first: Int = 20, includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, query: String, sort: [SortFieldInput!], status: EquipmentStatus): TrailerConnection!
+  trailers(includeEquipmentDetails: Boolean = false, includeFleetDetails: Boolean = false, input: DataTableConnectionInput!, status: EquipmentStatus): TrailerConnection!
   unassignedShipments(after: String, first: Int = 20): ShipmentConnection!
   upcomingWorkerPTO(after: String, endDate: Int, first: Int = 20, fleetCodeId: ID, startDate: Int, status: PTOStatus, timezone: String, type: PTOType, workerId: ID): WorkerPTOConnection!
   workerPTOChartData(startDateFrom: Int!, startDateTo: Int!, timezone: String, type: PTOType, workerId: ID): [PTOChartDataPoint!]!

@@ -119,10 +119,7 @@ func (r *repository) DistinctSources(
 	if offset > total {
 		offset = total
 	}
-	end := offset + limit
-	if end > total {
-		end = total
-	}
+	end := min(offset+limit, total)
 
 	return &pagination.ListResult[*repositories.BankReceiptBatchSourceOption]{
 		Items: options[offset:end],

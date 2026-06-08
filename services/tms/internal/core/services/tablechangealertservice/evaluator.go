@@ -3,6 +3,7 @@ package tablechangealertservice
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -49,12 +50,7 @@ func evaluateCondition( //nolint:cyclop,funlen,gocognit // legacy workflow
 		return ok && v != nil
 
 	case tablechangealert.OpChanged:
-		for _, f := range changedFields {
-			if f == cond.Field {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(changedFields, cond.Field)
 
 	case tablechangealert.OpChangedTo:
 		newVal, newOk := newData[cond.Field]

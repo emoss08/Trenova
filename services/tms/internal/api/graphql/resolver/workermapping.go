@@ -6,18 +6,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
-func applyWorkerPatch(entity *worker.Worker, input gqlmodel.WorkerPatchInput) {
-	if input.Status != nil {
-		entity.Status = *input.Status
-	}
-	if input.Type != nil {
-		entity.Type = *input.Type
-	}
-	if input.DriverType != nil {
-		entity.DriverType = *input.DriverType
-	}
-}
-
 func workerCursorConnectionToModel(
 	result *pagination.CursorListResult[*worker.Worker],
 ) (*gqlmodel.WorkerConnection, error) {
@@ -37,8 +25,13 @@ func workerCursorConnectionToModel(
 	}
 
 	return &gqlmodel.WorkerConnection{
-		Edges:      edges,
-		PageInfo:   pageInfo(result.HasNextPage, lastEdgeCursor(edges, func(edge *gqlmodel.WorkerEdge) string { return edge.Cursor })),
+		Edges: edges,
+		PageInfo: pageInfo(
+			result.HasNextPage,
+			lastEdgeCursor(edges, func(edge *gqlmodel.WorkerEdge) string {
+				return edge.Cursor
+			}),
+		),
 		TotalCount: result.TotalCount,
 	}, nil
 }
@@ -62,8 +55,13 @@ func workerPTOCursorConnectionToModel(
 	}
 
 	return &gqlmodel.WorkerPTOConnection{
-		Edges:      edges,
-		PageInfo:   pageInfo(result.HasNextPage, lastEdgeCursor(edges, func(edge *gqlmodel.WorkerPTOEdge) string { return edge.Cursor })),
+		Edges: edges,
+		PageInfo: pageInfo(
+			result.HasNextPage,
+			lastEdgeCursor(edges, func(edge *gqlmodel.WorkerPTOEdge) string {
+				return edge.Cursor
+			}),
+		),
 		TotalCount: result.TotalCount,
 	}, nil
 }

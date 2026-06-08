@@ -3,6 +3,7 @@ package graphql
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ func TestComplexityRoot_Trailers(t *testing.T) {
 		},
 		{
 			name:            "requested limit",
-			first:           intPtrForTest(15),
+			first:           new(15),
 			childComplexity: 3,
 			expected:        45,
 		},
@@ -39,13 +40,13 @@ func TestComplexityRoot_Trailers(t *testing.T) {
 		},
 		{
 			name:            "common relation query stays below fixed limit",
-			first:           intPtrForTest(20),
+			first:           new(20),
 			childComplexity: 16,
 			expected:        320,
 		},
 		{
 			name:            "rich table query stays below fixed limit",
-			first:           intPtrForTest(20),
+			first:           new(20),
 			childComplexity: 41,
 			expected:        820,
 		},
@@ -57,12 +58,7 @@ func TestComplexityRoot_Trailers(t *testing.T) {
 
 			cost := root.Query.Trailers(
 				tt.childComplexity,
-				tt.first,
-				nil,
-				nil,
-				nil,
-				nil,
-				nil,
+				gqlmodel.DataTableConnectionInput{First: tt.first},
 				&status,
 				nil,
 				nil,
@@ -79,6 +75,7 @@ func TestCountComplexity(t *testing.T) {
 	assert.Equal(t, 50, countComplexity(5, 10))
 }
 
+//go:fix inline
 func intPtrForTest(value int) *int {
-	return &value
+	return new(value)
 }

@@ -74,20 +74,14 @@ export default function Table() {
     <>
       <DataTable<Trailer>
         name="Trailer"
-        link="/trailers/"
         queryKey="trailer-list"
         graphql={equipmentTableGraphQLConfigs.trailer}
-        exportModelName="trailer"
         resource={Resource.Trailer}
         columns={columns}
         dockActions={dockActions}
         contextMenuActions={contextMenuActions}
         enableRowSelection
         TablePanel={TrailerPanel}
-        extraSearchParams={{
-          includeFleetDetails: true,
-          includeEquipmentDetails: true,
-        }}
       />
       {locateTrailerId && (
         <LocateTrailerDialog

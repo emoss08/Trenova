@@ -493,7 +493,7 @@ func (w *countingWorker) Start() error {
 	return w.startErr
 }
 
-func (w *countingWorker) Run(_ <-chan interface{}) error {
+func (w *countingWorker) Run(_ <-chan any) error {
 	return w.Start()
 }
 
@@ -501,30 +501,30 @@ func (w *countingWorker) Stop() {
 	w.stopCount++
 }
 
-func (w *countingWorker) RegisterWorkflow(_ interface{}) {}
+func (w *countingWorker) RegisterWorkflow(_ any) {}
 
 func (w *countingWorker) RegisterWorkflowWithOptions(
-	_ interface{},
+	_ any,
 	_ workflow.RegisterOptions,
 ) {
 }
 
 func (w *countingWorker) RegisterDynamicWorkflow(
-	_ interface{},
+	_ any,
 	_ workflow.DynamicRegisterOptions,
 ) {
 }
 
-func (w *countingWorker) RegisterActivity(_ interface{}) {}
+func (w *countingWorker) RegisterActivity(_ any) {}
 
 func (w *countingWorker) RegisterActivityWithOptions(
-	_ interface{},
+	_ any,
 	_ activity.RegisterOptions,
 ) {
 }
 
 func (w *countingWorker) RegisterDynamicActivity(
-	_ interface{},
+	_ any,
 	_ activity.DynamicRegisterOptions,
 ) {
 }

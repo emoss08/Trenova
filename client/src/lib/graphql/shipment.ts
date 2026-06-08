@@ -96,7 +96,7 @@ export const shipmentTableGraphQLConfig = defineDataTableGraphQLConfig<
   document: ShipmentCommandCenterTableDocument,
   operationName: "ShipmentCommandCenterTable",
   connectionKey: "shipments",
-  variables: {
+  extraVariables: {
     expandShipmentDetails: true,
   },
   mapNode: (node) => node as Shipment,

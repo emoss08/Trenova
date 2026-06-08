@@ -11,32 +11,22 @@ func complexityRoot() generated.ComplexityRoot {
 	var root generated.ComplexityRoot
 	root.Query.Trailers = func(
 		childComplexity int,
-		first *int,
-		_ *string,
-		_ *string,
-		_ []*gqlmodel.FieldFilterInput,
-		_ []*gqlmodel.FilterGroupInput,
-		_ []*gqlmodel.SortFieldInput,
+		input gqlmodel.DataTableConnectionInput,
 		_ *domaintypes.EquipmentStatus,
 		_ *bool,
 		_ *bool,
 	) int {
-		return listComplexity(childComplexity, first)
+		return listComplexity(childComplexity, input.First)
 	}
 	root.Query.Tractors = func(
 		childComplexity int,
-		first *int,
-		_ *string,
-		_ *string,
-		_ []*gqlmodel.FieldFilterInput,
-		_ []*gqlmodel.FilterGroupInput,
-		_ []*gqlmodel.SortFieldInput,
+		input gqlmodel.DataTableConnectionInput,
 		_ *domaintypes.EquipmentStatus,
 		_ *bool,
 		_ *bool,
 		_ *bool,
 	) int {
-		return listComplexity(childComplexity, first)
+		return listComplexity(childComplexity, input.First)
 	}
 
 	return root

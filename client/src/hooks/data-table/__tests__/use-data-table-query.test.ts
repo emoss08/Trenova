@@ -1,28 +1,29 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearCsrfToken, setCsrfToken } from "@/lib/api";
-import { fetchDataTablePage, fetchGraphQLData } from "../use-data-table-query";
 import { equipmentTableGraphQLConfigs } from "@/lib/graphql/equipment-table";
+import type { GraphQLRequestError } from "@/lib/graphql";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchDataTablePage, fetchGraphQLData } from "../use-data-table-query";
 
-function createJSONResponse(data: unknown): Response {
+let fetchMock: ReturnType<typeof vi.fn>;
+
+function createJSONResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
-    status: 200,
+    status,
     headers: { "Content-Type": "application/json" },
   });
 }
 
-describe("data table query fetching", () => {
-  let fetchMock: ReturnType<typeof vi.fn>;
-
+describe("data table GraphQL query fetching", () => {
   beforeEach(() => {
     clearCsrfToken();
     fetchMock = vi.fn(async () =>
       createJSONResponse({
         data: {
-          tractors: {
-            edges: [{ node: { id: "tr_1", code: "T-100" } }],
+          equipmentTypes: {
+            edges: [{ node: { id: "et_1", code: "VAN", class: "Trailer" } }],
             pageInfo: {
               hasNextPage: true,
-              endCursor: "cursor-tr-1",
+              endCursor: "cursor-et-1",
             },
             totalCount: 12,
           },
@@ -37,170 +38,50 @@ describe("data table query fetching", () => {
     vi.unstubAllGlobals();
   });
 
-  it("builds GraphQL cursor variables from table state and normalizes connection results", async () => {
+  it("sends the default DataTableConnectionInput first value", async () => {
     setCsrfToken("table-token");
 
-    const result = await fetchDataTablePage({
-      link: "/tractors/",
-      pageIndex: 0,
+    await fetchDataTablePage({
       pageSize: 25,
-      graphql: equipmentTableGraphQLConfigs.tractor,
-      options: {
-        query: "T-100",
-        fieldFilters: [{ field: "status", operator: "eq", value: "Available" }],
-        filterGroups: [
-          {
-            filters: [{ field: "fleetCode.code", operator: "contains", value: "MID" }],
-          },
-        ],
-        sort: [],
-      },
+      graphql: equipmentTableGraphQLConfigs.equipmentType,
     });
 
-    expect(result).toEqual({
-      results: [{ id: "tr_1", code: "T-100" }],
-      count: 12,
-      next: null,
-      prev: null,
-      pageInfo: {
-        mode: "cursor",
-        hasNextPage: true,
-        endCursor: "cursor-tr-1",
-        totalCount: 12,
-      },
-    });
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(typeof init.body).toBe("string");
-    const body = JSON.parse(init.body as string);
+    const body = requestBody();
     expect(body).toMatchObject({
-      operationName: "TractorTable",
+      operationName: "EquipmentTypeTable",
       variables: {
-        first: 25,
-        query: "T-100",
-        includeEquipmentDetails: true,
-        includeFleetDetails: true,
-        includeWorkerDetails: true,
-        fieldFilters: [{ field: "status", operator: "eq", value: "Available" }],
-        filterGroups: [
-          {
-            filters: [{ field: "fleetCode.code", operator: "contains", value: "MID" }],
-          },
-        ],
-        sort: [],
-      },
-    });
-    expect(body.variables).not.toHaveProperty("offset");
-  });
-
-  it("keeps GraphQL tables on cursor pagination while sorting", async () => {
-    setCsrfToken("table-token");
-
-    const result = await fetchDataTablePage({
-      link: "/tractors/",
-      pageIndex: 2,
-      pageSize: 25,
-      graphql: equipmentTableGraphQLConfigs.tractor,
-      options: {
-        sort: [{ field: "code", direction: "asc" }],
-      },
-    });
-
-    expect(result).toEqual({
-      results: [{ id: "tr_1", code: "T-100" }],
-      count: 12,
-      next: null,
-      prev: null,
-      pageInfo: {
-        mode: "cursor",
-        hasNextPage: true,
-        endCursor: "cursor-tr-1",
-        totalCount: 12,
-      },
-    });
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(typeof init.body).toBe("string");
-    const body = JSON.parse(init.body as string);
-    expect(body.variables).toMatchObject({
-      first: 25,
-      sort: [{ field: "code", direction: "asc" }],
-    });
-    expect(body.variables).not.toHaveProperty("offset");
-    expect(body.variables).not.toHaveProperty("after");
-  });
-
-  it("uses REST fetching when no GraphQL config is provided", async () => {
-    fetchMock.mockResolvedValueOnce(
-      createJSONResponse({
-        results: [{ id: "trl_1", code: "TRL-1" }],
-        count: 12,
-        totalCount: 12,
-        next: null,
-        previous: null,
-        hasNextPage: true,
-        endCursor: "cursor-trl-1",
-      }),
-    );
-
-    const result = await fetchDataTablePage({
-      link: "/trailers/",
-      pageIndex: 1,
-      pageSize: 50,
-      options: {
-        query: "TRL",
-        fieldFilters: [{ field: "status", operator: "eq", value: "Available" }],
-        filterGroups: [],
-        sort: [{ field: "code", direction: "asc" }],
-        cursor: "cursor-page-2",
-        extraSearchParams: { includeFleetDetails: true },
-      },
-    });
-
-    expect(result.results).toEqual([{ id: "trl_1", code: "TRL-1" }]);
-    expect(result.count).toBe(12);
-    expect(result.pageInfo).toEqual({
-      mode: "cursor",
-      hasNextPage: true,
-      endCursor: "cursor-trl-1",
-      totalCount: 12,
-    });
-
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const requestURL = new URL(url);
-    expect(requestURL.pathname).toBe("/api/v1/trailers/");
-    expect(requestURL.searchParams.get("limit")).toBe("50");
-    expect(requestURL.searchParams.get("offset")).toBeNull();
-    expect(requestURL.searchParams.get("after")).toBe("cursor-page-2");
-    expect(requestURL.searchParams.get("query")).toBe("TRL");
-    expect(requestURL.searchParams.get("includeFleetDetails")).toBe("true");
-    expect(init.credentials).toBe("include");
-  });
-
-  it("builds Equipment Type GraphQL variables with DataTableConnectionInput", async () => {
-    setCsrfToken("table-token");
-    fetchMock.mockResolvedValueOnce(
-      createJSONResponse({
-        data: {
-          equipmentTypes: {
-            edges: [{ node: { id: "et_1", code: "VAN", class: "Trailer" } }],
-            pageInfo: {
-              hasNextPage: false,
-              endCursor: "cursor-et-1",
-            },
-            totalCount: 1,
-          },
+        input: {
+          first: 25,
+          fieldFilters: [],
+          filterGroups: [],
+          sort: [],
         },
-      }),
-    );
+      },
+    });
+    expect(body.variables).not.toHaveProperty("first");
+    expect(body.variables.input).not.toHaveProperty("after");
+  });
 
-    const result = await fetchDataTablePage({
-      link: "/equipment-types/",
-      pageIndex: 0,
+  it("sends the current cursor in input.after", async () => {
+    setCsrfToken("table-token");
+
+    await fetchGraphQLData(25, equipmentTableGraphQLConfigs.equipmentType, {
+      cursor: "cursor-page-3",
+    });
+
+    expect(requestBody().variables.input).toMatchObject({
+      first: 25,
+      after: "cursor-page-3",
+    });
+  });
+
+  it("sends search query, field filters, filter groups, and sort in input", async () => {
+    setCsrfToken("table-token");
+
+    await fetchDataTablePage({
       pageSize: 15,
       graphql: equipmentTableGraphQLConfigs.equipmentType,
       options: {
-        cursor: "cursor-page-2",
         query: "VAN",
         fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
         filterGroups: [
@@ -212,109 +93,152 @@ describe("data table query fetching", () => {
       },
     });
 
-    expect(result.results).toEqual([{ id: "et_1", code: "VAN", class: "Trailer" }]);
-    expect(result.pageInfo).toMatchObject({
-      mode: "cursor",
-      hasNextPage: false,
-      endCursor: "cursor-et-1",
-      totalCount: 1,
-    });
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const body = JSON.parse(init.body as string);
-    expect(body).toMatchObject({
-      operationName: "EquipmentTypeTable",
-      variables: {
-        input: {
-          first: 15,
-          after: "cursor-page-2",
-          query: "VAN",
-          fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
-          filterGroups: [
-            {
-              filters: [{ field: "class", operator: "in", value: ["Trailer"] }],
-            },
-          ],
-          sort: [{ field: "code", direction: "asc" }],
+    expect(requestBody().variables.input).toEqual({
+      first: 15,
+      query: "VAN",
+      fieldFilters: [{ field: "status", operator: "eq", value: "Active" }],
+      filterGroups: [
+        {
+          filters: [{ field: "class", operator: "in", value: ["Trailer"] }],
         },
+      ],
+      sort: [{ field: "code", direction: "asc" }],
+    });
+  });
+
+  it("merges static extra variables beside input", async () => {
+    setCsrfToken("table-token");
+
+    await fetchDataTablePage({
+      pageSize: 20,
+      graphql: {
+        ...equipmentTableGraphQLConfigs.equipmentType,
+        extraVariables: { classes: ["Trailer"] },
       },
     });
-    expect(body.variables).not.toHaveProperty("first");
-    expect(body.variables).not.toHaveProperty("offset");
+
+    expect(requestBody().variables).toMatchObject({
+      input: { first: 20 },
+      classes: ["Trailer"],
+    });
+  });
+
+  it("merges dynamic extra variables beside input", async () => {
+    setCsrfToken("table-token");
+
+    await fetchDataTablePage({
+      pageSize: 20,
+      graphql: {
+        ...equipmentTableGraphQLConfigs.equipmentType,
+        extraVariables: ({ options }) => ({
+          classes: options?.query ? ["Trailer"] : ["Tractor"],
+        }),
+      },
+      options: { query: "VAN" },
+    });
+
+    expect(requestBody().variables).toMatchObject({
+      input: { first: 20, query: "VAN" },
+      classes: ["Trailer"],
+    });
+  });
+
+  it("normalizes GraphQL cursor connections into table results", async () => {
+    setCsrfToken("table-token");
+
+    const result = await fetchGraphQLData(10, equipmentTableGraphQLConfigs.equipmentType);
+
+    expect(result).toEqual({
+      results: [{ id: "et_1", code: "VAN", class: "Trailer" }],
+      count: 12,
+      next: null,
+      prev: null,
+      pageInfo: {
+        mode: "cursor",
+        hasNextPage: true,
+        endCursor: "cursor-et-1",
+        totalCount: 12,
+      },
+    });
+  });
+
+  it("normalizes empty GraphQL pages", async () => {
+    setCsrfToken("table-token");
+    fetchMock.mockResolvedValueOnce(
+      createJSONResponse({
+        data: {
+          equipmentTypes: {
+            edges: [],
+            pageInfo: {
+              hasNextPage: false,
+              endCursor: null,
+            },
+            totalCount: 0,
+          },
+        },
+      }),
+    );
+
+    const result = await fetchGraphQLData(10, equipmentTableGraphQLConfigs.equipmentType);
+
+    expect(result).toEqual({
+      results: [],
+      count: 0,
+      next: null,
+      prev: null,
+      pageInfo: {
+        mode: "cursor",
+        hasNextPage: false,
+        endCursor: null,
+        totalCount: 0,
+      },
+    });
   });
 
   it("applies mapNode before returning normalized GraphQL results", async () => {
     setCsrfToken("table-token");
 
     const result = await fetchGraphQLData(10, {
-      document: "query TractorTable { tractors { totalCount } }",
-      operationName: "TractorTable",
-      connectionKey: "tractors",
+      ...equipmentTableGraphQLConfigs.equipmentType,
       mapNode: (node) => ({ ...(node as { id: string }), mapped: true }),
     });
 
-    expect(result.results).toEqual([{ id: "tr_1", code: "T-100", mapped: true }]);
-    expect(result.count).toBe(12);
-    expect(result.pageInfo).toMatchObject({
-      hasNextPage: true,
-      endCursor: "cursor-tr-1",
-    });
+    expect(result.results).toEqual([{ id: "et_1", code: "VAN", class: "Trailer", mapped: true }]);
   });
 
-  it("sends the current cursor instead of an offset for GraphQL pages", async () => {
+  it("throws GraphQL request errors", async () => {
     setCsrfToken("table-token");
+    fetchMock.mockResolvedValueOnce(
+      createJSONResponse(
+        {
+          errors: [
+            {
+              message: "input.first must be greater than zero",
+              extensions: { code: "BAD_USER_INPUT", traceId: "trace-1" },
+            },
+          ],
+        },
+        200,
+      ),
+    );
 
-    await fetchGraphQLData(25, equipmentTableGraphQLConfigs.tractor, {
-      cursor: "cursor-page-3",
-    });
-
-    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(typeof init.body).toBe("string");
-    expect(JSON.parse(init.body as string).variables).toMatchObject({
-      first: 25,
-      after: "cursor-page-3",
-    });
+    await expect(
+      fetchGraphQLData(0, equipmentTableGraphQLConfigs.equipmentType),
+    ).rejects.toMatchObject({
+      name: "GraphQLRequestError",
+      message: "input.first must be greater than zero",
+      code: "BAD_USER_INPUT",
+      traceId: "trace-1",
+    } satisfies Partial<GraphQLRequestError>);
   });
 });
 
-describe("tractor and trailer GraphQL table configs", () => {
-  it("opts tractors into the tractor connection with required include variables", () => {
-    const document = equipmentTableGraphQLConfigs.tractor.document.toString();
-
-    expect(equipmentTableGraphQLConfigs.tractor.connectionKey).toBe("tractors");
-    expect(equipmentTableGraphQLConfigs.tractor.variables).toMatchObject({
-      includeEquipmentDetails: true,
-      includeFleetDetails: true,
-      includeWorkerDetails: true,
-    });
-    expect(document).toContain("primaryWorker");
-    expect(document).toContain("customFields");
-    expect(document).toContain("totalCount");
-    expect(document).toContain("pageInfo");
-    expect(document).toContain("$after: String");
-    expect(document).not.toContain("$offset: Int");
-  });
-
-  it("opts trailers into the trailer connection with required include variables", () => {
-    const document = equipmentTableGraphQLConfigs.trailer.document.toString();
-
-    expect(equipmentTableGraphQLConfigs.trailer.connectionKey).toBe("trailers");
-    expect(equipmentTableGraphQLConfigs.trailer.variables).toMatchObject({
-      includeEquipmentDetails: true,
-      includeFleetDetails: true,
-    });
-    expect(document).toContain("lastKnownLocationName");
-    expect(document).toContain("customFields");
-    expect(document).toContain("totalCount");
-    expect(document).toContain("pageInfo");
-    expect(document).toContain("$after: String");
-    expect(document).not.toContain("$offset: Int");
-  });
-
-  it("opts equipment types into DataTableConnectionInput", () => {
+describe("equipment table GraphQL configs", () => {
+  it("defines equipment types with the standard DataTableConnectionInput document", () => {
     const document = equipmentTableGraphQLConfigs.equipmentType.document.toString();
 
     expect(equipmentTableGraphQLConfigs.equipmentType.connectionKey).toBe("equipmentTypes");
+    expect(equipmentTableGraphQLConfigs.equipmentType).not.toHaveProperty("buildVariables");
     expect(document).toContain("query EquipmentTypeTable");
     expect(document).toContain("$input: DataTableConnectionInput!");
     expect(document).toContain("equipmentTypes(input: $input");
@@ -322,4 +246,29 @@ describe("tractor and trailer GraphQL table configs", () => {
     expect(document).toContain("pageInfo");
     expect(document).not.toContain("$offset: Int");
   });
+
+  it("keeps resource-specific include flags as extra variables", () => {
+    expect(equipmentTableGraphQLConfigs.tractor.extraVariables).toMatchObject({
+      includeEquipmentDetails: true,
+      includeFleetDetails: true,
+      includeWorkerDetails: true,
+    });
+    expect(equipmentTableGraphQLConfigs.trailer.extraVariables).toMatchObject({
+      includeEquipmentDetails: true,
+      includeFleetDetails: true,
+    });
+  });
 });
+
+function requestBody() {
+  const [, init] = fetchMockCall();
+  expect(typeof init.body).toBe("string");
+  return JSON.parse(init.body as string) as {
+    operationName: string;
+    variables: Record<string, any>;
+  };
+}
+
+function fetchMockCall(): [string, RequestInit] {
+  return fetchMock.mock.calls[0] as [string, RequestInit];
+}

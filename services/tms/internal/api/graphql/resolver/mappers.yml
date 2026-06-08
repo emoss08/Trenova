@@ -1,0 +1,20 @@
+# GraphQL mapper overrides.
+#
+# Mapper generation discovers eligible gqlgen-bound domain objects globally.
+# Add entries here only when inference needs a skip, excluded field, rename, or create default.
+types:
+  EquipmentType:
+    imports:
+      domaintypes: github.com/emoss08/trenova/pkg/domaintypes
+    defaults:
+      status: domaintypes.StatusActive
+  Tractor:
+    imports:
+      domaintypes: github.com/emoss08/trenova/pkg/domaintypes
+    defaults:
+      status: domaintypes.EquipmentStatusAvailable
+  Trailer:
+    imports:
+      domaintypes: github.com/emoss08/trenova/pkg/domaintypes
+    defaults:
+      status: domaintypes.EquipmentStatusAvailable

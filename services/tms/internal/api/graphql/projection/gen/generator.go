@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -719,13 +720,7 @@ func stringSet(values []string) map[string]struct{} {
 }
 
 func containsString(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(values, target)
 }
 
 func buildSpec(typeName string, data discovery) (generatedSpec, error) {
@@ -857,10 +852,8 @@ func buildField(params fieldBuildParams) (generatedField, error) {
 
 func specialKeyForField(specials map[string][]string, fieldName string) (string, bool) {
 	for specialKey, fields := range specials {
-		for _, field := range fields {
-			if field == fieldName {
-				return specialKey, true
-			}
+		if slices.Contains(fields, fieldName) {
+			return specialKey, true
 		}
 	}
 

@@ -14,8 +14,9 @@ func pageInfo(hasNextPage bool, endCursor *string) *gqlmodel.PageInfo {
 	}
 }
 
+//go:fix inline
 func totalCountPtr(total int) *int {
-	return &total
+	return new(total)
 }
 
 type entityCursorConnectionPage[TEdge any] struct {

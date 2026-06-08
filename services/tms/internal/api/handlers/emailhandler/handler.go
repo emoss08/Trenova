@@ -427,7 +427,7 @@ func verifySvixSignature(p svixSignatureParams) error {
 	mac.Write([]byte(p.ID + "." + p.Timestamp + "."))
 	mac.Write(p.Body)
 	expected := mac.Sum(nil)
-	for _, part := range strings.Split(p.Signature, " ") {
+	for part := range strings.SplitSeq(p.Signature, " ") {
 		_, sig, ok := strings.Cut(part, ",")
 		if !ok {
 			sig = strings.TrimPrefix(part, "v1,")

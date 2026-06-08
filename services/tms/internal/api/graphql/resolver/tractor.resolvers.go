@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
@@ -26,7 +27,7 @@ func (r *mutationResolver) CreateTractor(ctx context.Context, input gqlmodel.Tra
 		return nil, err
 	}
 
-	entity, err := tractorFromInput(input, pulid.Nil, authCtx)
+	entity, err := mappers.TractorFromInput(input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func (r *mutationResolver) UpdateTractor(ctx context.Context, id string, input g
 		return nil, err
 	}
 
-	entity, err := tractorFromInput(input, tractorID, authCtx)
+	entity, err := mappers.TractorFromInput(input, tractorID, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func (r *mutationResolver) PatchTractor(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	if err = applyTractorPatch(existing, input); err != nil {
+	if err = mappers.ApplyTractorPatch(existing, input); err != nil {
 		return nil, err
 	}
 
@@ -155,24 +156,17 @@ func (r *mutationResolver) LocateTractor(ctx context.Context, input gqlmodel.Loc
 }
 
 // Tractors is the resolver for the tractors field.
-func (r *queryResolver) Tractors(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error) {
+func (r *queryResolver) Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceTractor, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
-	})
+	connection, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	queryValue := ""
-	if query != nil {
-		queryValue = *query
-	}
 	statusValue := ""
 	if status != nil {
 		statusValue = string(*status)
@@ -190,14 +184,6 @@ func (r *queryResolver) Tractors(ctx context.Context, first *int, after *string,
 		includeWorker = *includeWorkerDetails
 	}
 
-	filter := queryOptionsFromGraphQL(gqlListOptions{
-		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Cursor.Limit,
-		Query:        queryValue,
-		FieldFilters: fieldFilters,
-		FilterGroups: filterGroups,
-		Sort:         sort,
-	})
 	includes := tractorRelationIncludes(
 		ctx,
 		"edges.node",
@@ -206,8 +192,8 @@ func (r *queryResolver) Tractors(ctx context.Context, first *int, after *string,
 		&includeWorker,
 	)
 	result, err := r.tractorService.List(ctx, &repositories.ListTractorsRequest{
-		Filter:                  filter,
-		Cursor:                  page.Cursor,
+		Filter:                  connection.Filter,
+		Cursor:                  connection.Cursor,
 		TractorRelationIncludes: includes,
 		Status:                  statusValue,
 	})

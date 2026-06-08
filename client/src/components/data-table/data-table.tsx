@@ -9,7 +9,6 @@ import {
   initializeFilterItemsFromFilterGroups,
   updateSortField,
 } from "@/lib/data-table";
-import { api } from "@/lib/api";
 import { queries } from "@/lib/queries";
 import type {
   DataTableProps,
@@ -46,8 +45,6 @@ import { DataTableToolbar } from "./data-table-toolbar";
 export function DataTable<TData extends Record<string, any>>({
   columns,
   name,
-  link,
-  detailLink,
   queryKey,
   resource,
   enableRowSelection = false,
@@ -55,10 +52,8 @@ export function DataTable<TData extends Record<string, any>>({
   TablePanel,
   onAddRecord: onAddRecordProp,
   addRecordActions = [],
-  extraSearchParams,
   contextMenuActions,
   onRowClick,
-  preferDetailRowForEdit = false,
   enableCreateAction = true,
   enableReadOnlyPanel = false,
   initialColumnVisibility,
@@ -191,9 +186,6 @@ export function DataTable<TData extends Record<string, any>>({
 
   const handleSortChange = useCallback(
     (field: string, direction: SortDirection | null) => {
-      if (graphql?.supportsSort === false) {
-        return;
-      }
       const nextParams: { sort: SortField[]; pageIndex?: number } = {
         sort: updateSortField(sort, field, direction),
         pageIndex: 1,
@@ -201,14 +193,11 @@ export function DataTable<TData extends Record<string, any>>({
 
       void setSearchParams(nextParams);
     },
-    [graphql, sort, setSearchParams],
+    [sort, setSearchParams],
   );
 
   const handleSortArrayChange = useCallback(
     (newSort: SortField[]) => {
-      if (graphql?.supportsSort === false) {
-        return;
-      }
       const nextParams: { sort: SortField[]; pageIndex?: number } = {
         sort: newSort,
         pageIndex: 1,
@@ -216,7 +205,7 @@ export function DataTable<TData extends Record<string, any>>({
 
       void setSearchParams(nextParams);
     },
-    [graphql, setSearchParams],
+    [setSearchParams],
   );
 
   const handlePageChange = useCallback(
@@ -234,45 +223,39 @@ export function DataTable<TData extends Record<string, any>>({
   );
 
   const zeroBasedPageIndex = pageIndex - 1;
-  const effectiveSort = useMemo(
-    () => (graphql?.supportsSort === false ? [] : sort),
-    [graphql?.supportsSort, sort],
-  );
+  const effectiveSort = sort;
   const cursorScopeKey = useMemo(
     () =>
       JSON.stringify({
-        link,
         pageSize,
         query,
         fieldFilters,
         filterGroups,
         sort: effectiveSort,
-        extraSearchParams: extraSearchParams ?? null,
-        variables: graphql?.variables ?? null,
+        graphql: {
+          connectionKey: graphql.connectionKey,
+          operationName: graphql.operationName,
+          extraVariables: graphql.extraVariables ?? null,
+        },
       }),
     [
       effectiveSort,
-      extraSearchParams,
       fieldFilters,
       filterGroups,
-      graphql?.variables,
-      link,
+      graphql.connectionKey,
+      graphql.extraVariables,
+      graphql.operationName,
       pageSize,
       query,
     ],
   );
-  const pageCursors =
-    cursorState.scopeKey === cursorScopeKey
-      ? cursorState.cursors
-      : { 0: null };
+  const pageCursors = cursorState.scopeKey === cursorScopeKey ? cursorState.cursors : { 0: null };
   const currentCursor = pageCursors[zeroBasedPageIndex];
-  const canFetchPage =
-    zeroBasedPageIndex === 0 ||
-    currentCursor !== undefined;
+  const canFetchPage = zeroBasedPageIndex === 0 || currentCursor !== undefined;
 
   const dataQuery = useDataTableQuery<TData>(
     queryKey,
-    link,
+    graphql,
     { pageIndex: zeroBasedPageIndex, pageSize },
     {
       query,
@@ -280,9 +263,7 @@ export function DataTable<TData extends Record<string, any>>({
       filterGroups,
       sort: effectiveSort,
       cursor: currentCursor,
-      extraSearchParams,
     },
-    graphql,
     canFetchPage,
   );
 
@@ -317,7 +298,7 @@ export function DataTable<TData extends Record<string, any>>({
     void setSearchParams({ pageIndex: 1 });
   }, [canFetchPage, pageIndex, setSearchParams]);
 
-  const cursorPageInfo = dataQuery.data?.pageInfo?.mode === "cursor" ? dataQuery.data.pageInfo : null;
+  const cursorPageInfo = dataQuery.data?.pageInfo ?? null;
   const currentPageRowCount = dataQuery.data?.results.length ?? 0;
   const rowCount = cursorPageInfo
     ? zeroBasedPageIndex * pageSize +
@@ -326,7 +307,7 @@ export function DataTable<TData extends Record<string, any>>({
     : (dataQuery.data?.count ?? 0);
   const pageCount = cursorPageInfo
     ? zeroBasedPageIndex + 1 + (cursorPageInfo.hasNextPage ? 1 : 0)
-    : Math.ceil((dataQuery.data?.count ?? 0) / pageSize);
+    : 1;
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -358,7 +339,9 @@ export function DataTable<TData extends Record<string, any>>({
     },
     onPaginationChange: (updater) => {
       const newState =
-        typeof updater === "function" ? updater({ pageIndex: zeroBasedPageIndex, pageSize }) : updater;
+        typeof updater === "function"
+          ? updater({ pageIndex: zeroBasedPageIndex, pageSize })
+          : updater;
       handlePageChange(newState.pageIndex);
       if (newState.pageSize !== pageSize) {
         handlePageSizeChange(newState.pageSize);
@@ -377,7 +360,7 @@ export function DataTable<TData extends Record<string, any>>({
       void setSearchParams({
         fieldFilters: newFieldFilters,
         filterGroups: newFilterGroups,
-        sort: graphql?.supportsSort === false ? [] : config.sort,
+        sort: config.sort,
         pageSize: config.pageSize,
         pageIndex: 1,
       });
@@ -391,7 +374,7 @@ export function DataTable<TData extends Record<string, any>>({
         table.setColumnOrder(config.columnOrder);
       }
     },
-    [graphql?.supportsSort, setSearchParams, columns, table],
+    [setSearchParams, columns, table],
   );
 
   useEffect(() => {
@@ -438,21 +421,7 @@ export function DataTable<TData extends Record<string, any>>({
     return results.find((row: TData) => (row as { id?: string }).id === panelEntityId) ?? null;
   }, [panelEntityId, panelMode, dataQuery.data?.results]);
 
-  const extraParams = extraSearchParams
-    ? "?" +
-      new URLSearchParams(
-        Object.entries(extraSearchParams).map(([k, v]) => [k, String(v)]),
-      ).toString()
-    : "";
-
-  const { data: detailRow } = useQuery({
-    queryKey: [queryKey, "detail", detailLink ?? link, extraParams, panelEntityId],
-    queryFn: () => api.get<TData>(`${detailLink ?? link}${panelEntityId}/${extraParams}`),
-    enabled: !!panelEntityId && panelMode === "edit" && (preferDetailRowForEdit || !listRow),
-    staleTime: 0,
-  });
-
-  const panelRow = preferDetailRowForEdit ? (detailRow ?? null) : (listRow ?? detailRow ?? null);
+  const panelRow = listRow;
 
   const { columnSizeVars, totalSize } = useMemo(() => {
     const headers = table.getFlatHeaders();
@@ -556,7 +525,7 @@ export function DataTable<TData extends Record<string, any>>({
               table={table}
               onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
-              mode={cursorPageInfo ? "cursor" : "offset"}
+              mode="cursor"
               hasNextPage={cursorPageInfo?.hasNextPage}
               currentPageRowCount={currentPageRowCount}
             />

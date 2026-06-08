@@ -98,12 +98,7 @@ input LocateTractorInput {
 
 extend type Query {
   tractors(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
+    input: DataTableConnectionInput!
     status: EquipmentStatus
     includeEquipmentDetails: Boolean = false
     includeFleetDetails: Boolean = false

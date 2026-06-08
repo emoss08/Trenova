@@ -1,9 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
-import {
-  driverTypeChoices,
-  statusChoices,
-  workerTypeChoices,
-} from "@/lib/choices";
+import { driverTypeChoices, statusChoices, workerTypeChoices } from "@/lib/choices";
 import { patchWorker } from "@/lib/graphql/worker-mutations";
 import { workerTableGraphQLConfigs } from "@/lib/graphql/worker-table";
 import type { DockAction } from "@/types/data-table";
@@ -15,8 +11,6 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getColumns } from "./worker-columns";
 import { WorkerPanel } from "./worker-panel";
-
-
 
 export default function WorkerTable() {
   const queryClient = useQueryClient();
@@ -130,9 +124,7 @@ export default function WorkerTable() {
   return (
     <DataTable<Worker>
       name="Worker"
-      link="/workers/"
       queryKey="worker-list"
-      exportModelName="worker"
       resource={Resource.Worker}
       columns={columns}
       graphql={workerTableGraphQLConfigs.worker}

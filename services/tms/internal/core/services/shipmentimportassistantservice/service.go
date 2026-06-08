@@ -1990,7 +1990,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 		latestSuggestions []serviceports.ShipmentImportSuggestion
 		toolCallLog       []serviceports.ShipmentImportToolCallRecord
 		conversationID    string
-		fullText          string
+		fullText          strings.Builder
 	)
 
 	for round := range 5 {
@@ -2014,7 +2014,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 			switch event.Type {
 			case "response.output_text.delta":
 				delta := event.AsResponseOutputTextDelta()
-				fullText += delta.Delta
+				fullText.WriteString(delta.Delta)
 				emit(
 					serviceports.StreamEvent{
 						Event: "text_delta",
@@ -2047,7 +2047,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 				req,
 				conversation,
 				conversationID,
-				fullText,
+				fullText.String(),
 				toolCallLog,
 				allActions,
 				userMsg,
@@ -2167,7 +2167,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 		req,
 		conversation,
 		conversationID,
-		fullText,
+		fullText.String(),
 		latestSuggestions,
 		toolCallLog,
 		allActions,
@@ -2177,7 +2177,7 @@ func (s *Service) ChatStream( //nolint:funlen,gocognit // legacy workflow
 		return err
 	}
 
-	s.logAICall(ctx, req, fullText)
+	s.logAICall(ctx, req, fullText.String())
 	return nil
 }
 

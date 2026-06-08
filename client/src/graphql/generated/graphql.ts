@@ -506,12 +506,7 @@ export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string
 export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
 
 export type TractorTableQueryVariables = Exact<{
-  first: number;
-  after?: string | null | undefined;
-  query?: string | null | undefined;
-  fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
-  filterGroups?: Array<FilterGroupInput> | FilterGroupInput | null | undefined;
-  sort?: Array<SortFieldInput> | SortFieldInput | null | undefined;
+  input: DataTableConnectionInput;
   includeEquipmentDetails?: boolean | null | undefined;
   includeFleetDetails?: boolean | null | undefined;
   includeWorkerDetails?: boolean | null | undefined;
@@ -521,12 +516,7 @@ export type TractorTableQueryVariables = Exact<{
 export type TractorTableQuery = { tractors: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'TractorTableRowFieldsFragment': TractorTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type TrailerTableQueryVariables = Exact<{
-  first: number;
-  after?: string | null | undefined;
-  query?: string | null | undefined;
-  fieldFilters?: Array<FieldFilterInput> | FieldFilterInput | null | undefined;
-  filterGroups?: Array<FilterGroupInput> | FilterGroupInput | null | undefined;
-  sort?: Array<SortFieldInput> | SortFieldInput | null | undefined;
+  input: DataTableConnectionInput;
   includeEquipmentDetails?: boolean | null | undefined;
   includeFleetDetails?: boolean | null | undefined;
 }>;
@@ -2119,14 +2109,9 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
 }
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const TractorTableDocument = new TypedDocumentString(`
-    query TractorTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
+    query TractorTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
   tractors(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
+    input: $input
     includeEquipmentDetails: $includeEquipmentDetails
     includeFleetDetails: $includeFleetDetails
     includeWorkerDetails: $includeWorkerDetails
@@ -2214,16 +2199,11 @@ fragment TractorTableRowFields on Tractor {
   secondaryWorker {
     ...WorkerTableReferenceFields
   }
-}`, {"hash":"sha256:48e33e2d022f9b3fd926131b7eb932b0fb4d388627326e375d96d23a10648baf"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
+}`, {"hash":"sha256:221694538edc13a9273b326e0a39921877c7dbd0af16166a2415150aadc1c61e"}) as unknown as TypedDocumentString<TractorTableQuery, TractorTableQueryVariables>;
 export const TrailerTableDocument = new TypedDocumentString(`
-    query TrailerTable($first: Int!, $after: String, $query: String, $fieldFilters: [FieldFilterInput!], $filterGroups: [FilterGroupInput!], $sort: [SortFieldInput!], $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
+    query TrailerTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true) {
   trailers(
-    first: $first
-    after: $after
-    query: $query
-    fieldFilters: $fieldFilters
-    filterGroups: $filterGroups
-    sort: $sort
+    input: $input
     includeEquipmentDetails: $includeEquipmentDetails
     includeFleetDetails: $includeFleetDetails
   ) {
@@ -2298,7 +2278,7 @@ fragment TrailerTableRowFields on Trailer {
   registrationState {
     ...UsStateTableFields
   }
-}`, {"hash":"sha256:9df2ee9fc4bfd5411a8dca95d3f610a7040e7de8656657a6ccd049afa65b4238"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
+}`, {"hash":"sha256:a03e38be977d09fb8f9c421a646adde0cf7b54ed10970765f43e353ca61ae4fe"}) as unknown as TypedDocumentString<TrailerTableQuery, TrailerTableQueryVariables>;
 export const EquipmentTypeTableDocument = new TypedDocumentString(`
     query EquipmentTypeTable($input: DataTableConnectionInput!, $classes: [EquipmentClass!]) {
   equipmentTypes(input: $input, classes: $classes) {

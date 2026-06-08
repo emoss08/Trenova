@@ -59,20 +59,13 @@ export default function Table() {
   return (
     <DataTable<Tractor>
       name="Tractor"
-      link="/tractors/"
       queryKey="tractor-list"
       graphql={equipmentTableGraphQLConfigs.tractor}
-      exportModelName="tractor"
       resource={Resource.Tractor}
       columns={columns}
       dockActions={dockActions}
       enableRowSelection
       TablePanel={TractorPanel}
-      extraSearchParams={{
-        includeFleetDetails: true,
-        includeEquipmentDetails: true,
-        includeWorkerDetails: true,
-      }}
     />
   );
 }

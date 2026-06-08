@@ -16,22 +16,12 @@ export const equipmentTableGraphQLConfigs = {
     document: EquipmentTypeTableDocument,
     operationName: "EquipmentTypeTable",
     connectionKey: "equipmentTypes",
-    buildVariables: ({ pageSize, options }) => ({
-      input: {
-        first: pageSize,
-        after: options?.cursor || undefined,
-        query: options?.query || undefined,
-        fieldFilters: options?.fieldFilters ?? [],
-        filterGroups: options?.filterGroups ?? [],
-        sort: options?.sort ?? [],
-      },
-    }),
   }),
   tractor: defineDataTableGraphQLConfig<Tractor, TractorTableQueryVariables>({
     document: TractorTableDocument,
     operationName: "TractorTable",
     connectionKey: "tractors",
-    variables: {
+    extraVariables: {
       includeEquipmentDetails: true,
       includeFleetDetails: true,
       includeWorkerDetails: true,
@@ -41,7 +31,7 @@ export const equipmentTableGraphQLConfigs = {
     document: TrailerTableDocument,
     operationName: "TrailerTable",
     connectionKey: "trailers",
-    variables: {
+    extraVariables: {
       includeEquipmentDetails: true,
       includeFleetDetails: true,
     },

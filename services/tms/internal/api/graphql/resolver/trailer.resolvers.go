@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -26,7 +27,7 @@ func (r *mutationResolver) CreateTrailer(ctx context.Context, input gqlmodel.Tra
 		return nil, err
 	}
 
-	entity, err := trailerFromInput(input, pulid.Nil, authCtx)
+	entity, err := mappers.TrailerFromInput(input, pulid.Nil, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,7 @@ func (r *mutationResolver) UpdateTrailer(ctx context.Context, id string, input g
 		return nil, err
 	}
 
-	entity, err := trailerFromInput(input, trailerID, authCtx)
+	entity, err := mappers.TrailerFromInput(input, trailerID, authCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func (r *mutationResolver) PatchTrailer(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	if err = applyTrailerPatch(existing, input); err != nil {
+	if err = mappers.ApplyTrailerPatch(existing, input); err != nil {
 		return nil, err
 	}
 
@@ -156,24 +157,17 @@ func (r *mutationResolver) LocateTrailer(ctx context.Context, input gqlmodel.Loc
 }
 
 // Trailers is the resolver for the trailers field.
-func (r *queryResolver) Trailers(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error) {
+func (r *queryResolver) Trailers(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceTrailer, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	page, err := entityCursorPageFromGraphQL(gqlCursorPageInput{
-		First: first,
-		After: after,
-	})
+	connection, err := dataTableConnectionFromGraphQL(&input, tenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	queryValue := ""
-	if query != nil {
-		queryValue = *query
-	}
 	statusValue := ""
 	if status != nil {
 		statusValue = string(*status)
@@ -187,14 +181,6 @@ func (r *queryResolver) Trailers(ctx context.Context, first *int, after *string,
 		includeFleet = *includeFleetDetails
 	}
 
-	filter := queryOptionsFromGraphQL(gqlListOptions{
-		TenantInfo:   tenantInfo(authCtx),
-		Limit:        page.Cursor.Limit,
-		Query:        queryValue,
-		FieldFilters: fieldFilters,
-		FilterGroups: filterGroups,
-		Sort:         sort,
-	})
 	includes := trailerRelationIncludes(
 		ctx,
 		"edges.node",
@@ -202,8 +188,8 @@ func (r *queryResolver) Trailers(ctx context.Context, first *int, after *string,
 		&includeFleet,
 	)
 	result, err := r.trailerService.List(ctx, &repositories.ListTrailersRequest{
-		Filter:                  filter,
-		Cursor:                  page.Cursor,
+		Filter:                  connection.Filter,
+		Cursor:                  connection.Cursor,
 		TrailerRelationIncludes: includes,
 		Status:                  statusValue,
 	})

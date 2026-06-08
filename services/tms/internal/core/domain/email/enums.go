@@ -1,5 +1,7 @@
 package email
 
+import "slices"
+
 type Provider string
 
 const (
@@ -85,10 +87,5 @@ func Purposes() []Purpose {
 }
 
 func IsValidPurpose(p Purpose) bool {
-	for _, purpose := range Purposes() {
-		if purpose == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(Purposes(), p)
 }

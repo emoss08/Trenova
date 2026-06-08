@@ -5,6 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,13 +25,13 @@ func TestApplyTractorPatch_NullableIDs(t *testing.T) {
 		SecondaryWorkerID: secondaryWorkerID,
 	}
 
-	err := applyTractorPatch(entity, gqlmodel.TractorPatchInput{})
+	err := mappers.ApplyTractorPatch(entity, gqlmodel.TractorPatchInput{})
 	require.NoError(t, err)
 	assert.Equal(t, stateID, entity.StateID)
 	assert.Equal(t, fleetCodeID, entity.FleetCodeID)
 	assert.Equal(t, secondaryWorkerID, entity.SecondaryWorkerID)
 
-	err = applyTractorPatch(entity, gqlmodel.TractorPatchInput{
+	err = mappers.ApplyTractorPatch(entity, gqlmodel.TractorPatchInput{
 		StateID:           graphql.OmittableOf[*string](nil),
 		FleetCodeID:       graphql.OmittableOf[*string](nil),
 		SecondaryWorkerID: graphql.OmittableOf[*string](nil),
@@ -46,7 +47,7 @@ func TestApplyTractorPatch_NullableIDs(t *testing.T) {
 	nextStateIDValue := nextStateID.String()
 	nextFleetCodeIDValue := nextFleetCodeID.String()
 	nextSecondaryWorkerIDValue := nextSecondaryWorkerID.String()
-	err = applyTractorPatch(entity, gqlmodel.TractorPatchInput{
+	err = mappers.ApplyTractorPatch(entity, gqlmodel.TractorPatchInput{
 		StateID:           graphql.OmittableOf(&nextStateIDValue),
 		FleetCodeID:       graphql.OmittableOf(&nextFleetCodeIDValue),
 		SecondaryWorkerID: graphql.OmittableOf(&nextSecondaryWorkerIDValue),

@@ -134,6 +134,17 @@ type ComplexityRoot struct {
 		Version        func(childComplexity int) int
 	}
 
+	EquipmentManufacturerConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EquipmentManufacturerEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	EquipmentType struct {
 		BusinessUnit   func(childComplexity int) int
 		BusinessUnitID func(childComplexity int) int
@@ -243,41 +254,45 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ApproveWorkerPto                     func(childComplexity int, id string) int
-		BulkTransferShipmentsToBilling       func(childComplexity int, input gqlmodel.ShipmentBulkTransferToBillingInput) int
-		BulkUpdateEquipmentTypeStatus        func(childComplexity int, input gqlmodel.BulkUpdateEquipmentTypeStatusInput) int
-		BulkUpdateTractorStatus              func(childComplexity int, input gqlmodel.BulkUpdateTractorStatusInput) int
-		BulkUpdateTrailerStatus              func(childComplexity int, input gqlmodel.BulkUpdateTrailerStatusInput) int
-		CalculateShipmentDistance            func(childComplexity int, input gqlmodel.ShipmentInput) int
-		CalculateShipmentLoadingOptimization func(childComplexity int, input gqlmodel.ShipmentLoadingOptimizationInput) int
-		CalculateShipmentTotals              func(childComplexity int, input gqlmodel.ShipmentInput) int
-		CancelShipment                       func(childComplexity int, id string, input *gqlmodel.ShipmentCancelInput) int
-		CheckShipmentDuplicateBol            func(childComplexity int, input gqlmodel.ShipmentDuplicateBolInput) int
-		CheckShipmentHazmatSegregation       func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
-		CreateEquipmentType                  func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
-		CreateShipment                       func(childComplexity int, input gqlmodel.ShipmentInput) int
-		CreateShipmentComment                func(childComplexity int, shipmentID string, input gqlmodel.ShipmentCommentInput) int
-		CreateTractor                        func(childComplexity int, input gqlmodel.TractorInput) int
-		CreateTrailer                        func(childComplexity int, input gqlmodel.TrailerInput) int
-		DeleteShipmentComment                func(childComplexity int, shipmentID string, commentID string) int
-		DuplicateShipment                    func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
-		LocateTractor                        func(childComplexity int, input gqlmodel.LocateTractorInput) int
-		LocateTrailer                        func(childComplexity int, input gqlmodel.LocateTrailerInput) int
-		PatchEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypePatchInput) int
-		PatchTractor                         func(childComplexity int, id string, input gqlmodel.TractorPatchInput) int
-		PatchTrailer                         func(childComplexity int, id string, input gqlmodel.TrailerPatchInput) int
-		PatchWorker                          func(childComplexity int, id string, input gqlmodel.WorkerPatchInput) int
-		RecalculateShipmentDistance          func(childComplexity int, shipmentID string) int
-		RejectWorkerPto                      func(childComplexity int, id string, reason string) int
-		TransferShipmentOwnership            func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
-		TransferShipmentToBilling            func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
-		UncancelShipment                     func(childComplexity int, id string) int
-		UpdateEquipmentType                  func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
-		UpdateOrganization                   func(childComplexity int, id string, input gqlmodel.OrganizationInput) int
-		UpdateShipment                       func(childComplexity int, id string, input gqlmodel.ShipmentInput) int
-		UpdateShipmentComment                func(childComplexity int, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) int
-		UpdateTractor                        func(childComplexity int, id string, input gqlmodel.TractorInput) int
-		UpdateTrailer                        func(childComplexity int, id string, input gqlmodel.TrailerInput) int
+		ApproveWorkerPto                      func(childComplexity int, id string) int
+		BulkTransferShipmentsToBilling        func(childComplexity int, input gqlmodel.ShipmentBulkTransferToBillingInput) int
+		BulkUpdateEquipmentManufacturerStatus func(childComplexity int, input gqlmodel.BulkUpdateEquipmentManufacturerStatusInput) int
+		BulkUpdateEquipmentTypeStatus         func(childComplexity int, input gqlmodel.BulkUpdateEquipmentTypeStatusInput) int
+		BulkUpdateTractorStatus               func(childComplexity int, input gqlmodel.BulkUpdateTractorStatusInput) int
+		BulkUpdateTrailerStatus               func(childComplexity int, input gqlmodel.BulkUpdateTrailerStatusInput) int
+		CalculateShipmentDistance             func(childComplexity int, input gqlmodel.ShipmentInput) int
+		CalculateShipmentLoadingOptimization  func(childComplexity int, input gqlmodel.ShipmentLoadingOptimizationInput) int
+		CalculateShipmentTotals               func(childComplexity int, input gqlmodel.ShipmentInput) int
+		CancelShipment                        func(childComplexity int, id string, input *gqlmodel.ShipmentCancelInput) int
+		CheckShipmentDuplicateBol             func(childComplexity int, input gqlmodel.ShipmentDuplicateBolInput) int
+		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
+		CreateEquipmentManufacturer           func(childComplexity int, input gqlmodel.EquipmentManufacturerInput) int
+		CreateEquipmentType                   func(childComplexity int, input gqlmodel.EquipmentTypeInput) int
+		CreateShipment                        func(childComplexity int, input gqlmodel.ShipmentInput) int
+		CreateShipmentComment                 func(childComplexity int, shipmentID string, input gqlmodel.ShipmentCommentInput) int
+		CreateTractor                         func(childComplexity int, input gqlmodel.TractorInput) int
+		CreateTrailer                         func(childComplexity int, input gqlmodel.TrailerInput) int
+		DeleteShipmentComment                 func(childComplexity int, shipmentID string, commentID string) int
+		DuplicateShipment                     func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
+		LocateTractor                         func(childComplexity int, input gqlmodel.LocateTractorInput) int
+		LocateTrailer                         func(childComplexity int, input gqlmodel.LocateTrailerInput) int
+		PatchEquipmentManufacturer            func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerPatchInput) int
+		PatchEquipmentType                    func(childComplexity int, id string, input gqlmodel.EquipmentTypePatchInput) int
+		PatchTractor                          func(childComplexity int, id string, input gqlmodel.TractorPatchInput) int
+		PatchTrailer                          func(childComplexity int, id string, input gqlmodel.TrailerPatchInput) int
+		PatchWorker                           func(childComplexity int, id string, input gqlmodel.WorkerPatchInput) int
+		RecalculateShipmentDistance           func(childComplexity int, shipmentID string) int
+		RejectWorkerPto                       func(childComplexity int, id string, reason string) int
+		TransferShipmentOwnership             func(childComplexity int, id string, input gqlmodel.ShipmentTransferOwnershipInput) int
+		TransferShipmentToBilling             func(childComplexity int, input gqlmodel.ShipmentTransferToBillingInput) int
+		UncancelShipment                      func(childComplexity int, id string) int
+		UpdateEquipmentManufacturer           func(childComplexity int, id string, input gqlmodel.EquipmentManufacturerInput) int
+		UpdateEquipmentType                   func(childComplexity int, id string, input gqlmodel.EquipmentTypeInput) int
+		UpdateOrganization                    func(childComplexity int, id string, input gqlmodel.OrganizationInput) int
+		UpdateShipment                        func(childComplexity int, id string, input gqlmodel.ShipmentInput) int
+		UpdateShipmentComment                 func(childComplexity int, shipmentID string, commentID string, input gqlmodel.ShipmentCommentUpdateInput) int
+		UpdateTractor                         func(childComplexity int, id string, input gqlmodel.TractorInput) int
+		UpdateTrailer                         func(childComplexity int, id string, input gqlmodel.TrailerInput) int
 	}
 
 	Organization struct {
@@ -321,6 +336,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		EquipmentManufacturer    func(childComplexity int, id string) int
+		EquipmentManufacturers   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		EquipmentType            func(childComplexity int, id string) int
 		EquipmentTypes           func(childComplexity int, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) int
 		Organization             func(childComplexity int, id string, includeState *bool, includeBu *bool) int
@@ -335,9 +352,9 @@ type ComplexityRoot struct {
 		ShipmentUIPolicy         func(childComplexity int) int
 		Shipments                func(childComplexity int, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, expandShipmentDetails *bool, status *string) int
 		Tractor                  func(childComplexity int, id string) int
-		Tractors                 func(childComplexity int, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
+		Tractors                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) int
 		Trailer                  func(childComplexity int, id string) int
-		Trailers                 func(childComplexity int, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) int
+		Trailers                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) int
 		UnassignedShipments      func(childComplexity int, first *int, after *string) int
 		UpcomingWorkerPto        func(childComplexity int, first *int, after *string, status *worker.PTOStatus, typeArg *worker.PTOType, startDate *int, endDate *int, workerID *string, fleetCodeID *string, timezone *string) int
 		WorkerPTOChartData       func(childComplexity int, startDateFrom int, startDateTo int, typeArg *worker.PTOType, workerID *string, timezone *string) int
@@ -1334,6 +1351,10 @@ type MutationResolver interface {
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
 	BulkUpdateTrailerStatus(ctx context.Context, input gqlmodel.BulkUpdateTrailerStatusInput) ([]*trailer.Trailer, error)
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
+	CreateEquipmentManufacturer(ctx context.Context, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	UpdateEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	PatchEquipmentManufacturer(ctx context.Context, id string, input gqlmodel.EquipmentManufacturerPatchInput) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	BulkUpdateEquipmentManufacturerStatus(ctx context.Context, input gqlmodel.BulkUpdateEquipmentManufacturerStatusInput) ([]*equipmentmanufacturer.EquipmentManufacturer, error)
 	CreateEquipmentType(ctx context.Context, input gqlmodel.EquipmentTypeInput) (*equipmenttype.EquipmentType, error)
 	UpdateEquipmentType(ctx context.Context, id string, input gqlmodel.EquipmentTypeInput) (*equipmenttype.EquipmentType, error)
 	PatchEquipmentType(ctx context.Context, id string, input gqlmodel.EquipmentTypePatchInput) (*equipmenttype.EquipmentType, error)
@@ -1369,8 +1390,10 @@ type PTOChartDataPointResolver interface {
 	Workers(ctx context.Context, obj *repositories.PTOChartDataPoint) (map[string]any, error)
 }
 type QueryResolver interface {
-	Trailers(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
+	Trailers(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
 	Trailer(ctx context.Context, id string) (*trailer.Trailer, error)
+	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
+	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
 	EquipmentType(ctx context.Context, id string) (*equipmenttype.EquipmentType, error)
 	SelectOptions(ctx context.Context, input gqlmodel.SelectOptionsInput) (*gqlmodel.SelectOptionConnection, error)
@@ -1385,7 +1408,7 @@ type QueryResolver interface {
 	ShipmentAnalytics(ctx context.Context, startDate *int, endDate *int, limit *int, offset *int, timezone *string, windowDays *int, include *string) (*gqlmodel.ShipmentAnalytics, error)
 	ShipmentPreviousRates(ctx context.Context, input gqlmodel.ShipmentPreviousRatesInput) (*gqlmodel.ShipmentPreviousRatesResponse, error)
 	Organization(ctx context.Context, id string, includeState *bool, includeBu *bool) (*tenant.Organization, error)
-	Tractors(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
+	Tractors(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool, includeWorkerDetails *bool) (*gqlmodel.TractorConnection, error)
 	Tractor(ctx context.Context, id string) (*tractor.Tractor, error)
 	Workers(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput) (*gqlmodel.WorkerConnection, error)
 	WorkerPTOEntries(ctx context.Context, first *int, after *string, query *string, fieldFilters []*gqlmodel.FieldFilterInput, filterGroups []*gqlmodel.FilterGroupInput, sort []*gqlmodel.SortFieldInput, status *worker.PTOStatus, typeArg *worker.PTOType, startDateFrom *int, startDateTo *int, workerID *string, includeWorker *bool) (*gqlmodel.WorkerPTOConnection, error)
@@ -1814,6 +1837,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.EquipmentManufacturer.Version(childComplexity), true
+
+	case "EquipmentManufacturerConnection.edges":
+		if e.ComplexityRoot.EquipmentManufacturerConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentManufacturerConnection.Edges(childComplexity), true
+	case "EquipmentManufacturerConnection.pageInfo":
+		if e.ComplexityRoot.EquipmentManufacturerConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentManufacturerConnection.PageInfo(childComplexity), true
+	case "EquipmentManufacturerConnection.totalCount":
+		if e.ComplexityRoot.EquipmentManufacturerConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentManufacturerConnection.TotalCount(childComplexity), true
+
+	case "EquipmentManufacturerEdge.cursor":
+		if e.ComplexityRoot.EquipmentManufacturerEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentManufacturerEdge.Cursor(childComplexity), true
+	case "EquipmentManufacturerEdge.node":
+		if e.ComplexityRoot.EquipmentManufacturerEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EquipmentManufacturerEdge.Node(childComplexity), true
 
 	case "EquipmentType.businessUnit":
 		if e.ComplexityRoot.EquipmentType.BusinessUnit == nil {
@@ -2349,6 +2404,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.BulkTransferShipmentsToBilling(childComplexity, args["input"].(gqlmodel.ShipmentBulkTransferToBillingInput)), true
+	case "Mutation.bulkUpdateEquipmentManufacturerStatus":
+		if e.ComplexityRoot.Mutation.BulkUpdateEquipmentManufacturerStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkUpdateEquipmentManufacturerStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.BulkUpdateEquipmentManufacturerStatus(childComplexity, args["input"].(gqlmodel.BulkUpdateEquipmentManufacturerStatusInput)), true
 	case "Mutation.bulkUpdateEquipmentTypeStatus":
 		if e.ComplexityRoot.Mutation.BulkUpdateEquipmentTypeStatus == nil {
 			break
@@ -2448,6 +2514,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CheckShipmentHazmatSegregation(childComplexity, args["input"].(gqlmodel.ShipmentHazmatInput)), true
+	case "Mutation.createEquipmentManufacturer":
+		if e.ComplexityRoot.Mutation.CreateEquipmentManufacturer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createEquipmentManufacturer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateEquipmentManufacturer(childComplexity, args["input"].(gqlmodel.EquipmentManufacturerInput)), true
 	case "Mutation.createEquipmentType":
 		if e.ComplexityRoot.Mutation.CreateEquipmentType == nil {
 			break
@@ -2547,6 +2624,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.LocateTrailer(childComplexity, args["input"].(gqlmodel.LocateTrailerInput)), true
+	case "Mutation.patchEquipmentManufacturer":
+		if e.ComplexityRoot.Mutation.PatchEquipmentManufacturer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_patchEquipmentManufacturer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.PatchEquipmentManufacturer(childComplexity, args["id"].(string), args["input"].(gqlmodel.EquipmentManufacturerPatchInput)), true
 	case "Mutation.patchEquipmentType":
 		if e.ComplexityRoot.Mutation.PatchEquipmentType == nil {
 			break
@@ -2646,6 +2734,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UncancelShipment(childComplexity, args["id"].(string)), true
+	case "Mutation.updateEquipmentManufacturer":
+		if e.ComplexityRoot.Mutation.UpdateEquipmentManufacturer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateEquipmentManufacturer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateEquipmentManufacturer(childComplexity, args["id"].(string), args["input"].(gqlmodel.EquipmentManufacturerInput)), true
 	case "Mutation.updateEquipmentType":
 		if e.ComplexityRoot.Mutation.UpdateEquipmentType == nil {
 			break
@@ -2902,6 +3001,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 
+	case "Query.equipmentManufacturer":
+		if e.ComplexityRoot.Query.EquipmentManufacturer == nil {
+			break
+		}
+
+		args, err := ec.field_Query_equipmentManufacturer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EquipmentManufacturer(childComplexity, args["id"].(string)), true
+	case "Query.equipmentManufacturers":
+		if e.ComplexityRoot.Query.EquipmentManufacturers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_equipmentManufacturers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EquipmentManufacturers(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.equipmentType":
 		if e.ComplexityRoot.Query.EquipmentType == nil {
 			break
@@ -3062,7 +3183,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.Tractors(childComplexity, args["first"].(*int), args["after"].(*string), args["query"].(*string), args["fieldFilters"].([]*gqlmodel.FieldFilterInput), args["filterGroups"].([]*gqlmodel.FilterGroupInput), args["sort"].([]*gqlmodel.SortFieldInput), args["status"].(*domaintypes.EquipmentStatus), args["includeEquipmentDetails"].(*bool), args["includeFleetDetails"].(*bool), args["includeWorkerDetails"].(*bool)), true
+		return e.ComplexityRoot.Query.Tractors(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["status"].(*domaintypes.EquipmentStatus), args["includeEquipmentDetails"].(*bool), args["includeFleetDetails"].(*bool), args["includeWorkerDetails"].(*bool)), true
 	case "Query.trailer":
 		if e.ComplexityRoot.Query.Trailer == nil {
 			break
@@ -3084,7 +3205,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.Trailers(childComplexity, args["first"].(*int), args["after"].(*string), args["query"].(*string), args["fieldFilters"].([]*gqlmodel.FieldFilterInput), args["filterGroups"].([]*gqlmodel.FilterGroupInput), args["sort"].([]*gqlmodel.SortFieldInput), args["status"].(*domaintypes.EquipmentStatus), args["includeEquipmentDetails"].(*bool), args["includeFleetDetails"].(*bool)), true
+		return e.ComplexityRoot.Query.Trailers(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["status"].(*domaintypes.EquipmentStatus), args["includeEquipmentDetails"].(*bool), args["includeFleetDetails"].(*bool)), true
 	case "Query.unassignedShipments":
 		if e.ComplexityRoot.Query.UnassignedShipments == nil {
 			break
@@ -7599,10 +7720,13 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputBulkUpdateEquipmentManufacturerStatusInput,
 		ec.unmarshalInputBulkUpdateEquipmentTypeStatusInput,
 		ec.unmarshalInputBulkUpdateTractorStatusInput,
 		ec.unmarshalInputBulkUpdateTrailerStatusInput,
 		ec.unmarshalInputDataTableConnectionInput,
+		ec.unmarshalInputEquipmentManufacturerInput,
+		ec.unmarshalInputEquipmentManufacturerPatchInput,
 		ec.unmarshalInputEquipmentTypeInput,
 		ec.unmarshalInputEquipmentTypePatchInput,
 		ec.unmarshalInputFieldFilterInput,
@@ -7727,7 +7851,18 @@ var sources = []*ast.Source{
   updatedAt: Int!
 }
 `, BuiltIn: false},
-	{Name: "../schema/equipment_manufacturer.graphqls", Input: `type EquipmentManufacturer {
+	{Name: "../schema/equipment_manufacturer.graphqls", Input: `type EquipmentManufacturerEdge {
+  node: EquipmentManufacturer!
+  cursor: String!
+}
+
+type EquipmentManufacturerConnection {
+  edges: [EquipmentManufacturerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentManufacturer {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -7740,7 +7875,41 @@ var sources = []*ast.Source{
   businessUnit: BusinessUnit
   organization: Organization
 }
-`, BuiltIn: false},
+
+input EquipmentManufacturerInput {
+  status: EntityStatus!
+  name: String!
+  description: String!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+input EquipmentManufacturerPatchInput {
+  status: EntityStatus
+  name: String
+  description: String
+  version: Int
+}
+
+input BulkUpdateEquipmentManufacturerStatusInput {
+  equipmentManufacturerIds: [ID!]!
+  status: EntityStatus!
+}
+
+extend type Query {
+  equipmentManufacturers(
+    input: DataTableConnectionInput!
+  ): EquipmentManufacturerConnection!
+  equipmentManufacturer(id: ID!): EquipmentManufacturer
+}
+
+extend type Mutation {
+  createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
+  patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
+  bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
+}`, BuiltIn: false},
 	{Name: "../schema/equipment_type.graphqls", Input: `enum EquipmentClass {
   Tractor
   Trailer
@@ -9351,12 +9520,7 @@ input LocateTractorInput {
 
 extend type Query {
   tractors(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
+    input: DataTableConnectionInput!
     status: EquipmentStatus
     includeEquipmentDetails: Boolean = false
     includeFleetDetails: Boolean = false
@@ -9478,12 +9642,7 @@ input LocateTrailerInput {
 
 type Query {
   trailers(
-    first: Int = 20
-    after: String
-    query: String
-    fieldFilters: [FieldFilterInput!]
-    filterGroups: [FilterGroupInput!]
-    sort: [SortFieldInput!]
+    input: DataTableConnectionInput!
     status: EquipmentStatus
     includeEquipmentDetails: Boolean = false
     includeFleetDetails: Boolean = false
@@ -9900,6 +10059,28 @@ func (ec *executionContext) childFields_EquipmentManufacturer(ctx context.Contex
 		return ec.fieldContext_EquipmentManufacturer_organization(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type EquipmentManufacturer", field.Name)
+}
+
+func (ec *executionContext) childFields_EquipmentManufacturerConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EquipmentManufacturerConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EquipmentManufacturerConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EquipmentManufacturerConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EquipmentManufacturerConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EquipmentManufacturerEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EquipmentManufacturerEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EquipmentManufacturerEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EquipmentManufacturerEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_EquipmentType(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -12290,6 +12471,20 @@ func (ec *executionContext) field_Mutation_bulkTransferShipmentsToBilling_args(c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_bulkUpdateEquipmentManufacturerStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.BulkUpdateEquipmentManufacturerStatusInput, error) {
+			return ec.unmarshalNBulkUpdateEquipmentManufacturerStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateEquipmentManufacturerStatusInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_bulkUpdateEquipmentTypeStatus_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -12416,6 +12611,20 @@ func (ec *executionContext) field_Mutation_checkShipmentHazmatSegregation_args(c
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.ShipmentHazmatInput, error) {
 			return ec.unmarshalNShipmentHazmatInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentHazmatInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createEquipmentManufacturer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.EquipmentManufacturerInput, error) {
+			return ec.unmarshalNEquipmentManufacturerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -12563,6 +12772,28 @@ func (ec *executionContext) field_Mutation_locateTrailer_args(ctx context.Contex
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_patchEquipmentManufacturer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.EquipmentManufacturerPatchInput, error) {
+			return ec.unmarshalNEquipmentManufacturerPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerPatchInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -12740,6 +12971,28 @@ func (ec *executionContext) field_Mutation_uncancelShipment_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateEquipmentManufacturer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.EquipmentManufacturerInput, error) {
+			return ec.unmarshalNEquipmentManufacturerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateEquipmentType_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -12891,6 +13144,34 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_equipmentManufacturer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_equipmentManufacturers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -13263,86 +13544,46 @@ func (ec *executionContext) field_Query_tractor_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_tractors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first",
-		func(ctx context.Context, v any) (*int, error) {
-			return ec.unmarshalOInt2ᚖint(ctx, v)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["first"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "query",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["query"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "fieldFilters",
-		func(ctx context.Context, v any) ([]*gqlmodel.FieldFilterInput, error) {
-			return ec.unmarshalOFieldFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFieldFilterInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["fieldFilters"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "filterGroups",
-		func(ctx context.Context, v any) ([]*gqlmodel.FilterGroupInput, error) {
-			return ec.unmarshalOFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFilterGroupInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["filterGroups"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sort",
-		func(ctx context.Context, v any) ([]*gqlmodel.SortFieldInput, error) {
-			return ec.unmarshalOSortFieldInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSortFieldInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["sort"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*domaintypes.EquipmentStatus, error) {
 			return ec.unmarshalOEquipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["status"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "includeEquipmentDetails",
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "includeEquipmentDetails",
 		func(ctx context.Context, v any) (*bool, error) {
 			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["includeEquipmentDetails"] = arg7
-	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "includeFleetDetails",
+	args["includeEquipmentDetails"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "includeFleetDetails",
 		func(ctx context.Context, v any) (*bool, error) {
 			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["includeFleetDetails"] = arg8
-	arg9, err := graphql.ProcessArgField(ctx, rawArgs, "includeWorkerDetails",
+	args["includeFleetDetails"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "includeWorkerDetails",
 		func(ctx context.Context, v any) (*bool, error) {
 			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["includeWorkerDetails"] = arg9
+	args["includeWorkerDetails"] = arg4
 	return args, nil
 }
 
@@ -13363,78 +13604,38 @@ func (ec *executionContext) field_Query_trailer_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Query_trailers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "first",
-		func(ctx context.Context, v any) (*int, error) {
-			return ec.unmarshalOInt2ᚖint(ctx, v)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["first"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "after",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "query",
-		func(ctx context.Context, v any) (*string, error) {
-			return ec.unmarshalOString2ᚖstring(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["query"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "fieldFilters",
-		func(ctx context.Context, v any) ([]*gqlmodel.FieldFilterInput, error) {
-			return ec.unmarshalOFieldFilterInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFieldFilterInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["fieldFilters"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "filterGroups",
-		func(ctx context.Context, v any) ([]*gqlmodel.FilterGroupInput, error) {
-			return ec.unmarshalOFilterGroupInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐFilterGroupInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["filterGroups"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "sort",
-		func(ctx context.Context, v any) ([]*gqlmodel.SortFieldInput, error) {
-			return ec.unmarshalOSortFieldInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSortFieldInputᚄ(ctx, v)
-		})
-	if err != nil {
-		return nil, err
-	}
-	args["sort"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
 		func(ctx context.Context, v any) (*domaintypes.EquipmentStatus, error) {
 			return ec.unmarshalOEquipmentStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["status"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "includeEquipmentDetails",
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "includeEquipmentDetails",
 		func(ctx context.Context, v any) (*bool, error) {
 			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["includeEquipmentDetails"] = arg7
-	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "includeFleetDetails",
+	args["includeEquipmentDetails"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "includeFleetDetails",
 		func(ctx context.Context, v any) (*bool, error) {
 			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["includeFleetDetails"] = arg8
+	args["includeFleetDetails"] = arg3
 	return args, nil
 }
 
@@ -15250,6 +15451,148 @@ func (ec *executionContext) fieldContext_EquipmentManufacturer_organization(_ co
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _EquipmentManufacturerConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EquipmentManufacturerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentManufacturerConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EquipmentManufacturerEdge) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturerEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentManufacturerConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EquipmentManufacturerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturerEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EquipmentManufacturerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EquipmentManufacturerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentManufacturerConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentManufacturerConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EquipmentManufacturerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EquipmentManufacturerConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EquipmentManufacturerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentManufacturerConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentManufacturerConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentManufacturerConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EquipmentManufacturerEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EquipmentManufacturerEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentManufacturerEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentManufacturerEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EquipmentManufacturerEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EquipmentManufacturerEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EquipmentManufacturerEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EquipmentManufacturerEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EquipmentManufacturerEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EquipmentManufacturerEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _EquipmentType_id(ctx context.Context, field graphql.CollectedField, obj *equipmenttype.EquipmentType) (ret graphql.Marshaler) {
@@ -17539,6 +17882,182 @@ func (ec *executionContext) fieldContext_Mutation_locateTrailer(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createEquipmentManufacturer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().CreateEquipmentManufacturer(ctx, fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createEquipmentManufacturer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateEquipmentManufacturer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateEquipmentManufacturer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_patchEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_patchEquipmentManufacturer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().PatchEquipmentManufacturer(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.EquipmentManufacturerPatchInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_patchEquipmentManufacturer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_patchEquipmentManufacturer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkUpdateEquipmentManufacturerStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_bulkUpdateEquipmentManufacturerStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().BulkUpdateEquipmentManufacturerStatus(ctx, fc.Args["input"].(gqlmodel.BulkUpdateEquipmentManufacturerStatusInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturerᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_bulkUpdateEquipmentManufacturerStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkUpdateEquipmentManufacturerStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createEquipmentType(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -19600,7 +20119,7 @@ func (ec *executionContext) _Query_trailers(ctx context.Context, field graphql.C
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().Trailers(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["query"].(*string), fc.Args["fieldFilters"].([]*gqlmodel.FieldFilterInput), fc.Args["filterGroups"].([]*gqlmodel.FilterGroupInput), fc.Args["sort"].([]*gqlmodel.SortFieldInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool))
+			return ec.Resolvers.Query().Trailers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.TrailerConnection) graphql.Marshaler {
@@ -19672,6 +20191,94 @@ func (ec *executionContext) fieldContext_Query_trailer(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_trailer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_equipmentManufacturers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_equipmentManufacturers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EquipmentManufacturers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EquipmentManufacturerConnection) graphql.Marshaler {
+			return ec.marshalNEquipmentManufacturerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_equipmentManufacturers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturerConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_equipmentManufacturers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_equipmentManufacturer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_equipmentManufacturer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EquipmentManufacturer(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+			return ec.marshalOEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Query_equipmentManufacturer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EquipmentManufacturer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_equipmentManufacturer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20292,7 +20899,7 @@ func (ec *executionContext) _Query_tractors(ctx context.Context, field graphql.C
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().Tractors(ctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["query"].(*string), fc.Args["fieldFilters"].([]*gqlmodel.FieldFilterInput), fc.Args["filterGroups"].([]*gqlmodel.FilterGroupInput), fc.Args["sort"].([]*gqlmodel.SortFieldInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool), fc.Args["includeWorkerDetails"].(*bool))
+			return ec.Resolvers.Query().Tractors(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*domaintypes.EquipmentStatus), fc.Args["includeEquipmentDetails"].(*bool), fc.Args["includeFleetDetails"].(*bool), fc.Args["includeWorkerDetails"].(*bool))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.TractorConnection) graphql.Marshaler {
@@ -39388,6 +39995,43 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputBulkUpdateEquipmentManufacturerStatusInput(ctx context.Context, obj any) (gqlmodel.BulkUpdateEquipmentManufacturerStatusInput, error) {
+	var it gqlmodel.BulkUpdateEquipmentManufacturerStatusInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"equipmentManufacturerIds", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "equipmentManufacturerIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("equipmentManufacturerIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EquipmentManufacturerIds = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputBulkUpdateEquipmentTypeStatusInput(ctx context.Context, obj any) (gqlmodel.BulkUpdateEquipmentTypeStatusInput, error) {
 	var it gqlmodel.BulkUpdateEquipmentTypeStatusInput
 	if obj == nil {
@@ -39563,6 +40207,122 @@ func (ec *executionContext) unmarshalInputDataTableConnectionInput(ctx context.C
 				return it, err
 			}
 			it.Sort = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEquipmentManufacturerInput(ctx context.Context, obj any) (gqlmodel.EquipmentManufacturerInput, error) {
+	var it gqlmodel.EquipmentManufacturerInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "description", "version", "createdAt", "updatedAt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		case "createdAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdAt"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedAt = data
+		case "updatedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("updatedAt"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UpdatedAt = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEquipmentManufacturerPatchInput(ctx context.Context, obj any) (gqlmodel.EquipmentManufacturerPatchInput, error) {
+	var it gqlmodel.EquipmentManufacturerPatchInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status", "name", "description", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
 		}
 	}
 	return it, nil
@@ -42729,6 +43489,96 @@ func (ec *executionContext) _EquipmentManufacturer(ctx context.Context, sel ast.
 	return out
 }
 
+var equipmentManufacturerConnectionImplementors = []string{"EquipmentManufacturerConnection"}
+
+func (ec *executionContext) _EquipmentManufacturerConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EquipmentManufacturerConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentManufacturerConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EquipmentManufacturerConnection")
+		case "edges":
+			out.Values[i] = ec._EquipmentManufacturerConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EquipmentManufacturerConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EquipmentManufacturerConnection_totalCount(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var equipmentManufacturerEdgeImplementors = []string{"EquipmentManufacturerEdge"}
+
+func (ec *executionContext) _EquipmentManufacturerEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EquipmentManufacturerEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentManufacturerEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EquipmentManufacturerEdge")
+		case "node":
+			out.Values[i] = ec._EquipmentManufacturerEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EquipmentManufacturerEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+
+	for label, dfs := range deferred {
+		ec.ProcessDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var equipmentTypeImplementors = []string{"EquipmentType"}
 
 func (ec *executionContext) _EquipmentType(ctx context.Context, sel ast.SelectionSet, obj *equipmenttype.EquipmentType) graphql.Marshaler {
@@ -43415,6 +44265,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createEquipmentManufacturer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createEquipmentManufacturer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateEquipmentManufacturer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateEquipmentManufacturer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "patchEquipmentManufacturer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_patchEquipmentManufacturer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkUpdateEquipmentManufacturerStatus":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkUpdateEquipmentManufacturerStatus(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createEquipmentType":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createEquipmentType(ctx, field)
@@ -43978,6 +44856,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_trailer(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "equipmentManufacturers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_equipmentManufacturers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "equipmentManufacturer":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_equipmentManufacturer(ctx, field)
 				return res
 			}
 
@@ -51182,6 +52101,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNBulkUpdateEquipmentManufacturerStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateEquipmentManufacturerStatusInput(ctx context.Context, v any) (gqlmodel.BulkUpdateEquipmentManufacturerStatusInput, error) {
+	res, err := ec.unmarshalInputBulkUpdateEquipmentManufacturerStatusInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNBulkUpdateEquipmentTypeStatusInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐBulkUpdateEquipmentTypeStatusInput(ctx context.Context, v any) (gqlmodel.BulkUpdateEquipmentTypeStatusInput, error) {
 	res, err := ec.unmarshalInputBulkUpdateEquipmentTypeStatusInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -51316,6 +52240,86 @@ func (ec *executionContext) marshalNEquipmentContinuity2ᚖgithubᚗcomᚋemoss0
 		return graphql.Null
 	}
 	return ec._EquipmentContinuity(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturer2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx context.Context, sel ast.SelectionSet, v equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+	return ec._EquipmentManufacturer(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturer2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturerᚄ(ctx context.Context, sel ast.SelectionSet, v []*equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋequipmentmanufacturerᚐEquipmentManufacturer(ctx context.Context, sel ast.SelectionSet, v *equipmentmanufacturer.EquipmentManufacturer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EquipmentManufacturer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturerConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EquipmentManufacturerConnection) graphql.Marshaler {
+	return ec._EquipmentManufacturerConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EquipmentManufacturerConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EquipmentManufacturerConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturerEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EquipmentManufacturerEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEquipmentManufacturerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEquipmentManufacturerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EquipmentManufacturerEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EquipmentManufacturerEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEquipmentManufacturerInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerInput(ctx context.Context, v any) (gqlmodel.EquipmentManufacturerInput, error) {
+	res, err := ec.unmarshalInputEquipmentManufacturerInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNEquipmentManufacturerPatchInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEquipmentManufacturerPatchInput(ctx context.Context, v any) (gqlmodel.EquipmentManufacturerPatchInput, error) {
+	res, err := ec.unmarshalInputEquipmentManufacturerPatchInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNEquipmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐEquipmentStatus(ctx context.Context, v any) (domaintypes.EquipmentStatus, error) {

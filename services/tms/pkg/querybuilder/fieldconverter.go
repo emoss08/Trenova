@@ -171,7 +171,7 @@ func fieldIsInteger(field reflect.StructField) bool {
 }
 
 func bunTagHasOption(bunTag, option string) bool {
-	for _, part := range strings.Split(bunTag, ",") {
+	for part := range strings.SplitSeq(bunTag, ",") {
 		if strings.TrimSpace(part) == option {
 			return true
 		}

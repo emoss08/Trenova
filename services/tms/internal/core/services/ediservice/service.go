@@ -5,7 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -1372,7 +1372,7 @@ func (s *Service) buildMappingPreview(
 	all := make([]edi.MappingResolution, 0, len(sourceIDs))
 	for _, entityType := range requiredEntityTypes(required) {
 		ids := append([]pulid.ID(nil), required[entityType]...)
-		sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+		slices.Sort(ids)
 		for _, sourceID := range ids {
 			resolution := edi.MappingResolution{
 				EntityType:  entityType,
@@ -1757,8 +1757,9 @@ func (s *Service) createSystemShipmentComment(
 	return err
 }
 
+//go:fix inline
 func tenderStatusPtr(status shipment.TenderStatus) *shipment.TenderStatus {
-	return &status
+	return new(status)
 }
 
 func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {

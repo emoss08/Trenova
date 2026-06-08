@@ -625,7 +625,7 @@ func (a *Activities) createDocumentWithRetryLoop(
 	fileInfo *storage.FileInfo,
 ) (*document.Document, error) {
 	const maxCreateAttempts = 3
-	for attempt := 0; attempt < maxCreateAttempts; attempt++ {
+	for attempt := range maxCreateAttempts {
 		lineageID, versionNumber, previousDoc, resolveErr := a.resolveLineageState(ctx, session)
 		if resolveErr != nil {
 			return nil, resolveErr

@@ -765,7 +765,11 @@ func loadingOptimizationRequestFromInput(
 		})
 	}
 	return &repositories.LoadingOptimizationRequest{
-		TenantInfo:      tenantInfo(authCtx),
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
 		Commodities:     commodities,
 		EquipmentTypeID: equipmentTypeID,
 		Stops:           stops,

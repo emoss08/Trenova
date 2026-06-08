@@ -5,6 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/mappers"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -22,12 +23,12 @@ func TestApplyTrailerPatch_NullableIDs(t *testing.T) {
 		FleetCodeID:         fleetCodeID,
 	}
 
-	err := applyTrailerPatch(entity, gqlmodel.TrailerPatchInput{})
+	err := mappers.ApplyTrailerPatch(entity, gqlmodel.TrailerPatchInput{})
 	require.NoError(t, err)
 	assert.Equal(t, stateID, entity.RegistrationStateID)
 	assert.Equal(t, fleetCodeID, entity.FleetCodeID)
 
-	err = applyTrailerPatch(entity, gqlmodel.TrailerPatchInput{
+	err = mappers.ApplyTrailerPatch(entity, gqlmodel.TrailerPatchInput{
 		RegistrationStateID: graphql.OmittableOf[*string](nil),
 		FleetCodeID:         graphql.OmittableOf[*string](nil),
 	})
@@ -39,7 +40,7 @@ func TestApplyTrailerPatch_NullableIDs(t *testing.T) {
 	nextFleetCodeID := pulid.MustNew("fc_")
 	nextStateIDValue := nextStateID.String()
 	nextFleetCodeIDValue := nextFleetCodeID.String()
-	err = applyTrailerPatch(entity, gqlmodel.TrailerPatchInput{
+	err = mappers.ApplyTrailerPatch(entity, gqlmodel.TrailerPatchInput{
 		RegistrationStateID: graphql.OmittableOf(&nextStateIDValue),
 		FleetCodeID:         graphql.OmittableOf(&nextFleetCodeIDValue),
 	})

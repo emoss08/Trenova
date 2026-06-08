@@ -13,6 +13,12 @@ import { DataTablePagination } from "../_components/data-table-pagination";
 type TestRow = { id: string; name: string };
 
 const testColumns: ColumnDef<TestRow>[] = [{ accessorKey: "name", header: "Name" }];
+const testGraphQLConfig = {
+  document:
+    "query TestTable($input: DataTableConnectionInput!) { tests(input: $input) { totalCount } }",
+  operationName: "TestTable",
+  connectionKey: "tests",
+};
 const useDataTableQueryMock = vi.hoisted(() =>
   vi.fn(() => ({
     data: {
@@ -55,10 +61,6 @@ vi.mock("@/lib/queries", () => ({
   },
 }));
 
-vi.mock("@/lib/api", () => ({
-  api: { get: vi.fn().mockResolvedValue(null) },
-}));
-
 vi.mock("@/hooks/use-debounce", () => ({
   useDebounce: <T,>(value: T): T => value,
 }));
@@ -83,9 +85,8 @@ function renderDataTable(props?: Partial<React.ComponentProps<typeof DataTable<T
         <DataTable<TestRow>
           columns={testColumns}
           name="test-table"
-          link="/trailers/"
           queryKey="test"
-          exportModelName="Test"
+          graphql={testGraphQLConfig}
           {...props}
         />
       </NuqsTestingAdapter>
@@ -116,22 +117,23 @@ describe("DataTable", () => {
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("passes GraphQL opt-in config through to the query hook", () => {
+  it("passes the required GraphQL config through to the query hook", () => {
     const graphql = {
-      document: "query TestTable { tests { totalCount } }",
+      document:
+        "query TestTable($input: DataTableConnectionInput!) { tests(input: $input) { totalCount } }",
       operationName: "TestTable",
       connectionKey: "tests",
-      variables: { includeDetails: true },
+      extraVariables: { includeDetails: true },
     };
 
     renderDataTable({ graphql });
 
     const graphqlCall = (useDataTableQueryMock.mock.calls as unknown[][]).find(
-      (call) => call[4] === graphql,
+      (call) => call[1] === graphql,
     );
     expect(graphqlCall).toEqual([
       "test",
-      "/trailers/",
+      graphql,
       { pageIndex: 0, pageSize: 10 },
       expect.objectContaining({
         query: "",
@@ -139,7 +141,6 @@ describe("DataTable", () => {
         filterGroups: [],
         sort: [],
       }),
-      graphql,
       true,
     ]);
   });
@@ -157,9 +158,8 @@ describe("DataTable", () => {
           <DataTable<TestRow>
             columns={testColumns}
             name="rerender-test"
-            link="/trailers/"
             queryKey="rerender"
-            exportModelName="Test"
+            graphql={testGraphQLConfig}
           />
         </>
       );
@@ -388,12 +388,7 @@ describe("DataTablePagination", () => {
       });
 
       return (
-        <DataTablePagination
-          table={table}
-          mode="cursor"
-          hasNextPage
-          currentPageRowCount={2}
-        />
+        <DataTablePagination table={table} mode="cursor" hasNextPage currentPageRowCount={2} />
       );
     }
 

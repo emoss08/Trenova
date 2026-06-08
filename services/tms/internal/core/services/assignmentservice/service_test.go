@@ -769,12 +769,14 @@ func validShipment(
 }
 
 //go:fix inline
+//go:fix inline
 func ptrInt16(v int16) *int16 {
-	return &v
+	return new(v)
 }
 
+//go:fix inline
 func ptrInt64(v int64) *int64 {
-	return &v
+	return new(v)
 }
 
 func TestResolveDelayThresholdMinutes_DisablesAutomaticDelayWhenToggleOff(t *testing.T) {

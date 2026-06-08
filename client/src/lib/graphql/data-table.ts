@@ -1,21 +1,11 @@
 import type { DataTableGraphQLConfig } from "@/types/data-table";
 
 export const DATA_TABLE_CONNECTION_VARIABLES = `
-  $first: Int!
-  $after: String
-  $query: String
-  $fieldFilters: [FieldFilterInput!]
-  $filterGroups: [FilterGroupInput!]
-  $sort: [SortFieldInput!]
+  $input: DataTableConnectionInput!
 `;
 
 export const DATA_TABLE_CONNECTION_ARGUMENTS = `
-  first: $first
-  after: $after
-  query: $query
-  fieldFilters: $fieldFilters
-  filterGroups: $filterGroups
-  sort: $sort
+  input: $input
 `;
 
 export const DATA_TABLE_PAGE_INFO_FRAGMENT = `
@@ -28,8 +18,6 @@ export const DATA_TABLE_PAGE_INFO_FRAGMENT = `
 export function defineDataTableGraphQLConfig<
   TData extends Record<string, unknown>,
   TVariables extends Record<string, unknown> = Record<string, unknown>,
->(
-  config: DataTableGraphQLConfig<TData, TVariables>,
-): DataTableGraphQLConfig<TData, TVariables> {
+>(config: DataTableGraphQLConfig<TData, TVariables>): DataTableGraphQLConfig<TData, TVariables> {
   return config;
 }
