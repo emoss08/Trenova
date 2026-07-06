@@ -8,10 +8,11 @@ RUN apk add --no-cache --virtual .build-deps \
     apk del .build-deps
 
 RUN apk add --no-cache openssl && \
+    mkdir -p /etc/postgresql/ssl && \
     openssl req -new -x509 -days 3650 -nodes -text \
-      -out /var/lib/postgresql/server.crt \
-      -keyout /var/lib/postgresql/server.key \
+      -out /etc/postgresql/ssl/server.crt \
+      -keyout /etc/postgresql/ssl/server.key \
       -subj '/CN=postgres' && \
-    chown postgres:postgres /var/lib/postgresql/server.crt /var/lib/postgresql/server.key && \
-    chmod 600 /var/lib/postgresql/server.key && \
+    chown -R postgres:postgres /etc/postgresql/ssl && \
+    chmod 600 /etc/postgresql/ssl/server.key && \
     apk del openssl

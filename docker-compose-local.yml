@@ -13,7 +13,7 @@ services:
             POSTGRES_INITDB_ARGS: "--data-checksums"
             POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist,postgis,pg_cron"
         volumes:
-            - pg_data:/var/lib/postgresql/data
+            - pg_data:/var/lib/postgresql
             - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
         command:
             ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
