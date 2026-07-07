@@ -16,9 +16,19 @@ export function EnvelopeEditor({
       <div className="text-xs font-medium">X12 Envelope</div>
       <div className="grid grid-cols-2 gap-2">
         <InputBlock
+          label="ISA Sender Qualifier (ISA05)"
+          value={envelope.interchangeSenderQualifier}
+          onChange={(value) => update("interchangeSenderQualifier", value)}
+        />
+        <InputBlock
           label="ISA Sender"
           value={envelope.interchangeSenderId}
           onChange={(value) => update("interchangeSenderId", value)}
+        />
+        <InputBlock
+          label="ISA Receiver Qualifier (ISA07)"
+          value={envelope.interchangeReceiverQualifier}
+          onChange={(value) => update("interchangeReceiverQualifier", value)}
         />
         <InputBlock
           label="ISA Receiver"

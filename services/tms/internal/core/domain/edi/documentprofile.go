@@ -136,3 +136,15 @@ func (s *EDIControlNumberSequence) BeforeAppendModel(_ context.Context, query bu
 	}
 	return nil
 }
+
+func (c *EDIControlNumberSequence) GetID() pulid.ID {
+	return c.ID
+}
+
+func (c *EDIControlNumberSequence) GetOrganizationID() pulid.ID {
+	return c.OrganizationID
+}
+
+func (c *EDIControlNumberSequence) GetBusinessUnitID() pulid.ID {
+	return c.BusinessUnitID
+}

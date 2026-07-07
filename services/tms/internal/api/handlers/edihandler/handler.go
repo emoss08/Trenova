@@ -39,25 +39,25 @@ type Handler struct {
 }
 
 type partnerRequest struct {
-	Kind                       edi.PartnerKind `json:"kind"`
-	Status                     string          `json:"status"`
-	Code                       string          `json:"code"`
-	Name                       string          `json:"name"`
-	Description                string          `json:"description"`
-	InternalOrganizationID     pulid.ID        `json:"internalOrganizationId"`
-	EDIConnectionID            pulid.ID        `json:"ediConnectionId"`
-	CustomerID                 pulid.ID        `json:"customerId"`
-	DefaultTransportID         pulid.ID        `json:"defaultTransportId"`
-	DefaultMappingProfileID    pulid.ID        `json:"defaultMappingProfileId"`
-	Timezone                   string          `json:"timezone"`
-	Country                    string          `json:"country"`
-	ContactName                string          `json:"contactName"`
-	ContactEmail               string          `json:"contactEmail"`
-	ContactPhone               string          `json:"contactPhone"`
-	EnabledForInbound          *bool           `json:"enabledForInbound"`
-	EnabledForOutbound         *bool           `json:"enabledForOutbound"`
-	Settings                   map[string]any  `json:"settings"`
-	Version                    int64           `json:"version"`
+	Kind                    edi.PartnerKind `json:"kind"`
+	Status                  string          `json:"status"`
+	Code                    string          `json:"code"`
+	Name                    string          `json:"name"`
+	Description             string          `json:"description"`
+	InternalOrganizationID  pulid.ID        `json:"internalOrganizationId"`
+	EDIConnectionID         pulid.ID        `json:"ediConnectionId"`
+	CustomerID              pulid.ID        `json:"customerId"`
+	DefaultTransportID      pulid.ID        `json:"defaultTransportId"`
+	DefaultMappingProfileID pulid.ID        `json:"defaultMappingProfileId"`
+	Timezone                string          `json:"timezone"`
+	Country                 string          `json:"country"`
+	ContactName             string          `json:"contactName"`
+	ContactEmail            string          `json:"contactEmail"`
+	ContactPhone            string          `json:"contactPhone"`
+	EnabledForInbound       *bool           `json:"enabledForInbound"`
+	EnabledForOutbound      *bool           `json:"enabledForOutbound"`
+	Settings                map[string]any  `json:"settings"`
+	Version                 int64           `json:"version"`
 }
 
 func New(p Params) *Handler {
@@ -91,6 +91,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/load-tenders/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),
 		h.submitLoadTender,
+	)
+	api.POST(
+		"/control-numbers/reset/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.resetControlNumber,
 	)
 	h.registerTransferRoutes(api.Group("/transfers"))
 	h.registerShipmentLinkRoutes(api.Group("/shipment-links"))
@@ -510,6 +515,11 @@ func (h *Handler) registerMessageRoutes(messages *gin.RouterGroup) {
 		h.retryMessageDelivery,
 	)
 	messages.POST(
+		"/:messageID/replay/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.replayMessageDelivery,
+	)
+	messages.POST(
 		"/bulk-retry-delivery/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.bulkRetryMessageDelivery,
@@ -833,25 +843,25 @@ func (r *partnerRequest) toEntity(defaultEnabled bool) *edi.EDIPartner {
 	}
 
 	return &edi.EDIPartner{
-		Kind:                       r.Kind,
-		Status:                     domaintypes.Status(r.Status),
-		Code:                       r.Code,
-		Name:                       r.Name,
-		Description:                r.Description,
-		InternalOrganizationID:     r.InternalOrganizationID,
-		EDIConnectionID:            r.EDIConnectionID,
-		CustomerID:                 r.CustomerID,
-		DefaultTransportID:         r.DefaultTransportID,
-		DefaultMappingProfileID:    r.DefaultMappingProfileID,
-		Timezone:                   r.Timezone,
-		Country:                    r.Country,
-		ContactName:                r.ContactName,
-		ContactEmail:               r.ContactEmail,
-		ContactPhone:               r.ContactPhone,
-		EnabledForInbound:          enabledForInbound,
-		EnabledForOutbound:         enabledForOutbound,
-		Settings:                   r.Settings,
-		Version:                    r.Version,
+		Kind:                    r.Kind,
+		Status:                  domaintypes.Status(r.Status),
+		Code:                    r.Code,
+		Name:                    r.Name,
+		Description:             r.Description,
+		InternalOrganizationID:  r.InternalOrganizationID,
+		EDIConnectionID:         r.EDIConnectionID,
+		CustomerID:              r.CustomerID,
+		DefaultTransportID:      r.DefaultTransportID,
+		DefaultMappingProfileID: r.DefaultMappingProfileID,
+		Timezone:                r.Timezone,
+		Country:                 r.Country,
+		ContactName:             r.ContactName,
+		ContactEmail:            r.ContactEmail,
+		ContactPhone:            r.ContactPhone,
+		EnabledForInbound:       enabledForInbound,
+		EnabledForOutbound:      enabledForOutbound,
+		Settings:                r.Settings,
+		Version:                 r.Version,
 	}
 }
 
@@ -2471,6 +2481,55 @@ func (h *Handler) getPartnerReadiness(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, states[0])
+}
+
+func (h *Handler) replayMessageDelivery(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	messageID, err := pulid.MustParse(c.Param("messageID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	message, err := h.service.ReplayMessageDelivery(
+		c.Request.Context(),
+		&ediservice.RetryMessageDeliveryRequest{
+			MessageID: messageID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) resetControlNumber(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(repositories.ResetEDIControlNumberRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	sequence, err := h.service.ResetControlNumber(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, sequence)
 }
 
 func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {

@@ -769,7 +769,9 @@ export const ediPartnerSettingSchemaSchema = z.object({
 export type EDIPartnerSettingSchema = z.infer<typeof ediPartnerSettingSchemaSchema>;
 
 export const ediX12EnvelopeSettingsSchema = z.object({
+  interchangeSenderQualifier: z.string().default("ZZ"),
   interchangeSenderId: z.string().default("TRENOVA"),
+  interchangeReceiverQualifier: z.string().default("ZZ"),
   interchangeReceiverId: z.string().default("PARTNER"),
   applicationSenderCode: z.string().default("TRENOVA"),
   applicationReceiverCode: z.string().default("PARTNER"),
@@ -962,6 +964,7 @@ export const ediMessageSchema = z.object({
   deliveryAttempts: z.number().default(0),
   deliveryLastAttemptAt: nullableNumberSchema,
   deliverySentAt: nullableNumberSchema,
+  rawPurgedAt: nullableNumberSchema,
   deliveryLastError: z.string().nullish(),
   ackStatus: ediMessageAcknowledgmentStatusSchema.nullish(),
   ackMessageId: z.string().nullish(),

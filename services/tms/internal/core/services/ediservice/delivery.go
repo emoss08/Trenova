@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
@@ -367,6 +368,123 @@ func (s *Service) RetryMessageDelivery(
 		return nil, err
 	}
 	return message, nil
+}
+
+func (s *Service) ReplayMessageDelivery(
+	ctx context.Context,
+	req *RetryMessageDeliveryRequest,
+) (*edi.EDIMessage, error) {
+	if req == nil || req.MessageID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"messageId",
+			errortypes.ErrRequired,
+			"EDI message ID is required",
+		)
+	}
+	message, err := s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
+		ID:         req.MessageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if message.Direction != edi.DocumentDirectionOutbound {
+		return nil, errortypes.NewValidationError(
+			"messageId",
+			errortypes.ErrInvalidOperation,
+			"Only outbound EDI messages can be replayed",
+		)
+	}
+	if message.DeliveryStatus != edi.MessageDeliveryStatusSent {
+		return nil, errortypes.NewValidationError(
+			"deliveryStatus",
+			errortypes.ErrInvalidOperation,
+			"Only delivered EDI messages can be replayed; use retry for failed messages",
+		)
+	}
+	if message.RawPurgedAt != nil {
+		return nil, errortypes.NewValidationError(
+			"messageId",
+			errortypes.ErrInvalidOperation,
+			"The raw X12 payload was purged by the retention policy and can no longer be replayed",
+		)
+	}
+	profile, err := s.deliveryProfileForMessage(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+	now := timeutils.NowUnix()
+	message, err = s.messageRepo.UpdateMessageDelivery(
+		ctx,
+		&repositories.UpdateEDIMessageDeliveryRequest{
+			ID:                    message.ID,
+			TenantInfo:            messageTenantInfo(message),
+			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
+			DeliveryRemotePath:    message.DeliveryRemotePath,
+			DeliveryLastAttemptAt: &now,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	s.l.Info(
+		"EDI message replay requested",
+		zap.String("messageId", message.ID.String()),
+		zap.String("requestedBy", req.TenantInfo.UserID.String()),
+	)
+	if err = s.startDeliveryWorkflow(ctx, message, profile); err != nil {
+		return nil, err
+	}
+	return message, nil
+}
+
+func (s *Service) ResetControlNumber(
+	ctx context.Context,
+	req *repositories.ResetEDIControlNumberRequest,
+	actor *services.RequestActor,
+) (*edi.EDIControlNumberSequence, error) {
+	multiErr := errortypes.NewMultiError()
+	if req.PartnerID.IsNil() {
+		multiErr.Add("partnerId", errortypes.ErrRequired, "EDI partner is required")
+	}
+	if req.DocumentTypeID.IsNil() {
+		multiErr.Add("documentTypeId", errortypes.ErrRequired, "Document type is required")
+	}
+	switch req.Kind {
+	case edi.ControlNumberKindInterchange,
+		edi.ControlNumberKindGroup,
+		edi.ControlNumberKindTransaction:
+	default:
+		multiErr.Add(
+			"kind",
+			errortypes.ErrInvalid,
+			"Control number kind must be Interchange, Group, or Transaction",
+		)
+	}
+	if req.NextValue < 1 {
+		multiErr.Add("nextValue", errortypes.ErrInvalid, "Next value must be at least 1")
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	sequence, err := s.controlNumberRepo.ResetControlNumber(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	s.logAction(
+		sequence,
+		actor,
+		permission.OpUpdate,
+		nil,
+		sequence,
+		fmt.Sprintf(
+			"EDI %s control number sequence reset to %d",
+			sequence.Kind,
+			req.NextValue,
+		),
+	)
+	return sequence, nil
 }
 
 func (s *Service) queueMessageForDelivery(

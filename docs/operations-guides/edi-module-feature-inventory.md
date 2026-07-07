@@ -35,7 +35,9 @@ The module supports two exchange styles end to end:
 | AS2 transport | Implemented | Outbound: S/MIME signed + encrypted (optional zlib compression) POST to the partner URL with sync or async MDNs; sync MDNs verify disposition, signature, and MIC before the message is marked Sent; async deliveries persist the AS2 Message-ID/MIC and stay Sending until the partner's MDN resolves them. Inbound: unauthenticated `POST /api/v1/edi/as2/inbound/` resolves the profile by AS2-From/AS2-To, decrypts and verifies signatures with the configured certificates, dedupes by checksum, stages into the standard inbound pipeline, and returns (or asynchronously posts) a signed MDN with the received-content MIC. Crypto lives in `shared/as2` on smallstep/pkcs7. |
 | AS2 inbound security | Implemented | Per-profile `requireSignedInbound`/`requireEncryptedInbound` toggles (auto/true/false). Automatic mode fails closed: signatures are required whenever a partner signing certificate is configured, and encryption is required whenever a local certificate and private key are configured. Unsigned or unencrypted payloads that violate the policy are rejected with a negative MDN before staging. Supported encryption algorithms: 3des, aes128-cbc, aes256-cbc, aes128-gcm, aes256-gcm (aes192-cbc was removed because the pkcs7 library cannot honor it). |
 | X12 generation | Implemented | 204/210/214/990/997/999 via the template engine with Starlark scripting, transforms, conditions, repeat loops, envelope control, and validation modes. |
-| Control numbers | Implemented | Transactional per-partner/document-type ISA/GS/ST sequences with row locking. |
+| Control numbers | Implemented | Transactional per-partner/document-type ISA/GS/ST sequences with row locking. `POST /edi/control-numbers/reset/` performs an audited sequence reset (partner + document type + kind + next value). |
+| Message replay | Implemented | `POST /edi/messages/{id}/replay/` re-queues an already-delivered outbound message through the delivery workflow (Replay Delivery button on the message panel). Blocked when the raw X12 has been purged by retention. |
+| ISA qualifiers | Implemented | `interchangeSenderQualifier`/`interchangeReceiverQualifier` are first-class envelope fields (default `ZZ`), rendered through runtime values in the base templates, editable in the document-profile envelope editor, and registered in the source-context catalog. |
 | Outbound delivery | Implemented | Per-message Temporal workflow (`DeliverEDIMessageWorkflow`, EDI task queue) with exponential retry (6 attempts, 30s→15m). Lifecycle: Queued → Sending → Sent / Failed → DeadLettered. |
 | Delivery retry | Implemented | `POST /edi/messages/{id}/retry-delivery/` and a Retry Delivery action on the Messages page for failed or dead-lettered messages. |
 | Bulk remediation | Implemented | Row selection + dock actions on the Messages (bulk Retry Delivery), Inbound Files (bulk Reprocess), and inbound Transfers (bulk Approve / Reject with reason) tables, backed by `POST /edi/messages/bulk-retry-delivery/`, `/edi/inbound-files/bulk-reprocess/`, `/edi/transfers/bulk-approve/`, and `/edi/transfers/bulk-reject/` (max 500 per call). Each endpoint returns per-record succeeded/failed results; the UI filters ineligible rows client-side and reports success, failure, and skipped counts in one toast. |
@@ -71,6 +73,11 @@ The module supports two exchange styles end to end:
 | Area | Status | Notes |
 | --- | --- | --- |
 | Automatic 214 lifecycle application | Not implemented | External carrier statuses are recorded as comments; automatic stop/lifecycle mutation requires a per-partner policy design. |
+| TA1 interchange acknowledgment | Not implemented | Envelope-level accept/reject; pull in when a VAN or large partner requires it. |
+| Detailed 999 IK/CTX reporting | Not implemented | Current 999 is accept/reject only; AK3/AK4/IK3/IK4/CTX-level detail needed for some certifications. |
+| Outbound batching / send windows | Not implemented | One interchange per message, send-immediately; per-partner send windows and multi-ST functional groups are roadmap. |
+| Transaction sets 810 / 856 / 820 | Not implemented | 810 customer freight invoice, 856 ASN, and 820 remittance matching; sequence by partner demand. |
+| HTTP webhook / FTPS / email transports | Not implemented | New transports implement `services.EDITransport` and register in the `group:"edi_transports"` fx group (covered by the DI wiring test). |
 
 ## Data Model
 

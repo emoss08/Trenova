@@ -49,6 +49,15 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
     onError: () => toast.error("Failed to queue delivery retry"),
   });
 
+  const replayMutation = useApiMutation({
+    mutationFn: (messageId: string) => apiService.ediService.replayMessageDelivery(messageId),
+    onSuccess: async () => {
+      toast.success("Replay queued — the document will be re-delivered to the partner");
+      await invalidateEDIMessages(queryClient, row?.id);
+    },
+    onError: () => toast.error("Failed to queue the replay"),
+  });
+
   if (!detail) return null;
 
   const canRetry =
@@ -56,6 +65,11 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
     detail.direction === "Outbound" &&
     !!detail.deliveryStatus &&
     RETRYABLE_DELIVERY_STATUSES.has(detail.deliveryStatus);
+  const canReplay =
+    canUpdate &&
+    detail.direction === "Outbound" &&
+    detail.deliveryStatus === "Sent" &&
+    !detail.rawPurgedAt;
 
   return (
     <DataTablePanelContainer
@@ -69,6 +83,17 @@ export function MessagePanel({ open, onOpenChange, row }: DataTablePanelProps<ED
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
+          {canReplay && (
+            <Button
+              type="button"
+              variant="outline"
+              isLoading={replayMutation.isPending}
+              onClick={() => replayMutation.mutate(detail.id)}
+              title="Queue this already-delivered document for another delivery to the partner"
+            >
+              Replay Delivery
+            </Button>
+          )}
           {canRetry && (
             <Button
               type="button"
