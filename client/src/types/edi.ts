@@ -877,6 +877,18 @@ export const ediDocumentPreviewSchema = z.object({
 
 export type EDIDocumentPreview = z.infer<typeof ediDocumentPreviewSchema>;
 
+export const ediBulkActionResultSchema = z.object({
+  succeeded: z.array(z.string()),
+  failed: z.array(
+    z.object({
+      id: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type EDIBulkActionResult = z.infer<typeof ediBulkActionResultSchema>;
+
 export const ediMessageSchema = z.object({
   id: z.string(),
   businessUnitId: z.string().nullish(),

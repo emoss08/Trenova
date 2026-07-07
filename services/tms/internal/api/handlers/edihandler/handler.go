@@ -494,6 +494,11 @@ func (h *Handler) registerMessageRoutes(messages *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.retryMessageDelivery,
 	)
+	messages.POST(
+		"/bulk-retry-delivery/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkRetryMessageDelivery,
+	)
 }
 
 func (h *Handler) registerInboundFileRoutes(inboundFiles *gin.RouterGroup) {
@@ -511,6 +516,11 @@ func (h *Handler) registerInboundFileRoutes(inboundFiles *gin.RouterGroup) {
 		"/:fileID/reprocess/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.reprocessInboundFile,
+	)
+	inboundFiles.POST(
+		"/bulk-reprocess/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkReprocessInboundFiles,
 	)
 }
 
@@ -580,6 +590,16 @@ func (h *Handler) registerTransferRoutes(transfers *gin.RouterGroup) {
 		"/:transferID/reject/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.rejectTransfer,
+	)
+	transfers.POST(
+		"/bulk-approve/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkApproveTransfers,
+	)
+	transfers.POST(
+		"/bulk-reject/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.bulkRejectTransfers,
 	)
 	transfers.POST(
 		"/:transferID/cancel/",
@@ -2364,6 +2384,94 @@ func (h *Handler) retryMessageDelivery(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkRetryMessageDeliveryRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkRetryMessageDelivery(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkReprocessInboundFiles(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediinboundservice.BulkReprocessInboundFilesRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.inboundService.BulkReprocessInboundFiles(c.Request.Context(), req)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkApproveTransfers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkApproveTransfersRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkApproveTransfers(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) bulkRejectTransfers(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	req := new(ediservice.BulkRejectTransfersRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID:  authCtx.OrganizationID,
+		BuID:   authCtx.BusinessUnitID,
+		UserID: authCtx.UserID,
+	}
+	result, err := h.service.BulkRejectTransfers(
+		c.Request.Context(),
+		req,
+		actorutil.FromAuthContext(authCtx),
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) inspectX12(c *gin.Context) {

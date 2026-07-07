@@ -23,7 +23,7 @@ import {
   TransferOverview,
 } from "./edi-transfer-tender-review";
 
-const ACTIONABLE_TRANSFER_STATUSES = new Set<EDITransferStatus>([
+export const ACTIONABLE_TRANSFER_STATUSES = new Set<EDITransferStatus>([
   "Submitted",
   "MappingRequired",
   "PendingApproval",
