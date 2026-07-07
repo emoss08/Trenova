@@ -38,6 +38,14 @@ type GetActiveAS2ProfileByIdentifiersRequest struct {
 	PartnerAS2ID string `json:"partnerAs2Id"`
 }
 
+type RecordEDIProfilePollOutcomeRequest struct {
+	ProfileID  pulid.ID
+	TenantInfo pagination.TenantInfo
+	PolledAt   int64
+	Success    bool
+	Error      string
+}
+
 type EDICommunicationProfileRepository interface {
 	GetActiveAS2ProfileByIdentifiers(
 		ctx context.Context,
@@ -66,6 +74,11 @@ type EDICommunicationProfileRepository interface {
 	ListInboundPollingProfiles(
 		ctx context.Context,
 	) ([]*edi.EDICommunicationProfile, error)
+	RecordInboundPollOutcome(
+		ctx context.Context,
+		req RecordEDIProfilePollOutcomeRequest,
+	) error
+	CountStaleInboundPollingProfiles(ctx context.Context, staleBefore int64) (int64, error)
 	CreateProfile(
 		ctx context.Context,
 		entity *edi.EDICommunicationProfile,

@@ -35,6 +35,7 @@ type EDIInboundFile struct {
 	TransactionCount         int               `json:"transactionCount"         bun:"transaction_count,type:INTEGER,notnull,default:0"`
 	ReceivedAt               int64             `json:"receivedAt"               bun:"received_at,type:BIGINT,notnull"`
 	ProcessedAt              *int64            `json:"processedAt"              bun:"processed_at,type:BIGINT,nullzero"`
+	RawPurgedAt              *int64            `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
 	Version                  int64             `json:"version"                  bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt                int64             `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                int64             `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

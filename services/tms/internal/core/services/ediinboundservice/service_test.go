@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -72,6 +73,7 @@ func newInboundFixture(t *testing.T, rawContent string) *inboundFixture {
 	})
 	fixture.service = &Service{
 		l:                   zap.NewNop(),
+		metrics:             metrics.NewEDI(nil, zap.NewNop(), false),
 		inboundFileRepo:     fixture.inboundFileRepo,
 		partnerRepo:         fixture.partnerRepo,
 		messageRepo:         fixture.messageRepo,

@@ -3,6 +3,7 @@ package edijobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
@@ -25,11 +26,25 @@ var deliverMessageActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 5 * time.Minute,
 	HeartbeatTimeout:    time.Minute,
 	RetryPolicy: &temporal.RetryPolicy{
-		InitialInterval:    30 * time.Second,
+		InitialInterval:    editransport.DefaultDeliveryInitialInterval,
 		BackoffCoefficient: 2.0,
-		MaximumAttempts:    6,
-		MaximumInterval:    15 * time.Minute,
+		MaximumAttempts:    editransport.DefaultDeliveryMaxAttempts,
+		MaximumInterval:    editransport.DefaultDeliveryMaxInterval,
 	},
+}
+
+func deliverMessageOptions(policy *editransport.DeliveryRetryPolicy) workflow.ActivityOptions {
+	if policy == nil {
+		return deliverMessageActivityOptions
+	}
+	options := deliverMessageActivityOptions
+	options.RetryPolicy = &temporal.RetryPolicy{
+		InitialInterval:    policy.InitialIntervalOrDefault(),
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    policy.MaxAttemptsOrDefault(),
+		MaximumInterval:    policy.MaxIntervalOrDefault(),
+	}
+	return options
 }
 
 var deadLetterActivityOptions = workflow.ActivityOptions{
@@ -68,6 +83,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.EDITaskQueue,
 			Description: "Parse and route a staged inbound EDI file",
 		},
+		{
+			Name:        PurgeEDIRawPayloadsWorkflowName,
+			Fn:          PurgeEDIRawPayloadsWorkflow,
+			TaskQueue:   temporaltype.EDITaskQueue,
+			Description: "Purge raw EDI payloads past each organization's retention window",
+		},
 	}
 }
 
@@ -96,7 +117,11 @@ func DeliverEDIMessageWorkflow(
 	ctx workflow.Context,
 	payload *DeliverEDIMessageWorkflowPayload,
 ) (*DeliverEDIMessageWorkflowResult, error) {
-	activityCtx := workflow.WithActivityOptions(ctx, deliverMessageActivityOptions)
+	var retryPolicy *editransport.DeliveryRetryPolicy
+	if payload != nil {
+		retryPolicy = payload.RetryPolicy
+	}
+	activityCtx := workflow.WithActivityOptions(ctx, deliverMessageOptions(retryPolicy))
 
 	var a *Activities
 	result := new(DeliverEDIMessageWorkflowResult)

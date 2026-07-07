@@ -70,4 +70,13 @@ type EDIInboundFileRepository interface {
 		ctx context.Context,
 		req ExistsEDIInboundFileByChecksumRequest,
 	) (bool, error)
+	CountQuarantinedSince(ctx context.Context, since int64) (int64, error)
+	PurgeRawContentBefore(ctx context.Context, req PurgeEDIRawPayloadsRequest) (int64, error)
+}
+
+type PurgeEDIRawPayloadsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Before     int64
+	PurgedAt   int64
+	Limit      int
 }

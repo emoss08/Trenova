@@ -141,6 +141,8 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req *ListRecentEDIMessageFailuresRequest,
 	) ([]*edi.EDIMessage, error)
+	CountDeadLetteredSince(ctx context.Context, since int64) (int64, error)
+	PurgeRawX12Before(ctx context.Context, req PurgeEDIRawPayloadsRequest) (int64, error)
 	GetOutboundMessageForAck(
 		ctx context.Context,
 		req GetEDIOutboundMessageForAckRequest,

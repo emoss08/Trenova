@@ -989,3 +989,135 @@ func (_c *MockEDIMessageRepository_UpdateMessageDelivery_Call) RunAndReturn(run 
 	_c.Call.Return(run)
 	return _c
 }
+
+// CountDeadLetteredSince provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) CountDeadLetteredSince(ctx context.Context, since int64) (int64, error) {
+	ret := _mock.Called(ctx, since)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountDeadLetteredSince")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) (int64, error)); ok {
+		return returnFunc(ctx, since)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int64) int64); ok {
+		r0 = returnFunc(ctx, since)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = returnFunc(ctx, since)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_CountDeadLetteredSince_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountDeadLetteredSince'
+type MockEDIMessageRepository_CountDeadLetteredSince_Call struct {
+	*mock.Call
+}
+
+// CountDeadLetteredSince is a helper method to define mock.On call
+//   - ctx context.Context
+//   - since int64
+func (_e *MockEDIMessageRepository_Expecter) CountDeadLetteredSince(ctx interface{}, since interface{}) *MockEDIMessageRepository_CountDeadLetteredSince_Call {
+	return &MockEDIMessageRepository_CountDeadLetteredSince_Call{Call: _e.mock.On("CountDeadLetteredSince", ctx, since)}
+}
+
+func (_c *MockEDIMessageRepository_CountDeadLetteredSince_Call) Run(run func(ctx context.Context, since int64)) *MockEDIMessageRepository_CountDeadLetteredSince_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_CountDeadLetteredSince_Call) Return(n int64, err error) *MockEDIMessageRepository_CountDeadLetteredSince_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_CountDeadLetteredSince_Call) RunAndReturn(run func(ctx context.Context, since int64) (int64, error)) *MockEDIMessageRepository_CountDeadLetteredSince_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PurgeRawX12Before provides a mock function for the type MockEDIMessageRepository
+func (_mock *MockEDIMessageRepository) PurgeRawX12Before(ctx context.Context, req repositories.PurgeEDIRawPayloadsRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PurgeRawX12Before")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.PurgeEDIRawPayloadsRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.PurgeEDIRawPayloadsRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.PurgeEDIRawPayloadsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMessageRepository_PurgeRawX12Before_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PurgeRawX12Before'
+type MockEDIMessageRepository_PurgeRawX12Before_Call struct {
+	*mock.Call
+}
+
+// PurgeRawX12Before is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.PurgeEDIRawPayloadsRequest
+func (_e *MockEDIMessageRepository_Expecter) PurgeRawX12Before(ctx interface{}, req interface{}) *MockEDIMessageRepository_PurgeRawX12Before_Call {
+	return &MockEDIMessageRepository_PurgeRawX12Before_Call{Call: _e.mock.On("PurgeRawX12Before", ctx, req)}
+}
+
+func (_c *MockEDIMessageRepository_PurgeRawX12Before_Call) Run(run func(ctx context.Context, req repositories.PurgeEDIRawPayloadsRequest)) *MockEDIMessageRepository_PurgeRawX12Before_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.PurgeEDIRawPayloadsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.PurgeEDIRawPayloadsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_PurgeRawX12Before_Call) Return(n int64, err error) *MockEDIMessageRepository_PurgeRawX12Before_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockEDIMessageRepository_PurgeRawX12Before_Call) RunAndReturn(run func(ctx context.Context, req repositories.PurgeEDIRawPayloadsRequest) (int64, error)) *MockEDIMessageRepository_PurgeRawX12Before_Call {
+	_c.Call.Return(run)
+	return _c
+}

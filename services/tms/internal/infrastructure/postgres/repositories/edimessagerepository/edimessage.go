@@ -432,6 +432,56 @@ func (r *repository) ListRecentDeadLettered(
 	return entities, nil
 }
 
+func (r *repository) PurgeRawX12Before(
+	ctx context.Context,
+	req repositories.PurgeEDIRawPayloadsRequest,
+) (int64, error) {
+	cols := buncolgen.EDIMessageColumns
+	subquery := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Column("id").
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.CreatedAt.Lt(), req.Before).
+		Where("emsg.raw_purged_at IS NULL").
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where(cols.Direction.Eq(), edi.DocumentDirectionInbound).
+				WhereOr(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusSent)
+		}).
+		Limit(req.Limit)
+
+	result, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDIMessage)(nil)).
+		Set("raw_x12 = ''").
+		Set("payload_snapshot = '{}'::jsonb").
+		Set("raw_purged_at = ?", req.PurgedAt).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where("emsg.id IN (?)", subquery).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
+func (r *repository) CountDeadLetteredSince(ctx context.Context, since int64) (int64, error) {
+	cols := buncolgen.EDIMessageColumns
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		Where(cols.DeliveryStatus.Eq(), edi.MessageDeliveryStatusDeadLettered).
+		Where(cols.UpdatedAt.Gte(), since).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return int64(count), nil
+}
+
 func (r *repository) GetOutboundMessageForAck(
 	ctx context.Context,
 	req repositories.GetEDIOutboundMessageForAckRequest,

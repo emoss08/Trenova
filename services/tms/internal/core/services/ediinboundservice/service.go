@@ -8,11 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -38,6 +41,7 @@ type Params struct {
 	EDIService          *ediservice.Service
 	Transport           services.EDITransportDispatcher
 	WorkflowStarter     services.WorkflowStarter
+	Metrics             *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
@@ -53,11 +57,17 @@ type Service struct {
 	ediService          *ediservice.Service
 	transport           services.EDITransportDispatcher
 	workflowStarter     services.WorkflowStarter
+	metrics             *metrics.EDI
 }
 
 func New(p Params) *Service {
+	ediMetrics := metrics.NewEDI(nil, p.Logger, false)
+	if p.Metrics != nil {
+		ediMetrics = p.Metrics.EDI
+	}
 	return &Service{
 		l:                   p.Logger.Named("service.edi-inbound"),
+		metrics:             ediMetrics,
 		inboundFileRepo:     p.InboundFileRepo,
 		profileRepo:         p.ProfileRepo,
 		partnerRepo:         p.PartnerRepo,
@@ -122,8 +132,12 @@ func (s *Service) PollMailbox(
 	fetchReq := &services.EDIInboundFetchRequest{Profile: profile, Secrets: secrets}
 	remoteFiles, err := s.transport.FetchInbound(ctx, profile.Method, fetchReq)
 	if err != nil {
+		s.metrics.RecordInboundPoll(string(profile.Method), "failed")
+		s.recordPollOutcome(ctx, profile, false, err.Error())
 		return nil, err
 	}
+	s.metrics.RecordInboundPoll(string(profile.Method), "success")
+	s.recordPollOutcome(ctx, profile, true, "")
 
 	result := &PollMailboxResult{ProfileID: profile.ID}
 	for _, remoteFile := range remoteFiles {
@@ -157,6 +171,33 @@ func (s *Service) PollMailbox(
 	return result, nil
 }
 
+func (s *Service) recordPollOutcome(
+	ctx context.Context,
+	profile *edi.EDICommunicationProfile,
+	success bool,
+	pollErr string,
+) {
+	if err := s.profileRepo.RecordInboundPollOutcome(
+		ctx,
+		repositories.RecordEDIProfilePollOutcomeRequest{
+			ProfileID: profile.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: profile.OrganizationID,
+				BuID:  profile.BusinessUnitID,
+			},
+			PolledAt: timeutils.NowUnix(),
+			Success:  success,
+			Error:    pollErr,
+		},
+	); err != nil {
+		s.l.Warn(
+			"failed to record EDI inbound poll outcome",
+			zap.String("profileId", profile.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
 func (s *Service) stageInboundFile(
 	ctx context.Context,
 	profile *edi.EDICommunicationProfile,
@@ -180,6 +221,11 @@ func (s *Service) stageInboundFile(
 		return nil, false, err
 	}
 	if exists {
+		s.metrics.RecordInboundFile(
+			profile.EDIPartnerID.String(),
+			string(profile.Method),
+			"duplicate",
+		)
 		return nil, true, nil
 	}
 	staged, err := s.inboundFileRepo.CreateInboundFile(ctx, &edi.EDIInboundFile{
@@ -199,11 +245,32 @@ func (s *Service) stageInboundFile(
 	if err != nil {
 		return nil, false, err
 	}
+	s.metrics.RecordInboundFile(profile.EDIPartnerID.String(), string(profile.Method), "staged")
 	return staged, false, nil
 }
 
-//nolint:funlen // Inbound file processing walks parse, dedup, routing, and ack stages sequentially.
 func (s *Service) ProcessInboundFile(
+	ctx context.Context,
+	req *ProcessInboundFileRequest,
+) (*edi.EDIInboundFile, error) {
+	startedAt := time.Now()
+	updated, err := observability.RunWithSpanReturn(
+		ctx,
+		"edi.process_inbound_file",
+		func(ctx context.Context) (*edi.EDIInboundFile, error) {
+			return s.processInboundFile(ctx, req)
+		},
+	)
+	status := "error"
+	if err == nil && updated != nil {
+		status = string(updated.Status)
+	}
+	s.metrics.RecordInboundParse(status, time.Since(startedAt).Seconds())
+	return updated, err
+}
+
+//nolint:funlen // Inbound file processing walks parse, dedup, routing, and ack stages sequentially.
+func (s *Service) processInboundFile(
 	ctx context.Context,
 	req *ProcessInboundFileRequest,
 ) (*edi.EDIInboundFile, error) {
@@ -308,6 +375,7 @@ func (s *Service) ProcessInboundFile(
 	if err != nil {
 		return nil, err
 	}
+	s.metrics.RecordInboundOutcome(updated.EDIPartnerID.String(), string(updated.Status))
 	if updated.Status == edi.InboundFileStatusQuarantined {
 		s.notifyQuarantinedFile(ctx, updated)
 	}
@@ -327,6 +395,7 @@ func (s *Service) quarantineFile(
 	if err != nil {
 		return nil, err
 	}
+	s.metrics.RecordInboundOutcome(updated.EDIPartnerID.String(), string(updated.Status))
 	s.notifyQuarantinedFile(ctx, updated)
 	return updated, nil
 }

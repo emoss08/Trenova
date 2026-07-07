@@ -3,6 +3,7 @@ package ediservice
 import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/editransport"
 	"github.com/emoss08/trenova/internal/core/services/edix12"
 	"github.com/emoss08/trenova/internal/core/services/edix12inspect"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -246,8 +247,9 @@ type ApproveLoadTenderTransferWorkflowResult struct {
 }
 
 type DeliverEDIMessageWorkflowPayload struct {
-	MessageID  pulid.ID              `json:"messageId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	MessageID   pulid.ID                          `json:"messageId"`
+	TenantInfo  pagination.TenantInfo             `json:"tenantInfo"`
+	RetryPolicy *editransport.DeliveryRetryPolicy `json:"retryPolicy,omitempty"`
 }
 
 type DeliverEDIMessageWorkflowResult struct {

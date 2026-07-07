@@ -63,6 +63,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				"purpose": "edi-inbound-poll",
 			},
 		},
+		{
+			ID:            "edi-raw-retention-purge",
+			Description:   "Purge raw EDI payloads past each organization's retention window",
+			Spec:          schedule.Cron("0 3 * * *"),
+			Workflow:      PurgeEDIRawPayloadsWorkflow,
+			TaskQueue:     temporaltype.EDITaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "edi-raw-retention-purge",
+			},
+		},
 	}
 }
 

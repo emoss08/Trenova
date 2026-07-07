@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/editransport"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -56,8 +57,20 @@ type ReceiveAS2MessageResult struct {
 	IsMDN          bool
 }
 
-//nolint:funlen // AS2 receipt walks identify, decrypt/verify, stage, process, and MDN stages sequentially.
 func (s *Service) ReceiveAS2Message(
+	ctx context.Context,
+	req *ReceiveAS2MessageRequest,
+) (*ReceiveAS2MessageResult, error) {
+	return observability.RunWithSpanReturn(
+		ctx,
+		"edi.receive_as2_message",
+		func(ctx context.Context) (*ReceiveAS2MessageResult, error) {
+			return s.receiveAS2Message(ctx, req)
+		},
+	)
+}
+
+func (s *Service) receiveAS2Message(
 	ctx context.Context,
 	req *ReceiveAS2MessageRequest,
 ) (*ReceiveAS2MessageResult, error) {
@@ -114,6 +127,11 @@ func (s *Service) ReceiveAS2Message(
 			"inbound AS2 message could not be decrypted or verified",
 			zap.String("profileId", profile.ID.String()),
 			zap.Error(parseErr),
+		)
+		s.metrics.RecordInboundFile(
+			profile.EDIPartnerID.String(),
+			string(profile.Method),
+			"rejected",
 		)
 		return s.buildAS2MDNResult(req, cfg, "", parseErr)
 	}

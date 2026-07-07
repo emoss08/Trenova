@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/interceptor"
 	"go.temporal.io/sdk/worker"
 	"go.uber.org/zap"
 )
@@ -57,8 +58,15 @@ type WorkerManager struct {
 	queueWorkers map[string]worker.Worker
 	queueOptions map[string]worker.Options
 	registries   []WorkerRegistry
+	interceptors []interceptor.WorkerInterceptor
 	logger       *zap.Logger
 	mu           sync.RWMutex
+}
+
+func (m *WorkerManager) SetInterceptors(interceptors []interceptor.WorkerInterceptor) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.interceptors = interceptors
 }
 
 func NewWorkerManager(c client.Client, logger *zap.Logger) *WorkerManager {
@@ -91,6 +99,9 @@ func (m *WorkerManager) Register(registry WorkerRegistry) error {
 	}
 
 	opts := registry.GetWorkerOptions()
+	if len(m.interceptors) > 0 {
+		opts.Interceptors = append(opts.Interceptors, m.interceptors...)
+	}
 	w, exists := m.queueWorkers[taskQueue]
 	if exists && !workerOptionsEqual(m.queueOptions[taskQueue], opts) {
 		return fmt.Errorf(

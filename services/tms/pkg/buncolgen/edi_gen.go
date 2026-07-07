@@ -494,39 +494,45 @@ var EDICommunicationProfileTable = TableInfo{
 //	q.Where(EDICommunicationProfileColumns.ID.Eq(), id)           // WHERE ecp.id = ?
 //	q.Order(EDICommunicationProfileColumns.CreatedAt.OrderDesc())  // ORDER BY ecp.created_at DESC
 var EDICommunicationProfileColumns = struct {
-	ID               Column // "id" → qualified: "ecp.id"
-	BusinessUnitID   Column // "business_unit_id" → qualified: "ecp.business_unit_id"
-	OrganizationID   Column // "organization_id" → qualified: "ecp.organization_id"
-	EDIConnectionID  Column // "edi_connection_id" → qualified: "ecp.edi_connection_id"
-	EDIPartnerID     Column // "edi_partner_id" → qualified: "ecp.edi_partner_id"
-	Method           Column // "method" → qualified: "ecp.method"
-	Status           Column // "status" → qualified: "ecp.status"
-	Name             Column // "name" → qualified: "ecp.name"
-	Description      Column // "description" → qualified: "ecp.description"
-	Config           Column // "config" → qualified: "ecp.config"
-	EncryptedSecrets Column // "encrypted_secrets" → qualified: "ecp.encrypted_secrets"
-	SearchVector     Column // "search_vector" → qualified: "ecp.search_vector"
-	Rank             Column // "rank" → qualified: "ecp.rank"
-	Version          Column // "version" → qualified: "ecp.version"
-	CreatedAt        Column // "created_at" → qualified: "ecp.created_at"
-	UpdatedAt        Column // "updated_at" → qualified: "ecp.updated_at"
+	ID                Column // "id" → qualified: "ecp.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "ecp.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "ecp.organization_id"
+	EDIConnectionID   Column // "edi_connection_id" → qualified: "ecp.edi_connection_id"
+	EDIPartnerID      Column // "edi_partner_id" → qualified: "ecp.edi_partner_id"
+	Method            Column // "method" → qualified: "ecp.method"
+	Status            Column // "status" → qualified: "ecp.status"
+	Name              Column // "name" → qualified: "ecp.name"
+	Description       Column // "description" → qualified: "ecp.description"
+	Config            Column // "config" → qualified: "ecp.config"
+	EncryptedSecrets  Column // "encrypted_secrets" → qualified: "ecp.encrypted_secrets"
+	LastPollAttemptAt Column // "last_poll_attempt_at" → qualified: "ecp.last_poll_attempt_at"
+	LastPollSuccessAt Column // "last_poll_success_at" → qualified: "ecp.last_poll_success_at"
+	LastPollError     Column // "last_poll_error" → qualified: "ecp.last_poll_error"
+	SearchVector      Column // "search_vector" → qualified: "ecp.search_vector"
+	Rank              Column // "rank" → qualified: "ecp.rank"
+	Version           Column // "version" → qualified: "ecp.version"
+	CreatedAt         Column // "created_at" → qualified: "ecp.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "ecp.updated_at"
 }{
-	ID:               NewColumn("id", "ecp"),
-	BusinessUnitID:   NewColumn("business_unit_id", "ecp"),
-	OrganizationID:   NewColumn("organization_id", "ecp"),
-	EDIConnectionID:  NewColumn("edi_connection_id", "ecp"),
-	EDIPartnerID:     NewColumn("edi_partner_id", "ecp"),
-	Method:           NewColumn("method", "ecp"),
-	Status:           NewColumn("status", "ecp"),
-	Name:             NewColumn("name", "ecp"),
-	Description:      NewColumn("description", "ecp"),
-	Config:           NewColumn("config", "ecp"),
-	EncryptedSecrets: NewColumn("encrypted_secrets", "ecp"),
-	SearchVector:     NewColumn("search_vector", "ecp"),
-	Rank:             NewColumn("rank", "ecp"),
-	Version:          NewColumn("version", "ecp"),
-	CreatedAt:        NewColumn("created_at", "ecp"),
-	UpdatedAt:        NewColumn("updated_at", "ecp"),
+	ID:                NewColumn("id", "ecp"),
+	BusinessUnitID:    NewColumn("business_unit_id", "ecp"),
+	OrganizationID:    NewColumn("organization_id", "ecp"),
+	EDIConnectionID:   NewColumn("edi_connection_id", "ecp"),
+	EDIPartnerID:      NewColumn("edi_partner_id", "ecp"),
+	Method:            NewColumn("method", "ecp"),
+	Status:            NewColumn("status", "ecp"),
+	Name:              NewColumn("name", "ecp"),
+	Description:       NewColumn("description", "ecp"),
+	Config:            NewColumn("config", "ecp"),
+	EncryptedSecrets:  NewColumn("encrypted_secrets", "ecp"),
+	LastPollAttemptAt: NewColumn("last_poll_attempt_at", "ecp"),
+	LastPollSuccessAt: NewColumn("last_poll_success_at", "ecp"),
+	LastPollError:     NewColumn("last_poll_error", "ecp"),
+	SearchVector:      NewColumn("search_vector", "ecp"),
+	Rank:              NewColumn("rank", "ecp"),
+	Version:           NewColumn("version", "ecp"),
+	CreatedAt:         NewColumn("created_at", "ecp"),
+	UpdatedAt:         NewColumn("updated_at", "ecp"),
 }
 
 // EDICommunicationProfileFieldMap maps JSON API field names to database column names.
@@ -534,19 +540,22 @@ var EDICommunicationProfileColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by EDICommunicationProfile.GetStaticFieldMap().
 var EDICommunicationProfileFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"ediConnectionId": "edi_connection_id",
-	"ediPartnerId":    "edi_partner_id",
-	"method":          "method",
-	"status":          "status",
-	"name":            "name",
-	"description":     "description",
-	"config":          "config",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"ediConnectionId":   "edi_connection_id",
+	"ediPartnerId":      "edi_partner_id",
+	"method":            "method",
+	"status":            "status",
+	"name":              "name",
+	"description":       "description",
+	"config":            "config",
+	"lastPollAttemptAt": "last_poll_attempt_at",
+	"lastPollSuccessAt": "last_poll_success_at",
+	"lastPollError":     "last_poll_error",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
 }
 
 // EDICommunicationProfileInsertableColumns lists column names suitable for INSERT statements on the "edi_communication_profiles" table.
@@ -563,6 +572,9 @@ var EDICommunicationProfileInsertableColumns = []string{
 	"description",
 	"config",
 	"encrypted_secrets",
+	"last_poll_attempt_at",
+	"last_poll_success_at",
+	"last_poll_error",
 	"version",
 	"created_at",
 	"updated_at",
@@ -635,19 +647,22 @@ func EDICommunicationProfileApplyTenant(ti pagination.TenantInfo) func(*bun.Sele
 //	EDICommunicationProfileFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var EDICommunicationProfileFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	EDIConnectionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
-	EDIPartnerID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
-	Method          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
-	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Name            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
-	Description     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	Config          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "config" → DB: "config"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	EDIConnectionID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediConnectionId" → DB: "edi_connection_id"
+	EDIPartnerID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	Method            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Name              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "name" → DB: "name"
+	Description       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	Config            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "config" → DB: "config"
+	LastPollAttemptAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastPollAttemptAt" → DB: "last_poll_attempt_at"
+	LastPollSuccessAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastPollSuccessAt" → DB: "last_poll_success_at"
+	LastPollError     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastPollError" → DB: "last_poll_error"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -678,6 +693,15 @@ var EDICommunicationProfileFilter = struct {
 	},
 	Config: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("config", op, value)
+	},
+	LastPollAttemptAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastPollAttemptAt", op, value)
+	},
+	LastPollSuccessAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastPollSuccessAt", op, value)
+	},
+	LastPollError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastPollError", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -1349,6 +1373,7 @@ var EDIInboundFileColumns = struct {
 	TransactionCount         Column // "transaction_count" → qualified: "eif.transaction_count"
 	ReceivedAt               Column // "received_at" → qualified: "eif.received_at"
 	ProcessedAt              Column // "processed_at" → qualified: "eif.processed_at"
+	RawPurgedAt              Column // "raw_purged_at" → qualified: "eif.raw_purged_at"
 	Version                  Column // "version" → qualified: "eif.version"
 	CreatedAt                Column // "created_at" → qualified: "eif.created_at"
 	UpdatedAt                Column // "updated_at" → qualified: "eif.updated_at"
@@ -1374,6 +1399,7 @@ var EDIInboundFileColumns = struct {
 	TransactionCount:         NewColumn("transaction_count", "eif"),
 	ReceivedAt:               NewColumn("received_at", "eif"),
 	ProcessedAt:              NewColumn("processed_at", "eif"),
+	RawPurgedAt:              NewColumn("raw_purged_at", "eif"),
 	Version:                  NewColumn("version", "eif"),
 	CreatedAt:                NewColumn("created_at", "eif"),
 	UpdatedAt:                NewColumn("updated_at", "eif"),
@@ -1405,6 +1431,7 @@ var EDIInboundFileFieldMap = map[string]string{
 	"transactionCount":         "transaction_count",
 	"receivedAt":               "received_at",
 	"processedAt":              "processed_at",
+	"rawPurgedAt":              "raw_purged_at",
 	"version":                  "version",
 	"createdAt":                "created_at",
 	"updatedAt":                "updated_at",
@@ -1434,6 +1461,7 @@ var EDIInboundFileInsertableColumns = []string{
 	"transaction_count",
 	"received_at",
 	"processed_at",
+	"raw_purged_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1525,6 +1553,7 @@ var EDIInboundFileFilter = struct {
 	TransactionCount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionCount" → DB: "transaction_count"
 	ReceivedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "receivedAt" → DB: "received_at"
 	ProcessedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "processedAt" → DB: "processed_at"
+	RawPurgedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rawPurgedAt" → DB: "raw_purged_at"
 	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1591,6 +1620,9 @@ var EDIInboundFileFilter = struct {
 	},
 	ProcessedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("processedAt", op, value)
+	},
+	RawPurgedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rawPurgedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -2058,6 +2090,7 @@ var EDIMessageColumns = struct {
 	SegmentCount             Column // "segment_count" → qualified: "emsg.segment_count"
 	RawX12                   Column // "raw_x12" → qualified: "emsg.raw_x12"
 	PayloadSnapshot          Column // "payload_snapshot" → qualified: "emsg.payload_snapshot"
+	RawPurgedAt              Column // "raw_purged_at" → qualified: "emsg.raw_purged_at"
 	DeliveryStatus           Column // "delivery_status" → qualified: "emsg.delivery_status"
 	DeliveryRemotePath       Column // "delivery_remote_path" → qualified: "emsg.delivery_remote_path"
 	DeliveryAttempts         Column // "delivery_attempts" → qualified: "emsg.delivery_attempts"
@@ -2100,6 +2133,7 @@ var EDIMessageColumns = struct {
 	SegmentCount:             NewColumn("segment_count", "emsg"),
 	RawX12:                   NewColumn("raw_x12", "emsg"),
 	PayloadSnapshot:          NewColumn("payload_snapshot", "emsg"),
+	RawPurgedAt:              NewColumn("raw_purged_at", "emsg"),
 	DeliveryStatus:           NewColumn("delivery_status", "emsg"),
 	DeliveryRemotePath:       NewColumn("delivery_remote_path", "emsg"),
 	DeliveryAttempts:         NewColumn("delivery_attempts", "emsg"),
@@ -2148,6 +2182,7 @@ var EDIMessageFieldMap = map[string]string{
 	"segmentCount":             "segment_count",
 	"rawX12":                   "raw_x12",
 	"payloadSnapshot":          "payload_snapshot",
+	"rawPurgedAt":              "raw_purged_at",
 	"deliveryStatus":           "delivery_status",
 	"deliveryRemotePath":       "delivery_remote_path",
 	"deliveryAttempts":         "delivery_attempts",
@@ -2194,6 +2229,7 @@ var EDIMessageInsertableColumns = []string{
 	"segment_count",
 	"raw_x12",
 	"payload_snapshot",
+	"raw_purged_at",
 	"delivery_status",
 	"delivery_remote_path",
 	"delivery_attempts",
@@ -2307,6 +2343,7 @@ var EDIMessageFilter = struct {
 	SegmentCount             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "segmentCount" → DB: "segment_count"
 	RawX12                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rawX12" → DB: "raw_x12"
 	PayloadSnapshot          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payloadSnapshot" → DB: "payload_snapshot"
+	RawPurgedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rawPurgedAt" → DB: "raw_purged_at"
 	DeliveryStatus           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryStatus" → DB: "delivery_status"
 	DeliveryRemotePath       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryRemotePath" → DB: "delivery_remote_path"
 	DeliveryAttempts         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryAttempts" → DB: "delivery_attempts"
@@ -2393,6 +2430,9 @@ var EDIMessageFilter = struct {
 	},
 	PayloadSnapshot: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("payloadSnapshot", op, value)
+	},
+	RawPurgedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rawPurgedAt", op, value)
 	},
 	DeliveryStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("deliveryStatus", op, value)
