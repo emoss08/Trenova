@@ -106,6 +106,8 @@ func (s *Service) ReceiveAS2Message(
 		PartnerCertificate:    cfg.PartnerSigningCertificate,
 		MICAlgorithm:          micAlgorithmFromOptions(req.DispositionNotificationOptions),
 		TransferEncoding:      req.TransferEncoding,
+		RequireSignature:      cfg.RequireSignedInbound,
+		RequireEncryption:     cfg.RequireEncryptedInbound,
 	})
 	if parseErr != nil {
 		s.l.Warn(

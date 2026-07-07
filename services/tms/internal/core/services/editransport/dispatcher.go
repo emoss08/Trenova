@@ -31,6 +31,11 @@ func NewDispatcher(p DispatcherParams) *Dispatcher {
 	return &Dispatcher{transports: transports}
 }
 
+func (d *Dispatcher) Supports(method edi.ConnectionMethod) bool {
+	_, ok := d.transports[method]
+	return ok
+}
+
 func (d *Dispatcher) Deliver(
 	ctx context.Context,
 	method edi.ConnectionMethod,

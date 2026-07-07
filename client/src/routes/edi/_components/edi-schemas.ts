@@ -66,11 +66,16 @@ export const as2SigningAlgorithmOptions = [
 
 export const as2EncryptionAlgorithmOptions = [
   { label: "AES-256-CBC", value: "aes256-cbc" },
-  { label: "AES-192-CBC", value: "aes192-cbc" },
   { label: "AES-128-CBC", value: "aes128-cbc" },
   { label: "AES-256-GCM", value: "aes256-gcm" },
   { label: "AES-128-GCM", value: "aes128-gcm" },
   { label: "Triple DES (legacy)", value: "3des" },
+];
+
+export const as2InboundRequirementOptions = [
+  { label: "Automatic (require when certificates are configured)", value: "auto" },
+  { label: "Required", value: "true" },
+  { label: "Not required", value: "false" },
 ];
 
 export const as2CompressionOptions = [
@@ -107,6 +112,8 @@ export const communicationProfileConfigSchema = z.object({
   compressionAlgorithm: z.string(),
   signingAlgorithm: z.string(),
   encryptionAlgorithm: z.string(),
+  requireSignedInbound: z.string(),
+  requireEncryptedInbound: z.string(),
   basicAuthUsername: z.string(),
   host: z.string(),
   port: z.string(),
@@ -200,7 +207,6 @@ export const ediPartnerFormSchema = z.object({
   enabledForOutbound: z.boolean(),
   defaultTransportId: z.string(),
   defaultMappingProfileId: z.string(),
-  defaultValidationProfileId: z.string(),
   settingsJson: z.string().refine(
     (value) => {
       try {
@@ -236,7 +242,6 @@ export function getPartnerFormDefaults(partner?: EDIPartner | null): EDIPartnerF
     enabledForOutbound: partner?.enabledForOutbound ?? true,
     defaultTransportId: partner?.defaultTransportId ?? "",
     defaultMappingProfileId: partner?.defaultMappingProfileId ?? "",
-    defaultValidationProfileId: partner?.defaultValidationProfileId ?? "",
     settingsJson: JSON.stringify(partner?.settings ?? {}, null, 2),
     version: partner?.version,
   };
@@ -252,7 +257,6 @@ export function toPartnerRequest(values: EDIPartnerFormValues): UpsertEDIPartner
     customerId: emptyToUndefined(values.customerId),
     defaultTransportId: emptyToUndefined(values.defaultTransportId),
     defaultMappingProfileId: emptyToUndefined(values.defaultMappingProfileId),
-    defaultValidationProfileId: emptyToUndefined(values.defaultValidationProfileId),
     country: values.country,
     timezone: emptyToUndefined(values.timezone),
     contactName: emptyToUndefined(values.contactName),

@@ -18,6 +18,11 @@ var Module = fx.Module("edi-transport",
 			fx.ResultTags(`group:"edi_transports"`),
 		),
 		fx.Annotate(
+			NewAS2Transport,
+			fx.As(new(services.EDITransport)),
+			fx.ResultTags(`group:"edi_transports"`),
+		),
+		fx.Annotate(
 			NewDispatcher,
 			fx.As(new(services.EDITransportDispatcher)),
 		),

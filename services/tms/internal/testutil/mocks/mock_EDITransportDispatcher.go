@@ -255,3 +255,54 @@ func (_c *MockEDITransportDispatcher_FetchInbound_Call) RunAndReturn(run func(ct
 	_c.Call.Return(run)
 	return _c
 }
+
+// Supports provides a mock function for the type MockEDITransportDispatcher
+func (_mock *MockEDITransportDispatcher) Supports(method edi.ConnectionMethod) bool {
+	ret := _mock.Called(method)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Supports")
+	}
+
+	var r0 bool
+	if returnFunc, ok := ret.Get(0).(func(edi.ConnectionMethod) bool); ok {
+		r0 = returnFunc(method)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	return r0
+}
+
+// MockEDITransportDispatcher_Supports_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Supports'
+type MockEDITransportDispatcher_Supports_Call struct {
+	*mock.Call
+}
+
+// Supports is a helper method to define mock.On call
+//   - method edi.ConnectionMethod
+func (_e *MockEDITransportDispatcher_Expecter) Supports(method interface{}) *MockEDITransportDispatcher_Supports_Call {
+	return &MockEDITransportDispatcher_Supports_Call{Call: _e.mock.On("Supports", method)}
+}
+
+func (_c *MockEDITransportDispatcher_Supports_Call) Run(run func(method edi.ConnectionMethod)) *MockEDITransportDispatcher_Supports_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 edi.ConnectionMethod
+		if args[0] != nil {
+			arg0 = args[0].(edi.ConnectionMethod)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITransportDispatcher_Supports_Call) Return(b bool) *MockEDITransportDispatcher_Supports_Call {
+	_c.Call.Return(b)
+	return _c
+}
+
+func (_c *MockEDITransportDispatcher_Supports_Call) RunAndReturn(run func(method edi.ConnectionMethod) bool) *MockEDITransportDispatcher_Supports_Call {
+	_c.Call.Return(run)
+	return _c
+}

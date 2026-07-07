@@ -49,7 +49,6 @@ type partnerRequest struct {
 	CustomerID                 pulid.ID        `json:"customerId"`
 	DefaultTransportID         pulid.ID        `json:"defaultTransportId"`
 	DefaultMappingProfileID    pulid.ID        `json:"defaultMappingProfileId"`
-	DefaultValidationProfileID pulid.ID        `json:"defaultValidationProfileId"`
 	Timezone                   string          `json:"timezone"`
 	Country                    string          `json:"country"`
 	ContactName                string          `json:"contactName"`
@@ -809,7 +808,6 @@ func (r *partnerRequest) toEntity(defaultEnabled bool) *edi.EDIPartner {
 		CustomerID:                 r.CustomerID,
 		DefaultTransportID:         r.DefaultTransportID,
 		DefaultMappingProfileID:    r.DefaultMappingProfileID,
-		DefaultValidationProfileID: r.DefaultValidationProfileID,
 		Timezone:                   r.Timezone,
 		Country:                    r.Country,
 		ContactName:                r.ContactName,

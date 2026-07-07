@@ -158,7 +158,6 @@ export const ediPartnerSchema = z.object({
   customerId: z.string().nullish(),
   defaultTransportId: z.string().nullish(),
   defaultMappingProfileId: z.string().nullish(),
-  defaultValidationProfileId: z.string().nullish(),
   timezone: z.string().nullish(),
   country: z.string(),
   contactName: z.string().nullish(),
@@ -1190,7 +1189,6 @@ export type UpsertEDIPartnerRequest = {
   customerId?: string;
   defaultTransportId?: string;
   defaultMappingProfileId?: string;
-  defaultValidationProfileId?: string;
   timezone?: string;
   country?: string;
   contactName?: string;
