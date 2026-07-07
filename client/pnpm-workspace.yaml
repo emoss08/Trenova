@@ -1,33 +1,31 @@
 allowBuilds:
-  '@parcel/watcher': true
+  "@parcel/watcher": true
   esbuild: true
   msgpackr-extract: true
   msw: true
   sharp: true
   workerd: true
 minimumReleaseAgeExclude:
-  - '@codemirror/state@6.7.1'
-  - '@codemirror/view@6.43.6'
-  - '@graphql-codegen/add@7.1.0'
-  - '@graphql-codegen/cli@7.2.0'
-  - '@graphql-codegen/client-preset@6.1.0'
-  - '@graphql-codegen/core@6.2.0'
-  - '@graphql-codegen/gql-tag-operations@6.1.0'
-  - '@graphql-codegen/plugin-helpers@7.1.0'
-  - '@graphql-codegen/schema-ast@6.1.0'
-  - '@graphql-codegen/typed-document-node@7.1.0'
-  - '@graphql-codegen/typescript-operations@6.1.0'
-  - '@graphql-codegen/typescript@6.1.0'
-  - '@graphql-codegen/visitor-plugin-common@7.2.0'
-  - '@graphql-tools/utils@11.2.0'
-  - '@vitest/browser-playwright@4.1.10'
-  - '@vitest/browser@4.1.10'
-  - '@vitest/expect@4.1.10'
-  - '@vitest/mocker@4.1.10'
-  - '@vitest/pretty-format@4.1.10'
-  - '@vitest/runner@4.1.10'
-  - '@vitest/snapshot@4.1.10'
-  - '@vitest/spy@4.1.10'
-  - '@vitest/ui@4.1.10'
-  - '@vitest/utils@4.1.10'
+  - "@graphql-codegen/add@7.1.0"
+  - "@graphql-codegen/cli@7.2.0"
+  - "@graphql-codegen/client-preset@6.1.0"
+  - "@graphql-codegen/core@6.2.0"
+  - "@graphql-codegen/gql-tag-operations@6.1.0"
+  - "@graphql-codegen/plugin-helpers@7.1.0"
+  - "@graphql-codegen/schema-ast@6.1.0"
+  - "@graphql-codegen/typed-document-node@7.1.0"
+  - "@graphql-codegen/typescript-operations@6.1.0"
+  - "@graphql-codegen/typescript@6.1.0"
+  - "@graphql-codegen/visitor-plugin-common@7.2.0"
+  - "@graphql-tools/utils@11.2.0"
+  - "@vitest/browser-playwright@4.1.10"
+  - "@vitest/browser@4.1.10"
+  - "@vitest/expect@4.1.10"
+  - "@vitest/mocker@4.1.10"
+  - "@vitest/pretty-format@4.1.10"
+  - "@vitest/runner@4.1.10"
+  - "@vitest/snapshot@4.1.10"
+  - "@vitest/spy@4.1.10"
+  - "@vitest/ui@4.1.10"
+  - "@vitest/utils@4.1.10"
   - vitest@4.1.10

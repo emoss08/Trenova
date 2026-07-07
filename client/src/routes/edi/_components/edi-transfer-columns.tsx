@@ -1,23 +1,12 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { EDITransferStatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
+import { ediTransferStatusChoices } from "@/lib/choices";
 import type { EDITransfer } from "@/types/edi";
 import type { ColumnDef } from "@tanstack/react-table";
 import { LinkIcon } from "lucide-react";
 import { Link } from "react-router";
-import { EDITransferStatusBadge } from "./edi-transfer-status-badge";
-
-const transferStatusOptions = [
-  "Submitted",
-  "MappingRequired",
-  "PendingApproval",
-  "Processing",
-  "Approved",
-  "Rejected",
-  "Expired",
-  "Canceled",
-  "Failed",
-].map((status) => ({ label: status, value: status }));
 
 export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef<EDITransfer>[] {
   return [
@@ -32,7 +21,7 @@ export function getTransferColumns(direction: "inbound" | "outbound"): ColumnDef
         filterable: true,
         sortable: true,
         filterType: "select",
-        filterOptions: transferStatusOptions,
+        filterOptions: [...ediTransferStatusChoices],
         defaultFilterOperator: "eq",
       },
     },

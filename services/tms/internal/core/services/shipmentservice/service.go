@@ -184,6 +184,20 @@ func (s *service) GetUnassigned(
 	return s.repo.GetUnassigned(ctx, req)
 }
 
+func (s *service) GetByIDs(
+	ctx context.Context,
+	req *repositories.GetShipmentsByIDsRequest,
+) ([]*shipment.Shipment, error) {
+	return s.repo.GetByIDs(ctx, req)
+}
+
+func (s *service) SelectOptions(
+	ctx context.Context,
+	req *repositories.ShipmentSelectOptionsRequest,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
 func (s *service) GetUIPolicy(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,

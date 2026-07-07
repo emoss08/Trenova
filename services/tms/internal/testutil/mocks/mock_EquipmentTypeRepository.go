@@ -370,8 +370,8 @@ func (_c *MockEquipmentTypeRepository_List_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockEquipmentTypeRepository_List_Call) Return(listResult *pagination.CursorListResult[*equipmenttype.EquipmentType], err error) *MockEquipmentTypeRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockEquipmentTypeRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*equipmenttype.EquipmentType], err error) *MockEquipmentTypeRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 

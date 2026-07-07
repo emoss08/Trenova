@@ -25,9 +25,11 @@ type FreightInvoicePayload struct {
 	InvoiceID          pulid.ID               `json:"invoiceId,omitempty"`
 	InvoiceNumber      string                 `json:"invoiceNumber,omitempty"`
 	InvoiceDate        int64                  `json:"invoiceDate,omitempty"`
+	DeliveryDate       int64                  `json:"deliveryDate,omitempty"`
 	ShipmentID         pulid.ID               `json:"shipmentId,omitempty"`
 	BOL                string                 `json:"bol,omitempty"`
 	ProNumber          string                 `json:"proNumber,omitempty"`
+	Weight             *int64                 `json:"weight,omitempty"`
 	BillToName         string                 `json:"billToName,omitempty"`
 	BillToAddressLine1 string                 `json:"billToAddressLine1,omitempty"`
 	BillToAddressLine2 string                 `json:"billToAddressLine2,omitempty"`
@@ -42,10 +44,12 @@ type FreightInvoicePayload struct {
 }
 
 type FreightInvoiceCharge struct {
-	Sequence    int64           `json:"sequence"`
-	Code        string          `json:"code,omitempty"`
-	Description string          `json:"description,omitempty"`
-	Amount      decimal.Decimal `json:"amount"`
+	Sequence    int64               `json:"sequence"`
+	Code        string              `json:"code,omitempty"`
+	Description string              `json:"description,omitempty"`
+	Amount      decimal.Decimal     `json:"amount"`
+	Rate        decimal.NullDecimal `json:"rate,omitempty"`
+	Weight      *int64              `json:"weight,omitempty"`
 }
 
 type ShipmentStatusPayload struct {

@@ -1,111 +1,130 @@
 # EDI Module Feature Inventory
 
-This document inventories the EDI module as it exists today and separates current
-capabilities from future-state EDI expectations. Current implementation is
-primarily internal organization-to-organization load tender transfer inside
-Trenova. Future support can expand this foundation into standards-based external
-EDI exchange.
+This document inventories the EDI module as shipped. The module is a
+self-service EDI platform: system administrators configure partners,
+connections, transports, templates, and mappings themselves, for both
+intercompany EDI (organization-to-organization inside a business unit) and
+external partner EDI over the wire.
 
 ## Current Scope
 
-The current module supports internal EDI-style shipment tendering between
-Trenova organizations. It models partners, organization-to-organization
-connections, communication profiles, mapping profiles, load tender transfer
-review, target shipment creation, and transfer lifecycle visibility.
+The module supports two exchange styles end to end:
 
-It is not yet a full external EDI gateway. AS2, SFTP, and VAN profile data can be
-configured, but the module does not yet serialize, transmit, receive, parse, or
-acknowledge X12 documents end to end.
+- **Intercompany**: load tender submit → review/approve → target shipment
+  creation → shipment links → bidirectional status/lifecycle sync, entirely
+  in-app with no wire protocol.
+- **External**: X12 generation from the template engine, durable outbound
+  delivery over SFTP, VAN, or AS2 with automatic retry and dead-lettering,
+  inbound mailbox polling plus an AS2 HTTP receiver, inbound X12 parsing and
+  routing (204/210/990/214/997/999), acknowledgment reconciliation, and
+  outbound 997/999 generation.
 
-## Current Feature Matrix
+## Feature Matrix
 
-| Area | Status | Current capability |
+| Area | Status | Capability |
 | --- | --- | --- |
-| EDI navigation | Implemented | EDI module navigation exposes partners, communication profiles, mapping profiles, inbound transfers, and outbound transfers. |
-| Permission model | Implemented | The module uses the restricted `edi` resource with standard create, read, update, and delete operations. |
-| Partner management | Implemented | Stores internal and external partners with code, name, status, contact details, country, inbound/outbound enablement, settings, linked customer, internal organization, and default profile references. |
-| Internal partner pairs | Implemented | Creates reciprocal internal partners through an internal connection request and acceptance flow. |
-| Connection lifecycle | Implemented | Tracks connection method, capabilities, source/target organizations, source/target partner configuration, pending acceptance, active, suspended, rejected, and revoked states. |
-| Pending connection review | Implemented | Target organizations can accept or reject pending internal connection requests from the EDI partner workspace. |
-| Communication profiles | Implemented | Stores transport profile metadata, method, active/inactive status, config, encrypted secrets, and secret presence state. |
-| Communication profile validation | Partial | Validates required fields for Internal, AS2, SFTP, and VAN profile configurations. Transport execution is not implemented. |
-| Secret handling | Implemented | Communication profile secrets are encrypted when an encryption service is configured and are returned only as presence metadata. |
-| Mapping profiles | Implemented | Maintains per-partner mapping profiles and mapping items from source IDs to target IDs. |
-| Supported mapping entities | Implemented | Supports customer, service type, shipment type, formula template, location, commodity, and accessorial charge mappings. |
-| Mapping preview | Implemented | Shows resolved and unresolved mappings for a transfer before approval. |
-| Inline mapping during approval | Implemented | Inbound transfer review can submit missing mapping items while approving a transfer. |
-| Load tender submission | Implemented | New eligible shipments can be submitted as outbound internal load tenders to enabled internal partners with an active internal connection and active internal profiles. |
-| Tender eligibility | Implemented | Only `New` shipments without an active or accepted tender can be tendered; rejected, expired, and canceled tenders can be retried. |
-| Tender payload snapshot | Implemented | Captures shipment, customer, service, rating, BOL, pieces, weight, temperature, charge, move, stop, commodity, and accessorial data into a JSON payload. |
-| Transfer queues | Implemented | Lists inbound and outbound load tender transfers separately. |
-| Transfer statuses | Implemented | Supports submitted, mapping required, pending approval, processing, approved, rejected, expired, canceled, and failed lifecycle states. |
-| Inbound review | Implemented | Inbound users can inspect tender, freight, route, stop, and mapping details before accepting or rejecting. |
-| Outbound review | Implemented | Outbound users can inspect sent tenders and cancel actionable transfers. |
-| Approval workflow | Implemented | Approval starts a Temporal workflow on the EDI task queue and processes the target shipment creation asynchronously. |
-| Target shipment creation | Implemented | Approved transfers create a target shipment with mapped entities, EDI entry method, accepted tender status, moves, stops, commodities, and additional charges. |
-| Source tender status updates | Implemented | Source shipments move through tendered, accepted, rejected, expired, and canceled tender statuses. |
-| Shipment comments | Implemented | System comments are written for tender submission, acceptance, rejection, cancellation, expiration, and transfer-change review events. |
-| Shipment links | Implemented | Accepted tenders create links between source and target shipments with sync policy, field ownership, and link status. |
-| Field ownership model | Implemented | Default ownership separates source-owned commercial tender fields from target-owned operational execution fields. |
-| Transfer changes | Partial | Transfer change records can be listed, inspected, applied, or rejected, with conflict status and idempotency fields. Automatic change detection/application is not fully represented in the current service flow. |
-| Audit logging | Implemented | EDI partner, connection, profile, transfer, and transfer-change actions log audit events when audit service and actor context are available. |
-| Search/list support | Implemented | Partners, profiles, links, and changes include searchable fields or list repositories for table views. |
+| EDI navigation | Implemented | Partners, communication profiles, mapping profiles, template designer, inbound/outbound transfers, messages, and inbound files. |
+| Permission model | Implemented | The `edi` resource with standard operations gates every route, action, and GraphQL query. |
+| Partner management | Implemented | Internal and external partners with contact details, enablement flags, settings, linked customer, and default profile references. |
+| Internal partner pairs | Implemented | Reciprocal internal partners created through a connection request/acceptance flow. |
+| Connection lifecycle | Implemented | Pending acceptance, active, suspended, rejected, and revoked states with capability flags. |
+| Communication profiles | Implemented | Internal, AS2, SFTP, and VAN methods with per-method config validation, encrypted secrets, and secret presence state. |
+| SFTP transport | Implemented | Outbound push with host-key pinning, password or private-key auth, configurable directories and file naming; inbound mailbox polling with archive-after-read. |
+| VAN transport | Implemented | VAN mailbox identity (provider, mailbox ID) plus SFTP gateway endpoint; outbound defaults to `/{mailboxId}/outbound`. |
+| AS2 transport | Implemented | Outbound: S/MIME signed + encrypted (optional zlib compression) POST to the partner URL with sync or async MDNs; sync MDNs verify disposition, signature, and MIC before the message is marked Sent; async deliveries persist the AS2 Message-ID/MIC and stay Sending until the partner's MDN resolves them. Inbound: unauthenticated `POST /api/v1/edi/as2/inbound/` resolves the profile by AS2-From/AS2-To, decrypts and verifies signatures with the configured certificates, dedupes by checksum, stages into the standard inbound pipeline, and returns (or asynchronously posts) a signed MDN with the received-content MIC. Crypto lives in `shared/as2` on smallstep/pkcs7. |
+| X12 generation | Implemented | 204/210/214/990/997/999 via the template engine with Starlark scripting, transforms, conditions, repeat loops, envelope control, and validation modes. |
+| Control numbers | Implemented | Transactional per-partner/document-type ISA/GS/ST sequences with row locking. |
+| Outbound delivery | Implemented | Per-message Temporal workflow (`DeliverEDIMessageWorkflow`, EDI task queue) with exponential retry (6 attempts, 30s→15m). Lifecycle: Queued → Sending → Sent / Failed → DeadLettered. |
+| Delivery retry | Implemented | `POST /edi/messages/{id}/retry-delivery/` and a Retry Delivery action on the Messages page for failed or dead-lettered messages. |
+| Inbound polling | Implemented | Temporal schedule `edi-inbound-poll` (every 2 minutes, overlap skip) polls every active SFTP/VAN profile that has an `inboundDirectory` configured and a partner assigned. |
+| Inbound staging | Implemented | Files are checksummed, deduplicated (per-profile checksum and per-partner ISA control number), stored in `edi_inbound_files`, and archived on the remote mailbox. |
+| Inbound parsing | Implemented | Envelope and transaction parsing via the X12 inspector; parse failures quarantine the file, per-transaction failures mark it partially processed. |
+| 997/999 reconciliation | Implemented | Inbound acknowledgments are matched to sent messages by partner and control numbers; message ack status becomes Accepted/Rejected with diagnostics. |
+| Inbound 990 | Implemented | Tender responses resolve the outbound tender recipient by shipment reference and set the shipment tender status to Accepted/Rejected. |
+| Inbound 214 | Implemented | Status updates resolve the tendered shipment and record an auditable system comment with the AT7 status/reason codes. Automatic lifecycle mutation is intentionally not applied. |
+| Inbound 210 | Implemented | Carrier freight invoices parse into a structured payload (B3/C3/N9/L11/G62/N1 loops/LX-L5-L0-L1/L3), correlate to the tendered shipment by reference, resolve the bill-to party through customer mappings, and persist an `edi_carrier_invoices` reconciliation record with variance against the tendered rate plus a shipment comment. |
+| Inbound 204 | Implemented | External load tenders become inbound transfers reviewed in the existing transfers UI. Header entities map through sentinel `DEFAULT` mapping keys; locations/commodities map by partner codes. Purpose `04` changes supersede pending tenders. |
+| Outbound acknowledgments | Implemented | When an inbound document profile expects acks, 997/999s are generated from auto-provisioned base templates and delivered through the outbound queue. |
+| External tender responses | Implemented | Approving or rejecting an external inbound transfer generates an outbound 990 response automatically. |
+| Mapping profiles | Implemented | Per-partner source→target entity mapping with preview, unresolved detection, and inline mapping during approval. |
+| Intercompany sync | Implemented | Shipment links with sync policies, tender change detection/supersession, and 214-style status mirroring between linked shipments. |
+| Messages monitoring | Implemented | `/edi/messages` lists every generated/received document with delivery status, attempts, ack status, and a read-only detail panel with raw X12. |
+| Inbound file monitoring | Implemented | `/edi/inbound-files` lists received files with processing state, failure reasons, linked transactions, and a Reprocess action for quarantined/partial files. |
+| GraphQL lists | Implemented | Partners, communication profiles, transfers, messages, and inbound files are served by persisted GraphQL connection queries; mutations and detail reads remain REST. |
+| Template designer | Implemented | Draft/certify/activate/archive lifecycle, segment editing, X12 inspector, document preview and archive. |
+| Operations dashboard | Implemented | `/edi/overview` (the module landing page) shows live grouped counts for delivery/ack status, inbound file status, and stuck inbound transfers, plus an overdue-ack tile and a recent-failures feed that deep-links into the message/inbound-file panels. Refreshes every 30 seconds via the `ediSummary` GraphQL query. |
+| Failure alerting | Implemented | Dead-lettered messages and quarantined inbound files raise high-priority in-app notifications (org/BU-scoped, realtime push) with deep links; alerts are throttled per partner and event type within a 15-minute window via notification correlation IDs. |
+| Test-case management | Implemented | `/edi/test-cases` provides full CRUD over certification scenarios (document profile + payload + expected diagnostics) with a Run Preview action that renders the payload through the partner template and opens the X12 inspector. |
+| Audit logging | Implemented | Partner, connection, profile, transfer, and change actions log audit events with actor context. |
 
-## Current Data Model
+## Not Implemented
 
-The current module persists these main records:
-
-- `edi_partners`: partner identity, direction flags, contact data, linked
-  internal organization/customer, and default profile references.
-- `edi_connections`: source/target organization relationship, method,
-  capabilities, partner configs, and connection lifecycle metadata.
-- `edi_communication_profiles`: method-specific transport/envelope config,
-  encrypted secrets, partner/connection links, and active/inactive state.
-- `edi_mapping_profiles` and `edi_mapping_profile_items`: per-partner entity ID
-  translation rules.
-- `edi_load_tender_transfers`: source/target shipment tender payload,
-  lifecycle state, mapping snapshot, workflow IDs, approval/rejection/cancel
-  metadata, and failure reason.
-- `edi_shipment_links`: linkage between source and target shipments after
-  approval, sync policy, field ownership, and link status.
-- `edi_transfer_changes`: reviewed change records with direction, type,
-  conflict status, idempotency key, payload, diff, and review/apply metadata.
-
-## Future-State Gap Checklist
-
-Transportation EDI commonly centers on X12 transaction sets such as 204 Motor
-Carrier Load Tender, 990 Response to a Load Tender, 214 Shipment Status, 210
-Motor Carrier Freight Details and Invoice, and 997/999 acknowledgments. The
-current module has strong internal tender workflow foundations, but the items
-below are still future-state unless explicitly implemented later.
-
-| Future capability | Status | Notes |
+| Area | Status | Notes |
 | --- | --- | --- |
-| X12 204 outbound generation | Not implemented | Convert Trenova load tender data into partner-specific X12 204 envelopes and segments. |
-| X12 204 inbound parsing | Not implemented | Parse external customer/broker load tenders into draft or reviewable Trenova shipments. |
-| X12 990 tender response | Not implemented | Send and receive accept/decline responses tied to load tender transfers. |
-| X12 214 shipment status | Not implemented | Send and receive pickup, departure, arrival, delivery, delay, and exception status events. |
-| X12 210 freight invoice | Not implemented | Generate freight invoice EDI from billing/invoice data and ingest partner invoice responses where applicable. |
-| 997/999 acknowledgments | Not implemented | Generate and process functional or implementation acknowledgments for received X12 documents. |
-| ISA/GS/ST control number management | Not implemented | Allocate, persist, validate, and reconcile interchange, group, and transaction control numbers. |
-| External transport execution | Not implemented | Run AS2, SFTP, or VAN send/receive jobs using communication profile config and secrets. |
-| Inbound mailbox polling | Not implemented | Poll SFTP/VAN mailboxes or receive AS2 messages and hand documents to validation/parsing. |
-| AS2 MDN handling | Not implemented | Support signed/encrypted AS2 payloads and synchronous/asynchronous MDNs. |
-| Document validation | Not implemented | Validate syntax, envelope values, required segments, partner rules, duplicate control numbers, and business constraints. |
-| Message archive | Not implemented | Store raw inbound/outbound payloads, parsed payloads, acknowledgments, errors, and replay metadata. |
-| Retry and dead-letter handling | Not implemented | Retry transient transport failures and isolate poison messages for manual recovery. |
-| Partner certification/testing | Not implemented | Provide test-mode profiles, sample messages, validation reports, and partner onboarding evidence. |
-| Operational monitoring | Not implemented | Add dashboards or alerts for failed transmissions, missing acknowledgments, stale tenders, and partner outages. |
-| Exception workbench | Not implemented | Centralize mapping errors, validation errors, duplicate messages, rejected acknowledgments, and replay actions. |
-| Multi-document partner capabilities | Planned | Existing connection capability fields already anticipate load tender, shipment status, and invoice features. |
+| Automatic 214 lifecycle application | Not implemented | External carrier statuses are recorded as comments; automatic stop/lifecycle mutation requires a per-partner policy design. |
 
-## References
+## Data Model
 
-- X12 transaction set catalog:
-  <https://x12.org/products/transaction-sets>
-- Stedi X12 transaction set reference:
-  <https://www.stedi.com/edi/x12-003020/transaction-set>
-- EDI transportation cycle overview:
-  <https://ediacademy.com/blog/edi-transportation-cycle/>
-- EDI 204 Motor Carrier Load Tender overview:
-  <https://ediacademy.com/blog/edi-204-motor-carrier-load-tender/>
+- `edi_partners`, `edi_connections`, `edi_communication_profiles`,
+  `edi_mapping_profiles`/`edi_mapping_profile_items`: partner, handshake,
+  transport, and translation configuration.
+- `edi_templates`/`edi_template_versions`/`edi_template_segments` and the
+  transaction-set dictionary tables: the template engine.
+- `edi_partner_document_profiles` and `edi_control_number_sequences`: per
+  transaction-set envelope/ack settings and control numbers.
+- `edi_messages`: every generated or received X12 document with control
+  numbers, delivery state, and acknowledgment state (`inbound_file_id` links
+  received transactions to their source file).
+- `edi_inbound_files`: staged mailbox files with checksums, ISA identity,
+  processing status, and failure reasons.
+- `edi_load_tender_transfers`, `edi_shipment_links`, `edi_tender_recipients`,
+  `edi_tender_changes`, `edi_transfer_changes`: tender lifecycle, linkage, and
+  change tracking (`inbound_message_id` marks external inbound transfers).
+
+## Operations Runbook
+
+### Stuck outbound deliveries
+
+1. Open the Messages page and filter delivery status `Failed` or `DeadLettered`;
+   the last error is shown in the detail panel.
+2. In the Temporal UI, search for workflow ID `edi-deliver-message-{messageId}`
+   on the EDI task queue to see attempt history.
+3. Fix the cause (host key, credentials, directory permissions) on the
+   communication profile, then use **Retry Delivery**. Retry restarts the same
+   workflow ID, so a still-running retry cycle is never duplicated.
+
+### Quarantined inbound files
+
+1. Open the Inbound Files page and filter status `Quarantined` or
+   `PartiallyProcessed`; the failure reason lists per-transaction warnings.
+2. Common causes: unmapped entities (complete the partner mapping profile via
+   the transfer approval screen), unmatched acknowledgments (control number
+   mismatch), or malformed X12.
+3. Use **Reprocess File** after fixing the cause. Duplicate interchanges are
+   detected by ISA control number and marked `Duplicate` instead of
+   reprocessing.
+
+### Inbound polling
+
+- Schedule ID `edi-inbound-poll` (Temporal), every 2 minutes, overlap policy
+  skip. A profile is polled only when it is Active, method SFTP or VAN, has a
+  partner assigned, and has a non-empty `inboundDirectory` config value.
+- Processed remote files are moved to `archiveDirectory` (default
+  `{inboundDirectory}/processed`). Archive failures are logged and tolerated —
+  checksum dedup prevents double processing.
+
+### Enabling a new external partner (checklist)
+
+1. Create the partner (kind External) and, optionally, link the customer.
+2. Create an SFTP or VAN communication profile for the partner, including the
+   known host key, credentials, and inbound/outbound directories.
+3. Certify and activate a template version (or rely on the seeded base
+   templates) and create the partner document profiles per transaction set,
+   with envelope identifiers.
+4. Populate the partner mapping profile: `DEFAULT` keys for customer, service
+   type, and rating formula, plus location/commodity codes as they appear in
+   partner documents (unresolved entities can also be mapped inline during the
+   first transfer approval).
+5. Send a test 204 via Documents → Generate and verify delivery, then drop a
+   test file into the inbound directory and verify it appears under Inbound
+   Files.

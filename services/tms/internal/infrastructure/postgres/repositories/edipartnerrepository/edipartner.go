@@ -291,3 +291,67 @@ func (r *repository) GetReciprocalInternalPartner(
 
 	return entity, nil
 }
+
+func (r *repository) ListCursor(
+	ctx context.Context,
+	req *repositories.ListEDIPartnersRequest,
+) (*pagination.CursorListResult[*edi.EDIPartner], error) {
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*edi.EDIPartner)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = querybuilder.ApplyFiltersWithoutSort(sq, "ep", req.Filter, (*edi.EDIPartner)(nil))
+			return applyPartnerListFilters(sq, req)
+		}).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
+			rel := buncolgen.EDIPartnerRelations
+			return dba.
+				NewSelect().
+				Model(entities).
+				ColumnExpr(buncolgen.EDIPartnerTable.All()).
+				Relation(rel.InternalOrganization).
+				Relation(rel.Connection).
+				Relation(rel.DefaultTransport)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			sq, applyErr := querybuilder.ApplyCursorFilters(
+				sq,
+				"ep",
+				req.Filter,
+				req.Cursor,
+				(*edi.EDIPartner)(nil),
+			)
+			if applyErr != nil {
+				return sq, applyErr
+			}
+			return applyPartnerListFilters(sq, req), nil
+		},
+	})
+}
+
+func applyPartnerListFilters(
+	q *bun.SelectQuery,
+	req *repositories.ListEDIPartnersRequest,
+) *bun.SelectQuery {
+	cols := buncolgen.EDIPartnerColumns
+	if req.CustomerID.IsNotNil() {
+		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
+	}
+	if req.EnabledForOutbound {
+		q = q.Where(cols.EnabledForOutbound.IsTrue())
+	}
+	if req.Status != "" {
+		q = q.Where(cols.Status.Eq(), req.Status)
+	}
+	return q
+}

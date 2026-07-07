@@ -1,14 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -21,19 +12,24 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
+import { usePermissionStore } from "@/stores/permission-store";
 import type { EDIConnection } from "@/types/edi";
+import { Operation, Resource } from "@/types/permission";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatUnix } from "../edi-display-utils";
 import { invalidateEDIConnections } from "./edi-panel-invalidation";
+import { EDIReasonDialog } from "./edi-reason-dialog";
 
 export function PendingConnectionsPanel() {
   const queryClient = useQueryClient();
   const currentOrganizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
+  const canUpdate = usePermissionStore((state) =>
+    state.hasPermission(Resource.EDI, Operation.Update),
+  );
   const [rejecting, setRejecting] = useState<EDIConnection | null>(null);
-  const [reason, setReason] = useState("");
   const { data, isLoading } = useQuery(queries.edi.connections("?limit=25"));
   const pending = (data?.results ?? []).filter(
     (connection) =>
@@ -49,12 +45,11 @@ export function PendingConnectionsPanel() {
     onError: () => toast.error("Failed to accept EDI connection"),
   });
   const rejectMutation = useApiMutation({
-    mutationFn: (connection: EDIConnection) =>
+    mutationFn: ({ connection, reason }: { connection: EDIConnection; reason: string }) =>
       apiService.ediService.rejectConnection(connection.id, { reason }),
     onSuccess: async () => {
       toast.success("EDI connection rejected");
       setRejecting(null);
-      setReason("");
       await invalidateEDIConnections(queryClient);
     },
     onError: () => toast.error("Failed to reject EDI connection"),
@@ -97,20 +92,22 @@ export function PendingConnectionsPanel() {
               <TableCell>{connection.method}</TableCell>
               <TableCell>{formatUnix(connection.requestedAt)}</TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setRejecting(connection)}>
-                    <XIcon data-icon="inline-start" />
-                    Reject
-                  </Button>
-                  <Button
-                    size="sm"
-                    isLoading={acceptMutation.isPending}
-                    onClick={() => acceptMutation.mutate(connection.id)}
-                  >
-                    <CheckIcon data-icon="inline-start" />
-                    Accept
-                  </Button>
-                </div>
+                {canUpdate && (
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setRejecting(connection)}>
+                      <XIcon data-icon="inline-start" />
+                      Reject
+                    </Button>
+                    <Button
+                      size="sm"
+                      isLoading={acceptMutation.isPending}
+                      onClick={() => acceptMutation.mutate(connection.id)}
+                    >
+                      <CheckIcon data-icon="inline-start" />
+                      Accept
+                    </Button>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -123,35 +120,20 @@ export function PendingConnectionsPanel() {
           )}
         </TableBody>
       </Table>
-      <Sheet open={!!rejecting} onOpenChange={(open) => !open && setRejecting(null)}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Reject EDI Connection</SheetTitle>
-            <SheetDescription>
-              {rejecting?.sourceOrganization?.name ?? rejecting?.id}
-            </SheetDescription>
-          </SheetHeader>
-          <div className="px-4">
-            <Input
-              placeholder="Rejection reason"
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </div>
-          <SheetFooter>
-            <Button variant="outline" onClick={() => setRejecting(null)}>
-              Cancel
-            </Button>
-            <Button
-              disabled={!reason.trim() || !rejecting}
-              isLoading={rejectMutation.isPending}
-              onClick={() => rejecting && rejectMutation.mutate(rejecting)}
-            >
-              Reject
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <EDIReasonDialog
+        open={!!rejecting}
+        onOpenChange={(open) => !open && setRejecting(null)}
+        title="Reject EDI Connection"
+        description={
+          rejecting
+            ? `Reject the connection request from ${rejecting.sourceOrganization?.name ?? rejecting.sourceOrganizationId}.`
+            : undefined
+        }
+        placeholder="Reason shared with the requesting organization"
+        confirmLabel="Reject Connection"
+        isPending={rejectMutation.isPending}
+        onConfirm={(reason) => rejecting && rejectMutation.mutate({ connection: rejecting, reason })}
+      />
     </div>
   );
 }

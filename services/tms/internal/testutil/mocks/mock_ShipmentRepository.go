@@ -1356,6 +1356,74 @@ func (_c *MockShipmentRepository_RunAutoDelayShipmentsForTenant_Call) RunAndRetu
 	return _c
 }
 
+// SelectOptions provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) SelectOptions(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectOptions")
+	}
+
+	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) *pagination.ListResult[*shipment.Shipment]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_SelectOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectOptions'
+type MockShipmentRepository_SelectOptions_Call struct {
+	*mock.Call
+}
+
+// SelectOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ShipmentSelectOptionsRequest
+func (_e *MockShipmentRepository_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockShipmentRepository_SelectOptions_Call {
+	return &MockShipmentRepository_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
+}
+
+func (_c *MockShipmentRepository_SelectOptions_Call) Run(run func(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest)) *MockShipmentRepository_SelectOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ShipmentSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ShipmentSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_SelectOptions_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentRepository_SelectOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentRepository_SelectOptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TransferOwnership provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) TransferOwnership(ctx context.Context, req *repositories.TransferOwnershipRequest) (*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)

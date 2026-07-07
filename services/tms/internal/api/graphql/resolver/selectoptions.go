@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
@@ -89,6 +91,12 @@ func (r *Resolver) selectOptionRegistry() map[gqlmodel.SelectOptionResource]sele
 		},
 		gqlmodel.SelectOptionResourceUsState: {
 			resolve: r.resolveUSStateSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceShipment: {
+			resolve: r.resolveShipmentSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceEdiTransfer: {
+			resolve: r.resolveEDITransferSelectOptions,
 		},
 	}
 }
@@ -355,6 +363,85 @@ func (r *Resolver) resolveUSStateSelectOptions(
 	)
 }
 
+func (r *Resolver) resolveShipmentSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.shipmentService.GetByIDs(
+			ctx,
+			&repositories.GetShipmentsByIDsRequest{
+				TenantInfo:  req.tenantInfo,
+				ShipmentIDs: req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(req.ids, entities, shipmentID, shipmentSelectOptionItem)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.shipmentService.SelectOptions(
+		ctx,
+		&repositories.ShipmentSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		shipmentSelectOptionItem,
+	)
+}
+
+func (r *Resolver) resolveEDITransferSelectOptions(
+	ctx context.Context,
+	req selectOptionsRequest,
+) (*gqlmodel.SelectOptionConnection, error) {
+	if len(req.ids) > 0 {
+		entities, err := r.ediService.GetTransfersByIDs(
+			ctx,
+			repositories.GetEDITransfersByIDsRequest{
+				TenantInfo:  req.tenantInfo,
+				TransferIDs: req.ids,
+			},
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		items := orderedSelectOptionItems(
+			req.ids,
+			entities,
+			ediTransferID,
+			ediTransferSelectOptionItem,
+		)
+		return selectOptionConnection(items, len(items), 0)
+	}
+
+	result, err := r.ediService.TransferSelectOptions(
+		ctx,
+		&repositories.EDITransferSelectOptionsRequest{
+			SelectQueryRequest: req.selectQuery,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return selectOptionListConnection(
+		result,
+		req.selectQuery.Pagination.SafeOffset(),
+		ediTransferSelectOptionItem,
+	)
+}
+
 func equipmentTypeClassesFilter(filters map[string]any) []string {
 	value, ok := filters["classes"]
 	if !ok {
@@ -587,6 +674,74 @@ func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {
 			"countryIso3":  entity.CountryIso3,
 		},
 	}
+}
+
+func shipmentSelectOptionItem(entity *shipment.Shipment) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		shipmentSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func shipmentSelectOption(entity *shipment.Shipment) *gqlmodel.SelectOption {
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.ProNumber,
+		Description: stringPtr(entity.BOL),
+		Meta: map[string]any{
+			"status":    string(entity.Status),
+			"proNumber": entity.ProNumber,
+			"bol":       entity.BOL,
+		},
+	}
+}
+
+func ediTransferSelectOptionItem(entity *edi.EDITransfer) selectOptionConnectionItem {
+	return selectOptionConnectionItemFor(
+		ediTransferSelectOption(entity),
+		entity.CreatedAt,
+		entity.ID,
+	)
+}
+
+func ediTransferSelectOption(entity *edi.EDITransfer) *gqlmodel.SelectOption {
+	label := entity.TenderPayload.BOL
+	if label == "" {
+		label = "Load tender " + entity.ID.String()
+	}
+
+	meta := map[string]any{
+		"status":        string(entity.Status),
+		"bol":           entity.TenderPayload.BOL,
+		"customerLabel": entity.TenderPayload.CustomerLabel,
+	}
+	if entity.SourcePartner != nil {
+		meta["sourcePartner"] = entity.SourcePartner.Name
+	}
+	if entity.TargetPartner != nil {
+		meta["targetPartner"] = entity.TargetPartner.Name
+	}
+
+	description := entity.TenderPayload.CustomerLabel
+	if description == "" {
+		description = entity.TenderPayload.ServiceTypeLabel
+	}
+
+	return &gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       label,
+		Description: stringPtr(description),
+		Meta:        meta,
+	}
+}
+
+func shipmentID(entity *shipment.Shipment) pulid.ID {
+	return entity.ID
+}
+
+func ediTransferID(entity *edi.EDITransfer) pulid.ID {
+	return entity.ID
 }
 
 func trailerID(entity *trailer.Trailer) pulid.ID {

@@ -302,8 +302,8 @@ func (_c *MockWorkerRepository_List_Call) Run(run func(ctx context.Context, req 
 	return _c
 }
 
-func (_c *MockWorkerRepository_List_Call) Return(listResult *pagination.CursorListResult[*worker.Worker], err error) *MockWorkerRepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockWorkerRepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*worker.Worker], err error) *MockWorkerRepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 

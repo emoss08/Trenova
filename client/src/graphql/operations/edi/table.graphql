@@ -1,0 +1,315 @@
+fragment EdiPartnerRowFields on EdiPartner {
+  id
+  businessUnitId
+  organizationId
+  kind
+  status
+  code
+  name
+  description
+  internalOrganizationId
+  customerId
+  defaultTransportId
+  defaultMappingProfileId
+  country
+  timezone
+  contactName
+  contactEmail
+  contactPhone
+  enabledForInbound
+  enabledForOutbound
+  version
+  createdAt
+  updatedAt
+  internalOrganization {
+    id
+    name
+  }
+  connection {
+    id
+    method
+    status
+  }
+  defaultTransport {
+    id
+    name
+    method
+  }
+}
+
+query EdiPartnerTable($input: DataTableConnectionInput!) {
+  ediPartners(input: $input) {
+    edges {
+      node {
+        ...EdiPartnerRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  ediConnectionId
+  method
+  status
+  name
+  description
+  secretState {
+    key
+  }
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+}
+
+query EdiCommunicationProfileTable($input: DataTableConnectionInput!) {
+  ediCommunicationProfiles(input: $input) {
+    edges {
+      node {
+        ...EdiCommunicationProfileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiTransferRowFields on EdiTransfer {
+  id
+  sourceOrganizationId
+  sourceBusinessUnitId
+  targetOrganizationId
+  targetBusinessUnitId
+  sourcePartnerId
+  targetPartnerId
+  sourceShipmentId
+  targetShipmentId
+  inboundMessageId
+  status
+  tenderPayload
+  mappingSnapshot
+  rejectionReason
+  failureReason
+  submittedAt
+  processedAt
+  version
+  createdAt
+  updatedAt
+  sourcePartner {
+    id
+    code
+    name
+  }
+  targetPartner {
+    id
+    code
+    name
+  }
+}
+
+query EdiTransferTable($input: DataTableConnectionInput!, $direction: EdiTransferDirection!) {
+  ediTransfers(input: $input, direction: $direction) {
+    edges {
+      node {
+        ...EdiTransferRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiMessageRowFields on EdiMessage {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  documentTypeId
+  partnerDocumentProfileId
+  shipmentId
+  transferId
+  inboundFileId
+  direction
+  transactionSet
+  x12Version
+  status
+  interchangeControlNumber
+  groupControlNumber
+  transactionControlNumber
+  segmentCount
+  deliveryStatus
+  deliveryRemotePath
+  deliveryAttempts
+  deliveryLastAttemptAt
+  deliverySentAt
+  deliveryLastError
+  ackStatus
+  ackMessageId
+  ackReceivedAt
+  ackLastError
+  generatedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}
+
+query EdiMessageTable($input: DataTableConnectionInput!) {
+  ediMessages(input: $input) {
+    edges {
+      node {
+        ...EdiMessageRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiInboundFileRowFields on EdiInboundFile {
+  id
+  businessUnitId
+  organizationId
+  communicationProfileId
+  ediPartnerId
+  method
+  remotePath
+  fileName
+  checksum
+  sizeBytes
+  interchangeControlNumber
+  isaSenderQualifier
+  isaSenderId
+  isaReceiverQualifier
+  isaReceiverId
+  status
+  failureReason
+  transactionCount
+  receivedAt
+  processedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}
+
+query EdiInboundFileTable($input: DataTableConnectionInput!) {
+  ediInboundFiles(input: $input) {
+    edges {
+      node {
+        ...EdiInboundFileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiMappingProfileRowFields on EdiMappingProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  name
+  description
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+  entries {
+    id
+    entityType
+    sourceId
+    sourceLabel
+    targetId
+    targetLabel
+  }
+}
+
+query EdiMappingProfileTable($input: DataTableConnectionInput!) {
+  ediMappingProfiles(input: $input) {
+    edges {
+      node {
+        ...EdiMappingProfileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+fragment EdiTestCaseRowFields on EdiTestCase {
+  id
+  businessUnitId
+  organizationId
+  partnerDocumentProfileId
+  name
+  description
+  expectedWarnings
+  expectedErrors
+  version
+  createdAt
+  updatedAt
+  documentProfile {
+    id
+    name
+    direction
+    transactionSet
+    partner {
+      id
+      code
+      name
+    }
+  }
+}
+
+query EdiTestCaseTable($input: DataTableConnectionInput!, $partnerDocumentProfileId: ID) {
+  ediTestCases(input: $input, partnerDocumentProfileId: $partnerDocumentProfileId) {
+    edges {
+      node {
+        ...EdiTestCaseRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

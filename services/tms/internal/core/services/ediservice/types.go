@@ -244,3 +244,25 @@ type ApproveLoadTenderTransferWorkflowResult struct {
 	TargetShipmentID pulid.ID `json:"targetShipmentId"`
 	ProcessedAt      int64    `json:"processedAt"`
 }
+
+type DeliverEDIMessageWorkflowPayload struct {
+	MessageID  pulid.ID              `json:"messageId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type DeliverEDIMessageWorkflowResult struct {
+	MessageID      pulid.ID                  `json:"messageId"`
+	DeliveryStatus edi.MessageDeliveryStatus `json:"deliveryStatus"`
+	RemotePath     string                    `json:"remotePath"`
+}
+
+type MarkEDIMessageDeadLetteredPayload struct {
+	MessageID  pulid.ID              `json:"messageId"`
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Reason     string                `json:"reason"`
+}
+
+type RetryMessageDeliveryRequest struct {
+	MessageID  pulid.ID              `json:"-"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}

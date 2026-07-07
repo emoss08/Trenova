@@ -143,6 +143,14 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *repositories.GetShipmentByIDRequest,
 	) (*shipment.Shipment, error)
+	GetByIDs(
+		ctx context.Context,
+		req *repositories.GetShipmentsByIDsRequest,
+	) ([]*shipment.Shipment, error)
+	SelectOptions(
+		ctx context.Context,
+		req *repositories.ShipmentSelectOptionsRequest,
+	) (*pagination.ListResult[*shipment.Shipment], error)
 	GetUIPolicy(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

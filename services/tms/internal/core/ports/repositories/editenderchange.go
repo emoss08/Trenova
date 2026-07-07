@@ -20,6 +20,11 @@ type GetEDITenderChangeByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetEDITenderChangeByOutboundMessageIDRequest struct {
+	OutboundMessageID pulid.ID              `json:"outboundMessageId"`
+	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type CreateEDITenderChangeIdempotentResult struct {
 	TenderChange *edi.TenderChange `json:"tenderChange"`
 	Created      bool              `json:"created"`
@@ -39,6 +44,10 @@ type EDITenderChangeRepository interface {
 	GetTenderChangeByID(
 		ctx context.Context,
 		req GetEDITenderChangeByIDRequest,
+	) (*edi.TenderChange, error)
+	GetTenderChangeByOutboundMessageID(
+		ctx context.Context,
+		req GetEDITenderChangeByOutboundMessageIDRequest,
 	) (*edi.TenderChange, error)
 	CreateTenderChangeIdempotent(
 		ctx context.Context,

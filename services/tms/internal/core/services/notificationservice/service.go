@@ -34,6 +34,13 @@ func New(p Params) *Service {
 	}
 }
 
+func (s *Service) ExistsRecent(
+	ctx context.Context,
+	req repositories.ExistsRecentNotificationRequest,
+) (bool, error) {
+	return s.repo.ExistsRecent(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *notification.Notification,

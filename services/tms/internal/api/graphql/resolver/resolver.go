@@ -7,6 +7,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
+	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
@@ -32,6 +34,8 @@ type Params struct {
 	ShipmentEventService         services.ShipmentEventService
 	ShipmentImportAssistant      services.ShipmentImportAssistantService `optional:"true"`
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
+	EDIService                   *ediservice.Service
+	EDIInboundService            *ediinboundservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
@@ -49,6 +53,8 @@ type Resolver struct {
 	shipmentCommentService       services.ShipmentCommentService
 	shipmentEventService         services.ShipmentEventService
 	shipmentImportAssistant      services.ShipmentImportAssistantService
+	ediService                   *ediservice.Service
+	ediInboundService            *ediinboundservice.Service
 	equipmentTypeService         *equipmenttypeservice.Service
 	equipmentManufacturerService *equipmentmanufacturerservice.Service
 	tractorService               *tractorservice.Service
@@ -68,6 +74,8 @@ func New(p Params) *Resolver {
 		shipmentCommentService:       p.ShipmentCommentService,
 		shipmentEventService:         p.ShipmentEventService,
 		shipmentImportAssistant:      p.ShipmentImportAssistant,
+		ediService:                   p.EDIService,
+		ediInboundService:            p.EDIInboundService,
 		equipmentTypeService:         p.EquipmentTypeService,
 		equipmentManufacturerService: p.EquipmentManufacturerService,
 		tractorService:               p.TractorService,

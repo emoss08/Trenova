@@ -16,49 +16,23 @@ func ApplyFilters[T domaintypes.PostgresSearchable](
 
 	qb := NewWithPostgresSearch(query, tableAlias, fieldConfig, entity)
 	qb.WithTraversalSupport(true)
-
 	qb.ApplyTenantFilters(filter.TenantInfo)
 
-	if len(filter.FieldFilters) > 0 {
-		qb.ApplyFilters(filter.FieldFilters)
-	}
+	return applyFilterPipeline(qb, fieldConfig, filter)
+}
 
-	if len(filter.FilterGroups) > 0 {
-		qb.ApplyFilterGroups(filter.FilterGroups)
-	}
+func ApplyFiltersWithoutTenantScope[T domaintypes.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	filter *pagination.QueryOptions,
+	entity T,
+) *bun.SelectQuery {
+	fieldConfig := GetFieldConfiguration(entity)
 
-	if len(filter.GeoFilters) > 0 {
-		qb.ApplyGeoFilters(filter.GeoFilters)
-	}
+	qb := NewWithPostgresSearch(query, tableAlias, fieldConfig, entity)
+	qb.WithTraversalSupport(true)
 
-	if len(filter.AggregateFilters) > 0 {
-		qb.ApplyAggregateFilters(filter.AggregateFilters)
-	}
-
-	if filter.Query != "" {
-		searchFields := ExtractSearchFields(fieldConfig)
-		if filter.UseCursor {
-			qb.ApplyTextSearchFilter(filter.Query, searchFields)
-		} else {
-			qb.ApplyTextSearch(filter.Query, searchFields)
-		}
-	}
-
-	if filter.UseCursor {
-		plan, err := qb.applyCursorSort(filter, filter.Cursor)
-		if err != nil {
-			filter.CursorError = err
-			return qb.GetQuery()
-		}
-		filter.CursorSort = plan.Shape()
-		return qb.GetQuery()
-	}
-
-	if len(filter.Sort) > 0 {
-		qb.ApplySort(filter.Sort)
-	}
-
-	return qb.GetQuery()
+	return applyFilterPipeline(qb, fieldConfig, filter)
 }
 
 func ApplyFiltersWithConfig[T domaintypes.PostgresSearchable](
@@ -72,6 +46,14 @@ func ApplyFiltersWithConfig[T domaintypes.PostgresSearchable](
 	qb.WithTraversalSupport(true)
 	qb.ApplyTenantFilters(filter.TenantInfo)
 
+	return applyFilterPipeline(qb, fieldConfig, filter)
+}
+
+func applyFilterPipeline(
+	qb *QueryBuilder,
+	fieldConfig *domaintypes.FieldConfiguration,
+	filter *pagination.QueryOptions,
+) *bun.SelectQuery {
 	if len(filter.FieldFilters) > 0 {
 		qb.ApplyFilters(filter.FieldFilters)
 	}

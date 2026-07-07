@@ -450,6 +450,10 @@ type GetShipmentsByIDsRequest struct {
 	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
 }
 
+type ShipmentSelectOptionsRequest struct {
+	SelectQueryRequest *pagination.SelectQueryRequest `json:"-"`
+}
+
 type UpdateShipmentStatusRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	ShipmentID pulid.ID              `json:"shipmentId"`
@@ -470,6 +474,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetShipmentsByIDsRequest,
 	) ([]*shipment.Shipment, error)
+	SelectOptions(
+		ctx context.Context,
+		req *ShipmentSelectOptionsRequest,
+	) (*pagination.ListResult[*shipment.Shipment], error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *GetPreviousRatesRequest,

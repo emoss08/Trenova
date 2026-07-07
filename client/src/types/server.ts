@@ -105,6 +105,7 @@ export type BaseEndpoint =
   | "/accounting/bank-receipt-batches/select-options/sources/"
   | "/accounting/bank-receipt-work-items/"
   | "/edi/partners/"
+  | "/edi/connections/"
   | "/edi/communication-profiles/"
   | "/edi/mapping-profiles/"
   | "/edi/catalog/document-types/"

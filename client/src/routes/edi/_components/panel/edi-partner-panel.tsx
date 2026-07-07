@@ -2,6 +2,7 @@ import { DataTablePanelContainer } from "@/components/data-table/data-table-pane
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { usePermissionStore } from "@/stores/permission-store";
@@ -13,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2Icon, GitBranchIcon, HandshakeIcon, ListChecksIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import {
   createInternalPartnerPairSchema,
@@ -56,27 +57,30 @@ function CreatePartnerPanel({
     defaultValues: getCreatePairDefaults(),
     mode: "onChange",
   });
-  const { reset, setValue, watch } = pairForm;
-  const pairValues = watch();
+  const { control: pairControl, reset, setValue } = pairForm;
+  const targetCode = useWatch({ control: pairControl, name: "targetCode" });
+  const targetName = useWatch({ control: pairControl, name: "targetName" });
   const { data: currentOrganization } = useQuery({
-    queryKey: ["organization", "edi-current", currentOrganizationId],
-    queryFn: () => apiService.organizationService.getByID(currentOrganizationId),
+    ...queries.organization.detail(currentOrganizationId),
     enabled: open && Boolean(currentOrganizationId),
   });
   const createExternalMutation = useApiMutation({
     mutationFn: (values: EDIPartnerFormValues) =>
       apiService.ediService.createPartner(toPartnerRequest(values)),
+    setFormError: externalForm.setError,
+    resourceName: "EDI Partner",
     onSuccess: async () => {
       toast.success("External EDI partner created");
       externalForm.reset(getPartnerFormDefaults());
       onOpenChange(false);
       await invalidateEDIPartners(queryClient);
     },
-    onError: () => toast.error("Failed to create EDI partner"),
   });
   const createConnectionMutation = useApiMutation({
     mutationFn: (values: CreateInternalPartnerPairFormValues) =>
       apiService.ediService.createConnection(toConnectionRequest(values)),
+    setFormError: pairForm.setError,
+    resourceName: "EDI Connection",
     onSuccess: async () => {
       toast.success("EDI connection requested");
       reset(getCreatePairDefaults());
@@ -84,15 +88,7 @@ function CreatePartnerPanel({
       await invalidateEDIPartners(queryClient);
       await invalidateEDIConnections(queryClient);
     },
-    onError: () => toast.error("Failed to request EDI connection"),
   });
-  const canSubmit = Boolean(
-    pairValues.targetOrganizationId &&
-    pairValues.sourceCode &&
-    pairValues.sourceName &&
-    pairValues.targetCode &&
-    pairValues.targetName,
-  );
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (!nextOpen) {
@@ -125,16 +121,10 @@ function CreatePartnerPanel({
 
   useEffect(() => {
     if (!open || !currentOrganization) return;
-    if (pairValues.targetCode || pairValues.targetName) return;
+    if (targetCode || targetName) return;
 
     fillCurrentOrganizationPartner();
-  }, [
-    currentOrganization,
-    fillCurrentOrganizationPartner,
-    open,
-    pairValues.targetCode,
-    pairValues.targetName,
-  ]);
+  }, [currentOrganization, fillCurrentOrganizationPartner, open, targetCode, targetName]);
 
   return (
     <DataTablePanelContainer
@@ -160,7 +150,6 @@ function CreatePartnerPanel({
             <Button
               type="submit"
               form="edi-create-pair-form"
-              disabled={!canSubmit}
               isLoading={createConnectionMutation.isPending}
             >
               Request Connection
@@ -295,11 +284,12 @@ function PartnerEditPanel({
       }
       return apiService.ediService.updatePartner(partner.id, toPartnerRequest(values));
     },
+    setFormError: form.setError,
+    resourceName: "EDI Partner",
     onSuccess: async () => {
       toast.success("EDI partner updated");
       await invalidateEDIPartners(queryClient);
     },
-    onError: () => toast.error("Failed to update EDI partner"),
   });
   const handleClose = () => {
     onOpenChange(false);

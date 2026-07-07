@@ -24,6 +24,327 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// CarrierInvoice — table "edi_carrier_invoices", alias "ecinv"
+// ---------------------------------------------------------------------------
+
+// CarrierInvoiceTable holds the table name, alias, and primary key columns
+// for the "edi_carrier_invoices" table. The alias "ecinv" is used in all generated
+// SQL fragments (e.g. "ecinv.id = ?").
+var CarrierInvoiceTable = TableInfo{
+	Name:       "edi_carrier_invoices",
+	Alias:      "ecinv",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// CarrierInvoiceColumns provides type-safe column references for the "edi_carrier_invoices" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(CarrierInvoiceColumns.ID.String())
+//	// SELECT ecinv.id FROM edi_carrier_invoices AS ecinv
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(CarrierInvoiceColumns.ID.Eq(), id)           // WHERE ecinv.id = ?
+//	q.Order(CarrierInvoiceColumns.CreatedAt.OrderDesc())  // ORDER BY ecinv.created_at DESC
+var CarrierInvoiceColumns = struct {
+	ID                   Column // "id" → qualified: "ecinv.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "ecinv.business_unit_id"
+	OrganizationID       Column // "organization_id" → qualified: "ecinv.organization_id"
+	EDIPartnerID         Column // "edi_partner_id" → qualified: "ecinv.edi_partner_id"
+	InboundMessageID     Column // "inbound_message_id" → qualified: "ecinv.inbound_message_id"
+	ShipmentID           Column // "shipment_id" → qualified: "ecinv.shipment_id"
+	TenderRecipientID    Column // "tender_recipient_id" → qualified: "ecinv.tender_recipient_id"
+	CustomerID           Column // "customer_id" → qualified: "ecinv.customer_id"
+	InvoiceNumber        Column // "invoice_number" → qualified: "ecinv.invoice_number"
+	InvoiceDate          Column // "invoice_date" → qualified: "ecinv.invoice_date"
+	DeliveryDate         Column // "delivery_date" → qualified: "ecinv.delivery_date"
+	ShipmentReference    Column // "shipment_reference" → qualified: "ecinv.shipment_reference"
+	BOL                  Column // "bol" → qualified: "ecinv.bol"
+	ProNumber            Column // "pro_number" → qualified: "ecinv.pro_number"
+	BillToName           Column // "bill_to_name" → qualified: "ecinv.bill_to_name"
+	BillToSourceID       Column // "bill_to_source_id" → qualified: "ecinv.bill_to_source_id"
+	CurrencyCode         Column // "currency_code" → qualified: "ecinv.currency_code"
+	TotalAmount          Column // "total_amount" → qualified: "ecinv.total_amount"
+	ExpectedAmount       Column // "expected_amount" → qualified: "ecinv.expected_amount"
+	VarianceAmount       Column // "variance_amount" → qualified: "ecinv.variance_amount"
+	LineCharges          Column // "line_charges" → qualified: "ecinv.line_charges"
+	ReferenceNumbers     Column // "reference_numbers" → qualified: "ecinv.reference_numbers"
+	ReconciliationStatus Column // "reconciliation_status" → qualified: "ecinv.reconciliation_status"
+	ReconciliationNotes  Column // "reconciliation_notes" → qualified: "ecinv.reconciliation_notes"
+	Version              Column // "version" → qualified: "ecinv.version"
+	CreatedAt            Column // "created_at" → qualified: "ecinv.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "ecinv.updated_at"
+}{
+	ID:                   NewColumn("id", "ecinv"),
+	BusinessUnitID:       NewColumn("business_unit_id", "ecinv"),
+	OrganizationID:       NewColumn("organization_id", "ecinv"),
+	EDIPartnerID:         NewColumn("edi_partner_id", "ecinv"),
+	InboundMessageID:     NewColumn("inbound_message_id", "ecinv"),
+	ShipmentID:           NewColumn("shipment_id", "ecinv"),
+	TenderRecipientID:    NewColumn("tender_recipient_id", "ecinv"),
+	CustomerID:           NewColumn("customer_id", "ecinv"),
+	InvoiceNumber:        NewColumn("invoice_number", "ecinv"),
+	InvoiceDate:          NewColumn("invoice_date", "ecinv"),
+	DeliveryDate:         NewColumn("delivery_date", "ecinv"),
+	ShipmentReference:    NewColumn("shipment_reference", "ecinv"),
+	BOL:                  NewColumn("bol", "ecinv"),
+	ProNumber:            NewColumn("pro_number", "ecinv"),
+	BillToName:           NewColumn("bill_to_name", "ecinv"),
+	BillToSourceID:       NewColumn("bill_to_source_id", "ecinv"),
+	CurrencyCode:         NewColumn("currency_code", "ecinv"),
+	TotalAmount:          NewColumn("total_amount", "ecinv"),
+	ExpectedAmount:       NewColumn("expected_amount", "ecinv"),
+	VarianceAmount:       NewColumn("variance_amount", "ecinv"),
+	LineCharges:          NewColumn("line_charges", "ecinv"),
+	ReferenceNumbers:     NewColumn("reference_numbers", "ecinv"),
+	ReconciliationStatus: NewColumn("reconciliation_status", "ecinv"),
+	ReconciliationNotes:  NewColumn("reconciliation_notes", "ecinv"),
+	Version:              NewColumn("version", "ecinv"),
+	CreatedAt:            NewColumn("created_at", "ecinv"),
+	UpdatedAt:            NewColumn("updated_at", "ecinv"),
+}
+
+// CarrierInvoiceFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by CarrierInvoice.GetStaticFieldMap().
+var CarrierInvoiceFieldMap = map[string]string{
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"ediPartnerId":         "edi_partner_id",
+	"inboundMessageId":     "inbound_message_id",
+	"shipmentId":           "shipment_id",
+	"tenderRecipientId":    "tender_recipient_id",
+	"customerId":           "customer_id",
+	"invoiceNumber":        "invoice_number",
+	"invoiceDate":          "invoice_date",
+	"deliveryDate":         "delivery_date",
+	"shipmentReference":    "shipment_reference",
+	"bol":                  "bol",
+	"proNumber":            "pro_number",
+	"billToName":           "bill_to_name",
+	"billToSourceId":       "bill_to_source_id",
+	"currencyCode":         "currency_code",
+	"totalAmount":          "total_amount",
+	"expectedAmount":       "expected_amount",
+	"varianceAmount":       "variance_amount",
+	"lineCharges":          "line_charges",
+	"referenceNumbers":     "reference_numbers",
+	"reconciliationStatus": "reconciliation_status",
+	"reconciliationNotes":  "reconciliation_notes",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// CarrierInvoiceInsertableColumns lists column names suitable for INSERT statements on the "edi_carrier_invoices" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var CarrierInvoiceInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"edi_partner_id",
+	"inbound_message_id",
+	"shipment_id",
+	"tender_recipient_id",
+	"customer_id",
+	"invoice_number",
+	"invoice_date",
+	"delivery_date",
+	"shipment_reference",
+	"bol",
+	"pro_number",
+	"bill_to_name",
+	"bill_to_source_id",
+	"currency_code",
+	"total_amount",
+	"expected_amount",
+	"variance_amount",
+	"line_charges",
+	"reference_numbers",
+	"reconciliation_status",
+	"reconciliation_notes",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// CarrierInvoiceRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(CarrierInvoiceRelations.Partner)
+//	// Bun eager-loads the Partner association via a separate query
+var CarrierInvoiceRelations = struct {
+	Partner string
+}{
+	Partner: "Partner",
+}
+
+// CarrierInvoiceScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE ecinv.organization_id = ? AND ecinv.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.CarrierInvoiceScopeTenant(sq, ti).
+//		Where(buncolgen.CarrierInvoiceColumns.ID.Eq(), id)
+func CarrierInvoiceScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, CarrierInvoiceColumns.OrganizationID, CarrierInvoiceColumns.BusinessUnitID, ti)
+}
+
+// CarrierInvoiceScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.CarrierInvoiceScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.CarrierInvoiceColumns.ID.In(), bun.List(ids))
+//	})
+func CarrierInvoiceScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, CarrierInvoiceColumns.OrganizationID, CarrierInvoiceColumns.BusinessUnitID, ti)
+}
+
+// CarrierInvoiceScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.CarrierInvoiceScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.CarrierInvoiceColumns.ID.Eq(), id)
+//	})
+func CarrierInvoiceScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, CarrierInvoiceColumns.OrganizationID, CarrierInvoiceColumns.BusinessUnitID, ti)
+}
+
+// CarrierInvoiceApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.CarrierInvoiceApplyTenant(tenantInfo))
+func CarrierInvoiceApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(CarrierInvoiceColumns.OrganizationID, CarrierInvoiceColumns.BusinessUnitID, ti)
+}
+
+// CarrierInvoiceFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_carrier_invoices" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	CarrierInvoiceFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var CarrierInvoiceFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	EDIPartnerID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	InboundMessageID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundMessageId" → DB: "inbound_message_id"
+	ShipmentID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
+	TenderRecipientID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderRecipientId" → DB: "tender_recipient_id"
+	CustomerID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "customerId" → DB: "customer_id"
+	InvoiceNumber        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceNumber" → DB: "invoice_number"
+	InvoiceDate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "invoiceDate" → DB: "invoice_date"
+	DeliveryDate         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryDate" → DB: "delivery_date"
+	ShipmentReference    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentReference" → DB: "shipment_reference"
+	BOL                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "bol" → DB: "bol"
+	ProNumber            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proNumber" → DB: "pro_number"
+	BillToName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToName" → DB: "bill_to_name"
+	BillToSourceID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "billToSourceId" → DB: "bill_to_source_id"
+	CurrencyCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	TotalAmount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalAmount" → DB: "total_amount"
+	ExpectedAmount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedAmount" → DB: "expected_amount"
+	VarianceAmount       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "varianceAmount" → DB: "variance_amount"
+	LineCharges          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineCharges" → DB: "line_charges"
+	ReferenceNumbers     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceNumbers" → DB: "reference_numbers"
+	ReconciliationStatus func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationStatus" → DB: "reconciliation_status"
+	ReconciliationNotes  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reconciliationNotes" → DB: "reconciliation_notes"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	EDIPartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediPartnerId", op, value)
+	},
+	InboundMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inboundMessageId", op, value)
+	},
+	ShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentId", op, value)
+	},
+	TenderRecipientID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tenderRecipientId", op, value)
+	},
+	CustomerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("customerId", op, value)
+	},
+	InvoiceNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceNumber", op, value)
+	},
+	InvoiceDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("invoiceDate", op, value)
+	},
+	DeliveryDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deliveryDate", op, value)
+	},
+	ShipmentReference: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("shipmentReference", op, value)
+	},
+	BOL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("bol", op, value)
+	},
+	ProNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("proNumber", op, value)
+	},
+	BillToName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billToName", op, value)
+	},
+	BillToSourceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("billToSourceId", op, value)
+	},
+	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("currencyCode", op, value)
+	},
+	TotalAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("totalAmount", op, value)
+	},
+	ExpectedAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("expectedAmount", op, value)
+	},
+	VarianceAmount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("varianceAmount", op, value)
+	},
+	LineCharges: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineCharges", op, value)
+	},
+	ReferenceNumbers: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("referenceNumbers", op, value)
+	},
+	ReconciliationStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reconciliationStatus", op, value)
+	},
+	ReconciliationNotes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("reconciliationNotes", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EDICodeListDefinition — table "edi_code_list_definitions", alias "ecld"
 // ---------------------------------------------------------------------------
 
@@ -982,6 +1303,307 @@ var EDIDocumentTypeFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// EDIInboundFile — table "edi_inbound_files", alias "eif"
+// ---------------------------------------------------------------------------
+
+// EDIInboundFileTable holds the table name, alias, and primary key columns
+// for the "edi_inbound_files" table. The alias "eif" is used in all generated
+// SQL fragments (e.g. "eif.id = ?").
+var EDIInboundFileTable = TableInfo{
+	Name:       "edi_inbound_files",
+	Alias:      "eif",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// EDIInboundFileColumns provides type-safe column references for the "edi_inbound_files" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(EDIInboundFileColumns.ID.String())
+//	// SELECT eif.id FROM edi_inbound_files AS eif
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(EDIInboundFileColumns.ID.Eq(), id)           // WHERE eif.id = ?
+//	q.Order(EDIInboundFileColumns.CreatedAt.OrderDesc())  // ORDER BY eif.created_at DESC
+var EDIInboundFileColumns = struct {
+	ID                       Column // "id" → qualified: "eif.id"
+	BusinessUnitID           Column // "business_unit_id" → qualified: "eif.business_unit_id"
+	OrganizationID           Column // "organization_id" → qualified: "eif.organization_id"
+	CommunicationProfileID   Column // "communication_profile_id" → qualified: "eif.communication_profile_id"
+	EDIPartnerID             Column // "edi_partner_id" → qualified: "eif.edi_partner_id"
+	Method                   Column // "method" → qualified: "eif.method"
+	RemotePath               Column // "remote_path" → qualified: "eif.remote_path"
+	FileName                 Column // "file_name" → qualified: "eif.file_name"
+	Checksum                 Column // "checksum" → qualified: "eif.checksum"
+	SizeBytes                Column // "size_bytes" → qualified: "eif.size_bytes"
+	RawContent               Column // "raw_content" → qualified: "eif.raw_content"
+	InterchangeControlNumber Column // "interchange_control_number" → qualified: "eif.interchange_control_number"
+	ISASenderQualifier       Column // "isa_sender_qualifier" → qualified: "eif.isa_sender_qualifier"
+	ISASenderID              Column // "isa_sender_id" → qualified: "eif.isa_sender_id"
+	ISAReceiverQualifier     Column // "isa_receiver_qualifier" → qualified: "eif.isa_receiver_qualifier"
+	ISAReceiverID            Column // "isa_receiver_id" → qualified: "eif.isa_receiver_id"
+	Status                   Column // "status" → qualified: "eif.status"
+	FailureReason            Column // "failure_reason" → qualified: "eif.failure_reason"
+	TransactionCount         Column // "transaction_count" → qualified: "eif.transaction_count"
+	ReceivedAt               Column // "received_at" → qualified: "eif.received_at"
+	ProcessedAt              Column // "processed_at" → qualified: "eif.processed_at"
+	Version                  Column // "version" → qualified: "eif.version"
+	CreatedAt                Column // "created_at" → qualified: "eif.created_at"
+	UpdatedAt                Column // "updated_at" → qualified: "eif.updated_at"
+}{
+	ID:                       NewColumn("id", "eif"),
+	BusinessUnitID:           NewColumn("business_unit_id", "eif"),
+	OrganizationID:           NewColumn("organization_id", "eif"),
+	CommunicationProfileID:   NewColumn("communication_profile_id", "eif"),
+	EDIPartnerID:             NewColumn("edi_partner_id", "eif"),
+	Method:                   NewColumn("method", "eif"),
+	RemotePath:               NewColumn("remote_path", "eif"),
+	FileName:                 NewColumn("file_name", "eif"),
+	Checksum:                 NewColumn("checksum", "eif"),
+	SizeBytes:                NewColumn("size_bytes", "eif"),
+	RawContent:               NewColumn("raw_content", "eif"),
+	InterchangeControlNumber: NewColumn("interchange_control_number", "eif"),
+	ISASenderQualifier:       NewColumn("isa_sender_qualifier", "eif"),
+	ISASenderID:              NewColumn("isa_sender_id", "eif"),
+	ISAReceiverQualifier:     NewColumn("isa_receiver_qualifier", "eif"),
+	ISAReceiverID:            NewColumn("isa_receiver_id", "eif"),
+	Status:                   NewColumn("status", "eif"),
+	FailureReason:            NewColumn("failure_reason", "eif"),
+	TransactionCount:         NewColumn("transaction_count", "eif"),
+	ReceivedAt:               NewColumn("received_at", "eif"),
+	ProcessedAt:              NewColumn("processed_at", "eif"),
+	Version:                  NewColumn("version", "eif"),
+	CreatedAt:                NewColumn("created_at", "eif"),
+	UpdatedAt:                NewColumn("updated_at", "eif"),
+}
+
+// EDIInboundFileFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by EDIInboundFile.GetStaticFieldMap().
+var EDIInboundFileFieldMap = map[string]string{
+	"id":                       "id",
+	"businessUnitId":           "business_unit_id",
+	"organizationId":           "organization_id",
+	"communicationProfileId":   "communication_profile_id",
+	"ediPartnerId":             "edi_partner_id",
+	"method":                   "method",
+	"remotePath":               "remote_path",
+	"fileName":                 "file_name",
+	"checksum":                 "checksum",
+	"sizeBytes":                "size_bytes",
+	"rawContent":               "raw_content",
+	"interchangeControlNumber": "interchange_control_number",
+	"isaSenderQualifier":       "isa_sender_qualifier",
+	"isaSenderId":              "isa_sender_id",
+	"isaReceiverQualifier":     "isa_receiver_qualifier",
+	"isaReceiverId":            "isa_receiver_id",
+	"status":                   "status",
+	"failureReason":            "failure_reason",
+	"transactionCount":         "transaction_count",
+	"receivedAt":               "received_at",
+	"processedAt":              "processed_at",
+	"version":                  "version",
+	"createdAt":                "created_at",
+	"updatedAt":                "updated_at",
+}
+
+// EDIInboundFileInsertableColumns lists column names suitable for INSERT statements on the "edi_inbound_files" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var EDIInboundFileInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"communication_profile_id",
+	"edi_partner_id",
+	"method",
+	"remote_path",
+	"file_name",
+	"checksum",
+	"size_bytes",
+	"raw_content",
+	"interchange_control_number",
+	"isa_sender_qualifier",
+	"isa_sender_id",
+	"isa_receiver_qualifier",
+	"isa_receiver_id",
+	"status",
+	"failure_reason",
+	"transaction_count",
+	"received_at",
+	"processed_at",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// EDIInboundFileRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDIInboundFileRelations.Partner)
+//	// Bun eager-loads the Partner association via a separate query
+var EDIInboundFileRelations = struct {
+	Partner              string
+	CommunicationProfile string
+	Messages             string
+}{
+	Partner:              "Partner",
+	CommunicationProfile: "CommunicationProfile",
+	Messages:             "Messages",
+}
+
+// EDIInboundFileScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE eif.organization_id = ? AND eif.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.EDIInboundFileScopeTenant(sq, ti).
+//		Where(buncolgen.EDIInboundFileColumns.ID.Eq(), id)
+func EDIInboundFileScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, EDIInboundFileColumns.OrganizationID, EDIInboundFileColumns.BusinessUnitID, ti)
+}
+
+// EDIInboundFileScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.EDIInboundFileScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.EDIInboundFileColumns.ID.In(), bun.List(ids))
+//	})
+func EDIInboundFileScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, EDIInboundFileColumns.OrganizationID, EDIInboundFileColumns.BusinessUnitID, ti)
+}
+
+// EDIInboundFileScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.EDIInboundFileScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.EDIInboundFileColumns.ID.Eq(), id)
+//	})
+func EDIInboundFileScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, EDIInboundFileColumns.OrganizationID, EDIInboundFileColumns.BusinessUnitID, ti)
+}
+
+// EDIInboundFileApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.EDIInboundFileApplyTenant(tenantInfo))
+func EDIInboundFileApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(EDIInboundFileColumns.OrganizationID, EDIInboundFileColumns.BusinessUnitID, ti)
+}
+
+// EDIInboundFileFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "edi_inbound_files" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	EDIInboundFileFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var EDIInboundFileFilter = struct {
+	ID                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	CommunicationProfileID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "communicationProfileId" → DB: "communication_profile_id"
+	EDIPartnerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediPartnerId" → DB: "edi_partner_id"
+	Method                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "method" → DB: "method"
+	RemotePath               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remotePath" → DB: "remote_path"
+	FileName                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
+	Checksum                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checksum" → DB: "checksum"
+	SizeBytes                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sizeBytes" → DB: "size_bytes"
+	RawContent               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rawContent" → DB: "raw_content"
+	InterchangeControlNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "interchangeControlNumber" → DB: "interchange_control_number"
+	ISASenderQualifier       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isaSenderQualifier" → DB: "isa_sender_qualifier"
+	ISASenderID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isaSenderId" → DB: "isa_sender_id"
+	ISAReceiverQualifier     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isaReceiverQualifier" → DB: "isa_receiver_qualifier"
+	ISAReceiverID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isaReceiverId" → DB: "isa_receiver_id"
+	Status                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	FailureReason            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failureReason" → DB: "failure_reason"
+	TransactionCount         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionCount" → DB: "transaction_count"
+	ReceivedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "receivedAt" → DB: "received_at"
+	ProcessedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "processedAt" → DB: "processed_at"
+	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	CommunicationProfileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("communicationProfileId", op, value)
+	},
+	EDIPartnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ediPartnerId", op, value)
+	},
+	Method: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("method", op, value)
+	},
+	RemotePath: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("remotePath", op, value)
+	},
+	FileName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fileName", op, value)
+	},
+	Checksum: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("checksum", op, value)
+	},
+	SizeBytes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sizeBytes", op, value)
+	},
+	RawContent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rawContent", op, value)
+	},
+	InterchangeControlNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("interchangeControlNumber", op, value)
+	},
+	ISASenderQualifier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isaSenderQualifier", op, value)
+	},
+	ISASenderID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isaSenderId", op, value)
+	},
+	ISAReceiverQualifier: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isaReceiverQualifier", op, value)
+	},
+	ISAReceiverID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isaReceiverId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	FailureReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failureReason", op, value)
+	},
+	TransactionCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("transactionCount", op, value)
+	},
+	ReceivedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("receivedAt", op, value)
+	},
+	ProcessedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("processedAt", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EDIMappingProfile — table "edi_mapping_profiles", alias "emp"
 // ---------------------------------------------------------------------------
 
@@ -1423,6 +2045,7 @@ var EDIMessageColumns = struct {
 	TemplateVersionID        Column // "template_version_id" → qualified: "emsg.template_version_id"
 	ShipmentID               Column // "shipment_id" → qualified: "emsg.shipment_id"
 	TransferID               Column // "transfer_id" → qualified: "emsg.transfer_id"
+	InboundFileID            Column // "inbound_file_id" → qualified: "emsg.inbound_file_id"
 	Direction                Column // "direction" → qualified: "emsg.direction"
 	Standard                 Column // "standard" → qualified: "emsg.standard"
 	TransactionSet           Column // "transaction_set" → qualified: "emsg.transaction_set"
@@ -1441,6 +2064,8 @@ var EDIMessageColumns = struct {
 	DeliveryLastAttemptAt    Column // "delivery_last_attempt_at" → qualified: "emsg.delivery_last_attempt_at"
 	DeliverySentAt           Column // "delivery_sent_at" → qualified: "emsg.delivery_sent_at"
 	DeliveryLastError        Column // "delivery_last_error" → qualified: "emsg.delivery_last_error"
+	AS2MessageID             Column // "as2_message_id" → qualified: "emsg.as2_message_id"
+	AS2MIC                   Column // "as2_mic" → qualified: "emsg.as2_mic"
 	AckStatus                Column // "ack_status" → qualified: "emsg.ack_status"
 	AckMessageID             Column // "ack_message_id" → qualified: "emsg.ack_message_id"
 	AckReceivedAt            Column // "ack_received_at" → qualified: "emsg.ack_received_at"
@@ -1462,6 +2087,7 @@ var EDIMessageColumns = struct {
 	TemplateVersionID:        NewColumn("template_version_id", "emsg"),
 	ShipmentID:               NewColumn("shipment_id", "emsg"),
 	TransferID:               NewColumn("transfer_id", "emsg"),
+	InboundFileID:            NewColumn("inbound_file_id", "emsg"),
 	Direction:                NewColumn("direction", "emsg"),
 	Standard:                 NewColumn("standard", "emsg"),
 	TransactionSet:           NewColumn("transaction_set", "emsg"),
@@ -1480,6 +2106,8 @@ var EDIMessageColumns = struct {
 	DeliveryLastAttemptAt:    NewColumn("delivery_last_attempt_at", "emsg"),
 	DeliverySentAt:           NewColumn("delivery_sent_at", "emsg"),
 	DeliveryLastError:        NewColumn("delivery_last_error", "emsg"),
+	AS2MessageID:             NewColumn("as2_message_id", "emsg"),
+	AS2MIC:                   NewColumn("as2_mic", "emsg"),
 	AckStatus:                NewColumn("ack_status", "emsg"),
 	AckMessageID:             NewColumn("ack_message_id", "emsg"),
 	AckReceivedAt:            NewColumn("ack_received_at", "emsg"),
@@ -1507,6 +2135,7 @@ var EDIMessageFieldMap = map[string]string{
 	"templateVersionId":        "template_version_id",
 	"shipmentId":               "shipment_id",
 	"transferId":               "transfer_id",
+	"inboundFileId":            "inbound_file_id",
 	"direction":                "direction",
 	"standard":                 "standard",
 	"transactionSet":           "transaction_set",
@@ -1525,6 +2154,8 @@ var EDIMessageFieldMap = map[string]string{
 	"deliveryLastAttemptAt":    "delivery_last_attempt_at",
 	"deliverySentAt":           "delivery_sent_at",
 	"deliveryLastError":        "delivery_last_error",
+	"as2MessageId":             "as2_message_id",
+	"as2Mic":                   "as2_mic",
 	"ackStatus":                "ack_status",
 	"ackMessageId":             "ack_message_id",
 	"ackReceivedAt":            "ack_received_at",
@@ -1550,6 +2181,7 @@ var EDIMessageInsertableColumns = []string{
 	"template_version_id",
 	"shipment_id",
 	"transfer_id",
+	"inbound_file_id",
 	"direction",
 	"standard",
 	"transaction_set",
@@ -1568,6 +2200,8 @@ var EDIMessageInsertableColumns = []string{
 	"delivery_last_attempt_at",
 	"delivery_sent_at",
 	"delivery_last_error",
+	"as2_message_id",
+	"as2_mic",
 	"ack_status",
 	"ack_message_id",
 	"ack_received_at",
@@ -1660,6 +2294,7 @@ var EDIMessageFilter = struct {
 	TemplateVersionID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "templateVersionId" → DB: "template_version_id"
 	ShipmentID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentId" → DB: "shipment_id"
 	TransferID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transferId" → DB: "transfer_id"
+	InboundFileID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundFileId" → DB: "inbound_file_id"
 	Direction                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "direction" → DB: "direction"
 	Standard                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "standard" → DB: "standard"
 	TransactionSet           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "transactionSet" → DB: "transaction_set"
@@ -1678,6 +2313,8 @@ var EDIMessageFilter = struct {
 	DeliveryLastAttemptAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryLastAttemptAt" → DB: "delivery_last_attempt_at"
 	DeliverySentAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliverySentAt" → DB: "delivery_sent_at"
 	DeliveryLastError        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deliveryLastError" → DB: "delivery_last_error"
+	AS2MessageID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "as2MessageId" → DB: "as2_message_id"
+	AS2MIC                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "as2Mic" → DB: "as2_mic"
 	AckStatus                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackStatus" → DB: "ack_status"
 	AckMessageID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackMessageId" → DB: "ack_message_id"
 	AckReceivedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ackReceivedAt" → DB: "ack_received_at"
@@ -1717,6 +2354,9 @@ var EDIMessageFilter = struct {
 	},
 	TransferID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("transferId", op, value)
+	},
+	InboundFileID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inboundFileId", op, value)
 	},
 	Direction: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("direction", op, value)
@@ -1771,6 +2411,12 @@ var EDIMessageFilter = struct {
 	},
 	DeliveryLastError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("deliveryLastError", op, value)
+	},
+	AS2MessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("as2MessageId", op, value)
+	},
+	AS2MIC: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("as2Mic", op, value)
 	},
 	AckStatus: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("ackStatus", op, value)
@@ -3474,6 +4120,7 @@ var EDITemplateColumns = struct {
 	Version        Column // "version" → qualified: "et.version"
 	CreatedAt      Column // "created_at" → qualified: "et.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "et.updated_at"
+	SearchVector   Column // "search_vector" → qualified: "et.search_vector"
 }{
 	ID:             NewColumn("id", "et"),
 	BusinessUnitID: NewColumn("business_unit_id", "et"),
@@ -3488,6 +4135,7 @@ var EDITemplateColumns = struct {
 	Version:        NewColumn("version", "et"),
 	CreatedAt:      NewColumn("created_at", "et"),
 	UpdatedAt:      NewColumn("updated_at", "et"),
+	SearchVector:   NewColumn("search_vector", "et"),
 }
 
 // EDITemplateFieldMap maps JSON API field names to database column names.
@@ -4503,6 +5151,17 @@ var EDITestCaseInsertableColumns = []string{
 	"updated_at",
 }
 
+// EDITestCaseRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(EDITestCaseRelations.DocumentProfile)
+//	// Bun eager-loads the DocumentProfile association via a separate query
+var EDITestCaseRelations = struct {
+	DocumentProfile string
+}{
+	DocumentProfile: "DocumentProfile",
+}
+
 // EDITestCaseScopeTenant restricts a query to a single tenant by adding:
 //
 //	WHERE etc.organization_id = ? AND etc.business_unit_id = ?
@@ -5247,6 +5906,7 @@ var EDITransferColumns = struct {
 	TargetPartnerID       Column // "target_partner_id" → qualified: "eltt.target_partner_id"
 	SourceShipmentID      Column // "source_shipment_id" → qualified: "eltt.source_shipment_id"
 	TargetShipmentID      Column // "target_shipment_id" → qualified: "eltt.target_shipment_id"
+	InboundMessageID      Column // "inbound_message_id" → qualified: "eltt.inbound_message_id"
 	Status                Column // "status" → qualified: "eltt.status"
 	TenderPayload         Column // "tender_payload" → qualified: "eltt.tender_payload"
 	MappingSnapshot       Column // "mapping_snapshot" → qualified: "eltt.mapping_snapshot"
@@ -5277,6 +5937,7 @@ var EDITransferColumns = struct {
 	TargetPartnerID:       NewColumn("target_partner_id", "eltt"),
 	SourceShipmentID:      NewColumn("source_shipment_id", "eltt"),
 	TargetShipmentID:      NewColumn("target_shipment_id", "eltt"),
+	InboundMessageID:      NewColumn("inbound_message_id", "eltt"),
 	Status:                NewColumn("status", "eltt"),
 	TenderPayload:         NewColumn("tender_payload", "eltt"),
 	MappingSnapshot:       NewColumn("mapping_snapshot", "eltt"),
@@ -5313,6 +5974,7 @@ var EDITransferFieldMap = map[string]string{
 	"targetPartnerId":       "target_partner_id",
 	"sourceShipmentId":      "source_shipment_id",
 	"targetShipmentId":      "target_shipment_id",
+	"inboundMessageId":      "inbound_message_id",
 	"status":                "status",
 	"tenderPayload":         "tender_payload",
 	"mappingSnapshot":       "mapping_snapshot",
@@ -5347,6 +6009,7 @@ var EDITransferInsertableColumns = []string{
 	"target_partner_id",
 	"source_shipment_id",
 	"target_shipment_id",
+	"inbound_message_id",
 	"status",
 	"tender_payload",
 	"mapping_snapshot",
@@ -5399,6 +6062,7 @@ var EDITransferFilter = struct {
 	TargetPartnerID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetPartnerId" → DB: "target_partner_id"
 	SourceShipmentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceShipmentId" → DB: "source_shipment_id"
 	TargetShipmentID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetShipmentId" → DB: "target_shipment_id"
+	InboundMessageID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inboundMessageId" → DB: "inbound_message_id"
 	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	TenderPayload         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tenderPayload" → DB: "tender_payload"
 	MappingSnapshot       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mappingSnapshot" → DB: "mapping_snapshot"
@@ -5446,6 +6110,9 @@ var EDITransferFilter = struct {
 	},
 	TargetShipmentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("targetShipmentId", op, value)
+	},
+	InboundMessageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("inboundMessageId", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

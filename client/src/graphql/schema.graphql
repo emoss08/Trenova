@@ -81,6 +81,11 @@ enum BillingQueueStatus {
   SentBackToOps
 }
 
+input BulkUpdateEquipmentManufacturerStatusInput {
+  equipmentManufacturerIds: [ID!]!
+  status: EntityStatus!
+}
+
 input BulkUpdateEquipmentTypeStatusInput {
   equipmentTypeIds: [ID!]!
   status: EntityStatus!
@@ -133,6 +138,463 @@ enum DriverType {
   Team
 }
 
+type EdiCommunicationProfile {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  ediConnectionId: ID
+  ediPartnerId: ID
+  id: ID!
+  method: EdiConnectionMethod!
+  name: String!
+  organizationId: ID!
+  partner: EdiPartner
+  secretState: [EdiCommunicationProfileSecretState!]
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiCommunicationProfileConnection {
+  edges: [EdiCommunicationProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiCommunicationProfileEdge {
+  cursor: String!
+  node: EdiCommunicationProfile!
+}
+
+type EdiCommunicationProfileSecretState {
+  key: String!
+}
+
+type EdiConnection {
+  id: ID!
+  method: EdiConnectionMethod!
+  status: EdiConnectionStatus!
+}
+
+enum EdiConnectionMethod {
+  AS2
+  Internal
+  SFTP
+  VAN
+}
+
+enum EdiConnectionStatus {
+  Active
+  PendingAcceptance
+  Rejected
+  Revoked
+  Suspended
+}
+
+enum EdiDocumentDirection {
+  Inbound
+  Outbound
+}
+
+type EdiInboundFile {
+  businessUnitId: ID!
+  checksum: String!
+  communicationProfileId: ID!
+  createdAt: Int!
+  ediPartnerId: ID
+  failureReason: String
+  fileName: String!
+  id: ID!
+  interchangeControlNumber: String
+  isaReceiverId: String
+  isaReceiverQualifier: String
+  isaSenderId: String
+  isaSenderQualifier: String
+  method: EdiConnectionMethod!
+  organizationId: ID!
+  partner: EdiPartner
+  processedAt: Int
+  receivedAt: Int!
+  remotePath: String!
+  sizeBytes: Int!
+  status: EdiInboundFileStatus!
+  transactionCount: Int!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiInboundFileConnection {
+  edges: [EdiInboundFileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiInboundFileEdge {
+  cursor: String!
+  node: EdiInboundFile!
+}
+
+enum EdiInboundFileStatus {
+  Duplicate
+  Parsed
+  PartiallyProcessed
+  Processed
+  Quarantined
+  Received
+}
+
+enum EdiMappingEntityType {
+  AccessorialCharge
+  Commodity
+  Customer
+  FormulaTemplate
+  Location
+  ServiceFailureReasonCode
+  ServiceType
+  ShipmentType
+}
+
+type EdiMappingProfile {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  ediPartnerId: ID!
+  entries: [EdiMappingProfileItem!]
+  id: ID!
+  name: String!
+  organizationId: ID!
+  partner: EdiPartner
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiMappingProfileConnection {
+  edges: [EdiMappingProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiMappingProfileEdge {
+  cursor: String!
+  node: EdiMappingProfile!
+}
+
+type EdiMappingProfileItem {
+  businessUnitId: ID!
+  createdAt: Int!
+  ediPartnerId: ID!
+  entityType: EdiMappingEntityType!
+  id: ID!
+  mappingProfileId: ID!
+  organizationId: ID!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID!
+  targetLabel: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiMessage {
+  ackLastError: String
+  ackMessageId: ID
+  ackReceivedAt: Int
+  ackStatus: EdiMessageAckStatus
+  businessUnitId: ID!
+  createdAt: Int!
+  deliveryAttempts: Int!
+  deliveryLastAttemptAt: Int
+  deliveryLastError: String
+  deliveryRemotePath: String
+  deliverySentAt: Int
+  deliveryStatus: EdiMessageDeliveryStatus
+  direction: EdiDocumentDirection!
+  documentTypeId: ID!
+  ediPartnerId: ID!
+  generatedAt: Int!
+  groupControlNumber: String!
+  id: ID!
+  inboundFileId: ID
+  interchangeControlNumber: String!
+  organizationId: ID!
+  partner: EdiPartner
+  partnerDocumentProfileId: ID
+  segmentCount: Int!
+  shipmentId: ID
+  status: EdiMessageStatus!
+  templateId: ID
+  templateVersionId: ID
+  transactionControlNumber: String!
+  transactionSet: String!
+  transferId: ID
+  updatedAt: Int!
+  version: Int!
+  x12Version: String!
+}
+
+enum EdiMessageAckStatus {
+  Accepted
+  Failed
+  NotExpected
+  Pending
+  Rejected
+}
+
+type EdiMessageConnection {
+  edges: [EdiMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum EdiMessageDeliveryStatus {
+  DeadLettered
+  Failed
+  Queued
+  Sending
+  Sent
+}
+
+type EdiMessageEdge {
+  cursor: String!
+  node: EdiMessage!
+}
+
+enum EdiMessageStatus {
+  Failed
+  Generated
+}
+
+type EdiPartner {
+  businessUnitId: ID!
+  code: String!
+  connection: EdiConnection
+  contactEmail: String
+  contactName: String
+  contactPhone: String
+  country: String!
+  createdAt: Int!
+  customerId: ID
+  defaultMappingProfileId: ID
+  defaultTransport: EdiCommunicationProfile
+  defaultTransportId: ID
+  description: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  id: ID!
+  internalOrganization: Organization
+  internalOrganizationId: ID
+  kind: EdiPartnerKind!
+  name: String!
+  organizationId: ID!
+  status: EntityStatus!
+  timezone: String
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiPartnerConnection {
+  edges: [EdiPartnerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiPartnerDocumentProfile {
+  direction: EdiDocumentDirection!
+  ediPartnerId: ID!
+  id: ID!
+  name: String!
+  partner: EdiPartner
+  transactionSet: String!
+}
+
+type EdiPartnerEdge {
+  cursor: String!
+  node: EdiPartner!
+}
+
+enum EdiPartnerKind {
+  External
+  Internal
+}
+
+enum EdiStandard {
+  X12
+}
+
+type EdiSummary {
+  ackStatusCounts: [EdiSummaryStatusCount!]!
+  attentionItems: [EdiSummaryAttentionItem!]!
+  deliveryStatusCounts: [EdiSummaryStatusCount!]!
+  inboundFileStatusCounts: [EdiSummaryStatusCount!]!
+  inboundTransferStatusCounts: [EdiSummaryStatusCount!]!
+  overdueAckCount: Int!
+}
+
+type EdiSummaryAttentionItem {
+  error: String
+  id: ID!
+  kind: EdiSummaryAttentionKind!
+  occurredAt: Int!
+  partnerCode: String
+  partnerId: ID
+  partnerName: String
+  reference: String
+}
+
+enum EdiSummaryAttentionKind {
+  InboundFile
+  Message
+}
+
+type EdiSummaryStatusCount {
+  count: Int!
+  status: String!
+}
+
+type EdiTemplate {
+  activeVersion: EdiTemplateVersion
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  direction: EdiDocumentDirection!
+  documentTypeId: ID!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  standard: EdiStandard!
+  status: EdiTemplateStatus!
+  transactionSet: String!
+  updatedAt: Int!
+  version: Int!
+  versions: [EdiTemplateVersion!]
+}
+
+type EdiTemplateConnection {
+  edges: [EdiTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTemplateEdge {
+  cursor: String!
+  node: EdiTemplate!
+}
+
+enum EdiTemplateStatus {
+  Active
+  Archived
+  Certified
+  Deprecated
+  Draft
+  Superseded
+}
+
+type EdiTemplateVersion {
+  activatedAt: Int
+  activationNotes: String
+  archiveNotes: String
+  archivedAt: Int
+  businessUnitId: ID!
+  certificationNotes: String
+  certifiedAt: Int
+  createdAt: Int!
+  deprecatedAt: Int
+  deprecatedNotes: String
+  functionalGroupId: String!
+  id: ID!
+  isActive: Boolean!
+  notes: String
+  organizationId: ID!
+  sourceVersionId: ID
+  status: EdiTemplateStatus!
+  supersededAt: Int
+  supersededNotes: String
+  templateId: ID!
+  updatedAt: Int!
+  version: Int!
+  versionNumber: Int!
+  x12Version: String!
+}
+
+type EdiTestCase {
+  businessUnitId: ID!
+  createdAt: Int!
+  description: String
+  documentProfile: EdiPartnerDocumentProfile
+  expectedErrors: Int!
+  expectedWarnings: Int!
+  id: ID!
+  name: String!
+  organizationId: ID!
+  partnerDocumentProfileId: ID!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiTestCaseConnection {
+  edges: [EdiTestCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTestCaseEdge {
+  cursor: String!
+  node: EdiTestCase!
+}
+
+type EdiTransfer {
+  createdAt: Int!
+  failureReason: String
+  id: ID!
+  inboundMessageId: ID
+  mappingSnapshot: Any!
+  processedAt: Int
+  rejectionReason: String
+  sourceBusinessUnitId: ID!
+  sourceOrganizationId: ID!
+  sourcePartner: EdiPartner
+  sourcePartnerId: ID!
+  sourceShipmentId: ID
+  status: EdiTransferStatus!
+  submittedAt: Int!
+  targetBusinessUnitId: ID!
+  targetOrganizationId: ID!
+  targetPartner: EdiPartner
+  targetPartnerId: ID!
+  targetShipmentId: ID
+  tenderPayload: Any!
+  updatedAt: Int!
+  version: Int!
+}
+
+type EdiTransferConnection {
+  edges: [EdiTransferEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+enum EdiTransferDirection {
+  Inbound
+  Outbound
+}
+
+type EdiTransferEdge {
+  cursor: String!
+  node: EdiTransfer!
+}
+
+enum EdiTransferStatus {
+  Approved
+  Canceled
+  Expired
+  Failed
+  MappingRequired
+  PendingApproval
+  Processing
+  Rejected
+  Submitted
+}
+
 enum EndorsementType {
   H
   N
@@ -182,6 +644,33 @@ type EquipmentManufacturer {
   status: EntityStatus!
   updatedAt: Int!
   version: Int!
+}
+
+type EquipmentManufacturerConnection {
+  edges: [EquipmentManufacturerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EquipmentManufacturerEdge {
+  cursor: String!
+  node: EquipmentManufacturer!
+}
+
+input EquipmentManufacturerInput {
+  createdAt: Int!
+  description: String!
+  name: String!
+  status: EntityStatus!
+  updatedAt: Int!
+  version: Int!
+}
+
+input EquipmentManufacturerPatchInput {
+  description: String
+  name: String
+  status: EntityStatus
+  version: Int
 }
 
 enum EquipmentStatus {
@@ -379,6 +868,7 @@ enum MoveStatus {
 type Mutation {
   approveWorkerPTO(id: ID!): WorkerPTO!
   bulkTransferShipmentsToBilling(input: ShipmentBulkTransferToBillingInput!): ShipmentBulkTransferToBillingResponse!
+  bulkUpdateEquipmentManufacturerStatus(input: BulkUpdateEquipmentManufacturerStatusInput!): [EquipmentManufacturer!]!
   bulkUpdateEquipmentTypeStatus(input: BulkUpdateEquipmentTypeStatusInput!): [EquipmentType!]!
   bulkUpdateTractorStatus(input: BulkUpdateTractorStatusInput!): [Tractor!]!
   bulkUpdateTrailerStatus(input: BulkUpdateTrailerStatusInput!): [Trailer!]!
@@ -388,6 +878,7 @@ type Mutation {
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  createEquipmentManufacturer(input: EquipmentManufacturerInput!): EquipmentManufacturer!
   createEquipmentType(input: EquipmentTypeInput!): EquipmentType!
   createShipment(input: ShipmentInput!): Shipment!
   createShipmentComment(input: ShipmentCommentInput!, shipmentId: ID!): ShipmentComment!
@@ -397,6 +888,7 @@ type Mutation {
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   locateTractor(input: LocateTractorInput!): EquipmentContinuity!
   locateTrailer(input: LocateTrailerInput!): EquipmentContinuity!
+  patchEquipmentManufacturer(id: ID!, input: EquipmentManufacturerPatchInput!): EquipmentManufacturer!
   patchEquipmentType(id: ID!, input: EquipmentTypePatchInput!): EquipmentType!
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
@@ -406,6 +898,7 @@ type Mutation {
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   transferShipmentToBilling(input: ShipmentTransferToBillingInput!): BillingQueueItem!
   uncancelShipment(id: ID!): Shipment!
+  updateEquipmentManufacturer(id: ID!, input: EquipmentManufacturerInput!): EquipmentManufacturer!
   updateEquipmentType(id: ID!, input: EquipmentTypeInput!): EquipmentType!
   updateOrganization(id: ID!, input: OrganizationInput!): Organization!
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
@@ -489,6 +982,17 @@ type PageInfo {
 }
 
 type Query {
+  ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
+  ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
+  ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
+  ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
+  ediSummary(sinceHours: Int): EdiSummary!
+  ediTemplates(direction: EdiDocumentDirection, input: DataTableConnectionInput!, status: EdiTemplateStatus, transactionSet: String): EdiTemplateConnection!
+  ediTestCases(input: DataTableConnectionInput!, partnerDocumentProfileId: ID): EdiTestCaseConnection!
+  ediTransfers(direction: EdiTransferDirection!, input: DataTableConnectionInput!): EdiTransferConnection!
+  equipmentManufacturer(id: ID!): EquipmentManufacturer
+  equipmentManufacturers(input: DataTableConnectionInput!): EquipmentManufacturerConnection!
   equipmentType(id: ID!): EquipmentType
   equipmentTypes(classes: [EquipmentClass!], input: DataTableConnectionInput!): EquipmentTypeConnection!
   organization(id: ID!, includeBu: Boolean = false, includeState: Boolean = true): Organization!
@@ -532,8 +1036,10 @@ type SelectOptionEdge {
 }
 
 enum SelectOptionResource {
+  EDI_TRANSFER
   EQUIPMENT_MANUFACTURER
   EQUIPMENT_TYPE
+  SHIPMENT
   TRACTOR
   TRAILER
   US_STATE

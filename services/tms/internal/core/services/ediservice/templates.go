@@ -142,6 +142,9 @@ func (s *Service) UpdateTemplate(
 	if err = validateTemplateStatus(req.Status); err != nil {
 		return nil, err
 	}
+	if err = s.validateTemplateStatusTransition(ctx, current, req); err != nil {
+		return nil, err
+	}
 	original := *current
 	if strings.TrimSpace(req.Name) != "" {
 		current.Name = strings.TrimSpace(req.Name)
@@ -807,6 +810,57 @@ func (s *Service) validateTemplateCreateRequest(
 	return nil
 }
 
+func (s *Service) validateTemplateStatusTransition(
+	ctx context.Context,
+	current *edi.EDITemplate,
+	req *UpdateEDITemplateRequest,
+) error {
+	if req.Status == "" || req.Status == current.Status {
+		return nil
+	}
+
+	if req.Status == edi.TemplateStatusSuperseded {
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Superseded template status is managed by the system and cannot be set directly",
+		)
+	}
+	if req.Status != edi.TemplateStatusActive && req.Status != edi.TemplateStatusCertified {
+		return nil
+	}
+
+	versions, err := s.templateRepo.ListTemplateVersions(
+		ctx,
+		repositories.ListEDITemplateVersionsRequest{
+			TemplateID: current.ID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for _, version := range versions {
+		if version == nil {
+			continue
+		}
+		if version.Status == edi.TemplateStatusActive ||
+			version.Status == edi.TemplateStatusCertified {
+			return nil
+		}
+	}
+
+	return errortypes.NewValidationError(
+		"status",
+		errortypes.ErrInvalidOperation,
+		fmt.Sprintf(
+			"Template cannot be marked %s without a certified or active template version",
+			req.Status,
+		),
+	)
+}
+
 func validateTemplateStatus(status edi.TemplateStatus) error {
 	if status == "" {
 		return nil
@@ -834,6 +888,7 @@ func documentTypesContainID(documentTypes []*edi.EDIDocumentType, documentTypeID
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -855,6 +910,7 @@ func cloneTemplateSegments(
 		cloned.Elements = append([]edi.TemplateElement{}, segment.Elements...)
 		segments = append(segments, &cloned)
 	}
+
 	return segments
 }
 
@@ -879,6 +935,7 @@ func cloneTemplateScriptLibraries(
 		cloned.FunctionNames = nil
 		libraries = append(libraries, &cloned)
 	}
+
 	return libraries
 }
 
@@ -931,6 +988,7 @@ func validateTemplateVersionDefinitionWithSourceContext(
 				"Add template segments before certification.",
 			),
 		)
+
 		return diagnostics
 	}
 
@@ -947,6 +1005,7 @@ func validateTemplateVersionDefinitionWithSourceContext(
 			validateTemplatePartnerSettings(version, partnerSettings[0], false)...,
 		)
 	}
+
 	return diagnostics
 }
 
@@ -978,6 +1037,7 @@ func validateTemplateMetadata(version *edi.EDITemplateVersion) []edix12.Diagnost
 			),
 		)
 	}
+
 	return diagnostics
 }
 
@@ -1045,6 +1105,7 @@ func validateTemplateSegments(
 			"Add the required X12 control segment.",
 		))
 	}
+
 	return diagnostics
 }
 
@@ -1074,6 +1135,7 @@ func validateTemplateSegment(
 		element := &segment.Elements[idx]
 		diagnostics = append(diagnostics, validateTemplateElement(segment, element, libraries)...)
 	}
+
 	return diagnostics
 }
 
@@ -1192,6 +1254,7 @@ func validateTransformElement(
 			"Choose the source value that feeds the transform pipeline.",
 		))
 	}
+
 	if !edix12.IsDirectElementSource(element.BaseSource.Source) {
 		diagnostics = append(diagnostics, templateDiagnostic(
 			"baseSource.source",
@@ -1202,6 +1265,7 @@ func validateTransformElement(
 			"Use a constant, field path, partner setting, runtime, repeat, or mapping source.",
 		))
 	}
+
 	for _, step := range element.TransformPipeline {
 		if !edix12.IsSupportedTransformOperation(step.Operation) {
 			diagnostics = append(diagnostics, templateDiagnostic(
@@ -1214,6 +1278,7 @@ func validateTransformElement(
 			))
 		}
 	}
+
 	return diagnostics
 }
 
@@ -1222,7 +1287,7 @@ func validateTemplateScriptLibraries(
 ) []edix12.Diagnostic {
 	diagnostics := make([]edix12.Diagnostic, 0)
 	seenNames := make(map[string]string, len(libraries))
-	starlarkLibraries := make([]edistarlark.ScriptLibrary, 0, len(libraries))
+	starlarkLibs := make([]edistarlark.ScriptLibrary, 0, len(libraries))
 	for idx, library := range libraries {
 		path := fmt.Sprintf("scriptLibraries.%d", idx)
 		if library == nil {
@@ -1286,12 +1351,13 @@ func validateTemplateScriptLibraries(
 			))
 			continue
 		}
-		starlarkLibraries = append(starlarkLibraries, edistarlark.ScriptLibrary{
+		starlarkLibs = append(starlarkLibs, edistarlark.ScriptLibrary{
 			Name:   name,
 			Script: library.Script,
 		})
 	}
-	for _, diagnostic := range edistarlark.ValidateLibraries(starlarkLibraries) {
+
+	for _, diagnostic := range edistarlark.ValidateLibraries(starlarkLibs) {
 		diagnostics = append(diagnostics, starlarkTemplateDiagnostic(diagnostic))
 	}
 	return diagnostics
@@ -1318,6 +1384,7 @@ func validateStarlarkElement(
 		)
 		return diagnostics
 	}
+
 	functionName := stringutils.FirstNonEmpty(strings.TrimSpace(element.StarlarkFunction), "value")
 	starlarkDiagnostics := edistarlark.ValidateScriptFunction(edistarlark.EvalRequest{
 		Script:       element.StarlarkScript,
@@ -1466,5 +1533,6 @@ func hasTemplateValidationErrors(diagnostics []edix12.Diagnostic) bool {
 			return true
 		}
 	}
+
 	return false
 }

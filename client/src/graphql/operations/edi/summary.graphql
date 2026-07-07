@@ -1,0 +1,31 @@
+query EdiSummary($sinceHours: Int) {
+  ediSummary(sinceHours: $sinceHours) {
+    deliveryStatusCounts {
+      status
+      count
+    }
+    ackStatusCounts {
+      status
+      count
+    }
+    inboundFileStatusCounts {
+      status
+      count
+    }
+    inboundTransferStatusCounts {
+      status
+      count
+    }
+    overdueAckCount
+    attentionItems {
+      kind
+      id
+      partnerId
+      partnerName
+      partnerCode
+      reference
+      error
+      occurredAt
+    }
+  }
+}

@@ -1,20 +1,13 @@
-import {
-  AccessorialChargeAutocompleteField,
-  CommodityAutocompleteField,
-  CustomerAutocompleteField,
-  FormulaTemplateAutocompleteField,
-  LocationAutocompleteField,
-  ServiceTypeAutocompleteField,
-  ShipmentTypeAutocompleteField,
-} from "@/components/autocomplete-fields";
+import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import type { EDIMappingEntityType } from "@/types/edi";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import type { FieldValues } from "react-hook-form";
 import {
+  getTargetOptionDescription,
   getTargetOptionLabel,
   getTargetOptionValue,
   type TargetLookupSelection,
 } from "./edi-display-utils";
+import { mappingTargetEndpoints } from "./edi-schemas";
 
 type TargetLookupProps = {
   entityType: EDIMappingEntityType;
@@ -24,46 +17,37 @@ type TargetLookupProps = {
 };
 
 export function TargetLookup({ entityType, label, value, onChange }: TargetLookupProps) {
-  const { control, setValue } = useForm<{ targetId: string }>({
-    defaultValues: { targetId: value },
-  });
-
-  useEffect(() => {
-    setValue("targetId", value);
-  }, [setValue, value]);
-
-  const handleOptionChange = (option: unknown) => {
-    onChange({
-      targetId: getTargetOptionValue(option),
-      targetLabel: getTargetOptionLabel(option),
-    });
-  };
-
-  const commonProps = {
-    control,
-    name: "targetId" as const,
-    label,
-    placeholder: "Select local record",
-    clearable: true,
-    onOptionChange: handleOptionChange,
-  };
-
-  switch (entityType) {
-    case "Customer":
-      return <CustomerAutocompleteField {...commonProps} />;
-    case "Location":
-      return <LocationAutocompleteField {...commonProps} />;
-    case "Commodity":
-      return <CommodityAutocompleteField {...commonProps} />;
-    case "AccessorialCharge":
-      return <AccessorialChargeAutocompleteField {...commonProps} />;
-    case "ServiceType":
-      return <ServiceTypeAutocompleteField {...commonProps} />;
-    case "ShipmentType":
-      return <ShipmentTypeAutocompleteField {...commonProps} />;
-    case "FormulaTemplate":
-      return <FormulaTemplateAutocompleteField {...commonProps} />;
-    default:
-      return null;
-  }
+  return (
+    <Autocomplete<Record<string, unknown>, FieldValues>
+      link={mappingTargetEndpoints[entityType]}
+      label={label}
+      value={value}
+      placeholder="Select local record"
+      clearable
+      onChange={(nextValue) => {
+        if (!nextValue) {
+          onChange({ targetId: "", targetLabel: "" });
+        }
+      }}
+      onOptionChange={(option) =>
+        onChange({
+          targetId: getTargetOptionValue(option),
+          targetLabel: getTargetOptionLabel(option),
+        })
+      }
+      getOptionValue={getTargetOptionValue}
+      getDisplayValue={getTargetOptionLabel}
+      renderOption={(option) => {
+        const description = getTargetOptionDescription(option);
+        return (
+          <div className="flex size-full min-w-0 flex-col items-start pr-4">
+            <span className="w-full truncate">{getTargetOptionLabel(option)}</span>
+            {description && (
+              <span className="w-full truncate text-2xs text-muted-foreground">{description}</span>
+            )}
+          </div>
+        );
+      }}
+    />
+  );
 }

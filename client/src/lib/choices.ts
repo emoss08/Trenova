@@ -3,6 +3,12 @@ import type { AccountCategory } from "@/types/account-type";
 import type { BankReceiptStatus } from "@/types/bank-receipt";
 import type { BankReceiptBatchStatus } from "@/types/bank-receipt-batch";
 import type { ResolutionType, WorkItemStatus } from "@/types/bank-receipt-work-item";
+import type {
+  EDIInboundFileStatus,
+  EDIMessageAcknowledgmentStatus,
+  EDIMessageDeliveryStatus,
+  EDITransferStatus,
+} from "@/types/edi";
 import type { PaymentMethod } from "@/types/customer-payment";
 import type { JournalReversalStatus } from "@/types/journal-reversal";
 import type { ManualJournalStatus } from "@/types/manual-journal";
@@ -1168,3 +1174,61 @@ export const resolutionTypeChoices = [
   { label: "Requires External Follow-Up", value: "RequiresExternalFollowUp" },
   { label: "Superseded", value: "Superseded" },
 ] satisfies ReadonlyArray<GenericSelectOption<ResolutionType>>;
+
+export const ediTransferStatusChoices = [
+  { label: "Submitted", value: "Submitted" },
+  { label: "Mapping Required", value: "MappingRequired" },
+  { label: "Pending Approval", value: "PendingApproval" },
+  { label: "Processing", value: "Processing" },
+  { label: "Approved", value: "Approved" },
+  { label: "Rejected", value: "Rejected" },
+  { label: "Expired", value: "Expired" },
+  { label: "Canceled", value: "Canceled" },
+  { label: "Failed", value: "Failed" },
+] satisfies ReadonlyArray<GenericSelectOption<EDITransferStatus>>;
+
+export const ediMessageDeliveryStatusChoices = [
+  { label: "Queued", value: "Queued" },
+  { label: "Sending", value: "Sending" },
+  { label: "Sent", value: "Sent" },
+  { label: "Failed", value: "Failed" },
+  { label: "Dead Lettered", value: "DeadLettered" },
+] satisfies ReadonlyArray<GenericSelectOption<EDIMessageDeliveryStatus>>;
+
+export const ediAckStatusChoices = [
+  { label: "Not Expected", value: "NotExpected" },
+  { label: "Pending", value: "Pending" },
+  { label: "Accepted", value: "Accepted" },
+  { label: "Rejected", value: "Rejected" },
+  { label: "Failed", value: "Failed" },
+] satisfies ReadonlyArray<GenericSelectOption<EDIMessageAcknowledgmentStatus>>;
+
+export const ediInboundFileStatusChoices = [
+  { label: "Received", value: "Received" },
+  { label: "Parsed", value: "Parsed" },
+  { label: "Processed", value: "Processed" },
+  { label: "Partially Processed", value: "PartiallyProcessed" },
+  { label: "Quarantined", value: "Quarantined" },
+  { label: "Duplicate", value: "Duplicate" },
+] satisfies ReadonlyArray<GenericSelectOption<EDIInboundFileStatus>>;
+
+export const ediConnectionMethodChoices = [
+  { label: "Internal", value: "Internal" },
+  { label: "AS2", value: "AS2" },
+  { label: "SFTP", value: "SFTP" },
+  { label: "VAN", value: "VAN" },
+];
+
+export const ediTransactionSetChoices = [
+  { label: "204 Load Tender", value: "204" },
+  { label: "210 Freight Invoice", value: "210" },
+  { label: "214 Shipment Status", value: "214" },
+  { label: "990 Tender Response", value: "990" },
+  { label: "997 Functional Ack", value: "997" },
+  { label: "999 Implementation Ack", value: "999" },
+];
+
+export const ediDocumentDirectionChoices = [
+  { label: "Inbound", value: "Inbound" },
+  { label: "Outbound", value: "Outbound" },
+];

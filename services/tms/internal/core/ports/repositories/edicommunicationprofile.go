@@ -11,6 +11,7 @@ import (
 
 type ListEDICommunicationProfilesRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
+	Cursor pagination.CursorInfo    `json:"-"`
 }
 
 type EDICommunicationProfileSelectOptionsRequest struct {
@@ -26,16 +27,30 @@ type GetEDICommunicationProfileByIDRequest struct {
 }
 
 type GetActiveEDICommunicationProfileByPartnerRequest struct {
-	PartnerID  pulid.ID              `json:"partnerId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	Method     edi.ConnectionMethod  `json:"method"`
+	PartnerID  pulid.ID               `json:"partnerId"`
+	TenantInfo pagination.TenantInfo  `json:"tenantInfo"`
+	Method     edi.ConnectionMethod   `json:"method"`
+	Methods    []edi.ConnectionMethod `json:"methods"`
+}
+
+type GetActiveAS2ProfileByIdentifiersRequest struct {
+	LocalAS2ID   string `json:"localAs2Id"`
+	PartnerAS2ID string `json:"partnerAs2Id"`
 }
 
 type EDICommunicationProfileRepository interface {
+	GetActiveAS2ProfileByIdentifiers(
+		ctx context.Context,
+		req GetActiveAS2ProfileByIdentifiersRequest,
+	) (*edi.EDICommunicationProfile, error)
 	ListProfiles(
 		ctx context.Context,
 		req *ListEDICommunicationProfilesRequest,
 	) (*pagination.ListResult[*edi.EDICommunicationProfile], error)
+	ListProfilesCursor(
+		ctx context.Context,
+		req *ListEDICommunicationProfilesRequest,
+	) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error)
 	SelectProfileOptions(
 		ctx context.Context,
 		req *EDICommunicationProfileSelectOptionsRequest,
@@ -48,6 +63,9 @@ type EDICommunicationProfileRepository interface {
 		ctx context.Context,
 		req GetActiveEDICommunicationProfileByPartnerRequest,
 	) (*edi.EDICommunicationProfile, error)
+	ListInboundPollingProfiles(
+		ctx context.Context,
+	) ([]*edi.EDICommunicationProfile, error)
 	CreateProfile(
 		ctx context.Context,
 		entity *edi.EDICommunicationProfile,

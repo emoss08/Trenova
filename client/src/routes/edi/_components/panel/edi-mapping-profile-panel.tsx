@@ -1,7 +1,6 @@
-import {
-  EDIPartnerAutocompleteField,
-  ServiceFailureReasonCodeAutocompleteField,
-} from "@/components/autocomplete-fields";
+import { ControlledEDIPartnerAutocompleteField } from "@/components/autocomplete-fields";
+import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
+import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,16 +16,26 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { usePermissionStore } from "@/stores/permission-store";
-import type { EDIMappingProfileItem, EDIPartner } from "@/types/edi";
+import type { DataTablePanelProps } from "@/types/data-table";
+import type { EDIMappingProfile, EDIMappingProfileItem } from "@/types/edi";
 import { Operation, Resource } from "@/types/permission";
+import type { ServiceFailureReasonCode } from "@/types/service-failure-reason-code";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useState } from "react";
+import type { FieldValues } from "react-hook-form";
 import { toast } from "sonner";
 import { mappingEntityTypes } from "../edi-schemas";
 import { TargetLookup } from "../edi-target-lookup";
-import { EDIEmptyState } from "./edi-empty-state";
+import { EDIEmptyState } from "./edi-panel-primitives";
+
+const emptyDraft: EDIMappingProfileItem = {
+  entityType: "Customer",
+  sourceId: "",
+  sourceLabel: "",
+  targetId: "",
+  targetLabel: "",
+};
 
 export function MappingProfilePanel({
   partnerId,
@@ -37,13 +46,7 @@ export function MappingProfilePanel({
 }) {
   const queryClient = useQueryClient();
   const { data } = useQuery(queries.edi.mappingProfile(partnerId));
-  const [draft, setDraft] = useState<EDIMappingProfileItem>({
-    entityType: "Customer",
-    sourceId: "",
-    sourceLabel: "",
-    targetId: "",
-    targetLabel: "",
-  });
+  const [draft, setDraft] = useState<EDIMappingProfileItem>(emptyDraft);
   const saveMutation = useApiMutation({
     mutationFn: (item: EDIMappingProfileItem) =>
       data?.id
@@ -51,16 +54,13 @@ export function MappingProfilePanel({
         : apiService.ediService.saveMappingProfile(partnerId, [item]),
     onSuccess: async () => {
       toast.success("Mapping saved");
-      setDraft((current) => ({
-        ...current,
-        sourceId: "",
-        sourceLabel: "",
-        targetId: "",
-        targetLabel: "",
-      }));
-      await queryClient.invalidateQueries({
-        queryKey: queries.edi.mappingProfile(partnerId).queryKey,
-      });
+      setDraft((current) => ({ ...emptyDraft, entityType: current.entityType }));
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.edi.mappingProfile(partnerId).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
+      ]);
     },
     onError: () => toast.error("Failed to save mapping"),
   });
@@ -71,9 +71,12 @@ export function MappingProfilePanel({
         : apiService.ediService.deleteMappingItem(partnerId, itemId),
     onSuccess: async () => {
       toast.success("Mapping deleted");
-      await queryClient.invalidateQueries({
-        queryKey: queries.edi.mappingProfile(partnerId).queryKey,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.edi.mappingProfile(partnerId).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: ["edi-mapping-profile-list"] }),
+      ]);
     },
     onError: () => toast.error("Failed to delete mapping"),
   });
@@ -154,6 +157,7 @@ export function MappingProfilePanel({
                 />
                 <Button
                   disabled={!draft.sourceId || !draft.targetId || draft.entityType !== entityType}
+                  isLoading={saveMutation.isPending}
                   onClick={() => saveMutation.mutate(draft)}
                 >
                   <CheckIcon data-icon="inline-start" />
@@ -214,27 +218,33 @@ function MappingSourceInput({
   value: string;
   onChange: (source: { sourceId: string; sourceLabel: string }) => void;
 }) {
-  const { control, setValue } = useForm<{ sourceId: string }>({
-    defaultValues: { sourceId: value },
-  });
-
-  useEffect(() => {
-    setValue("sourceId", value);
-  }, [setValue, value]);
-
   if (entityType === "ServiceFailureReasonCode") {
     return (
-      <ServiceFailureReasonCodeAutocompleteField
-        control={control}
-        name="sourceId"
+      <Autocomplete<ServiceFailureReasonCode, FieldValues>
+        link="/service-failure-reason-codes/select-options/"
+        selectedValueLink="/service-failure-reason-codes/"
+        value={value}
         placeholder="Service failure reason"
         clearable
+        onChange={(nextValue) => {
+          if (!nextValue) {
+            onChange({ sourceId: "", sourceLabel: "" });
+          }
+        }}
         onOptionChange={(option) =>
           onChange({
             sourceId: option?.id ?? "",
             sourceLabel: option ? `${option.code} - ${option.label}` : "",
           })
         }
+        getOptionValue={(option) => option.id || ""}
+        getDisplayValue={(option) => option.code || option.label || ""}
+        renderOption={(option) => (
+          <div className="flex size-full flex-col items-start">
+            <span className="w-full truncate font-medium">{option.code}</span>
+            <span className="w-full truncate text-2xs text-muted-foreground">{option.label}</span>
+          </div>
+        )}
       />
     );
   }
@@ -258,48 +268,64 @@ function mappingEntityTabLabel(entityType: EDIMappingProfileItem["entityType"]) 
   return entityType;
 }
 
-export function MappingProfilesWorkspace() {
+export function MappingProfileTablePanel({
+  open,
+  onOpenChange,
+  mode,
+  row,
+}: DataTablePanelProps<EDIMappingProfile>) {
   const canUpdate = usePermissionStore((state) =>
     state.hasPermission(Resource.EDI, Operation.Update),
   );
-  const [selectedPartner, setSelectedPartner] = useState<EDIPartner | null>(null);
-  const { control } = useForm<{ partnerId: string }>({
-    defaultValues: { partnerId: "" },
-  });
-  const selectedPartnerId = useWatch({ control, name: "partnerId" });
+  const [selectedPartnerId, setSelectedPartnerId] = useState("");
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) setSelectedPartnerId("");
+    onOpenChange(nextOpen);
+  };
+
+  if (mode === "edit") {
+    if (!row) return null;
+    return (
+      <DataTablePanelContainer
+        open={open}
+        onOpenChange={onOpenChange}
+        title={row.name}
+        description={
+          row.partner
+            ? `Source value mappings for ${row.partner.code} — ${row.partner.name}`
+            : "Source value mappings for this trading partner"
+        }
+        size="xl"
+      >
+        <MappingProfilePanel partnerId={row.ediPartnerId} canUpdate={canUpdate} />
+      </DataTablePanelContainer>
+    );
+  }
 
   return (
-    <div className="grid min-h-0 gap-4 p-3 lg:grid-cols-[18rem_1fr]">
-      <div className="rounded-md border bg-background">
-        <div className="border-b px-3 py-2">
-          <div className="text-sm font-medium">Partner</div>
-          <div className="text-xs text-muted-foreground">
-            Choose which partner source values should map into local records.
-          </div>
-        </div>
-        <div className="p-3">
-          <EDIPartnerAutocompleteField
-            control={control}
-            name="partnerId"
+    <DataTablePanelContainer
+      open={open}
+      onOpenChange={handleOpenChange}
+      title="New Mapping Profile"
+      description="Choose which partner source values should map into local records."
+      size="xl"
+    >
+      <div className="flex min-h-0 flex-col gap-4">
+        <div className="max-w-md">
+          <ControlledEDIPartnerAutocompleteField
+            label="Partner"
             placeholder="Select partner"
-            clearable
-            onOptionChange={setSelectedPartner}
+            description="Saving the first mapping creates the partner's mapping profile."
+            value={selectedPartnerId}
+            onValueChange={setSelectedPartnerId}
           />
-          {selectedPartner && (
-            <div className="mt-3 rounded-md border bg-muted/20 p-3 text-sm">
-              <div className="font-medium">{selectedPartner.name}</div>
-              <div className="text-xs text-muted-foreground">{selectedPartner.code}</div>
-            </div>
-          )}
         </div>
-      </div>
-      <div className="min-w-0 rounded-md border bg-background">
         {selectedPartnerId ? (
           <MappingProfilePanel partnerId={selectedPartnerId} canUpdate={canUpdate} />
         ) : (
           <EDIEmptyState message="Select a partner to manage mapping records." />
         )}
       </div>
-    </div>
+    </DataTablePanelContainer>
   );
 }

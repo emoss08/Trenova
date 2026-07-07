@@ -65,6 +65,7 @@ type GenerateEDIDocumentRequest struct {
 	Direction                edi.DocumentDirection `json:"direction"`
 	Payload                  *edi.DocumentPayload  `json:"payload"`
 	GeneratedByID            pulid.ID              `json:"-"`
+	DisableDeliveryQueue     bool                  `json:"-"`
 }
 
 type ServiceFailure214LifecycleRequest struct {

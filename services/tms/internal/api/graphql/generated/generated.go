@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
@@ -35,7 +36,7 @@ import (
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
-// region    ************************** generated!.gotpl **************************
+// region    ***************************** api!.gotpl *****************************
 
 // NewExecutableSchema creates an ExecutableSchema from the ResolverRoot interface.
 func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
@@ -45,6 +46,10 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	EdiMessage() EdiMessageResolver
+	EdiPartnerDocumentProfile() EdiPartnerDocumentProfileResolver
+	EdiTemplate() EdiTemplateResolver
+	EdiTransfer() EdiTransferResolver
 	EquipmentContinuity() EquipmentContinuityResolver
 	Mutation() MutationResolver
 	PTOChartDataPoint() PTOChartDataPointResolver
@@ -102,6 +107,362 @@ type ComplexityRoot struct {
 		Name      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		Version   func(childComplexity int) int
+	}
+
+	EdiCommunicationProfile struct {
+		BusinessUnitID  func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		Description     func(childComplexity int) int
+		EDIConnectionID func(childComplexity int) int
+		EDIPartnerID    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Method          func(childComplexity int) int
+		Name            func(childComplexity int) int
+		OrganizationID  func(childComplexity int) int
+		Partner         func(childComplexity int) int
+		SecretState     func(childComplexity int) int
+		Status          func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
+	}
+
+	EdiCommunicationProfileConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiCommunicationProfileEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiCommunicationProfileSecretState struct {
+		Key func(childComplexity int) int
+	}
+
+	EdiConnection struct {
+		ID     func(childComplexity int) int
+		Method func(childComplexity int) int
+		Status func(childComplexity int) int
+	}
+
+	EdiInboundFile struct {
+		BusinessUnitID           func(childComplexity int) int
+		Checksum                 func(childComplexity int) int
+		CommunicationProfileID   func(childComplexity int) int
+		CreatedAt                func(childComplexity int) int
+		EDIPartnerID             func(childComplexity int) int
+		FailureReason            func(childComplexity int) int
+		FileName                 func(childComplexity int) int
+		ID                       func(childComplexity int) int
+		ISAReceiverID            func(childComplexity int) int
+		ISAReceiverQualifier     func(childComplexity int) int
+		ISASenderID              func(childComplexity int) int
+		ISASenderQualifier       func(childComplexity int) int
+		InterchangeControlNumber func(childComplexity int) int
+		Method                   func(childComplexity int) int
+		OrganizationID           func(childComplexity int) int
+		Partner                  func(childComplexity int) int
+		ProcessedAt              func(childComplexity int) int
+		ReceivedAt               func(childComplexity int) int
+		RemotePath               func(childComplexity int) int
+		SizeBytes                func(childComplexity int) int
+		Status                   func(childComplexity int) int
+		TransactionCount         func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+		Version                  func(childComplexity int) int
+	}
+
+	EdiInboundFileConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiInboundFileEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiMappingProfile struct {
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		EDIPartnerID   func(childComplexity int) int
+		Entries        func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Partner        func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+	}
+
+	EdiMappingProfileConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiMappingProfileEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiMappingProfileItem struct {
+		BusinessUnitID   func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		EDIPartnerID     func(childComplexity int) int
+		EntityType       func(childComplexity int) int
+		ID               func(childComplexity int) int
+		MappingProfileID func(childComplexity int) int
+		OrganizationID   func(childComplexity int) int
+		SourceID         func(childComplexity int) int
+		SourceLabel      func(childComplexity int) int
+		TargetID         func(childComplexity int) int
+		TargetLabel      func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		Version          func(childComplexity int) int
+	}
+
+	EdiMessage struct {
+		AckLastError             func(childComplexity int) int
+		AckMessageID             func(childComplexity int) int
+		AckReceivedAt            func(childComplexity int) int
+		AckStatus                func(childComplexity int) int
+		BusinessUnitID           func(childComplexity int) int
+		CreatedAt                func(childComplexity int) int
+		DeliveryAttempts         func(childComplexity int) int
+		DeliveryLastAttemptAt    func(childComplexity int) int
+		DeliveryLastError        func(childComplexity int) int
+		DeliveryRemotePath       func(childComplexity int) int
+		DeliverySentAt           func(childComplexity int) int
+		DeliveryStatus           func(childComplexity int) int
+		Direction                func(childComplexity int) int
+		DocumentTypeID           func(childComplexity int) int
+		EDIPartnerID             func(childComplexity int) int
+		GeneratedAt              func(childComplexity int) int
+		GroupControlNumber       func(childComplexity int) int
+		ID                       func(childComplexity int) int
+		InboundFileID            func(childComplexity int) int
+		InterchangeControlNumber func(childComplexity int) int
+		OrganizationID           func(childComplexity int) int
+		Partner                  func(childComplexity int) int
+		PartnerDocumentProfileID func(childComplexity int) int
+		SegmentCount             func(childComplexity int) int
+		ShipmentID               func(childComplexity int) int
+		Status                   func(childComplexity int) int
+		TemplateID               func(childComplexity int) int
+		TemplateVersionID        func(childComplexity int) int
+		TransactionControlNumber func(childComplexity int) int
+		TransactionSet           func(childComplexity int) int
+		TransferID               func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+		Version                  func(childComplexity int) int
+		X12Version               func(childComplexity int) int
+	}
+
+	EdiMessageConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiMessageEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiPartner struct {
+		BusinessUnitID          func(childComplexity int) int
+		Code                    func(childComplexity int) int
+		Connection              func(childComplexity int) int
+		ContactEmail            func(childComplexity int) int
+		ContactName             func(childComplexity int) int
+		ContactPhone            func(childComplexity int) int
+		Country                 func(childComplexity int) int
+		CreatedAt               func(childComplexity int) int
+		CustomerID              func(childComplexity int) int
+		DefaultMappingProfileID func(childComplexity int) int
+		DefaultTransport        func(childComplexity int) int
+		DefaultTransportID      func(childComplexity int) int
+		Description             func(childComplexity int) int
+		EnabledForInbound       func(childComplexity int) int
+		EnabledForOutbound      func(childComplexity int) int
+		ID                      func(childComplexity int) int
+		InternalOrganization    func(childComplexity int) int
+		InternalOrganizationID  func(childComplexity int) int
+		Kind                    func(childComplexity int) int
+		Name                    func(childComplexity int) int
+		OrganizationID          func(childComplexity int) int
+		Status                  func(childComplexity int) int
+		Timezone                func(childComplexity int) int
+		UpdatedAt               func(childComplexity int) int
+		Version                 func(childComplexity int) int
+	}
+
+	EdiPartnerConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiPartnerDocumentProfile struct {
+		Direction      func(childComplexity int) int
+		EDIPartnerID   func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		Partner        func(childComplexity int) int
+		TransactionSet func(childComplexity int) int
+	}
+
+	EdiPartnerEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiSummary struct {
+		AckStatusCounts             func(childComplexity int) int
+		AttentionItems              func(childComplexity int) int
+		DeliveryStatusCounts        func(childComplexity int) int
+		InboundFileStatusCounts     func(childComplexity int) int
+		InboundTransferStatusCounts func(childComplexity int) int
+		OverdueAckCount             func(childComplexity int) int
+	}
+
+	EdiSummaryAttentionItem struct {
+		Error       func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		OccurredAt  func(childComplexity int) int
+		PartnerCode func(childComplexity int) int
+		PartnerID   func(childComplexity int) int
+		PartnerName func(childComplexity int) int
+		Reference   func(childComplexity int) int
+	}
+
+	EdiSummaryStatusCount struct {
+		Count  func(childComplexity int) int
+		Status func(childComplexity int) int
+	}
+
+	EdiTemplate struct {
+		ActiveVersion  func(childComplexity int) int
+		BusinessUnitID func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Description    func(childComplexity int) int
+		Direction      func(childComplexity int) int
+		DocumentTypeID func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Name           func(childComplexity int) int
+		OrganizationID func(childComplexity int) int
+		Standard       func(childComplexity int) int
+		Status         func(childComplexity int) int
+		TransactionSet func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
+		Versions       func(childComplexity int) int
+	}
+
+	EdiTemplateConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiTemplateEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiTemplateVersion struct {
+		ActivatedAt        func(childComplexity int) int
+		ActivationNotes    func(childComplexity int) int
+		ArchiveNotes       func(childComplexity int) int
+		ArchivedAt         func(childComplexity int) int
+		BusinessUnitID     func(childComplexity int) int
+		CertificationNotes func(childComplexity int) int
+		CertifiedAt        func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DeprecatedAt       func(childComplexity int) int
+		DeprecatedNotes    func(childComplexity int) int
+		FunctionalGroupID  func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		IsActive           func(childComplexity int) int
+		Notes              func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		SourceVersionID    func(childComplexity int) int
+		Status             func(childComplexity int) int
+		SupersededAt       func(childComplexity int) int
+		SupersededNotes    func(childComplexity int) int
+		TemplateID         func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+		VersionNumber      func(childComplexity int) int
+		X12Version         func(childComplexity int) int
+	}
+
+	EdiTestCase struct {
+		BusinessUnitID           func(childComplexity int) int
+		CreatedAt                func(childComplexity int) int
+		Description              func(childComplexity int) int
+		DocumentProfile          func(childComplexity int) int
+		ExpectedErrors           func(childComplexity int) int
+		ExpectedWarnings         func(childComplexity int) int
+		ID                       func(childComplexity int) int
+		Name                     func(childComplexity int) int
+		OrganizationID           func(childComplexity int) int
+		PartnerDocumentProfileID func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+		Version                  func(childComplexity int) int
+	}
+
+	EdiTestCaseConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiTestCaseEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	EdiTransfer struct {
+		CreatedAt            func(childComplexity int) int
+		FailureReason        func(childComplexity int) int
+		ID                   func(childComplexity int) int
+		InboundMessageID     func(childComplexity int) int
+		MappingSnapshot      func(childComplexity int) int
+		ProcessedAt          func(childComplexity int) int
+		RejectionReason      func(childComplexity int) int
+		SourceBusinessUnitID func(childComplexity int) int
+		SourceOrganizationID func(childComplexity int) int
+		SourcePartner        func(childComplexity int) int
+		SourcePartnerID      func(childComplexity int) int
+		SourceShipmentID     func(childComplexity int) int
+		Status               func(childComplexity int) int
+		SubmittedAt          func(childComplexity int) int
+		TargetBusinessUnitID func(childComplexity int) int
+		TargetOrganizationID func(childComplexity int) int
+		TargetPartner        func(childComplexity int) int
+		TargetPartnerID      func(childComplexity int) int
+		TargetShipmentID     func(childComplexity int) int
+		TenderPayload        func(childComplexity int) int
+		UpdatedAt            func(childComplexity int) int
+		Version              func(childComplexity int) int
+	}
+
+	EdiTransferConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	EdiTransferEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	EquipmentContinuity struct {
@@ -336,6 +697,15 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		EdiCommunicationProfiles func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EdiInboundFiles          func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) int
+		EdiMappingProfiles       func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerID *string) int
+		EdiMessages              func(childComplexity int, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) int
+		EdiPartners              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		EdiSummary               func(childComplexity int, sinceHours *int) int
+		EdiTemplates             func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) int
+		EdiTestCases             func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) int
+		EdiTransfers             func(childComplexity int, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EdiTransferDirection) int
 		EquipmentManufacturer    func(childComplexity int, id string) int
 		EquipmentManufacturers   func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		EquipmentType            func(childComplexity int, id string) int
@@ -1337,6 +1707,23 @@ type ComplexityRoot struct {
 	}
 }
 
+// endregion ***************************** api!.gotpl *****************************
+
+// region    ************************** generated!.gotpl **************************
+
+type EdiMessageResolver interface {
+	TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error)
+}
+type EdiPartnerDocumentProfileResolver interface {
+	TransactionSet(ctx context.Context, obj *edi.EDIPartnerDocumentProfile) (string, error)
+}
+type EdiTemplateResolver interface {
+	TransactionSet(ctx context.Context, obj *edi.EDITemplate) (string, error)
+}
+type EdiTransferResolver interface {
+	TenderPayload(ctx context.Context, obj *edi.EDITransfer) (any, error)
+	MappingSnapshot(ctx context.Context, obj *edi.EDITransfer) (any, error)
+}
 type EquipmentContinuityResolver interface {
 	EquipmentType(ctx context.Context, obj *equipmentcontinuity.EquipmentContinuity) (string, error)
 
@@ -1392,6 +1779,15 @@ type PTOChartDataPointResolver interface {
 type QueryResolver interface {
 	Trailers(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *domaintypes.EquipmentStatus, includeEquipmentDetails *bool, includeFleetDetails *bool) (*gqlmodel.TrailerConnection, error)
 	Trailer(ctx context.Context, id string) (*trailer.Trailer, error)
+	EdiPartners(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EdiPartnerConnection, error)
+	EdiCommunicationProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EdiCommunicationProfileConnection, error)
+	EdiTransfers(ctx context.Context, input gqlmodel.DataTableConnectionInput, direction gqlmodel.EdiTransferDirection) (*gqlmodel.EdiTransferConnection, error)
+	EdiMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EdiMessageConnection, error)
+	EdiInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EdiInboundFileConnection, error)
+	EdiTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) (*gqlmodel.EdiTemplateConnection, error)
+	EdiMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EdiMappingProfileConnection, error)
+	EdiTestCases(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) (*gqlmodel.EdiTestCaseConnection, error)
+	EdiSummary(ctx context.Context, sinceHours *int) (*gqlmodel.EdiSummary, error)
 	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	EquipmentTypes(ctx context.Context, input gqlmodel.DataTableConnectionInput, classes []equipmenttype.Class) (*gqlmodel.EquipmentTypeConnection, error)
@@ -1453,6 +1849,10 @@ type WorkerPTOResolver interface {
 type WorkerProfileResolver interface {
 	LicenseStateID(ctx context.Context, obj *worker.WorkerProfile) (*string, error)
 }
+
+// endregion ************************** generated!.gotpl **************************
+
+// region    ************************** internal!.gotpl ***************************
 
 type executableSchema graphql.ExecutableSchemaState[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
@@ -1691,6 +2091,1598 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.BusinessUnit.Version(childComplexity), true
+
+	case "EdiCommunicationProfile.businessUnitId":
+		if e.ComplexityRoot.EdiCommunicationProfile.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.BusinessUnitID(childComplexity), true
+	case "EdiCommunicationProfile.createdAt":
+		if e.ComplexityRoot.EdiCommunicationProfile.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.CreatedAt(childComplexity), true
+	case "EdiCommunicationProfile.description":
+		if e.ComplexityRoot.EdiCommunicationProfile.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Description(childComplexity), true
+	case "EdiCommunicationProfile.ediConnectionId":
+		if e.ComplexityRoot.EdiCommunicationProfile.EDIConnectionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.EDIConnectionID(childComplexity), true
+	case "EdiCommunicationProfile.ediPartnerId":
+		if e.ComplexityRoot.EdiCommunicationProfile.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.EDIPartnerID(childComplexity), true
+	case "EdiCommunicationProfile.id":
+		if e.ComplexityRoot.EdiCommunicationProfile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.ID(childComplexity), true
+	case "EdiCommunicationProfile.method":
+		if e.ComplexityRoot.EdiCommunicationProfile.Method == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Method(childComplexity), true
+	case "EdiCommunicationProfile.name":
+		if e.ComplexityRoot.EdiCommunicationProfile.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Name(childComplexity), true
+	case "EdiCommunicationProfile.organizationId":
+		if e.ComplexityRoot.EdiCommunicationProfile.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.OrganizationID(childComplexity), true
+	case "EdiCommunicationProfile.partner":
+		if e.ComplexityRoot.EdiCommunicationProfile.Partner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Partner(childComplexity), true
+	case "EdiCommunicationProfile.secretState":
+		if e.ComplexityRoot.EdiCommunicationProfile.SecretState == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.SecretState(childComplexity), true
+	case "EdiCommunicationProfile.status":
+		if e.ComplexityRoot.EdiCommunicationProfile.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Status(childComplexity), true
+	case "EdiCommunicationProfile.updatedAt":
+		if e.ComplexityRoot.EdiCommunicationProfile.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.UpdatedAt(childComplexity), true
+	case "EdiCommunicationProfile.version":
+		if e.ComplexityRoot.EdiCommunicationProfile.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfile.Version(childComplexity), true
+
+	case "EdiCommunicationProfileConnection.edges":
+		if e.ComplexityRoot.EdiCommunicationProfileConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileConnection.Edges(childComplexity), true
+	case "EdiCommunicationProfileConnection.pageInfo":
+		if e.ComplexityRoot.EdiCommunicationProfileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileConnection.PageInfo(childComplexity), true
+	case "EdiCommunicationProfileConnection.totalCount":
+		if e.ComplexityRoot.EdiCommunicationProfileConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileConnection.TotalCount(childComplexity), true
+
+	case "EdiCommunicationProfileEdge.cursor":
+		if e.ComplexityRoot.EdiCommunicationProfileEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileEdge.Cursor(childComplexity), true
+	case "EdiCommunicationProfileEdge.node":
+		if e.ComplexityRoot.EdiCommunicationProfileEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileEdge.Node(childComplexity), true
+
+	case "EdiCommunicationProfileSecretState.key":
+		if e.ComplexityRoot.EdiCommunicationProfileSecretState.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiCommunicationProfileSecretState.Key(childComplexity), true
+
+	case "EdiConnection.id":
+		if e.ComplexityRoot.EdiConnection.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiConnection.ID(childComplexity), true
+	case "EdiConnection.method":
+		if e.ComplexityRoot.EdiConnection.Method == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiConnection.Method(childComplexity), true
+	case "EdiConnection.status":
+		if e.ComplexityRoot.EdiConnection.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiConnection.Status(childComplexity), true
+
+	case "EdiInboundFile.businessUnitId":
+		if e.ComplexityRoot.EdiInboundFile.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.BusinessUnitID(childComplexity), true
+	case "EdiInboundFile.checksum":
+		if e.ComplexityRoot.EdiInboundFile.Checksum == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.Checksum(childComplexity), true
+	case "EdiInboundFile.communicationProfileId":
+		if e.ComplexityRoot.EdiInboundFile.CommunicationProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.CommunicationProfileID(childComplexity), true
+	case "EdiInboundFile.createdAt":
+		if e.ComplexityRoot.EdiInboundFile.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.CreatedAt(childComplexity), true
+	case "EdiInboundFile.ediPartnerId":
+		if e.ComplexityRoot.EdiInboundFile.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.EDIPartnerID(childComplexity), true
+	case "EdiInboundFile.failureReason":
+		if e.ComplexityRoot.EdiInboundFile.FailureReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.FailureReason(childComplexity), true
+	case "EdiInboundFile.fileName":
+		if e.ComplexityRoot.EdiInboundFile.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.FileName(childComplexity), true
+	case "EdiInboundFile.id":
+		if e.ComplexityRoot.EdiInboundFile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ID(childComplexity), true
+	case "EdiInboundFile.isaReceiverId":
+		if e.ComplexityRoot.EdiInboundFile.ISAReceiverID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ISAReceiverID(childComplexity), true
+	case "EdiInboundFile.isaReceiverQualifier":
+		if e.ComplexityRoot.EdiInboundFile.ISAReceiverQualifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ISAReceiverQualifier(childComplexity), true
+	case "EdiInboundFile.isaSenderId":
+		if e.ComplexityRoot.EdiInboundFile.ISASenderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ISASenderID(childComplexity), true
+	case "EdiInboundFile.isaSenderQualifier":
+		if e.ComplexityRoot.EdiInboundFile.ISASenderQualifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ISASenderQualifier(childComplexity), true
+	case "EdiInboundFile.interchangeControlNumber":
+		if e.ComplexityRoot.EdiInboundFile.InterchangeControlNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.InterchangeControlNumber(childComplexity), true
+	case "EdiInboundFile.method":
+		if e.ComplexityRoot.EdiInboundFile.Method == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.Method(childComplexity), true
+	case "EdiInboundFile.organizationId":
+		if e.ComplexityRoot.EdiInboundFile.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.OrganizationID(childComplexity), true
+	case "EdiInboundFile.partner":
+		if e.ComplexityRoot.EdiInboundFile.Partner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.Partner(childComplexity), true
+	case "EdiInboundFile.processedAt":
+		if e.ComplexityRoot.EdiInboundFile.ProcessedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ProcessedAt(childComplexity), true
+	case "EdiInboundFile.receivedAt":
+		if e.ComplexityRoot.EdiInboundFile.ReceivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.ReceivedAt(childComplexity), true
+	case "EdiInboundFile.remotePath":
+		if e.ComplexityRoot.EdiInboundFile.RemotePath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.RemotePath(childComplexity), true
+	case "EdiInboundFile.sizeBytes":
+		if e.ComplexityRoot.EdiInboundFile.SizeBytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.SizeBytes(childComplexity), true
+	case "EdiInboundFile.status":
+		if e.ComplexityRoot.EdiInboundFile.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.Status(childComplexity), true
+	case "EdiInboundFile.transactionCount":
+		if e.ComplexityRoot.EdiInboundFile.TransactionCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.TransactionCount(childComplexity), true
+	case "EdiInboundFile.updatedAt":
+		if e.ComplexityRoot.EdiInboundFile.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.UpdatedAt(childComplexity), true
+	case "EdiInboundFile.version":
+		if e.ComplexityRoot.EdiInboundFile.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFile.Version(childComplexity), true
+
+	case "EdiInboundFileConnection.edges":
+		if e.ComplexityRoot.EdiInboundFileConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFileConnection.Edges(childComplexity), true
+	case "EdiInboundFileConnection.pageInfo":
+		if e.ComplexityRoot.EdiInboundFileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFileConnection.PageInfo(childComplexity), true
+	case "EdiInboundFileConnection.totalCount":
+		if e.ComplexityRoot.EdiInboundFileConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFileConnection.TotalCount(childComplexity), true
+
+	case "EdiInboundFileEdge.cursor":
+		if e.ComplexityRoot.EdiInboundFileEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFileEdge.Cursor(childComplexity), true
+	case "EdiInboundFileEdge.node":
+		if e.ComplexityRoot.EdiInboundFileEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiInboundFileEdge.Node(childComplexity), true
+
+	case "EdiMappingProfile.businessUnitId":
+		if e.ComplexityRoot.EdiMappingProfile.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.BusinessUnitID(childComplexity), true
+	case "EdiMappingProfile.createdAt":
+		if e.ComplexityRoot.EdiMappingProfile.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.CreatedAt(childComplexity), true
+	case "EdiMappingProfile.description":
+		if e.ComplexityRoot.EdiMappingProfile.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.Description(childComplexity), true
+	case "EdiMappingProfile.ediPartnerId":
+		if e.ComplexityRoot.EdiMappingProfile.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.EDIPartnerID(childComplexity), true
+	case "EdiMappingProfile.entries":
+		if e.ComplexityRoot.EdiMappingProfile.Entries == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.Entries(childComplexity), true
+	case "EdiMappingProfile.id":
+		if e.ComplexityRoot.EdiMappingProfile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.ID(childComplexity), true
+	case "EdiMappingProfile.name":
+		if e.ComplexityRoot.EdiMappingProfile.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.Name(childComplexity), true
+	case "EdiMappingProfile.organizationId":
+		if e.ComplexityRoot.EdiMappingProfile.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.OrganizationID(childComplexity), true
+	case "EdiMappingProfile.partner":
+		if e.ComplexityRoot.EdiMappingProfile.Partner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.Partner(childComplexity), true
+	case "EdiMappingProfile.updatedAt":
+		if e.ComplexityRoot.EdiMappingProfile.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.UpdatedAt(childComplexity), true
+	case "EdiMappingProfile.version":
+		if e.ComplexityRoot.EdiMappingProfile.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfile.Version(childComplexity), true
+
+	case "EdiMappingProfileConnection.edges":
+		if e.ComplexityRoot.EdiMappingProfileConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileConnection.Edges(childComplexity), true
+	case "EdiMappingProfileConnection.pageInfo":
+		if e.ComplexityRoot.EdiMappingProfileConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileConnection.PageInfo(childComplexity), true
+	case "EdiMappingProfileConnection.totalCount":
+		if e.ComplexityRoot.EdiMappingProfileConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileConnection.TotalCount(childComplexity), true
+
+	case "EdiMappingProfileEdge.cursor":
+		if e.ComplexityRoot.EdiMappingProfileEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileEdge.Cursor(childComplexity), true
+	case "EdiMappingProfileEdge.node":
+		if e.ComplexityRoot.EdiMappingProfileEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileEdge.Node(childComplexity), true
+
+	case "EdiMappingProfileItem.businessUnitId":
+		if e.ComplexityRoot.EdiMappingProfileItem.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.BusinessUnitID(childComplexity), true
+	case "EdiMappingProfileItem.createdAt":
+		if e.ComplexityRoot.EdiMappingProfileItem.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.CreatedAt(childComplexity), true
+	case "EdiMappingProfileItem.ediPartnerId":
+		if e.ComplexityRoot.EdiMappingProfileItem.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.EDIPartnerID(childComplexity), true
+	case "EdiMappingProfileItem.entityType":
+		if e.ComplexityRoot.EdiMappingProfileItem.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.EntityType(childComplexity), true
+	case "EdiMappingProfileItem.id":
+		if e.ComplexityRoot.EdiMappingProfileItem.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.ID(childComplexity), true
+	case "EdiMappingProfileItem.mappingProfileId":
+		if e.ComplexityRoot.EdiMappingProfileItem.MappingProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.MappingProfileID(childComplexity), true
+	case "EdiMappingProfileItem.organizationId":
+		if e.ComplexityRoot.EdiMappingProfileItem.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.OrganizationID(childComplexity), true
+	case "EdiMappingProfileItem.sourceId":
+		if e.ComplexityRoot.EdiMappingProfileItem.SourceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.SourceID(childComplexity), true
+	case "EdiMappingProfileItem.sourceLabel":
+		if e.ComplexityRoot.EdiMappingProfileItem.SourceLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.SourceLabel(childComplexity), true
+	case "EdiMappingProfileItem.targetId":
+		if e.ComplexityRoot.EdiMappingProfileItem.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.TargetID(childComplexity), true
+	case "EdiMappingProfileItem.targetLabel":
+		if e.ComplexityRoot.EdiMappingProfileItem.TargetLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.TargetLabel(childComplexity), true
+	case "EdiMappingProfileItem.updatedAt":
+		if e.ComplexityRoot.EdiMappingProfileItem.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.UpdatedAt(childComplexity), true
+	case "EdiMappingProfileItem.version":
+		if e.ComplexityRoot.EdiMappingProfileItem.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMappingProfileItem.Version(childComplexity), true
+
+	case "EdiMessage.ackLastError":
+		if e.ComplexityRoot.EdiMessage.AckLastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.AckLastError(childComplexity), true
+	case "EdiMessage.ackMessageId":
+		if e.ComplexityRoot.EdiMessage.AckMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.AckMessageID(childComplexity), true
+	case "EdiMessage.ackReceivedAt":
+		if e.ComplexityRoot.EdiMessage.AckReceivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.AckReceivedAt(childComplexity), true
+	case "EdiMessage.ackStatus":
+		if e.ComplexityRoot.EdiMessage.AckStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.AckStatus(childComplexity), true
+	case "EdiMessage.businessUnitId":
+		if e.ComplexityRoot.EdiMessage.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.BusinessUnitID(childComplexity), true
+	case "EdiMessage.createdAt":
+		if e.ComplexityRoot.EdiMessage.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.CreatedAt(childComplexity), true
+	case "EdiMessage.deliveryAttempts":
+		if e.ComplexityRoot.EdiMessage.DeliveryAttempts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliveryAttempts(childComplexity), true
+	case "EdiMessage.deliveryLastAttemptAt":
+		if e.ComplexityRoot.EdiMessage.DeliveryLastAttemptAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliveryLastAttemptAt(childComplexity), true
+	case "EdiMessage.deliveryLastError":
+		if e.ComplexityRoot.EdiMessage.DeliveryLastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliveryLastError(childComplexity), true
+	case "EdiMessage.deliveryRemotePath":
+		if e.ComplexityRoot.EdiMessage.DeliveryRemotePath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliveryRemotePath(childComplexity), true
+	case "EdiMessage.deliverySentAt":
+		if e.ComplexityRoot.EdiMessage.DeliverySentAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliverySentAt(childComplexity), true
+	case "EdiMessage.deliveryStatus":
+		if e.ComplexityRoot.EdiMessage.DeliveryStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DeliveryStatus(childComplexity), true
+	case "EdiMessage.direction":
+		if e.ComplexityRoot.EdiMessage.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.Direction(childComplexity), true
+	case "EdiMessage.documentTypeId":
+		if e.ComplexityRoot.EdiMessage.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.DocumentTypeID(childComplexity), true
+	case "EdiMessage.ediPartnerId":
+		if e.ComplexityRoot.EdiMessage.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.EDIPartnerID(childComplexity), true
+	case "EdiMessage.generatedAt":
+		if e.ComplexityRoot.EdiMessage.GeneratedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.GeneratedAt(childComplexity), true
+	case "EdiMessage.groupControlNumber":
+		if e.ComplexityRoot.EdiMessage.GroupControlNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.GroupControlNumber(childComplexity), true
+	case "EdiMessage.id":
+		if e.ComplexityRoot.EdiMessage.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.ID(childComplexity), true
+	case "EdiMessage.inboundFileId":
+		if e.ComplexityRoot.EdiMessage.InboundFileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.InboundFileID(childComplexity), true
+	case "EdiMessage.interchangeControlNumber":
+		if e.ComplexityRoot.EdiMessage.InterchangeControlNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.InterchangeControlNumber(childComplexity), true
+	case "EdiMessage.organizationId":
+		if e.ComplexityRoot.EdiMessage.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.OrganizationID(childComplexity), true
+	case "EdiMessage.partner":
+		if e.ComplexityRoot.EdiMessage.Partner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.Partner(childComplexity), true
+	case "EdiMessage.partnerDocumentProfileId":
+		if e.ComplexityRoot.EdiMessage.PartnerDocumentProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.PartnerDocumentProfileID(childComplexity), true
+	case "EdiMessage.segmentCount":
+		if e.ComplexityRoot.EdiMessage.SegmentCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.SegmentCount(childComplexity), true
+	case "EdiMessage.shipmentId":
+		if e.ComplexityRoot.EdiMessage.ShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.ShipmentID(childComplexity), true
+	case "EdiMessage.status":
+		if e.ComplexityRoot.EdiMessage.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.Status(childComplexity), true
+	case "EdiMessage.templateId":
+		if e.ComplexityRoot.EdiMessage.TemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.TemplateID(childComplexity), true
+	case "EdiMessage.templateVersionId":
+		if e.ComplexityRoot.EdiMessage.TemplateVersionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.TemplateVersionID(childComplexity), true
+	case "EdiMessage.transactionControlNumber":
+		if e.ComplexityRoot.EdiMessage.TransactionControlNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.TransactionControlNumber(childComplexity), true
+	case "EdiMessage.transactionSet":
+		if e.ComplexityRoot.EdiMessage.TransactionSet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.TransactionSet(childComplexity), true
+	case "EdiMessage.transferId":
+		if e.ComplexityRoot.EdiMessage.TransferID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.TransferID(childComplexity), true
+	case "EdiMessage.updatedAt":
+		if e.ComplexityRoot.EdiMessage.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.UpdatedAt(childComplexity), true
+	case "EdiMessage.version":
+		if e.ComplexityRoot.EdiMessage.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.Version(childComplexity), true
+	case "EdiMessage.x12Version":
+		if e.ComplexityRoot.EdiMessage.X12Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessage.X12Version(childComplexity), true
+
+	case "EdiMessageConnection.edges":
+		if e.ComplexityRoot.EdiMessageConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessageConnection.Edges(childComplexity), true
+	case "EdiMessageConnection.pageInfo":
+		if e.ComplexityRoot.EdiMessageConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessageConnection.PageInfo(childComplexity), true
+	case "EdiMessageConnection.totalCount":
+		if e.ComplexityRoot.EdiMessageConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessageConnection.TotalCount(childComplexity), true
+
+	case "EdiMessageEdge.cursor":
+		if e.ComplexityRoot.EdiMessageEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessageEdge.Cursor(childComplexity), true
+	case "EdiMessageEdge.node":
+		if e.ComplexityRoot.EdiMessageEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiMessageEdge.Node(childComplexity), true
+
+	case "EdiPartner.businessUnitId":
+		if e.ComplexityRoot.EdiPartner.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.BusinessUnitID(childComplexity), true
+	case "EdiPartner.code":
+		if e.ComplexityRoot.EdiPartner.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Code(childComplexity), true
+	case "EdiPartner.connection":
+		if e.ComplexityRoot.EdiPartner.Connection == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Connection(childComplexity), true
+	case "EdiPartner.contactEmail":
+		if e.ComplexityRoot.EdiPartner.ContactEmail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.ContactEmail(childComplexity), true
+	case "EdiPartner.contactName":
+		if e.ComplexityRoot.EdiPartner.ContactName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.ContactName(childComplexity), true
+	case "EdiPartner.contactPhone":
+		if e.ComplexityRoot.EdiPartner.ContactPhone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.ContactPhone(childComplexity), true
+	case "EdiPartner.country":
+		if e.ComplexityRoot.EdiPartner.Country == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Country(childComplexity), true
+	case "EdiPartner.createdAt":
+		if e.ComplexityRoot.EdiPartner.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.CreatedAt(childComplexity), true
+	case "EdiPartner.customerId":
+		if e.ComplexityRoot.EdiPartner.CustomerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.CustomerID(childComplexity), true
+	case "EdiPartner.defaultMappingProfileId":
+		if e.ComplexityRoot.EdiPartner.DefaultMappingProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.DefaultMappingProfileID(childComplexity), true
+	case "EdiPartner.defaultTransport":
+		if e.ComplexityRoot.EdiPartner.DefaultTransport == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.DefaultTransport(childComplexity), true
+	case "EdiPartner.defaultTransportId":
+		if e.ComplexityRoot.EdiPartner.DefaultTransportID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.DefaultTransportID(childComplexity), true
+	case "EdiPartner.description":
+		if e.ComplexityRoot.EdiPartner.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Description(childComplexity), true
+	case "EdiPartner.enabledForInbound":
+		if e.ComplexityRoot.EdiPartner.EnabledForInbound == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.EnabledForInbound(childComplexity), true
+	case "EdiPartner.enabledForOutbound":
+		if e.ComplexityRoot.EdiPartner.EnabledForOutbound == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.EnabledForOutbound(childComplexity), true
+	case "EdiPartner.id":
+		if e.ComplexityRoot.EdiPartner.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.ID(childComplexity), true
+	case "EdiPartner.internalOrganization":
+		if e.ComplexityRoot.EdiPartner.InternalOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.InternalOrganization(childComplexity), true
+	case "EdiPartner.internalOrganizationId":
+		if e.ComplexityRoot.EdiPartner.InternalOrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.InternalOrganizationID(childComplexity), true
+	case "EdiPartner.kind":
+		if e.ComplexityRoot.EdiPartner.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Kind(childComplexity), true
+	case "EdiPartner.name":
+		if e.ComplexityRoot.EdiPartner.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Name(childComplexity), true
+	case "EdiPartner.organizationId":
+		if e.ComplexityRoot.EdiPartner.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.OrganizationID(childComplexity), true
+	case "EdiPartner.status":
+		if e.ComplexityRoot.EdiPartner.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Status(childComplexity), true
+	case "EdiPartner.timezone":
+		if e.ComplexityRoot.EdiPartner.Timezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Timezone(childComplexity), true
+	case "EdiPartner.updatedAt":
+		if e.ComplexityRoot.EdiPartner.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.UpdatedAt(childComplexity), true
+	case "EdiPartner.version":
+		if e.ComplexityRoot.EdiPartner.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartner.Version(childComplexity), true
+
+	case "EdiPartnerConnection.edges":
+		if e.ComplexityRoot.EdiPartnerConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerConnection.Edges(childComplexity), true
+	case "EdiPartnerConnection.pageInfo":
+		if e.ComplexityRoot.EdiPartnerConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerConnection.PageInfo(childComplexity), true
+	case "EdiPartnerConnection.totalCount":
+		if e.ComplexityRoot.EdiPartnerConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerConnection.TotalCount(childComplexity), true
+
+	case "EdiPartnerDocumentProfile.direction":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.Direction(childComplexity), true
+	case "EdiPartnerDocumentProfile.ediPartnerId":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.EDIPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.EDIPartnerID(childComplexity), true
+	case "EdiPartnerDocumentProfile.id":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.ID(childComplexity), true
+	case "EdiPartnerDocumentProfile.name":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.Name(childComplexity), true
+	case "EdiPartnerDocumentProfile.partner":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.Partner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.Partner(childComplexity), true
+	case "EdiPartnerDocumentProfile.transactionSet":
+		if e.ComplexityRoot.EdiPartnerDocumentProfile.TransactionSet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerDocumentProfile.TransactionSet(childComplexity), true
+
+	case "EdiPartnerEdge.cursor":
+		if e.ComplexityRoot.EdiPartnerEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerEdge.Cursor(childComplexity), true
+	case "EdiPartnerEdge.node":
+		if e.ComplexityRoot.EdiPartnerEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerEdge.Node(childComplexity), true
+
+	case "EdiSummary.ackStatusCounts":
+		if e.ComplexityRoot.EdiSummary.AckStatusCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.AckStatusCounts(childComplexity), true
+	case "EdiSummary.attentionItems":
+		if e.ComplexityRoot.EdiSummary.AttentionItems == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.AttentionItems(childComplexity), true
+	case "EdiSummary.deliveryStatusCounts":
+		if e.ComplexityRoot.EdiSummary.DeliveryStatusCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.DeliveryStatusCounts(childComplexity), true
+	case "EdiSummary.inboundFileStatusCounts":
+		if e.ComplexityRoot.EdiSummary.InboundFileStatusCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.InboundFileStatusCounts(childComplexity), true
+	case "EdiSummary.inboundTransferStatusCounts":
+		if e.ComplexityRoot.EdiSummary.InboundTransferStatusCounts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.InboundTransferStatusCounts(childComplexity), true
+	case "EdiSummary.overdueAckCount":
+		if e.ComplexityRoot.EdiSummary.OverdueAckCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummary.OverdueAckCount(childComplexity), true
+
+	case "EdiSummaryAttentionItem.error":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.Error(childComplexity), true
+	case "EdiSummaryAttentionItem.id":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.ID(childComplexity), true
+	case "EdiSummaryAttentionItem.kind":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.Kind(childComplexity), true
+	case "EdiSummaryAttentionItem.occurredAt":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.OccurredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.OccurredAt(childComplexity), true
+	case "EdiSummaryAttentionItem.partnerCode":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.PartnerCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.PartnerCode(childComplexity), true
+	case "EdiSummaryAttentionItem.partnerId":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.PartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.PartnerID(childComplexity), true
+	case "EdiSummaryAttentionItem.partnerName":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.PartnerName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.PartnerName(childComplexity), true
+	case "EdiSummaryAttentionItem.reference":
+		if e.ComplexityRoot.EdiSummaryAttentionItem.Reference == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryAttentionItem.Reference(childComplexity), true
+
+	case "EdiSummaryStatusCount.count":
+		if e.ComplexityRoot.EdiSummaryStatusCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryStatusCount.Count(childComplexity), true
+	case "EdiSummaryStatusCount.status":
+		if e.ComplexityRoot.EdiSummaryStatusCount.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiSummaryStatusCount.Status(childComplexity), true
+
+	case "EdiTemplate.activeVersion":
+		if e.ComplexityRoot.EdiTemplate.ActiveVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.ActiveVersion(childComplexity), true
+	case "EdiTemplate.businessUnitId":
+		if e.ComplexityRoot.EdiTemplate.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.BusinessUnitID(childComplexity), true
+	case "EdiTemplate.createdAt":
+		if e.ComplexityRoot.EdiTemplate.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.CreatedAt(childComplexity), true
+	case "EdiTemplate.description":
+		if e.ComplexityRoot.EdiTemplate.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Description(childComplexity), true
+	case "EdiTemplate.direction":
+		if e.ComplexityRoot.EdiTemplate.Direction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Direction(childComplexity), true
+	case "EdiTemplate.documentTypeId":
+		if e.ComplexityRoot.EdiTemplate.DocumentTypeID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.DocumentTypeID(childComplexity), true
+	case "EdiTemplate.id":
+		if e.ComplexityRoot.EdiTemplate.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.ID(childComplexity), true
+	case "EdiTemplate.name":
+		if e.ComplexityRoot.EdiTemplate.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Name(childComplexity), true
+	case "EdiTemplate.organizationId":
+		if e.ComplexityRoot.EdiTemplate.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.OrganizationID(childComplexity), true
+	case "EdiTemplate.standard":
+		if e.ComplexityRoot.EdiTemplate.Standard == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Standard(childComplexity), true
+	case "EdiTemplate.status":
+		if e.ComplexityRoot.EdiTemplate.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Status(childComplexity), true
+	case "EdiTemplate.transactionSet":
+		if e.ComplexityRoot.EdiTemplate.TransactionSet == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.TransactionSet(childComplexity), true
+	case "EdiTemplate.updatedAt":
+		if e.ComplexityRoot.EdiTemplate.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.UpdatedAt(childComplexity), true
+	case "EdiTemplate.version":
+		if e.ComplexityRoot.EdiTemplate.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Version(childComplexity), true
+	case "EdiTemplate.versions":
+		if e.ComplexityRoot.EdiTemplate.Versions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplate.Versions(childComplexity), true
+
+	case "EdiTemplateConnection.edges":
+		if e.ComplexityRoot.EdiTemplateConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateConnection.Edges(childComplexity), true
+	case "EdiTemplateConnection.pageInfo":
+		if e.ComplexityRoot.EdiTemplateConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateConnection.PageInfo(childComplexity), true
+	case "EdiTemplateConnection.totalCount":
+		if e.ComplexityRoot.EdiTemplateConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateConnection.TotalCount(childComplexity), true
+
+	case "EdiTemplateEdge.cursor":
+		if e.ComplexityRoot.EdiTemplateEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateEdge.Cursor(childComplexity), true
+	case "EdiTemplateEdge.node":
+		if e.ComplexityRoot.EdiTemplateEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateEdge.Node(childComplexity), true
+
+	case "EdiTemplateVersion.activatedAt":
+		if e.ComplexityRoot.EdiTemplateVersion.ActivatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.ActivatedAt(childComplexity), true
+	case "EdiTemplateVersion.activationNotes":
+		if e.ComplexityRoot.EdiTemplateVersion.ActivationNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.ActivationNotes(childComplexity), true
+	case "EdiTemplateVersion.archiveNotes":
+		if e.ComplexityRoot.EdiTemplateVersion.ArchiveNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.ArchiveNotes(childComplexity), true
+	case "EdiTemplateVersion.archivedAt":
+		if e.ComplexityRoot.EdiTemplateVersion.ArchivedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.ArchivedAt(childComplexity), true
+	case "EdiTemplateVersion.businessUnitId":
+		if e.ComplexityRoot.EdiTemplateVersion.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.BusinessUnitID(childComplexity), true
+	case "EdiTemplateVersion.certificationNotes":
+		if e.ComplexityRoot.EdiTemplateVersion.CertificationNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.CertificationNotes(childComplexity), true
+	case "EdiTemplateVersion.certifiedAt":
+		if e.ComplexityRoot.EdiTemplateVersion.CertifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.CertifiedAt(childComplexity), true
+	case "EdiTemplateVersion.createdAt":
+		if e.ComplexityRoot.EdiTemplateVersion.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.CreatedAt(childComplexity), true
+	case "EdiTemplateVersion.deprecatedAt":
+		if e.ComplexityRoot.EdiTemplateVersion.DeprecatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.DeprecatedAt(childComplexity), true
+	case "EdiTemplateVersion.deprecatedNotes":
+		if e.ComplexityRoot.EdiTemplateVersion.DeprecatedNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.DeprecatedNotes(childComplexity), true
+	case "EdiTemplateVersion.functionalGroupId":
+		if e.ComplexityRoot.EdiTemplateVersion.FunctionalGroupID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.FunctionalGroupID(childComplexity), true
+	case "EdiTemplateVersion.id":
+		if e.ComplexityRoot.EdiTemplateVersion.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.ID(childComplexity), true
+	case "EdiTemplateVersion.isActive":
+		if e.ComplexityRoot.EdiTemplateVersion.IsActive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.IsActive(childComplexity), true
+	case "EdiTemplateVersion.notes":
+		if e.ComplexityRoot.EdiTemplateVersion.Notes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.Notes(childComplexity), true
+	case "EdiTemplateVersion.organizationId":
+		if e.ComplexityRoot.EdiTemplateVersion.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.OrganizationID(childComplexity), true
+	case "EdiTemplateVersion.sourceVersionId":
+		if e.ComplexityRoot.EdiTemplateVersion.SourceVersionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.SourceVersionID(childComplexity), true
+	case "EdiTemplateVersion.status":
+		if e.ComplexityRoot.EdiTemplateVersion.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.Status(childComplexity), true
+	case "EdiTemplateVersion.supersededAt":
+		if e.ComplexityRoot.EdiTemplateVersion.SupersededAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.SupersededAt(childComplexity), true
+	case "EdiTemplateVersion.supersededNotes":
+		if e.ComplexityRoot.EdiTemplateVersion.SupersededNotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.SupersededNotes(childComplexity), true
+	case "EdiTemplateVersion.templateId":
+		if e.ComplexityRoot.EdiTemplateVersion.TemplateID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.TemplateID(childComplexity), true
+	case "EdiTemplateVersion.updatedAt":
+		if e.ComplexityRoot.EdiTemplateVersion.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.UpdatedAt(childComplexity), true
+	case "EdiTemplateVersion.version":
+		if e.ComplexityRoot.EdiTemplateVersion.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.Version(childComplexity), true
+	case "EdiTemplateVersion.versionNumber":
+		if e.ComplexityRoot.EdiTemplateVersion.VersionNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.VersionNumber(childComplexity), true
+	case "EdiTemplateVersion.x12Version":
+		if e.ComplexityRoot.EdiTemplateVersion.X12Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTemplateVersion.X12Version(childComplexity), true
+
+	case "EdiTestCase.businessUnitId":
+		if e.ComplexityRoot.EdiTestCase.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.BusinessUnitID(childComplexity), true
+	case "EdiTestCase.createdAt":
+		if e.ComplexityRoot.EdiTestCase.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.CreatedAt(childComplexity), true
+	case "EdiTestCase.description":
+		if e.ComplexityRoot.EdiTestCase.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.Description(childComplexity), true
+	case "EdiTestCase.documentProfile":
+		if e.ComplexityRoot.EdiTestCase.DocumentProfile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.DocumentProfile(childComplexity), true
+	case "EdiTestCase.expectedErrors":
+		if e.ComplexityRoot.EdiTestCase.ExpectedErrors == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.ExpectedErrors(childComplexity), true
+	case "EdiTestCase.expectedWarnings":
+		if e.ComplexityRoot.EdiTestCase.ExpectedWarnings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.ExpectedWarnings(childComplexity), true
+	case "EdiTestCase.id":
+		if e.ComplexityRoot.EdiTestCase.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.ID(childComplexity), true
+	case "EdiTestCase.name":
+		if e.ComplexityRoot.EdiTestCase.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.Name(childComplexity), true
+	case "EdiTestCase.organizationId":
+		if e.ComplexityRoot.EdiTestCase.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.OrganizationID(childComplexity), true
+	case "EdiTestCase.partnerDocumentProfileId":
+		if e.ComplexityRoot.EdiTestCase.PartnerDocumentProfileID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.PartnerDocumentProfileID(childComplexity), true
+	case "EdiTestCase.updatedAt":
+		if e.ComplexityRoot.EdiTestCase.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.UpdatedAt(childComplexity), true
+	case "EdiTestCase.version":
+		if e.ComplexityRoot.EdiTestCase.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCase.Version(childComplexity), true
+
+	case "EdiTestCaseConnection.edges":
+		if e.ComplexityRoot.EdiTestCaseConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCaseConnection.Edges(childComplexity), true
+	case "EdiTestCaseConnection.pageInfo":
+		if e.ComplexityRoot.EdiTestCaseConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCaseConnection.PageInfo(childComplexity), true
+	case "EdiTestCaseConnection.totalCount":
+		if e.ComplexityRoot.EdiTestCaseConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCaseConnection.TotalCount(childComplexity), true
+
+	case "EdiTestCaseEdge.cursor":
+		if e.ComplexityRoot.EdiTestCaseEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCaseEdge.Cursor(childComplexity), true
+	case "EdiTestCaseEdge.node":
+		if e.ComplexityRoot.EdiTestCaseEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTestCaseEdge.Node(childComplexity), true
+
+	case "EdiTransfer.createdAt":
+		if e.ComplexityRoot.EdiTransfer.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.CreatedAt(childComplexity), true
+	case "EdiTransfer.failureReason":
+		if e.ComplexityRoot.EdiTransfer.FailureReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.FailureReason(childComplexity), true
+	case "EdiTransfer.id":
+		if e.ComplexityRoot.EdiTransfer.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.ID(childComplexity), true
+	case "EdiTransfer.inboundMessageId":
+		if e.ComplexityRoot.EdiTransfer.InboundMessageID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.InboundMessageID(childComplexity), true
+	case "EdiTransfer.mappingSnapshot":
+		if e.ComplexityRoot.EdiTransfer.MappingSnapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.MappingSnapshot(childComplexity), true
+	case "EdiTransfer.processedAt":
+		if e.ComplexityRoot.EdiTransfer.ProcessedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.ProcessedAt(childComplexity), true
+	case "EdiTransfer.rejectionReason":
+		if e.ComplexityRoot.EdiTransfer.RejectionReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.RejectionReason(childComplexity), true
+	case "EdiTransfer.sourceBusinessUnitId":
+		if e.ComplexityRoot.EdiTransfer.SourceBusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SourceBusinessUnitID(childComplexity), true
+	case "EdiTransfer.sourceOrganizationId":
+		if e.ComplexityRoot.EdiTransfer.SourceOrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SourceOrganizationID(childComplexity), true
+	case "EdiTransfer.sourcePartner":
+		if e.ComplexityRoot.EdiTransfer.SourcePartner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SourcePartner(childComplexity), true
+	case "EdiTransfer.sourcePartnerId":
+		if e.ComplexityRoot.EdiTransfer.SourcePartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SourcePartnerID(childComplexity), true
+	case "EdiTransfer.sourceShipmentId":
+		if e.ComplexityRoot.EdiTransfer.SourceShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SourceShipmentID(childComplexity), true
+	case "EdiTransfer.status":
+		if e.ComplexityRoot.EdiTransfer.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.Status(childComplexity), true
+	case "EdiTransfer.submittedAt":
+		if e.ComplexityRoot.EdiTransfer.SubmittedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.SubmittedAt(childComplexity), true
+	case "EdiTransfer.targetBusinessUnitId":
+		if e.ComplexityRoot.EdiTransfer.TargetBusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TargetBusinessUnitID(childComplexity), true
+	case "EdiTransfer.targetOrganizationId":
+		if e.ComplexityRoot.EdiTransfer.TargetOrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TargetOrganizationID(childComplexity), true
+	case "EdiTransfer.targetPartner":
+		if e.ComplexityRoot.EdiTransfer.TargetPartner == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TargetPartner(childComplexity), true
+	case "EdiTransfer.targetPartnerId":
+		if e.ComplexityRoot.EdiTransfer.TargetPartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TargetPartnerID(childComplexity), true
+	case "EdiTransfer.targetShipmentId":
+		if e.ComplexityRoot.EdiTransfer.TargetShipmentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TargetShipmentID(childComplexity), true
+	case "EdiTransfer.tenderPayload":
+		if e.ComplexityRoot.EdiTransfer.TenderPayload == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.TenderPayload(childComplexity), true
+	case "EdiTransfer.updatedAt":
+		if e.ComplexityRoot.EdiTransfer.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.UpdatedAt(childComplexity), true
+	case "EdiTransfer.version":
+		if e.ComplexityRoot.EdiTransfer.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransfer.Version(childComplexity), true
+
+	case "EdiTransferConnection.edges":
+		if e.ComplexityRoot.EdiTransferConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransferConnection.Edges(childComplexity), true
+	case "EdiTransferConnection.pageInfo":
+		if e.ComplexityRoot.EdiTransferConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransferConnection.PageInfo(childComplexity), true
+	case "EdiTransferConnection.totalCount":
+		if e.ComplexityRoot.EdiTransferConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransferConnection.TotalCount(childComplexity), true
+
+	case "EdiTransferEdge.cursor":
+		if e.ComplexityRoot.EdiTransferEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransferEdge.Cursor(childComplexity), true
+	case "EdiTransferEdge.node":
+		if e.ComplexityRoot.EdiTransferEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiTransferEdge.Node(childComplexity), true
 
 	case "EquipmentContinuity.businessUnitId":
 		if e.ComplexityRoot.EquipmentContinuity.BusinessUnitID == nil {
@@ -3001,6 +4993,105 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.PageInfo.HasNextPage(childComplexity), true
 
+	case "Query.ediCommunicationProfiles":
+		if e.ComplexityRoot.Query.EdiCommunicationProfiles == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediCommunicationProfiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiCommunicationProfiles(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.ediInboundFiles":
+		if e.ComplexityRoot.Query.EdiInboundFiles == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediInboundFiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiInboundFiles(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["status"].(*edi.InboundFileStatus), args["partnerId"].(*string)), true
+	case "Query.ediMappingProfiles":
+		if e.ComplexityRoot.Query.EdiMappingProfiles == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediMappingProfiles_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiMappingProfiles(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["partnerId"].(*string)), true
+	case "Query.ediMessages":
+		if e.ComplexityRoot.Query.EdiMessages == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediMessages_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiMessages(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["transactionSet"].(*string), args["direction"].(*edi.DocumentDirection), args["partnerId"].(*string)), true
+	case "Query.ediPartners":
+		if e.ComplexityRoot.Query.EdiPartners == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediPartners_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiPartners(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.ediSummary":
+		if e.ComplexityRoot.Query.EdiSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediSummary_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiSummary(childComplexity, args["sinceHours"].(*int)), true
+	case "Query.ediTemplates":
+		if e.ComplexityRoot.Query.EdiTemplates == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediTemplates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiTemplates(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["status"].(*edi.TemplateStatus), args["transactionSet"].(*string), args["direction"].(*edi.DocumentDirection)), true
+	case "Query.ediTestCases":
+		if e.ComplexityRoot.Query.EdiTestCases == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediTestCases_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiTestCases(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["partnerDocumentProfileId"].(*string)), true
+	case "Query.ediTransfers":
+		if e.ComplexityRoot.Query.EdiTransfers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediTransfers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiTransfers(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["direction"].(gqlmodel.EdiTransferDirection)), true
 	case "Query.equipmentManufacturer":
 		if e.ComplexityRoot.Query.EquipmentManufacturer == nil {
 			break
@@ -7835,6 +9926,495 @@ func newExecutionContext(
 }
 
 var sources = []*ast.Source{
+	{Name: "../schema/edi.graphqls", Input: `enum EdiPartnerKind {
+  Internal
+  External
+}
+
+enum EdiConnectionMethod {
+  Internal
+  AS2
+  SFTP
+  VAN
+}
+
+enum EdiConnectionStatus {
+  PendingAcceptance
+  Active
+  Suspended
+  Rejected
+  Revoked
+}
+
+enum EdiTransferStatus {
+  Submitted
+  MappingRequired
+  PendingApproval
+  Processing
+  Approved
+  Rejected
+  Expired
+  Canceled
+  Failed
+}
+
+enum EdiDocumentDirection {
+  Inbound
+  Outbound
+}
+
+enum EdiMessageStatus {
+  Generated
+  Failed
+}
+
+enum EdiMessageDeliveryStatus {
+  Queued
+  Sending
+  Sent
+  Failed
+  DeadLettered
+}
+
+enum EdiMessageAckStatus {
+  NotExpected
+  Pending
+  Accepted
+  Rejected
+  Failed
+}
+
+enum EdiInboundFileStatus {
+  Received
+  Parsed
+  Processed
+  PartiallyProcessed
+  Quarantined
+  Duplicate
+}
+
+enum EdiTransferDirection {
+  Inbound
+  Outbound
+}
+
+enum EdiTemplateStatus {
+  Draft
+  Certified
+  Active
+  Deprecated
+  Archived
+  Superseded
+}
+
+enum EdiStandard {
+  X12
+}
+
+enum EdiMappingEntityType {
+  Customer
+  ServiceType
+  ShipmentType
+  FormulaTemplate
+  Location
+  Commodity
+  AccessorialCharge
+  ServiceFailureReasonCode
+}
+
+type EdiConnection {
+  id: ID!
+  method: EdiConnectionMethod!
+  status: EdiConnectionStatus!
+}
+
+type EdiPartner {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  kind: EdiPartnerKind!
+  status: EntityStatus!
+  code: String!
+  name: String!
+  description: String
+  internalOrganizationId: ID
+  customerId: ID
+  defaultTransportId: ID
+  defaultMappingProfileId: ID
+  country: String!
+  timezone: String
+  contactName: String
+  contactEmail: String
+  contactPhone: String
+  enabledForInbound: Boolean!
+  enabledForOutbound: Boolean!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  internalOrganization: Organization
+  connection: EdiConnection
+  defaultTransport: EdiCommunicationProfile
+}
+
+type EdiCommunicationProfileSecretState {
+  key: String!
+}
+
+type EdiCommunicationProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  ediPartnerId: ID
+  ediConnectionId: ID
+  method: EdiConnectionMethod!
+  status: EntityStatus!
+  name: String!
+  description: String
+  secretState: [EdiCommunicationProfileSecretState!]
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  partner: EdiPartner
+}
+
+type EdiTransfer {
+  id: ID!
+  sourceOrganizationId: ID!
+  sourceBusinessUnitId: ID!
+  targetOrganizationId: ID!
+  targetBusinessUnitId: ID!
+  sourcePartnerId: ID!
+  targetPartnerId: ID!
+  sourceShipmentId: ID
+  targetShipmentId: ID
+  inboundMessageId: ID
+  status: EdiTransferStatus!
+  tenderPayload: Any!
+  mappingSnapshot: Any!
+  rejectionReason: String
+  failureReason: String
+  submittedAt: Int!
+  processedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  sourcePartner: EdiPartner
+  targetPartner: EdiPartner
+}
+
+type EdiMessage {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  ediPartnerId: ID!
+  documentTypeId: ID!
+  partnerDocumentProfileId: ID
+  templateId: ID
+  templateVersionId: ID
+  shipmentId: ID
+  transferId: ID
+  inboundFileId: ID
+  direction: EdiDocumentDirection!
+  transactionSet: String!
+  x12Version: String!
+  status: EdiMessageStatus!
+  interchangeControlNumber: String!
+  groupControlNumber: String!
+  transactionControlNumber: String!
+  segmentCount: Int!
+  deliveryStatus: EdiMessageDeliveryStatus
+  deliveryRemotePath: String
+  deliveryAttempts: Int!
+  deliveryLastAttemptAt: Int
+  deliverySentAt: Int
+  deliveryLastError: String
+  ackStatus: EdiMessageAckStatus
+  ackMessageId: ID
+  ackReceivedAt: Int
+  ackLastError: String
+  generatedAt: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  partner: EdiPartner
+}
+
+type EdiInboundFile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  communicationProfileId: ID!
+  ediPartnerId: ID
+  method: EdiConnectionMethod!
+  remotePath: String!
+  fileName: String!
+  checksum: String!
+  sizeBytes: Int!
+  interchangeControlNumber: String
+  isaSenderQualifier: String
+  isaSenderId: String
+  isaReceiverQualifier: String
+  isaReceiverId: String
+  status: EdiInboundFileStatus!
+  failureReason: String
+  transactionCount: Int!
+  receivedAt: Int!
+  processedAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  partner: EdiPartner
+}
+
+type EdiTemplateVersion {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  templateId: ID!
+  sourceVersionId: ID
+  versionNumber: Int!
+  x12Version: String!
+  functionalGroupId: String!
+  status: EdiTemplateStatus!
+  isActive: Boolean!
+  notes: String
+  certificationNotes: String
+  activationNotes: String
+  archiveNotes: String
+  deprecatedNotes: String
+  supersededNotes: String
+  certifiedAt: Int
+  activatedAt: Int
+  archivedAt: Int
+  deprecatedAt: Int
+  supersededAt: Int
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type EdiTemplate {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  documentTypeId: ID!
+  name: String!
+  description: String
+  direction: EdiDocumentDirection!
+  standard: EdiStandard!
+  transactionSet: String!
+  status: EdiTemplateStatus!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  activeVersion: EdiTemplateVersion
+  versions: [EdiTemplateVersion!]
+}
+
+type EdiMappingProfileItem {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  ediPartnerId: ID!
+  mappingProfileId: ID!
+  entityType: EdiMappingEntityType!
+  sourceId: ID!
+  sourceLabel: String
+  targetId: ID!
+  targetLabel: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+}
+
+type EdiMappingProfile {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  ediPartnerId: ID!
+  name: String!
+  description: String
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  partner: EdiPartner
+  entries: [EdiMappingProfileItem!]
+}
+
+type EdiPartnerEdge {
+  node: EdiPartner!
+  cursor: String!
+}
+
+type EdiPartnerConnection {
+  edges: [EdiPartnerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiCommunicationProfileEdge {
+  node: EdiCommunicationProfile!
+  cursor: String!
+}
+
+type EdiCommunicationProfileConnection {
+  edges: [EdiCommunicationProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTransferEdge {
+  node: EdiTransfer!
+  cursor: String!
+}
+
+type EdiTransferConnection {
+  edges: [EdiTransferEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiMessageEdge {
+  node: EdiMessage!
+  cursor: String!
+}
+
+type EdiMessageConnection {
+  edges: [EdiMessageEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiInboundFileEdge {
+  node: EdiInboundFile!
+  cursor: String!
+}
+
+type EdiInboundFileConnection {
+  edges: [EdiInboundFileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiTemplateEdge {
+  node: EdiTemplate!
+  cursor: String!
+}
+
+type EdiTemplateConnection {
+  edges: [EdiTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiMappingProfileEdge {
+  node: EdiMappingProfile!
+  cursor: String!
+}
+
+type EdiMappingProfileConnection {
+  edges: [EdiMappingProfileEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type EdiPartnerDocumentProfile {
+  id: ID!
+  ediPartnerId: ID!
+  name: String!
+  direction: EdiDocumentDirection!
+  transactionSet: String!
+  partner: EdiPartner
+}
+
+type EdiTestCase {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  partnerDocumentProfileId: ID!
+  name: String!
+  description: String
+  expectedWarnings: Int!
+  expectedErrors: Int!
+  version: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  documentProfile: EdiPartnerDocumentProfile
+}
+
+type EdiSummaryStatusCount {
+  status: String!
+  count: Int!
+}
+
+type EdiSummaryAttentionItem {
+  kind: EdiSummaryAttentionKind!
+  id: ID!
+  partnerId: ID
+  partnerName: String
+  partnerCode: String
+  reference: String
+  error: String
+  occurredAt: Int!
+}
+
+enum EdiSummaryAttentionKind {
+  Message
+  InboundFile
+}
+
+type EdiSummary {
+  deliveryStatusCounts: [EdiSummaryStatusCount!]!
+  ackStatusCounts: [EdiSummaryStatusCount!]!
+  inboundFileStatusCounts: [EdiSummaryStatusCount!]!
+  inboundTransferStatusCounts: [EdiSummaryStatusCount!]!
+  overdueAckCount: Int!
+  attentionItems: [EdiSummaryAttentionItem!]!
+}
+
+type EdiTestCaseEdge {
+  node: EdiTestCase!
+  cursor: String!
+}
+
+type EdiTestCaseConnection {
+  edges: [EdiTestCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+extend type Query {
+  ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
+  ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
+  ediTransfers(
+    input: DataTableConnectionInput!
+    direction: EdiTransferDirection!
+  ): EdiTransferConnection!
+  ediMessages(
+    input: DataTableConnectionInput!
+    transactionSet: String
+    direction: EdiDocumentDirection
+    partnerId: ID
+  ): EdiMessageConnection!
+  ediInboundFiles(
+    input: DataTableConnectionInput!
+    status: EdiInboundFileStatus
+    partnerId: ID
+  ): EdiInboundFileConnection!
+  ediTemplates(
+    input: DataTableConnectionInput!
+    status: EdiTemplateStatus
+    transactionSet: String
+    direction: EdiDocumentDirection
+  ): EdiTemplateConnection!
+  ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
+  ediTestCases(
+    input: DataTableConnectionInput!
+    partnerDocumentProfileId: ID
+  ): EdiTestCaseConnection!
+  ediSummary(sinceHours: Int): EdiSummary!
+}
+`, BuiltIn: false},
 	{Name: "../schema/equipment_continuity.graphqls", Input: `type EquipmentContinuity {
   id: ID!
   organizationId: ID!
@@ -8099,6 +10679,8 @@ type LocationCategory {
   TRACTOR
   WORKER
   US_STATE
+  SHIPMENT
+  EDI_TRANSFER
 }
 
 input SelectOptionsInput {
@@ -9999,6 +12581,718 @@ func (ec *executionContext) childFields_BusinessUnit(ctx context.Context, field 
 		return ec.fieldContext_BusinessUnit_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type BusinessUnit", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiCommunicationProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiCommunicationProfile_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiCommunicationProfile_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiCommunicationProfile_organizationId(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiCommunicationProfile_ediPartnerId(ctx, field)
+	case "ediConnectionId":
+		return ec.fieldContext_EdiCommunicationProfile_ediConnectionId(ctx, field)
+	case "method":
+		return ec.fieldContext_EdiCommunicationProfile_method(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiCommunicationProfile_status(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiCommunicationProfile_name(ctx, field)
+	case "description":
+		return ec.fieldContext_EdiCommunicationProfile_description(ctx, field)
+	case "secretState":
+		return ec.fieldContext_EdiCommunicationProfile_secretState(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiCommunicationProfile_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiCommunicationProfile_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiCommunicationProfile_updatedAt(ctx, field)
+	case "partner":
+		return ec.fieldContext_EdiCommunicationProfile_partner(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiCommunicationProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiCommunicationProfileConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiCommunicationProfileConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiCommunicationProfileConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiCommunicationProfileConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiCommunicationProfileConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiCommunicationProfileEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiCommunicationProfileEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiCommunicationProfileEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiCommunicationProfileEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiCommunicationProfileSecretState(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_EdiCommunicationProfileSecretState_key(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiCommunicationProfileSecretState", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiConnection_id(ctx, field)
+	case "method":
+		return ec.fieldContext_EdiConnection_method(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiConnection_status(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiInboundFile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiInboundFile_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiInboundFile_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiInboundFile_organizationId(ctx, field)
+	case "communicationProfileId":
+		return ec.fieldContext_EdiInboundFile_communicationProfileId(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiInboundFile_ediPartnerId(ctx, field)
+	case "method":
+		return ec.fieldContext_EdiInboundFile_method(ctx, field)
+	case "remotePath":
+		return ec.fieldContext_EdiInboundFile_remotePath(ctx, field)
+	case "fileName":
+		return ec.fieldContext_EdiInboundFile_fileName(ctx, field)
+	case "checksum":
+		return ec.fieldContext_EdiInboundFile_checksum(ctx, field)
+	case "sizeBytes":
+		return ec.fieldContext_EdiInboundFile_sizeBytes(ctx, field)
+	case "interchangeControlNumber":
+		return ec.fieldContext_EdiInboundFile_interchangeControlNumber(ctx, field)
+	case "isaSenderQualifier":
+		return ec.fieldContext_EdiInboundFile_isaSenderQualifier(ctx, field)
+	case "isaSenderId":
+		return ec.fieldContext_EdiInboundFile_isaSenderId(ctx, field)
+	case "isaReceiverQualifier":
+		return ec.fieldContext_EdiInboundFile_isaReceiverQualifier(ctx, field)
+	case "isaReceiverId":
+		return ec.fieldContext_EdiInboundFile_isaReceiverId(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiInboundFile_status(ctx, field)
+	case "failureReason":
+		return ec.fieldContext_EdiInboundFile_failureReason(ctx, field)
+	case "transactionCount":
+		return ec.fieldContext_EdiInboundFile_transactionCount(ctx, field)
+	case "receivedAt":
+		return ec.fieldContext_EdiInboundFile_receivedAt(ctx, field)
+	case "processedAt":
+		return ec.fieldContext_EdiInboundFile_processedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiInboundFile_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiInboundFile_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiInboundFile_updatedAt(ctx, field)
+	case "partner":
+		return ec.fieldContext_EdiInboundFile_partner(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiInboundFile", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiInboundFileConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiInboundFileConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiInboundFileConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiInboundFileConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiInboundFileConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiInboundFileEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiInboundFileEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiInboundFileEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiInboundFileEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMappingProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiMappingProfile_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiMappingProfile_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiMappingProfile_organizationId(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiMappingProfile_ediPartnerId(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiMappingProfile_name(ctx, field)
+	case "description":
+		return ec.fieldContext_EdiMappingProfile_description(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiMappingProfile_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiMappingProfile_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiMappingProfile_updatedAt(ctx, field)
+	case "partner":
+		return ec.fieldContext_EdiMappingProfile_partner(ctx, field)
+	case "entries":
+		return ec.fieldContext_EdiMappingProfile_entries(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMappingProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMappingProfileConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiMappingProfileConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiMappingProfileConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiMappingProfileConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMappingProfileConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMappingProfileEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiMappingProfileEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiMappingProfileEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMappingProfileEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMappingProfileItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiMappingProfileItem_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiMappingProfileItem_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiMappingProfileItem_organizationId(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiMappingProfileItem_ediPartnerId(ctx, field)
+	case "mappingProfileId":
+		return ec.fieldContext_EdiMappingProfileItem_mappingProfileId(ctx, field)
+	case "entityType":
+		return ec.fieldContext_EdiMappingProfileItem_entityType(ctx, field)
+	case "sourceId":
+		return ec.fieldContext_EdiMappingProfileItem_sourceId(ctx, field)
+	case "sourceLabel":
+		return ec.fieldContext_EdiMappingProfileItem_sourceLabel(ctx, field)
+	case "targetId":
+		return ec.fieldContext_EdiMappingProfileItem_targetId(ctx, field)
+	case "targetLabel":
+		return ec.fieldContext_EdiMappingProfileItem_targetLabel(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiMappingProfileItem_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiMappingProfileItem_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiMappingProfileItem_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMappingProfileItem", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMessage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiMessage_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiMessage_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiMessage_organizationId(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiMessage_ediPartnerId(ctx, field)
+	case "documentTypeId":
+		return ec.fieldContext_EdiMessage_documentTypeId(ctx, field)
+	case "partnerDocumentProfileId":
+		return ec.fieldContext_EdiMessage_partnerDocumentProfileId(ctx, field)
+	case "templateId":
+		return ec.fieldContext_EdiMessage_templateId(ctx, field)
+	case "templateVersionId":
+		return ec.fieldContext_EdiMessage_templateVersionId(ctx, field)
+	case "shipmentId":
+		return ec.fieldContext_EdiMessage_shipmentId(ctx, field)
+	case "transferId":
+		return ec.fieldContext_EdiMessage_transferId(ctx, field)
+	case "inboundFileId":
+		return ec.fieldContext_EdiMessage_inboundFileId(ctx, field)
+	case "direction":
+		return ec.fieldContext_EdiMessage_direction(ctx, field)
+	case "transactionSet":
+		return ec.fieldContext_EdiMessage_transactionSet(ctx, field)
+	case "x12Version":
+		return ec.fieldContext_EdiMessage_x12Version(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiMessage_status(ctx, field)
+	case "interchangeControlNumber":
+		return ec.fieldContext_EdiMessage_interchangeControlNumber(ctx, field)
+	case "groupControlNumber":
+		return ec.fieldContext_EdiMessage_groupControlNumber(ctx, field)
+	case "transactionControlNumber":
+		return ec.fieldContext_EdiMessage_transactionControlNumber(ctx, field)
+	case "segmentCount":
+		return ec.fieldContext_EdiMessage_segmentCount(ctx, field)
+	case "deliveryStatus":
+		return ec.fieldContext_EdiMessage_deliveryStatus(ctx, field)
+	case "deliveryRemotePath":
+		return ec.fieldContext_EdiMessage_deliveryRemotePath(ctx, field)
+	case "deliveryAttempts":
+		return ec.fieldContext_EdiMessage_deliveryAttempts(ctx, field)
+	case "deliveryLastAttemptAt":
+		return ec.fieldContext_EdiMessage_deliveryLastAttemptAt(ctx, field)
+	case "deliverySentAt":
+		return ec.fieldContext_EdiMessage_deliverySentAt(ctx, field)
+	case "deliveryLastError":
+		return ec.fieldContext_EdiMessage_deliveryLastError(ctx, field)
+	case "ackStatus":
+		return ec.fieldContext_EdiMessage_ackStatus(ctx, field)
+	case "ackMessageId":
+		return ec.fieldContext_EdiMessage_ackMessageId(ctx, field)
+	case "ackReceivedAt":
+		return ec.fieldContext_EdiMessage_ackReceivedAt(ctx, field)
+	case "ackLastError":
+		return ec.fieldContext_EdiMessage_ackLastError(ctx, field)
+	case "generatedAt":
+		return ec.fieldContext_EdiMessage_generatedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiMessage_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiMessage_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiMessage_updatedAt(ctx, field)
+	case "partner":
+		return ec.fieldContext_EdiMessage_partner(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMessage", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMessageConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiMessageConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiMessageConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiMessageConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMessageConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiMessageEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiMessageEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiMessageEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiMessageEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiPartner(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiPartner_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiPartner_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiPartner_organizationId(ctx, field)
+	case "kind":
+		return ec.fieldContext_EdiPartner_kind(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiPartner_status(ctx, field)
+	case "code":
+		return ec.fieldContext_EdiPartner_code(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiPartner_name(ctx, field)
+	case "description":
+		return ec.fieldContext_EdiPartner_description(ctx, field)
+	case "internalOrganizationId":
+		return ec.fieldContext_EdiPartner_internalOrganizationId(ctx, field)
+	case "customerId":
+		return ec.fieldContext_EdiPartner_customerId(ctx, field)
+	case "defaultTransportId":
+		return ec.fieldContext_EdiPartner_defaultTransportId(ctx, field)
+	case "defaultMappingProfileId":
+		return ec.fieldContext_EdiPartner_defaultMappingProfileId(ctx, field)
+	case "country":
+		return ec.fieldContext_EdiPartner_country(ctx, field)
+	case "timezone":
+		return ec.fieldContext_EdiPartner_timezone(ctx, field)
+	case "contactName":
+		return ec.fieldContext_EdiPartner_contactName(ctx, field)
+	case "contactEmail":
+		return ec.fieldContext_EdiPartner_contactEmail(ctx, field)
+	case "contactPhone":
+		return ec.fieldContext_EdiPartner_contactPhone(ctx, field)
+	case "enabledForInbound":
+		return ec.fieldContext_EdiPartner_enabledForInbound(ctx, field)
+	case "enabledForOutbound":
+		return ec.fieldContext_EdiPartner_enabledForOutbound(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiPartner_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiPartner_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiPartner_updatedAt(ctx, field)
+	case "internalOrganization":
+		return ec.fieldContext_EdiPartner_internalOrganization(ctx, field)
+	case "connection":
+		return ec.fieldContext_EdiPartner_connection(ctx, field)
+	case "defaultTransport":
+		return ec.fieldContext_EdiPartner_defaultTransport(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiPartner", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiPartnerConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiPartnerConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiPartnerConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiPartnerConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiPartnerConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiPartnerDocumentProfile(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiPartnerDocumentProfile_id(ctx, field)
+	case "ediPartnerId":
+		return ec.fieldContext_EdiPartnerDocumentProfile_ediPartnerId(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiPartnerDocumentProfile_name(ctx, field)
+	case "direction":
+		return ec.fieldContext_EdiPartnerDocumentProfile_direction(ctx, field)
+	case "transactionSet":
+		return ec.fieldContext_EdiPartnerDocumentProfile_transactionSet(ctx, field)
+	case "partner":
+		return ec.fieldContext_EdiPartnerDocumentProfile_partner(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiPartnerDocumentProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiPartnerEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiPartnerEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiPartnerEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiPartnerEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "deliveryStatusCounts":
+		return ec.fieldContext_EdiSummary_deliveryStatusCounts(ctx, field)
+	case "ackStatusCounts":
+		return ec.fieldContext_EdiSummary_ackStatusCounts(ctx, field)
+	case "inboundFileStatusCounts":
+		return ec.fieldContext_EdiSummary_inboundFileStatusCounts(ctx, field)
+	case "inboundTransferStatusCounts":
+		return ec.fieldContext_EdiSummary_inboundTransferStatusCounts(ctx, field)
+	case "overdueAckCount":
+		return ec.fieldContext_EdiSummary_overdueAckCount(ctx, field)
+	case "attentionItems":
+		return ec.fieldContext_EdiSummary_attentionItems(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiSummaryAttentionItem(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_EdiSummaryAttentionItem_kind(ctx, field)
+	case "id":
+		return ec.fieldContext_EdiSummaryAttentionItem_id(ctx, field)
+	case "partnerId":
+		return ec.fieldContext_EdiSummaryAttentionItem_partnerId(ctx, field)
+	case "partnerName":
+		return ec.fieldContext_EdiSummaryAttentionItem_partnerName(ctx, field)
+	case "partnerCode":
+		return ec.fieldContext_EdiSummaryAttentionItem_partnerCode(ctx, field)
+	case "reference":
+		return ec.fieldContext_EdiSummaryAttentionItem_reference(ctx, field)
+	case "error":
+		return ec.fieldContext_EdiSummaryAttentionItem_error(ctx, field)
+	case "occurredAt":
+		return ec.fieldContext_EdiSummaryAttentionItem_occurredAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiSummaryAttentionItem", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiSummaryStatusCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "status":
+		return ec.fieldContext_EdiSummaryStatusCount_status(ctx, field)
+	case "count":
+		return ec.fieldContext_EdiSummaryStatusCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiSummaryStatusCount", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTemplate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiTemplate_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiTemplate_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiTemplate_organizationId(ctx, field)
+	case "documentTypeId":
+		return ec.fieldContext_EdiTemplate_documentTypeId(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiTemplate_name(ctx, field)
+	case "description":
+		return ec.fieldContext_EdiTemplate_description(ctx, field)
+	case "direction":
+		return ec.fieldContext_EdiTemplate_direction(ctx, field)
+	case "standard":
+		return ec.fieldContext_EdiTemplate_standard(ctx, field)
+	case "transactionSet":
+		return ec.fieldContext_EdiTemplate_transactionSet(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiTemplate_status(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiTemplate_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiTemplate_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiTemplate_updatedAt(ctx, field)
+	case "activeVersion":
+		return ec.fieldContext_EdiTemplate_activeVersion(ctx, field)
+	case "versions":
+		return ec.fieldContext_EdiTemplate_versions(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTemplate", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTemplateConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiTemplateConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiTemplateConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiTemplateConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTemplateConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTemplateEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiTemplateEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiTemplateEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTemplateEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTemplateVersion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiTemplateVersion_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiTemplateVersion_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiTemplateVersion_organizationId(ctx, field)
+	case "templateId":
+		return ec.fieldContext_EdiTemplateVersion_templateId(ctx, field)
+	case "sourceVersionId":
+		return ec.fieldContext_EdiTemplateVersion_sourceVersionId(ctx, field)
+	case "versionNumber":
+		return ec.fieldContext_EdiTemplateVersion_versionNumber(ctx, field)
+	case "x12Version":
+		return ec.fieldContext_EdiTemplateVersion_x12Version(ctx, field)
+	case "functionalGroupId":
+		return ec.fieldContext_EdiTemplateVersion_functionalGroupId(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiTemplateVersion_status(ctx, field)
+	case "isActive":
+		return ec.fieldContext_EdiTemplateVersion_isActive(ctx, field)
+	case "notes":
+		return ec.fieldContext_EdiTemplateVersion_notes(ctx, field)
+	case "certificationNotes":
+		return ec.fieldContext_EdiTemplateVersion_certificationNotes(ctx, field)
+	case "activationNotes":
+		return ec.fieldContext_EdiTemplateVersion_activationNotes(ctx, field)
+	case "archiveNotes":
+		return ec.fieldContext_EdiTemplateVersion_archiveNotes(ctx, field)
+	case "deprecatedNotes":
+		return ec.fieldContext_EdiTemplateVersion_deprecatedNotes(ctx, field)
+	case "supersededNotes":
+		return ec.fieldContext_EdiTemplateVersion_supersededNotes(ctx, field)
+	case "certifiedAt":
+		return ec.fieldContext_EdiTemplateVersion_certifiedAt(ctx, field)
+	case "activatedAt":
+		return ec.fieldContext_EdiTemplateVersion_activatedAt(ctx, field)
+	case "archivedAt":
+		return ec.fieldContext_EdiTemplateVersion_archivedAt(ctx, field)
+	case "deprecatedAt":
+		return ec.fieldContext_EdiTemplateVersion_deprecatedAt(ctx, field)
+	case "supersededAt":
+		return ec.fieldContext_EdiTemplateVersion_supersededAt(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiTemplateVersion_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiTemplateVersion_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiTemplateVersion_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTemplateVersion", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTestCase(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiTestCase_id(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_EdiTestCase_businessUnitId(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_EdiTestCase_organizationId(ctx, field)
+	case "partnerDocumentProfileId":
+		return ec.fieldContext_EdiTestCase_partnerDocumentProfileId(ctx, field)
+	case "name":
+		return ec.fieldContext_EdiTestCase_name(ctx, field)
+	case "description":
+		return ec.fieldContext_EdiTestCase_description(ctx, field)
+	case "expectedWarnings":
+		return ec.fieldContext_EdiTestCase_expectedWarnings(ctx, field)
+	case "expectedErrors":
+		return ec.fieldContext_EdiTestCase_expectedErrors(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiTestCase_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiTestCase_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiTestCase_updatedAt(ctx, field)
+	case "documentProfile":
+		return ec.fieldContext_EdiTestCase_documentProfile(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTestCase", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTestCaseConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiTestCaseConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiTestCaseConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiTestCaseConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTestCaseConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTestCaseEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiTestCaseEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiTestCaseEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTestCaseEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTransfer(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_EdiTransfer_id(ctx, field)
+	case "sourceOrganizationId":
+		return ec.fieldContext_EdiTransfer_sourceOrganizationId(ctx, field)
+	case "sourceBusinessUnitId":
+		return ec.fieldContext_EdiTransfer_sourceBusinessUnitId(ctx, field)
+	case "targetOrganizationId":
+		return ec.fieldContext_EdiTransfer_targetOrganizationId(ctx, field)
+	case "targetBusinessUnitId":
+		return ec.fieldContext_EdiTransfer_targetBusinessUnitId(ctx, field)
+	case "sourcePartnerId":
+		return ec.fieldContext_EdiTransfer_sourcePartnerId(ctx, field)
+	case "targetPartnerId":
+		return ec.fieldContext_EdiTransfer_targetPartnerId(ctx, field)
+	case "sourceShipmentId":
+		return ec.fieldContext_EdiTransfer_sourceShipmentId(ctx, field)
+	case "targetShipmentId":
+		return ec.fieldContext_EdiTransfer_targetShipmentId(ctx, field)
+	case "inboundMessageId":
+		return ec.fieldContext_EdiTransfer_inboundMessageId(ctx, field)
+	case "status":
+		return ec.fieldContext_EdiTransfer_status(ctx, field)
+	case "tenderPayload":
+		return ec.fieldContext_EdiTransfer_tenderPayload(ctx, field)
+	case "mappingSnapshot":
+		return ec.fieldContext_EdiTransfer_mappingSnapshot(ctx, field)
+	case "rejectionReason":
+		return ec.fieldContext_EdiTransfer_rejectionReason(ctx, field)
+	case "failureReason":
+		return ec.fieldContext_EdiTransfer_failureReason(ctx, field)
+	case "submittedAt":
+		return ec.fieldContext_EdiTransfer_submittedAt(ctx, field)
+	case "processedAt":
+		return ec.fieldContext_EdiTransfer_processedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_EdiTransfer_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_EdiTransfer_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_EdiTransfer_updatedAt(ctx, field)
+	case "sourcePartner":
+		return ec.fieldContext_EdiTransfer_sourcePartner(ctx, field)
+	case "targetPartner":
+		return ec.fieldContext_EdiTransfer_targetPartner(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTransfer", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTransferConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_EdiTransferConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_EdiTransferConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiTransferConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTransferConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiTransferEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_EdiTransferEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_EdiTransferEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiTransferEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_EquipmentContinuity(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -12439,7 +15733,7 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 	return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
 }
 
-// endregion ************************** generated!.gotpl **************************
+// endregion ************************** internal!.gotpl ***************************
 
 // region    ***************************** args.gotpl *****************************
 
@@ -13144,6 +16438,220 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		return nil, err
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediCommunicationProfiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediInboundFiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (*edi.InboundFileStatus, error) {
+			return ec.unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "partnerId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partnerId"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediMappingProfiles_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "partnerId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partnerId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediMessages_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "transactionSet",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["transactionSet"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
+		func(ctx context.Context, v any) (*edi.DocumentDirection, error) {
+			return ec.unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["direction"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "partnerId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partnerId"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediPartners_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediSummary_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sinceHours",
+		func(ctx context.Context, v any) (*int, error) {
+			return ec.unmarshalOInt2ᚖint(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["sinceHours"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediTemplates_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "status",
+		func(ctx context.Context, v any) (*edi.TemplateStatus, error) {
+			return ec.unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["status"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "transactionSet",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["transactionSet"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
+		func(ctx context.Context, v any) (*edi.DocumentDirection, error) {
+			return ec.unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["direction"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediTestCases_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "partnerDocumentProfileId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partnerDocumentProfileId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediTransfers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
+			return ec.unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "direction",
+		func(ctx context.Context, v any) (gqlmodel.EdiTransferDirection, error) {
+			return ec.unmarshalNEdiTransferDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferDirection(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["direction"] = arg1
 	return args, nil
 }
 
@@ -13998,10 +17506,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 }
 
 // endregion ***************************** args.gotpl *****************************
-
-// region    ************************** directives.gotpl **************************
-
-// endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
 
@@ -14881,6 +18385,6382 @@ func (ec *executionContext) _BusinessUnit_updatedAt(ctx context.Context, field g
 }
 func (ec *executionContext) fieldContext_BusinessUnit_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("BusinessUnit", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_ediConnectionId(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_ediConnectionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIConnectionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_ediConnectionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_method(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_method(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Method, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
+			return ec.marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_method(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type EdiConnectionMethod does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
+			return ec.marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type EntityStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_description(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_secretState(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_secretState(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SecretState, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []edi.CommunicationProfileSecretState) graphql.Marshaler {
+			return ec.marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_secretState(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiCommunicationProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiCommunicationProfileSecretState(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfile_partner(ctx context.Context, field graphql.CollectedField, obj *edi.EDICommunicationProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfile_partner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Partner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfile_partner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiCommunicationProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiCommunicationProfileConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiCommunicationProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiCommunicationProfileEdge) graphql.Marshaler {
+			return ec.marshalNEdiCommunicationProfileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiCommunicationProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiCommunicationProfileEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiCommunicationProfileConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiCommunicationProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiCommunicationProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiCommunicationProfileConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiCommunicationProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfileConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfileEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiCommunicationProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+			return ec.marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiCommunicationProfileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiCommunicationProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiCommunicationProfileEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiCommunicationProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfileEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiCommunicationProfileSecretState_key(ctx context.Context, field graphql.CollectedField, obj *edi.CommunicationProfileSecretState) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiCommunicationProfileSecretState_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiCommunicationProfileSecretState_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiCommunicationProfileSecretState", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiConnection_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiConnection_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiConnection_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiConnection", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiConnection_method(ctx context.Context, field graphql.CollectedField, obj *edi.EDIConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiConnection_method(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Method, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
+			return ec.marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiConnection_method(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiConnection", field, false, false, errors.New("field of type EdiConnectionMethod does not have child fields"))
+}
+
+func (ec *executionContext) _EdiConnection_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDIConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiConnection_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.ConnectionStatus) graphql.Marshaler {
+			return ec.marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiConnection_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiConnection", field, false, false, errors.New("field of type EdiConnectionStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_communicationProfileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_communicationProfileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CommunicationProfileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_communicationProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_method(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_method(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Method, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
+			return ec.marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_method(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type EdiConnectionMethod does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_remotePath(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_remotePath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RemotePath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_remotePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_fileName(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_fileName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FileName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_fileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_checksum(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_checksum(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Checksum, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_checksum(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_sizeBytes(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_sizeBytes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SizeBytes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_sizeBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_interchangeControlNumber(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_interchangeControlNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InterchangeControlNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_interchangeControlNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_isaSenderQualifier(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_isaSenderQualifier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ISASenderQualifier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_isaSenderQualifier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_isaSenderId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_isaSenderId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ISASenderID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_isaSenderId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_isaReceiverQualifier(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_isaReceiverQualifier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ISAReceiverQualifier, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_isaReceiverQualifier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_isaReceiverId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_isaReceiverId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ISAReceiverID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_isaReceiverId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.InboundFileStatus) graphql.Marshaler {
+			return ec.marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type EdiInboundFileStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_failureReason(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_failureReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FailureReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_failureReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_transactionCount(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_transactionCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TransactionCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_transactionCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_receivedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_receivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReceivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_receivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_processedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_processedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_processedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFile_partner(ctx context.Context, field graphql.CollectedField, obj *edi.EDIInboundFile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFile_partner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Partner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFile_partner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiInboundFile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiInboundFileConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiInboundFileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFileConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiInboundFileEdge) graphql.Marshaler {
+			return ec.marshalNEdiInboundFileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiInboundFileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiInboundFileEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiInboundFileConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiInboundFileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFileConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiInboundFileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiInboundFileConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiInboundFileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFileConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFileConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFileConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiInboundFileEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiInboundFileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFileEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIInboundFile) graphql.Marshaler {
+			return ec.marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIInboundFile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiInboundFileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiInboundFile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiInboundFileEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiInboundFileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiInboundFileEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiInboundFileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiInboundFileEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_description(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfile", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfile_partner(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_partner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Partner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_partner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMappingProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMappingProfile_entries(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfile_entries(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Entries, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*edi.EDIMappingProfileItem) graphql.Marshaler {
+			return ec.marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItemᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfile_entries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMappingProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMappingProfileItem(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMappingProfileConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMappingProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiMappingProfileEdge) graphql.Marshaler {
+			return ec.marshalNEdiMappingProfileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMappingProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMappingProfileEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMappingProfileConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMappingProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMappingProfileConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMappingProfileConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMappingProfileConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMappingProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIMappingProfile) graphql.Marshaler {
+			return ec.marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfile(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMappingProfileEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMappingProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMappingProfileEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMappingProfileEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_mappingProfileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_mappingProfileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MappingProfileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_mappingProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_entityType(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_entityType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntityType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.MappingEntityType) graphql.Marshaler {
+			return ec.marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMappingEntityType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_entityType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type EdiMappingEntityType does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_sourceId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_sourceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_sourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_sourceLabel(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_sourceLabel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceLabel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_sourceLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_targetId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_targetId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_targetId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_targetLabel(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_targetLabel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetLabel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_targetLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMappingProfileItem_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMappingProfileItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMappingProfileItem_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMappingProfileItem_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMappingProfileItem", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_documentTypeId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_documentTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_documentTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_partnerDocumentProfileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_partnerDocumentProfileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerDocumentProfileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_partnerDocumentProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_templateId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_templateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_templateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_templateVersionId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_templateVersionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemplateVersionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_templateVersionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_shipmentId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_shipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_shipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_transferId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_transferId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TransferID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_transferId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_inboundFileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_inboundFileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InboundFileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_inboundFileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_direction(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_direction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Direction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+			return ec.marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type EdiDocumentDirection does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_transactionSet(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_transactionSet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.EdiMessage().TransactionSet(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_transactionSet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_x12Version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_x12Version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.X12Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_x12Version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.MessageStatus) graphql.Marshaler {
+			return ec.marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type EdiMessageStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_interchangeControlNumber(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_interchangeControlNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InterchangeControlNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_interchangeControlNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_groupControlNumber(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_groupControlNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GroupControlNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_groupControlNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_transactionControlNumber(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_transactionControlNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TransactionControlNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_transactionControlNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_segmentCount(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_segmentCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SegmentCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_segmentCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliveryStatus(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliveryStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.MessageDeliveryStatus) graphql.Marshaler {
+			return ec.marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageDeliveryStatus(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliveryStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type EdiMessageDeliveryStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliveryRemotePath(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliveryRemotePath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryRemotePath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliveryRemotePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliveryAttempts(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliveryAttempts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryAttempts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliveryAttempts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliveryLastAttemptAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliveryLastAttemptAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryLastAttemptAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliveryLastAttemptAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliverySentAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliverySentAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliverySentAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliverySentAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_deliveryLastError(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_deliveryLastError(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryLastError, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_deliveryLastError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_ackStatus(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_ackStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AckStatus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
+			return ec.marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_ackStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type EdiMessageAckStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_ackMessageId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_ackMessageId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AckMessageID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_ackMessageId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_ackReceivedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_ackReceivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AckReceivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_ackReceivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_ackLastError(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_ackLastError(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AckLastError, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_ackLastError(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_generatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_generatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.GeneratedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_generatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessage_partner(ctx context.Context, field graphql.CollectedField, obj *edi.EDIMessage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessage_partner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Partner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessage_partner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMessage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMessageConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMessageConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessageConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiMessageEdge) graphql.Marshaler {
+			return ec.marshalNEdiMessageEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessageConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMessageConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMessageEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMessageConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMessageConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessageConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessageConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMessageConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMessageConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMessageConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessageConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessageConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessageConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiMessageEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMessageEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessageEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIMessage) graphql.Marshaler {
+			return ec.marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMessage(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessageEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiMessageEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMessage(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiMessageEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiMessageEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiMessageEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiMessageEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiMessageEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_kind(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.PartnerKind) graphql.Marshaler {
+			return ec.marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐPartnerKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type EdiPartnerKind does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v domaintypes.Status) graphql.Marshaler {
+			return ec.marshalNEntityStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type EntityStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_code(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_description(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_internalOrganizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_internalOrganizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InternalOrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_internalOrganizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_customerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_customerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CustomerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_customerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_defaultTransportId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_defaultTransportId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultTransportID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_defaultTransportId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_defaultMappingProfileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_defaultMappingProfileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultMappingProfileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_defaultMappingProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_country(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_country(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Country, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_country(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_timezone(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_timezone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Timezone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_timezone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_contactName(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_contactName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContactName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_contactName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_contactEmail(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_contactEmail(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContactEmail, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_contactEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_contactPhone(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_contactPhone(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ContactPhone, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_contactPhone(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_enabledForInbound(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_enabledForInbound(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EnabledForInbound, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_enabledForInbound(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_enabledForOutbound(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_enabledForOutbound(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EnabledForOutbound, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_enabledForOutbound(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartner", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartner_internalOrganization(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_internalOrganization(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InternalOrganization, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *tenant.Organization) graphql.Marshaler {
+			return ec.marshalOOrganization2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋtenantᚐOrganization(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_internalOrganization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Organization(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartner_connection(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_connection(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Connection, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIConnection) graphql.Marshaler {
+			return ec.marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIConnection(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_connection(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiConnection(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartner_defaultTransport(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartner) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartner_defaultTransport(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultTransport, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+			return ec.marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartner_defaultTransport(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartner",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiCommunicationProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartnerConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiPartnerEdge) graphql.Marshaler {
+			return ec.marshalNEdiPartnerEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartnerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartnerEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartnerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartnerConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartnerConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerDocumentProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_ediPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_ediPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EDIPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_ediPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerDocumentProfile", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerDocumentProfile", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_direction(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_direction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Direction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+			return ec.marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerDocumentProfile", field, false, false, errors.New("field of type EdiDocumentDirection does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_transactionSet(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_transactionSet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.EdiPartnerDocumentProfile().TransactionSet(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_transactionSet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerDocumentProfile", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile_partner(ctx context.Context, field graphql.CollectedField, obj *edi.EDIPartnerDocumentProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerDocumentProfile_partner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Partner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerDocumentProfile_partner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartnerDocumentProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartnerEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiPartnerEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiPartnerEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummary_deliveryStatusCounts(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_deliveryStatusCounts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeliveryStatusCounts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+			return ec.marshalNEdiSummaryStatusCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_deliveryStatusCounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummaryStatusCount(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiSummary_ackStatusCounts(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_ackStatusCounts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AckStatusCounts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+			return ec.marshalNEdiSummaryStatusCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_ackStatusCounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummaryStatusCount(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiSummary_inboundFileStatusCounts(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_inboundFileStatusCounts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InboundFileStatusCounts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+			return ec.marshalNEdiSummaryStatusCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_inboundFileStatusCounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummaryStatusCount(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiSummary_inboundTransferStatusCounts(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_inboundTransferStatusCounts(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InboundTransferStatusCounts, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+			return ec.marshalNEdiSummaryStatusCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCountᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_inboundTransferStatusCounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummaryStatusCount(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiSummary_overdueAckCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_overdueAckCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OverdueAckCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_overdueAckCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummary", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummary_attentionItems(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummary_attentionItems(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AttentionItems, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiSummaryAttentionItem) graphql.Marshaler {
+			return ec.marshalNEdiSummaryAttentionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionItemᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummary_attentionItems(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummaryAttentionItem(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_kind(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v gqlmodel.EdiSummaryAttentionKind) graphql.Marshaler {
+			return ec.marshalNEdiSummaryAttentionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type EdiSummaryAttentionKind does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_partnerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_partnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOID2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_partnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_partnerName(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_partnerName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_partnerName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_partnerCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_partnerCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_partnerCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_reference(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_reference(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reference, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_reference(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_error(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_error(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryAttentionItem_occurredAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryAttentionItem) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryAttentionItem_occurredAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OccurredAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryAttentionItem_occurredAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryAttentionItem", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryStatusCount_status(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryStatusCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryStatusCount_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryStatusCount_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryStatusCount", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiSummaryStatusCount_count(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiSummaryStatusCount) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiSummaryStatusCount_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiSummaryStatusCount_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiSummaryStatusCount", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_documentTypeId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_documentTypeId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentTypeID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_documentTypeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_description(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_direction(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_direction(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Direction, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+			return ec.marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_direction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type EdiDocumentDirection does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_standard(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_standard(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Standard, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.EDIStandard) graphql.Marshaler {
+			return ec.marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIStandard(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_standard(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type EdiStandard does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_transactionSet(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_transactionSet(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.EdiTemplate().TransactionSet(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_transactionSet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, true, true, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.TemplateStatus) graphql.Marshaler {
+			return ec.marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type EdiTemplateStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplate", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplate_activeVersion(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_activeVersion(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActiveVersion, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
+			return ec.marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_activeVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTemplate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTemplateVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTemplate_versions(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplate) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplate_versions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Versions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*edi.EDITemplateVersion) graphql.Marshaler {
+			return ec.marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersionᚄ(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplate_versions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTemplate",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTemplateVersion(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTemplateConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiTemplateEdge) graphql.Marshaler {
+			return ec.marshalNEdiTemplateEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTemplateConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTemplateEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTemplateConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTemplateConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTemplateConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTemplateConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTemplateEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDITemplate) graphql.Marshaler {
+			return ec.marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplate(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTemplateEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTemplate(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTemplateEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTemplateEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_templateId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_templateId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TemplateID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_templateId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_sourceVersionId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_sourceVersionId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceVersionID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_sourceVersionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_versionNumber(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_versionNumber(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.VersionNumber, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_versionNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_x12Version(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_x12Version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.X12Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_x12Version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_functionalGroupId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_functionalGroupId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FunctionalGroupID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_functionalGroupId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.TemplateStatus) graphql.Marshaler {
+			return ec.marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type EdiTemplateStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_isActive(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_isActive(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsActive, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_notes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_notes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Notes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_notes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_certificationNotes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_certificationNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CertificationNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_certificationNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_activationNotes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_activationNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActivationNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_activationNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_archiveNotes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_archiveNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArchiveNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_archiveNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_deprecatedNotes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_deprecatedNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeprecatedNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_deprecatedNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_supersededNotes(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_supersededNotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupersededNotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_supersededNotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_certifiedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_certifiedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CertifiedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_certifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_activatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_activatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActivatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_activatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_archivedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_archivedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ArchivedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_archivedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_deprecatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_deprecatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DeprecatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_deprecatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_supersededAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_supersededAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupersededAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_supersededAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTemplateVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITemplateVersion) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTemplateVersion_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTemplateVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTemplateVersion", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_businessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_businessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_businessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_organizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_organizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_organizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_partnerDocumentProfileId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_partnerDocumentProfileId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerDocumentProfileID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_partnerDocumentProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_name(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_description(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_expectedWarnings(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_expectedWarnings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExpectedWarnings, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_expectedWarnings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_expectedErrors(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_expectedErrors(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExpectedErrors, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_expectedErrors(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCase", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCase_documentProfile(ctx context.Context, field graphql.CollectedField, obj *edi.EDITestCase) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCase_documentProfile(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DocumentProfile, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartnerDocumentProfile) graphql.Marshaler {
+			return ec.marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartnerDocumentProfile(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCase_documentProfile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTestCase",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartnerDocumentProfile(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTestCaseConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTestCaseConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCaseConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiTestCaseEdge) graphql.Marshaler {
+			return ec.marshalNEdiTestCaseEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCaseConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTestCaseConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTestCaseEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTestCaseConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTestCaseConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCaseConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCaseConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTestCaseConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTestCaseConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTestCaseConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCaseConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCaseConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCaseConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTestCaseEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTestCaseEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCaseEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDITestCase) graphql.Marshaler {
+			return ec.marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITestCase(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCaseEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTestCaseEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTestCase(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTestCaseEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTestCaseEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTestCaseEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTestCaseEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTestCaseEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_id(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_sourceOrganizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_sourceOrganizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceOrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_sourceOrganizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_sourceBusinessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_sourceBusinessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceBusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_sourceBusinessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_targetOrganizationId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_targetOrganizationId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetOrganizationID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_targetOrganizationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_targetBusinessUnitId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_targetBusinessUnitId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetBusinessUnitID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_targetBusinessUnitId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_sourcePartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_sourcePartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourcePartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_sourcePartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_targetPartnerId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_targetPartnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetPartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_targetPartnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_sourceShipmentId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_sourceShipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourceShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_sourceShipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_targetShipmentId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_targetShipmentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetShipmentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_targetShipmentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_inboundMessageId(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_inboundMessageId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InboundMessageID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_inboundMessageId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_status(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_status(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Status, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v edi.TransferStatus) graphql.Marshaler {
+			return ec.marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTransferStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type EdiTransferStatus does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_tenderPayload(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_tenderPayload(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.EdiTransfer().TenderPayload(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v any) graphql.Marshaler {
+			return ec.marshalNAny2interface(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_tenderPayload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, true, true, errors.New("field of type Any does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_mappingSnapshot(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_mappingSnapshot(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.EdiTransfer().MappingSnapshot(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v any) graphql.Marshaler {
+			return ec.marshalNAny2interface(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_mappingSnapshot(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, true, true, errors.New("field of type Any does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_rejectionReason(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_rejectionReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RejectionReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_rejectionReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_failureReason(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_failureReason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FailureReason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalOString2string(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_failureReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_submittedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_submittedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SubmittedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_submittedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_processedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_processedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ProcessedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_processedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_version(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_createdAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_updatedAt(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransfer", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransfer_sourcePartner(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_sourcePartner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SourcePartner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_sourcePartner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTransfer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTransfer_targetPartner(ctx context.Context, field graphql.CollectedField, obj *edi.EDITransfer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransfer_targetPartner(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TargetPartner, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+			return ec.marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransfer_targetPartner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTransfer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartner(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTransferConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTransferConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransferConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiTransferEdge) graphql.Marshaler {
+			return ec.marshalNEdiTransferEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransferConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTransferConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTransferEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTransferConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTransferConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransferConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransferConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTransferConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTransferConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTransferConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransferConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransferConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransferConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiTransferEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTransferEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransferEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *edi.EDITransfer) graphql.Marshaler {
+			return ec.marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITransfer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransferEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "EdiTransferEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTransfer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _EdiTransferEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiTransferEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiTransferEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiTransferEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiTransferEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _EquipmentContinuity_id(ctx context.Context, field graphql.CollectedField, obj *equipmentcontinuity.EquipmentContinuity) (ret graphql.Marshaler) {
@@ -20191,6 +30071,402 @@ func (ec *executionContext) fieldContext_Query_trailer(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_trailer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediPartners(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediPartners(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiPartners(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiPartnerConnection) graphql.Marshaler {
+			return ec.marshalNEdiPartnerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediPartners(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartnerConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediPartners_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediCommunicationProfiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediCommunicationProfiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiCommunicationProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiCommunicationProfileConnection) graphql.Marshaler {
+			return ec.marshalNEdiCommunicationProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediCommunicationProfiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiCommunicationProfileConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediCommunicationProfiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediTransfers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediTransfers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiTransfers(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["direction"].(gqlmodel.EdiTransferDirection))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiTransferConnection) graphql.Marshaler {
+			return ec.marshalNEdiTransferConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediTransfers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTransferConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediTransfers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediMessages(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediMessages(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiMessages(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["transactionSet"].(*string), fc.Args["direction"].(*edi.DocumentDirection), fc.Args["partnerId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiMessageConnection) graphql.Marshaler {
+			return ec.marshalNEdiMessageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediMessages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMessageConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediMessages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediInboundFiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediInboundFiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiInboundFiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*edi.InboundFileStatus), fc.Args["partnerId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiInboundFileConnection) graphql.Marshaler {
+			return ec.marshalNEdiInboundFileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediInboundFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiInboundFileConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediInboundFiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediTemplates(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediTemplates(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiTemplates(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["status"].(*edi.TemplateStatus), fc.Args["transactionSet"].(*string), fc.Args["direction"].(*edi.DocumentDirection))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiTemplateConnection) graphql.Marshaler {
+			return ec.marshalNEdiTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediTemplates(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTemplateConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediTemplates_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediMappingProfiles(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediMappingProfiles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiMappingProfiles(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["partnerId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiMappingProfileConnection) graphql.Marshaler {
+			return ec.marshalNEdiMappingProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediMappingProfiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiMappingProfileConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediMappingProfiles_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediTestCases(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediTestCases(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiTestCases(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["partnerDocumentProfileId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiTestCaseConnection) graphql.Marshaler {
+			return ec.marshalNEdiTestCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseConnection(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediTestCases(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiTestCaseConnection(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediTestCases_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediSummary(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediSummary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiSummary(ctx, fc.Args["sinceHours"].(*int))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.EdiSummary) graphql.Marshaler {
+			return ec.marshalNEdiSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummary(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediSummary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiSummary(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediSummary_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -42956,7 +53232,8 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, billingQueueItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -42983,6 +53260,9 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 			}
 		case "assignedBillerId":
 			out.Values[i] = ec._BillingQueueItem_assignedBillerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "number":
 			out.Values[i] = ec._BillingQueueItem_number(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43000,6 +53280,9 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 			}
 		case "exceptionReasonCode":
 			out.Values[i] = ec._BillingQueueItem_exceptionReasonCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "reviewNotes":
 			out.Values[i] = ec._BillingQueueItem_reviewNotes(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43012,12 +53295,24 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 			}
 		case "reviewStartedAt":
 			out.Values[i] = ec._BillingQueueItem_reviewStartedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "reviewCompletedAt":
 			out.Values[i] = ec._BillingQueueItem_reviewCompletedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "canceledById":
 			out.Values[i] = ec._BillingQueueItem_canceledById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "canceledAt":
 			out.Values[i] = ec._BillingQueueItem_canceledAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "cancelReason":
 			out.Values[i] = ec._BillingQueueItem_cancelReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43030,14 +53325,29 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 			}
 		case "sourceInvoiceId":
 			out.Values[i] = ec._BillingQueueItem_sourceInvoiceId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "sourceInvoiceAdjustmentId":
 			out.Values[i] = ec._BillingQueueItem_sourceInvoiceAdjustmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "sourceCreditMemoInvoiceId":
 			out.Values[i] = ec._BillingQueueItem_sourceCreditMemoInvoiceId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "correctionGroupId":
 			out.Values[i] = ec._BillingQueueItem_correctionGroupId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "rebillStrategy":
 			out.Values[i] = ec._BillingQueueItem_rebillStrategy(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "requiresReplacementReview":
 			out.Values[i] = ec._BillingQueueItem_requiresReplacementReview(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43070,10 +53380,19 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 			}
 		case "shipment":
 			out.Values[i] = ec._BillingQueueItem_shipment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "assignedBiller":
 			out.Values[i] = ec._BillingQueueItem_assignedBiller(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "canceledBy":
 			out.Values[i] = ec._BillingQueueItem_canceledBy(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43083,16 +53402,14 @@ func (ec *executionContext) _BillingQueueItem(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43103,7 +53420,8 @@ func (ec *executionContext) _BusinessUnit(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, businessUnitImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43147,16 +53465,2535 @@ func (ec *executionContext) _BusinessUnit(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediCommunicationProfileImplementors = []string{"EdiCommunicationProfile"}
+
+func (ec *executionContext) _EdiCommunicationProfile(ctx context.Context, sel ast.SelectionSet, obj *edi.EDICommunicationProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediCommunicationProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiCommunicationProfile")
+		case "id":
+			out.Values[i] = ec._EdiCommunicationProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiCommunicationProfile_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiCommunicationProfile_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiCommunicationProfile_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "ediConnectionId":
+			out.Values[i] = ec._EdiCommunicationProfile_ediConnectionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "method":
+			out.Values[i] = ec._EdiCommunicationProfile_method(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._EdiCommunicationProfile_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._EdiCommunicationProfile_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._EdiCommunicationProfile_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "secretState":
+			out.Values[i] = ec._EdiCommunicationProfile_secretState(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiCommunicationProfile_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiCommunicationProfile_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiCommunicationProfile_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partner":
+			out.Values[i] = ec._EdiCommunicationProfile_partner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
 	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediCommunicationProfileConnectionImplementors = []string{"EdiCommunicationProfileConnection"}
+
+func (ec *executionContext) _EdiCommunicationProfileConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiCommunicationProfileConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediCommunicationProfileConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiCommunicationProfileConnection")
+		case "edges":
+			out.Values[i] = ec._EdiCommunicationProfileConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiCommunicationProfileConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiCommunicationProfileConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediCommunicationProfileEdgeImplementors = []string{"EdiCommunicationProfileEdge"}
+
+func (ec *executionContext) _EdiCommunicationProfileEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiCommunicationProfileEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediCommunicationProfileEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiCommunicationProfileEdge")
+		case "node":
+			out.Values[i] = ec._EdiCommunicationProfileEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiCommunicationProfileEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediCommunicationProfileSecretStateImplementors = []string{"EdiCommunicationProfileSecretState"}
+
+func (ec *executionContext) _EdiCommunicationProfileSecretState(ctx context.Context, sel ast.SelectionSet, obj *edi.CommunicationProfileSecretState) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediCommunicationProfileSecretStateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiCommunicationProfileSecretState")
+		case "key":
+			out.Values[i] = ec._EdiCommunicationProfileSecretState_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediConnectionImplementors = []string{"EdiConnection"}
+
+func (ec *executionContext) _EdiConnection(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiConnection")
+		case "id":
+			out.Values[i] = ec._EdiConnection_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "method":
+			out.Values[i] = ec._EdiConnection_method(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._EdiConnection_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediInboundFileImplementors = []string{"EdiInboundFile"}
+
+func (ec *executionContext) _EdiInboundFile(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIInboundFile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediInboundFileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiInboundFile")
+		case "id":
+			out.Values[i] = ec._EdiInboundFile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiInboundFile_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiInboundFile_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "communicationProfileId":
+			out.Values[i] = ec._EdiInboundFile_communicationProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiInboundFile_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "method":
+			out.Values[i] = ec._EdiInboundFile_method(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "remotePath":
+			out.Values[i] = ec._EdiInboundFile_remotePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileName":
+			out.Values[i] = ec._EdiInboundFile_fileName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "checksum":
+			out.Values[i] = ec._EdiInboundFile_checksum(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sizeBytes":
+			out.Values[i] = ec._EdiInboundFile_sizeBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "interchangeControlNumber":
+			out.Values[i] = ec._EdiInboundFile_interchangeControlNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isaSenderQualifier":
+			out.Values[i] = ec._EdiInboundFile_isaSenderQualifier(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isaSenderId":
+			out.Values[i] = ec._EdiInboundFile_isaSenderId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isaReceiverQualifier":
+			out.Values[i] = ec._EdiInboundFile_isaReceiverQualifier(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "isaReceiverId":
+			out.Values[i] = ec._EdiInboundFile_isaReceiverId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._EdiInboundFile_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "failureReason":
+			out.Values[i] = ec._EdiInboundFile_failureReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "transactionCount":
+			out.Values[i] = ec._EdiInboundFile_transactionCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "receivedAt":
+			out.Values[i] = ec._EdiInboundFile_receivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "processedAt":
+			out.Values[i] = ec._EdiInboundFile_processedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiInboundFile_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiInboundFile_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiInboundFile_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partner":
+			out.Values[i] = ec._EdiInboundFile_partner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediInboundFileConnectionImplementors = []string{"EdiInboundFileConnection"}
+
+func (ec *executionContext) _EdiInboundFileConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiInboundFileConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediInboundFileConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiInboundFileConnection")
+		case "edges":
+			out.Values[i] = ec._EdiInboundFileConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiInboundFileConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiInboundFileConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediInboundFileEdgeImplementors = []string{"EdiInboundFileEdge"}
+
+func (ec *executionContext) _EdiInboundFileEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiInboundFileEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediInboundFileEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiInboundFileEdge")
+		case "node":
+			out.Values[i] = ec._EdiInboundFileEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiInboundFileEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMappingProfileImplementors = []string{"EdiMappingProfile"}
+
+func (ec *executionContext) _EdiMappingProfile(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIMappingProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMappingProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMappingProfile")
+		case "id":
+			out.Values[i] = ec._EdiMappingProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiMappingProfile_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiMappingProfile_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiMappingProfile_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._EdiMappingProfile_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._EdiMappingProfile_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiMappingProfile_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiMappingProfile_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiMappingProfile_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partner":
+			out.Values[i] = ec._EdiMappingProfile_partner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "entries":
+			out.Values[i] = ec._EdiMappingProfile_entries(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMappingProfileConnectionImplementors = []string{"EdiMappingProfileConnection"}
+
+func (ec *executionContext) _EdiMappingProfileConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiMappingProfileConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMappingProfileConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMappingProfileConnection")
+		case "edges":
+			out.Values[i] = ec._EdiMappingProfileConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiMappingProfileConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiMappingProfileConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMappingProfileEdgeImplementors = []string{"EdiMappingProfileEdge"}
+
+func (ec *executionContext) _EdiMappingProfileEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiMappingProfileEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMappingProfileEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMappingProfileEdge")
+		case "node":
+			out.Values[i] = ec._EdiMappingProfileEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiMappingProfileEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMappingProfileItemImplementors = []string{"EdiMappingProfileItem"}
+
+func (ec *executionContext) _EdiMappingProfileItem(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIMappingProfileItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMappingProfileItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMappingProfileItem")
+		case "id":
+			out.Values[i] = ec._EdiMappingProfileItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiMappingProfileItem_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiMappingProfileItem_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiMappingProfileItem_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mappingProfileId":
+			out.Values[i] = ec._EdiMappingProfileItem_mappingProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entityType":
+			out.Values[i] = ec._EdiMappingProfileItem_entityType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceId":
+			out.Values[i] = ec._EdiMappingProfileItem_sourceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceLabel":
+			out.Values[i] = ec._EdiMappingProfileItem_sourceLabel(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "targetId":
+			out.Values[i] = ec._EdiMappingProfileItem_targetId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "targetLabel":
+			out.Values[i] = ec._EdiMappingProfileItem_targetLabel(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiMappingProfileItem_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiMappingProfileItem_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiMappingProfileItem_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMessageImplementors = []string{"EdiMessage"}
+
+func (ec *executionContext) _EdiMessage(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIMessage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMessageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMessage")
+		case "id":
+			out.Values[i] = ec._EdiMessage_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiMessage_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiMessage_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiMessage_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentTypeId":
+			out.Values[i] = ec._EdiMessage_documentTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "partnerDocumentProfileId":
+			out.Values[i] = ec._EdiMessage_partnerDocumentProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "templateId":
+			out.Values[i] = ec._EdiMessage_templateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "templateVersionId":
+			out.Values[i] = ec._EdiMessage_templateVersionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "shipmentId":
+			out.Values[i] = ec._EdiMessage_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transferId":
+			out.Values[i] = ec._EdiMessage_transferId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "inboundFileId":
+			out.Values[i] = ec._EdiMessage_inboundFileId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "direction":
+			out.Values[i] = ec._EdiMessage_direction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transactionSet":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdiMessage_transactionSet(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "x12Version":
+			out.Values[i] = ec._EdiMessage_x12Version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._EdiMessage_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "interchangeControlNumber":
+			out.Values[i] = ec._EdiMessage_interchangeControlNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "groupControlNumber":
+			out.Values[i] = ec._EdiMessage_groupControlNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transactionControlNumber":
+			out.Values[i] = ec._EdiMessage_transactionControlNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "segmentCount":
+			out.Values[i] = ec._EdiMessage_segmentCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryStatus":
+			out.Values[i] = ec._EdiMessage_deliveryStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryRemotePath":
+			out.Values[i] = ec._EdiMessage_deliveryRemotePath(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryAttempts":
+			out.Values[i] = ec._EdiMessage_deliveryAttempts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryLastAttemptAt":
+			out.Values[i] = ec._EdiMessage_deliveryLastAttemptAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliverySentAt":
+			out.Values[i] = ec._EdiMessage_deliverySentAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "deliveryLastError":
+			out.Values[i] = ec._EdiMessage_deliveryLastError(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ackStatus":
+			out.Values[i] = ec._EdiMessage_ackStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ackMessageId":
+			out.Values[i] = ec._EdiMessage_ackMessageId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ackReceivedAt":
+			out.Values[i] = ec._EdiMessage_ackReceivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ackLastError":
+			out.Values[i] = ec._EdiMessage_ackLastError(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "generatedAt":
+			out.Values[i] = ec._EdiMessage_generatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._EdiMessage_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiMessage_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiMessage_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "partner":
+			out.Values[i] = ec._EdiMessage_partner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMessageConnectionImplementors = []string{"EdiMessageConnection"}
+
+func (ec *executionContext) _EdiMessageConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiMessageConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMessageConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMessageConnection")
+		case "edges":
+			out.Values[i] = ec._EdiMessageConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiMessageConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiMessageConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediMessageEdgeImplementors = []string{"EdiMessageEdge"}
+
+func (ec *executionContext) _EdiMessageEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiMessageEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediMessageEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiMessageEdge")
+		case "node":
+			out.Values[i] = ec._EdiMessageEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiMessageEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediPartnerImplementors = []string{"EdiPartner"}
+
+func (ec *executionContext) _EdiPartner(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIPartner) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediPartnerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiPartner")
+		case "id":
+			out.Values[i] = ec._EdiPartner_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiPartner_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiPartner_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._EdiPartner_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._EdiPartner_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._EdiPartner_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._EdiPartner_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._EdiPartner_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "internalOrganizationId":
+			out.Values[i] = ec._EdiPartner_internalOrganizationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "customerId":
+			out.Values[i] = ec._EdiPartner_customerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "defaultTransportId":
+			out.Values[i] = ec._EdiPartner_defaultTransportId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "defaultMappingProfileId":
+			out.Values[i] = ec._EdiPartner_defaultMappingProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "country":
+			out.Values[i] = ec._EdiPartner_country(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "timezone":
+			out.Values[i] = ec._EdiPartner_timezone(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "contactName":
+			out.Values[i] = ec._EdiPartner_contactName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "contactEmail":
+			out.Values[i] = ec._EdiPartner_contactEmail(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "contactPhone":
+			out.Values[i] = ec._EdiPartner_contactPhone(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "enabledForInbound":
+			out.Values[i] = ec._EdiPartner_enabledForInbound(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "enabledForOutbound":
+			out.Values[i] = ec._EdiPartner_enabledForOutbound(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiPartner_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiPartner_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiPartner_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "internalOrganization":
+			out.Values[i] = ec._EdiPartner_internalOrganization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "connection":
+			out.Values[i] = ec._EdiPartner_connection(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "defaultTransport":
+			out.Values[i] = ec._EdiPartner_defaultTransport(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediPartnerConnectionImplementors = []string{"EdiPartnerConnection"}
+
+func (ec *executionContext) _EdiPartnerConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiPartnerConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediPartnerConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiPartnerConnection")
+		case "edges":
+			out.Values[i] = ec._EdiPartnerConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiPartnerConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiPartnerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediPartnerDocumentProfileImplementors = []string{"EdiPartnerDocumentProfile"}
+
+func (ec *executionContext) _EdiPartnerDocumentProfile(ctx context.Context, sel ast.SelectionSet, obj *edi.EDIPartnerDocumentProfile) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediPartnerDocumentProfileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiPartnerDocumentProfile")
+		case "id":
+			out.Values[i] = ec._EdiPartnerDocumentProfile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "ediPartnerId":
+			out.Values[i] = ec._EdiPartnerDocumentProfile_ediPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._EdiPartnerDocumentProfile_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "direction":
+			out.Values[i] = ec._EdiPartnerDocumentProfile_direction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transactionSet":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdiPartnerDocumentProfile_transactionSet(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "partner":
+			out.Values[i] = ec._EdiPartnerDocumentProfile_partner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediPartnerEdgeImplementors = []string{"EdiPartnerEdge"}
+
+func (ec *executionContext) _EdiPartnerEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiPartnerEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediPartnerEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiPartnerEdge")
+		case "node":
+			out.Values[i] = ec._EdiPartnerEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiPartnerEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediSummaryImplementors = []string{"EdiSummary"}
+
+func (ec *executionContext) _EdiSummary(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiSummary) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediSummaryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiSummary")
+		case "deliveryStatusCounts":
+			out.Values[i] = ec._EdiSummary_deliveryStatusCounts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ackStatusCounts":
+			out.Values[i] = ec._EdiSummary_ackStatusCounts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inboundFileStatusCounts":
+			out.Values[i] = ec._EdiSummary_inboundFileStatusCounts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inboundTransferStatusCounts":
+			out.Values[i] = ec._EdiSummary_inboundTransferStatusCounts(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "overdueAckCount":
+			out.Values[i] = ec._EdiSummary_overdueAckCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "attentionItems":
+			out.Values[i] = ec._EdiSummary_attentionItems(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediSummaryAttentionItemImplementors = []string{"EdiSummaryAttentionItem"}
+
+func (ec *executionContext) _EdiSummaryAttentionItem(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiSummaryAttentionItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediSummaryAttentionItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiSummaryAttentionItem")
+		case "kind":
+			out.Values[i] = ec._EdiSummaryAttentionItem_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._EdiSummaryAttentionItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partnerId":
+			out.Values[i] = ec._EdiSummaryAttentionItem_partnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "partnerName":
+			out.Values[i] = ec._EdiSummaryAttentionItem_partnerName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "partnerCode":
+			out.Values[i] = ec._EdiSummaryAttentionItem_partnerCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reference":
+			out.Values[i] = ec._EdiSummaryAttentionItem_reference(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._EdiSummaryAttentionItem_error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "occurredAt":
+			out.Values[i] = ec._EdiSummaryAttentionItem_occurredAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediSummaryStatusCountImplementors = []string{"EdiSummaryStatusCount"}
+
+func (ec *executionContext) _EdiSummaryStatusCount(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediSummaryStatusCountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiSummaryStatusCount")
+		case "status":
+			out.Values[i] = ec._EdiSummaryStatusCount_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._EdiSummaryStatusCount_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTemplateImplementors = []string{"EdiTemplate"}
+
+func (ec *executionContext) _EdiTemplate(ctx context.Context, sel ast.SelectionSet, obj *edi.EDITemplate) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTemplateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTemplate")
+		case "id":
+			out.Values[i] = ec._EdiTemplate_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiTemplate_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiTemplate_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentTypeId":
+			out.Values[i] = ec._EdiTemplate_documentTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._EdiTemplate_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._EdiTemplate_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "direction":
+			out.Values[i] = ec._EdiTemplate_direction(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "standard":
+			out.Values[i] = ec._EdiTemplate_standard(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transactionSet":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdiTemplate_transactionSet(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "status":
+			out.Values[i] = ec._EdiTemplate_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._EdiTemplate_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiTemplate_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiTemplate_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "activeVersion":
+			out.Values[i] = ec._EdiTemplate_activeVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "versions":
+			out.Values[i] = ec._EdiTemplate_versions(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTemplateConnectionImplementors = []string{"EdiTemplateConnection"}
+
+func (ec *executionContext) _EdiTemplateConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTemplateConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTemplateConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTemplateConnection")
+		case "edges":
+			out.Values[i] = ec._EdiTemplateConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiTemplateConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiTemplateConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTemplateEdgeImplementors = []string{"EdiTemplateEdge"}
+
+func (ec *executionContext) _EdiTemplateEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTemplateEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTemplateEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTemplateEdge")
+		case "node":
+			out.Values[i] = ec._EdiTemplateEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiTemplateEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTemplateVersionImplementors = []string{"EdiTemplateVersion"}
+
+func (ec *executionContext) _EdiTemplateVersion(ctx context.Context, sel ast.SelectionSet, obj *edi.EDITemplateVersion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTemplateVersionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTemplateVersion")
+		case "id":
+			out.Values[i] = ec._EdiTemplateVersion_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiTemplateVersion_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiTemplateVersion_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "templateId":
+			out.Values[i] = ec._EdiTemplateVersion_templateId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sourceVersionId":
+			out.Values[i] = ec._EdiTemplateVersion_sourceVersionId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "versionNumber":
+			out.Values[i] = ec._EdiTemplateVersion_versionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "x12Version":
+			out.Values[i] = ec._EdiTemplateVersion_x12Version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "functionalGroupId":
+			out.Values[i] = ec._EdiTemplateVersion_functionalGroupId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "status":
+			out.Values[i] = ec._EdiTemplateVersion_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isActive":
+			out.Values[i] = ec._EdiTemplateVersion_isActive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "notes":
+			out.Values[i] = ec._EdiTemplateVersion_notes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "certificationNotes":
+			out.Values[i] = ec._EdiTemplateVersion_certificationNotes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "activationNotes":
+			out.Values[i] = ec._EdiTemplateVersion_activationNotes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "archiveNotes":
+			out.Values[i] = ec._EdiTemplateVersion_archiveNotes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "deprecatedNotes":
+			out.Values[i] = ec._EdiTemplateVersion_deprecatedNotes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "supersededNotes":
+			out.Values[i] = ec._EdiTemplateVersion_supersededNotes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "certifiedAt":
+			out.Values[i] = ec._EdiTemplateVersion_certifiedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "activatedAt":
+			out.Values[i] = ec._EdiTemplateVersion_activatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "archivedAt":
+			out.Values[i] = ec._EdiTemplateVersion_archivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "deprecatedAt":
+			out.Values[i] = ec._EdiTemplateVersion_deprecatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "supersededAt":
+			out.Values[i] = ec._EdiTemplateVersion_supersededAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiTemplateVersion_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiTemplateVersion_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiTemplateVersion_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTestCaseImplementors = []string{"EdiTestCase"}
+
+func (ec *executionContext) _EdiTestCase(ctx context.Context, sel ast.SelectionSet, obj *edi.EDITestCase) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTestCaseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTestCase")
+		case "id":
+			out.Values[i] = ec._EdiTestCase_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "businessUnitId":
+			out.Values[i] = ec._EdiTestCase_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organizationId":
+			out.Values[i] = ec._EdiTestCase_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "partnerDocumentProfileId":
+			out.Values[i] = ec._EdiTestCase_partnerDocumentProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._EdiTestCase_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._EdiTestCase_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "expectedWarnings":
+			out.Values[i] = ec._EdiTestCase_expectedWarnings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expectedErrors":
+			out.Values[i] = ec._EdiTestCase_expectedErrors(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._EdiTestCase_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiTestCase_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiTestCase_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "documentProfile":
+			out.Values[i] = ec._EdiTestCase_documentProfile(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTestCaseConnectionImplementors = []string{"EdiTestCaseConnection"}
+
+func (ec *executionContext) _EdiTestCaseConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTestCaseConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTestCaseConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTestCaseConnection")
+		case "edges":
+			out.Values[i] = ec._EdiTestCaseConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiTestCaseConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiTestCaseConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTestCaseEdgeImplementors = []string{"EdiTestCaseEdge"}
+
+func (ec *executionContext) _EdiTestCaseEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTestCaseEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTestCaseEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTestCaseEdge")
+		case "node":
+			out.Values[i] = ec._EdiTestCaseEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiTestCaseEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTransferImplementors = []string{"EdiTransfer"}
+
+func (ec *executionContext) _EdiTransfer(ctx context.Context, sel ast.SelectionSet, obj *edi.EDITransfer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTransferImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTransfer")
+		case "id":
+			out.Values[i] = ec._EdiTransfer_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceOrganizationId":
+			out.Values[i] = ec._EdiTransfer_sourceOrganizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceBusinessUnitId":
+			out.Values[i] = ec._EdiTransfer_sourceBusinessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetOrganizationId":
+			out.Values[i] = ec._EdiTransfer_targetOrganizationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetBusinessUnitId":
+			out.Values[i] = ec._EdiTransfer_targetBusinessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourcePartnerId":
+			out.Values[i] = ec._EdiTransfer_sourcePartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetPartnerId":
+			out.Values[i] = ec._EdiTransfer_targetPartnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourceShipmentId":
+			out.Values[i] = ec._EdiTransfer_sourceShipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetShipmentId":
+			out.Values[i] = ec._EdiTransfer_targetShipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "inboundMessageId":
+			out.Values[i] = ec._EdiTransfer_inboundMessageId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._EdiTransfer_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tenderPayload":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdiTransfer_tenderPayload(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "mappingSnapshot":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._EdiTransfer_mappingSnapshot(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "rejectionReason":
+			out.Values[i] = ec._EdiTransfer_rejectionReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "failureReason":
+			out.Values[i] = ec._EdiTransfer_failureReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "submittedAt":
+			out.Values[i] = ec._EdiTransfer_submittedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "processedAt":
+			out.Values[i] = ec._EdiTransfer_processedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._EdiTransfer_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._EdiTransfer_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._EdiTransfer_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "sourcePartner":
+			out.Values[i] = ec._EdiTransfer_sourcePartner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "targetPartner":
+			out.Values[i] = ec._EdiTransfer_targetPartner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTransferConnectionImplementors = []string{"EdiTransferConnection"}
+
+func (ec *executionContext) _EdiTransferConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTransferConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTransferConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTransferConnection")
+		case "edges":
+			out.Values[i] = ec._EdiTransferConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._EdiTransferConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiTransferConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var ediTransferEdgeImplementors = []string{"EdiTransferEdge"}
+
+func (ec *executionContext) _EdiTransferEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiTransferEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediTransferEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiTransferEdge")
+		case "node":
+			out.Values[i] = ec._EdiTransferEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._EdiTransferEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43167,7 +56004,8 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentContinuityImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43203,19 +56041,21 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -43231,29 +56071,34 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 		case "sourceShipmentId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._EquipmentContinuity_sourceShipmentId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -43264,29 +56109,34 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 		case "sourceShipmentMoveId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._EquipmentContinuity_sourceShipmentMoveId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -43297,29 +56147,34 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 		case "currentLocationId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._EquipmentContinuity_currentLocationId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -43343,19 +56198,21 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -43392,16 +56249,14 @@ func (ec *executionContext) _EquipmentContinuity(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43412,7 +56267,8 @@ func (ec *executionContext) _EquipmentManufacturer(ctx context.Context, sel ast.
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentManufacturerImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43464,8 +56320,14 @@ func (ec *executionContext) _EquipmentManufacturer(ctx context.Context, sel ast.
 			}
 		case "businessUnit":
 			out.Values[i] = ec._EquipmentManufacturer_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organization":
 			out.Values[i] = ec._EquipmentManufacturer_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43475,16 +56337,14 @@ func (ec *executionContext) _EquipmentManufacturer(ctx context.Context, sel ast.
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43495,7 +56355,8 @@ func (ec *executionContext) _EquipmentManufacturerConnection(ctx context.Context
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentManufacturerConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43512,6 +56373,9 @@ func (ec *executionContext) _EquipmentManufacturerConnection(ctx context.Context
 			}
 		case "totalCount":
 			out.Values[i] = ec._EquipmentManufacturerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43521,16 +56385,14 @@ func (ec *executionContext) _EquipmentManufacturerConnection(ctx context.Context
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43541,7 +56403,8 @@ func (ec *executionContext) _EquipmentManufacturerEdge(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentManufacturerEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43565,16 +56428,14 @@ func (ec *executionContext) _EquipmentManufacturerEdge(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43585,7 +56446,8 @@ func (ec *executionContext) _EquipmentType(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentTypeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43632,6 +56494,9 @@ func (ec *executionContext) _EquipmentType(ctx context.Context, sel ast.Selectio
 			}
 		case "interiorLength":
 			out.Values[i] = ec._EquipmentType_interiorLength(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._EquipmentType_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43649,8 +56514,14 @@ func (ec *executionContext) _EquipmentType(ctx context.Context, sel ast.Selectio
 			}
 		case "businessUnit":
 			out.Values[i] = ec._EquipmentType_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organization":
 			out.Values[i] = ec._EquipmentType_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43660,16 +56531,14 @@ func (ec *executionContext) _EquipmentType(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43680,7 +56549,8 @@ func (ec *executionContext) _EquipmentTypeConnection(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentTypeConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43697,6 +56567,9 @@ func (ec *executionContext) _EquipmentTypeConnection(ctx context.Context, sel as
 			}
 		case "totalCount":
 			out.Values[i] = ec._EquipmentTypeConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43706,16 +56579,14 @@ func (ec *executionContext) _EquipmentTypeConnection(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43726,7 +56597,8 @@ func (ec *executionContext) _EquipmentTypeEdge(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, equipmentTypeEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43750,16 +56622,14 @@ func (ec *executionContext) _EquipmentTypeEdge(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43770,7 +56640,8 @@ func (ec *executionContext) _FleetCode(ctx context.Context, sel ast.SelectionSet
 	fields := graphql.CollectFields(ec.OperationContext, sel, fleetCodeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43812,10 +56683,19 @@ func (ec *executionContext) _FleetCode(ctx context.Context, sel ast.SelectionSet
 			}
 		case "revenueGoal":
 			out.Values[i] = ec._FleetCode_revenueGoal(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "deadheadGoal":
 			out.Values[i] = ec._FleetCode_deadheadGoal(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "mileageGoal":
 			out.Values[i] = ec._FleetCode_mileageGoal(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "color":
 			out.Values[i] = ec._FleetCode_color(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -43838,10 +56718,19 @@ func (ec *executionContext) _FleetCode(ctx context.Context, sel ast.SelectionSet
 			}
 		case "businessUnit":
 			out.Values[i] = ec._FleetCode_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organization":
 			out.Values[i] = ec._FleetCode_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "manager":
 			out.Values[i] = ec._FleetCode_manager(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -43851,16 +56740,14 @@ func (ec *executionContext) _FleetCode(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43871,7 +56758,8 @@ func (ec *executionContext) _GeofenceVertex(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, geofenceVertexImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43895,16 +56783,14 @@ func (ec *executionContext) _GeofenceVertex(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -43915,7 +56801,8 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, locationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -43997,8 +56884,14 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "longitude":
 			out.Values[i] = ec._Location_longitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "latitude":
 			out.Values[i] = ec._Location_latitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "geofenceType":
 			out.Values[i] = ec._Location_geofenceType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -44006,6 +56899,9 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "geofenceRadiusMeters":
 			out.Values[i] = ec._Location_geofenceRadiusMeters(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "geofenceVertices":
 			out.Values[i] = ec._Location_geofenceVertices(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -44028,12 +56924,24 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "businessUnit":
 			out.Values[i] = ec._Location_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organization":
 			out.Values[i] = ec._Location_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "state":
 			out.Values[i] = ec._Location_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "locationCategory":
 			out.Values[i] = ec._Location_locationCategory(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -44043,16 +56951,14 @@ func (ec *executionContext) _Location(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44063,7 +56969,8 @@ func (ec *executionContext) _LocationCategory(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, locationCategoryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -44100,6 +57007,9 @@ func (ec *executionContext) _LocationCategory(ctx context.Context, sel ast.Selec
 			}
 		case "facilityType":
 			out.Values[i] = ec._LocationCategory_facilityType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "color":
 			out.Values[i] = ec._LocationCategory_color(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -44142,8 +57052,14 @@ func (ec *executionContext) _LocationCategory(ctx context.Context, sel ast.Selec
 			}
 		case "businessUnit":
 			out.Values[i] = ec._LocationCategory_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organization":
 			out.Values[i] = ec._LocationCategory_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -44153,16 +57069,14 @@ func (ec *executionContext) _LocationCategory(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44173,7 +57087,8 @@ func (ec *executionContext) _LocationReference(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, locationReferenceImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -44197,16 +57112,14 @@ func (ec *executionContext) _LocationReference(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44220,7 +57133,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	})
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -44512,16 +57426,14 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44532,7 +57444,8 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, organizationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -44629,8 +57542,14 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 		case "state":
 			out.Values[i] = ec._Organization_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnit":
 			out.Values[i] = ec._Organization_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -44640,16 +57559,14 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44660,7 +57577,8 @@ func (ec *executionContext) _PTOChartDataPoint(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, pTOChartDataPointImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -44721,19 +57639,21 @@ func (ec *executionContext) _PTOChartDataPoint(ctx context.Context, sel ast.Sele
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -44750,16 +57670,14 @@ func (ec *executionContext) _PTOChartDataPoint(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44770,7 +57688,8 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -44782,6 +57701,9 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "endCursor":
 			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -44791,16 +57713,14 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -44814,7 +57734,8 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	})
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -44849,13 +57770,214 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "trailer":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_trailer(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediPartners":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediPartners(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediCommunicationProfiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediCommunicationProfiles(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediTransfers":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediTransfers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediMessages":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediMessages(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediInboundFiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediInboundFiles(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediTemplates":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediTemplates(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediMappingProfiles":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediMappingProfiles(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediTestCases":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediTestCases(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediSummary":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediSummary(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -44890,13 +58012,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "equipmentManufacturer":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_equipmentManufacturer(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -44931,13 +58056,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "equipmentType":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_equipmentType(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -44994,13 +58122,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "shipment":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_shipment(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -45233,13 +58364,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		case "tractor":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Query_tractor(ctx, field)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -45341,10 +58475,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
 			})
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "__schema":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45354,16 +58494,14 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45374,7 +58512,8 @@ func (ec *executionContext) _SelectOption(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45391,8 +58530,14 @@ func (ec *executionContext) _SelectOption(ctx context.Context, sel ast.Selection
 			}
 		case "description":
 			out.Values[i] = ec._SelectOption_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "meta":
 			out.Values[i] = ec._SelectOption_meta(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45402,16 +58547,14 @@ func (ec *executionContext) _SelectOption(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45422,7 +58565,8 @@ func (ec *executionContext) _SelectOptionConnection(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45439,6 +58583,9 @@ func (ec *executionContext) _SelectOptionConnection(ctx context.Context, sel ast
 			}
 		case "totalCount":
 			out.Values[i] = ec._SelectOptionConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45448,16 +58595,14 @@ func (ec *executionContext) _SelectOptionConnection(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45468,7 +58613,8 @@ func (ec *executionContext) _SelectOptionEdge(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, selectOptionEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45492,16 +58638,14 @@ func (ec *executionContext) _SelectOptionEdge(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45512,7 +58656,8 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45534,6 +58679,9 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "sourceDocumentId":
 			out.Values[i] = ec._Shipment_sourceDocumentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "serviceTypeId":
 			out.Values[i] = ec._Shipment_serviceTypeId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45551,14 +58699,29 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "tractorTypeId":
 			out.Values[i] = ec._Shipment_tractorTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "trailerTypeId":
 			out.Values[i] = ec._Shipment_trailerTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ownerId":
 			out.Values[i] = ec._Shipment_ownerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "enteredById":
 			out.Values[i] = ec._Shipment_enteredById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "canceledById":
 			out.Values[i] = ec._Shipment_canceledById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "formulaTemplateId":
 			out.Values[i] = ec._Shipment_formulaTemplateId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45566,6 +58729,9 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "consolidationGroupId":
 			out.Values[i] = ec._Shipment_consolidationGroupId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "status":
 			out.Values[i] = ec._Shipment_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45573,8 +58739,14 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "tenderStatus":
 			out.Values[i] = ec._Shipment_tenderStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "entryMethod":
 			out.Values[i] = ec._Shipment_entryMethod(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "proNumber":
 			out.Values[i] = ec._Shipment_proNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45582,6 +58754,9 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "bol":
 			out.Values[i] = ec._Shipment_bol(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "cancelReason":
 			out.Values[i] = ec._Shipment_cancelReason(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45609,26 +58784,59 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "pieces":
 			out.Values[i] = ec._Shipment_pieces(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "weight":
 			out.Values[i] = ec._Shipment_weight(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "temperatureMin":
 			out.Values[i] = ec._Shipment_temperatureMin(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "temperatureMax":
 			out.Values[i] = ec._Shipment_temperatureMax(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actualDeliveryDate":
 			out.Values[i] = ec._Shipment_actualDeliveryDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actualShipDate":
 			out.Values[i] = ec._Shipment_actualShipDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "canceledAt":
 			out.Values[i] = ec._Shipment_canceledAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "billingTransferStatus":
 			out.Values[i] = ec._Shipment_billingTransferStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "transferredToBillingAt":
 			out.Values[i] = ec._Shipment_transferredToBillingAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "markedReadyToBillAt":
 			out.Values[i] = ec._Shipment_markedReadyToBillAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "billedAt":
 			out.Values[i] = ec._Shipment_billedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ratingUnit":
 			out.Values[i] = ec._Shipment_ratingUnit(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45636,6 +58844,9 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "ratingDetail":
 			out.Values[i] = ec._Shipment_ratingDetail(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._Shipment_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45668,10 +58879,19 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "customer":
 			out.Values[i] = ec._Shipment_customer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "owner":
 			out.Values[i] = ec._Shipment_owner(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "formulaTemplate":
 			out.Values[i] = ec._Shipment_formulaTemplate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45681,16 +58901,14 @@ func (ec *executionContext) _Shipment(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45701,7 +58919,8 @@ func (ec *executionContext) _ShipmentAccessorialCharge(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAccessorialChargeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45775,16 +58994,14 @@ func (ec *executionContext) _ShipmentAccessorialCharge(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45795,7 +59012,8 @@ func (ec *executionContext) _ShipmentActiveShipments(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentActiveShipmentsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45829,16 +59047,14 @@ func (ec *executionContext) _ShipmentActiveShipments(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45849,7 +59065,8 @@ func (ec *executionContext) _ShipmentActiveShipmentsBreakdown(ctx context.Contex
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentActiveShipmentsBreakdownImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -45883,16 +59100,14 @@ func (ec *executionContext) _ShipmentActiveShipmentsBreakdown(ctx context.Contex
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45903,13 +59118,17 @@ func (ec *executionContext) _ShipmentAdditionalCharge(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAdditionalChargeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentAdditionalCharge")
 		case "id":
 			out.Values[i] = ec._ShipmentAdditionalCharge_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentAdditionalCharge_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -45967,6 +59186,9 @@ func (ec *executionContext) _ShipmentAdditionalCharge(ctx context.Context, sel a
 			}
 		case "accessorialCharge":
 			out.Values[i] = ec._ShipmentAdditionalCharge_accessorialCharge(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -45976,16 +59198,14 @@ func (ec *executionContext) _ShipmentAdditionalCharge(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -45996,7 +59216,8 @@ func (ec *executionContext) _ShipmentAnalytics(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAnalyticsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46008,28 +59229,64 @@ func (ec *executionContext) _ShipmentAnalytics(ctx context.Context, sel ast.Sele
 			}
 		case "savedViewCounts":
 			out.Values[i] = ec._ShipmentAnalytics_savedViewCounts(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "activeShipments":
 			out.Values[i] = ec._ShipmentAnalytics_activeShipments(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "onTimePercent":
 			out.Values[i] = ec._ShipmentAnalytics_onTimePercent(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "revenueToday":
 			out.Values[i] = ec._ShipmentAnalytics_revenueToday(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "emptyMilePercent":
 			out.Values[i] = ec._ShipmentAnalytics_emptyMilePercent(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "atRisk":
 			out.Values[i] = ec._ShipmentAnalytics_atRisk(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "unassigned":
 			out.Values[i] = ec._ShipmentAnalytics_unassigned(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "readyToDispatch":
 			out.Values[i] = ec._ShipmentAnalytics_readyToDispatch(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "detentionWatchlist":
 			out.Values[i] = ec._ShipmentAnalytics_detentionWatchlist(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "customerMix":
 			out.Values[i] = ec._ShipmentAnalytics_customerMix(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "tomorrowsPickups":
 			out.Values[i] = ec._ShipmentAnalytics_tomorrowsPickups(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "laneHeatmap":
 			out.Values[i] = ec._ShipmentAnalytics_laneHeatmap(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46039,16 +59296,14 @@ func (ec *executionContext) _ShipmentAnalytics(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46059,13 +59314,17 @@ func (ec *executionContext) _ShipmentAssignment(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAssignmentImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentAssignment")
 		case "id":
 			out.Values[i] = ec._ShipmentAssignment_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentAssignment_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46078,14 +59337,29 @@ func (ec *executionContext) _ShipmentAssignment(ctx context.Context, sel ast.Sel
 			}
 		case "shipmentMoveId":
 			out.Values[i] = ec._ShipmentAssignment_shipmentMoveId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "primaryWorkerId":
 			out.Values[i] = ec._ShipmentAssignment_primaryWorkerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "tractorId":
 			out.Values[i] = ec._ShipmentAssignment_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "trailerId":
 			out.Values[i] = ec._ShipmentAssignment_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "secondaryWorkerId":
 			out.Values[i] = ec._ShipmentAssignment_secondaryWorkerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "status":
 			out.Values[i] = ec._ShipmentAssignment_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46093,6 +59367,9 @@ func (ec *executionContext) _ShipmentAssignment(ctx context.Context, sel ast.Sel
 			}
 		case "archivedAt":
 			out.Values[i] = ec._ShipmentAssignment_archivedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentAssignment_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46110,12 +59387,24 @@ func (ec *executionContext) _ShipmentAssignment(ctx context.Context, sel ast.Sel
 			}
 		case "tractor":
 			out.Values[i] = ec._ShipmentAssignment_tractor(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "trailer":
 			out.Values[i] = ec._ShipmentAssignment_trailer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "primaryWorker":
 			out.Values[i] = ec._ShipmentAssignment_primaryWorker(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "secondaryWorker":
 			out.Values[i] = ec._ShipmentAssignment_secondaryWorker(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46125,16 +59414,14 @@ func (ec *executionContext) _ShipmentAssignment(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46145,7 +59432,8 @@ func (ec *executionContext) _ShipmentAtRisk(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAtRiskImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46184,16 +59472,14 @@ func (ec *executionContext) _ShipmentAtRisk(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46204,7 +59490,8 @@ func (ec *executionContext) _ShipmentAxleWeight(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentAxleWeightImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46243,16 +59530,14 @@ func (ec *executionContext) _ShipmentAxleWeight(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46263,7 +59548,8 @@ func (ec *executionContext) _ShipmentBillingReadiness(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingReadinessImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46332,16 +59618,14 @@ func (ec *executionContext) _ShipmentBillingReadiness(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46352,7 +59636,8 @@ func (ec *executionContext) _ShipmentBillingReadinessPolicy(ctx context.Context,
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingReadinessPolicyImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46396,16 +59681,14 @@ func (ec *executionContext) _ShipmentBillingReadinessPolicy(ctx context.Context,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46416,7 +59699,8 @@ func (ec *executionContext) _ShipmentBillingRequirement(ctx context.Context, sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingRequirementImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46460,16 +59744,14 @@ func (ec *executionContext) _ShipmentBillingRequirement(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46480,7 +59762,8 @@ func (ec *executionContext) _ShipmentBillingValidation(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingValidationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46509,16 +59792,14 @@ func (ec *executionContext) _ShipmentBillingValidation(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46529,7 +59810,8 @@ func (ec *executionContext) _ShipmentBillingWarning(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingWarningImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46546,6 +59828,9 @@ func (ec *executionContext) _ShipmentBillingWarning(ctx context.Context, sel ast
 			}
 		case "context":
 			out.Values[i] = ec._ShipmentBillingWarning_context(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46555,16 +59840,14 @@ func (ec *executionContext) _ShipmentBillingWarning(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46575,27 +59858,52 @@ func (ec *executionContext) _ShipmentBillingWarningContext(ctx context.Context, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBillingWarningContextImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentBillingWarningContext")
 		case "documentTypeId":
 			out.Values[i] = ec._ShipmentBillingWarningContext_documentTypeId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "documentTypeCode":
 			out.Values[i] = ec._ShipmentBillingWarningContext_documentTypeCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "documentTypeName":
 			out.Values[i] = ec._ShipmentBillingWarningContext_documentTypeName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "documentCount":
 			out.Values[i] = ec._ShipmentBillingWarningContext_documentCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "requirementCount":
 			out.Values[i] = ec._ShipmentBillingWarningContext_requirementCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "missingRequirementCount":
 			out.Values[i] = ec._ShipmentBillingWarningContext_missingRequirementCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "serviceFailureIds":
 			out.Values[i] = ec._ShipmentBillingWarningContext_serviceFailureIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "unresolvedCount":
 			out.Values[i] = ec._ShipmentBillingWarningContext_unresolvedCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46605,16 +59913,14 @@ func (ec *executionContext) _ShipmentBillingWarningContext(ctx context.Context, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46625,7 +59931,8 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResponse(ctx context.C
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBulkTransferToBillingResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46659,16 +59966,14 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResponse(ctx context.C
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46679,7 +59984,8 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResult(ctx context.Con
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentBulkTransferToBillingResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46696,6 +60002,9 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResult(ctx context.Con
 			}
 		case "error":
 			out.Values[i] = ec._ShipmentBulkTransferToBillingResult_error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46705,16 +60014,14 @@ func (ec *executionContext) _ShipmentBulkTransferToBillingResult(ctx context.Con
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46725,7 +60032,8 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46737,8 +60045,14 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentComment_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "organizationId":
 			out.Values[i] = ec._ShipmentComment_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "shipmentId":
 			out.Values[i] = ec._ShipmentComment_shipmentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46746,6 +60060,9 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			}
 		case "userId":
 			out.Values[i] = ec._ShipmentComment_userId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "comment":
 			out.Values[i] = ec._ShipmentComment_comment(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46773,8 +60090,14 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			}
 		case "metadata":
 			out.Values[i] = ec._ShipmentComment_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "editedAt":
 			out.Values[i] = ec._ShipmentComment_editedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentComment_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46797,8 +60120,14 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 			}
 		case "user":
 			out.Values[i] = ec._ShipmentComment_user(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "mentionedUsers":
 			out.Values[i] = ec._ShipmentComment_mentionedUsers(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46808,16 +60137,14 @@ func (ec *executionContext) _ShipmentComment(ctx context.Context, sel ast.Select
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46828,7 +60155,8 @@ func (ec *executionContext) _ShipmentCommentConnection(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46845,6 +60173,9 @@ func (ec *executionContext) _ShipmentCommentConnection(ctx context.Context, sel 
 			}
 		case "totalCount":
 			out.Values[i] = ec._ShipmentCommentConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46854,16 +60185,14 @@ func (ec *executionContext) _ShipmentCommentConnection(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46874,7 +60203,8 @@ func (ec *executionContext) _ShipmentCommentCountResponse(ctx context.Context, s
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentCountResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46893,16 +60223,14 @@ func (ec *executionContext) _ShipmentCommentCountResponse(ctx context.Context, s
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46913,7 +60241,8 @@ func (ec *executionContext) _ShipmentCommentEdge(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46937,16 +60266,14 @@ func (ec *executionContext) _ShipmentCommentEdge(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -46957,7 +60284,8 @@ func (ec *executionContext) _ShipmentCommentMention(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommentMentionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -46979,10 +60307,19 @@ func (ec *executionContext) _ShipmentCommentMention(ctx context.Context, sel ast
 			}
 		case "organizationId":
 			out.Values[i] = ec._ShipmentCommentMention_organizationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentCommentMention_businessUnitId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "shipmentId":
 			out.Values[i] = ec._ShipmentCommentMention_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._ShipmentCommentMention_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -46990,6 +60327,9 @@ func (ec *executionContext) _ShipmentCommentMention(ctx context.Context, sel ast
 			}
 		case "mentionedUser":
 			out.Values[i] = ec._ShipmentCommentMention_mentionedUser(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -46999,16 +60339,14 @@ func (ec *executionContext) _ShipmentCommentMention(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47019,13 +60357,17 @@ func (ec *executionContext) _ShipmentCommodity(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommodityImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentCommodity")
 		case "id":
 			out.Values[i] = ec._ShipmentCommodity_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentCommodity_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47073,6 +60415,9 @@ func (ec *executionContext) _ShipmentCommodity(ctx context.Context, sel ast.Sele
 			}
 		case "commodity":
 			out.Values[i] = ec._ShipmentCommodity_commodity(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -47082,16 +60427,14 @@ func (ec *executionContext) _ShipmentCommodity(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47102,7 +60445,8 @@ func (ec *executionContext) _ShipmentCommodityDetail(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCommodityDetailImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47124,6 +60468,9 @@ func (ec *executionContext) _ShipmentCommodityDetail(ctx context.Context, sel as
 			}
 		case "hazardousMaterialId":
 			out.Values[i] = ec._ShipmentCommodityDetail_hazardousMaterialId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "status":
 			out.Values[i] = ec._ShipmentCommodityDetail_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47141,14 +60488,29 @@ func (ec *executionContext) _ShipmentCommodityDetail(ctx context.Context, sel as
 			}
 		case "minTemperature":
 			out.Values[i] = ec._ShipmentCommodityDetail_minTemperature(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "maxTemperature":
 			out.Values[i] = ec._ShipmentCommodityDetail_maxTemperature(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "weightPerUnit":
 			out.Values[i] = ec._ShipmentCommodityDetail_weightPerUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "linearFeetPerUnit":
 			out.Values[i] = ec._ShipmentCommodityDetail_linearFeetPerUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "maxQuantityPerShipment":
 			out.Values[i] = ec._ShipmentCommodityDetail_maxQuantityPerShipment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "freightClass":
 			out.Values[i] = ec._ShipmentCommodityDetail_freightClass(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47193,16 +60555,14 @@ func (ec *executionContext) _ShipmentCommodityDetail(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47213,7 +60573,8 @@ func (ec *executionContext) _ShipmentConnection(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47230,6 +60591,9 @@ func (ec *executionContext) _ShipmentConnection(ctx context.Context, sel ast.Sel
 			}
 		case "totalCount":
 			out.Values[i] = ec._ShipmentConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -47239,16 +60603,14 @@ func (ec *executionContext) _ShipmentConnection(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47259,7 +60621,8 @@ func (ec *executionContext) _ShipmentCustomer(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCustomerImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47326,8 +60689,14 @@ func (ec *executionContext) _ShipmentCustomer(ctx context.Context, sel ast.Selec
 			}
 		case "longitude":
 			out.Values[i] = ec._ShipmentCustomer_longitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "latitude":
 			out.Values[i] = ec._ShipmentCustomer_latitude(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "placeId":
 			out.Values[i] = ec._ShipmentCustomer_placeId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47377,16 +60746,14 @@ func (ec *executionContext) _ShipmentCustomer(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47397,7 +60764,8 @@ func (ec *executionContext) _ShipmentCustomerMix(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCustomerMixImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47421,16 +60789,14 @@ func (ec *executionContext) _ShipmentCustomerMix(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47441,7 +60807,8 @@ func (ec *executionContext) _ShipmentCustomerMixEntry(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentCustomerMixEntryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47485,16 +60852,14 @@ func (ec *executionContext) _ShipmentCustomerMixEntry(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47505,7 +60870,8 @@ func (ec *executionContext) _ShipmentDetentionWatchlist(ctx context.Context, sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentDetentionWatchlistImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47524,16 +60890,14 @@ func (ec *executionContext) _ShipmentDetentionWatchlist(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47544,7 +60908,8 @@ func (ec *executionContext) _ShipmentDetentionWatchlistItem(ctx context.Context,
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentDetentionWatchlistItemImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47578,16 +60943,14 @@ func (ec *executionContext) _ShipmentDetentionWatchlistItem(ctx context.Context,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47598,13 +60961,17 @@ func (ec *executionContext) _ShipmentDistanceMoveResult(ctx context.Context, sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentDistanceMoveResultImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentDistanceMoveResult")
 		case "moveId":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "moveIndex":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_moveIndex(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47622,18 +60989,39 @@ func (ec *executionContext) _ShipmentDistanceMoveResult(ctx context.Context, sel
 			}
 		case "provider":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_provider(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "routingType":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_routingType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "dataVersion":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_dataVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceUnits":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_distanceUnits(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceProfileId":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_distanceProfileId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceProfileName":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_distanceProfileName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "warnings":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_warnings(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "calculatedAt":
 			out.Values[i] = ec._ShipmentDistanceMoveResult_calculatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47648,16 +61036,14 @@ func (ec *executionContext) _ShipmentDistanceMoveResult(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47668,13 +61054,17 @@ func (ec *executionContext) _ShipmentDistanceResponse(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentDistanceResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentDistanceResponse")
 		case "shipmentId":
 			out.Values[i] = ec._ShipmentDistanceResponse_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "totalDistance":
 			out.Values[i] = ec._ShipmentDistanceResponse_totalDistance(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47694,16 +61084,14 @@ func (ec *executionContext) _ShipmentDistanceResponse(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47714,7 +61102,8 @@ func (ec *executionContext) _ShipmentDuplicateResponse(ctx context.Context, sel 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentDuplicateResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47753,16 +61142,14 @@ func (ec *executionContext) _ShipmentDuplicateResponse(ctx context.Context, sel 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47773,7 +61160,8 @@ func (ec *executionContext) _ShipmentEdge(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47797,16 +61185,14 @@ func (ec *executionContext) _ShipmentEdge(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47817,7 +61203,8 @@ func (ec *executionContext) _ShipmentEmptyMile(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentEmptyMileImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47851,16 +61238,14 @@ func (ec *executionContext) _ShipmentEmptyMile(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -47871,7 +61256,8 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentEventImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -47898,14 +61284,29 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 			}
 		case "moveId":
 			out.Values[i] = ec._ShipmentEvent_moveId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "stopId":
 			out.Values[i] = ec._ShipmentEvent_stopId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "assignmentId":
 			out.Values[i] = ec._ShipmentEvent_assignmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commentId":
 			out.Values[i] = ec._ShipmentEvent_commentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "holdId":
 			out.Values[i] = ec._ShipmentEvent_holdId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "type":
 			out.Values[i] = ec._ShipmentEvent_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47923,6 +61324,9 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 			}
 		case "actorId":
 			out.Values[i] = ec._ShipmentEvent_actorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actorLabel":
 			out.Values[i] = ec._ShipmentEvent_actorLabel(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47935,40 +61339,94 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 			}
 		case "proNumber":
 			out.Values[i] = ec._ShipmentEvent_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "previousStatus":
 			out.Values[i] = ec._ShipmentEvent_previousStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "newStatus":
 			out.Values[i] = ec._ShipmentEvent_newStatus(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "reason":
 			out.Values[i] = ec._ShipmentEvent_reason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "previousOwnerId":
 			out.Values[i] = ec._ShipmentEvent_previousOwnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "newOwnerId":
 			out.Values[i] = ec._ShipmentEvent_newOwnerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "primaryWorkerId":
 			out.Values[i] = ec._ShipmentEvent_primaryWorkerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "secondaryWorkerId":
 			out.Values[i] = ec._ShipmentEvent_secondaryWorkerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "tractorId":
 			out.Values[i] = ec._ShipmentEvent_tractorId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "trailerId":
 			out.Values[i] = ec._ShipmentEvent_trailerId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "driverName":
 			out.Values[i] = ec._ShipmentEvent_driverName(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "holdType":
 			out.Values[i] = ec._ShipmentEvent_holdType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "holdSeverity":
 			out.Values[i] = ec._ShipmentEvent_holdSeverity(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "holdSource":
 			out.Values[i] = ec._ShipmentEvent_holdSource(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commentBody":
 			out.Values[i] = ec._ShipmentEvent_commentBody(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commentType":
 			out.Values[i] = ec._ShipmentEvent_commentType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commentVisibility":
 			out.Values[i] = ec._ShipmentEvent_commentVisibility(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commentPriority":
 			out.Values[i] = ec._ShipmentEvent_commentPriority(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "mentionedUserIds":
 			out.Values[i] = ec._ShipmentEvent_mentionedUserIds(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -47986,10 +61444,19 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 			}
 		case "correlationId":
 			out.Values[i] = ec._ShipmentEvent_correlationId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actor":
 			out.Values[i] = ec._ShipmentEvent_actor(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "shipment":
 			out.Values[i] = ec._ShipmentEvent_shipment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -47999,16 +61466,14 @@ func (ec *executionContext) _ShipmentEvent(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48019,15 +61484,22 @@ func (ec *executionContext) _ShipmentEventShipmentReference(ctx context.Context,
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentEventShipmentReferenceImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentEventShipmentReference")
 		case "id":
 			out.Values[i] = ec._ShipmentEventShipmentReference_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "proNumber":
 			out.Values[i] = ec._ShipmentEventShipmentReference_proNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48037,16 +61509,14 @@ func (ec *executionContext) _ShipmentEventShipmentReference(ctx context.Context,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48057,7 +61527,8 @@ func (ec *executionContext) _ShipmentFormulaTemplate(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentFormulaTemplateImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48114,6 +61585,9 @@ func (ec *executionContext) _ShipmentFormulaTemplate(ctx context.Context, sel as
 			}
 		case "metadata":
 			out.Values[i] = ec._ShipmentFormulaTemplate_metadata(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentFormulaTemplate_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48121,8 +61595,14 @@ func (ec *executionContext) _ShipmentFormulaTemplate(ctx context.Context, sel as
 			}
 		case "sourceTemplateId":
 			out.Values[i] = ec._ShipmentFormulaTemplate_sourceTemplateId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "sourceVersionNumber":
 			out.Values[i] = ec._ShipmentFormulaTemplate_sourceVersionNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "currentVersionNumber":
 			out.Values[i] = ec._ShipmentFormulaTemplate_currentVersionNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48147,16 +61627,14 @@ func (ec *executionContext) _ShipmentFormulaTemplate(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48167,7 +61645,8 @@ func (ec *executionContext) _ShipmentFormulaVariableDefinition(ctx context.Conte
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentFormulaVariableDefinitionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48194,8 +61673,14 @@ func (ec *executionContext) _ShipmentFormulaVariableDefinition(ctx context.Conte
 			}
 		case "defaultValue":
 			out.Values[i] = ec._ShipmentFormulaVariableDefinition_defaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "source":
 			out.Values[i] = ec._ShipmentFormulaVariableDefinition_source(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48205,16 +61690,14 @@ func (ec *executionContext) _ShipmentFormulaVariableDefinition(ctx context.Conte
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48225,7 +61708,8 @@ func (ec *executionContext) _ShipmentHazmatZone(ctx context.Context, sel ast.Sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentHazmatZoneImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48262,6 +61746,9 @@ func (ec *executionContext) _ShipmentHazmatZone(ctx context.Context, sel ast.Sel
 			}
 		case "requiredDistanceFeet":
 			out.Values[i] = ec._ShipmentHazmatZone_requiredDistanceFeet(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actualDistanceFeet":
 			out.Values[i] = ec._ShipmentHazmatZone_actualDistanceFeet(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48281,16 +61768,14 @@ func (ec *executionContext) _ShipmentHazmatZone(ctx context.Context, sel ast.Sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48301,7 +61786,8 @@ func (ec *executionContext) _ShipmentLaneHeatmap(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLaneHeatmapImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48330,16 +61816,14 @@ func (ec *executionContext) _ShipmentLaneHeatmap(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48350,7 +61834,8 @@ func (ec *executionContext) _ShipmentLaneHeatmapCell(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLaneHeatmapCellImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48379,16 +61864,14 @@ func (ec *executionContext) _ShipmentLaneHeatmapCell(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48399,7 +61882,8 @@ func (ec *executionContext) _ShipmentLoadingCommodity(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLoadingCommodityImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48451,12 +61935,24 @@ func (ec *executionContext) _ShipmentLoadingCommodity(ctx context.Context, sel a
 			}
 		case "hazmatClass":
 			out.Values[i] = ec._ShipmentLoadingCommodity_hazmatClass(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "minTemp":
 			out.Values[i] = ec._ShipmentLoadingCommodity_minTemp(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "maxTemp":
 			out.Values[i] = ec._ShipmentLoadingCommodity_maxTemp(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "loadingInstructions":
 			out.Values[i] = ec._ShipmentLoadingCommodity_loadingInstructions(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "estimatedLength":
 			out.Values[i] = ec._ShipmentLoadingCommodity_estimatedLength(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48464,6 +61960,9 @@ func (ec *executionContext) _ShipmentLoadingCommodity(ctx context.Context, sel a
 			}
 		case "stopNumber":
 			out.Values[i] = ec._ShipmentLoadingCommodity_stopNumber(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48473,16 +61972,14 @@ func (ec *executionContext) _ShipmentLoadingCommodity(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48493,7 +61990,8 @@ func (ec *executionContext) _ShipmentLoadingOptimizationResponse(ctx context.Con
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLoadingOptimizationResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48565,8 +62063,14 @@ func (ec *executionContext) _ShipmentLoadingOptimizationResponse(ctx context.Con
 			}
 		case "stopDividers":
 			out.Values[i] = ec._ShipmentLoadingOptimizationResponse_stopDividers(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "aiAnalysis":
 			out.Values[i] = ec._ShipmentLoadingOptimizationResponse_aiAnalysis(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48576,16 +62080,14 @@ func (ec *executionContext) _ShipmentLoadingOptimizationResponse(ctx context.Con
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48596,7 +62098,8 @@ func (ec *executionContext) _ShipmentLoadingRecommendation(ctx context.Context, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLoadingRecommendationImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48623,8 +62126,14 @@ func (ec *executionContext) _ShipmentLoadingRecommendation(ctx context.Context, 
 			}
 		case "impact":
 			out.Values[i] = ec._ShipmentLoadingRecommendation_impact(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "commodityIds":
 			out.Values[i] = ec._ShipmentLoadingRecommendation_commodityIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48634,16 +62143,14 @@ func (ec *executionContext) _ShipmentLoadingRecommendation(ctx context.Context, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48654,7 +62161,8 @@ func (ec *executionContext) _ShipmentLoadingWarning(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentLoadingWarningImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48676,6 +62184,9 @@ func (ec *executionContext) _ShipmentLoadingWarning(ctx context.Context, sel ast
 			}
 		case "commodityIds":
 			out.Values[i] = ec._ShipmentLoadingWarning_commodityIds(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48685,16 +62196,14 @@ func (ec *executionContext) _ShipmentLoadingWarning(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48705,13 +62214,17 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentMoveImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentMove")
 		case "id":
 			out.Values[i] = ec._ShipmentMove_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentMove_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48724,6 +62237,9 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 			}
 		case "shipmentId":
 			out.Values[i] = ec._ShipmentMove_shipmentId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "status":
 			out.Values[i] = ec._ShipmentMove_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48741,22 +62257,49 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 			}
 		case "distance":
 			out.Values[i] = ec._ShipmentMove_distance(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceSource":
 			out.Values[i] = ec._ShipmentMove_distanceSource(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceProvider":
 			out.Values[i] = ec._ShipmentMove_distanceProvider(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceCalculatedAt":
 			out.Values[i] = ec._ShipmentMove_distanceCalculatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceRouteSignature":
 			out.Values[i] = ec._ShipmentMove_distanceRouteSignature(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceDataVersion":
 			out.Values[i] = ec._ShipmentMove_distanceDataVersion(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceRoutingType":
 			out.Values[i] = ec._ShipmentMove_distanceRoutingType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceUnits":
 			out.Values[i] = ec._ShipmentMove_distanceUnits(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "distanceMetadata":
 			out.Values[i] = ec._ShipmentMove_distanceMetadata(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._ShipmentMove_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48779,6 +62322,9 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 			}
 		case "assignment":
 			out.Values[i] = ec._ShipmentMove_assignment(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -48788,16 +62334,14 @@ func (ec *executionContext) _ShipmentMove(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48808,7 +62352,8 @@ func (ec *executionContext) _ShipmentOnTime(ctx context.Context, sel ast.Selecti
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentOnTimeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48830,6 +62375,9 @@ func (ec *executionContext) _ShipmentOnTime(ctx context.Context, sel ast.Selecti
 			}
 		case "target":
 			out.Values[i] = ec._ShipmentOnTime_target(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "deltaPp":
 			out.Values[i] = ec._ShipmentOnTime_deltaPp(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48849,16 +62397,14 @@ func (ec *executionContext) _ShipmentOnTime(ctx context.Context, sel ast.Selecti
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48869,7 +62415,8 @@ func (ec *executionContext) _ShipmentPreviousRateSummary(ctx context.Context, se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentPreviousRateSummaryImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48926,8 +62473,14 @@ func (ec *executionContext) _ShipmentPreviousRateSummary(ctx context.Context, se
 			}
 		case "pieces":
 			out.Values[i] = ec._ShipmentPreviousRateSummary_pieces(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "weight":
 			out.Values[i] = ec._ShipmentPreviousRateSummary_weight(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._ShipmentPreviousRateSummary_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -48942,16 +62495,14 @@ func (ec *executionContext) _ShipmentPreviousRateSummary(ctx context.Context, se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -48962,7 +62513,8 @@ func (ec *executionContext) _ShipmentPreviousRatesResponse(ctx context.Context, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentPreviousRatesResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -48986,16 +62538,14 @@ func (ec *executionContext) _ShipmentPreviousRatesResponse(ctx context.Context, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49006,7 +62556,8 @@ func (ec *executionContext) _ShipmentRatingDetail(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentRatingDetailImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49050,16 +62601,14 @@ func (ec *executionContext) _ShipmentRatingDetail(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49070,7 +62619,8 @@ func (ec *executionContext) _ShipmentReadyToDispatch(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentReadyToDispatchImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49104,16 +62654,14 @@ func (ec *executionContext) _ShipmentReadyToDispatch(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49124,7 +62672,8 @@ func (ec *executionContext) _ShipmentRevenueToday(ctx context.Context, sel ast.S
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentRevenueTodayImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49158,16 +62707,14 @@ func (ec *executionContext) _ShipmentRevenueToday(ctx context.Context, sel ast.S
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49178,21 +62725,37 @@ func (ec *executionContext) _ShipmentSavedViewCounts(ctx context.Context, sel as
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentSavedViewCountsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentSavedViewCounts")
 		case "all":
 			out.Values[i] = ec._ShipmentSavedViewCounts_all(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "transit":
 			out.Values[i] = ec._ShipmentSavedViewCounts_transit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "atRisk":
 			out.Values[i] = ec._ShipmentSavedViewCounts_atRisk(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "unassigned":
 			out.Values[i] = ec._ShipmentSavedViewCounts_unassigned(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "deliveringToday":
 			out.Values[i] = ec._ShipmentSavedViewCounts_deliveringToday(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -49202,16 +62765,14 @@ func (ec *executionContext) _ShipmentSavedViewCounts(ctx context.Context, sel as
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49222,7 +62783,8 @@ func (ec *executionContext) _ShipmentServiceFailureBillingContext(ctx context.Co
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentServiceFailureBillingContextImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49251,16 +62813,14 @@ func (ec *executionContext) _ShipmentServiceFailureBillingContext(ctx context.Co
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49271,7 +62831,8 @@ func (ec *executionContext) _ShipmentSparklinePoint(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentSparklinePointImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49295,16 +62856,14 @@ func (ec *executionContext) _ShipmentSparklinePoint(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49315,13 +62874,17 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentStopImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ShipmentStop")
 		case "id":
 			out.Values[i] = ec._ShipmentStop_id(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "businessUnitId":
 			out.Values[i] = ec._ShipmentStop_businessUnitId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49334,6 +62897,9 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 			}
 		case "shipmentMoveId":
 			out.Values[i] = ec._ShipmentStop_shipmentMoveId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "locationId":
 			out.Values[i] = ec._ShipmentStop_locationId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49361,8 +62927,14 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 			}
 		case "pieces":
 			out.Values[i] = ec._ShipmentStop_pieces(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "weight":
 			out.Values[i] = ec._ShipmentStop_weight(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "scheduledWindowStart":
 			out.Values[i] = ec._ShipmentStop_scheduledWindowStart(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49370,14 +62942,29 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 			}
 		case "scheduledWindowEnd":
 			out.Values[i] = ec._ShipmentStop_scheduledWindowEnd(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actualArrival":
 			out.Values[i] = ec._ShipmentStop_actualArrival(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "actualDeparture":
 			out.Values[i] = ec._ShipmentStop_actualDeparture(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "countLateOverride":
 			out.Values[i] = ec._ShipmentStop_countLateOverride(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "countDetentionOverride":
 			out.Values[i] = ec._ShipmentStop_countDetentionOverride(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "addressLine":
 			out.Values[i] = ec._ShipmentStop_addressLine(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49400,6 +62987,9 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 			}
 		case "location":
 			out.Values[i] = ec._ShipmentStop_location(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -49409,16 +62999,14 @@ func (ec *executionContext) _ShipmentStop(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49429,7 +63017,8 @@ func (ec *executionContext) _ShipmentStopDivider(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentStopDividerImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49458,16 +63047,14 @@ func (ec *executionContext) _ShipmentStopDivider(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49478,7 +63065,8 @@ func (ec *executionContext) _ShipmentTomorrowPickup(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentTomorrowPickupImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49532,16 +63120,14 @@ func (ec *executionContext) _ShipmentTomorrowPickup(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49552,7 +63138,8 @@ func (ec *executionContext) _ShipmentTomorrowsPickups(ctx context.Context, sel a
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentTomorrowsPickupsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49576,16 +63163,14 @@ func (ec *executionContext) _ShipmentTomorrowsPickups(ctx context.Context, sel a
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49596,7 +63181,8 @@ func (ec *executionContext) _ShipmentTotalsResponse(ctx context.Context, sel ast
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentTotalsResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49625,16 +63211,14 @@ func (ec *executionContext) _ShipmentTotalsResponse(ctx context.Context, sel ast
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49645,7 +63229,8 @@ func (ec *executionContext) _ShipmentUIPolicy(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentUIPolicyImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49679,16 +63264,14 @@ func (ec *executionContext) _ShipmentUIPolicy(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49699,7 +63282,8 @@ func (ec *executionContext) _ShipmentUnassignedAnalytics(ctx context.Context, se
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentUnassignedAnalyticsImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49728,16 +63312,14 @@ func (ec *executionContext) _ShipmentUnassignedAnalytics(ctx context.Context, se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49748,7 +63330,8 @@ func (ec *executionContext) _ShipmentValidationResponse(ctx context.Context, sel
 	fields := graphql.CollectFields(ec.OperationContext, sel, shipmentValidationResponseImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49767,16 +63350,14 @@ func (ec *executionContext) _ShipmentValidationResponse(ctx context.Context, sel
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -49787,7 +63368,8 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, tractorImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -49825,29 +63407,34 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 		case "stateId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Tractor_stateId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -49858,29 +63445,34 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 		case "fleetCodeId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Tractor_fleetCodeId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -49891,29 +63483,34 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 		case "secondaryWorkerId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Tractor_secondaryWorkerId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -49942,19 +63539,21 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -49979,6 +63578,9 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "year":
 			out.Values[i] = ec._Tractor_year(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "licensePlateNumber":
 			out.Values[i] = ec._Tractor_licensePlateNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49991,6 +63593,9 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "registrationExpiry":
 			out.Values[i] = ec._Tractor_registrationExpiry(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "vin":
 			out.Values[i] = ec._Tractor_vin(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -49999,29 +63604,34 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 		case "lastKnownLocationId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Tractor_lastKnownLocationId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50051,48 +63661,80 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "customFields":
 			out.Values[i] = ec._Tractor_customFields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "businessUnit":
 			out.Values[i] = ec._Tractor_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "organization":
 			out.Values[i] = ec._Tractor_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "equipmentType":
 			out.Values[i] = ec._Tractor_equipmentType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "equipmentManufacturer":
 			out.Values[i] = ec._Tractor_equipmentManufacturer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "fleetCode":
 			out.Values[i] = ec._Tractor_fleetCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "state":
 			out.Values[i] = ec._Tractor_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "primaryWorker":
 			out.Values[i] = ec._Tractor_primaryWorker(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "secondaryWorker":
 			out.Values[i] = ec._Tractor_secondaryWorker(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastKnownLocation":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Tractor_lastKnownLocation(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50109,16 +63751,14 @@ func (ec *executionContext) _Tractor(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50129,7 +63769,8 @@ func (ec *executionContext) _TractorConnection(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, tractorConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50146,6 +63787,9 @@ func (ec *executionContext) _TractorConnection(ctx context.Context, sel ast.Sele
 			}
 		case "totalCount":
 			out.Values[i] = ec._TractorConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -50155,16 +63799,14 @@ func (ec *executionContext) _TractorConnection(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50175,7 +63817,8 @@ func (ec *executionContext) _TractorEdge(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, tractorEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50199,16 +63842,14 @@ func (ec *executionContext) _TractorEdge(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50219,7 +63860,8 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, trailerImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50252,29 +63894,34 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 		case "registrationStateId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Trailer_registrationStateId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50285,29 +63932,34 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 		case "fleetCodeId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Trailer_fleetCodeId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50336,19 +63988,21 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50373,6 +64027,9 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "year":
 			out.Values[i] = ec._Trailer_year(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "licensePlateNumber":
 			out.Values[i] = ec._Trailer_licensePlateNumber(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -50390,36 +64047,50 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "maxLoadWeight":
 			out.Values[i] = ec._Trailer_maxLoadWeight(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastInspectionDate":
 			out.Values[i] = ec._Trailer_lastInspectionDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "registrationExpiry":
 			out.Values[i] = ec._Trailer_registrationExpiry(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastKnownLocationId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Trailer_lastKnownLocationId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50449,44 +64120,70 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "customFields":
 			out.Values[i] = ec._Trailer_customFields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "businessUnit":
 			out.Values[i] = ec._Trailer_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "organization":
 			out.Values[i] = ec._Trailer_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "equipmentType":
 			out.Values[i] = ec._Trailer_equipmentType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "equipmentManufacturer":
 			out.Values[i] = ec._Trailer_equipmentManufacturer(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "fleetCode":
 			out.Values[i] = ec._Trailer_fleetCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "registrationState":
 			out.Values[i] = ec._Trailer_registrationState(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "lastKnownLocation":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Trailer_lastKnownLocation(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50503,16 +64200,14 @@ func (ec *executionContext) _Trailer(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50523,7 +64218,8 @@ func (ec *executionContext) _TrailerConnection(ctx context.Context, sel ast.Sele
 	fields := graphql.CollectFields(ec.OperationContext, sel, trailerConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50540,6 +64236,9 @@ func (ec *executionContext) _TrailerConnection(ctx context.Context, sel ast.Sele
 			}
 		case "totalCount":
 			out.Values[i] = ec._TrailerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -50549,16 +64248,14 @@ func (ec *executionContext) _TrailerConnection(ctx context.Context, sel ast.Sele
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50569,7 +64266,8 @@ func (ec *executionContext) _TrailerEdge(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, trailerEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50593,16 +64291,14 @@ func (ec *executionContext) _TrailerEdge(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50613,7 +64309,8 @@ func (ec *executionContext) _UsState(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, usStateImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50662,16 +64359,14 @@ func (ec *executionContext) _UsState(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50682,7 +64377,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50733,19 +64429,21 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50800,32 +64498,40 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "lastLoginAt":
 			out.Values[i] = ec._User_lastLoginAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "businessUnit":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._User_businessUnit(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50836,29 +64542,34 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "currentOrganization":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._User_currentOrganization(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50875,16 +64586,14 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -50895,7 +64604,8 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -50923,29 +64633,34 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 		case "fleetCodeId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Worker_fleetCodeId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -50956,29 +64671,34 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 		case "managerId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._Worker_managerId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -51103,20 +64823,44 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "customFields":
 			out.Values[i] = ec._Worker_customFields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "businessUnit":
 			out.Values[i] = ec._Worker_businessUnit(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "organization":
 			out.Values[i] = ec._Worker_organization(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "state":
 			out.Values[i] = ec._Worker_state(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "fleetCode":
 			out.Values[i] = ec._Worker_fleetCode(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "manager":
 			out.Values[i] = ec._Worker_manager(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "profile":
 			out.Values[i] = ec._Worker_profile(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "pto":
 			out.Values[i] = ec._Worker_pto(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51126,16 +64870,14 @@ func (ec *executionContext) _Worker(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51146,7 +64888,8 @@ func (ec *executionContext) _WorkerConnection(ctx context.Context, sel ast.Selec
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51163,6 +64906,9 @@ func (ec *executionContext) _WorkerConnection(ctx context.Context, sel ast.Selec
 			}
 		case "totalCount":
 			out.Values[i] = ec._WorkerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51172,16 +64918,14 @@ func (ec *executionContext) _WorkerConnection(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51192,7 +64936,8 @@ func (ec *executionContext) _WorkerEdge(ctx context.Context, sel ast.SelectionSe
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51216,16 +64961,14 @@ func (ec *executionContext) _WorkerEdge(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51236,7 +64979,8 @@ func (ec *executionContext) _WorkerPTO(ctx context.Context, sel ast.SelectionSet
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerPTOImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51264,29 +65008,34 @@ func (ec *executionContext) _WorkerPTO(ctx context.Context, sel ast.SelectionSet
 		case "approverId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._WorkerPTO_approverId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -51297,29 +65046,34 @@ func (ec *executionContext) _WorkerPTO(ctx context.Context, sel ast.SelectionSet
 		case "rejectorId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._WorkerPTO_rejectorId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -51369,10 +65123,19 @@ func (ec *executionContext) _WorkerPTO(ctx context.Context, sel ast.SelectionSet
 			}
 		case "worker":
 			out.Values[i] = ec._WorkerPTO_worker(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "approver":
 			out.Values[i] = ec._WorkerPTO_approver(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "rejector":
 			out.Values[i] = ec._WorkerPTO_rejector(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51382,16 +65145,14 @@ func (ec *executionContext) _WorkerPTO(ctx context.Context, sel ast.SelectionSet
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51402,7 +65163,8 @@ func (ec *executionContext) _WorkerPTOConnection(ctx context.Context, sel ast.Se
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerPTOConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51419,6 +65181,9 @@ func (ec *executionContext) _WorkerPTOConnection(ctx context.Context, sel ast.Se
 			}
 		case "totalCount":
 			out.Values[i] = ec._WorkerPTOConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51428,16 +65193,14 @@ func (ec *executionContext) _WorkerPTOConnection(ctx context.Context, sel ast.Se
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51448,7 +65211,8 @@ func (ec *executionContext) _WorkerPTOEdge(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerPTOEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51472,16 +65236,14 @@ func (ec *executionContext) _WorkerPTOEdge(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51492,7 +65254,8 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 	fields := graphql.CollectFields(ec.OperationContext, sel, workerProfileImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51520,29 +65283,34 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 		case "licenseStateId":
 			field := field
 
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
 				res = ec._WorkerProfile_licenseStateId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
 				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
 
 				// don't run the out.Concurrently() call below
 				out.Values[i] = graphql.Null
@@ -51577,6 +65345,9 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "hazmatExpiry":
 			out.Values[i] = ec._WorkerProfile_hazmatExpiry(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "licenseExpiry":
 			out.Values[i] = ec._WorkerProfile_licenseExpiry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51584,6 +65355,9 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "medicalCardExpiry":
 			out.Values[i] = ec._WorkerProfile_medicalCardExpiry(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "medicalExaminerName":
 			out.Values[i] = ec._WorkerProfile_medicalExaminerName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51601,6 +65375,9 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "twicExpiry":
 			out.Values[i] = ec._WorkerProfile_twicExpiry(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "hireDate":
 			out.Values[i] = ec._WorkerProfile_hireDate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51608,10 +65385,19 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "terminationDate":
 			out.Values[i] = ec._WorkerProfile_terminationDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "physicalDueDate":
 			out.Values[i] = ec._WorkerProfile_physicalDueDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "mvrDueDate":
 			out.Values[i] = ec._WorkerProfile_mvrDueDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "complianceStatus":
 			out.Values[i] = ec._WorkerProfile_complianceStatus(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51669,6 +65455,9 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 			}
 		case "licenseState":
 			out.Values[i] = ec._WorkerProfile_licenseState(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51678,16 +65467,14 @@ func (ec *executionContext) _WorkerProfile(ctx context.Context, sel ast.Selectio
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51698,7 +65485,8 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, __DirectiveImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51710,6 +65498,9 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___Directive_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isRepeatable":
 			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51734,16 +65525,14 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51754,7 +65543,8 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 	fields := graphql.CollectFields(ec.OperationContext, sel, __EnumValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51766,6 +65556,9 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 			}
 		case "description":
 			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isDeprecated":
 			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51773,6 +65566,9 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51782,16 +65578,14 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51802,7 +65596,8 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 	fields := graphql.CollectFields(ec.OperationContext, sel, __FieldImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51814,6 +65609,9 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec.___Field_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "args":
 			out.Values[i] = ec.___Field_args(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51831,6 +65629,9 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51840,16 +65641,14 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51860,7 +65659,8 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 	fields := graphql.CollectFields(ec.OperationContext, sel, __InputValueImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51872,6 +65672,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "description":
 			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "type":
 			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51879,6 +65682,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "defaultValue":
 			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isDeprecated":
 			out.Values[i] = ec.___InputValue_isDeprecated(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51886,6 +65692,9 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 			}
 		case "deprecationReason":
 			out.Values[i] = ec.___InputValue_deprecationReason(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -51895,16 +65704,14 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51915,13 +65722,17 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 	fields := graphql.CollectFields(ec.OperationContext, sel, __SchemaImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Schema")
 		case "description":
 			out.Values[i] = ec.___Schema_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "types":
 			out.Values[i] = ec.___Schema_types(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51934,8 +65745,14 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "mutationType":
 			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "subscriptionType":
 			out.Values[i] = ec.___Schema_subscriptionType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "directives":
 			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -51950,16 +65767,14 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -51970,7 +65785,8 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 	fields := graphql.CollectFields(ec.OperationContext, sel, __TypeImplementors)
 
 	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
@@ -51982,24 +65798,54 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "name":
 			out.Values[i] = ec.___Type_name(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "description":
 			out.Values[i] = ec.___Type_description(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "specifiedByURL":
 			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "fields":
 			out.Values[i] = ec.___Type_fields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "interfaces":
 			out.Values[i] = ec.___Type_interfaces(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "possibleTypes":
 			out.Values[i] = ec.___Type_possibleTypes(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "enumValues":
 			out.Values[i] = ec.___Type_enumValues(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "inputFields":
 			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "ofType":
 			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "isOneOf":
 			out.Values[i] = ec.___Type_isOneOf(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -52009,16 +65855,14 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 
-	atomic.AddInt32(&ec.Deferred, int32(min(len(deferred), math.MaxInt32)))
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
 
-	for label, dfs := range deferred {
-		ec.ProcessDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
 
 	return out
 }
@@ -52026,6 +65870,28 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAny2interface(ctx context.Context, v any) (any, error) {
+	res, err := graphql.UnmarshalAny(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	_ = sel
+	res := graphql.MarshalAny(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) unmarshalNAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignmentStatus(ctx context.Context, v any) (gqlmodel.AssignmentStatus, error) {
 	var res gqlmodel.AssignmentStatus
@@ -52167,6 +66033,686 @@ func (ec *executionContext) unmarshalNDriverType2githubᚗcomᚋemoss08ᚋtrenov
 }
 
 func (ec *executionContext) marshalNDriverType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋworkerᚐDriverType(ctx context.Context, sel ast.SelectionSet, v worker.DriverType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiCommunicationProfile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfileConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiCommunicationProfileConnection) graphql.Marshaler {
+	return ec._EdiCommunicationProfileConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiCommunicationProfileConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiCommunicationProfileConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiCommunicationProfileEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiCommunicationProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiCommunicationProfileEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiCommunicationProfileEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiCommunicationProfileEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretState(ctx context.Context, sel ast.SelectionSet, v edi.CommunicationProfileSecretState) graphql.Marshaler {
+	return ec._EdiCommunicationProfileSecretState(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx context.Context, v any) (edi.ConnectionMethod, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.ConnectionMethod(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiConnectionMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionMethod(ctx context.Context, sel ast.SelectionSet, v edi.ConnectionMethod) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionStatus(ctx context.Context, v any) (edi.ConnectionStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.ConnectionStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiConnectionStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐConnectionStatus(ctx context.Context, sel ast.SelectionSet, v edi.ConnectionStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, v any) (edi.DocumentDirection, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.DocumentDirection(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiDocumentDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, sel ast.SelectionSet, v edi.DocumentDirection) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiInboundFile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIInboundFile(ctx context.Context, sel ast.SelectionSet, v *edi.EDIInboundFile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiInboundFile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiInboundFileConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiInboundFileConnection) graphql.Marshaler {
+	return ec._EdiInboundFileConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiInboundFileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiInboundFileConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiInboundFileConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiInboundFileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiInboundFileEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiInboundFileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiInboundFileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiInboundFileEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiInboundFileEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiInboundFileEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, v any) (edi.InboundFileStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.InboundFileStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiInboundFileStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, sel ast.SelectionSet, v edi.InboundFileStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMappingEntityType(ctx context.Context, v any) (edi.MappingEntityType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.MappingEntityType(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiMappingEntityType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMappingEntityType(ctx context.Context, sel ast.SelectionSet, v edi.MappingEntityType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiMappingProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfile(ctx context.Context, sel ast.SelectionSet, v *edi.EDIMappingProfile) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMappingProfile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMappingProfileConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiMappingProfileConnection) graphql.Marshaler {
+	return ec._EdiMappingProfileConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiMappingProfileConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiMappingProfileConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMappingProfileConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMappingProfileEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiMappingProfileEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiMappingProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiMappingProfileEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMappingProfileEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiMappingProfileEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMappingProfileEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItem(ctx context.Context, sel ast.SelectionSet, v *edi.EDIMappingProfileItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMappingProfileItem(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMessage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMessage(ctx context.Context, sel ast.SelectionSet, v *edi.EDIMessage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMessage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMessageConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiMessageConnection) graphql.Marshaler {
+	return ec._EdiMessageConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiMessageConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiMessageConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMessageConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiMessageEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiMessageEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiMessageEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiMessageEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiMessageEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiMessageEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiMessageEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageStatus(ctx context.Context, v any) (edi.MessageStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.MessageStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiMessageStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageStatus(ctx context.Context, sel ast.SelectionSet, v edi.MessageStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx context.Context, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiPartner(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiPartnerConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiPartnerConnection) graphql.Marshaler {
+	return ec._EdiPartnerConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiPartnerConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiPartnerConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiPartnerConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiPartnerEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiPartnerEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiPartnerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiPartnerEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiPartnerEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiPartnerEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐPartnerKind(ctx context.Context, v any) (edi.PartnerKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.PartnerKind(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐPartnerKind(ctx context.Context, sel ast.SelectionSet, v edi.PartnerKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIStandard(ctx context.Context, v any) (edi.EDIStandard, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.EDIStandard(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiStandard2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIStandard(ctx context.Context, sel ast.SelectionSet, v edi.EDIStandard) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiSummary2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummary(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiSummary) graphql.Marshaler {
+	return ec._EdiSummary(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummary(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiSummary) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiSummary(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiSummaryAttentionItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiSummaryAttentionItem) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiSummaryAttentionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionItem(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiSummaryAttentionItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionItem(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiSummaryAttentionItem) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiSummaryAttentionItem(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiSummaryAttentionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionKind(ctx context.Context, v any) (gqlmodel.EdiSummaryAttentionKind, error) {
+	var res gqlmodel.EdiSummaryAttentionKind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiSummaryAttentionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryAttentionKind(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiSummaryAttentionKind) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNEdiSummaryStatusCount2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCountᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiSummaryStatusCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCount(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiSummaryStatusCount2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiSummaryStatusCount(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiSummaryStatusCount) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiSummaryStatusCount(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTemplate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplate(ctx context.Context, sel ast.SelectionSet, v *edi.EDITemplate) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTemplate(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTemplateConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiTemplateConnection) graphql.Marshaler {
+	return ec._EdiTemplateConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiTemplateConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTemplateConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTemplateConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTemplateEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiTemplateEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiTemplateEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTemplateEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTemplateEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTemplateEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, v any) (edi.TemplateStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.TemplateStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiTemplateStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, sel ast.SelectionSet, v edi.TemplateStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTemplateVersion(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTestCase2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITestCase(ctx context.Context, sel ast.SelectionSet, v *edi.EDITestCase) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTestCase(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTestCaseConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiTestCaseConnection) graphql.Marshaler {
+	return ec._EdiTestCaseConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiTestCaseConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTestCaseConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTestCaseConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTestCaseEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiTestCaseEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiTestCaseEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiTestCaseEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTestCaseEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTestCaseEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTestCaseEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTransfer2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITransfer(ctx context.Context, sel ast.SelectionSet, v *edi.EDITransfer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTransfer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNEdiTransferConnection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferConnection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiTransferConnection) graphql.Marshaler {
+	return ec._EdiTransferConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEdiTransferConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTransferConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTransferConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiTransferDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferDirection(ctx context.Context, v any) (gqlmodel.EdiTransferDirection, error) {
+	var res gqlmodel.EdiTransferDirection
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiTransferDirection2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferDirection(ctx context.Context, sel ast.SelectionSet, v gqlmodel.EdiTransferDirection) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNEdiTransferEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiTransferEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiTransferEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiTransferEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiTransferEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiTransferEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiTransferEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTransferStatus(ctx context.Context, v any) (edi.TransferStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.TransferStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNEdiTransferStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTransferStatus(ctx context.Context, sel ast.SelectionSet, v edi.TransferStatus) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -54520,6 +69066,181 @@ func (ec *executionContext) marshalODriverType2ᚖgithubᚗcomᚋemoss08ᚋtreno
 	return res
 }
 
+func (ec *executionContext) marshalOEdiCommunicationProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDICommunicationProfile(ctx context.Context, sel ast.SelectionSet, v *edi.EDICommunicationProfile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EdiCommunicationProfile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOEdiCommunicationProfileSecretState2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretStateᚄ(ctx context.Context, sel ast.SelectionSet, v []edi.CommunicationProfileSecretState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiCommunicationProfileSecretState2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐCommunicationProfileSecretState(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOEdiConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIConnection(ctx context.Context, sel ast.SelectionSet, v *edi.EDIConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EdiConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, v any) (*edi.DocumentDirection, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.DocumentDirection(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEdiDocumentDirection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐDocumentDirection(ctx context.Context, sel ast.SelectionSet, v *edi.DocumentDirection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, v any) (*edi.InboundFileStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.InboundFileStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEdiInboundFileStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐInboundFileStatus(ctx context.Context, sel ast.SelectionSet, v *edi.InboundFileStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalOEdiMappingProfileItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*edi.EDIMappingProfileItem) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiMappingProfileItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIMappingProfileItem(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, v any) (edi.MessageAcknowledgmentStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.MessageAcknowledgmentStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEdiMessageAckStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageAcknowledgmentStatus(ctx context.Context, sel ast.SelectionSet, v edi.MessageAcknowledgmentStatus) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageDeliveryStatus(ctx context.Context, v any) (edi.MessageDeliveryStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.MessageDeliveryStatus(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEdiMessageDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐMessageDeliveryStatus(ctx context.Context, sel ast.SelectionSet, v edi.MessageDeliveryStatus) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
+}
+
+func (ec *executionContext) marshalOEdiPartner2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartner(ctx context.Context, sel ast.SelectionSet, v *edi.EDIPartner) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EdiPartner(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOEdiPartnerDocumentProfile2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDIPartnerDocumentProfile(ctx context.Context, sel ast.SelectionSet, v *edi.EDIPartnerDocumentProfile) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EdiPartnerDocumentProfile(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, v any) (*edi.TemplateStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := edi.TemplateStatus(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOEdiTemplateStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐTemplateStatus(ctx context.Context, sel ast.SelectionSet, v *edi.TemplateStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) marshalOEdiTemplateVersion2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersionᚄ(ctx context.Context, sel ast.SelectionSet, v []*edi.EDITemplateVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOEdiTemplateVersion2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋediᚐEDITemplateVersion(ctx context.Context, sel ast.SelectionSet, v *edi.EDITemplateVersion) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._EdiTemplateVersion(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOEntityStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋpkgᚋdomaintypesᚐStatus(ctx context.Context, v any) (*domaintypes.Status, error) {
 	if v == nil {
 		return nil, nil
@@ -54699,6 +69420,19 @@ func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel as
 	_ = sel
 	res := graphql.MarshalFloatContext(*v)
 	return graphql.WrapContextMarshaler(ctx, res)
+}
+
+func (ec *executionContext) unmarshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, v any) (pulid.ID, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := pulid.ID(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
@@ -55379,6 +70113,18 @@ func (ec *executionContext) marshalOStopType2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOString2string(ctx context.Context, v any) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOString2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {

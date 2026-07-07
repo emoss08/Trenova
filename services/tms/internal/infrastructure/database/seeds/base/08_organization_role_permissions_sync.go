@@ -35,6 +35,10 @@ func NewOrganizationRolePermissionsSyncSeed() *OrganizationRolePermissionsSyncSe
 	return seed
 }
 
+func (s *OrganizationRolePermissionsSyncSeed) Repeatable() bool {
+	return true
+}
+
 func (s *OrganizationRolePermissionsSyncSeed) Run(ctx context.Context, tx bun.Tx) error {
 	var roles []permission.Role
 	if err := tx.NewSelect().

@@ -482,6 +482,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
+	r.ediHandler.RegisterPublicRoutes(rg)
 }
 
 //nolint:funlen // existing workflow or route registration is intentionally kept together

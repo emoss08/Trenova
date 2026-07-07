@@ -1,5 +1,6 @@
 import { DataTablePlaceholder } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { statusChoices } from "@/lib/choices";
 import type { EDIPartner } from "@/types/edi";
@@ -71,11 +72,7 @@ export function getPartnerColumns(): ColumnDef<EDIPartner>[] {
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => (
-        <Badge variant={row.original.status === "Active" ? "active" : "outline"}>
-          {row.original.status}
-        </Badge>
-      ),
+      cell: ({ row }) => <StatusBadge status={row.original.status} />,
       size: 120,
       meta: {
         label: "Status",

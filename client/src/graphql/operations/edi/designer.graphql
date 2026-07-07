@@ -1,0 +1,65 @@
+fragment EdiTemplateVersionSummaryFields on EdiTemplateVersion {
+  id
+  businessUnitId
+  organizationId
+  templateId
+  sourceVersionId
+  versionNumber
+  x12Version
+  functionalGroupId
+  status
+  isActive
+  notes
+  certifiedAt
+  activatedAt
+  archivedAt
+  deprecatedAt
+  supersededAt
+  version
+  createdAt
+  updatedAt
+}
+
+fragment EdiTemplateListFields on EdiTemplate {
+  id
+  businessUnitId
+  organizationId
+  documentTypeId
+  name
+  description
+  direction
+  standard
+  transactionSet
+  status
+  version
+  createdAt
+  updatedAt
+  versions {
+    ...EdiTemplateVersionSummaryFields
+  }
+}
+
+query EdiTemplateList(
+  $input: DataTableConnectionInput!
+  $status: EdiTemplateStatus
+  $transactionSet: String
+  $direction: EdiDocumentDirection
+) {
+  ediTemplates(
+    input: $input
+    status: $status
+    transactionSet: $transactionSet
+    direction: $direction
+  ) {
+    edges {
+      node {
+        ...EdiTemplateListFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}

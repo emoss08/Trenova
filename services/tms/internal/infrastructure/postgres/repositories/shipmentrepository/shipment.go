@@ -147,6 +147,35 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *repositories.ShipmentSelectOptionsRequest,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	sp := buncolgen.ShipmentColumns
+
+	return dbhelper.SelectOptions[*shipment.Shipment](
+		ctx,
+		r.db.DBForContext(ctx),
+		req.SelectQueryRequest,
+		&dbhelper.SelectOptionsConfig{
+			ColumnRefs: []buncolgen.Column{
+				sp.ID,
+				sp.CreatedAt,
+				sp.Status,
+				sp.ProNumber,
+				sp.BOL,
+			},
+			OrgColumnRef:     &sp.OrganizationID,
+			BuColumnRef:      &sp.BusinessUnitID,
+			SearchColumnRefs: []buncolgen.Column{sp.ProNumber, sp.BOL},
+			EntityName:       "Shipment",
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Order(sp.CreatedAt.OrderDesc())
+			},
+		},
+	)
+}
+
 func (r *repository) GetUnassigned(
 	ctx context.Context,
 	req *repositories.GetUnassignedShipmentsRequest,

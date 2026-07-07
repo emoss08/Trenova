@@ -1,3 +1,7 @@
+import {
+  ControlledEDITransferAutocompleteField,
+  ControlledShipmentAutocompleteField,
+} from "@/components/autocomplete-fields";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +52,32 @@ export function DocumentSourceControls({
           );
         }
 
+        const fieldClassName = layout === "toolbar" ? "w-56" : undefined;
+
+        if (input.field === "shipmentId") {
+          return (
+            <div key={input.field} className={fieldClassName}>
+              <ControlledShipmentAutocompleteField
+                label={input.label}
+                value={value}
+                onValueChange={(nextValue) => onChange(input.field, nextValue)}
+              />
+            </div>
+          );
+        }
+
+        if (input.field === "transferId") {
+          return (
+            <div key={input.field} className={fieldClassName}>
+              <ControlledEDITransferAutocompleteField
+                label={input.label}
+                value={value}
+                onValueChange={(nextValue) => onChange(input.field, nextValue)}
+              />
+            </div>
+          );
+        }
+
         return (
           <DocumentSourceField
             key={input.field}
@@ -55,7 +85,7 @@ export function DocumentSourceControls({
             placeholder={input.placeholder}
             value={value}
             onChange={(nextValue) => onChange(input.field, nextValue)}
-            className={layout === "toolbar" ? "w-56" : undefined}
+            className={fieldClassName}
           />
         );
       })}

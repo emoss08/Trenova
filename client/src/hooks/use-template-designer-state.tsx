@@ -1,3 +1,4 @@
+import { listEdiTemplatesGraphQL } from "@/lib/graphql/edi-templates";
 import { queries } from "@/lib/queries";
 import {
   getChangedTemplateUrlStatePatch,
@@ -9,12 +10,10 @@ import {
   useInvalidateEDITemplateQueries,
   useValidateEDITemplateMutation,
 } from "@/routes/edi/_components/designer/hooks/use-edi-template-mutations";
-import { buildEDIDocumentContextQuery } from "@/routes/edi/_components/designer/utils/edi-designer-utils";
 import {
   getTemplateDesignerVersionDraftKey,
   useTemplateDesignerStore,
 } from "@/stores/template-designer-store";
-import { apiService } from "@/services/api";
 import type { EDIDiagnostic, EDITemplate, EDITemplateVersion } from "@/types/edi";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
@@ -83,23 +82,17 @@ export function useTemplateDesignerTemplateListInfiniteQuery() {
       },
     ],
     queryFn: async ({ pageParam }) =>
-      apiService.ediService.listTemplates(
-        buildEDIDocumentContextQuery({
-          limit: templateDesignerTemplatePageSize,
-          offset: pageParam,
-          query: templateSearch,
-          status: templateStatus,
-          transactionSet: templateTransactionSet,
-          direction: templateDirection,
-        }),
-      ),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.next || lastPage.results.length === templateDesignerTemplatePageSize) {
-        return lastPageParam + templateDesignerTemplatePageSize;
-      }
-      return undefined;
-    },
+      listEdiTemplatesGraphQL({
+        first: templateDesignerTemplatePageSize,
+        after: pageParam,
+        query: templateSearch,
+        status: templateStatus,
+        transactionSet: templateTransactionSet,
+        direction: templateDirection,
+      }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasNextPage && lastPage.endCursor ? lastPage.endCursor : undefined,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });

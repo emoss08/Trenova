@@ -29,7 +29,7 @@ func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
 	fixture.target.Status = shipment.StatusInTransit
 
 	fixture.expectLoadPendingChange(change)
-	fixture.expectLoadLink(2)
+	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
 	fixture.shipmentRepo.EXPECT().
 		Cancel(mock.Anything, mock.MatchedBy(func(req *repositories.CancelShipmentRequest) bool {
@@ -65,7 +65,7 @@ func TestService_RejectTransferChange_DoesNotCancelLinkedShipment(t *testing.T) 
 	change := fixture.pendingChange(edi.TransferChangeTypeShipmentCancel214, shipment.StatusCanceled)
 
 	fixture.expectLoadPendingChange(change)
-	fixture.expectLoadLink(1)
+	fixture.expectLoadLink(2)
 	fixture.expectUpdateReviewedChange(edi.TransferChangeStatusRejected)
 
 	updated, err := fixture.service.RejectTransferChange(
@@ -92,7 +92,7 @@ func TestService_ApplyTransferChange_StatusRegressionAppliesLinkedShipmentStatus
 	fixture.target.Status = shipment.StatusInTransit
 
 	fixture.expectLoadPendingChange(change)
-	fixture.expectLoadLink(2)
+	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
 	fixture.shipmentRepo.EXPECT().
 		UpdateStatus(mock.Anything, mock.MatchedBy(func(req *repositories.UpdateShipmentStatusRequest) bool {
@@ -134,7 +134,7 @@ func TestService_ApplyTransferChange_LifecycleAppliesActualsThroughCoordinator(t
 	change := fixture.pendingChange(edi.TransferChangeTypeShipmentLifecycle214, shipment.StatusInTransit)
 
 	fixture.expectLoadPendingChange(change)
-	fixture.expectLoadLink(2)
+	fixture.expectLoadLink(3)
 	fixture.expectLoadShipments()
 	fixture.shipmentRepo.EXPECT().
 		UpdateOperationalLifecycle(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
@@ -267,8 +267,14 @@ func (f *transferChangeApplyFixture) pendingChange(
 }
 
 func (f *transferChangeApplyFixture) tenantInfo() pagination.TenantInfo {
+	if f.direction == edi.TransferChangeDirectionTargetToSource {
+		return pagination.TenantInfo{
+			OrgID: f.link.SourceOrganizationID,
+			BuID:  f.link.BusinessUnitID,
+		}
+	}
 	return pagination.TenantInfo{
-		OrgID: f.link.SourceOrganizationID,
+		OrgID: f.link.TargetOrganizationID,
 		BuID:  f.link.BusinessUnitID,
 	}
 }

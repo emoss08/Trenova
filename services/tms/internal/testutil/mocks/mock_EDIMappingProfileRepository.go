@@ -426,6 +426,74 @@ func (_c *MockEDIMappingProfileRepository_ListMappingProfiles_Call) RunAndReturn
 	return _c
 }
 
+// ListMappingProfilesCursor provides a mock function for the type MockEDIMappingProfileRepository
+func (_mock *MockEDIMappingProfileRepository) ListMappingProfilesCursor(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMappingProfilesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDIMappingProfile]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) (*pagination.CursorListResult[*edi.EDIMappingProfile], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) *pagination.CursorListResult[*edi.EDIMappingProfile]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDIMappingProfile])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIMappingProfilesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMappingProfilesCursor'
+type MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call struct {
+	*mock.Call
+}
+
+// ListMappingProfilesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIMappingProfilesRequest
+func (_e *MockEDIMappingProfileRepository_Expecter) ListMappingProfilesCursor(ctx interface{}, req interface{}) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
+	return &MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call{Call: _e.mock.On("ListMappingProfilesCursor", ctx, req)}
+}
+
+func (_c *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest)) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIMappingProfilesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIMappingProfilesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDIMappingProfile], err error) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIMappingProfilesRequest) (*pagination.CursorListResult[*edi.EDIMappingProfile], error)) *MockEDIMappingProfileRepository_ListMappingProfilesCursor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveMappingItems provides a mock function for the type MockEDIMappingProfileRepository
 func (_mock *MockEDIMappingProfileRepository) SaveMappingItems(ctx context.Context, req *repositories.SaveMappingItemsRequest) ([]*edi.EDIMappingProfileItem, error) {
 	ret := _mock.Called(ctx, req)

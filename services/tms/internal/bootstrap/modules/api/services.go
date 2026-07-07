@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
+	"github.com/emoss08/trenova/internal/core/services/ediinboundservice"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/emailservice"
 	"github.com/emoss08/trenova/internal/core/services/entitlementservice"
@@ -214,6 +215,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	hazmatsegregationruleservice.New,
 	dothazmatreferenceservice.New,
 	ediservice.New,
+	ediinboundservice.New,
 	func(s *ediservice.Service) services.EDIService { return s },
 	fx.Annotate(
 		func(s *ediservice.Service) services.ShipmentMutationObserver { return s },

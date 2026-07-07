@@ -5,6 +5,8 @@ enum SelectOptionResource {
   TRACTOR
   WORKER
   US_STATE
+  SHIPMENT
+  EDI_TRANSFER
 }
 
 input SelectOptionsInput {

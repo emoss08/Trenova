@@ -4,6 +4,13 @@ package edi
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [CarrierInvoice].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.CarrierInvoiceFieldMap] instead of parsing struct tags via reflection.
+func (e *CarrierInvoice) GetStaticFieldMap() map[string]string {
+	return buncolgen.CarrierInvoiceFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDICodeListDefinition].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EDICodeListDefinitionFieldMap] instead of parsing struct tags via reflection.
@@ -37,6 +44,13 @@ func (e *EDIControlNumberSequence) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.EDIDocumentTypeFieldMap] instead of parsing struct tags via reflection.
 func (e *EDIDocumentType) GetStaticFieldMap() map[string]string {
 	return buncolgen.EDIDocumentTypeFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIInboundFile].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.EDIInboundFileFieldMap] instead of parsing struct tags via reflection.
+func (e *EDIInboundFile) GetStaticFieldMap() map[string]string {
+	return buncolgen.EDIInboundFileFieldMap
 }
 
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EDIMappingProfile].

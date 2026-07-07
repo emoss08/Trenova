@@ -76,7 +76,17 @@ export default function TemplateList() {
         </div>
       ) : null}
       {templatesQuery.isError ? (
-        <div className="p-3 text-sm text-destructive">Failed to load templates.</div>
+        <div className="flex flex-col items-center gap-2 p-3 text-center">
+          <span className="text-sm text-destructive">Failed to load templates.</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void templatesQuery.refetch()}
+          >
+            Retry
+          </Button>
+        </div>
       ) : null}
       {!templatesQuery.isLoading && templates.length === 0 ? (
         <div className="p-3 text-sm text-muted-foreground">No matching templates.</div>

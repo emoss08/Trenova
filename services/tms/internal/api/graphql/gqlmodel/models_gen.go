@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/location"
@@ -82,6 +83,119 @@ type DataTableConnectionInput struct {
 	FieldFilters []*FieldFilterInput `json:"fieldFilters,omitempty"`
 	FilterGroups []*FilterGroupInput `json:"filterGroups,omitempty"`
 	Sort         []*SortFieldInput   `json:"sort,omitempty"`
+}
+
+type EdiCommunicationProfileConnection struct {
+	Edges      []*EdiCommunicationProfileEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+}
+
+type EdiCommunicationProfileEdge struct {
+	Node   *edi.EDICommunicationProfile `json:"node"`
+	Cursor string                       `json:"cursor"`
+}
+
+type EdiInboundFileConnection struct {
+	Edges      []*EdiInboundFileEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+}
+
+type EdiInboundFileEdge struct {
+	Node   *edi.EDIInboundFile `json:"node"`
+	Cursor string              `json:"cursor"`
+}
+
+type EdiMappingProfileConnection struct {
+	Edges      []*EdiMappingProfileEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type EdiMappingProfileEdge struct {
+	Node   *edi.EDIMappingProfile `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type EdiMessageConnection struct {
+	Edges      []*EdiMessageEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type EdiMessageEdge struct {
+	Node   *edi.EDIMessage `json:"node"`
+	Cursor string          `json:"cursor"`
+}
+
+type EdiPartnerConnection struct {
+	Edges      []*EdiPartnerEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type EdiPartnerEdge struct {
+	Node   *edi.EDIPartner `json:"node"`
+	Cursor string          `json:"cursor"`
+}
+
+type EdiSummary struct {
+	DeliveryStatusCounts        []*EdiSummaryStatusCount   `json:"deliveryStatusCounts"`
+	AckStatusCounts             []*EdiSummaryStatusCount   `json:"ackStatusCounts"`
+	InboundFileStatusCounts     []*EdiSummaryStatusCount   `json:"inboundFileStatusCounts"`
+	InboundTransferStatusCounts []*EdiSummaryStatusCount   `json:"inboundTransferStatusCounts"`
+	OverdueAckCount             int                        `json:"overdueAckCount"`
+	AttentionItems              []*EdiSummaryAttentionItem `json:"attentionItems"`
+}
+
+type EdiSummaryAttentionItem struct {
+	Kind        EdiSummaryAttentionKind `json:"kind"`
+	ID          string                  `json:"id"`
+	PartnerID   *string                 `json:"partnerId,omitempty"`
+	PartnerName *string                 `json:"partnerName,omitempty"`
+	PartnerCode *string                 `json:"partnerCode,omitempty"`
+	Reference   *string                 `json:"reference,omitempty"`
+	Error       *string                 `json:"error,omitempty"`
+	OccurredAt  int                     `json:"occurredAt"`
+}
+
+type EdiSummaryStatusCount struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type EdiTemplateConnection struct {
+	Edges      []*EdiTemplateEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type EdiTemplateEdge struct {
+	Node   *edi.EDITemplate `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type EdiTestCaseConnection struct {
+	Edges      []*EdiTestCaseEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type EdiTestCaseEdge struct {
+	Node   *edi.EDITestCase `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
+type EdiTransferConnection struct {
+	Edges      []*EdiTransferEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount *int               `json:"totalCount,omitempty"`
+}
+
+type EdiTransferEdge struct {
+	Node   *edi.EDITransfer `json:"node"`
+	Cursor string           `json:"cursor"`
 }
 
 type EquipmentManufacturerConnection struct {
@@ -1321,6 +1435,116 @@ func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type EdiSummaryAttentionKind string
+
+const (
+	EdiSummaryAttentionKindMessage     EdiSummaryAttentionKind = "Message"
+	EdiSummaryAttentionKindInboundFile EdiSummaryAttentionKind = "InboundFile"
+)
+
+var AllEdiSummaryAttentionKind = []EdiSummaryAttentionKind{
+	EdiSummaryAttentionKindMessage,
+	EdiSummaryAttentionKindInboundFile,
+}
+
+func (e EdiSummaryAttentionKind) IsValid() bool {
+	switch e {
+	case EdiSummaryAttentionKindMessage, EdiSummaryAttentionKindInboundFile:
+		return true
+	}
+	return false
+}
+
+func (e EdiSummaryAttentionKind) String() string {
+	return string(e)
+}
+
+func (e *EdiSummaryAttentionKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EdiSummaryAttentionKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EdiSummaryAttentionKind", str)
+	}
+	return nil
+}
+
+func (e EdiSummaryAttentionKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EdiSummaryAttentionKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EdiSummaryAttentionKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type EdiTransferDirection string
+
+const (
+	EdiTransferDirectionInbound  EdiTransferDirection = "Inbound"
+	EdiTransferDirectionOutbound EdiTransferDirection = "Outbound"
+)
+
+var AllEdiTransferDirection = []EdiTransferDirection{
+	EdiTransferDirectionInbound,
+	EdiTransferDirectionOutbound,
+}
+
+func (e EdiTransferDirection) IsValid() bool {
+	switch e {
+	case EdiTransferDirectionInbound, EdiTransferDirectionOutbound:
+		return true
+	}
+	return false
+}
+
+func (e EdiTransferDirection) String() string {
+	return string(e)
+}
+
+func (e *EdiTransferDirection) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EdiTransferDirection(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EdiTransferDirection", str)
+	}
+	return nil
+}
+
+func (e EdiTransferDirection) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *EdiTransferDirection) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e EdiTransferDirection) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type MoveStatus string
 
 const (
@@ -1391,6 +1615,8 @@ const (
 	SelectOptionResourceTractor               SelectOptionResource = "TRACTOR"
 	SelectOptionResourceWorker                SelectOptionResource = "WORKER"
 	SelectOptionResourceUsState               SelectOptionResource = "US_STATE"
+	SelectOptionResourceShipment              SelectOptionResource = "SHIPMENT"
+	SelectOptionResourceEdiTransfer           SelectOptionResource = "EDI_TRANSFER"
 )
 
 var AllSelectOptionResource = []SelectOptionResource{
@@ -1400,11 +1626,13 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceTractor,
 	SelectOptionResourceWorker,
 	SelectOptionResourceUsState,
+	SelectOptionResourceShipment,
+	SelectOptionResourceEdiTransfer,
 }
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState:
+	case SelectOptionResourceEquipmentType, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceTrailer, SelectOptionResourceTractor, SelectOptionResourceWorker, SelectOptionResourceUsState, SelectOptionResourceShipment, SelectOptionResourceEdiTransfer:
 		return true
 	}
 	return false

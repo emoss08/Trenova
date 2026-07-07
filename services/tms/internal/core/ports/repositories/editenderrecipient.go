@@ -22,6 +22,12 @@ type UpsertEDITenderRecipientRequest struct {
 	Recipient *edi.TenderRecipient `json:"recipient"`
 }
 
+type GetActiveExternalEDITenderRecipientByReferenceRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID  pulid.ID              `json:"partnerId"`
+	Reference  string                `json:"reference"`
+}
+
 type EDITenderRecipientRepository interface {
 	GetTenderRecipientByID(
 		ctx context.Context,
@@ -38,5 +44,9 @@ type EDITenderRecipientRepository interface {
 	UpdateTenderRecipient(
 		ctx context.Context,
 		entity *edi.TenderRecipient,
+	) (*edi.TenderRecipient, error)
+	GetActiveExternalRecipientByShipmentReference(
+		ctx context.Context,
+		req GetActiveExternalEDITenderRecipientByReferenceRequest,
 	) (*edi.TenderRecipient, error)
 }

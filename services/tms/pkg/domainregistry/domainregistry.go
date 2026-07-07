@@ -70,6 +70,7 @@ func RegisterEntities() []any {
 		&edi.EDIPartnerDocumentProfile{},
 		&edi.EDIControlNumberSequence{},
 		&edi.EDIMessage{},
+		&edi.EDIInboundFile{},
 		&edi.EDIMessageValidationError{},
 		&edi.EDITestCase{},
 		&audit.Entry{},

@@ -43,6 +43,7 @@ require (
 	github.com/samber/lo v1.53.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/shopspring/decimal v1.4.0
+	github.com/smallstep/pkcs7 v0.2.1 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0

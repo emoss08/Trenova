@@ -108,6 +108,44 @@ func ApplyCursorFilters[T domaintypes.PostgresSearchable](
 	return qb.GetQuery(), nil
 }
 
+func ApplyCursorFiltersWithoutTenantScope[T domaintypes.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	filter *pagination.QueryOptions,
+	cursor pagination.CursorInfo,
+	entity T,
+) (*bun.SelectQuery, error) {
+	fieldConfig := GetFieldConfiguration(entity)
+	qb := NewWithPostgresSearch(query, tableAlias, fieldConfig, entity)
+	qb.WithTraversalSupport(true)
+
+	if len(filter.FieldFilters) > 0 {
+		qb.ApplyFilters(filter.FieldFilters)
+	}
+	if len(filter.FilterGroups) > 0 {
+		qb.ApplyFilterGroups(filter.FilterGroups)
+	}
+	if len(filter.GeoFilters) > 0 {
+		qb.ApplyGeoFilters(filter.GeoFilters)
+	}
+	if len(filter.AggregateFilters) > 0 {
+		qb.ApplyAggregateFilters(filter.AggregateFilters)
+	}
+	if filter.Query != "" {
+		searchFields := ExtractSearchFields(fieldConfig)
+		qb.ApplyTextSearchFilter(filter.Query, searchFields)
+	}
+
+	plan, err := qb.applyCursorSort(filter, cursor)
+	if err != nil {
+		return qb.GetQuery(), err
+	}
+	filter.CursorSort = plan.Shape()
+	filter.CursorColumns = plan.Columns()
+
+	return qb.GetQuery(), nil
+}
+
 func ApplyCursorSort[T domaintypes.PostgresSearchable](
 	query *bun.SelectQuery,
 	tableAlias string,

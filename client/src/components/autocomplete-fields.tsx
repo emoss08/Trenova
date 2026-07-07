@@ -14,6 +14,7 @@ import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
 import type {
   EDICommunicationProfile,
+  EDIConnection,
   EDIDocumentType,
   EDIMappingProfile,
   EDIPartner,
@@ -71,6 +72,7 @@ type ControlledAutocompleteFieldProps<TOption> = {
   description?: string;
   link: SELECT_OPTIONS_ENDPOINTS;
   selectedValueLink?: API_ENDPOINTS;
+  graphql?: GraphQLSelectOptionsConfig;
   renderOption: (option: TOption) => ReactNode;
   getOptionValue: (option: TOption) => string | number;
   getDisplayValue: (option: TOption) => ReactNode;
@@ -161,6 +163,14 @@ const workerSelectOptionsGraphQL = {
   resource: "WORKER",
 } satisfies GraphQLSelectOptionsConfig;
 
+const shipmentSelectOptionsGraphQL = {
+  resource: "SHIPMENT",
+} satisfies GraphQLSelectOptionsConfig;
+
+const ediTransferSelectOptionsGraphQL = {
+  resource: "EDI_TRANSFER",
+} satisfies GraphQLSelectOptionsConfig;
+
 function getDocumentLabel(option: Document) {
   const documentTypeLabel = option.documentType?.name?.trim();
   const fileName = option.originalName?.trim() || option.fileName?.trim() || option.id;
@@ -176,6 +186,7 @@ function ControlledAutocompleteField<TOption>({
   description,
   link,
   selectedValueLink,
+  graphql,
   renderOption,
   getOptionValue,
   getDisplayValue,
@@ -191,6 +202,7 @@ function ControlledAutocompleteField<TOption>({
       <Autocomplete<TOption, FieldValues>
         link={link}
         selectedValueLink={selectedValueLink}
+        graphql={graphql}
         value={value}
         onChange={(nextValue) => onValueChange(nextValue ? String(nextValue) : "")}
         onOptionChange={onOptionChange}
@@ -572,6 +584,31 @@ export function EDICommunicationProfileAutocompleteField<T extends FieldValues>(
   );
 }
 
+function ediConnectionDisplayLabel(option: EDIConnection) {
+  const source = option.sourceOrganization?.name ?? option.sourceOrganizationId;
+  const target = option.targetOrganization?.name ?? option.targetOrganizationId;
+  return `${source} → ${target}`;
+}
+
+export function EDIConnectionAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<EDIConnection, T>) {
+  return (
+    <AutocompleteField<EDIConnection, T>
+      link="/edi/connections/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => ediConnectionDisplayLabel(option)}
+      renderOption={(option) => (
+        <EDIOptionStack
+          primary={ediConnectionDisplayLabel(option)}
+          secondary={`${option.method} · ${option.status}`}
+        />
+      )}
+      {...props}
+    />
+  );
+}
+
 export function EDIMappingProfileAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<EDIMappingProfile, T>) {
@@ -859,6 +896,71 @@ export function ControlledEDIPartnerAutocompleteField({
       )}
       getOptionValue={(option) => option.id}
       getDisplayValue={(option) => `${option.code} - ${option.name}`}
+      {...props}
+    />
+  );
+}
+
+type ControlledGraphQLAutocompleteFieldProps = Omit<
+  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
+  | "label"
+  | "link"
+  | "graphql"
+  | "renderOption"
+  | "getOptionValue"
+  | "getDisplayValue"
+  | "selectedValueLink"
+> & {
+  label?: string;
+};
+
+export function ControlledShipmentAutocompleteField({
+  label = "Shipment",
+  placeholder = "Search by Pro # or BOL...",
+  ...props
+}: ControlledGraphQLAutocompleteFieldProps) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      link="/shipments/select-options/"
+      graphql={shipmentSelectOptionsGraphQL}
+      placeholder={placeholder}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <EDIOptionStack
+          primary={option.label}
+          secondary={selectOptionMetaString(option, "bol") || selectOptionMetaString(option, "status")}
+        />
+      )}
+      {...props}
+    />
+  );
+}
+
+export function ControlledEDITransferAutocompleteField({
+  label = "Transfer",
+  placeholder = "Search transfers by BOL...",
+  ...props
+}: ControlledGraphQLAutocompleteFieldProps) {
+  return (
+    <ControlledAutocompleteField<GraphQLSelectOption>
+      label={label}
+      link="/edi/transfers/select-options/"
+      graphql={ediTransferSelectOptionsGraphQL}
+      placeholder={placeholder}
+      getOptionValue={(option) => option.id}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <EDIOptionStack
+          primary={option.label}
+          secondary={
+            selectOptionMetaString(option, "customerLabel") ||
+            selectOptionMetaString(option, "sourcePartner") ||
+            selectOptionMetaString(option, "status")
+          }
+        />
+      )}
       {...props}
     />
   );

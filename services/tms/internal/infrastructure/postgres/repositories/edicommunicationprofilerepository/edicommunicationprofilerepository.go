@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -168,19 +169,70 @@ func (r *repository) GetActiveProfileByPartner(
 	entity := new(edi.EDICommunicationProfile)
 	cols := buncolgen.EDICommunicationProfileColumns
 
-	err := r.db.DBForContext(ctx).
+	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
 		Where(cols.EDIPartnerID.Eq(), req.PartnerID).
 		Apply(buncolgen.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-		Where(cols.Method.Eq(), req.Method).
 		Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Limit(1)
+	if len(req.Methods) > 0 {
+		query = query.Where(cols.Method.In(), bun.List(req.Methods))
+	} else {
+		query = query.Where(cols.Method.Eq(), req.Method)
+	}
+	if err := query.Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
+	}
+
+	return entity, nil
+}
+
+func (r *repository) ListInboundPollingProfiles(
+	ctx context.Context,
+) ([]*edi.EDICommunicationProfile, error) {
+	entities := make([]*edi.EDICommunicationProfile, 0)
+	cols := buncolgen.EDICommunicationProfileColumns
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Where(cols.Method.In(), bun.List([]edi.ConnectionMethod{
+			edi.ConnectionMethodSFTP,
+			edi.ConnectionMethodVAN,
+		})).
+		Where("ecp.edi_partner_id IS NOT NULL").
+		Where("COALESCE(TRIM(ecp.config->>'inboundDirectory'), '') <> ''").
+		Order(cols.CreatedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
+func (r *repository) GetActiveAS2ProfileByIdentifiers(
+	ctx context.Context,
+	req repositories.GetActiveAS2ProfileByIdentifiersRequest,
+) (*edi.EDICommunicationProfile, error) {
+	entity := new(edi.EDICommunicationProfile)
+	cols := buncolgen.EDICommunicationProfileColumns
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.Status.Eq(), domaintypes.StatusActive).
+		Where(cols.Method.Eq(), edi.ConnectionMethodAS2).
+		Where("ecp.edi_partner_id IS NOT NULL").
+		Where("TRIM(ecp.config->>'localAS2Id') = ?", req.LocalAS2ID).
+		Where("TRIM(ecp.config->>'partnerAS2Id') = ?", req.PartnerAS2ID).
+		Order(cols.CreatedAt.OrderAsc()).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
 	}
-
 	return entity, nil
 }
 
@@ -238,4 +290,48 @@ func (r *repository) UpdateProfile(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) ListProfilesCursor(
+	ctx context.Context,
+	req *repositories.ListEDICommunicationProfilesRequest,
+) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
+	dba := r.db.DBForContext(ctx)
+	total, err := dba.
+		NewSelect().
+		Model((*edi.EDICommunicationProfile)(nil)).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return querybuilder.ApplyFiltersWithoutSort(
+				sq,
+				"ecp",
+				req.Filter,
+				(*edi.EDICommunicationProfile)(nil),
+			)
+		}).
+		Count(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDICommunicationProfile]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: &total,
+		Query: func(entities *[]*edi.EDICommunicationProfile) *bun.SelectQuery {
+			return dba.
+				NewSelect().
+				Model(entities).
+				ColumnExpr(buncolgen.EDICommunicationProfileTable.All()).
+				Relation(buncolgen.EDICommunicationProfileRelations.Partner)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return querybuilder.ApplyCursorFilters(
+				sq,
+				"ecp",
+				req.Filter,
+				req.Cursor,
+				(*edi.EDICommunicationProfile)(nil),
+			)
+		},
+	})
 }

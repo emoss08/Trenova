@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"go.uber.org/zap"
 )
 
 type resolvedDocumentContext struct {
@@ -507,6 +508,15 @@ func (s *Service) GenerateDocument(
 	}
 	if err = s.upsertExternalTenderRecipient(ctx, created, resolved.profile); err != nil {
 		return nil, err
+	}
+	if !req.DisableDeliveryQueue {
+		if err = s.queueMessageForDelivery(ctx, created); err != nil {
+			s.l.Warn(
+				"failed to queue EDI message for delivery",
+				zap.String("messageId", created.ID.String()),
+				zap.Error(err),
+			)
+		}
 	}
 	return created, nil
 }

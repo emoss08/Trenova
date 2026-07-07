@@ -147,6 +147,81 @@ models:
   EquipmentType:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmenttype.EquipmentType
+  EdiPartnerKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.PartnerKind
+  EdiConnectionMethod:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.ConnectionMethod
+  EdiConnectionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.ConnectionStatus
+  EdiTransferStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.TransferStatus
+  EdiDocumentDirection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.DocumentDirection
+  EdiMessageStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageStatus
+  EdiMessageDeliveryStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageDeliveryStatus
+  EdiMessageAckStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MessageAcknowledgmentStatus
+  EdiInboundFileStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.InboundFileStatus
+  EdiTemplateStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.TemplateStatus
+  EdiStandard:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIStandard
+  EdiMappingEntityType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.MappingEntityType
+  EdiConnection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIConnection
+  EdiPartner:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIPartner
+  EdiCommunicationProfileSecretState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.CommunicationProfileSecretState
+  EdiCommunicationProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDICommunicationProfile
+  EdiTransfer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITransfer
+  EdiMessage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMessage
+  EdiTestCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITestCase
+  EdiPartnerDocumentProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIPartnerDocumentProfile
+  EdiInboundFile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIInboundFile
+  EdiTemplate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITemplate
+  EdiTemplateVersion:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDITemplateVersion
+  EdiMappingProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMappingProfile
+  EdiMappingProfileItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/edi.EDIMappingProfileItem
   EquipmentManufacturer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer.EquipmentManufacturer

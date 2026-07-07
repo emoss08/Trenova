@@ -1095,6 +1095,74 @@ func (_c *MockShipmentService_GetBillingReadiness_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// GetByIDs provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) GetByIDs(ctx context.Context, req *repositories.GetShipmentsByIDsRequest) ([]*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentsByIDsRequest) ([]*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetShipmentsByIDsRequest) []*shipment.Shipment); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetShipmentsByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockShipmentService_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetShipmentsByIDsRequest
+func (_e *MockShipmentService_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockShipmentService_GetByIDs_Call {
+	return &MockShipmentService_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockShipmentService_GetByIDs_Call) Run(run func(ctx context.Context, req *repositories.GetShipmentsByIDsRequest)) *MockShipmentService_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetShipmentsByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetShipmentsByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_GetByIDs_Call) Return(shipments []*shipment.Shipment, err error) *MockShipmentService_GetByIDs_Call {
+	_c.Call.Return(shipments, err)
+	return _c
+}
+
+func (_c *MockShipmentService_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetShipmentsByIDsRequest) ([]*shipment.Shipment, error)) *MockShipmentService_GetByIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetDelayedShipments provides a mock function for the type MockShipmentService
 func (_mock *MockShipmentService) GetDelayedShipments(ctx context.Context, req *repositories.GetDelayedShipmentsRequest) ([]*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, req)
@@ -1505,6 +1573,74 @@ func (_c *MockShipmentService_RecalculateDistance_Call) Return(distanceCalculati
 }
 
 func (_c *MockShipmentService_RecalculateDistance_Call) RunAndReturn(run func(ctx context.Context, shipmentID pulid.ID, tenantInfo pagination.TenantInfo) (*services.DistanceCalculationResponse, error)) *MockShipmentService_RecalculateDistance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SelectOptions provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) SelectOptions(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SelectOptions")
+	}
+
+	var r0 *pagination.ListResult[*shipment.Shipment]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) *pagination.ListResult[*shipment.Shipment]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.ListResult[*shipment.Shipment])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ShipmentSelectOptionsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_SelectOptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SelectOptions'
+type MockShipmentService_SelectOptions_Call struct {
+	*mock.Call
+}
+
+// SelectOptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ShipmentSelectOptionsRequest
+func (_e *MockShipmentService_Expecter) SelectOptions(ctx interface{}, req interface{}) *MockShipmentService_SelectOptions_Call {
+	return &MockShipmentService_SelectOptions_Call{Call: _e.mock.On("SelectOptions", ctx, req)}
+}
+
+func (_c *MockShipmentService_SelectOptions_Call) Run(run func(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest)) *MockShipmentService_SelectOptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ShipmentSelectOptionsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ShipmentSelectOptionsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_SelectOptions_Call) Return(listResult *pagination.ListResult[*shipment.Shipment], err error) *MockShipmentService_SelectOptions_Call {
+	_c.Call.Return(listResult, err)
+	return _c
+}
+
+func (_c *MockShipmentService_SelectOptions_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ShipmentSelectOptionsRequest) (*pagination.ListResult[*shipment.Shipment], error)) *MockShipmentService_SelectOptions_Call {
 	_c.Call.Return(run)
 	return _c
 }

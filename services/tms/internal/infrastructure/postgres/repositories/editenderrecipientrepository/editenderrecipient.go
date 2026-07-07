@@ -68,6 +68,34 @@ func (r *repository) ListActiveTenderRecipientsForSourceShipment(
 	return entities, err
 }
 
+func (r *repository) GetActiveExternalRecipientByShipmentReference(
+	ctx context.Context,
+	req repositories.GetActiveExternalEDITenderRecipientByReferenceRequest,
+) (*edi.TenderRecipient, error) {
+	entity := new(edi.TenderRecipient)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("etr.source_organization_id = ?", req.TenantInfo.OrgID).
+		Where("etr.source_business_unit_id = ?", req.TenantInfo.BuID).
+		Where("etr.edi_partner_id = ?", req.PartnerID).
+		Where("etr.recipient_kind = ?", edi.TenderRecipientKindExternal).
+		Where("etr.status = ?", edi.TenderRecipientStatusActive).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				WhereOr("etr.source_shipment_id = ?", req.Reference).
+				WhereOr("etr.latest_baseline_payload->>'bol' = ?", req.Reference).
+				WhereOr("etr.latest_baseline_payload->>'shipmentId' = ?", req.Reference)
+		}).
+		Order("etr.created_at DESC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "EDITenderRecipient")
+	}
+	return entity, nil
+}
+
 func (r *repository) UpsertTenderRecipient(
 	ctx context.Context,
 	req repositories.UpsertEDITenderRecipientRequest,

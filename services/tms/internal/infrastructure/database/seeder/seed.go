@@ -18,6 +18,20 @@ type Seed interface {
 	CanRollback() bool
 }
 
+// Repeatable is an optional interface a Seed may implement to opt into
+// re-running on every seed invocation, even when already recorded as applied.
+// Use it for idempotent reconciliation seeds that must pick up newly registered
+// state (e.g. syncing role permissions with the resource registry) without
+// requiring a version bump each time the registry changes.
+type Repeatable interface {
+	Repeatable() bool
+}
+
+func isRepeatable(seed Seed) bool {
+	r, ok := seed.(Repeatable)
+	return ok && r.Repeatable()
+}
+
 type ExecuteOptions struct {
 	Environment  common.Environment
 	Target       string

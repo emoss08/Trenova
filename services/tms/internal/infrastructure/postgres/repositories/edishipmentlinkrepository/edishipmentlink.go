@@ -45,7 +45,7 @@ func (r *repository) ListShipmentLinks(
 		NewSelect().
 		Model(&entities).
 		Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-			return querybuilder.ApplyFilters(query, "esl", req.Filter, (*edi.ShipmentLink)(nil)).
+			return querybuilder.ApplyFiltersWithoutTenantScope(query, "esl", req.Filter, (*edi.ShipmentLink)(nil)).
 				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
 					return applyShipmentLinkTenantScope(sq, req.Filter.TenantInfo)
 				})

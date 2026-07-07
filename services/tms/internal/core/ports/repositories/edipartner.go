@@ -11,6 +11,7 @@ import (
 
 type ListEDIPartnersRequest struct {
 	Filter             *pagination.QueryOptions `json:"filter"`
+	Cursor             pagination.CursorInfo    `json:"-"`
 	CustomerID         pulid.ID                 `json:"customerId"`
 	EnabledForOutbound bool                     `json:"enabledForOutbound"`
 	Status             domaintypes.Status       `json:"status"`
@@ -38,6 +39,10 @@ type EDIPartnerRepository interface {
 		ctx context.Context,
 		req *ListEDIPartnersRequest,
 	) (*pagination.ListResult[*edi.EDIPartner], error)
+	ListCursor(
+		ctx context.Context,
+		req *ListEDIPartnersRequest,
+	) (*pagination.CursorListResult[*edi.EDIPartner], error)
 	SelectOptions(
 		ctx context.Context,
 		req *EDIPartnerSelectOptionsRequest,

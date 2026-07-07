@@ -10,6 +10,7 @@ import (
 
 type ListEDIMessagesRequest struct {
 	Filter         *pagination.QueryOptions `json:"filter"`
+	Cursor         pagination.CursorInfo    `json:"-"`
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	Direction      edi.DocumentDirection    `json:"direction"`
 	PartnerID      pulid.ID                 `json:"partnerId"`
@@ -52,15 +53,49 @@ type ServiceFailure214Status struct {
 	LastGeneratedAt   int64                           `json:"lastGeneratedAt,omitempty"`
 }
 
+type GetEDIOutboundMessageForAckRequest struct {
+	TenantInfo               pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID                pulid.ID              `json:"partnerId"`
+	TransactionSet           edi.TransactionSet    `json:"transactionSet"`
+	GroupControlNumber       string                `json:"groupControlNumber"`
+	TransactionControlNumber string                `json:"transactionControlNumber"`
+}
+
+type UpdateEDIMessageAcknowledgmentRequest struct {
+	ID            pulid.ID                        `json:"id"`
+	TenantInfo    pagination.TenantInfo           `json:"tenantInfo"`
+	AckStatus     edi.MessageAcknowledgmentStatus `json:"ackStatus"`
+	AckMessageID  pulid.ID                        `json:"ackMessageId"`
+	AckReceivedAt *int64                          `json:"ackReceivedAt"`
+	AckLastError  string                          `json:"ackLastError"`
+}
+
 type UpdateEDIMessageDeliveryRequest struct {
 	ID                    pulid.ID                  `json:"id"`
 	TenantInfo            pagination.TenantInfo     `json:"tenantInfo"`
 	DeliveryStatus        edi.MessageDeliveryStatus `json:"deliveryStatus"`
 	DeliveryRemotePath    string                    `json:"deliveryRemotePath"`
+	AS2MessageID          string                    `json:"as2MessageId"`
+	AS2MIC                string                    `json:"as2Mic"`
 	IncrementAttempts     bool                      `json:"incrementAttempts"`
 	DeliveryLastAttemptAt *int64                    `json:"deliveryLastAttemptAt"`
 	DeliverySentAt        *int64                    `json:"deliverySentAt"`
 	DeliveryLastError     string                    `json:"deliveryLastError"`
+}
+
+type GetEDIMessageStatusCountsRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Since      int64                 `json:"since"`
+}
+
+type GetEDIOverdueAckCountRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	PendingSince int64                 `json:"pendingSince"`
+}
+
+type ListRecentEDIMessageFailuresRequest struct {
+	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	Limit      int                   `json:"limit"`
 }
 
 type EDIMessageRepository interface {
@@ -68,6 +103,10 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
 	) (*pagination.ListResult[*edi.EDIMessage], error)
+	ListMessagesCursor(
+		ctx context.Context,
+		req *ListEDIMessagesRequest,
+	) (*pagination.CursorListResult[*edi.EDIMessage], error)
 	GetMessageByID(ctx context.Context, req GetEDIMessageByIDRequest) (*edi.EDIMessage, error)
 	CreateMessageWithDiagnostics(
 		ctx context.Context,
@@ -84,5 +123,30 @@ type EDIMessageRepository interface {
 	UpdateMessageDelivery(
 		ctx context.Context,
 		req *UpdateEDIMessageDeliveryRequest,
+	) (*edi.EDIMessage, error)
+	GetOutboundMessageByAS2MessageID(
+		ctx context.Context,
+		as2MessageID string,
+	) (*edi.EDIMessage, error)
+	GetDeliveryStatusCounts(
+		ctx context.Context,
+		req GetEDIMessageStatusCountsRequest,
+	) (map[edi.MessageDeliveryStatus]int, error)
+	GetAckStatusCounts(
+		ctx context.Context,
+		req GetEDIMessageStatusCountsRequest,
+	) (map[edi.MessageAcknowledgmentStatus]int, error)
+	GetOverdueAckCount(ctx context.Context, req GetEDIOverdueAckCountRequest) (int, error)
+	ListRecentDeadLettered(
+		ctx context.Context,
+		req *ListRecentEDIMessageFailuresRequest,
+	) ([]*edi.EDIMessage, error)
+	GetOutboundMessageForAck(
+		ctx context.Context,
+		req GetEDIOutboundMessageForAckRequest,
+	) (*edi.EDIMessage, error)
+	UpdateMessageAcknowledgment(
+		ctx context.Context,
+		req *UpdateEDIMessageAcknowledgmentRequest,
 	) (*edi.EDIMessage, error)
 }

@@ -67,6 +67,93 @@ export type DriverType =
   | 'Regional'
   | 'Team';
 
+export type EdiConnectionMethod =
+  | 'AS2'
+  | 'Internal'
+  | 'SFTP'
+  | 'VAN';
+
+export type EdiConnectionStatus =
+  | 'Active'
+  | 'PendingAcceptance'
+  | 'Rejected'
+  | 'Revoked'
+  | 'Suspended';
+
+export type EdiDocumentDirection =
+  | 'Inbound'
+  | 'Outbound';
+
+export type EdiInboundFileStatus =
+  | 'Duplicate'
+  | 'Parsed'
+  | 'PartiallyProcessed'
+  | 'Processed'
+  | 'Quarantined'
+  | 'Received';
+
+export type EdiMappingEntityType =
+  | 'AccessorialCharge'
+  | 'Commodity'
+  | 'Customer'
+  | 'FormulaTemplate'
+  | 'Location'
+  | 'ServiceFailureReasonCode'
+  | 'ServiceType'
+  | 'ShipmentType';
+
+export type EdiMessageAckStatus =
+  | 'Accepted'
+  | 'Failed'
+  | 'NotExpected'
+  | 'Pending'
+  | 'Rejected';
+
+export type EdiMessageDeliveryStatus =
+  | 'DeadLettered'
+  | 'Failed'
+  | 'Queued'
+  | 'Sending'
+  | 'Sent';
+
+export type EdiMessageStatus =
+  | 'Failed'
+  | 'Generated';
+
+export type EdiPartnerKind =
+  | 'External'
+  | 'Internal';
+
+export type EdiStandard =
+  | 'X12';
+
+export type EdiSummaryAttentionKind =
+  | 'InboundFile'
+  | 'Message';
+
+export type EdiTemplateStatus =
+  | 'Active'
+  | 'Archived'
+  | 'Certified'
+  | 'Deprecated'
+  | 'Draft'
+  | 'Superseded';
+
+export type EdiTransferDirection =
+  | 'Inbound'
+  | 'Outbound';
+
+export type EdiTransferStatus =
+  | 'Approved'
+  | 'Canceled'
+  | 'Expired'
+  | 'Failed'
+  | 'MappingRequired'
+  | 'PendingApproval'
+  | 'Processing'
+  | 'Rejected'
+  | 'Submitted';
+
 export type EndorsementType =
   | 'H'
   | 'N'
@@ -161,8 +248,10 @@ export type PtoType =
   | 'Vacation';
 
 export type SelectOptionResource =
+  | 'EDI_TRANSFER'
   | 'EQUIPMENT_MANUFACTURER'
   | 'EQUIPMENT_TYPE'
+  | 'SHIPMENT'
   | 'TRACTOR'
   | 'TRAILER'
   | 'US_STATE'
@@ -486,6 +575,92 @@ export type WorkerPatchInput = {
 export type WorkerType =
   | 'Contractor'
   | 'Employee';
+
+export type EdiTemplateVersionSummaryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, templateId: string, sourceVersionId: string | null, versionNumber: number, x12Version: string, functionalGroupId: string, status: EdiTemplateStatus, isActive: boolean, notes: string | null, certifiedAt: number | null, activatedAt: number | null, archivedAt: number | null, deprecatedAt: number | null, supersededAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EdiTemplateVersionSummaryFieldsFragment' };
+
+export type EdiTemplateListFieldsFragment = { id: string, businessUnitId: string, organizationId: string, documentTypeId: string, name: string, description: string | null, direction: EdiDocumentDirection, standard: EdiStandard, transactionSet: string, status: EdiTemplateStatus, version: number, createdAt: number, updatedAt: number, versions: Array<{ ' $fragmentRefs'?: { 'EdiTemplateVersionSummaryFieldsFragment': EdiTemplateVersionSummaryFieldsFragment } }> | null } & { ' $fragmentName'?: 'EdiTemplateListFieldsFragment' };
+
+export type EdiTemplateListQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  status?: EdiTemplateStatus | null | undefined;
+  transactionSet?: string | null | undefined;
+  direction?: EdiDocumentDirection | null | undefined;
+}>;
+
+
+export type EdiTemplateListQuery = { ediTemplates: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiSummaryQueryVariables = Exact<{
+  sinceHours?: number | null | undefined;
+}>;
+
+
+export type EdiSummaryQuery = { ediSummary: { overdueAckCount: number, deliveryStatusCounts: Array<{ status: string, count: number }>, ackStatusCounts: Array<{ status: string, count: number }>, inboundFileStatusCounts: Array<{ status: string, count: number }>, inboundTransferStatusCounts: Array<{ status: string, count: number }>, attentionItems: Array<{ kind: EdiSummaryAttentionKind, id: string, partnerId: string | null, partnerName: string | null, partnerCode: string | null, reference: string | null, error: string | null, occurredAt: number }> } };
+
+export type EdiPartnerRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, kind: EdiPartnerKind, status: EntityStatus, code: string, name: string, description: string | null, internalOrganizationId: string | null, customerId: string | null, defaultTransportId: string | null, defaultMappingProfileId: string | null, country: string, timezone: string | null, contactName: string | null, contactEmail: string | null, contactPhone: string | null, enabledForInbound: boolean, enabledForOutbound: boolean, version: number, createdAt: number, updatedAt: number, internalOrganization: { id: string, name: string } | null, connection: { id: string, method: EdiConnectionMethod, status: EdiConnectionStatus } | null, defaultTransport: { id: string, name: string, method: EdiConnectionMethod } | null } & { ' $fragmentName'?: 'EdiPartnerRowFieldsFragment' };
+
+export type EdiPartnerTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EdiPartnerTableQuery = { ediPartners: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiPartnerRowFieldsFragment': EdiPartnerRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
+
+export type EdiCommunicationProfileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EdiCommunicationProfileTableQuery = { ediCommunicationProfiles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiCommunicationProfileRowFieldsFragment': EdiCommunicationProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiTransferRowFieldsFragment = { id: string, sourceOrganizationId: string, sourceBusinessUnitId: string, targetOrganizationId: string, targetBusinessUnitId: string, sourcePartnerId: string, targetPartnerId: string, sourceShipmentId: string | null, targetShipmentId: string | null, inboundMessageId: string | null, status: EdiTransferStatus, tenderPayload: unknown, mappingSnapshot: unknown, rejectionReason: string | null, failureReason: string | null, submittedAt: number, processedAt: number | null, version: number, createdAt: number, updatedAt: number, sourcePartner: { id: string, code: string, name: string } | null, targetPartner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiTransferRowFieldsFragment' };
+
+export type EdiTransferTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  direction: EdiTransferDirection;
+}>;
+
+
+export type EdiTransferTableQuery = { ediTransfers: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTransferRowFieldsFragment': EdiTransferRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiMessageRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, documentTypeId: string, partnerDocumentProfileId: string | null, shipmentId: string | null, transferId: string | null, inboundFileId: string | null, direction: EdiDocumentDirection, transactionSet: string, x12Version: string, status: EdiMessageStatus, interchangeControlNumber: string, groupControlNumber: string, transactionControlNumber: string, segmentCount: number, deliveryStatus: EdiMessageDeliveryStatus | null, deliveryRemotePath: string | null, deliveryAttempts: number, deliveryLastAttemptAt: number | null, deliverySentAt: number | null, deliveryLastError: string | null, ackStatus: EdiMessageAckStatus | null, ackMessageId: string | null, ackReceivedAt: number | null, ackLastError: string | null, generatedAt: number, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiMessageRowFieldsFragment' };
+
+export type EdiMessageTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EdiMessageTableQuery = { ediMessages: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMessageRowFieldsFragment': EdiMessageRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiInboundFileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, communicationProfileId: string, ediPartnerId: string | null, method: EdiConnectionMethod, remotePath: string, fileName: string, checksum: string, sizeBytes: number, interchangeControlNumber: string | null, isaSenderQualifier: string | null, isaSenderId: string | null, isaReceiverQualifier: string | null, isaReceiverId: string | null, status: EdiInboundFileStatus, failureReason: string | null, transactionCount: number, receivedAt: number, processedAt: number | null, version: number, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiInboundFileRowFieldsFragment' };
+
+export type EdiInboundFileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EdiInboundFileTableQuery = { ediInboundFiles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiInboundFileRowFieldsFragment': EdiInboundFileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiMappingProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string, name: string, description: string | null, version: number, createdAt: number, updatedAt: number, partner: { id: string, code: string, name: string } | null, entries: Array<{ id: string, entityType: EdiMappingEntityType, sourceId: string, sourceLabel: string | null, targetId: string, targetLabel: string | null }> | null } & { ' $fragmentName'?: 'EdiMappingProfileRowFieldsFragment' };
+
+export type EdiMappingProfileTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type EdiMappingProfileTableQuery = { ediMappingProfiles: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiMappingProfileRowFieldsFragment': EdiMappingProfileRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type EdiTestCaseRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, partnerDocumentProfileId: string, name: string, description: string | null, expectedWarnings: number, expectedErrors: number, version: number, createdAt: number, updatedAt: number, documentProfile: { id: string, name: string, direction: EdiDocumentDirection, transactionSet: string, partner: { id: string, code: string, name: string } | null } | null } & { ' $fragmentName'?: 'EdiTestCaseRowFieldsFragment' };
+
+export type EdiTestCaseTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  partnerDocumentProfileId?: string | number | null | undefined;
+}>;
+
+
+export type EdiTestCaseTableQuery = { ediTestCases: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTestCaseRowFieldsFragment': EdiTestCaseRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type EquipmentTypeTableFieldsFragment = { id: string, code: string, color: string } & { ' $fragmentName'?: 'EquipmentTypeTableFieldsFragment' };
 
@@ -982,6 +1157,287 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const EdiTemplateVersionSummaryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiTemplateVersionSummaryFields on EdiTemplateVersion {
+  id
+  businessUnitId
+  organizationId
+  templateId
+  sourceVersionId
+  versionNumber
+  x12Version
+  functionalGroupId
+  status
+  isActive
+  notes
+  certifiedAt
+  activatedAt
+  archivedAt
+  deprecatedAt
+  supersededAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"EdiTemplateVersionSummaryFields"}) as unknown as TypedDocumentString<EdiTemplateVersionSummaryFieldsFragment, unknown>;
+export const EdiTemplateListFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiTemplateListFields on EdiTemplate {
+  id
+  businessUnitId
+  organizationId
+  documentTypeId
+  name
+  description
+  direction
+  standard
+  transactionSet
+  status
+  version
+  createdAt
+  updatedAt
+  versions {
+    ...EdiTemplateVersionSummaryFields
+  }
+}
+    fragment EdiTemplateVersionSummaryFields on EdiTemplateVersion {
+  id
+  businessUnitId
+  organizationId
+  templateId
+  sourceVersionId
+  versionNumber
+  x12Version
+  functionalGroupId
+  status
+  isActive
+  notes
+  certifiedAt
+  activatedAt
+  archivedAt
+  deprecatedAt
+  supersededAt
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"EdiTemplateListFields"}) as unknown as TypedDocumentString<EdiTemplateListFieldsFragment, unknown>;
+export const EdiPartnerRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiPartnerRowFields on EdiPartner {
+  id
+  businessUnitId
+  organizationId
+  kind
+  status
+  code
+  name
+  description
+  internalOrganizationId
+  customerId
+  defaultTransportId
+  defaultMappingProfileId
+  country
+  timezone
+  contactName
+  contactEmail
+  contactPhone
+  enabledForInbound
+  enabledForOutbound
+  version
+  createdAt
+  updatedAt
+  internalOrganization {
+    id
+    name
+  }
+  connection {
+    id
+    method
+    status
+  }
+  defaultTransport {
+    id
+    name
+    method
+  }
+}
+    `, {"fragmentName":"EdiPartnerRowFields"}) as unknown as TypedDocumentString<EdiPartnerRowFieldsFragment, unknown>;
+export const EdiCommunicationProfileRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  ediConnectionId
+  method
+  status
+  name
+  description
+  secretState {
+    key
+  }
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+}
+    `, {"fragmentName":"EdiCommunicationProfileRowFields"}) as unknown as TypedDocumentString<EdiCommunicationProfileRowFieldsFragment, unknown>;
+export const EdiTransferRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiTransferRowFields on EdiTransfer {
+  id
+  sourceOrganizationId
+  sourceBusinessUnitId
+  targetOrganizationId
+  targetBusinessUnitId
+  sourcePartnerId
+  targetPartnerId
+  sourceShipmentId
+  targetShipmentId
+  inboundMessageId
+  status
+  tenderPayload
+  mappingSnapshot
+  rejectionReason
+  failureReason
+  submittedAt
+  processedAt
+  version
+  createdAt
+  updatedAt
+  sourcePartner {
+    id
+    code
+    name
+  }
+  targetPartner {
+    id
+    code
+    name
+  }
+}
+    `, {"fragmentName":"EdiTransferRowFields"}) as unknown as TypedDocumentString<EdiTransferRowFieldsFragment, unknown>;
+export const EdiMessageRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiMessageRowFields on EdiMessage {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  documentTypeId
+  partnerDocumentProfileId
+  shipmentId
+  transferId
+  inboundFileId
+  direction
+  transactionSet
+  x12Version
+  status
+  interchangeControlNumber
+  groupControlNumber
+  transactionControlNumber
+  segmentCount
+  deliveryStatus
+  deliveryRemotePath
+  deliveryAttempts
+  deliveryLastAttemptAt
+  deliverySentAt
+  deliveryLastError
+  ackStatus
+  ackMessageId
+  ackReceivedAt
+  ackLastError
+  generatedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}
+    `, {"fragmentName":"EdiMessageRowFields"}) as unknown as TypedDocumentString<EdiMessageRowFieldsFragment, unknown>;
+export const EdiInboundFileRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiInboundFileRowFields on EdiInboundFile {
+  id
+  businessUnitId
+  organizationId
+  communicationProfileId
+  ediPartnerId
+  method
+  remotePath
+  fileName
+  checksum
+  sizeBytes
+  interchangeControlNumber
+  isaSenderQualifier
+  isaSenderId
+  isaReceiverQualifier
+  isaReceiverId
+  status
+  failureReason
+  transactionCount
+  receivedAt
+  processedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}
+    `, {"fragmentName":"EdiInboundFileRowFields"}) as unknown as TypedDocumentString<EdiInboundFileRowFieldsFragment, unknown>;
+export const EdiMappingProfileRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiMappingProfileRowFields on EdiMappingProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  name
+  description
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+  entries {
+    id
+    entityType
+    sourceId
+    sourceLabel
+    targetId
+    targetLabel
+  }
+}
+    `, {"fragmentName":"EdiMappingProfileRowFields"}) as unknown as TypedDocumentString<EdiMappingProfileRowFieldsFragment, unknown>;
+export const EdiTestCaseRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment EdiTestCaseRowFields on EdiTestCase {
+  id
+  businessUnitId
+  organizationId
+  partnerDocumentProfileId
+  name
+  description
+  expectedWarnings
+  expectedErrors
+  version
+  createdAt
+  updatedAt
+  documentProfile {
+    id
+    name
+    direction
+    transactionSet
+    partner {
+      id
+      code
+      name
+    }
+  }
+}
+    `, {"fragmentName":"EdiTestCaseRowFields"}) as unknown as TypedDocumentString<EdiTestCaseRowFieldsFragment, unknown>;
 export const EquipmentTypeConfigurationRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment EquipmentTypeConfigurationRowFields on EquipmentType {
   id
@@ -2108,6 +2564,407 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
   endCursor
 }
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
+export const EdiTemplateListDocument = new TypedDocumentString(`
+    query EdiTemplateList($input: DataTableConnectionInput!, $status: EdiTemplateStatus, $transactionSet: String, $direction: EdiDocumentDirection) {
+  ediTemplates(
+    input: $input
+    status: $status
+    transactionSet: $transactionSet
+    direction: $direction
+  ) {
+    edges {
+      node {
+        ...EdiTemplateListFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiTemplateVersionSummaryFields on EdiTemplateVersion {
+  id
+  businessUnitId
+  organizationId
+  templateId
+  sourceVersionId
+  versionNumber
+  x12Version
+  functionalGroupId
+  status
+  isActive
+  notes
+  certifiedAt
+  activatedAt
+  archivedAt
+  deprecatedAt
+  supersededAt
+  version
+  createdAt
+  updatedAt
+}
+fragment EdiTemplateListFields on EdiTemplate {
+  id
+  businessUnitId
+  organizationId
+  documentTypeId
+  name
+  description
+  direction
+  standard
+  transactionSet
+  status
+  version
+  createdAt
+  updatedAt
+  versions {
+    ...EdiTemplateVersionSummaryFields
+  }
+}`, {"hash":"sha256:f412648ecffa3ce3939f151f43e74eebb77d0278b8fc405c4a091eee7ae6298d"}) as unknown as TypedDocumentString<EdiTemplateListQuery, EdiTemplateListQueryVariables>;
+export const EdiSummaryDocument = new TypedDocumentString(`
+    query EdiSummary($sinceHours: Int) {
+  ediSummary(sinceHours: $sinceHours) {
+    deliveryStatusCounts {
+      status
+      count
+    }
+    ackStatusCounts {
+      status
+      count
+    }
+    inboundFileStatusCounts {
+      status
+      count
+    }
+    inboundTransferStatusCounts {
+      status
+      count
+    }
+    overdueAckCount
+    attentionItems {
+      kind
+      id
+      partnerId
+      partnerName
+      partnerCode
+      reference
+      error
+      occurredAt
+    }
+  }
+}
+    `, {"hash":"sha256:3ac851e5c896dbfb25ef2c5275379c815430951cf1f410cb48d6587ccbf2ce0a"}) as unknown as TypedDocumentString<EdiSummaryQuery, EdiSummaryQueryVariables>;
+export const EdiPartnerTableDocument = new TypedDocumentString(`
+    query EdiPartnerTable($input: DataTableConnectionInput!) {
+  ediPartners(input: $input) {
+    edges {
+      node {
+        ...EdiPartnerRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiPartnerRowFields on EdiPartner {
+  id
+  businessUnitId
+  organizationId
+  kind
+  status
+  code
+  name
+  description
+  internalOrganizationId
+  customerId
+  defaultTransportId
+  defaultMappingProfileId
+  country
+  timezone
+  contactName
+  contactEmail
+  contactPhone
+  enabledForInbound
+  enabledForOutbound
+  version
+  createdAt
+  updatedAt
+  internalOrganization {
+    id
+    name
+  }
+  connection {
+    id
+    method
+    status
+  }
+  defaultTransport {
+    id
+    name
+    method
+  }
+}`, {"hash":"sha256:c3d724f49cd3db7e385b862d3c367b5e262b45a37c949b38f79b9daf5d487b49"}) as unknown as TypedDocumentString<EdiPartnerTableQuery, EdiPartnerTableQueryVariables>;
+export const EdiCommunicationProfileTableDocument = new TypedDocumentString(`
+    query EdiCommunicationProfileTable($input: DataTableConnectionInput!) {
+  ediCommunicationProfiles(input: $input) {
+    edges {
+      node {
+        ...EdiCommunicationProfileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiCommunicationProfileRowFields on EdiCommunicationProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  ediConnectionId
+  method
+  status
+  name
+  description
+  secretState {
+    key
+  }
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+}`, {"hash":"sha256:f223a5cffeab0423e08214971f5dff307b73c42cc7859433e0a64b375b3b999d"}) as unknown as TypedDocumentString<EdiCommunicationProfileTableQuery, EdiCommunicationProfileTableQueryVariables>;
+export const EdiTransferTableDocument = new TypedDocumentString(`
+    query EdiTransferTable($input: DataTableConnectionInput!, $direction: EdiTransferDirection!) {
+  ediTransfers(input: $input, direction: $direction) {
+    edges {
+      node {
+        ...EdiTransferRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiTransferRowFields on EdiTransfer {
+  id
+  sourceOrganizationId
+  sourceBusinessUnitId
+  targetOrganizationId
+  targetBusinessUnitId
+  sourcePartnerId
+  targetPartnerId
+  sourceShipmentId
+  targetShipmentId
+  inboundMessageId
+  status
+  tenderPayload
+  mappingSnapshot
+  rejectionReason
+  failureReason
+  submittedAt
+  processedAt
+  version
+  createdAt
+  updatedAt
+  sourcePartner {
+    id
+    code
+    name
+  }
+  targetPartner {
+    id
+    code
+    name
+  }
+}`, {"hash":"sha256:79fb13e369231b4319fbdc4fd4e5b47859a7a3b548834f5eb3ce9b8cd9414c65"}) as unknown as TypedDocumentString<EdiTransferTableQuery, EdiTransferTableQueryVariables>;
+export const EdiMessageTableDocument = new TypedDocumentString(`
+    query EdiMessageTable($input: DataTableConnectionInput!) {
+  ediMessages(input: $input) {
+    edges {
+      node {
+        ...EdiMessageRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiMessageRowFields on EdiMessage {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  documentTypeId
+  partnerDocumentProfileId
+  shipmentId
+  transferId
+  inboundFileId
+  direction
+  transactionSet
+  x12Version
+  status
+  interchangeControlNumber
+  groupControlNumber
+  transactionControlNumber
+  segmentCount
+  deliveryStatus
+  deliveryRemotePath
+  deliveryAttempts
+  deliveryLastAttemptAt
+  deliverySentAt
+  deliveryLastError
+  ackStatus
+  ackMessageId
+  ackReceivedAt
+  ackLastError
+  generatedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}`, {"hash":"sha256:af442ce1cb8573365cec4e594d4d3c656fc188d44a16e63f20a545c2dcc6e937"}) as unknown as TypedDocumentString<EdiMessageTableQuery, EdiMessageTableQueryVariables>;
+export const EdiInboundFileTableDocument = new TypedDocumentString(`
+    query EdiInboundFileTable($input: DataTableConnectionInput!) {
+  ediInboundFiles(input: $input) {
+    edges {
+      node {
+        ...EdiInboundFileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiInboundFileRowFields on EdiInboundFile {
+  id
+  businessUnitId
+  organizationId
+  communicationProfileId
+  ediPartnerId
+  method
+  remotePath
+  fileName
+  checksum
+  sizeBytes
+  interchangeControlNumber
+  isaSenderQualifier
+  isaSenderId
+  isaReceiverQualifier
+  isaReceiverId
+  status
+  failureReason
+  transactionCount
+  receivedAt
+  processedAt
+  version
+  partner {
+    id
+    code
+    name
+  }
+}`, {"hash":"sha256:23a72ad0db50e1988827a9b85f280f720f93562e70933de12af52b544d0bebd4"}) as unknown as TypedDocumentString<EdiInboundFileTableQuery, EdiInboundFileTableQueryVariables>;
+export const EdiMappingProfileTableDocument = new TypedDocumentString(`
+    query EdiMappingProfileTable($input: DataTableConnectionInput!) {
+  ediMappingProfiles(input: $input) {
+    edges {
+      node {
+        ...EdiMappingProfileRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiMappingProfileRowFields on EdiMappingProfile {
+  id
+  businessUnitId
+  organizationId
+  ediPartnerId
+  name
+  description
+  version
+  createdAt
+  updatedAt
+  partner {
+    id
+    code
+    name
+  }
+  entries {
+    id
+    entityType
+    sourceId
+    sourceLabel
+    targetId
+    targetLabel
+  }
+}`, {"hash":"sha256:b8dd0f903ccc5fe99d5b781c747d43a7112d8356e9eb02049c5617a766dfe198"}) as unknown as TypedDocumentString<EdiMappingProfileTableQuery, EdiMappingProfileTableQueryVariables>;
+export const EdiTestCaseTableDocument = new TypedDocumentString(`
+    query EdiTestCaseTable($input: DataTableConnectionInput!, $partnerDocumentProfileId: ID) {
+  ediTestCases(input: $input, partnerDocumentProfileId: $partnerDocumentProfileId) {
+    edges {
+      node {
+        ...EdiTestCaseRowFields
+      }
+    }
+    totalCount
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    fragment EdiTestCaseRowFields on EdiTestCase {
+  id
+  businessUnitId
+  organizationId
+  partnerDocumentProfileId
+  name
+  description
+  expectedWarnings
+  expectedErrors
+  version
+  createdAt
+  updatedAt
+  documentProfile {
+    id
+    name
+    direction
+    transactionSet
+    partner {
+      id
+      code
+      name
+    }
+  }
+}`, {"hash":"sha256:5eddd01690b554a6b32398b3bbb4d397ef7b355a3a0f988818783ad41a79bd43"}) as unknown as TypedDocumentString<EdiTestCaseTableQuery, EdiTestCaseTableQueryVariables>;
 export const TractorTableDocument = new TypedDocumentString(`
     query TractorTable($input: DataTableConnectionInput!, $includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeWorkerDetails: Boolean = true) {
   tractors(

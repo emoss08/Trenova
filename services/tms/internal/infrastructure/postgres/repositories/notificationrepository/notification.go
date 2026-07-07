@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,6 +51,22 @@ func (r *repository) userOrGlobalFilter(
 					WhereOr("notif.channel = ?", notification.ChannelGlobal)
 			})
 	})
+}
+
+func (r *repository) ExistsRecent(
+	ctx context.Context,
+	req repositories.ExistsRecentNotificationRequest,
+) (bool, error) {
+	cols := buncolgen.NotificationColumns
+	return r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*notification.Notification)(nil)).
+		Where(cols.OrganizationID.Eq(), req.OrganizationID).
+		Where(cols.BusinessUnitID.Eq(), req.BusinessUnitID).
+		Where(cols.EventType.Eq(), req.EventType).
+		Where(cols.CorrelationID.Eq(), req.CorrelationID).
+		Where(cols.CreatedAt.Gte(), req.Since).
+		Exists(ctx)
 }
 
 func (r *repository) Create(

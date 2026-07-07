@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -18,7 +19,8 @@ type CommunicationProfileSecretState struct {
 }
 
 type EDICommunicationProfile struct {
-	bun.BaseModel `json:"-" bun:"table:edi_communication_profiles,alias:ecp"`
+	bun.BaseModel             `json:"-" bun:"table:edi_communication_profiles,alias:ecp"`
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID               pulid.ID                          `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID   pulid.ID                          `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
@@ -97,4 +99,8 @@ func (p *EDICommunicationProfile) GetPostgresSearchConfig() domaintypes.Postgres
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightC},
 		},
 	}
+}
+
+func (p *EDICommunicationProfile) GetCreatedAt() int64 {
+	return p.CreatedAt
 }

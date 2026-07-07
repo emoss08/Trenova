@@ -592,6 +592,63 @@ func (_c *MockEDIDocumentRepository_CreateTestCase_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// DeleteTestCase provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) DeleteTestCase(ctx context.Context, req repositories.DeleteEDITestCaseRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteTestCase")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.DeleteEDITestCaseRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDIDocumentRepository_DeleteTestCase_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteTestCase'
+type MockEDIDocumentRepository_DeleteTestCase_Call struct {
+	*mock.Call
+}
+
+// DeleteTestCase is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.DeleteEDITestCaseRequest
+func (_e *MockEDIDocumentRepository_Expecter) DeleteTestCase(ctx interface{}, req interface{}) *MockEDIDocumentRepository_DeleteTestCase_Call {
+	return &MockEDIDocumentRepository_DeleteTestCase_Call{Call: _e.mock.On("DeleteTestCase", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_DeleteTestCase_Call) Run(run func(ctx context.Context, req repositories.DeleteEDITestCaseRequest)) *MockEDIDocumentRepository_DeleteTestCase_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.DeleteEDITestCaseRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.DeleteEDITestCaseRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_DeleteTestCase_Call) Return(err error) *MockEDIDocumentRepository_DeleteTestCase_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_DeleteTestCase_Call) RunAndReturn(run func(ctx context.Context, req repositories.DeleteEDITestCaseRequest) error) *MockEDIDocumentRepository_DeleteTestCase_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnsureBase204Template provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) EnsureBase204Template(ctx context.Context, tenantInfo pagination.TenantInfo) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
 	ret := _mock.Called(ctx, tenantInfo)
@@ -664,6 +721,156 @@ func (_c *MockEDIDocumentRepository_EnsureBase204Template_Call) Return(eDITempla
 }
 
 func (_c *MockEDIDocumentRepository_EnsureBase204Template_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (*edi.EDITemplate, *edi.EDITemplateVersion, error)) *MockEDIDocumentRepository_EnsureBase204Template_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// EnsureBaseTemplate provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) EnsureBaseTemplate(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error) {
+	ret := _mock.Called(ctx, tenantInfo, transactionSet)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnsureBaseTemplate")
+	}
+
+	var r0 *edi.EDITemplate
+	var r1 *edi.EDITemplateVersion
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error)); ok {
+		return returnFunc(ctx, tenantInfo, transactionSet)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) *edi.EDITemplate); ok {
+		r0 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDITemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) *edi.EDITemplateVersion); ok {
+		r1 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*edi.EDITemplateVersion)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, pagination.TenantInfo, edi.TransactionSet) error); ok {
+		r2 = returnFunc(ctx, tenantInfo, transactionSet)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// MockEDIDocumentRepository_EnsureBaseTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnsureBaseTemplate'
+type MockEDIDocumentRepository_EnsureBaseTemplate_Call struct {
+	*mock.Call
+}
+
+// EnsureBaseTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - transactionSet edi.TransactionSet
+func (_e *MockEDIDocumentRepository_Expecter) EnsureBaseTemplate(ctx interface{}, tenantInfo interface{}, transactionSet interface{}) *MockEDIDocumentRepository_EnsureBaseTemplate_Call {
+	return &MockEDIDocumentRepository_EnsureBaseTemplate_Call{Call: _e.mock.On("EnsureBaseTemplate", ctx, tenantInfo, transactionSet)}
+}
+
+func (_c *MockEDIDocumentRepository_EnsureBaseTemplate_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet)) *MockEDIDocumentRepository_EnsureBaseTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 edi.TransactionSet
+		if args[2] != nil {
+			arg2 = args[2].(edi.TransactionSet)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_EnsureBaseTemplate_Call) Return(eDITemplate *edi.EDITemplate, eDITemplateVersion *edi.EDITemplateVersion, err error) *MockEDIDocumentRepository_EnsureBaseTemplate_Call {
+	_c.Call.Return(eDITemplate, eDITemplateVersion, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_EnsureBaseTemplate_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, transactionSet edi.TransactionSet) (*edi.EDITemplate, *edi.EDITemplateVersion, error)) *MockEDIDocumentRepository_EnsureBaseTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAckStatusCounts provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetAckStatusCounts(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAckStatusCounts")
+	}
+
+	var r0 map[edi.MessageAcknowledgmentStatus]int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) map[edi.MessageAcknowledgmentStatus]int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[edi.MessageAcknowledgmentStatus]int)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetAckStatusCounts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAckStatusCounts'
+type MockEDIDocumentRepository_GetAckStatusCounts_Call struct {
+	*mock.Call
+}
+
+// GetAckStatusCounts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIMessageStatusCountsRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetAckStatusCounts(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetAckStatusCounts_Call {
+	return &MockEDIDocumentRepository_GetAckStatusCounts_Call{Call: _e.mock.On("GetAckStatusCounts", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCounts_Call) Run(run func(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest)) *MockEDIDocumentRepository_GetAckStatusCounts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIMessageStatusCountsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIMessageStatusCountsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCounts_Call) Return(messageAcknowledgmentStatusToInt map[edi.MessageAcknowledgmentStatus]int, err error) *MockEDIDocumentRepository_GetAckStatusCounts_Call {
+	_c.Call.Return(messageAcknowledgmentStatusToInt, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetAckStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageAcknowledgmentStatus]int, error)) *MockEDIDocumentRepository_GetAckStatusCounts_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -940,6 +1147,74 @@ func (_c *MockEDIDocumentRepository_GetActiveTemplateVersion_Call) RunAndReturn(
 	return _c
 }
 
+// GetDeliveryStatusCounts provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetDeliveryStatusCounts(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetDeliveryStatusCounts")
+	}
+
+	var r0 map[edi.MessageDeliveryStatus]int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) map[edi.MessageDeliveryStatus]int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[edi.MessageDeliveryStatus]int)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIMessageStatusCountsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetDeliveryStatusCounts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDeliveryStatusCounts'
+type MockEDIDocumentRepository_GetDeliveryStatusCounts_Call struct {
+	*mock.Call
+}
+
+// GetDeliveryStatusCounts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIMessageStatusCountsRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetDeliveryStatusCounts(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call {
+	return &MockEDIDocumentRepository_GetDeliveryStatusCounts_Call{Call: _e.mock.On("GetDeliveryStatusCounts", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call) Run(run func(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest)) *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIMessageStatusCountsRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIMessageStatusCountsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call) Return(messageDeliveryStatusToInt map[edi.MessageDeliveryStatus]int, err error) *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call {
+	_c.Call.Return(messageDeliveryStatusToInt, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIMessageStatusCountsRequest) (map[edi.MessageDeliveryStatus]int, error)) *MockEDIDocumentRepository_GetDeliveryStatusCounts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMessageByID provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) GetMessageByID(ctx context.Context, req repositories.GetEDIMessageByIDRequest) (*edi.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
@@ -1004,6 +1279,208 @@ func (_c *MockEDIDocumentRepository_GetMessageByID_Call) Return(eDIMessage *edi.
 }
 
 func (_c *MockEDIDocumentRepository_GetMessageByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIMessageByIDRequest) (*edi.EDIMessage, error)) *MockEDIDocumentRepository_GetMessageByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetOutboundMessageByAS2MessageID provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetOutboundMessageByAS2MessageID(ctx context.Context, as2MessageID string) (*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, as2MessageID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOutboundMessageByAS2MessageID")
+	}
+
+	var r0 *edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, as2MessageID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, as2MessageID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, as2MessageID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOutboundMessageByAS2MessageID'
+type MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call struct {
+	*mock.Call
+}
+
+// GetOutboundMessageByAS2MessageID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - as2MessageID string
+func (_e *MockEDIDocumentRepository_Expecter) GetOutboundMessageByAS2MessageID(ctx interface{}, as2MessageID interface{}) *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call {
+	return &MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call{Call: _e.mock.On("GetOutboundMessageByAS2MessageID", ctx, as2MessageID)}
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call) Run(run func(ctx context.Context, as2MessageID string)) *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call {
+	_c.Call.Return(eDIMessage, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call) RunAndReturn(run func(ctx context.Context, as2MessageID string) (*edi.EDIMessage, error)) *MockEDIDocumentRepository_GetOutboundMessageByAS2MessageID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetOutboundMessageForAck provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetOutboundMessageForAck(ctx context.Context, req repositories.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOutboundMessageForAck")
+	}
+
+	var r0 *edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIOutboundMessageForAckRequest) *edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIOutboundMessageForAckRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetOutboundMessageForAck_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOutboundMessageForAck'
+type MockEDIDocumentRepository_GetOutboundMessageForAck_Call struct {
+	*mock.Call
+}
+
+// GetOutboundMessageForAck is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIOutboundMessageForAckRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetOutboundMessageForAck(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetOutboundMessageForAck_Call {
+	return &MockEDIDocumentRepository_GetOutboundMessageForAck_Call{Call: _e.mock.On("GetOutboundMessageForAck", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageForAck_Call) Run(run func(ctx context.Context, req repositories.GetEDIOutboundMessageForAckRequest)) *MockEDIDocumentRepository_GetOutboundMessageForAck_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIOutboundMessageForAckRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIOutboundMessageForAckRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageForAck_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIDocumentRepository_GetOutboundMessageForAck_Call {
+	_c.Call.Return(eDIMessage, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOutboundMessageForAck_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIOutboundMessageForAckRequest) (*edi.EDIMessage, error)) *MockEDIDocumentRepository_GetOutboundMessageForAck_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetOverdueAckCount provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetOverdueAckCount(ctx context.Context, req repositories.GetEDIOverdueAckCountRequest) (int, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOverdueAckCount")
+	}
+
+	var r0 int
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIOverdueAckCountRequest) (int, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIOverdueAckCountRequest) int); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIOverdueAckCountRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetOverdueAckCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOverdueAckCount'
+type MockEDIDocumentRepository_GetOverdueAckCount_Call struct {
+	*mock.Call
+}
+
+// GetOverdueAckCount is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIOverdueAckCountRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetOverdueAckCount(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetOverdueAckCount_Call {
+	return &MockEDIDocumentRepository_GetOverdueAckCount_Call{Call: _e.mock.On("GetOverdueAckCount", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetOverdueAckCount_Call) Run(run func(ctx context.Context, req repositories.GetEDIOverdueAckCountRequest)) *MockEDIDocumentRepository_GetOverdueAckCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIOverdueAckCountRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIOverdueAckCountRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOverdueAckCount_Call) Return(n int, err error) *MockEDIDocumentRepository_GetOverdueAckCount_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetOverdueAckCount_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIOverdueAckCountRequest) (int, error)) *MockEDIDocumentRepository_GetOverdueAckCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1688,6 +2165,74 @@ func (_c *MockEDIDocumentRepository_ListMessages_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// ListMessagesCursor provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListMessagesCursor(ctx context.Context, req *repositories.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListMessagesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDIMessage]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDIMessagesRequest) *pagination.CursorListResult[*edi.EDIMessage]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDIMessage])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDIMessagesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListMessagesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListMessagesCursor'
+type MockEDIDocumentRepository_ListMessagesCursor_Call struct {
+	*mock.Call
+}
+
+// ListMessagesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDIMessagesRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListMessagesCursor(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListMessagesCursor_Call {
+	return &MockEDIDocumentRepository_ListMessagesCursor_Call{Call: _e.mock.On("ListMessagesCursor", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListMessagesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDIMessagesRequest)) *MockEDIDocumentRepository_ListMessagesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDIMessagesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDIMessagesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListMessagesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDIMessage], err error) *MockEDIDocumentRepository_ListMessagesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListMessagesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIMessagesRequest) (*pagination.CursorListResult[*edi.EDIMessage], error)) *MockEDIDocumentRepository_ListMessagesCursor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListPartnerDocumentProfiles provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) ListPartnerDocumentProfiles(ctx context.Context, req *repositories.ListEDIPartnerDocumentProfilesRequest) (*pagination.ListResult[*edi.EDIPartnerDocumentProfile], error) {
 	ret := _mock.Called(ctx, req)
@@ -1888,6 +2433,74 @@ func (_c *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call) Return(listR
 }
 
 func (_c *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDIPartnerSettingSchemasRequest) (*pagination.ListResult[*edi.EDIPartnerSettingSchema], error)) *MockEDIDocumentRepository_ListPartnerSettingSchemas_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListRecentDeadLettered provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListRecentDeadLettered(ctx context.Context, req *repositories.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRecentDeadLettered")
+	}
+
+	var r0 []*edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListRecentEDIMessageFailuresRequest) []*edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListRecentEDIMessageFailuresRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListRecentDeadLettered_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRecentDeadLettered'
+type MockEDIDocumentRepository_ListRecentDeadLettered_Call struct {
+	*mock.Call
+}
+
+// ListRecentDeadLettered is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListRecentEDIMessageFailuresRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListRecentDeadLettered(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListRecentDeadLettered_Call {
+	return &MockEDIDocumentRepository_ListRecentDeadLettered_Call{Call: _e.mock.On("ListRecentDeadLettered", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListRecentDeadLettered_Call) Run(run func(ctx context.Context, req *repositories.ListRecentEDIMessageFailuresRequest)) *MockEDIDocumentRepository_ListRecentDeadLettered_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListRecentEDIMessageFailuresRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListRecentEDIMessageFailuresRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListRecentDeadLettered_Call) Return(eDIMessages []*edi.EDIMessage, err error) *MockEDIDocumentRepository_ListRecentDeadLettered_Call {
+	_c.Call.Return(eDIMessages, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListRecentDeadLettered_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListRecentEDIMessageFailuresRequest) ([]*edi.EDIMessage, error)) *MockEDIDocumentRepository_ListRecentDeadLettered_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2232,6 +2845,74 @@ func (_c *MockEDIDocumentRepository_ListTemplates_Call) RunAndReturn(run func(ct
 	return _c
 }
 
+// ListTemplatesCursor provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListTemplatesCursor(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListTemplatesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDITemplate]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITemplatesRequest) *pagination.CursorListResult[*edi.EDITemplate]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDITemplate])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDITemplatesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListTemplatesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTemplatesCursor'
+type MockEDIDocumentRepository_ListTemplatesCursor_Call struct {
+	*mock.Call
+}
+
+// ListTemplatesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDITemplatesRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListTemplatesCursor(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListTemplatesCursor_Call {
+	return &MockEDIDocumentRepository_ListTemplatesCursor_Call{Call: _e.mock.On("ListTemplatesCursor", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListTemplatesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest)) *MockEDIDocumentRepository_ListTemplatesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDITemplatesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDITemplatesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListTemplatesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDITemplate], err error) *MockEDIDocumentRepository_ListTemplatesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListTemplatesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITemplatesRequest) (*pagination.CursorListResult[*edi.EDITemplate], error)) *MockEDIDocumentRepository_ListTemplatesCursor_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListTestCases provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) ListTestCases(ctx context.Context, req *repositories.ListEDITestCasesRequest) (*pagination.ListResult[*edi.EDITestCase], error) {
 	ret := _mock.Called(ctx, req)
@@ -2296,6 +2977,74 @@ func (_c *MockEDIDocumentRepository_ListTestCases_Call) Return(listResult *pagin
 }
 
 func (_c *MockEDIDocumentRepository_ListTestCases_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITestCasesRequest) (*pagination.ListResult[*edi.EDITestCase], error)) *MockEDIDocumentRepository_ListTestCases_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListTestCasesCursor provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) ListTestCasesCursor(ctx context.Context, req *repositories.ListEDITestCasesRequest) (*pagination.CursorListResult[*edi.EDITestCase], error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListTestCasesCursor")
+	}
+
+	var r0 *pagination.CursorListResult[*edi.EDITestCase]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITestCasesRequest) (*pagination.CursorListResult[*edi.EDITestCase], error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListEDITestCasesRequest) *pagination.CursorListResult[*edi.EDITestCase]); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*pagination.CursorListResult[*edi.EDITestCase])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListEDITestCasesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_ListTestCasesCursor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTestCasesCursor'
+type MockEDIDocumentRepository_ListTestCasesCursor_Call struct {
+	*mock.Call
+}
+
+// ListTestCasesCursor is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListEDITestCasesRequest
+func (_e *MockEDIDocumentRepository_Expecter) ListTestCasesCursor(ctx interface{}, req interface{}) *MockEDIDocumentRepository_ListTestCasesCursor_Call {
+	return &MockEDIDocumentRepository_ListTestCasesCursor_Call{Call: _e.mock.On("ListTestCasesCursor", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_ListTestCasesCursor_Call) Run(run func(ctx context.Context, req *repositories.ListEDITestCasesRequest)) *MockEDIDocumentRepository_ListTestCasesCursor_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListEDITestCasesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListEDITestCasesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListTestCasesCursor_Call) Return(cursorListResult *pagination.CursorListResult[*edi.EDITestCase], err error) *MockEDIDocumentRepository_ListTestCasesCursor_Call {
+	_c.Call.Return(cursorListResult, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_ListTestCasesCursor_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListEDITestCasesRequest) (*pagination.CursorListResult[*edi.EDITestCase], error)) *MockEDIDocumentRepository_ListTestCasesCursor_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2912,6 +3661,74 @@ func (_c *MockEDIDocumentRepository_SelectTemplateOptions_Call) RunAndReturn(run
 	return _c
 }
 
+// UpdateMessageAcknowledgment provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) UpdateMessageAcknowledgment(ctx context.Context, req *repositories.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateMessageAcknowledgment")
+	}
+
+	var r0 *edi.EDIMessage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateEDIMessageAcknowledgmentRequest) *edi.EDIMessage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDIMessage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UpdateEDIMessageAcknowledgmentRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateMessageAcknowledgment'
+type MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call struct {
+	*mock.Call
+}
+
+// UpdateMessageAcknowledgment is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateEDIMessageAcknowledgmentRequest
+func (_e *MockEDIDocumentRepository_Expecter) UpdateMessageAcknowledgment(ctx interface{}, req interface{}) *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call {
+	return &MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call{Call: _e.mock.On("UpdateMessageAcknowledgment", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call) Run(run func(ctx context.Context, req *repositories.UpdateEDIMessageAcknowledgmentRequest)) *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateEDIMessageAcknowledgmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateEDIMessageAcknowledgmentRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call) Return(eDIMessage *edi.EDIMessage, err error) *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call {
+	_c.Call.Return(eDIMessage, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateEDIMessageAcknowledgmentRequest) (*edi.EDIMessage, error)) *MockEDIDocumentRepository_UpdateMessageAcknowledgment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateMessageDelivery provides a mock function for the type MockEDIDocumentRepository
 func (_mock *MockEDIDocumentRepository) UpdateMessageDelivery(ctx context.Context, req *repositories.UpdateEDIMessageDeliveryRequest) (*edi.EDIMessage, error) {
 	ret := _mock.Called(ctx, req)
@@ -3180,6 +3997,74 @@ func (_c *MockEDIDocumentRepository_UpdateTemplateVersionMetadata_Call) Return(e
 }
 
 func (_c *MockEDIDocumentRepository_UpdateTemplateVersionMetadata_Call) RunAndReturn(run func(ctx context.Context, version *edi.EDITemplateVersion) (*edi.EDITemplateVersion, error)) *MockEDIDocumentRepository_UpdateTemplateVersionMetadata_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateTestCase provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) UpdateTestCase(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateTestCase")
+	}
+
+	var r0 *edi.EDITestCase
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITestCase) (*edi.EDITestCase, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *edi.EDITestCase) *edi.EDITestCase); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*edi.EDITestCase)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *edi.EDITestCase) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_UpdateTestCase_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateTestCase'
+type MockEDIDocumentRepository_UpdateTestCase_Call struct {
+	*mock.Call
+}
+
+// UpdateTestCase is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *edi.EDITestCase
+func (_e *MockEDIDocumentRepository_Expecter) UpdateTestCase(ctx interface{}, entity interface{}) *MockEDIDocumentRepository_UpdateTestCase_Call {
+	return &MockEDIDocumentRepository_UpdateTestCase_Call{Call: _e.mock.On("UpdateTestCase", ctx, entity)}
+}
+
+func (_c *MockEDIDocumentRepository_UpdateTestCase_Call) Run(run func(ctx context.Context, entity *edi.EDITestCase)) *MockEDIDocumentRepository_UpdateTestCase_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *edi.EDITestCase
+		if args[1] != nil {
+			arg1 = args[1].(*edi.EDITestCase)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateTestCase_Call) Return(eDITestCase *edi.EDITestCase, err error) *MockEDIDocumentRepository_UpdateTestCase_Call {
+	_c.Call.Return(eDITestCase, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_UpdateTestCase_Call) RunAndReturn(run func(ctx context.Context, entity *edi.EDITestCase) (*edi.EDITestCase, error)) *MockEDIDocumentRepository_UpdateTestCase_Call {
 	_c.Call.Return(run)
 	return _c
 }

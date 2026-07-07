@@ -302,8 +302,8 @@ func (_c *MockWorkerPTORepository_List_Call) Run(run func(ctx context.Context, r
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_List_Call) Return(listResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_List_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockWorkerPTORepository_List_Call) Return(cursorListResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_List_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 
@@ -370,8 +370,8 @@ func (_c *MockWorkerPTORepository_ListUpcoming_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockWorkerPTORepository_ListUpcoming_Call) Return(listResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_ListUpcoming_Call {
-	_c.Call.Return(listResult, err)
+func (_c *MockWorkerPTORepository_ListUpcoming_Call) Return(cursorListResult *pagination.CursorListResult[*worker.WorkerPTO], err error) *MockWorkerPTORepository_ListUpcoming_Call {
+	_c.Call.Return(cursorListResult, err)
 	return _c
 }
 

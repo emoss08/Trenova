@@ -1,18 +1,13 @@
 package ediservice
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
-	"path"
 	"reflect"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -26,12 +21,9 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/pkg/sftp"
 	"github.com/uptrace/bun"
-	"golang.org/x/crypto/ssh"
+	"go.uber.org/zap"
 )
-
-const sftpAuthModePassword = "password"
 
 func (s *Service) AfterShipmentUpdate(
 	ctx context.Context,
@@ -69,6 +61,8 @@ func (s *Service) AfterShipmentUpdate(
 	if err != nil {
 		return err
 	}
+
+	var recipientErrs []error
 	for _, recipient := range recipients {
 		if recipient == nil || recipient.LatestBaselineHash == newHash {
 			continue
@@ -80,10 +74,17 @@ func (s *Service) AfterShipmentUpdate(
 			updated.Version,
 			actor,
 		); err != nil {
-			return err
+			s.l.Error(
+				"failed to record EDI tender change for recipient",
+				zap.String("recipientId", recipient.ID.String()),
+				zap.String("shipmentId", updated.ID.String()),
+				zap.Error(err),
+			)
+			recipientErrs = append(recipientErrs, err)
 		}
 	}
-	return nil
+
+	return errors.Join(recipientErrs...)
 }
 
 func (s *Service) createTenderChangeForRecipient(
@@ -176,6 +177,7 @@ func (s *Service) generateExternalTenderChange(
 		Direction:                edi.DocumentDirectionOutbound,
 		Payload:                  loadTenderDocumentPayload(&payload),
 		GeneratedByID:            actorUserID(actor),
+		DisableDeliveryQueue:     true,
 	})
 	if err != nil {
 		change.Status = edi.TenderChangeStatusFailed
@@ -184,67 +186,18 @@ func (s *Service) generateExternalTenderChange(
 		return updateErr
 	}
 
-	now := timeutils.NowUnix()
-	message, err = s.messageRepo.UpdateMessageDelivery(
-		ctx,
-		&repositories.UpdateEDIMessageDeliveryRequest{
-			ID: message.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: message.OrganizationID,
-				BuID:  message.BusinessUnitID,
-			},
-			DeliveryStatus:        edi.MessageDeliveryStatusSending,
-			IncrementAttempts:     true,
-			DeliveryLastAttemptAt: &now,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	remotePath, deliveryErr := s.dispatchExternalTenderChange(ctx, recipient, message)
-	deliveryStatus := edi.MessageDeliveryStatusSent
-	changeStatus := edi.TenderChangeStatusSent
-	sentAt := &now
-	lastErr := ""
-	if deliveryErr != nil {
-		deliveryStatus = edi.MessageDeliveryStatusFailed
-		changeStatus = edi.TenderChangeStatusFailed
-		sentAt = nil
-		lastErr = deliveryErr.Error()
-	}
-	message, err = s.messageRepo.UpdateMessageDelivery(
-		ctx,
-		&repositories.UpdateEDIMessageDeliveryRequest{
-			ID: message.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: message.OrganizationID,
-				BuID:  message.BusinessUnitID,
-			},
-			DeliveryStatus:        deliveryStatus,
-			DeliveryRemotePath:    remotePath,
-			DeliveryLastAttemptAt: &now,
-			DeliverySentAt:        sentAt,
-			DeliveryLastError:     lastErr,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
 	change.OutboundMessageID = message.ID
-	change.Status = changeStatus
-	change.FailureReason = lastErr
-	_, err = s.tenderChangeRepo.UpdateTenderChange(ctx, change)
-	if err != nil {
+	change.Status = edi.TenderChangeStatusQueued
+	change.FailureReason = ""
+	if _, err = s.tenderChangeRepo.UpdateTenderChange(ctx, change); err != nil {
 		return err
 	}
-	if deliveryStatus == edi.MessageDeliveryStatusSent {
-		return s.advanceTenderRecipientBaseline(
-			ctx,
-			recipient,
-			&change.NewTenderPayload,
-			edi.TenderRecipientBaselineStatusSent,
+	if err = s.queueMessageForDelivery(ctx, message); err != nil {
+		s.l.Warn(
+			"failed to queue EDI tender change delivery",
+			zap.String("changeId", change.ID.String()),
+			zap.String("messageId", message.ID.String()),
+			zap.Error(err),
 		)
 	}
 	return nil
@@ -320,19 +273,16 @@ func (s *Service) reviewTenderChange(
 	}
 
 	now := timeutils.NowUnix()
+	var applyErr error
 	err = s.db.WithTx(ctx, coreports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
 		if status == edi.TenderChangeStatusApplied {
-			applyErr := s.applyApprovedTenderChange(
+			if applyErr = s.applyApprovedTenderChange(
 				txCtx,
 				req.TenantInfo,
 				change,
 				actor,
-			)
-			if applyErr != nil {
-				change.ConflictMetadata = map[string]any{"reason": applyErr.Error()}
-				change.FailureReason = applyErr.Error()
-				_, updateErr := s.tenderChangeRepo.UpdateTenderChange(txCtx, change)
-				return updateErr
+			); applyErr != nil {
+				return applyErr
 			}
 		}
 		change.Status = status
@@ -348,6 +298,18 @@ func (s *Service) reviewTenderChange(
 		_, updateErr := s.tenderChangeRepo.UpdateTenderChange(txCtx, change)
 		return updateErr
 	})
+	if applyErr != nil {
+		change.ConflictMetadata = map[string]any{"reason": applyErr.Error()}
+		change.FailureReason = applyErr.Error()
+		if _, updateErr := s.tenderChangeRepo.UpdateTenderChange(ctx, change); updateErr != nil {
+			s.l.Warn(
+				"failed to record EDI tender change apply failure",
+				zap.String("changeId", change.ID.String()),
+				zap.Error(updateErr),
+			)
+		}
+		return nil, applyErr
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -621,6 +583,9 @@ func (s *Service) upsertExternalTenderRecipient(
 		},
 	)
 	if err != nil {
+		if !errortypes.IsNotFoundError(err) {
+			return err
+		}
 		commProfile = nil
 	}
 	payload := *message.PayloadSnapshot.LoadTender
@@ -930,128 +895,6 @@ func loadTenderDocumentPayload(payload *edi.LoadTenderPayload) *edi.DocumentPayl
 	return &documentPayload
 }
 
-type sftpDeliveryConfig struct {
-	host              string
-	port              string
-	username          string
-	authMode          string
-	knownHostKey      string
-	outboundDirectory string
-	fileNamingPattern string
-	password          string
-	privateKey        string
-}
-
-func (s *Service) dispatchExternalTenderChange(
-	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	message *edi.EDIMessage,
-) (string, error) {
-	if err := ctx.Err(); err != nil {
-		return "", err
-	}
-	profile, err := s.deliveryProfileForRecipient(ctx, recipient, message)
-	if err != nil {
-		return "", err
-	}
-	cfg, err := s.sftpDeliveryConfig(profile)
-	if err != nil {
-		return "", err
-	}
-	remotePath := outboundSFTPRemotePath(&cfg, recipient, message)
-	if err = sendSFTPFile(&cfg, remotePath, message.RawX12); err != nil {
-		return remotePath, err
-	}
-	return remotePath, nil
-}
-
-func (s *Service) deliveryProfileForRecipient(
-	ctx context.Context,
-	recipient *edi.TenderRecipient,
-	message *edi.EDIMessage,
-) (*edi.EDICommunicationProfile, error) {
-	if recipient == nil {
-		return nil, errors.New("tender recipient is required for external change tender delivery")
-	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: recipient.SourceOrganizationID,
-		BuID:  recipient.SourceBusinessUnitID,
-	}
-	if message != nil {
-		tenantInfo = pagination.TenantInfo{
-			OrgID: message.OrganizationID,
-			BuID:  message.BusinessUnitID,
-		}
-	}
-	if recipient.CommunicationProfileID.IsNotNil() {
-		profile, err := s.profileRepo.GetProfileByID(
-			ctx,
-			repositories.GetEDICommunicationProfileByIDRequest{
-				ID:         recipient.CommunicationProfileID,
-				TenantInfo: tenantInfo,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		return profile, nil
-	}
-	if recipient.EDIPartnerID.IsNil() {
-		return nil, errors.New("EDI partner is required for external change tender delivery")
-	}
-	profile, err := s.profileRepo.GetActiveProfileByPartner(
-		ctx,
-		repositories.GetActiveEDICommunicationProfileByPartnerRequest{
-			PartnerID:  recipient.EDIPartnerID,
-			TenantInfo: tenantInfo,
-			Method:     edi.ConnectionMethodSFTP,
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-	return profile, nil
-}
-
-func (s *Service) sftpDeliveryConfig(
-	profile *edi.EDICommunicationProfile,
-) (sftpDeliveryConfig, error) {
-	if profile == nil {
-		return sftpDeliveryConfig{}, errors.New(
-			"active SFTP communication profile is required for external change tender delivery",
-		)
-	}
-	if profile.Method != edi.ConnectionMethodSFTP {
-		return sftpDeliveryConfig{}, fmt.Errorf(
-			"%s communication profile is not supported for external change tender delivery",
-			profile.Method,
-		)
-	}
-	cfg := sftpDeliveryConfig{
-		host:              profileConfigString(profile.Config, "host"),
-		port:              profileConfigString(profile.Config, "port"),
-		username:          profileConfigString(profile.Config, "username"),
-		authMode:          profileConfigString(profile.Config, "authMode"),
-		knownHostKey:      profileConfigString(profile.Config, "knownHostKey"),
-		outboundDirectory: profileConfigString(profile.Config, "outboundDirectory"),
-		fileNamingPattern: profileConfigString(profile.Config, "fileNamingPattern"),
-	}
-	secretKey := "privateKey"
-	if strings.TrimSpace(cfg.authMode) == sftpAuthModePassword {
-		secretKey = sftpAuthModePassword
-	}
-	secret, err := s.decryptProfileSecret(profile, secretKey)
-	if err != nil {
-		return sftpDeliveryConfig{}, err
-	}
-	if secretKey == sftpAuthModePassword {
-		cfg.password = secret
-	} else {
-		cfg.privateKey = secret
-	}
-	return cfg, nil
-}
-
 func (s *Service) decryptProfileSecret(
 	profile *edi.EDICommunicationProfile,
 	key string,
@@ -1080,187 +923,6 @@ func (s *Service) decryptProfileSecret(
 		BusinessUnitID: profile.BusinessUnitID,
 		ResourceID:     profile.ID.String() + ":" + key,
 	})
-}
-
-func sendSFTPFile(cfg *sftpDeliveryConfig, remotePath, contents string) error {
-	if err := validateSFTPDeliveryConfig(cfg); err != nil {
-		return err
-	}
-	authMethod, err := sftpAuthMethod(cfg)
-	if err != nil {
-		return err
-	}
-	hostKeyCallback, err := sftpHostKeyCallback(cfg.knownHostKey)
-	if err != nil {
-		return err
-	}
-	port := cfg.port
-	if port == "" {
-		port = "22"
-	}
-	clientConfig := &ssh.ClientConfig{
-		User:            cfg.username,
-		Auth:            []ssh.AuthMethod{authMethod},
-		HostKeyCallback: hostKeyCallback,
-		Timeout:         30 * time.Second,
-	}
-	sshClient, err := ssh.Dial("tcp", net.JoinHostPort(cfg.host, port), clientConfig)
-	if err != nil {
-		return fmt.Errorf("connect SFTP server: %w", err)
-	}
-	defer sshClient.Close()
-
-	client, err := sftp.NewClient(sshClient)
-	if err != nil {
-		return fmt.Errorf("open SFTP session: %w", err)
-	}
-	defer client.Close()
-
-	if err = client.MkdirAll(path.Dir(remotePath)); err != nil {
-		return fmt.Errorf("create remote directory: %w", err)
-	}
-	file, err := client.Create(remotePath)
-	if err != nil {
-		return fmt.Errorf("create remote file: %w", err)
-	}
-	defer file.Close()
-	if _, err = file.Write([]byte(contents)); err != nil {
-		return fmt.Errorf("write remote file: %w", err)
-	}
-	return nil
-}
-
-func validateSFTPDeliveryConfig(cfg *sftpDeliveryConfig) error {
-	if cfg == nil {
-		return errors.New("SFTP delivery configuration is required")
-	}
-	switch {
-	case strings.TrimSpace(cfg.host) == "":
-		return errors.New("SFTP host is required for external change tender delivery")
-	case strings.TrimSpace(cfg.username) == "":
-		return errors.New("SFTP username is required for external change tender delivery")
-	case strings.TrimSpace(cfg.knownHostKey) == "":
-		return errors.New("SFTP known host key is required for external change tender delivery")
-	case strings.TrimSpace(cfg.authMode) == sftpAuthModePassword && strings.TrimSpace(cfg.password) == "":
-		return errors.New("SFTP password secret is required for external change tender delivery")
-	case strings.TrimSpace(cfg.authMode) != sftpAuthModePassword && strings.TrimSpace(cfg.privateKey) == "":
-		return errors.New("SFTP private key secret is required for external change tender delivery")
-	}
-	if cfg.port == "" {
-		return nil
-	}
-	if _, err := strconv.Atoi(cfg.port); err != nil {
-		return fmt.Errorf("SFTP port must be numeric: %w", err)
-	}
-	return nil
-}
-
-func sftpAuthMethod(cfg *sftpDeliveryConfig) (ssh.AuthMethod, error) {
-	if strings.TrimSpace(cfg.authMode) == sftpAuthModePassword {
-		return ssh.Password(cfg.password), nil
-	}
-	signer, err := ssh.ParsePrivateKey([]byte(cfg.privateKey))
-	if err != nil {
-		return nil, fmt.Errorf("parse SFTP private key: %w", err)
-	}
-	return ssh.PublicKeys(signer), nil
-}
-
-func sftpHostKeyCallback(knownHostKey string) (ssh.HostKeyCallback, error) {
-	publicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(strings.TrimSpace(knownHostKey)))
-	if err != nil {
-		fields := strings.Fields(knownHostKey)
-		if len(fields) >= 3 {
-			publicKey, _, _, _, err = ssh.ParseAuthorizedKey([]byte(strings.Join(fields[1:], " ")))
-		}
-		if err != nil {
-			return nil, fmt.Errorf("parse SFTP known host key: %w", err)
-		}
-	}
-	return func(_ string, _ net.Addr, key ssh.PublicKey) error {
-		if !bytes.Equal(key.Marshal(), publicKey.Marshal()) {
-			return errors.New("SFTP host key does not match configured known host key")
-		}
-		return nil
-	}, nil
-}
-
-func outboundSFTPRemotePath(
-	cfg *sftpDeliveryConfig,
-	recipient *edi.TenderRecipient,
-	message *edi.EDIMessage,
-) string {
-	directory := strings.TrimSpace(cfg.outboundDirectory)
-	if directory == "" {
-		directory = "/outbound"
-	}
-	return path.Join(directory, outboundSFTPFileName(cfg, recipient, message))
-}
-
-func outboundSFTPFileName(
-	cfg *sftpDeliveryConfig,
-	recipient *edi.TenderRecipient,
-	message *edi.EDIMessage,
-) string {
-	pattern := strings.TrimSpace(cfg.fileNamingPattern)
-	if pattern == "" {
-		pattern = "{partnerId}-{transactionSet}-{messageId}.x12"
-	}
-	now := strconv.FormatInt(timeutils.NowUnix(), 10)
-	partnerID := ""
-	transactionSet := ""
-	messageID := ""
-	if recipient != nil && recipient.EDIPartnerID.IsNotNil() {
-		partnerID = recipient.EDIPartnerID.String()
-	}
-	if message != nil {
-		if message.EDIPartnerID.IsNotNil() {
-			partnerID = message.EDIPartnerID.String()
-		}
-		transactionSet = string(message.TransactionSet)
-		messageID = message.ID.String()
-	}
-	replacer := strings.NewReplacer(
-		"{partner}", partnerID,
-		"{partnerId}", partnerID,
-		"{transactionSet}", transactionSet,
-		"{messageId}", messageID,
-		"{timestamp}", now,
-	)
-	name := replacer.Replace(pattern)
-	name = strings.NewReplacer("/", "_", "\\", "_", " ", "_").Replace(name)
-	if strings.TrimSpace(name) == "" {
-		return messageID + ".x12"
-	}
-	if path.Ext(name) == "" {
-		name += ".x12"
-	}
-	return name
-}
-
-func profileConfigString(config map[string]any, key string) string {
-	if len(config) == 0 {
-		return ""
-	}
-	switch value := config[key].(type) {
-	case nil:
-		return ""
-	case string:
-		return strings.TrimSpace(value)
-	case fmt.Stringer:
-		return strings.TrimSpace(value.String())
-	case int:
-		return strconv.Itoa(value)
-	case int64:
-		return strconv.FormatInt(value, 10)
-	case float64:
-		if value == float64(int64(value)) {
-			return strconv.FormatInt(int64(value), 10)
-		}
-		return strings.TrimSpace(strconv.FormatFloat(value, 'f', -1, 64))
-	default:
-		return strings.TrimSpace(fmt.Sprint(value))
-	}
 }
 
 func actorUserID(actor *services.RequestActor) pulid.ID {

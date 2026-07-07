@@ -2,32 +2,24 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   ediMappingPreviewSchema,
-  ediMappingProfileListSchema,
   ediMappingProfileItemSchema,
   ediMappingProfileSchema,
-  ediCommunicationProfileListSchema,
   ediCommunicationProfileSchema,
   ediConnectionListSchema,
   ediConnectionSchema,
   ediDocumentPreviewSchema,
   ediMessageInspectionSchema,
-  ediDocumentTypeSchema,
+  ediInboundFileSchema,
   ediMessageListSchema,
   ediMessageSchema,
+  ediTestCaseListSchema,
+  ediTestCaseSchema,
   ediPartnerDocumentProfileListSchema,
   ediPartnerDocumentProfileSchema,
-  ediPartnerListSchema,
   ediPartnerSchema,
-  ediPartnerSelectOptionListSchema,
-  ediPartnerSettingFieldListSchema,
-  ediSourceContextFieldListSchema,
-  ediTemplateScriptLibrarySchema,
   ediTemplateSchema,
-  ediTemplateListSchema,
   ediTemplateValidationResponseSchema,
   ediTemplateVersionSchema,
-  ediTestCaseListSchema,
-  ediTransferListSchema,
   ediTransferSchema,
   internalPartnerPairSchema,
   type ApproveEDITransferRequest,
@@ -37,13 +29,13 @@ import {
   type CreateInternalPartnerPairRequest,
   type EDIConnectionActionRequest,
   type EDIMappingProfileItem,
-  type EDIPartner,
   type EDITemplateActionRequest,
   type GenerateEDIDocumentRequest,
   type InspectX12Request,
   type PreviewEDIDocumentRequest,
   type ReplaceEDITemplateScriptLibrariesRequest,
   type ReplaceEDITemplateSegmentsRequest,
+  type SaveEDITestCaseRequest,
   ediShipmentLinkListSchema,
   ediShipmentLinkSchema,
   type RejectEDITransferRequest,
@@ -57,15 +49,9 @@ import {
   type UpsertEDIPartnerRequest,
   type UpsertEDIPartnerDocumentProfileRequest,
 } from "@/types/edi";
-import { ediCatalogEndpoints } from "./catalog";
-import { ediTransferEndpoints, ediTransferListEndpoint } from "./transfers";
+import { ediTransferEndpoints } from "./transfers";
 
 export class EDIService {
-  public async listPartners(query = "") {
-    const response = await api.get(`/edi/partners/${query}`);
-    return safeParse(ediPartnerListSchema, response, "EDIPartnerList");
-  }
-
   public async listConnections(query = "") {
     const response = await api.get(`/edi/connections/${query}`);
     return safeParse(ediConnectionListSchema, response, "EDIConnectionList");
@@ -96,11 +82,6 @@ export class EDIService {
     return safeParse(ediConnectionSchema, response, "EDIConnection");
   }
 
-  public async listCommunicationProfiles(query = "") {
-    const response = await api.get(`/edi/communication-profiles/${query}`);
-    return safeParse(ediCommunicationProfileListSchema, response, "EDICommunicationProfileList");
-  }
-
   public async createCommunicationProfile(request: UpsertEDICommunicationProfileRequest) {
     const response = await api.post("/edi/communication-profiles/", request);
     return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
@@ -112,16 +93,6 @@ export class EDIService {
   ) {
     const response = await api.put(`/edi/communication-profiles/${profileId}/`, request);
     return safeParse(ediCommunicationProfileSchema, response, "EDICommunicationProfile");
-  }
-
-  public async listDocumentTypes(query = "?standard=X12") {
-    const response = await api.get(`${ediCatalogEndpoints.documentTypes}${query}`);
-    return safeParse(ediDocumentTypeSchema.array(), response, "EDIDocumentTypes");
-  }
-
-  public async listTemplates(query = "") {
-    const response = await api.get(`/edi/templates/${query}`);
-    return safeParse(ediTemplateListSchema, response, "EDITemplateList");
   }
 
   public async createTemplate(request: CreateEDITemplateRequest) {
@@ -173,17 +144,6 @@ export class EDIService {
       request,
     );
     return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
-  }
-
-  public async listTemplateScriptLibraries(templateId: string, versionId: string) {
-    const response = await api.get(
-      `/edi/templates/${templateId}/versions/${versionId}/script-libraries/`,
-    );
-    return safeParse(
-      ediTemplateScriptLibrarySchema.array(),
-      response,
-      "EDITemplateScriptLibraries",
-    );
   }
 
   public async replaceTemplateScriptLibraries(
@@ -239,16 +199,6 @@ export class EDIService {
     return safeParse(ediTemplateVersionSchema, response, "EDITemplateVersion");
   }
 
-  public async searchSourceContextFields(query = "") {
-    const response = await api.get(`${ediCatalogEndpoints.sourceContextFields}${query}`);
-    return safeParse(ediSourceContextFieldListSchema, response, "EDISourceContextFieldList");
-  }
-
-  public async searchPartnerSettingFields(query = "") {
-    const response = await api.get(`${ediCatalogEndpoints.partnerSettingFields}${query}`);
-    return safeParse(ediPartnerSettingFieldListSchema, response, "EDIPartnerSettingFieldList");
-  }
-
   public async listPartnerDocumentProfiles(query = "") {
     const response = await api.get(`/edi/document-profiles/${query}`);
     return safeParse(
@@ -296,6 +246,21 @@ export class EDIService {
     return safeParse(ediMessageInspectionSchema, response, "EDIMessageInspection");
   }
 
+  public async retryMessageDelivery(messageId: string) {
+    const response = await api.post(`/edi/messages/${messageId}/retry-delivery/`);
+    return safeParse(ediMessageSchema, response, "EDIMessage");
+  }
+
+  public async getInboundFile(fileId: string) {
+    const response = await api.get(`/edi/inbound-files/${fileId}/`);
+    return safeParse(ediInboundFileSchema, response, "EDIInboundFile");
+  }
+
+  public async reprocessInboundFile(fileId: string) {
+    const response = await api.post(`/edi/inbound-files/${fileId}/reprocess/`);
+    return safeParse(ediInboundFileSchema, response, "EDIInboundFile");
+  }
+
   public async inspectX12(request: InspectX12Request) {
     const response = await api.post("/edi/x12/inspect/", request);
     return safeParse(ediX12InspectionSchema, response, "EDIX12Inspection");
@@ -306,38 +271,28 @@ export class EDIService {
     return safeParse(ediTestCaseListSchema, response, "EDITestCaseList");
   }
 
+  public async getTestCase(testCaseId: string) {
+    const response = await api.get(`/edi/test-cases/${testCaseId}/`);
+    return safeParse(ediTestCaseSchema, response, "EDITestCase");
+  }
+
+  public async createTestCase(request: SaveEDITestCaseRequest) {
+    const response = await api.post("/edi/test-cases/", request);
+    return safeParse(ediTestCaseSchema, response, "EDITestCase");
+  }
+
+  public async updateTestCase(testCaseId: string, request: SaveEDITestCaseRequest) {
+    const response = await api.put(`/edi/test-cases/${testCaseId}/`, request);
+    return safeParse(ediTestCaseSchema, response, "EDITestCase");
+  }
+
+  public async deleteTestCase(testCaseId: string) {
+    return api.delete<undefined>(`/edi/test-cases/${testCaseId}/`);
+  }
+
   public async previewTestCase(testCaseId: string) {
     const response = await api.post(`/edi/test-cases/${testCaseId}/preview/`);
-    return safeParse(ediDocumentPreviewSchema, response, "EDITestCasePreview");
-  }
-
-  public async listInboundTransfers(query = "") {
-    const response = await api.get(ediTransferListEndpoint("inbound", query));
-    return safeParse(ediTransferListSchema, response, "EDIInboundTransferList");
-  }
-
-  public async listOutboundTransfers(query = "") {
-    const response = await api.get(ediTransferListEndpoint("outbound", query));
-    return safeParse(ediTransferListSchema, response, "EDIOutboundTransferList");
-  }
-
-  public async selectPartners(
-    options: {
-      kind?: EDIPartner["kind"];
-      enabledForOutbound?: boolean;
-      limit?: number;
-    } = {},
-  ) {
-    const params = new URLSearchParams({
-      limit: String(options.limit ?? 100),
-    });
-    if (options.kind) params.set("kind", options.kind);
-    if (options.enabledForOutbound !== undefined) {
-      params.set("enabledForOutbound", String(options.enabledForOutbound));
-    }
-
-    const response = await api.get(`/edi/partners/select-options/?${params.toString()}`);
-    return safeParse(ediPartnerSelectOptionListSchema, response, "EDIPartnerOptions");
+    return safeParse(ediDocumentPreviewSchema, response, "EDIDocumentPreview");
   }
 
   public async createPartner(request: UpsertEDIPartnerRequest) {
@@ -357,16 +312,6 @@ export class EDIService {
 
   public async getMappingProfile(partnerId: string) {
     const response = await api.get(`/edi/partners/${partnerId}/mapping-profile/`);
-    return safeParse(ediMappingProfileSchema, response, "EDIMappingProfile");
-  }
-
-  public async listMappingProfiles(query = "") {
-    const response = await api.get(`/edi/mapping-profiles/${query}`);
-    return safeParse(ediMappingProfileListSchema, response, "EDIMappingProfileList");
-  }
-
-  public async getMappingProfileById(profileId: string) {
-    const response = await api.get(`/edi/mapping-profiles/${profileId}/`);
     return safeParse(ediMappingProfileSchema, response, "EDIMappingProfile");
   }
 
