@@ -237,3 +237,71 @@ func (_c *MockDataRetentionRepository_Update_Call) RunAndReturn(run func(ctx con
 	_c.Call.Return(run)
 	return _c
 }
+
+// Upsert provides a mock function for the type MockDataRetentionRepository
+func (_mock *MockDataRetentionRepository) Upsert(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Upsert")
+	}
+
+	var r0 *tenant.DataRetention
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) (*tenant.DataRetention, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *tenant.DataRetention) *tenant.DataRetention); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenant.DataRetention)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *tenant.DataRetention) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockDataRetentionRepository_Upsert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Upsert'
+type MockDataRetentionRepository_Upsert_Call struct {
+	*mock.Call
+}
+
+// Upsert is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *tenant.DataRetention
+func (_e *MockDataRetentionRepository_Expecter) Upsert(ctx interface{}, entity interface{}) *MockDataRetentionRepository_Upsert_Call {
+	return &MockDataRetentionRepository_Upsert_Call{Call: _e.mock.On("Upsert", ctx, entity)}
+}
+
+func (_c *MockDataRetentionRepository_Upsert_Call) Run(run func(ctx context.Context, entity *tenant.DataRetention)) *MockDataRetentionRepository_Upsert_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *tenant.DataRetention
+		if args[1] != nil {
+			arg1 = args[1].(*tenant.DataRetention)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDataRetentionRepository_Upsert_Call) Return(dataRetention *tenant.DataRetention, err error) *MockDataRetentionRepository_Upsert_Call {
+	_c.Call.Return(dataRetention, err)
+	return _c
+}
+
+func (_c *MockDataRetentionRepository_Upsert_Call) RunAndReturn(run func(ctx context.Context, entity *tenant.DataRetention) (*tenant.DataRetention, error)) *MockDataRetentionRepository_Upsert_Call {
+	_c.Call.Return(run)
+	return _c
+}

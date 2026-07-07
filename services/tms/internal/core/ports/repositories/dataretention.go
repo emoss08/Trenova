@@ -21,6 +21,10 @@ type DataRetentionRepository interface {
 		ctx context.Context,
 		entity *tenant.DataRetention,
 	) (*tenant.DataRetention, error)
+	Upsert(
+		ctx context.Context,
+		entity *tenant.DataRetention,
+	) (*tenant.DataRetention, error)
 }
 
 type DataRetentionCacheRepository interface {

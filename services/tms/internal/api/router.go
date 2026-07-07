@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
@@ -120,6 +121,7 @@ type RouterParams struct {
 	ErrorHandler                    *helpers.ErrorHandler
 	DocsHandler                     *docshandler.Handler
 	OrganizationHandler             *organizationhandler.Handler
+	DataRetentionHandler            *dataretentionhandler.Handler
 	IAMHandler                      *iamhandler.Handler
 	UserHandler                     *userhandler.Handler
 	AuthHandler                     *authhandler.Handler
@@ -219,6 +221,7 @@ type Router struct {
 	errorHandler                    *helpers.ErrorHandler
 	docsHandler                     *docshandler.Handler
 	organizationHandler             *organizationhandler.Handler
+	dataRetentionHandler            *dataretentionhandler.Handler
 	iamHandler                      *iamhandler.Handler
 	userHandler                     *userhandler.Handler
 	authHandler                     *authhandler.Handler
@@ -320,6 +323,7 @@ func NewRouter(p RouterParams) *Router {
 		errorHandler:                    p.ErrorHandler,
 		docsHandler:                     p.DocsHandler,
 		organizationHandler:             p.OrganizationHandler,
+		dataRetentionHandler:            p.DataRetentionHandler,
 		iamHandler:                      p.IAMHandler,
 		userHandler:                     p.UserHandler,
 		authHandler:                     p.AuthHandler,
@@ -490,6 +494,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	protected := r.protectedGroup(rg)
 
 	r.organizationHandler.RegisterRoutes(protected)
+	r.dataRetentionHandler.RegisterRoutes(protected)
 	r.iamHandler.RegisterRoutes(protected)
 	r.userHandler.RegisterRoutes(protected)
 	r.bankReceiptBatchHandler.RegisterRoutes(protected)

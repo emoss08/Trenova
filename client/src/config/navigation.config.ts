@@ -1022,7 +1022,8 @@ export const adminLinks: SidebarLink[] = [
     href: "/organization/data-retention/",
     title: "Data Retention",
     group: "Data & Integrations",
-    disabled: true,
+    resource: Resource.Organization,
+    requiredOperation: Operation.Read,
   },
   {
     href: "/organization/docker/",

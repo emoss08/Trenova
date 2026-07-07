@@ -48,8 +48,16 @@ var dlqActivityOptions = workflow.ActivityOptions{
 	},
 }
 
+const DeleteAuditEntriesWorkflowName = "DeleteAuditEntriesWorkflow"
+
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
+		{
+			Name:        DeleteAuditEntriesWorkflowName,
+			Fn:          DeleteAuditEntriesWorkflow,
+			TaskQueue:   temporaltype.AuditTaskQueue,
+			Description: "Delete audit entries past each organization's retention window",
+		},
 		{
 			Name:        "ProcessAuditBatchWorkflow",
 			Fn:          ProcessAuditBatchWorkflow,
@@ -223,4 +231,30 @@ func DLQRetryWorkflow(ctx workflow.Context) error {
 	)
 
 	return nil
+}
+
+var deleteAuditEntriesActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 30 * time.Minute,
+	HeartbeatTimeout:    2 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    30 * time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    3,
+		MaximumInterval:    5 * time.Minute,
+	},
+}
+
+func DeleteAuditEntriesWorkflow(ctx workflow.Context) (*DeleteAuditEntriesResult, error) {
+	activityCtx := workflow.WithActivityOptions(ctx, deleteAuditEntriesActivityOptions)
+
+	var a *Activities
+	result := new(DeleteAuditEntriesResult)
+	if err := workflow.ExecuteActivity(
+		activityCtx,
+		a.DeleteAuditEntriesActivity,
+	).Get(activityCtx, result); err != nil {
+		workflow.GetLogger(ctx).Error("audit retention deletion workflow failed", "error", err)
+		return nil, err
+	}
+	return result, nil
 }

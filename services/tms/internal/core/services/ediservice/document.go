@@ -645,24 +645,14 @@ func (s *Service) recordTestCaseRun(
 	tenantInfo pagination.TenantInfo,
 	preview *EDIDocumentPreview,
 ) {
-	warnings := 0
-	errorCount := 0
-	for _, diagnostic := range preview.Diagnostics {
-		switch diagnostic.Severity {
-		case edi.ValidationSeverityWarning:
-			warnings++
-		case edi.ValidationSeverityError:
-			errorCount++
-		case edi.ValidationSeverityInfo:
-		}
-	}
+	verdict := EvaluateTestCaseRun(testCase, preview.Diagnostics)
 	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &repositories.RecordEDITestCaseRunRequest{
 		ID:         testCase.ID,
 		TenantInfo: tenantInfo,
 		RanAt:      timeutils.NowUnix(),
-		Passed:     warnings == testCase.ExpectedWarnings && errorCount == testCase.ExpectedErrors,
-		Warnings:   warnings,
-		Errors:     errorCount,
+		Passed:     verdict.Passed,
+		Warnings:   verdict.Warnings,
+		Errors:     verdict.Errors,
 	}); err != nil {
 		s.l.Warn(
 			"failed to record EDI test case run outcome",

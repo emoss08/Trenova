@@ -118,19 +118,23 @@ func TestRegisterWorkflows(t *testing.T) {
 
 	wfs := RegisterWorkflows()
 
-	require.Len(t, wfs, 3)
+	require.Len(t, wfs, 4)
 
-	assert.Equal(t, "ProcessAuditBatchWorkflow", wfs[0].Name)
+	assert.Equal(t, DeleteAuditEntriesWorkflowName, wfs[0].Name)
 	assert.Equal(t, temporaltype.AuditTaskQueue, wfs[0].TaskQueue)
 	assert.NotNil(t, wfs[0].Fn)
 
-	assert.Equal(t, "ScheduledAuditFlushWorkflow", wfs[1].Name)
+	assert.Equal(t, "ProcessAuditBatchWorkflow", wfs[1].Name)
 	assert.Equal(t, temporaltype.AuditTaskQueue, wfs[1].TaskQueue)
 	assert.NotNil(t, wfs[1].Fn)
 
-	assert.Equal(t, "DLQRetryWorkflow", wfs[2].Name)
+	assert.Equal(t, "ScheduledAuditFlushWorkflow", wfs[2].Name)
 	assert.Equal(t, temporaltype.AuditTaskQueue, wfs[2].TaskQueue)
 	assert.NotNil(t, wfs[2].Fn)
+
+	assert.Equal(t, "DLQRetryWorkflow", wfs[3].Name)
+	assert.Equal(t, temporaltype.AuditTaskQueue, wfs[3].TaskQueue)
+	assert.NotNil(t, wfs[3].Fn)
 }
 
 func TestRegisterWorkflows_Descriptions(t *testing.T) {

@@ -1162,6 +1162,12 @@ export const ediTestCaseSchema = z.object({
   payload: ediDocumentPayloadSchema,
   expectedWarnings: z.number(),
   expectedErrors: z.number(),
+  expectedWarningCodes: z.array(z.string()).default([]),
+  expectedErrorCodes: z.array(z.string()).default([]),
+  lastRunAt: z.number().nullish(),
+  lastRunPassed: z.boolean().nullish(),
+  lastRunWarnings: z.number().default(0),
+  lastRunErrors: z.number().default(0),
   version: z.number().default(0),
   createdAt: z.number().nullish(),
   updatedAt: z.number().nullish(),
@@ -1186,6 +1192,8 @@ export type SaveEDITestCaseRequest = {
   payload: EDIDocumentPayload;
   expectedWarnings: number;
   expectedErrors: number;
+  expectedWarningCodes: string[];
+  expectedErrorCodes: string[];
   version?: number;
 };
 
