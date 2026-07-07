@@ -12,6 +12,15 @@ import (
 const (
 	defaultOverdueAckAgeSeconds = int64(4 * 60 * 60)
 	defaultSummaryFeedLimit     = 10
+
+	scorecardPendingOver4hSeconds  = int64(4 * 60 * 60)
+	scorecardPendingOver24hSeconds = int64(24 * 60 * 60)
+	defaultVolumeSeriesWindow      = int64(7 * 24 * 60 * 60)
+	maxVolumeSeriesBuckets         = 60
+	volumeBucketHour               = int64(60 * 60)
+	volumeBucketSixHours           = int64(6 * 60 * 60)
+	volumeBucketDay                = int64(24 * 60 * 60)
+	volumeBucketWeek               = int64(7 * 24 * 60 * 60)
 )
 
 type GetEDISummaryRequest struct {
@@ -116,4 +125,72 @@ func (s *Service) GetEDISummary(
 		RecentDeadLettered:          deadLettered,
 		RecentQuarantined:           quarantined,
 	}, nil
+}
+
+type GetEDIPartnerScorecardsRequest struct {
+	TenantInfo    pagination.TenantInfo
+	Since         int64
+	OverdueAckAge int64
+}
+
+func (s *Service) GetEDIPartnerScorecards(
+	ctx context.Context,
+	req *GetEDIPartnerScorecardsRequest,
+) ([]*repositories.EDIPartnerScorecardRow, error) {
+	overdueAge := req.OverdueAckAge
+	if overdueAge <= 0 {
+		overdueAge = defaultOverdueAckAgeSeconds
+	}
+	now := timeutils.NowUnix()
+	return s.messageRepo.GetPartnerScorecards(ctx, &repositories.GetEDIPartnerScorecardsRequest{
+		TenantInfo:             req.TenantInfo,
+		Since:                  req.Since,
+		OverdueAckPendingSince: now - overdueAge,
+		PendingOver4hBefore:    now - scorecardPendingOver4hSeconds,
+		PendingOver24hBefore:   now - scorecardPendingOver24hSeconds,
+	})
+}
+
+type GetEDIVolumeSeriesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+}
+
+type EDIVolumeSeries struct {
+	BucketSeconds int64
+	Points        []*repositories.EDIVolumePoint
+}
+
+func (s *Service) GetEDIVolumeSeries(
+	ctx context.Context,
+	req *GetEDIVolumeSeriesRequest,
+) (*EDIVolumeSeries, error) {
+	since := req.Since
+	if since <= 0 {
+		since = timeutils.NowUnix() - defaultVolumeSeriesWindow
+	}
+	bucket := volumeBucketFor(timeutils.NowUnix() - since)
+	points, err := s.messageRepo.GetVolumeSeries(ctx, repositories.GetEDIVolumeSeriesRequest{
+		TenantInfo:    req.TenantInfo,
+		Since:         since,
+		BucketSeconds: bucket,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &EDIVolumeSeries{BucketSeconds: bucket, Points: points}, nil
+}
+
+func volumeBucketFor(windowSeconds int64) int64 {
+	for _, bucket := range []int64{
+		volumeBucketHour,
+		volumeBucketSixHours,
+		volumeBucketDay,
+		volumeBucketWeek,
+	} {
+		if windowSeconds/bucket <= maxVolumeSeriesBuckets {
+			return bucket
+		}
+	}
+	return volumeBucketWeek
 }

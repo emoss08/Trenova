@@ -64,15 +64,28 @@ export function InfoTile({
   label,
   value,
   hint,
+  size = "default",
+  emphasizeWhenPositive = false,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
+  size?: "default" | "kpi";
+  emphasizeWhenPositive?: boolean;
 }) {
+  const emphasized = emphasizeWhenPositive && typeof value === "number" && value > 0;
   return (
     <div className="rounded-md border bg-background p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm font-semibold">{value}</div>
+      <div
+        className={cn(
+          "mt-1 font-semibold",
+          size === "kpi" ? "text-2xl leading-none tracking-tight tabular-nums" : "text-sm",
+          emphasized && "text-red-600 dark:text-red-400",
+        )}
+      >
+        {value}
+      </div>
       {hint && <div className="mt-0.5 text-[10px] text-muted-foreground">{hint}</div>}
     </div>
   );

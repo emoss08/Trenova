@@ -88,6 +88,45 @@ type GetEDIMessageStatusCountsRequest struct {
 	Since      int64                 `json:"since"`
 }
 
+type GetEDIPartnerScorecardsRequest struct {
+	TenantInfo             pagination.TenantInfo
+	Since                  int64
+	OverdueAckPendingSince int64
+	PendingOver4hBefore    int64
+	PendingOver24hBefore   int64
+}
+
+type EDIPartnerScorecardRow struct {
+	PartnerID           pulid.ID `bun:"partner_id"`
+	PartnerName         string   `bun:"partner_name"`
+	PartnerCode         string   `bun:"partner_code"`
+	OutboundTotal       int64    `bun:"outbound_total"`
+	SentCount           int64    `bun:"sent_count"`
+	FailedCount         int64    `bun:"failed_count"`
+	DeadLetteredCount   int64    `bun:"dead_lettered_count"`
+	ReceivedCount       int64    `bun:"received_count"`
+	AvgAckSeconds       *float64 `bun:"avg_ack_seconds"`
+	P95AckSeconds       *float64 `bun:"p95_ack_seconds"`
+	OverdueAckCount     int64    `bun:"overdue_ack_count"`
+	PendingOver4hCount  int64    `bun:"pending_over_4h_count"`
+	PendingOver24hCount int64    `bun:"pending_over_24h_count"`
+	OldestPendingAt     *int64   `bun:"oldest_pending_at"`
+}
+
+type GetEDIVolumeSeriesRequest struct {
+	TenantInfo    pagination.TenantInfo
+	Since         int64
+	BucketSeconds int64
+}
+
+type EDIVolumePoint struct {
+	BucketStart   int64 `bun:"bucket_start"`
+	OutboundCount int64 `bun:"outbound_count"`
+	SentCount     int64 `bun:"sent_count"`
+	FailedCount   int64 `bun:"failed_count"`
+	ReceivedCount int64 `bun:"received_count"`
+}
+
 type GetEDIOverdueAckCountRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	PendingSince int64                 `json:"pendingSince"`
@@ -142,6 +181,11 @@ type EDIMessageRepository interface {
 		req *ListRecentEDIMessageFailuresRequest,
 	) ([]*edi.EDIMessage, error)
 	CountDeadLetteredSince(ctx context.Context, since int64) (int64, error)
+	GetPartnerScorecards(
+		ctx context.Context,
+		req *GetEDIPartnerScorecardsRequest,
+	) ([]*EDIPartnerScorecardRow, error)
+	GetVolumeSeries(ctx context.Context, req GetEDIVolumeSeriesRequest) ([]*EDIVolumePoint, error)
 	PurgeRawX12Before(ctx context.Context, req PurgeEDIRawPayloadsRequest) (int64, error)
 	GetOutboundMessageForAck(
 		ctx context.Context,

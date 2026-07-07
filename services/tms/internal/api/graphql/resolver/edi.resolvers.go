@@ -312,6 +312,42 @@ func (r *queryResolver) EdiSummary(ctx context.Context, sinceHours *int) (*gqlmo
 	return ediSummaryToModel(summary), nil
 }
 
+// EdiPartnerScorecards is the resolver for the ediPartnerScorecards field.
+func (r *queryResolver) EdiPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EdiPartnerScorecard, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &ediservice.GetEDIPartnerScorecardsRequest{TenantInfo: tenantInfo(authCtx)}
+	if sinceHours != nil && *sinceHours > 0 {
+		req.Since = timeutils.NowUnix() - int64(*sinceHours)*3600
+	}
+	rows, err := r.ediService.GetEDIPartnerScorecards(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return ediPartnerScorecardsToModel(rows), nil
+}
+
+// EdiVolumeSeries is the resolver for the ediVolumeSeries field.
+func (r *queryResolver) EdiVolumeSeries(ctx context.Context, sinceHours *int) ([]*gqlmodel.EdiVolumePoint, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &ediservice.GetEDIVolumeSeriesRequest{TenantInfo: tenantInfo(authCtx)}
+	if sinceHours != nil && *sinceHours > 0 {
+		req.Since = timeutils.NowUnix() - int64(*sinceHours)*3600
+	}
+	series, err := r.ediService.GetEDIVolumeSeries(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return ediVolumeSeriesToModel(series), nil
+}
+
 // EdiMessage returns generated.EdiMessageResolver implementation.
 func (r *Resolver) EdiMessage() generated.EdiMessageResolver { return &ediMessageResolver{r} }
 

@@ -576,6 +576,20 @@ export type WorkerType =
   | 'Contractor'
   | 'Employee';
 
+export type EdiPartnerScorecardsQueryVariables = Exact<{
+  sinceHours?: number | null | undefined;
+}>;
+
+
+export type EdiPartnerScorecardsQuery = { ediPartnerScorecards: Array<{ partnerId: string, partnerName: string, partnerCode: string, outboundTotal: number, sentCount: number, failedCount: number, deadLetteredCount: number, receivedCount: number, deliverySuccessRate: number | null, avgAckSeconds: number | null, p95AckSeconds: number | null, overdueAckCount: number, pendingOver4hCount: number, pendingOver24hCount: number, oldestPendingAgeSeconds: number | null }> };
+
+export type EdiVolumeSeriesQueryVariables = Exact<{
+  sinceHours?: number | null | undefined;
+}>;
+
+
+export type EdiVolumeSeriesQuery = { ediVolumeSeries: Array<{ bucketStart: number, bucketSeconds: number, outboundCount: number, sentCount: number, failedCount: number, receivedCount: number }> };
+
 export type EdiTemplateVersionSummaryFieldsFragment = { id: string, businessUnitId: string, organizationId: string, templateId: string, sourceVersionId: string | null, versionNumber: number, x12Version: string, functionalGroupId: string, status: EdiTemplateStatus, isActive: boolean, notes: string | null, certifiedAt: number | null, activatedAt: number | null, archivedAt: number | null, deprecatedAt: number | null, supersededAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'EdiTemplateVersionSummaryFieldsFragment' };
 
 export type EdiTemplateListFieldsFragment = { id: string, businessUnitId: string, organizationId: string, documentTypeId: string, name: string, description: string | null, direction: EdiDocumentDirection, standard: EdiStandard, transactionSet: string, status: EdiTemplateStatus, version: number, createdAt: number, updatedAt: number, versions: Array<{ ' $fragmentRefs'?: { 'EdiTemplateVersionSummaryFieldsFragment': EdiTemplateVersionSummaryFieldsFragment } }> | null } & { ' $fragmentName'?: 'EdiTemplateListFieldsFragment' };
@@ -2564,6 +2578,39 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
   endCursor
 }
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
+export const EdiPartnerScorecardsDocument = new TypedDocumentString(`
+    query EdiPartnerScorecards($sinceHours: Int) {
+  ediPartnerScorecards(sinceHours: $sinceHours) {
+    partnerId
+    partnerName
+    partnerCode
+    outboundTotal
+    sentCount
+    failedCount
+    deadLetteredCount
+    receivedCount
+    deliverySuccessRate
+    avgAckSeconds
+    p95AckSeconds
+    overdueAckCount
+    pendingOver4hCount
+    pendingOver24hCount
+    oldestPendingAgeSeconds
+  }
+}
+    `, {"hash":"sha256:f96494e915c8a2ece90302cd0a0fc58743dacddaa6685b3cabdae9b07c4cbda4"}) as unknown as TypedDocumentString<EdiPartnerScorecardsQuery, EdiPartnerScorecardsQueryVariables>;
+export const EdiVolumeSeriesDocument = new TypedDocumentString(`
+    query EdiVolumeSeries($sinceHours: Int) {
+  ediVolumeSeries(sinceHours: $sinceHours) {
+    bucketStart
+    bucketSeconds
+    outboundCount
+    sentCount
+    failedCount
+    receivedCount
+  }
+}
+    `, {"hash":"sha256:8021ec391401918feed133209023963adf7ea69667f15ceb36ea26dd898e5c74"}) as unknown as TypedDocumentString<EdiVolumeSeriesQuery, EdiVolumeSeriesQueryVariables>;
 export const EdiTemplateListDocument = new TypedDocumentString(`
     query EdiTemplateList($input: DataTableConnectionInput!, $status: EdiTemplateStatus, $transactionSet: String, $direction: EdiDocumentDirection) {
   ediTemplates(

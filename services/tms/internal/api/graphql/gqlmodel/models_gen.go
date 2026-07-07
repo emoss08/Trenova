@@ -140,6 +140,24 @@ type EdiPartnerEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type EdiPartnerScorecard struct {
+	PartnerID               string   `json:"partnerId"`
+	PartnerName             string   `json:"partnerName"`
+	PartnerCode             string   `json:"partnerCode"`
+	OutboundTotal           int      `json:"outboundTotal"`
+	SentCount               int      `json:"sentCount"`
+	FailedCount             int      `json:"failedCount"`
+	DeadLetteredCount       int      `json:"deadLetteredCount"`
+	ReceivedCount           int      `json:"receivedCount"`
+	DeliverySuccessRate     *float64 `json:"deliverySuccessRate,omitempty"`
+	AvgAckSeconds           *float64 `json:"avgAckSeconds,omitempty"`
+	P95AckSeconds           *float64 `json:"p95AckSeconds,omitempty"`
+	OverdueAckCount         int      `json:"overdueAckCount"`
+	PendingOver4hCount      int      `json:"pendingOver4hCount"`
+	PendingOver24hCount     int      `json:"pendingOver24hCount"`
+	OldestPendingAgeSeconds *int     `json:"oldestPendingAgeSeconds,omitempty"`
+}
+
 type EdiSummary struct {
 	DeliveryStatusCounts        []*EdiSummaryStatusCount   `json:"deliveryStatusCounts"`
 	AckStatusCounts             []*EdiSummaryStatusCount   `json:"ackStatusCounts"`
@@ -196,6 +214,15 @@ type EdiTransferConnection struct {
 type EdiTransferEdge struct {
 	Node   *edi.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+type EdiVolumePoint struct {
+	BucketStart   int `json:"bucketStart"`
+	BucketSeconds int `json:"bucketSeconds"`
+	OutboundCount int `json:"outboundCount"`
+	SentCount     int `json:"sentCount"`
+	FailedCount   int `json:"failedCount"`
+	ReceivedCount int `json:"receivedCount"`
 }
 
 type EquipmentManufacturerConnection struct {

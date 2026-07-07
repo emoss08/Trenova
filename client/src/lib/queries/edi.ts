@@ -1,4 +1,8 @@
-import { EdiSummaryDocument } from "@/graphql/generated/graphql";
+import {
+  EdiPartnerScorecardsDocument,
+  EdiSummaryDocument,
+  EdiVolumeSeriesDocument,
+} from "@/graphql/generated/graphql";
 import { requestGraphQL } from "@/lib/graphql";
 import { listEdiTemplatesGraphQL, type ListEdiTemplatesParams } from "@/lib/graphql/edi-templates";
 import { apiService } from "@/services/api";
@@ -72,13 +76,31 @@ export const edi = createQueryKeys("edi", {
     queryKey: ["test-case", testCaseId],
     queryFn: async () => apiService.ediService.getTestCase(testCaseId),
   }),
-  summary: () => ({
-    queryKey: ["summary"],
+  summary: (sinceHours: number | null = null) => ({
+    queryKey: ["summary", sinceHours],
     queryFn: async () =>
       requestGraphQL({
         document: EdiSummaryDocument,
         operationName: "EdiSummary",
-        variables: { sinceHours: null },
+        variables: { sinceHours },
+      }),
+  }),
+  partnerScorecards: (sinceHours: number | null = null) => ({
+    queryKey: ["partner-scorecards", sinceHours],
+    queryFn: async () =>
+      requestGraphQL({
+        document: EdiPartnerScorecardsDocument,
+        operationName: "EdiPartnerScorecards",
+        variables: { sinceHours },
+      }),
+  }),
+  volumeSeries: (sinceHours: number | null = null) => ({
+    queryKey: ["volume-series", sinceHours],
+    queryFn: async () =>
+      requestGraphQL({
+        document: EdiVolumeSeriesDocument,
+        operationName: "EdiVolumeSeries",
+        variables: { sinceHours },
       }),
   }),
 });

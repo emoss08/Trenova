@@ -4200,3 +4200,139 @@ func (_c *MockEDIDocumentRepository_PurgeRawX12Before_Call) RunAndReturn(run fun
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetPartnerScorecards provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetPartnerScorecards(ctx context.Context, req *repositories.GetEDIPartnerScorecardsRequest) ([]*repositories.EDIPartnerScorecardRow, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPartnerScorecards")
+	}
+
+	var r0 []*repositories.EDIPartnerScorecardRow
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerScorecardsRequest) ([]*repositories.EDIPartnerScorecardRow, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.GetEDIPartnerScorecardsRequest) []*repositories.EDIPartnerScorecardRow); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.EDIPartnerScorecardRow)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.GetEDIPartnerScorecardsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetPartnerScorecards_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPartnerScorecards'
+type MockEDIDocumentRepository_GetPartnerScorecards_Call struct {
+	*mock.Call
+}
+
+// GetPartnerScorecards is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.GetEDIPartnerScorecardsRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetPartnerScorecards(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetPartnerScorecards_Call {
+	return &MockEDIDocumentRepository_GetPartnerScorecards_Call{Call: _e.mock.On("GetPartnerScorecards", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerScorecards_Call) Run(run func(ctx context.Context, req *repositories.GetEDIPartnerScorecardsRequest)) *MockEDIDocumentRepository_GetPartnerScorecards_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.GetEDIPartnerScorecardsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.GetEDIPartnerScorecardsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerScorecards_Call) Return(rows []*repositories.EDIPartnerScorecardRow, err error) *MockEDIDocumentRepository_GetPartnerScorecards_Call {
+	_c.Call.Return(rows, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetPartnerScorecards_Call) RunAndReturn(run func(ctx context.Context, req *repositories.GetEDIPartnerScorecardsRequest) ([]*repositories.EDIPartnerScorecardRow, error)) *MockEDIDocumentRepository_GetPartnerScorecards_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetVolumeSeries provides a mock function for the type MockEDIDocumentRepository
+func (_mock *MockEDIDocumentRepository) GetVolumeSeries(ctx context.Context, req repositories.GetEDIVolumeSeriesRequest) ([]*repositories.EDIVolumePoint, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetVolumeSeries")
+	}
+
+	var r0 []*repositories.EDIVolumePoint
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIVolumeSeriesRequest) ([]*repositories.EDIVolumePoint, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetEDIVolumeSeriesRequest) []*repositories.EDIVolumePoint); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*repositories.EDIVolumePoint)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetEDIVolumeSeriesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDIDocumentRepository_GetVolumeSeries_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetVolumeSeries'
+type MockEDIDocumentRepository_GetVolumeSeries_Call struct {
+	*mock.Call
+}
+
+// GetVolumeSeries is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req repositories.GetEDIVolumeSeriesRequest
+func (_e *MockEDIDocumentRepository_Expecter) GetVolumeSeries(ctx interface{}, req interface{}) *MockEDIDocumentRepository_GetVolumeSeries_Call {
+	return &MockEDIDocumentRepository_GetVolumeSeries_Call{Call: _e.mock.On("GetVolumeSeries", ctx, req)}
+}
+
+func (_c *MockEDIDocumentRepository_GetVolumeSeries_Call) Run(run func(ctx context.Context, req repositories.GetEDIVolumeSeriesRequest)) *MockEDIDocumentRepository_GetVolumeSeries_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 repositories.GetEDIVolumeSeriesRequest
+		if args[1] != nil {
+			arg1 = args[1].(repositories.GetEDIVolumeSeriesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetVolumeSeries_Call) Return(rows []*repositories.EDIVolumePoint, err error) *MockEDIDocumentRepository_GetVolumeSeries_Call {
+	_c.Call.Return(rows, err)
+	return _c
+}
+
+func (_c *MockEDIDocumentRepository_GetVolumeSeries_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetEDIVolumeSeriesRequest) ([]*repositories.EDIVolumePoint, error)) *MockEDIDocumentRepository_GetVolumeSeries_Call {
+	_c.Call.Return(run)
+	return _c
+}

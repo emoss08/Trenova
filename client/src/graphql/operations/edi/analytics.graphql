@@ -1,0 +1,30 @@
+query EdiPartnerScorecards($sinceHours: Int) {
+  ediPartnerScorecards(sinceHours: $sinceHours) {
+    partnerId
+    partnerName
+    partnerCode
+    outboundTotal
+    sentCount
+    failedCount
+    deadLetteredCount
+    receivedCount
+    deliverySuccessRate
+    avgAckSeconds
+    p95AckSeconds
+    overdueAckCount
+    pendingOver4hCount
+    pendingOver24hCount
+    oldestPendingAgeSeconds
+  }
+}
+
+query EdiVolumeSeries($sinceHours: Int) {
+  ediVolumeSeries(sinceHours: $sinceHours) {
+    bucketStart
+    bucketSeconds
+    outboundCount
+    sentCount
+    failedCount
+    receivedCount
+  }
+}

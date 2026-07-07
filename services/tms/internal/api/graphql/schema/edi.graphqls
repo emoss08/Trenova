@@ -444,6 +444,33 @@ type EdiSummary {
   attentionItems: [EdiSummaryAttentionItem!]!
 }
 
+type EdiPartnerScorecard {
+  partnerId: ID!
+  partnerName: String!
+  partnerCode: String!
+  outboundTotal: Int!
+  sentCount: Int!
+  failedCount: Int!
+  deadLetteredCount: Int!
+  receivedCount: Int!
+  deliverySuccessRate: Float
+  avgAckSeconds: Float
+  p95AckSeconds: Float
+  overdueAckCount: Int!
+  pendingOver4hCount: Int!
+  pendingOver24hCount: Int!
+  oldestPendingAgeSeconds: Int
+}
+
+type EdiVolumePoint {
+  bucketStart: Int!
+  bucketSeconds: Int!
+  outboundCount: Int!
+  sentCount: Int!
+  failedCount: Int!
+  receivedCount: Int!
+}
+
 type EdiTestCaseEdge {
   node: EdiTestCase!
   cursor: String!
@@ -485,4 +512,6 @@ extend type Query {
     partnerDocumentProfileId: ID
   ): EdiTestCaseConnection!
   ediSummary(sinceHours: Int): EdiSummary!
+  ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
+  ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
 }

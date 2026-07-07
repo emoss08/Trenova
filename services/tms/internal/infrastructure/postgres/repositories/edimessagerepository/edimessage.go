@@ -393,6 +393,101 @@ func (r *repository) GetAckStatusCounts(
 	return counts, nil
 }
 
+const scorecardPendingDeliveryFilter = "emsg.direction = 'Outbound' AND " +
+	"emsg.delivery_status IN ('Queued', 'Sending', 'Failed')"
+
+func (r *repository) GetPartnerScorecards(
+	ctx context.Context,
+	req *repositories.GetEDIPartnerScorecardsRequest,
+) ([]*repositories.EDIPartnerScorecardRow, error) {
+	rows := make([]*repositories.EDIPartnerScorecardRow, 0)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr("emsg.edi_partner_id AS partner_id").
+		ColumnExpr("MAX(ep.name) AS partner_name").
+		ColumnExpr("MAX(ep.code) AS partner_code").
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_total").
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Failed') AS failed_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'DeadLettered') AS dead_lettered_count",
+		).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
+		ColumnExpr(
+			"AVG(emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS avg_ack_seconds",
+		).
+		ColumnExpr(
+			"percentile_cont(0.95) WITHIN GROUP (ORDER BY emsg.ack_received_at - emsg.delivery_sent_at) FILTER (WHERE emsg.ack_received_at IS NOT NULL AND emsg.delivery_sent_at IS NOT NULL) AS p95_ack_seconds",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.ack_status = 'Pending' AND emsg.generated_at < ?) AS overdue_ack_count",
+			req.OverdueAckPendingSince,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_4h_count",
+			req.PendingOver4hBefore,
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE "+scorecardPendingDeliveryFilter+" AND emsg.generated_at < ?) AS pending_over_24h_count",
+			req.PendingOver24hBefore,
+		).
+		ColumnExpr(
+			"MIN(emsg.generated_at) FILTER (WHERE " + scorecardPendingDeliveryFilter + ") AS oldest_pending_at",
+		).
+		Join("JOIN edi_partners AS ep ON ep.id = emsg.edi_partner_id").
+		JoinOn("ep.organization_id = emsg.organization_id").
+		JoinOn("ep.business_unit_id = emsg.business_unit_id").
+		Where("emsg.edi_partner_id IS NOT NULL").
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr("emsg.edi_partner_id").
+		OrderExpr("MAX(ep.name) ASC")
+	if req.Since > 0 {
+		query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &rows); err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func (r *repository) GetVolumeSeries(
+	ctx context.Context,
+	req repositories.GetEDIVolumeSeriesRequest,
+) ([]*repositories.EDIVolumePoint, error) {
+	bucket := req.BucketSeconds
+	if bucket <= 0 {
+		bucket = 3600
+	}
+	points := make([]*repositories.EDIVolumePoint, 0)
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr("(emsg.generated_at / ?) * ? AS bucket_start", bucket, bucket).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Outbound') AS outbound_count").
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status = 'Sent') AS sent_count",
+		).
+		ColumnExpr(
+			"COUNT(*) FILTER (WHERE emsg.direction = 'Outbound' AND emsg.delivery_status IN ('Failed', 'DeadLettered')) AS failed_count",
+		).
+		ColumnExpr("COUNT(*) FILTER (WHERE emsg.direction = 'Inbound') AS received_count").
+		Apply(buncolgen.EDIMessageApplyTenant(req.TenantInfo)).
+		GroupExpr("1").
+		OrderExpr("1 ASC")
+	if req.Since > 0 {
+		query = query.Where(buncolgen.EDIMessageColumns.GeneratedAt.Gte(), req.Since)
+	}
+	if err := query.Scan(ctx, &points); err != nil {
+		return nil, err
+	}
+	return points, nil
+}
+
 func (r *repository) GetOverdueAckCount(
 	ctx context.Context,
 	req repositories.GetEDIOverdueAckCountRequest,
