@@ -2,6 +2,7 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   ediBulkActionResultSchema,
+  ediPartnerReadinessSchema,
   ediCertificateSummarySchema,
   ediConnectionTestResultSchema,
   ediMappingPreviewSchema,
@@ -304,6 +305,11 @@ export class EDIService {
   public async listTestCases(query = "") {
     const response = await api.get(`/edi/test-cases/${query}`);
     return safeParse(ediTestCaseListSchema, response, "EDITestCaseList");
+  }
+
+  public async getPartnerReadiness(partnerId: string) {
+    const response = await api.get(`/edi/partners/${partnerId}/readiness/`);
+    return safeParse(ediPartnerReadinessSchema, response, "EDIPartnerReadiness");
   }
 
   public async getTestCase(testCaseId: string) {

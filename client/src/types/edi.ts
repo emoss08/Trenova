@@ -905,6 +905,22 @@ export const ediCertificateSummarySchema = z.object({
 
 export type EDICertificateSummary = z.infer<typeof ediCertificateSummarySchema>;
 
+export const ediPartnerReadinessItemSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  complete: z.boolean(),
+});
+
+export const ediPartnerReadinessSchema = z.object({
+  partnerId: z.string(),
+  ready: z.boolean(),
+  completedCount: z.number(),
+  totalCount: z.number(),
+  items: z.array(ediPartnerReadinessItemSchema),
+});
+
+export type EDIPartnerReadiness = z.infer<typeof ediPartnerReadinessSchema>;
+
 export const ediBulkActionResultSchema = z.object({
   succeeded: z.array(z.string()),
   failed: z.array(

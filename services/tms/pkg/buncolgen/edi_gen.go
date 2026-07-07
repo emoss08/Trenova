@@ -5129,6 +5129,10 @@ var EDITestCaseColumns = struct {
 	Payload                  Column // "payload" → qualified: "etc.payload"
 	ExpectedWarnings         Column // "expected_warnings" → qualified: "etc.expected_warnings"
 	ExpectedErrors           Column // "expected_errors" → qualified: "etc.expected_errors"
+	LastRunAt                Column // "last_run_at" → qualified: "etc.last_run_at"
+	LastRunPassed            Column // "last_run_passed" → qualified: "etc.last_run_passed"
+	LastRunWarnings          Column // "last_run_warnings" → qualified: "etc.last_run_warnings"
+	LastRunErrors            Column // "last_run_errors" → qualified: "etc.last_run_errors"
 	Version                  Column // "version" → qualified: "etc.version"
 	CreatedAt                Column // "created_at" → qualified: "etc.created_at"
 	UpdatedAt                Column // "updated_at" → qualified: "etc.updated_at"
@@ -5142,6 +5146,10 @@ var EDITestCaseColumns = struct {
 	Payload:                  NewColumn("payload", "etc"),
 	ExpectedWarnings:         NewColumn("expected_warnings", "etc"),
 	ExpectedErrors:           NewColumn("expected_errors", "etc"),
+	LastRunAt:                NewColumn("last_run_at", "etc"),
+	LastRunPassed:            NewColumn("last_run_passed", "etc"),
+	LastRunWarnings:          NewColumn("last_run_warnings", "etc"),
+	LastRunErrors:            NewColumn("last_run_errors", "etc"),
 	Version:                  NewColumn("version", "etc"),
 	CreatedAt:                NewColumn("created_at", "etc"),
 	UpdatedAt:                NewColumn("updated_at", "etc"),
@@ -5161,6 +5169,10 @@ var EDITestCaseFieldMap = map[string]string{
 	"payload":                  "payload",
 	"expectedWarnings":         "expected_warnings",
 	"expectedErrors":           "expected_errors",
+	"lastRunAt":                "last_run_at",
+	"lastRunPassed":            "last_run_passed",
+	"lastRunWarnings":          "last_run_warnings",
+	"lastRunErrors":            "last_run_errors",
 	"version":                  "version",
 	"createdAt":                "created_at",
 	"updatedAt":                "updated_at",
@@ -5178,6 +5190,10 @@ var EDITestCaseInsertableColumns = []string{
 	"payload",
 	"expected_warnings",
 	"expected_errors",
+	"last_run_at",
+	"last_run_passed",
+	"last_run_warnings",
+	"last_run_errors",
 	"version",
 	"created_at",
 	"updated_at",
@@ -5253,6 +5269,10 @@ var EDITestCaseFilter = struct {
 	Payload                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
 	ExpectedWarnings         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedWarnings" → DB: "expected_warnings"
 	ExpectedErrors           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expectedErrors" → DB: "expected_errors"
+	LastRunAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
+	LastRunPassed            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunPassed" → DB: "last_run_passed"
+	LastRunWarnings          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunWarnings" → DB: "last_run_warnings"
+	LastRunErrors            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunErrors" → DB: "last_run_errors"
 	Version                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -5283,6 +5303,18 @@ var EDITestCaseFilter = struct {
 	},
 	ExpectedErrors: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("expectedErrors", op, value)
+	},
+	LastRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunAt", op, value)
+	},
+	LastRunPassed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunPassed", op, value)
+	},
+	LastRunWarnings: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunWarnings", op, value)
+	},
+	LastRunErrors: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastRunErrors", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

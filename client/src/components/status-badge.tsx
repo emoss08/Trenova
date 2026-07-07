@@ -546,6 +546,33 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
   );
 }
 
+export function EDIPartnerReadinessBadge({
+  ready,
+  completedCount,
+  totalCount,
+}: {
+  ready: boolean;
+  completedCount: number;
+  totalCount: number;
+}) {
+  if (ready) {
+    return (
+      <Badge variant="active" className="max-h-5" title="All onboarding checklist items are complete.">
+        Ready
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="warning"
+      className="max-h-5 tabular-nums"
+      title="Open the partner to see the remaining onboarding checklist items."
+    >
+      {completedCount}/{totalCount} ready
+    </Badge>
+  );
+}
+
 export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
   return (
     <Badge

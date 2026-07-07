@@ -26,6 +26,7 @@ The module supports two exchange styles end to end:
 | EDI navigation | Implemented | Partners, communication profiles, mapping profiles, template designer, inbound/outbound transfers, messages, and inbound files. |
 | Permission model | Implemented | The `edi` resource with standard operations gates every route, action, and GraphQL query. |
 | Partner management | Implemented | Internal and external partners with contact details, enablement flags, settings, linked customer, and default profile references. |
+| Partner onboarding readiness | Implemented | A per-partner readiness checklist (contact details, active communication profile, entity mappings, active document profile per enabled direction, and — for external partners — at least one passing test case) surfaced as a Readiness tab on the partner panel with deep links to each creator, a readiness badge column on the partners table (`ediPartnerReadiness` batched GraphQL query), and a warning when exchange is enabled while the checklist is incomplete. Test-case runs persist their verdict (`last_run_*` columns) so "passing test case" reflects the latest Run Preview outcome. |
 | Internal partner pairs | Implemented | Reciprocal internal partners created through a connection request/acceptance flow. |
 | Connection lifecycle | Implemented | Pending acceptance, active, suspended, rejected, and revoked states with capability flags. |
 | Communication profiles | Implemented | Internal, AS2, SFTP, and VAN methods with per-method config validation, encrypted secrets, and secret presence state. |

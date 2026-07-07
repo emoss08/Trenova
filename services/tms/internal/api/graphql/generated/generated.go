@@ -322,6 +322,13 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	EdiPartnerReadinessState struct {
+		CompletedCount func(childComplexity int) int
+		PartnerID      func(childComplexity int) int
+		Ready          func(childComplexity int) int
+		TotalCount     func(childComplexity int) int
+	}
+
 	EdiPartnerScorecard struct {
 		AvgAckSeconds           func(childComplexity int) int
 		DeadLetteredCount       func(childComplexity int) int
@@ -728,6 +735,7 @@ type ComplexityRoot struct {
 		EdiInboundFiles          func(childComplexity int, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) int
 		EdiMappingProfiles       func(childComplexity int, input gqlmodel.DataTableConnectionInput, partnerID *string) int
 		EdiMessages              func(childComplexity int, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) int
+		EdiPartnerReadiness      func(childComplexity int, partnerIds []string) int
 		EdiPartnerScorecards     func(childComplexity int, sinceHours *int) int
 		EdiPartners              func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		EdiSummary               func(childComplexity int, sinceHours *int) int
@@ -1818,6 +1826,7 @@ type QueryResolver interface {
 	EdiTestCases(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) (*gqlmodel.EdiTestCaseConnection, error)
 	EdiSummary(ctx context.Context, sinceHours *int) (*gqlmodel.EdiSummary, error)
 	EdiPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EdiPartnerScorecard, error)
+	EdiPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EdiPartnerReadinessState, error)
 	EdiVolumeSeries(ctx context.Context, sinceHours *int) ([]*gqlmodel.EdiVolumePoint, error)
 	EquipmentManufacturers(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.EquipmentManufacturerConnection, error)
 	EquipmentManufacturer(ctx context.Context, id string) (*equipmentmanufacturer.EquipmentManufacturer, error)
@@ -3077,6 +3086,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.EdiPartnerEdge.Node(childComplexity), true
+
+	case "EdiPartnerReadinessState.completedCount":
+		if e.ComplexityRoot.EdiPartnerReadinessState.CompletedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerReadinessState.CompletedCount(childComplexity), true
+	case "EdiPartnerReadinessState.partnerId":
+		if e.ComplexityRoot.EdiPartnerReadinessState.PartnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerReadinessState.PartnerID(childComplexity), true
+	case "EdiPartnerReadinessState.ready":
+		if e.ComplexityRoot.EdiPartnerReadinessState.Ready == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerReadinessState.Ready(childComplexity), true
+	case "EdiPartnerReadinessState.totalCount":
+		if e.ComplexityRoot.EdiPartnerReadinessState.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.EdiPartnerReadinessState.TotalCount(childComplexity), true
 
 	case "EdiPartnerScorecard.avgAckSeconds":
 		if e.ComplexityRoot.EdiPartnerScorecard.AvgAckSeconds == nil {
@@ -5196,6 +5230,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.EdiMessages(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput), args["transactionSet"].(*string), args["direction"].(*edi.DocumentDirection), args["partnerId"].(*string)), true
+	case "Query.ediPartnerReadiness":
+		if e.ComplexityRoot.Query.EdiPartnerReadiness == nil {
+			break
+		}
+
+		args, err := ec.field_Query_ediPartnerReadiness_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.EdiPartnerReadiness(childComplexity, args["partnerIds"].([]string)), true
 	case "Query.ediPartnerScorecards":
 		if e.ComplexityRoot.Query.EdiPartnerScorecards == nil {
 			break
@@ -10553,6 +10598,13 @@ type EdiSummary {
   attentionItems: [EdiSummaryAttentionItem!]!
 }
 
+type EdiPartnerReadinessState {
+  partnerId: ID!
+  ready: Boolean!
+  completedCount: Int!
+  totalCount: Int!
+}
+
 type EdiPartnerScorecard {
   partnerId: ID!
   partnerName: String!
@@ -10622,6 +10674,7 @@ extend type Query {
   ): EdiTestCaseConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
+  ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
 }
 `, BuiltIn: false},
@@ -13217,6 +13270,20 @@ func (ec *executionContext) childFields_EdiPartnerEdge(ctx context.Context, fiel
 		return ec.fieldContext_EdiPartnerEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type EdiPartnerEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_EdiPartnerReadinessState(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "partnerId":
+		return ec.fieldContext_EdiPartnerReadinessState_partnerId(ctx, field)
+	case "ready":
+		return ec.fieldContext_EdiPartnerReadinessState_ready(ctx, field)
+	case "completedCount":
+		return ec.fieldContext_EdiPartnerReadinessState_completedCount(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_EdiPartnerReadinessState_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type EdiPartnerReadinessState", field.Name)
 }
 
 func (ec *executionContext) childFields_EdiPartnerScorecard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -16806,6 +16873,20 @@ func (ec *executionContext) field_Query_ediMessages_args(ctx context.Context, ra
 		return nil, err
 	}
 	args["partnerId"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_ediPartnerReadiness_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "partnerIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["partnerIds"] = arg0
 	return args, nil
 }
 
@@ -22490,6 +22571,98 @@ func (ec *executionContext) _EdiPartnerEdge_cursor(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_EdiPartnerEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("EdiPartnerEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerReadinessState_partnerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerReadinessState) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerReadinessState_partnerId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PartnerID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerReadinessState_partnerId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerReadinessState", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerReadinessState_ready(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerReadinessState) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerReadinessState_ready(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Ready, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerReadinessState_ready(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerReadinessState", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerReadinessState_completedCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerReadinessState) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerReadinessState_completedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CompletedCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerReadinessState_completedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerReadinessState", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _EdiPartnerReadinessState_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerReadinessState) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_EdiPartnerReadinessState_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_EdiPartnerReadinessState_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("EdiPartnerReadinessState", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _EdiPartnerScorecard_partnerId(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.EdiPartnerScorecard) (ret graphql.Marshaler) {
@@ -31286,6 +31459,50 @@ func (ec *executionContext) fieldContext_Query_ediPartnerScorecards(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_ediPartnerScorecards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ediPartnerReadiness(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_ediPartnerReadiness(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().EdiPartnerReadiness(ctx, fc.Args["partnerIds"].([]string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.EdiPartnerReadinessState) graphql.Marshaler {
+			return ec.marshalNEdiPartnerReadinessState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerReadinessStateᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_ediPartnerReadiness(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_EdiPartnerReadinessState(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ediPartnerReadiness_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -55813,6 +56030,59 @@ func (ec *executionContext) _EdiPartnerEdge(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var ediPartnerReadinessStateImplementors = []string{"EdiPartnerReadinessState"}
+
+func (ec *executionContext) _EdiPartnerReadinessState(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiPartnerReadinessState) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, ediPartnerReadinessStateImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("EdiPartnerReadinessState")
+		case "partnerId":
+			out.Values[i] = ec._EdiPartnerReadinessState_partnerId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ready":
+			out.Values[i] = ec._EdiPartnerReadinessState_ready(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completedCount":
+			out.Values[i] = ec._EdiPartnerReadinessState_completedCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._EdiPartnerReadinessState_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var ediPartnerScorecardImplementors = []string{"EdiPartnerScorecard"}
 
 func (ec *executionContext) _EdiPartnerScorecard(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.EdiPartnerScorecard) graphql.Marshaler {
@@ -59031,6 +59301,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_ediPartnerScorecards(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "ediPartnerReadiness":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_ediPartnerReadiness(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -67502,6 +67794,32 @@ func (ec *executionContext) marshalNEdiPartnerKind2githubᚗcomᚋemoss08ᚋtren
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNEdiPartnerReadinessState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerReadinessStateᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiPartnerReadinessState) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNEdiPartnerReadinessState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerReadinessState(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNEdiPartnerReadinessState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerReadinessState(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.EdiPartnerReadinessState) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._EdiPartnerReadinessState(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNEdiPartnerScorecard2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐEdiPartnerScorecardᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.EdiPartnerScorecard) graphql.Marshaler {

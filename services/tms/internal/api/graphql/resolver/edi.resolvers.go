@@ -330,6 +330,39 @@ func (r *queryResolver) EdiPartnerScorecards(ctx context.Context, sinceHours *in
 	return ediPartnerScorecardsToModel(rows), nil
 }
 
+// EdiPartnerReadiness is the resolver for the ediPartnerReadiness field.
+func (r *queryResolver) EdiPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EdiPartnerReadinessState, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceEDI, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	ids := make([]pulid.ID, 0, len(partnerIds))
+	for _, raw := range partnerIds {
+		id, parseErr := pulid.MustParse(raw)
+		if parseErr != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	states, err := r.ediService.GetPartnerReadiness(ctx, &ediservice.GetEDIPartnerReadinessRequest{
+		TenantInfo: tenantInfo(authCtx),
+		PartnerIDs: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	models := make([]*gqlmodel.EdiPartnerReadinessState, 0, len(states))
+	for _, state := range states {
+		models = append(models, &gqlmodel.EdiPartnerReadinessState{
+			PartnerID:      state.PartnerID.String(),
+			Ready:          state.Ready,
+			CompletedCount: state.CompletedCount,
+			TotalCount:     state.TotalCount,
+		})
+	}
+	return models, nil
+}
+
 // EdiVolumeSeries is the resolver for the ediVolumeSeries field.
 func (r *queryResolver) EdiVolumeSeries(ctx context.Context, sinceHours *int) ([]*gqlmodel.EdiVolumePoint, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceEDI, permission.OpRead)
