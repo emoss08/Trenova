@@ -49,8 +49,29 @@ type EDIMailboxFetcher interface {
 	) error
 }
 
+const (
+	EDIConnectionCheckPassed  = "passed"
+	EDIConnectionCheckWarning = "warning"
+	EDIConnectionCheckFailed  = "failed"
+)
+
+type EDIConnectionCheck struct {
+	Name    string `json:"name"`
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+}
+
+type EDIConnectionTester interface {
+	TestConnection(ctx context.Context, req *EDITransportRequest) []EDIConnectionCheck
+}
+
 type EDITransportDispatcher interface {
 	Supports(method edi.ConnectionMethod) bool
+	TestConnection(
+		ctx context.Context,
+		method edi.ConnectionMethod,
+		req *EDITransportRequest,
+	) ([]EDIConnectionCheck, error)
 	Deliver(
 		ctx context.Context,
 		method edi.ConnectionMethod,

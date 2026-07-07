@@ -18,6 +18,8 @@ import { CircleCheckIcon, CircleXIcon, RefreshCwIcon, RotateCcwIcon } from "luci
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { notifyEDIBulkOutcome } from "./edi-bulk-actions";
+
+const EDI_QUEUE_REFETCH_INTERVAL_MS = 30_000;
 import { getCommunicationProfileColumns } from "./edi-communication-profile-columns";
 import { DesignerWorkspace } from "./edi-designer-workspace";
 import { getInboundFileColumns } from "./edi-inbound-file-columns";
@@ -220,6 +222,7 @@ function TransfersWorkspace({ direction }: { direction: "inbound" | "outbound" }
         enableReadOnlyPanel
         enableRowSelection={dockActions.length > 0}
         dockActions={dockActions}
+        refetchIntervalMs={EDI_QUEUE_REFETCH_INTERVAL_MS}
       />
       <EDIReasonDialog
         open={rejectOpen}
@@ -292,6 +295,7 @@ function MessagesWorkspace() {
         enableReadOnlyPanel
         enableRowSelection={dockActions.length > 0}
         dockActions={dockActions}
+        refetchIntervalMs={EDI_QUEUE_REFETCH_INTERVAL_MS}
       />
     </Outer>
   );
@@ -351,6 +355,7 @@ function InboundFilesWorkspace() {
         enableReadOnlyPanel
         enableRowSelection={dockActions.length > 0}
         dockActions={dockActions}
+        refetchIntervalMs={EDI_QUEUE_REFETCH_INTERVAL_MS}
       />
     </Outer>
   );

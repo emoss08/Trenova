@@ -14,9 +14,9 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { statusChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { DataTablePanelProps } from "@/types/data-table";
-import type { EDICommunicationProfile } from "@/types/edi";
+import type { EDICommunicationProfile, EDIConnectionTestResult } from "@/types/edi";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { KeyRoundIcon, RadioTowerIcon, ServerIcon, ShieldCheckIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -37,6 +37,24 @@ import {
 } from "./edi-communication-profile-form";
 import { invalidateEDICommunicationProfiles } from "./edi-panel-invalidation";
 import { EDIEmptyState } from "./edi-panel-primitives";
+
+function notifyConnectionTestResult(result: EDIConnectionTestResult) {
+  const describe = (statuses: string[]) =>
+    result.checks
+      .filter((check) => statuses.includes(check.status))
+      .map((check) => `${check.name}: ${check.message ?? check.status}`)
+      .join("\n");
+  if (result.success) {
+    const warnings = describe(["warning"]);
+    if (warnings) {
+      toast.warning("Connection test passed with warnings", { description: warnings });
+      return;
+    }
+    toast.success("Connection test passed", { description: describe(["passed"]) });
+    return;
+  }
+  toast.error("Connection test failed", { description: describe(["failed", "warning"]) });
+}
 
 export function CommunicationProfilePanel({
   open,
@@ -77,6 +95,17 @@ export function CommunicationProfilePanel({
     reset(getProfileFormDefaults(profile));
   }, [open, profile, reset]);
 
+  const testConnectionMutation = useMutation({
+    mutationFn: () => {
+      if (!profile) throw new Error("Profile is required");
+      return apiService.ediService.testProfileConnection(profile.id);
+    },
+    onSuccess: (result) => notifyConnectionTestResult(result),
+    onError: () => toast.error("The connection test could not be run"),
+  });
+  const isDirty = form.formState.isDirty;
+  const canTestConnection = isEdit && method !== "Internal";
+
   return (
     <DataTablePanelContainer
       open={open}
@@ -86,6 +115,23 @@ export function CommunicationProfilePanel({
       size="xl"
       footer={
         <div className="flex w-full items-center justify-end gap-2">
+          {canTestConnection && (
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-auto"
+              onClick={() => testConnectionMutation.mutate()}
+              isLoading={testConnectionMutation.isPending}
+              disabled={isDirty}
+              title={
+                isDirty
+                  ? "Save your changes before testing the connection"
+                  : "Verify certificates, credentials, and endpoint reachability"
+              }
+            >
+              Test Connection
+            </Button>
+          )}
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>

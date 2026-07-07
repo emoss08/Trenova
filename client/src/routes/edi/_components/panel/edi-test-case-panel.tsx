@@ -1,5 +1,6 @@
 import { EDIDocumentProfileAutocompleteField } from "@/components/autocomplete-fields";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
+import { EDITestCaseVerdictBadge } from "@/components/status-badge";
 import { InputField } from "@/components/fields/input-field";
 import { JsonEditorField } from "@/components/fields/json-editor-field";
 import { NumberField } from "@/components/fields/number-field";
@@ -246,6 +247,14 @@ function TestCaseEditPanel({
           </>
         }
       >
+        {testCase && preview && (
+          <TestCaseVerdict
+            preview={preview}
+            expectedWarnings={testCase.expectedWarnings}
+            expectedErrors={testCase.expectedErrors}
+            onOpenInspector={() => setInspectorOpen(true)}
+          />
+        )}
         {testCase && (
           <TestCaseForm
             id="edi-edit-test-case-form"
@@ -269,6 +278,56 @@ function TestCaseEditPanel({
         }}
       />
     </>
+  );
+}
+
+function verdictCountLine(label: string, actual: number, expected: number) {
+  if (actual === expected) {
+    return `${label}: ${actual} (matches expected)`;
+  }
+  return `${label}: ${actual}, expected ${expected}`;
+}
+
+function TestCaseVerdict({
+  preview,
+  expectedWarnings,
+  expectedErrors,
+  onOpenInspector,
+}: {
+  preview: EDIDocumentPreview;
+  expectedWarnings: number;
+  expectedErrors: number;
+  onOpenInspector: () => void;
+}) {
+  const actualWarnings = preview.diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "Warning",
+  ).length;
+  const actualErrors = preview.diagnostics.filter(
+    (diagnostic) => diagnostic.severity === "Error",
+  ).length;
+  const passed = actualWarnings === expectedWarnings && actualErrors === expectedErrors;
+
+  return (
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-md border bg-muted/20 p-3">
+      <div className="flex items-center gap-3">
+        <EDITestCaseVerdictBadge passed={passed} />
+        <div className="text-sm">
+          <p className={passed ? "text-muted-foreground" : "font-medium"}>
+            {verdictCountLine("Warnings", actualWarnings, expectedWarnings)} ·{" "}
+            {verdictCountLine("Errors", actualErrors, expectedErrors)}
+          </p>
+          {!passed && (
+            <p className="text-xs text-muted-foreground">
+              Review the inspector diagnostics, then either fix the payload/template or update the
+              expected counts.
+            </p>
+          )}
+        </div>
+      </div>
+      <Button type="button" variant="ghost" size="sm" onClick={onOpenInspector}>
+        Open Inspector
+      </Button>
+    </div>
   );
 }
 

@@ -36,6 +36,28 @@ func (d *Dispatcher) Supports(method edi.ConnectionMethod) bool {
 	return ok
 }
 
+func (d *Dispatcher) TestConnection(
+	ctx context.Context,
+	method edi.ConnectionMethod,
+	req *services.EDITransportRequest,
+) ([]services.EDIConnectionCheck, error) {
+	transport, ok := d.transports[method]
+	if !ok {
+		return nil, fmt.Errorf(
+			"EDI connection testing is not supported for connection method %s",
+			method,
+		)
+	}
+	tester, ok := transport.(services.EDIConnectionTester)
+	if !ok {
+		return nil, fmt.Errorf(
+			"EDI connection testing is not supported for connection method %s",
+			method,
+		)
+	}
+	return tester.TestConnection(ctx, req), nil
+}
+
 func (d *Dispatcher) Deliver(
 	ctx context.Context,
 	method edi.ConnectionMethod,

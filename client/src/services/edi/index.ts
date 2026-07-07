@@ -2,6 +2,8 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   ediBulkActionResultSchema,
+  ediCertificateSummarySchema,
+  ediConnectionTestResultSchema,
   ediMappingPreviewSchema,
   ediMappingProfileItemSchema,
   ediMappingProfileSchema,
@@ -245,6 +247,18 @@ export class EDIService {
   public async inspectMessage(messageId: string) {
     const response = await api.get(`/edi/messages/${messageId}/inspect/`);
     return safeParse(ediMessageInspectionSchema, response, "EDIMessageInspection");
+  }
+
+  public async testProfileConnection(profileId: string) {
+    const response = await api.post(`/edi/communication-profiles/${profileId}/test-connection/`);
+    return safeParse(ediConnectionTestResultSchema, response, "EDIConnectionTestResult");
+  }
+
+  public async inspectCertificate(certificate: string) {
+    const response = await api.post(`/edi/communication-profiles/inspect-certificate/`, {
+      certificate,
+    });
+    return safeParse(ediCertificateSummarySchema, response, "EDICertificateSummary");
   }
 
   public async bulkRetryMessageDelivery(messageIds: string[]) {

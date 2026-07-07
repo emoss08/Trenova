@@ -1,6 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
+import { SensitiveTextareaField } from "@/components/fields/sensitive-textarea-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { Badge } from "@/components/ui/badge";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
@@ -18,6 +19,7 @@ import {
   type CommunicationProfileFormValues,
   type CommunicationProfileMethod,
 } from "../edi-schemas";
+import { EDICertificateField } from "./edi-certificate-field";
 import { EDIEmptyState } from "./edi-panel-primitives";
 
 type ProfileFieldsProps = {
@@ -144,29 +146,26 @@ export function TransportProfileFields({
         <FormSection title="Certificates" className="rounded-md border bg-muted/20 p-3">
           <FormGroup cols={1}>
             <FormControl cols="full">
-              <TextareaField
+              <EDICertificateField
                 control={control}
                 name="config.localCertificate"
                 label="Local Certificate (PEM)"
-                placeholder="-----BEGIN CERTIFICATE-----"
                 description="Our public certificate. Partners use it to encrypt to us and verify our signatures; pair it with the private key secret."
               />
             </FormControl>
             <FormControl cols="full">
-              <TextareaField
+              <EDICertificateField
                 control={control}
                 name="config.partnerSigningCertificate"
                 label="Partner Signing Certificate (PEM)"
-                placeholder="-----BEGIN CERTIFICATE-----"
                 description="Used to verify inbound signatures and signed MDNs from this partner."
               />
             </FormControl>
             <FormControl cols="full">
-              <TextareaField
+              <EDICertificateField
                 control={control}
                 name="config.partnerEncryptionCertificate"
                 label="Partner Encryption Certificate (PEM)"
-                placeholder="-----BEGIN CERTIFICATE-----"
                 description="Used to encrypt outbound documents. Leave blank to reuse the signing certificate."
               />
             </FormControl>
@@ -468,7 +467,7 @@ export function SecretProfileFields({
           {method === "AS2" && (
             <>
               <FormControl cols="full">
-                <TextareaField
+                <SensitiveTextareaField
                   control={control}
                   name="secrets.privateKey"
                   label="AS2 Private Key (PEM)"

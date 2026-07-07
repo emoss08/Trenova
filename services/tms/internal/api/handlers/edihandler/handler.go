@@ -250,6 +250,16 @@ func (h *Handler) registerCommunicationProfileRoutes(profiles *gin.RouterGroup) 
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
 		h.updateCommunicationProfile,
 	)
+	profiles.POST(
+		"/:profileID/test-connection/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpUpdate),
+		h.testCommunicationProfileConnection,
+	)
+	profiles.POST(
+		"/inspect-certificate/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.inspectCertificate,
+	)
 }
 
 func (h *Handler) registerDocumentTypeRoutes(documentTypes *gin.RouterGroup) {
@@ -2384,6 +2394,49 @@ func (h *Handler) retryMessageDelivery(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, message)
+}
+
+func (h *Handler) testCommunicationProfileConnection(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	profileID, err := pulid.MustParse(c.Param("profileID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	result, err := h.service.TestCommunicationProfileConnection(
+		c.Request.Context(),
+		&ediservice.TestCommunicationProfileConnectionRequest{
+			ProfileID: profileID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+type inspectCertificateRequest struct {
+	Certificate string `json:"certificate"`
+}
+
+func (h *Handler) inspectCertificate(c *gin.Context) {
+	req := new(inspectCertificateRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	summary, err := h.service.InspectAS2Certificate(req.Certificate)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, summary)
 }
 
 func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {
