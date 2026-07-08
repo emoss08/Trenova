@@ -178,7 +178,9 @@ func (s *SFTPServer) Close() error {
 func (s *SFTPServer) handleConn(conn net.Conn, config *ssh.ServerConfig) {
 	sshConn, channels, requests, err := ssh.NewServerConn(conn, config)
 	if err != nil {
-		s.logger.Warn("sftp handshake failed", "error", err)
+		// Aborted handshakes are routine here: TCP health probes that never speak
+		// SSH, and clients that drop the connection when host-key pinning fails.
+		s.logger.Debug("sftp handshake did not complete", "error", err)
 		_ = conn.Close()
 		return
 	}
