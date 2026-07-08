@@ -18,6 +18,8 @@ export interface NavBadge {
   variant: "default" | "destructive" | "warning";
 }
 
+export type NavItemBadgeKind = "edi-attention";
+
 export interface NavItem {
   id: string;
   label: string;
@@ -27,6 +29,7 @@ export interface NavItem {
   includeBetaTag?: boolean;
   external?: boolean;
   resource?: string;
+  badge?: NavItemBadgeKind;
 }
 
 export interface NavGroup {

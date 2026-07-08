@@ -546,6 +546,22 @@ export function EDITransferStatusBadge({ status }: { status?: EDITransferStatus 
   );
 }
 
+export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
+  return (
+    <Badge
+      variant={passed ? "active" : "inactive"}
+      className="max-h-5"
+      title={
+        passed
+          ? "The preview diagnostics match the expected warning and error counts."
+          : "The preview diagnostics do not match the expected warning and error counts."
+      }
+    >
+      {passed ? "Pass" : "Fail"}
+    </Badge>
+  );
+}
+
 export function EDIMessageDeliveryStatusBadge({
   status,
 }: {

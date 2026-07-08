@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { ChevronLeftIcon, ChevronRightIcon, ChevronsUpDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NavItemBadge } from "@/components/navigation/nav-item-badge";
 import { BetaTag } from "@/components/beta-tag";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -45,7 +46,14 @@ function NavItemLink({ item, currentPath }: { item: NavItem; currentPath: string
       tabIndex={item.disabled ? -1 : undefined}
     >
       <span className="truncate">{item.label}</span>
-      {item.includeBetaTag && <BetaTag className="ml-auto" />}
+      {item.badge ? (
+        <span className="ml-auto flex items-center gap-1">
+          <NavItemBadge badge={item.badge} />
+          {item.includeBetaTag && <BetaTag />}
+        </span>
+      ) : (
+        item.includeBetaTag && <BetaTag className="ml-auto" />
+      )}
     </Link>
   );
 }
