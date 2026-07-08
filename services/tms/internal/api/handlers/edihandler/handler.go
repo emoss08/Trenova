@@ -105,6 +105,11 @@ func (h *Handler) registerPartnerRoutes(partners *gin.RouterGroup) {
 		h.listPartners,
 	)
 	partners.GET(
+		"/:partnerID/readiness/",
+		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
+		h.getPartnerReadiness,
+	)
+	partners.GET(
 		"/select-options/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpRead),
 		h.selectPartnerOptions,
@@ -2437,6 +2442,35 @@ func (h *Handler) inspectCertificate(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, summary)
+}
+
+func (h *Handler) getPartnerReadiness(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	partnerID, err := pulid.MustParse(c.Param("partnerID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	states, err := h.service.GetPartnerReadiness(
+		c.Request.Context(),
+		&ediservice.GetEDIPartnerReadinessRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			PartnerIDs: []pulid.ID{partnerID},
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	if len(states) == 0 {
+		h.eh.HandleError(c, errortypes.NewNotFoundError("EDIPartner not found"))
+		return
+	}
+	c.JSON(http.StatusOK, states[0])
 }
 
 func (h *Handler) bulkRetryMessageDelivery(c *gin.Context) {

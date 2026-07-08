@@ -12,7 +12,7 @@ import type { OrganizationSelectOption } from "@/types/organization";
 import { Operation, Resource } from "@/types/permission";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2Icon, GitBranchIcon, HandshakeIcon, ListChecksIcon } from "lucide-react";
+import { Building2Icon, CircleCheckBigIcon, GitBranchIcon, HandshakeIcon, ListChecksIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,6 +25,7 @@ import {
   type EDIPartnerFormValues,
 } from "../edi-schemas";
 import { invalidateEDIConnections, invalidateEDIPartners } from "./edi-panel-invalidation";
+import { PartnerReadinessChecklist } from "./edi-partner-readiness-checklist";
 import { InternalPartnerPairForm } from "./edi-internal-partner-pair-form";
 import { MappingProfilePanel } from "./edi-mapping-profile-panel";
 import { PartnerDetailsForm } from "./edi-partner-details-form";
@@ -327,6 +328,10 @@ function PartnerEditPanel({
               <GitBranchIcon className="size-4" />
               Mappings
             </TabsTrigger>
+            <TabsTrigger value="readiness">
+              <CircleCheckBigIcon className="size-4" />
+              Readiness
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="details" className="pt-4">
             <PartnerDetailsForm
@@ -339,6 +344,9 @@ function PartnerEditPanel({
           </TabsContent>
           <TabsContent value="mappings" className="pt-4">
             <MappingProfilePanel partnerId={partner.id} canUpdate={canUpdate} />
+          </TabsContent>
+          <TabsContent value="readiness" className="pt-4">
+            <PartnerReadinessChecklist partner={partner} />
           </TabsContent>
         </Tabs>
       )}

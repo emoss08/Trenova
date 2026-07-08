@@ -604,6 +604,13 @@ export type EdiTemplateListQueryVariables = Exact<{
 
 export type EdiTemplateListQuery = { ediTemplates: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiTemplateListFieldsFragment': EdiTemplateListFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type EdiPartnerReadinessQueryVariables = Exact<{
+  partnerIds: Array<string | number> | string | number;
+}>;
+
+
+export type EdiPartnerReadinessQuery = { ediPartnerReadiness: Array<{ partnerId: string, ready: boolean, completedCount: number, totalCount: number }> };
+
 export type EdiSummaryQueryVariables = Exact<{
   sinceHours?: number | null | undefined;
 }>;
@@ -2670,6 +2677,16 @@ fragment EdiTemplateListFields on EdiTemplate {
     ...EdiTemplateVersionSummaryFields
   }
 }`, {"hash":"sha256:f412648ecffa3ce3939f151f43e74eebb77d0278b8fc405c4a091eee7ae6298d"}) as unknown as TypedDocumentString<EdiTemplateListQuery, EdiTemplateListQueryVariables>;
+export const EdiPartnerReadinessDocument = new TypedDocumentString(`
+    query EdiPartnerReadiness($partnerIds: [ID!]!) {
+  ediPartnerReadiness(partnerIds: $partnerIds) {
+    partnerId
+    ready
+    completedCount
+    totalCount
+  }
+}
+    `, {"hash":"sha256:6a4869ef7f675e627e9080ece4fbf1ef01427e11cc848095267bbc312d95db31"}) as unknown as TypedDocumentString<EdiPartnerReadinessQuery, EdiPartnerReadinessQueryVariables>;
 export const EdiSummaryDocument = new TypedDocumentString(`
     query EdiSummary($sinceHours: Int) {
   ediSummary(sinceHours: $sinceHours) {

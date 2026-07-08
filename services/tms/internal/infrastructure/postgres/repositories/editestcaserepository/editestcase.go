@@ -119,6 +119,25 @@ func (r *repository) UpdateTestCase(
 	return entity, nil
 }
 
+func (r *repository) RecordTestCaseRun(
+	ctx context.Context,
+	req *repositories.RecordEDITestCaseRunRequest,
+) error {
+	cols := buncolgen.EDITestCaseColumns
+	_, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*edi.EDITestCase)(nil)).
+		Set("last_run_at = ?", req.RanAt).
+		Set("last_run_passed = ?", req.Passed).
+		Set("last_run_warnings = ?", req.Warnings).
+		Set("last_run_errors = ?", req.Errors).
+		Where(cols.ID.Eq(), req.ID).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Exec(ctx)
+	return err
+}
+
 func (r *repository) DeleteTestCase(
 	ctx context.Context,
 	req repositories.DeleteEDITestCaseRequest,

@@ -436,3 +436,60 @@ func (_c *MockEDITestCaseRepository_UpdateTestCase_Call) RunAndReturn(run func(c
 	_c.Call.Return(run)
 	return _c
 }
+
+// RecordTestCaseRun provides a mock function for the type MockEDITestCaseRepository
+func (_mock *MockEDITestCaseRepository) RecordTestCaseRun(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordTestCaseRun")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RecordEDITestCaseRunRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEDITestCaseRepository_RecordTestCaseRun_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordTestCaseRun'
+type MockEDITestCaseRepository_RecordTestCaseRun_Call struct {
+	*mock.Call
+}
+
+// RecordTestCaseRun is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.RecordEDITestCaseRunRequest
+func (_e *MockEDITestCaseRepository_Expecter) RecordTestCaseRun(ctx interface{}, req interface{}) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	return &MockEDITestCaseRepository_RecordTestCaseRun_Call{Call: _e.mock.On("RecordTestCaseRun", ctx, req)}
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Run(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest)) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.RecordEDITestCaseRunRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.RecordEDITestCaseRunRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) Return(err error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEDITestCaseRepository_RecordTestCaseRun_Call) RunAndReturn(run func(ctx context.Context, req *repositories.RecordEDITestCaseRunRequest) error) *MockEDITestCaseRepository_RecordTestCaseRun_Call {
+	_c.Call.Return(run)
+	return _c
+}

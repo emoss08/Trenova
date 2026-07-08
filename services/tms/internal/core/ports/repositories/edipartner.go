@@ -34,7 +34,30 @@ type GetReciprocalInternalPartnerRequest struct {
 	BusinessUnitID       pulid.ID `json:"businessUnitId"`
 }
 
+type EDIPartnerReadinessRow struct {
+	PartnerID             pulid.ID `bun:"partner_id"`
+	ContactEmail          string   `bun:"contact_email"`
+	Timezone              string   `bun:"timezone"`
+	HasActiveProfile      bool     `bun:"has_active_profile"`
+	HasMappingProfile     bool     `bun:"has_mapping_profile"`
+	HasInboundDocProfile  bool     `bun:"has_inbound_doc_profile"`
+	HasOutboundDocProfile bool     `bun:"has_outbound_doc_profile"`
+	HasPassingTestCase    bool     `bun:"has_passing_test_case"`
+	EnabledForInbound     bool     `bun:"enabled_for_inbound"`
+	EnabledForOutbound    bool     `bun:"enabled_for_outbound"`
+	Kind                  string   `bun:"kind"`
+}
+
+type GetEDIPartnerReadinessRequest struct {
+	TenantInfo pagination.TenantInfo
+	PartnerIDs []pulid.ID
+}
+
 type EDIPartnerRepository interface {
+	GetReadiness(
+		ctx context.Context,
+		req *GetEDIPartnerReadinessRequest,
+	) ([]*EDIPartnerReadinessRow, error)
 	List(
 		ctx context.Context,
 		req *ListEDIPartnersRequest,

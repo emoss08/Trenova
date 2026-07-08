@@ -444,6 +444,13 @@ type EdiSummary {
   attentionItems: [EdiSummaryAttentionItem!]!
 }
 
+type EdiPartnerReadinessState {
+  partnerId: ID!
+  ready: Boolean!
+  completedCount: Int!
+  totalCount: Int!
+}
+
 type EdiPartnerScorecard {
   partnerId: ID!
   partnerName: String!
@@ -513,5 +520,6 @@ extend type Query {
   ): EdiTestCaseConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
+  ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediVolumeSeries(sinceHours: Int): [EdiVolumePoint!]!
 }

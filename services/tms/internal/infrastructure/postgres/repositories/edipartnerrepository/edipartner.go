@@ -214,6 +214,49 @@ func (r *repository) ensureMappingProfile(
 	return profile, nil
 }
 
+func (r *repository) GetReadiness(
+	ctx context.Context,
+	req *repositories.GetEDIPartnerReadinessRequest,
+) ([]*repositories.EDIPartnerReadinessRow, error) {
+	if len(req.PartnerIDs) == 0 {
+		return []*repositories.EDIPartnerReadinessRow{}, nil
+	}
+	cols := buncolgen.EDIPartnerColumns
+	rows := make([]*repositories.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*edi.EDIPartner)(nil)).
+		ColumnExpr("ep.id AS partner_id").
+		ColumnExpr("COALESCE(ep.contact_email, '') AS contact_email").
+		ColumnExpr("COALESCE(ep.timezone, '') AS timezone").
+		ColumnExpr("ep.enabled_for_inbound AS enabled_for_inbound").
+		ColumnExpr("ep.enabled_for_outbound AS enabled_for_outbound").
+		ColumnExpr("ep.kind::text AS kind").
+		ColumnExpr(
+			"EXISTS (SELECT 1 FROM edi_communication_profiles ecp WHERE ecp.edi_partner_id = ep.id AND ecp.organization_id = ep.organization_id AND ecp.business_unit_id = ep.business_unit_id AND ecp.status = 'Active') AS has_active_profile",
+		).
+		ColumnExpr(
+			"EXISTS (SELECT 1 FROM edi_mapping_profile_items empi WHERE empi.edi_partner_id = ep.id AND empi.organization_id = ep.organization_id AND empi.business_unit_id = ep.business_unit_id) AS has_mapping_profile",
+		).
+		ColumnExpr(
+			"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Inbound') AS has_inbound_doc_profile",
+		).
+		ColumnExpr(
+			"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Outbound') AS has_outbound_doc_profile",
+		).
+		ColumnExpr(
+			"EXISTS (SELECT 1 FROM edi_test_cases etc JOIN edi_partner_document_profiles epdp ON epdp.id = etc.partner_document_profile_id AND epdp.organization_id = etc.organization_id AND epdp.business_unit_id = etc.business_unit_id WHERE epdp.edi_partner_id = ep.id AND etc.organization_id = ep.organization_id AND etc.business_unit_id = ep.business_unit_id AND etc.last_run_passed IS TRUE) AS has_passing_test_case",
+		).
+		Where(cols.ID.In(), bun.List(req.PartnerIDs)).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Scan(ctx, &rows)
+	if err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
 func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	ov := entity.Version
 	entity.Version++

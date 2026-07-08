@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -626,11 +627,49 @@ func (s *Service) PreviewTestCase(
 	if err != nil {
 		return nil, err
 	}
-	return s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
+	preview, err := s.PreviewDocument(ctx, &PreviewEDIDocumentRequest{
 		TenantInfo:               tenantInfo,
 		PartnerDocumentProfileID: testCase.PartnerDocumentProfileID,
 		Payload:                  &testCase.Payload,
 	})
+	if err != nil {
+		return nil, err
+	}
+	s.recordTestCaseRun(ctx, testCase, tenantInfo, preview)
+	return preview, nil
+}
+
+func (s *Service) recordTestCaseRun(
+	ctx context.Context,
+	testCase *edi.EDITestCase,
+	tenantInfo pagination.TenantInfo,
+	preview *EDIDocumentPreview,
+) {
+	warnings := 0
+	errorCount := 0
+	for _, diagnostic := range preview.Diagnostics {
+		switch diagnostic.Severity {
+		case edi.ValidationSeverityWarning:
+			warnings++
+		case edi.ValidationSeverityError:
+			errorCount++
+		case edi.ValidationSeverityInfo:
+		}
+	}
+	if err := s.testCaseRepo.RecordTestCaseRun(ctx, &repositories.RecordEDITestCaseRunRequest{
+		ID:         testCase.ID,
+		TenantInfo: tenantInfo,
+		RanAt:      timeutils.NowUnix(),
+		Passed:     warnings == testCase.ExpectedWarnings && errorCount == testCase.ExpectedErrors,
+		Warnings:   warnings,
+		Errors:     errorCount,
+	}); err != nil {
+		s.l.Warn(
+			"failed to record EDI test case run outcome",
+			zap.String("testCaseId", testCase.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func mergeEDIDiagnostics(

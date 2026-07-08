@@ -417,6 +417,13 @@ enum EdiPartnerKind {
   Internal
 }
 
+type EdiPartnerReadinessState {
+  completedCount: Int!
+  partnerId: ID!
+  ready: Boolean!
+  totalCount: Int!
+}
+
 type EdiPartnerScorecard {
   avgAckSeconds: Float
   deadLetteredCount: Int!
@@ -1013,6 +1020,7 @@ type Query {
   ediInboundFiles(input: DataTableConnectionInput!, partnerId: ID, status: EdiInboundFileStatus): EdiInboundFileConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
   ediMessages(direction: EdiDocumentDirection, input: DataTableConnectionInput!, partnerId: ID, transactionSet: String): EdiMessageConnection!
+  ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartners(input: DataTableConnectionInput!): EdiPartnerConnection!
   ediSummary(sinceHours: Int): EdiSummary!

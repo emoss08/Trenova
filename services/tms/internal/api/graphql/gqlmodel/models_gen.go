@@ -140,6 +140,13 @@ type EdiPartnerEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type EdiPartnerReadinessState struct {
+	PartnerID      string `json:"partnerId"`
+	Ready          bool   `json:"ready"`
+	CompletedCount int    `json:"completedCount"`
+	TotalCount     int    `json:"totalCount"`
+}
+
 type EdiPartnerScorecard struct {
 	PartnerID               string   `json:"partnerId"`
 	PartnerName             string   `json:"partnerName"`
