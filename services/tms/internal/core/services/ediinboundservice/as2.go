@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/as2"
+	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -252,10 +253,14 @@ func (s *Service) SendAsyncAS2MDN(
 	if result == nil || len(result.MDNBody) == 0 {
 		return errors.New("AS2 MDN payload is required for async delivery")
 	}
+	target, err := httpsafe.ValidateURL(returnURL)
+	if err != nil {
+		return fmt.Errorf("async AS2 MDN return URL is not permitted: %w", err)
+	}
 	request, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		returnURL,
+		target.String(),
 		bytes.NewReader(result.MDNBody),
 	)
 	if err != nil {
@@ -267,7 +272,7 @@ func (s *Service) SendAsyncAS2MDN(
 			request.Header.Set(key, value)
 		}
 	}
-	httpClient := &http.Client{Timeout: as2AsyncMDNTimeout}
+	httpClient := httpsafe.NewClient(as2AsyncMDNTimeout)
 	response, err := httpClient.Do(request)
 	if err != nil {
 		return fmt.Errorf("async AS2 MDN delivery to %s failed: %w", returnURL, err)

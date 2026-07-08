@@ -345,6 +345,43 @@ func TestReceiveAS2MessageRejectsUnknownIdentifiers(t *testing.T) {
 	require.ErrorIs(t, err, ErrAS2ProfileNotFound)
 }
 
+func TestSendAsyncAS2MDNRejectsUncontrolledReturnURL(t *testing.T) {
+	t.Parallel()
+
+	service := New(Params{
+		Logger:     zap.NewNop(),
+		EDIService: ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+	})
+
+	result := &ReceiveAS2MessageResult{
+		MDNContentType: "message/disposition-notification",
+		MDNBody:        []byte("mdn"),
+	}
+
+	for _, returnURL := range []string{
+		"http://169.254.169.254/latest/meta-data/",
+		"http://127.0.0.1:8080/internal",
+		"http://10.0.0.5/admin",
+		"file:///etc/passwd",
+	} {
+		err := service.SendAsyncAS2MDN(t.Context(), returnURL, result)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "not permitted")
+	}
+}
+
+func TestSendAsyncAS2MDNRequiresPayload(t *testing.T) {
+	t.Parallel()
+
+	service := New(Params{
+		Logger:     zap.NewNop(),
+		EDIService: ediservice.New(ediservice.Params{Logger: zap.NewNop()}),
+	})
+
+	err := service.SendAsyncAS2MDN(t.Context(), "https://partner.example/mdn", &ReceiveAS2MessageResult{})
+	require.Error(t, err)
+}
+
 func TestReceiveAS2MessageReturnsFailureMDNOnBadPayload(t *testing.T) {
 	t.Parallel()
 
