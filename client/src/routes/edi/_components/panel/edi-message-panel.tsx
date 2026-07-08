@@ -23,7 +23,7 @@ import {
   EDIRawContent,
 } from "./edi-panel-primitives";
 
-const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
+export const RETRYABLE_DELIVERY_STATUSES = new Set<EDIMessageDeliveryStatus>([
   "Queued",
   "Failed",
   "DeadLettered",

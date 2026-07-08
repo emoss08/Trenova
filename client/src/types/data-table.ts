@@ -90,6 +90,7 @@ export type DataTableProps<TData extends Record<string, any>> = {
   getRowClassName?: (row: Row<TData>) => string;
   enableRowSelection?: boolean;
   dockActions?: DockAction<TData>[];
+  refetchIntervalMs?: number;
   onAddRecord?: () => void;
   addRecordActions?: AddRecordAction[];
   contextMenuActions?: RowAction<TData>[];

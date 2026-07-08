@@ -119,6 +119,7 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
   pagination: PaginationState,
   options?: DataTableQueryOptions,
   enabled = true,
+  refetchIntervalMs?: number,
 ) {
   const extraVariables = resolveExtraVariables(graphql, pagination.pageSize, options);
 
@@ -142,5 +143,6 @@ export function useDataTableQuery<TData extends Record<string, unknown>>(
         graphql,
       }),
     enabled,
+    refetchInterval: refetchIntervalMs,
   });
 }

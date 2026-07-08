@@ -58,6 +58,7 @@ export function DataTable<TData extends Record<string, any>>({
   enableReadOnlyPanel = false,
   initialColumnVisibility,
   graphql,
+  refetchIntervalMs,
 }: DataTableProps<TData>) {
   "use no memo";
   const permissions = usePermissions(resource ?? "");
@@ -265,6 +266,7 @@ export function DataTable<TData extends Record<string, any>>({
       cursor: currentCursor,
     },
     canFetchPage,
+    refetchIntervalMs,
   );
 
   useEffect(() => {

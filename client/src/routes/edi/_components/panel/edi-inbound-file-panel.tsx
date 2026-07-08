@@ -24,7 +24,7 @@ import {
   EDIRawContent,
 } from "./edi-panel-primitives";
 
-const REPROCESSABLE_STATUSES = new Set<EDIInboundFileStatus>([
+export const REPROCESSABLE_STATUSES = new Set<EDIInboundFileStatus>([
   "Quarantined",
   "PartiallyProcessed",
 ]);

@@ -273,6 +273,7 @@ const ediModule: NavModule = {
       path: "/edi/overview",
       resource: Resource.EDI,
       includeBetaTag: true,
+      badge: "edi-attention",
     },
     {
       id: "edi-partners",

@@ -877,6 +877,46 @@ export const ediDocumentPreviewSchema = z.object({
 
 export type EDIDocumentPreview = z.infer<typeof ediDocumentPreviewSchema>;
 
+export const ediConnectionCheckSchema = z.object({
+  name: z.string(),
+  status: z.enum(["passed", "warning", "failed"]),
+  message: z.string().nullish(),
+});
+
+export type EDIConnectionCheck = z.infer<typeof ediConnectionCheckSchema>;
+
+export const ediConnectionTestResultSchema = z.object({
+  success: z.boolean(),
+  checks: z.array(ediConnectionCheckSchema),
+});
+
+export type EDIConnectionTestResult = z.infer<typeof ediConnectionTestResultSchema>;
+
+export const ediCertificateSummarySchema = z.object({
+  subject: z.string(),
+  issuer: z.string(),
+  serialNumber: z.string(),
+  notBefore: z.number(),
+  notAfter: z.number(),
+  expiresInDays: z.number(),
+  expired: z.boolean(),
+  sha256Fingerprint: z.string(),
+});
+
+export type EDICertificateSummary = z.infer<typeof ediCertificateSummarySchema>;
+
+export const ediBulkActionResultSchema = z.object({
+  succeeded: z.array(z.string()),
+  failed: z.array(
+    z.object({
+      id: z.string(),
+      error: z.string(),
+    }),
+  ),
+});
+
+export type EDIBulkActionResult = z.infer<typeof ediBulkActionResultSchema>;
+
 export const ediMessageSchema = z.object({
   id: z.string(),
   businessUnitId: z.string().nullish(),

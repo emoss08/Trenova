@@ -1,6 +1,9 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
+  ediBulkActionResultSchema,
+  ediCertificateSummarySchema,
+  ediConnectionTestResultSchema,
   ediMappingPreviewSchema,
   ediMappingProfileItemSchema,
   ediMappingProfileSchema,
@@ -244,6 +247,38 @@ export class EDIService {
   public async inspectMessage(messageId: string) {
     const response = await api.get(`/edi/messages/${messageId}/inspect/`);
     return safeParse(ediMessageInspectionSchema, response, "EDIMessageInspection");
+  }
+
+  public async testProfileConnection(profileId: string) {
+    const response = await api.post(`/edi/communication-profiles/${profileId}/test-connection/`);
+    return safeParse(ediConnectionTestResultSchema, response, "EDIConnectionTestResult");
+  }
+
+  public async inspectCertificate(certificate: string) {
+    const response = await api.post(`/edi/communication-profiles/inspect-certificate/`, {
+      certificate,
+    });
+    return safeParse(ediCertificateSummarySchema, response, "EDICertificateSummary");
+  }
+
+  public async bulkRetryMessageDelivery(messageIds: string[]) {
+    const response = await api.post(`/edi/messages/bulk-retry-delivery/`, { messageIds });
+    return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
+  }
+
+  public async bulkReprocessInboundFiles(fileIds: string[]) {
+    const response = await api.post(`/edi/inbound-files/bulk-reprocess/`, { fileIds });
+    return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
+  }
+
+  public async bulkApproveTransfers(transferIds: string[]) {
+    const response = await api.post(`/edi/transfers/bulk-approve/`, { transferIds });
+    return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
+  }
+
+  public async bulkRejectTransfers(transferIds: string[], reason: string) {
+    const response = await api.post(`/edi/transfers/bulk-reject/`, { transferIds, reason });
+    return safeParse(ediBulkActionResultSchema, response, "EDIBulkActionResult");
   }
 
   public async retryMessageDelivery(messageId: string) {

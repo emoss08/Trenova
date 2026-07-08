@@ -306,3 +306,77 @@ func (_c *MockEDITransportDispatcher_Supports_Call) RunAndReturn(run func(method
 	_c.Call.Return(run)
 	return _c
 }
+
+// TestConnection provides a mock function for the type MockEDITransportDispatcher
+func (_mock *MockEDITransportDispatcher) TestConnection(ctx context.Context, method edi.ConnectionMethod, req *services.EDITransportRequest) ([]services.EDIConnectionCheck, error) {
+	ret := _mock.Called(ctx, method, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TestConnection")
+	}
+
+	var r0 []services.EDIConnectionCheck
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edi.ConnectionMethod, *services.EDITransportRequest) ([]services.EDIConnectionCheck, error)); ok {
+		return returnFunc(ctx, method, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, edi.ConnectionMethod, *services.EDITransportRequest) []services.EDIConnectionCheck); ok {
+		r0 = returnFunc(ctx, method, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]services.EDIConnectionCheck)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, edi.ConnectionMethod, *services.EDITransportRequest) error); ok {
+		r1 = returnFunc(ctx, method, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockEDITransportDispatcher_TestConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TestConnection'
+type MockEDITransportDispatcher_TestConnection_Call struct {
+	*mock.Call
+}
+
+// TestConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - method edi.ConnectionMethod
+//   - req *services.EDITransportRequest
+func (_e *MockEDITransportDispatcher_Expecter) TestConnection(ctx interface{}, method interface{}, req interface{}) *MockEDITransportDispatcher_TestConnection_Call {
+	return &MockEDITransportDispatcher_TestConnection_Call{Call: _e.mock.On("TestConnection", ctx, method, req)}
+}
+
+func (_c *MockEDITransportDispatcher_TestConnection_Call) Run(run func(ctx context.Context, method edi.ConnectionMethod, req *services.EDITransportRequest)) *MockEDITransportDispatcher_TestConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 edi.ConnectionMethod
+		if args[1] != nil {
+			arg1 = args[1].(edi.ConnectionMethod)
+		}
+		var arg2 *services.EDITransportRequest
+		if args[2] != nil {
+			arg2 = args[2].(*services.EDITransportRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockEDITransportDispatcher_TestConnection_Call) Return(eDIConnectionChecks []services.EDIConnectionCheck, err error) *MockEDITransportDispatcher_TestConnection_Call {
+	_c.Call.Return(eDIConnectionChecks, err)
+	return _c
+}
+
+func (_c *MockEDITransportDispatcher_TestConnection_Call) RunAndReturn(run func(ctx context.Context, method edi.ConnectionMethod, req *services.EDITransportRequest) ([]services.EDIConnectionCheck, error)) *MockEDITransportDispatcher_TestConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
